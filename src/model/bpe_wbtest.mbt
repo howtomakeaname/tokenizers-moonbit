@@ -27,6 +27,7 @@ fn mk_bpe(
     fuse_unk: false,
     byte_fallback: false,
     ignore_merges: false,
+    cache: {},
   })
 }
 

@@ -53,14 +53,20 @@ pub fn BPEModel::tokenize(
     return []
   }
 
+  match self.cache.get(word) {
+    Some(cached) => return shift_tokens(cached, offset)
+    None => ()
+  }
+
   // ignore_merges fast path: if the whole word is directly in the vocab, emit
   // it as a single token without running any merges (GPT-4 / tiktoken style).
   if self.ignore_merges {
     match self.vocab.get(word) {
-      Some(id) =>
-        return [
-          @types.Token::{ id, value: word, offsets: (offset, offset + n) },
-        ]
+      Some(id) => {
+        let rel = [@types.Token::{ id, value: word, offsets: (0, n) }]
+        self.cache[word] = rel
+        return shift_tokens(rel, offset)
+      }
       None => ()
     }
   }
@@ -138,7 +144,24 @@ pub fn BPEModel::tokenize(
   }
 
   // Collect surviving symbols, mapping each to an id (or the unk token).
-  self.collect_tokens(symbols, chars, offset)
+  let rel = self.collect_tokens(symbols, chars, 0)
+  self.cache[word] = rel
+  shift_tokens(rel, offset)
+}
+
+///|
+fn shift_tokens(
+  tokens : Array[@types.Token],
+  offset : Int,
+) -> Array[@types.Token] {
+  if offset == 0 {
+    return tokens.copy()
+  }
+  tokens.map(t => @types.Token::{
+    id: t.id,
+    value: t.value,
+    offsets: (t.offsets.0 + offset, t.offsets.1 + offset),
+  })
 }
 
 // Walk the linked list from the head and emit tokens.

@@ -69,7 +69,7 @@
 ### Models
 | 组件 | 状态 | 备注 |
 |---|---|---|
-| BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效，llama 提速 ~7x |
+| BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效 + word cache；native mixed 抽样 gpt2/llama encode 快于 HF |
 | byte_fallback / fuse_unk / ignore_merges | ✅ | |
 | WordPiece | ✅ | 贪心最长前缀 |
 | Unigram | ✅ | Viterbi DP；`byte_fallback` / `fuse_unk` supported |
@@ -155,10 +155,14 @@
 MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的项目
 应进入优化排期；`< 0.90x` 才能明确宣称本项目在该用例快于 HF。
 
-最近一次抽样（native / mixed / gpt2,bert,llama）：BERT encode/decode 快于 HF
-（约 0.5x），GPT-2 decode 快于 HF（约 0.48x），但 BPE encode 仍落后：llama
-encode 约 1.83x、gpt2 encode 约 1.43x；加载方面 bert/llama from_str 约
-1.2x 落后。下一轮性能优化优先级：BPE encode hot path > 大词表加载。
+默认 benchmark 对比覆盖 `scripts/bench_python.py` 中的完整模型 fixture 矩阵；
+`--quick` 仅用于本地冒烟，正式性能结论必须跑 `--corpus all` 或至少全模型
+`mixed` 矩阵。最近一次全模型抽样（native / mixed，BPE word cache 后）：BPE/
+WordPiece/CLIP 主线大多快于 HF（gpt2 0.43x、llama 0.28x、Qwen2.5 0.58x、
+bert 0.53x、clip 0.48x）；decode 多数约 0.5x 或同水平；加载大模型基本同
+水平。主要剩余性能缺口集中在 Unigram/SentencePiece/embedding tokenizer encode：
+e5_multilingual 2.70x、bge_m3 2.62x、t5 2.10x 慢于 HF。下一轮性能优化优先级：
+Unigram DP/cache > 大词表 JSON 加载/解析 > batch 并行。
 
 ## 已知缺口与取舍（TODO）
 

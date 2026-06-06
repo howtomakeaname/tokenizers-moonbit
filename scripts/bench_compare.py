@@ -6,8 +6,8 @@ This script intentionally reports **ratios** instead of only standalone timings:
 `moon bench --target <target>`, parses MoonBit's benchmark table, then measures
 HF `tokenizers` on the same tokenizer.json fixtures and corpora.
 
-Default scope is a practical mixed-corpus matrix for the model families we care
-about most. Use `--all` to include every model fixture known to bench_python.py.
+Default scope covers every model fixture known to bench_python.py on the mixed
+corpus. Use `--corpus all` for the full model × corpus encode matrix.
 """
 
 from __future__ import annotations
@@ -29,7 +29,8 @@ except Exception as exc:  # pragma: no cover - environment diagnostic
     raise SystemExit(2) from exc
 
 
-DEFAULT_MODELS = ["gpt2", "bert", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder"]
+QUICK_MODELS = ["gpt2", "bert", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder"]
+DEFAULT_MODELS = MODELS
 TIME_RE = re.compile(r"^(?P<name>\S+)\s+(?P<value>[0-9.]+)\s+(?P<unit>ns|µs|us|ms|s)\b")
 
 
@@ -124,8 +125,7 @@ def hf_load_us(path: str) -> float:
     return timed_us(lambda: Tokenizer.from_file(path), 30)
 
 
-def compare(models: list[str], corpus: str, target: str) -> list[Row]:
-    text = CORPORA[corpus]
+def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     moon = run_moon_bench(target)
     rows: list[Row] = []
     for model in models:
@@ -133,13 +133,17 @@ def compare(models: list[str], corpus: str, target: str) -> list[Row]:
         if tok is None:
             print(f"[skip] missing fixture: {path}")
             continue
-        encode_key = f"{model}-encode-{corpus}"
-        decode_key = f"{model}-decode-{corpus}"
+        for corpus in corpora:
+            text = CORPORA[corpus]
+            encode_key = f"{model}-encode-{corpus}"
+            if encode_key in moon:
+                rows.append(Row(encode_key, moon[encode_key], hf_encode_us(tok, text)))
+        # Decode benches are currently standardized on the mixed corpus in
+        # src/tokenizer/bench_test.mbt; include them once per model.
+        decode_key = f"{model}-decode-mixed"
         load_key = f"{model}-from_str"
-        if encode_key in moon:
-            rows.append(Row(encode_key, moon[encode_key], hf_encode_us(tok, text)))
         if decode_key in moon:
-            rows.append(Row(decode_key, moon[decode_key], hf_decode_us(tok, text)))
+            rows.append(Row(decode_key, moon[decode_key], hf_decode_us(tok, CORPORA["mixed"])))
         if load_key in moon:
             rows.append(Row(load_key, moon[load_key], hf_load_us(path)))
     return rows
@@ -160,13 +164,14 @@ def print_rows(rows: list[Row]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--target", default="native", choices=["native", "js", "wasm", "wasm-gc"])
-    parser.add_argument("--corpus", default="mixed", choices=sorted(CORPORA.keys()))
+    parser.add_argument("--corpus", default="mixed", choices=sorted(CORPORA.keys()) + ["all"])
     parser.add_argument("--models", default=",".join(DEFAULT_MODELS), help="comma-separated model names")
-    parser.add_argument("--all", action="store_true", help="compare every model known to bench_python.py")
+    parser.add_argument("--quick", action="store_true", help="compare representative core models only")
     args = parser.parse_args()
-    models = MODELS if args.all else [m for m in args.models.split(",") if m]
-    print(f"Comparing target={args.target}, corpus={args.corpus}, models={','.join(models)}")
-    print_rows(compare(models, args.corpus, args.target))
+    models = QUICK_MODELS if args.quick else [m for m in args.models.split(",") if m]
+    corpora = list(CORPORA.keys()) if args.corpus == "all" else [args.corpus]
+    print(f"Comparing target={args.target}, corpus={','.join(corpora)}, models={','.join(models)}")
+    print_rows(compare(models, corpora, args.target))
 
 
 if __name__ == "__main__":

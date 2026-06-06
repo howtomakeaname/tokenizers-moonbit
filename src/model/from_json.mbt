@@ -113,6 +113,7 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
     fuse_unk: @types.get_bool(obj, "fuse_unk", default=false),
     byte_fallback: @types.get_bool(obj, "byte_fallback", default=false),
     ignore_merges: @types.get_bool(obj, "ignore_merges", default=false),
+    cache: {},
   }
 }
 

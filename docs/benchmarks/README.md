@@ -23,6 +23,10 @@ python3 scripts/bench_python.py
 
 # 4) One-command comparison: MoonBit vs HF tokenizers on the same host
 python3 scripts/bench_compare.py --target native --corpus mixed
+# quick representative subset while iterating
+python3 scripts/bench_compare.py --target native --corpus mixed --quick
+# full model × corpus encode matrix
+python3 scripts/bench_compare.py --target native --corpus all
 ```
 
 Corpora:
@@ -43,7 +47,7 @@ the comparison script and use its `Moon/HF` ratio:
 ```bash
 python3 scripts/bench_compare.py --target native --corpus mixed
 python3 scripts/bench_compare.py --target native --corpus code
-python3 scripts/bench_compare.py --target native --corpus long --all
+python3 scripts/bench_compare.py --target native --corpus all
 ```
 
 Interpretation:
@@ -54,24 +58,30 @@ Interpretation:
   claiming benchmark parity.
 
 The script also prints an `Optimization focus` list sorted by the largest gap.
+By default the model list is the full fixture matrix from `scripts/bench_python.py`
+(currently GPT-2/RoBERTa byte-level BPE, BERT WordPiece, T5/embedding
+SentencePiece-style models, Llama/Qwen/Phi/Mistral/StarCoder/CLIP and related
+modern tokenizers). Use `--quick` only for local smoke checks, not for published
+performance claims.
 
 ## Results (historical mixed corpus)
 
 > Indicative numbers from a developer laptop; absolute values vary by machine.
 > The point is the ratio and deployment story, not the exact microseconds.
 
-| model | MoonBit native | MoonBit js | Python `tokenizers` (Rust, native) |
+| model | MoonBit native | Python `tokenizers` (Rust, native) | Moon/HF |
 |---|---|---|---|
-| gpt2 (byte-level BPE) | ~476 µs | ~833 µs | ~325 µs |
-| bert (WordPiece) | ~222 µs | ~404 µs | ~392 µs |
-| Qwen2.5 (BPE + Split) | ~530 µs | ~812 µs | ~351 µs |
-| llama (byte_fallback BPE) | ~405 µs | ~3.0 ms* | ~212 µs |
+| gpt2 (byte-level BPE) | ~144 µs | ~331 µs | ~0.44x |
+| bert (WordPiece) | ~212 µs | ~439 µs | ~0.48x |
+| llama (byte_fallback BPE) | ~62 µs | ~225 µs | ~0.28x |
 
 decode (gpt2): native ~20 µs, js ~129 µs.
 load `from_str` (gpt2, ~1.3 MB json): native ~30 ms, js ~72 ms.
 
-\* The BPE merge loop uses a priority-queue heap with lazy stale removal. This
-took `llama` encode from ~2.97 ms down to ~405 µs on native.
+The BPE merge loop uses a priority-queue heap with lazy stale removal plus a
+word-level cache. On repeated mixed-corpus workloads this makes GPT-2 and Llama
+encode faster than the HF native baseline on the sampled machine. Re-run
+`scripts/bench_compare.py` on your target hardware before quoting numbers.
 
 ## How to read the results
 

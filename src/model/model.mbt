@@ -22,6 +22,10 @@ pub struct BPEModel {
   fuse_unk : Bool
   byte_fallback : Bool
   ignore_merges : Bool
+  // word -> tokens with offsets relative to 0. HF tokenizers caches BPE words;
+  // this keeps repeated prompts/corpora competitive while preserving offsets by
+  // shifting a fresh copy per call.
+  cache : Map[String, Array[@types.Token]]
 }
 
 ///|

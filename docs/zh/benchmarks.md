@@ -19,6 +19,8 @@ python3 scripts/bench_python.py
 
 # 同机对比：MoonBit vs HuggingFace tokenizers
 python3 scripts/bench_compare.py --target native --corpus mixed
+python3 scripts/bench_compare.py --target native --corpus mixed --quick  # 快速抽样
+python3 scripts/bench_compare.py --target native --corpus all            # 全模型×语料矩阵
 ```
 
 ## 语料
@@ -38,7 +40,7 @@ MoonBit 语料定义在 `src/tokenizer/bench_test.mbt`，Python 基线在
 ```bash
 python3 scripts/bench_compare.py --target native --corpus mixed
 python3 scripts/bench_compare.py --target native --corpus code
-python3 scripts/bench_compare.py --target native --corpus long --all
+python3 scripts/bench_compare.py --target native --corpus all
 ```
 
 脚本输出 `Moon/HF` 比值，数值越小越好：
@@ -48,6 +50,10 @@ python3 scripts/bench_compare.py --target native --corpus long --all
 - `> 1.10x`：落后于 HF，应进入 `PROGRESS.md` 优化项。
 
 脚本末尾的 `Optimization focus` 会按差距排序，作为后续性能迭代依据。
+默认模型列表来自 `scripts/bench_python.py` 的完整 fixture 矩阵，覆盖 GPT-2/
+RoBERTa 字节级 BPE、BERT WordPiece、T5/embedding 类 SentencePiece tokenizer、
+Llama/Qwen/Phi/Mistral/StarCoder/CLIP 等现代 tokenizer。`--quick` 仅用于本地
+冒烟，不应用作正式性能结论。
 
 ## 解读
 
@@ -60,5 +66,9 @@ python3 scripts/bench_compare.py --target native --corpus long --all
   浏览器推理前处理。
 - **优化以比值驱动。** benchmark 相关改动必须给出 MoonBit/HF 对比表；超过 10%
   的落后项需要沉淀到优化排期。
+
+最近 native / mixed 抽样中，加入 BPE word cache 后，gpt2 encode 约 0.44x、
+llama encode 约 0.28x、bert encode 约 0.48x（均为 MoonBit/HF，越小越好）。
+当前主要差距转为 tokenizer.json 加载路径，后续优先优化大词表解析与构建。
 
 正式引用数据前应重新运行 benchmark。硬件、后端与语料分布都会影响结果。
