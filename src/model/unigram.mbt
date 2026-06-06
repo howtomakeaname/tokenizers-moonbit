@@ -84,15 +84,60 @@ pub fn UnigramModel::tokenize(
     out.push(rev[k])
     k = k - 1
   }
-  // fuse_unk: merge runs of adjacent unk tokens into one (HF default).
-  if self.fuse_unk {
-    match self.unk_id {
-      Some(uid) => fuse_unigram_unk(out, uid)
-      None => out
-    }
+  // byte_fallback: replace unknown pieces by their UTF-8 <0xXX> byte tokens
+  // when the model vocab contains all required byte tokens.
+  let expanded = if self.byte_fallback {
+    self.expand_byte_fallback(out)
   } else {
     out
   }
+  // fuse_unk: merge runs of adjacent unk tokens into one (HF default). Run this
+  // after byte_fallback so successfully expanded bytes are not fused as unk.
+  if self.fuse_unk {
+    match self.unk_id {
+      Some(uid) => fuse_unigram_unk(expanded, uid)
+      None => expanded
+    }
+  } else {
+    expanded
+  }
+}
+
+fn UnigramModel::expand_byte_fallback(
+  self : UnigramModel,
+  toks : Array[@types.Token],
+) -> Array[@types.Token] {
+  let out : Array[@types.Token] = []
+  for t in toks {
+    if self.vocab.contains(t.value) {
+      out.push(t)
+      continue
+    }
+    match self.try_byte_fallback(t.value, t.offsets) {
+      Some(bytes) => for b in bytes {
+          out.push(b)
+        }
+      None => out.push(t)
+    }
+  }
+  out
+}
+
+fn UnigramModel::try_byte_fallback(
+  self : UnigramModel,
+  surface : String,
+  offsets : (Int, Int),
+) -> Array[@types.Token]? {
+  let bytes = @utf8.encode(surface)
+  let toks : Array[@types.Token] = []
+  for i in 0..<bytes.length() {
+    let tok = byte_hex_token(bytes[i].to_int())
+    match self.vocab.get(tok) {
+      Some((id, _)) => toks.push(@types.Token::{ id, value: tok, offsets })
+      None => return None
+    }
+  }
+  Some(toks)
 }
 
 // Merge adjacent unk tokens (id == uid) into a single spanning token.

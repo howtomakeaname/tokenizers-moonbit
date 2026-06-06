@@ -28,7 +28,7 @@
 
 ## 已对齐验证的真实模型（与 Python `tokenizers` 逐 token id 一致）
 
-通过表驱动的 `parity_test.mbt`（`scripts/fetch_models.py` + `scripts/gen_parity.py` 生成期望），覆盖 9 个真实模型：
+通过表驱动的 `parity_test.mbt`（`scripts/fetch_models.py` + `scripts/gen_parity.py` 生成期望），覆盖 19 个真实/公开 tokenizer.json 模型：
 
 | 模型 | 类型 | 状态 |
 |---|---|---|
@@ -45,6 +45,12 @@
 | Qwen3-0.6B | BPE + NFC + Split(Qwen 正则) + ByteLevel | ✅ |
 | DeepSeek-V2-Lite | BPE + 多步 Split + Digits + ByteLevel | ✅ |
 | Phi-3-mini | BPE + byte_fallback + Prepend | ✅ |
+| Mistral-7B-Instruct-v0.3 | BPE + Metaspace | ✅ |
+| Falcon-7B | BPE | ✅ |
+| StarCoder2-3B | BPE | ✅ |
+| GPT-NeoX-20B | BPE | ✅ |
+| CLIP ViT-B/32 | BPE + CLIP Split + ByteLevel | ✅ |
+| tiny-random-DeBERTaV2 | Unigram + Metaspace + Precompiled whitespace | ✅ |
 
 ## 组件实现矩阵
 
@@ -54,7 +60,7 @@
 | BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效，llama 提速 ~7x |
 | byte_fallback / fuse_unk / ignore_merges | ✅ | |
 | WordPiece | ✅ | 贪心最长前缀 |
-| Unigram | ✅ | Viterbi DP；byte_fallback/fuse_unk 字段已留，编码暂未接入 ⏸ |
+| Unigram | ✅ | Viterbi DP；`byte_fallback` / `fuse_unk` supported |
 | WordLevel | ✅ | |
 | dropout / word cache | ⏸ | 进一步优化（merge 已用优先队列堆）|
 
@@ -64,8 +70,8 @@
 | Lowercase / Strip / Replace / Prepend / Sequence | ✅ |
 | BertNormalizer（clean_text/handle_chinese_chars/strip_accents/lowercase）| ✅ |
 | StripAccents（NFD+Mn 最小表，1006 条，lazy 加载）| ✅ |
-| NFC/NFD/NFKC/NFKD | ⏸ identity（NFKC 视需要补；当前 9 模型对拍不依赖）|
-| Precompiled（SentencePiece charsmap）| ⏸ identity |
+| NFC/NFD/NFKC/NFKD | ✅ | 生成表 + UAX #15 分解/排序/重组 |
+| Precompiled（SentencePiece charsmap）| 🚧 | 已覆盖常见空白折叠；完整 charsmap 解码 TODO |
 | Nmt / ByteLevel-normalizer | ⬜ |
 
 ### Pre-tokenizers
@@ -73,15 +79,16 @@
 |---|---|
 | ByteLevel（手写 GPT-2 扫描）| ✅ |
 | Whitespace / WhitespaceSplit / BertPreTokenizer / Punctuation / Metaspace / Sequence | ✅ |
-| Split（GPT-2 / Qwen-Llama3 家族正则）| ✅ 现代 LLM 主线 |
-| Split（任意正则）/ Digits / Delimiter / FixedLength / UnicodeScripts | 🚧 未识别 pattern 退化为单段 |
+| Split（GPT-2 / Qwen-Llama3 / CLIP 家族正则）| ✅ 现代 LLM/CLIP 主线 |
+| Digits / Delimiter / FixedLength | ✅ |
+| Split（任意正则）/ UnicodeScripts | 🚧 未识别 pattern 退化为单段 |
 
 ### Decoders
 | 组件 | 状态 |
 |---|---|
 | ByteLevel / WordPiece / BPEDecoder / Metaspace / Fuse / Replace / Strip / Sequence | ✅ |
 | ByteFallback | ✅（R2）|
-| CTC | ⬜ R6 |
+| CTC | ✅ |
 
 ### Post-processors
 | 组件 | 状态 |
@@ -101,11 +108,10 @@
 
 ## 已知缺口与取舍（TODO）
 
-1. **Unicode 归一化**：NFC/NFKC 无数据表，当前 identity。R5 做 NFD+Mn 最小集支持 strip_accents（覆盖 bert-cased/xlm-roberta）。NFKC 视对拍失败再补。
+1. **Precompiled charsmap**：当前实现了 SentencePiece 常见空白折叠；完整二进制 charsmap 解码仍是 TODO。
 2. **正则**：core 正则不支持 `\p{L}`；GPT-2 已手写扫描器。通用 Split 复杂 pattern 暂抛 `UnsupportedComponent`。
 3. **性能**：BPE merge 已用优先队列(pairing heap)+惰性失效，llama 提速约 7x、与 Rust 同量级；进一步可加 word→tokens 缓存与多 MB 词表加载优化。
 4. **batch 并行**：MoonBit 单线程，encode_batch 串行（场景定位 wasm/js 边缘端）。
-5. **Unigram byte_fallback**：字段已留，编码路径未接入。
 
 ## 测试与验证
 
