@@ -1,0 +1,150 @@
+[
+  {
+    "text": "Hello world",
+    "ids": [
+      7592,
+      2088
+    ],
+    "tokens": [
+      "hello",
+      "world"
+    ]
+  },
+  {
+    "text": "The quick brown fox.",
+    "ids": [
+      1996,
+      4248,
+      2829,
+      4419,
+      1012
+    ],
+    "tokens": [
+      "the",
+      "quick",
+      "brown",
+      "fox",
+      "."
+    ]
+  },
+  {
+    "text": "unaffable",
+    "ids": [
+      14477,
+      20961,
+      3468
+    ],
+    "tokens": [
+      "una",
+      "##ffa",
+      "##ble"
+    ]
+  },
+  {
+    "text": "tokenization is fun",
+    "ids": [
+      19204,
+      3989,
+      2003,
+      4569
+    ],
+    "tokens": [
+      "token",
+      "##ization",
+      "is",
+      "fun"
+    ]
+  },
+  {
+    "text": "Don't panic!",
+    "ids": [
+      2123,
+      1005,
+      1056,
+      6634,
+      999
+    ],
+    "tokens": [
+      "don",
+      "'",
+      "t",
+      "panic",
+      "!"
+    ]
+  },
+  {
+    "text": "HELLO World",
+    "ids": [
+      7592,
+      2088
+    ],
+    "tokens": [
+      "hello",
+      "world"
+    ]
+  },
+  {
+    "text": "running runner runs",
+    "ids": [
+      2770,
+      5479,
+      3216
+    ],
+    "tokens": [
+      "running",
+      "runner",
+      "runs"
+    ]
+  },
+  {
+    "text": "a b c 1 2 3",
+    "ids": [
+      1037,
+      1038,
+      1039,
+      1015,
+      1016,
+      1017
+    ],
+    "tokens": [
+      "a",
+      "b",
+      "c",
+      "1",
+      "2",
+      "3"
+    ]
+  },
+  {
+    "text": "supercalifragilistic",
+    "ids": [
+      3565,
+      9289,
+      10128,
+      29181,
+      24411,
+      4588
+    ],
+    "tokens": [
+      "super",
+      "##cal",
+      "##if",
+      "##rag",
+      "##ilis",
+      "##tic"
+    ]
+  },
+  {
+    "text": "New York City",
+    "ids": [
+      2047,
+      2259,
+      2103
+    ],
+    "tokens": [
+      "new",
+      "york",
+      "city"
+    ]
+  }
+]

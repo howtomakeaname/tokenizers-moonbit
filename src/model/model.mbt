@@ -84,7 +84,7 @@ pub fn Model::tokenize(
 ) -> Array[@types.Token] {
   match self {
     BPE(m) => m.tokenize(word, offset~)
-    WordPiece(_) => [] // P5
+    WordPiece(m) => m.tokenize(word, offset~)
     Unigram(_) => [] // P6
   }
 }
