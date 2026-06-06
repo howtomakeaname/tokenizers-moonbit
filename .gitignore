@@ -13,3 +13,6 @@ target/
 # expected outputs generated from them. Both are regenerable (see README).
 tests/data/*.full.json
 tests/data/*_expected.json
+
+# Local-only docs (submission docs, drafts) — not version-controlled
+docs/.ignore/
