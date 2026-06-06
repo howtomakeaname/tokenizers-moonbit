@@ -138,7 +138,7 @@
 | P1 | byte offsets 模式 | ✅ | 可选择输出 HF Rust 风格 byte offsets；新增中英/emoji offset 对拍与 bench |
 | P1 | `sequence_ids` | ✅ | Encoding 增加字段和访问 API；覆盖 pair/special tokens |
 | P1 | token-char 映射 | ✅ | 已补 `token_to_sequence` / `token_to_chars` / `char_to_token`；覆盖 pair/special/byte offsets，并新增 lookup bench |
-| P1 | `word_ids` / word-char 映射 | ⬜ | 需补 word 边界传播、word_to_tokens/word_to_chars/char_to_word API；覆盖 pair/added tokens/overflow |
+| P1 | `word_ids` / word-char 映射 | ✅ | 已补 `word_ids`、`token_to_word`、`word_to_tokens`、`word_to_chars`、`char_to_word`；覆盖 pair/special/byte offsets，并纳入 lookup bench |
 | P1 | Truncation strategy 完整化 | ✅ | 支持 LongestFirst/OnlyFirst/OnlySecond；pair encode 按 HF 顺序：预留 special slots 后先截断 raw pair，再 post-process/pad |
 | P1 | ByteLevel post-processor `trim_offsets` 细节 | ⬜ | 空白修剪与 HF offsets 对齐；补 RoBERTa/GPT-2 offset 用例 |
 | P2 | Precompiled SentencePiece charsmap 完整解码 | ⬜ | 支持真实 charsmap；补 DeBERTa/Albert/XLM-R 复杂样例 |

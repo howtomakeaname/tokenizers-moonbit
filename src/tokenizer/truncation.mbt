@@ -44,6 +44,7 @@ fn slice_encoding(
     special_tokens_mask: enc.special_tokens_mask[start:stop].to_owned(),
     attention_mask: enc.attention_mask[start:stop].to_owned(),
     sequence_ids: enc.sequence_ids[start:stop].to_owned(),
+    word_ids: enc.word_ids[start:stop].to_owned(),
     overflowing: [],
   }
 }

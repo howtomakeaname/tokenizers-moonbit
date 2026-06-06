@@ -120,6 +120,7 @@ priv struct Builder {
   special_tokens_mask : Array[Int]
   attention_mask : Array[Int]
   sequence_ids : Array[Int?]
+  word_ids : Array[Int?]
 }
 
 ///|
@@ -132,6 +133,7 @@ fn new_builder() -> Builder {
     special_tokens_mask: [],
     attention_mask: [],
     sequence_ids: [],
+    word_ids: [],
   }
 }
 
@@ -150,6 +152,7 @@ fn append_sequence_with_id(
     out.special_tokens_mask.push(0)
     out.attention_mask.push(1)
     out.sequence_ids.push(Some(seq_id))
+    out.word_ids.push(enc.word_ids[i])
   }
 }
 
@@ -163,6 +166,7 @@ fn append_special(out : Builder, st : SpecialToken, type_id : Int) -> Unit {
     out.special_tokens_mask.push(1)
     out.attention_mask.push(1)
     out.sequence_ids.push(None)
+    out.word_ids.push(None)
   }
 }
 
@@ -175,6 +179,7 @@ fn push_special(out : Builder, id : Int, token : String, type_id : Int) -> Unit 
   out.special_tokens_mask.push(1)
   out.attention_mask.push(1)
   out.sequence_ids.push(None)
+  out.word_ids.push(None)
 }
 
 ///|
@@ -187,6 +192,7 @@ fn build(out : Builder) -> @types.Encoding {
     special_tokens_mask: out.special_tokens_mask,
     attention_mask: out.attention_mask,
     sequence_ids: out.sequence_ids,
+    word_ids: out.word_ids,
     overflowing: [],
   }
 }

@@ -228,6 +228,7 @@ fn convert_offsets(
     special_tokens_mask: enc.special_tokens_mask.copy(),
     attention_mask: enc.attention_mask.copy(),
     sequence_ids: enc.sequence_ids.copy(),
+    word_ids: enc.word_ids.copy(),
     overflowing: enc.overflowing.map(e => convert_offsets(e, table_a, table_b)),
   }
 }
@@ -286,7 +287,15 @@ fn Tokenizer::encode_raw(
   let special_tokens_mask : Array[Int] = []
   let attention_mask : Array[Int] = []
   let sequence_ids : Array[Int?] = []
-  fn emit(id : Int, value : String, offs : (Int, Int), special : Int) -> Unit {
+  let word_ids : Array[Int?] = []
+  let mut next_word_id = 0
+  fn emit(
+    id : Int,
+    value : String,
+    offs : (Int, Int),
+    special : Int,
+    word_id : Int?,
+  ) -> Unit {
     ids.push(id)
     tokens.push(value)
     type_ids.push(0)
@@ -294,12 +303,13 @@ fn Tokenizer::encode_raw(
     special_tokens_mask.push(special)
     attention_mask.push(1)
     sequence_ids.push(Some(0))
+    word_ids.push(word_id)
   }
 
   // Stage 1: split out non-normalized added tokens against the original text.
   for seg1 in self.added_vocabulary.extract_stage1(text, keep_special~) {
     match seg1 {
-      Special(info~, offsets~) => emit(info.id, info.content, offsets, 1)
+      Special(info~, offsets~) => emit(info.id, info.content, offsets, 1, None)
       Normal(text=raw, base_offset~) => {
         // Normalize this ordinary piece.
         let normalized = match self.normalizer {
@@ -314,7 +324,8 @@ fn Tokenizer::encode_raw(
             keep_special~,
           ) {
           match seg2 {
-            Special(info~, offsets~) => emit(info.id, info.content, offsets, 1)
+            Special(info~, offsets~) =>
+              emit(info.id, info.content, offsets, 1, None)
             Normal(text=ntext, base_offset=base2) => {
               let pieces : Array[@types.Split] = match self.pre_tokenizer {
                 Some(pt) => pt.pre_tokenize(ntext, base_offset=base2)
@@ -327,9 +338,11 @@ fn Tokenizer::encode_raw(
                   ]
               }
               for piece in pieces {
+                let word_id = next_word_id
+                next_word_id = next_word_id + 1
                 for
                   t in self.model.tokenize(piece.value, offset=piece.offsets.0) {
-                  emit(t.id, t.value, t.offsets, 0)
+                  emit(t.id, t.value, t.offsets, 0, Some(word_id))
                 }
               }
             }
@@ -346,6 +359,7 @@ fn Tokenizer::encode_raw(
     special_tokens_mask,
     attention_mask,
     sequence_ids,
+    word_ids,
     overflowing: [],
   }
 }
@@ -364,6 +378,7 @@ fn concat_encodings(
   let special_tokens_mask = a.special_tokens_mask.copy()
   let attention_mask = a.attention_mask.copy()
   let sequence_ids = a.sequence_ids.copy()
+  let word_ids = a.word_ids.copy()
   for i in 0..<b.ids.length() {
     ids.push(b.ids[i])
     tokens.push(b.tokens[i])
@@ -372,6 +387,7 @@ fn concat_encodings(
     special_tokens_mask.push(b.special_tokens_mask[i])
     attention_mask.push(b.attention_mask[i])
     sequence_ids.push(Some(1))
+    word_ids.push(b.word_ids[i])
   }
   {
     ids,
@@ -381,6 +397,7 @@ fn concat_encodings(
     special_tokens_mask,
     attention_mask,
     sequence_ids,
+    word_ids,
     overflowing: [],
   }
 }

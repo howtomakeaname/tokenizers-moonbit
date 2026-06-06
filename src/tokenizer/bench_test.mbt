@@ -145,6 +145,18 @@ fn bench_offset_lookup_case(
         Some((seq, offs)) => acc = acc + seq + offs.0 + offs.1
         None => ()
       }
+      match enc.token_to_word(acc % enc.ids.length()) {
+        Some((seq, word)) => acc = acc + seq + word
+        None => ()
+      }
+      match enc.word_to_tokens(acc % enc.ids.length()) {
+        Some((s, e)) => acc = acc + s + e
+        None => ()
+      }
+      match enc.char_to_word(p) {
+        Some(w) => acc = acc + w
+        None => ()
+      }
     }
     b.keep(acc)
   })

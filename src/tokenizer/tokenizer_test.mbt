@@ -41,6 +41,10 @@ test "encode_with_byte_offsets converts unicode char offsets" {
   @test.assert_eq(enc.tokens, ["我", "🙂", "a"])
   @test.assert_eq(enc.offsets, [(0, 3), (4, 8), (9, 10)])
   @test.assert_eq(enc.sequence_ids(), [Some(0), Some(0), Some(0)])
+  @test.assert_eq(enc.word_ids(), [Some(0), Some(1), Some(2)])
+  @test.assert_eq(enc.word_to_tokens(1), Some((1, 2)))
+  @test.assert_eq(enc.word_to_chars(1), Some((4, 8)))
+  @test.assert_eq(enc.char_to_word(5), Some(1))
 }
 
 ///|
@@ -66,6 +70,12 @@ test "encode_pair tracks sequence ids separate from type ids" {
   @test.assert_eq(enc.char_to_token(1, sequence_id=0), Some(1))
   @test.assert_eq(enc.char_to_token(0, sequence_id=1), Some(3))
   @test.assert_eq(enc.char_to_token(3, sequence_id=0), None)
+  @test.assert_eq(enc.word_ids(), [None, Some(0), None, Some(0), None])
+  @test.assert_eq(enc.token_to_word(1), Some((0, 0)))
+  @test.assert_eq(enc.token_to_word(3), Some((1, 0)))
+  @test.assert_eq(enc.word_to_tokens(0, sequence_id=1), Some((3, 4)))
+  @test.assert_eq(enc.word_to_chars(0, sequence_id=1), Some((0, 1)))
+  @test.assert_eq(enc.char_to_word(0, sequence_id=1), Some(0))
 }
 
 ///|
