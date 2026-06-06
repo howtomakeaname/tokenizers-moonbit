@@ -14,6 +14,26 @@ priv struct Symbol {
   mut alive : Bool
 }
 
+// A candidate merge of the pair starting at `pos` with its successor `right`.
+// `rank` is the BPE merge rank (lower applied first). Stored in a max-heap, so
+// Compare is defined so that a *smaller* rank (and then smaller pos) is "greater"
+// and thus pops first. `right` lets us detect stale entries after merges.
+priv struct Merge {
+  rank : Int
+  pos : Int
+  right : Int
+} derive(Eq)
+
+impl Compare for Merge with compare(self, other) {
+  // Smaller rank should pop first => it must compare as "greater".
+  if self.rank != other.rank {
+    other.rank - self.rank
+  } else {
+    // Tie: smaller pos first => compares greater.
+    other.pos - self.pos
+  }
+}
+
 /// Tokenize a single word with this BPE model.
 /// `offset` is the char offset of `word` within the original text.
 pub fn BPEModel::tokenize(
@@ -57,36 +77,56 @@ pub fn BPEModel::tokenize(
   }
   symbols[n - 1].next = -1
 
-  // Repeatedly merge the adjacent pair with the smallest rank.
-  while true {
-    let mut best_rank = @int.max_value
-    let mut best = -1
-    let mut i = 0
-    while i >= 0 && i < symbols.length() {
-      let nx = symbols[i].next
-      if nx >= 0 {
-        match self.merges.get((symbols[i].value, symbols[nx].value)) {
-          Some(r) =>
-            if r < best_rank {
-              best_rank = r
-              best = i
-            }
-          None => ()
-        }
-      }
-      i = nx
+  // Seed a priority queue with every adjacent pair that has a merge rank.
+  let heap : @pq.PriorityQueue[Merge] = @pq.PriorityQueue::new()
+  fn try_push(pos : Int) -> Unit {
+    if pos < 0 || not(symbols[pos].alive) {
+      return
     }
-    if best < 0 {
-      break
+    let r = symbols[pos].next
+    if r < 0 {
+      return
     }
-    // Merge symbols[best] with its successor.
-    let nx = symbols[best].next
-    symbols[best].value = symbols[best].value + symbols[nx].value
-    symbols[best].next = symbols[nx].next
+    match self.merges.get((symbols[pos].value, symbols[r].value)) {
+      Some(rank) => heap.push({ rank, pos, right: r })
+      None => ()
+    }
+  }
+
+  for i in 0..<n {
+    try_push(i)
+  }
+
+  // Pop the lowest-rank valid pair, merge it, and enqueue the new neighbours.
+  while not(heap.is_empty()) {
+    let m = match heap.pop() {
+      Some(x) => x
+      None => break
+    }
+    let pos = m.pos
+    // Skip stale entries. After merges, a symbol's value can change while its
+    // links stay the same, so we must re-validate the *current* pair: the left
+    // symbol is alive, still points at the recorded right neighbour, and the
+    // pair still has exactly the rank recorded when this entry was pushed.
+    if not(symbols[pos].alive) || symbols[pos].next != m.right {
+      continue
+    }
+    let cur_rank = self.merges.get((symbols[pos].value, symbols[m.right].value))
+    match cur_rank {
+      Some(r) => if r != m.rank { continue }
+      None => continue
+    }
+    let nx = m.right
+    // Merge symbols[nx] into symbols[pos].
+    symbols[pos].value = symbols[pos].value + symbols[nx].value
+    symbols[pos].next = symbols[nx].next
     symbols[nx].alive = false
     if symbols[nx].next >= 0 {
-      symbols[symbols[nx].next].prev = best
+      symbols[symbols[nx].next].prev = pos
     }
+    // The pair (prev,pos) and (pos,next) may now be mergeable.
+    try_push(symbols[pos].prev)
+    try_push(pos)
   }
 
   // Collect surviving symbols, mapping each to an id (or the unk token).

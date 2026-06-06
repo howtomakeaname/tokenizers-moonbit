@@ -51,12 +51,12 @@
 ### Models
 | 组件 | 状态 | 备注 |
 |---|---|---|
-| BPE / 字节级 BPE | ✅ | rank 线性合并（O(n²)，性能优化见 R7 TODO）|
+| BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效，llama 提速 ~7x |
 | byte_fallback / fuse_unk / ignore_merges | ✅ | |
 | WordPiece | ✅ | 贪心最长前缀 |
 | Unigram | ✅ | Viterbi DP；byte_fallback/fuse_unk 字段已留，编码暂未接入 ⏸ |
 | WordLevel | ✅ | |
-| dropout / cache（thread-local + 四叉堆） | ⏸ | 性能优化，R7 |
+| dropout / word cache | ⏸ | 进一步优化（merge 已用优先队列堆）|
 
 ### Normalizers
 | 组件 | 状态 |
@@ -103,7 +103,7 @@
 
 1. **Unicode 归一化**：NFC/NFKC 无数据表，当前 identity。R5 做 NFD+Mn 最小集支持 strip_accents（覆盖 bert-cased/xlm-roberta）。NFKC 视对拍失败再补。
 2. **正则**：core 正则不支持 `\p{L}`；GPT-2 已手写扫描器。通用 Split 复杂 pattern 暂抛 `UnsupportedComponent`。
-3. **性能**：BPE 用 rank 线性扫描、无 cache；R7 暴露瓶颈后引入优先队列 + word cache。
+3. **性能**：BPE merge 已用优先队列(pairing heap)+惰性失效，llama 提速约 7x、与 Rust 同量级；进一步可加 word→tokens 缓存与多 MB 词表加载优化。
 4. **batch 并行**：MoonBit 单线程，encode_batch 串行（场景定位 wasm/js 边缘端）。
 5. **Unigram byte_fallback**：字段已留，编码路径未接入。
 

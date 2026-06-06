@@ -65,7 +65,8 @@ DeepSeek-V2, Phi-3**.
 - **Offsets:** char-based, relative to the original text. HuggingFace's default
   `encode` returns byte offsets; byte-offset mode is future work.
 - **Batching:** single-threaded by design (target is wasm/js).
-- **Performance:** byte_fallback BPE (e.g. llama) uses a naive O(n²) merge
-  without a priority-queue heap or word cache — correct but slow; optimization
-  is tracked in `PROGRESS.md`.
+- **Performance:** BPE merging uses a priority-queue (pairing heap) with lazy
+  stale removal — the same algorithm class as the Rust crate — so byte_fallback
+  BPE (e.g. llama) is within ~2× of Rust. A word→tokens cache and faster
+  multi-MB vocab loading are possible further optimizations (see `PROGRESS.md`).
 - **Training:** out of scope. This library loads and runs existing tokenizers.

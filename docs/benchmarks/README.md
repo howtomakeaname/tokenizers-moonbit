@@ -30,13 +30,19 @@ Corpus: a mixed English / CJK / punctuation paragraph repeated to ~1.5 KB
 
 | model | MoonBit native | MoonBit js | Python `tokenizers` (Rust, native) |
 |---|---|---|---|
-| gpt2 (byte-level BPE) | ~505 µs | ~833 µs | ~325 µs |
-| bert (WordPiece) | ~232 µs | ~404 µs | ~392 µs |
-| Qwen2.5 (BPE + Split) | ~569 µs | ~812 µs | ~351 µs |
-| llama (byte_fallback BPE) | ~2.97 ms | ~3.16 ms | ~212 µs |
+| gpt2 (byte-level BPE) | ~476 µs | ~833 µs | ~325 µs |
+| bert (WordPiece) | ~222 µs | ~404 µs | ~392 µs |
+| Qwen2.5 (BPE + Split) | ~530 µs | ~812 µs | ~351 µs |
+| llama (byte_fallback BPE) | ~405 µs | ~3.0 ms* | ~212 µs |
 
 decode (gpt2): native ~20 µs, js ~129 µs.
 load `from_str` (gpt2, ~1.3 MB json): native ~30 ms, js ~72 ms.
+
+\* The BPE merge loop uses a priority-queue heap (pairing heap) with lazy stale
+removal — the same algorithm class as the Rust crate. This took `llama` encode
+from ~2.97 ms down to ~405 µs on native (≈7× faster), bringing byte_fallback
+BPE within ~2× of Rust. (The js number above predates the optimization on that
+backend; re-run `moon bench --target js` to refresh.)
 
 ## How to read this — the scenario-differentiated story
 
@@ -59,10 +65,10 @@ byte-level BPE / Split models are within ~1.5–1.6×. The JS backend (the one
 that matters for in-browser inference) runs the same corpus in well under a
 millisecond for most models.
 
-**4. Honest gaps.** `llama` (byte_fallback BPE with a multi-step pre-tokenizer)
-is currently ~14× slower than Rust — its merge loop is the naive O(n²) scan
-without a priority-queue heap or word cache. That is the next performance
-target (see `PROGRESS.md`); it does not affect correctness.
+**4. Honest gaps.** Throughput is within ~1.5–2× of the Rust crate across model
+families on native; `from_str` load of a multi-MB vocab is the slowest path
+(~30 ms native) and is a candidate for further work. Correctness is unaffected
+in all cases.
 
 ## Notes
 

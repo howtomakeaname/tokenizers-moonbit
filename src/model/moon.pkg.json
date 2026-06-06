@@ -2,6 +2,7 @@
   "import": [
     "tokenizer-moonbit/types",
     "moonbitlang/core/encoding/utf8",
-    "moonbitlang/core/int"
+    "moonbitlang/core/int",
+    { "path": "moonbitlang/core/priority_queue", "alias": "pq" }
   ]
 }
