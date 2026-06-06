@@ -83,16 +83,18 @@
 | StripAccents（NFD+Mn 最小表，1006 条，lazy 加载）| ✅ |
 | NFC/NFD/NFKC/NFKD | ✅ | 生成表 + UAX #15 分解/排序/重组 |
 | Precompiled（SentencePiece charsmap）| 🚧 | 已覆盖常见空白折叠；完整 charsmap 解码 TODO |
-| Nmt / ByteLevel-normalizer | ⬜ |
+| Nmt | ✅ | 控制/格式字符清理 + Unicode 空白归一 |
+| ByteLevel-normalizer | ✅ | UTF-8 bytes → GPT-2 byte alphabet |
 
 ### Pre-tokenizers
 | 组件 | 状态 |
 |---|---|
 | ByteLevel（手写 GPT-2 扫描）| ✅ |
 | Whitespace / WhitespaceSplit / BertPreTokenizer / Punctuation / Metaspace / Sequence | ✅ |
+| Punctuation SplitBehavior | ✅ | Removed / Isolated / MergedWithPrevious / MergedWithNext / Contiguous |
 | Split（GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet 家族正则）| ✅ 现代 LLM/CLIP 主线 |
-| Digits / Delimiter / FixedLength | ✅ |
-| Split（任意正则）/ UnicodeScripts | 🚧 未识别 pattern 退化为单段 |
+| Digits / Delimiter / FixedLength / UnicodeScripts | ✅ |
+| Split（任意正则）| 🚧 未识别 pattern 退化为单段 |
 
 ### Decoders
 | 组件 | 状态 |
@@ -105,6 +107,7 @@
 | 组件 | 状态 |
 |---|---|
 | TemplateProcessing（预解析 pieces）/ Bert / Roberta / ByteLevel / Sequence | ✅ |
+| RobertaProcessing pair type_ids | ✅ | 与 HF 一致，pair 两段均为 type_id 0 |
 | TemplateProcessing 字符串模板 DSL（$A/$B/$0:1）| ⬜ R6 |
 
 ### Tokenizer 核心
@@ -114,15 +117,17 @@
 | encode / encode_pair / decode | ✅ |
 | AddedVocabulary（single_word/lstrip/rstrip/normalized）| ✅ |
 | token_to_id / id_to_token / get_vocab_size | ✅ |
-| truncation / padding / encode_batch | ✅ | with_truncation/with_padding builder；BatchLongest/Fixed；batch 串行 |
+| truncation / padding / encode_batch | ✅ | with_truncation/with_padding builder；BatchLongest/Fixed；batch 串行；encode_pair 已接入 finalize |
 | offsets（当前 char 偏移；HF 默认 byte）| 🚧 R4 评估 |
 
 ## 已知缺口与取舍（TODO）
 
 1. **Precompiled charsmap**：当前实现了 SentencePiece 常见空白折叠；完整二进制 charsmap 解码仍是 TODO。
-2. **正则**：core 正则不支持 `\p{L}`；GPT-2 已手写扫描器。通用 Split 复杂 pattern 暂抛 `UnsupportedComponent`。
-3. **性能**：BPE merge 已用优先队列(pairing heap)+惰性失效，llama 提速约 7x、与 Rust 同量级；进一步可加 word→tokens 缓存与多 MB 词表加载优化。
-4. **batch 并行**：MoonBit 单线程，encode_batch 串行（场景定位 wasm/js 边缘端）。
+2. **正则**：core 正则不支持 `\p{L}`；GPT-2 已手写扫描器。通用 Split 复杂 pattern 仍退化为单段；Replace normalizer/decoder 目前是字面量替换。
+3. **ByteLevel post-processor offsets**：当前主要完成拼接流程；HF 的 trim_offsets 细节仍需补强。
+4. **训练 / save / from_pretrained**：当前定位 inference-only；训练器、保存和 Hub 加载 API 暂未实现。
+5. **性能**：BPE merge 已用优先队列(pairing heap)+惰性失效，llama 提速约 7x、与 Rust 同量级；进一步可加 word→tokens 缓存与多 MB 词表加载优化。
+6. **batch 并行**：MoonBit 单线程，encode_batch 串行（场景定位 wasm/js 边缘端）。
 
 ## 测试与验证
 

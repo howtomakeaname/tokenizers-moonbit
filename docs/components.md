@@ -22,8 +22,9 @@ Chinese version: [`docs/zh/components.md`](./zh/components.md)
 | `StripAccents` | ✅ (NFD-minus-Mn table) |
 | `BertNormalizer` (clean_text / handle_chinese_chars / strip_accents / lowercase) | ✅ |
 | `NFC` / `NFD` / `NFKC` / `NFKD` | ✅ Unicode table + decomposition/recomposition |
+| `Nmt` | ✅ Moses/NMT cleanup for SentencePiece-era tokenizers |
+| `ByteLevel` normalizer | ✅ UTF-8 bytes mapped to the GPT-2 byte alphabet |
 | `Precompiled` (SentencePiece charsmap) | 🚧 common whitespace folding; full charsmap TODO |
-| `Nmt`, byte-level normalizer | ⬜ not yet |
 
 ## Pre-tokenizers
 
@@ -32,8 +33,8 @@ Chinese version: [`docs/zh/components.md`](./zh/components.md)
 | `ByteLevel` (GPT-2 scanner) | ✅ |
 | `Whitespace`, `WhitespaceSplit`, `BertPreTokenizer`, `Punctuation`, `Metaspace`, `Sequence` | ✅ |
 | `Split` with GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet regex families | ✅ |
-| `Digits`, `Delimiter`, `FixedLength` | ✅ |
-| `Split` with arbitrary regex, `UnicodeScripts` | 🚧 unrecognized patterns fall back to one piece |
+| `Digits`, `Delimiter`, `FixedLength`, `UnicodeScripts` | ✅ |
+| `Split` with arbitrary regex | 🚧 unrecognized patterns fall back to one piece |
 
 ## Post-processors
 
@@ -66,6 +67,8 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   CJK / digit-triplet patterns are recognized. Other regexes are not executed
   and pass through as one piece. MoonBit's core regex lacks `\p{L}`/`\p{N}`
   support, so a general Unicode regex engine is future work.
+- **Regex `Replace`:** `Replace` normalizer/decoder currently implements literal
+  replacement; regex replacement is future work.
 - **Offsets:** char-based, relative to the original text. HuggingFace's default
   `encode` returns byte offsets; byte-offset mode is future work.
 - **Batching:** single-threaded by design for wasm/js targets.

@@ -8,14 +8,14 @@
 pub enum Piece {
   SequenceRef(id~ : String, type_id~ : Int)
   SpecialTokenRef(id~ : String, type_id~ : Int)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 /// A special token definition: its surface and the ids/tokens it expands to.
 pub struct SpecialToken {
   id : String
   ids : Array[Int]
   tokens : Array[String]
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 pub enum PostProcessor {
   TemplateProcessing(

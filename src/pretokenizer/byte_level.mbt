@@ -35,13 +35,13 @@ fn build_byte_to_char() -> Array[Char] {
   let table = Array::make(256, ' ')
   // Self-mapped bytes.
   for b in bs {
-    table[b] = Char::from_int(b)
+    table[b] = b.unsafe_to_char()
   }
   // Remaining bytes map to 256, 257, ...
   let mut n = 0
   for b in 0..<256 {
     if !in_bs[b] {
-      table[b] = Char::from_int(256 + n)
+      table[b] = (256 + n).unsafe_to_char()
       n = n + 1
     }
   }

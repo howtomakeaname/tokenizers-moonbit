@@ -81,8 +81,9 @@ fn bert_like(
       if roberta {
         push_special(out, sep.1, sep.0, 0)
       }
-      append_sequence(out, eb, 1)
-      push_special(out, sep.1, sep.0, 1)
+      let pair_type_id = if roberta { 0 } else { 1 }
+      append_sequence(out, eb, pair_type_id)
+      push_special(out, sep.1, sep.0, pair_type_id)
     }
     None => ()
   }

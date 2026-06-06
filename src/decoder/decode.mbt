@@ -97,7 +97,7 @@ fn decode_ctc(
   let mut prev = ""
   let mut first = true
   for t in tokens {
-    if not(first) && t == prev {
+    if !first && t == prev {
       continue // collapse consecutive duplicates
     }
     first = false

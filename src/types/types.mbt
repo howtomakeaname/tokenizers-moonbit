@@ -10,21 +10,21 @@ pub(all) struct Encoding {
   attention_mask : Array[Int]
   // Truncation overflow windows (empty unless truncation with stride trims).
   overflowing : Array[Encoding]
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 /// A token produced by a model: its id, surface string and char offsets.
 pub(all) struct Token {
   id : Int
   value : String
   offsets : (Int, Int)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 /// An intermediate piece produced by pre-tokenization: a substring plus the
 /// char offsets it occupies in the original (normalized) text.
 pub(all) struct Split {
   value : String
   offsets : (Int, Int)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 /// Errors raised across the tokenizer pipeline.
 pub(all) suberror TokenizerError {
@@ -34,7 +34,7 @@ pub(all) suberror TokenizerError {
   UnsupportedComponent(String)
   /// vocab / merges data was malformed.
   VocabError(String)
-} derive(Show)
+} derive(Debug)
 
 /// Build an empty `Encoding`.
 pub fn Encoding::empty() -> Encoding {

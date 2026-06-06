@@ -2,10 +2,10 @@ test "from_str parses a minimal BPE tokenizer.json" {
   let json =
     #|{"version":"1.0","model":{"type":"BPE","vocab":{"a":0,"b":1,"ab":2},"merges":[["a","b"]]}}
   let tok = Tokenizer::from_str(json)
-  assert_eq(tok.get_vocab_size(), 3)
-  assert_eq(tok.token_to_id("ab"), Some(2))
-  assert_eq(tok.id_to_token(1), Some("b"))
-  assert_eq(tok.token_to_id("zzz"), None)
+  @test.assert_eq(tok.get_vocab_size(), 3)
+  @test.assert_eq(tok.token_to_id("ab"), Some(2))
+  @test.assert_eq(tok.id_to_token(1), Some("b"))
+  @test.assert_eq(tok.token_to_id("zzz"), None)
 }
 
 test "from_str decodes optional components and added tokens" {
@@ -18,9 +18,9 @@ test "from_str decodes optional components and added tokens" {
     #| "decoder":{"type":"WordPiece"}}
   let tok = Tokenizer::from_str(json)
   // [UNK] is an added special token: it resolves via the public lookups.
-  assert_eq(tok.token_to_id("[UNK]"), Some(0))
-  assert_eq(tok.id_to_token(0), Some("[UNK]"))
-  assert_eq(tok.token_to_id("foo"), Some(1))
+  @test.assert_eq(tok.token_to_id("[UNK]"), Some(0))
+  @test.assert_eq(tok.id_to_token(0), Some("[UNK]"))
+  @test.assert_eq(tok.token_to_id("foo"), Some(1))
 }
 
 test "from_str rejects non-object root" {
@@ -37,5 +37,5 @@ test "from_str supports legacy string merges format" {
     #|{"model":{"type":"BPE","vocab":{"h":0,"e":1,"he":2},"merges":["h e"]}}
   let tok = Tokenizer::from_str(json)
   // merge of "h"+"e" produced surface "he" present in vocab
-  assert_eq(tok.token_to_id("he"), Some(2))
+  @test.assert_eq(tok.token_to_id("he"), Some(2))
 }

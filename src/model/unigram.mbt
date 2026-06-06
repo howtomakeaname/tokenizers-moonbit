@@ -68,7 +68,7 @@ pub fn UnigramModel::tokenize(
     if start < 0 {
       break
     }
-    let is_unk = not(self.vocab.contains(best_tok[pos]))
+    let is_unk = !self.vocab.contains(best_tok[pos])
     let id = if is_unk { self.unk_id.unwrap_or(-1) } else { best_id[pos] }
     rev.push(@types.Token::{
       id,

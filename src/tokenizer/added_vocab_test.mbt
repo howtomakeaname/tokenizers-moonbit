@@ -19,30 +19,30 @@ test "added tokens split out of surrounding text" {
   let tok = Tokenizer::from_str(av_bpe)
   let enc = tok.encode("<s>abc</s>", add_special_tokens=false)
   // <s> | abc(merged) | </s>
-  assert_eq(enc.tokens, ["<s>", "abc", "</s>"])
-  assert_eq(enc.ids, [5, 4, 6])
-  assert_eq(enc.special_tokens_mask, [1, 0, 1])
+  @test.assert_eq(enc.tokens, ["<s>", "abc", "</s>"])
+  @test.assert_eq(enc.ids, [5, 4, 6])
+  @test.assert_eq(enc.special_tokens_mask, [1, 0, 1])
 }
 
 test "added token in the middle of text" {
   let tok = Tokenizer::from_str(av_bpe)
   let enc = tok.encode("ab[MASK]ab", add_special_tokens=false)
-  assert_eq(enc.tokens, ["ab", "[MASK]", "ab"])
-  assert_eq(enc.ids, [3, 7, 3])
+  @test.assert_eq(enc.tokens, ["ab", "[MASK]", "ab"])
+  @test.assert_eq(enc.ids, [3, 7, 3])
 }
 
 test "lstrip/rstrip eats surrounding whitespace" {
   let tok = Tokenizer::from_str(av_bpe)
   // [MASK] has lstrip+rstrip: the spaces around it are absorbed into the token.
   let enc = tok.encode("ab [MASK] ab", add_special_tokens=false)
-  assert_eq(enc.tokens, ["ab", "[MASK]", "ab"])
+  @test.assert_eq(enc.tokens, ["ab", "[MASK]", "ab"])
 }
 
 test "decode skips special added tokens" {
   let tok = Tokenizer::from_str(av_bpe)
   let s = tok.decode([5, 4, 6], skip_special_tokens=true)
   // <s> and </s> dropped; only "abc" remains (no decoder -> join surfaces)
-  assert_eq(s, "abc")
+  @test.assert_eq(s, "abc")
   let s2 = tok.decode([5, 4, 6], skip_special_tokens=false)
-  assert_eq(s2, "<s>abc</s>")
+  @test.assert_eq(s2, "<s>abc</s>")
 }

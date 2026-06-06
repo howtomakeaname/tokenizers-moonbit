@@ -22,8 +22,8 @@ test "gpt2 splits the <|endoftext|> special token out of text" {
   let tok = Tokenizer::from_str(model_json)
   // Matches Python tokenizers: <|endoftext|> -> id 50256, recognized inline.
   let enc = tok.encode("hello<|endoftext|>world", add_special_tokens=false)
-  assert_eq(enc.ids, [31373, 50256, 6894])
-  assert_eq(enc.tokens, ["hello", "<|endoftext|>", "world"])
+  @test.assert_eq(enc.ids, [31373, 50256, 6894])
+  @test.assert_eq(enc.tokens, ["hello", "<|endoftext|>", "world"])
 }
 
 test "gpt2 encode matches python tokenizers" {
@@ -38,10 +38,10 @@ test "gpt2 encode matches python tokenizers" {
     let text = @types.get_str(obj, "text", default="")
     let want_ids = parse_int_array(obj, "ids")
     let enc = tok.encode(text, add_special_tokens=false)
-    assert_eq(enc.ids, want_ids)
+    @test.assert_eq(enc.ids, want_ids)
     // decode round-trip: ids -> text should match python's decoded output
     let want_decoded = @types.get_str(obj, "decoded", default="")
-    assert_eq(tok.decode(enc.ids, skip_special_tokens=false), want_decoded)
+    @test.assert_eq(tok.decode(enc.ids, skip_special_tokens=false), want_decoded)
   }
 }
 

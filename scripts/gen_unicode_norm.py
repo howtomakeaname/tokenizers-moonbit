@@ -99,9 +99,32 @@ def main() -> None:
 
 
 def raw(s: str) -> str:
-    """Emit a MoonBit double-quoted string literal with \\n escapes."""
+    """Emit a MoonBit string expression with \\n escapes.
+
+    The generated Unicode tables are large. Split the literal into smaller
+    chunks so `moon check` does not emit text_segment_excceed warnings for a
+    single very long source line.
+    """
     esc = s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
-    return '"' + esc + '"'
+    width = 8000
+    chunks = []
+    i = 0
+    while i < len(esc):
+        j = min(i + width, len(esc))
+        # Do not end a string literal after an odd-length backslash run, because
+        # that would escape the generated closing quote.
+        slash_run = 0
+        k = j - 1
+        while k >= i and esc[k] == "\\":
+            slash_run += 1
+            k -= 1
+        if slash_run % 2 == 1:
+            j -= 1
+        chunks.append(esc[i:j])
+        i = j
+    if not chunks:
+        chunks = [""]
+    return (" +\n  ").join('"' + chunk + '"' for chunk in chunks)
 
 
 if __name__ == "__main__":

@@ -4,13 +4,6 @@
 // added in later phases (P2+); for now they are declared as TODO stubs so the
 // public surface is visible.
 
-/// An added/special token entry from the top-level "added_tokens" array.
-pub struct AddedToken {
-  id : Int
-  content : String
-  special : Bool
-} derive(Show, Eq)
-
 /// A loaded tokenizer: the full decoded pipeline.
 pub struct Tokenizer {
   normalizer : @normalizer.Normalizer?

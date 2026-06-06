@@ -15,6 +15,6 @@ test "bert wordpiece encode matches python tokenizers" {
     let text = @types.get_str(obj, "text", default="")
     let want_ids = parse_int_array(obj, "ids")
     let enc = tok.encode(text, add_special_tokens=false)
-    assert_eq(enc.ids, want_ids)
+    @test.assert_eq(enc.ids, want_ids)
   }
 }

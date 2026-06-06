@@ -78,7 +78,7 @@ pub fn Tokenizer::encode_pair(
 ) -> @types.Encoding {
   let a = self.encode_raw(text_a, keep_special=true)
   let b = self.encode_raw(text_b, keep_special=true)
-  if add_special_tokens {
+  let processed = if add_special_tokens {
     match self.post_processor {
       Some(pp) => pp.process(a, Some(b))
       None => concat_encodings(a, b)
@@ -86,6 +86,7 @@ pub fn Tokenizer::encode_pair(
   } else {
     concat_encodings(a, b)
   }
+  self.finalize(processed)
 }
 
 // Run added-vocabulary extraction -> normalize -> pre_tokenize -> model,

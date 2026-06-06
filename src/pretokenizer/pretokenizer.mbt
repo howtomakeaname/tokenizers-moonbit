@@ -11,19 +11,20 @@ pub enum SplitBehavior {
   MergedWithPrevious
   MergedWithNext
   Contiguous
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 pub enum PreTokenizer {
   ByteLevel(add_prefix_space~ : Bool, use_regex~ : Bool, trim_offsets~ : Bool)
   Whitespace
   WhitespaceSplit
   Metaspace(replacement~ : Char, prepend_scheme~ : String, split~ : Bool)
-  Punctuation
-  Split(pattern~ : String, behavior~ : SplitBehavior, invert~ : Bool)
+  Punctuation(behavior~ : SplitBehavior)
+  Split(pattern~ : String, behavior~ : SplitBehavior, invert~ : Bool, regex~ : Bool)
   BertPreTokenizer
   Digits(individual_digits~ : Bool)
   Delimiter(delimiter~ : Char)
   FixedLength(length~ : Int)
+  UnicodeScripts
   Sequence(Array[PreTokenizer])
 }
 
@@ -42,7 +43,7 @@ pub fn PreTokenizer::from_json(
       )
     "Whitespace" => Whitespace
     "WhitespaceSplit" => WhitespaceSplit
-    "Punctuation" => Punctuation
+    "Punctuation" => Punctuation(behavior=parse_behavior(obj))
     "BertPreTokenizer" => BertPreTokenizer
     "Metaspace" =>
       Metaspace(
@@ -52,15 +53,19 @@ pub fn PreTokenizer::from_json(
       )
     "Digits" =>
       Digits(individual_digits=@types.get_bool(obj, "individual_digits", default=false))
-    "Delimiter" =>
+    "Delimiter" | "CharDelimiterSplit" =>
       Delimiter(delimiter=@types.get_char(obj, "delimiter", default=' '))
     "FixedLength" => FixedLength(length=@types.get_int(obj, "length", default=5))
-    "Split" =>
+    "UnicodeScripts" => UnicodeScripts
+    "Split" => {
+      let (pattern, regex) = parse_pattern_info(obj)
       Split(
-        pattern=parse_pattern(obj),
+        pattern~,
         behavior=parse_behavior(obj),
         invert=@types.get_bool(obj, "invert", default=false),
+        regex~,
       )
+    }
     "Sequence" => {
       let arr = match obj.get("pretokenizers") {
         Some(Array(a)) => a
@@ -72,19 +77,19 @@ pub fn PreTokenizer::from_json(
   }
 }
 
-fn parse_pattern(obj : Map[String, Json]) -> String {
+fn parse_pattern_info(obj : Map[String, Json]) -> (String, Bool) {
   match obj.get("pattern") {
     Some(Object(p)) =>
       match p.get("String") {
-        Some(String(s)) => s
+        Some(String(s)) => (s, false)
         _ =>
           match p.get("Regex") {
-            Some(String(s)) => s
-            _ => ""
+            Some(String(s)) => (s, true)
+            _ => ("", true)
           }
       }
-    Some(String(s)) => s
-    _ => ""
+    Some(String(s)) => (s, true)
+    _ => ("", true)
   }
 }
 

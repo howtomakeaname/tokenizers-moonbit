@@ -78,9 +78,9 @@ pub fn BPEModel::tokenize(
   symbols[n - 1].next = -1
 
   // Seed a priority queue with every adjacent pair that has a merge rank.
-  let heap : @pq.PriorityQueue[Merge] = @pq.PriorityQueue::new()
+  let heap : @pq.PriorityQueue[Merge] = @pq.PriorityQueue([])
   fn try_push(pos : Int) -> Unit {
-    if pos < 0 || not(symbols[pos].alive) {
+    if pos < 0 || !symbols[pos].alive {
       return
     }
     let r = symbols[pos].next
@@ -98,7 +98,7 @@ pub fn BPEModel::tokenize(
   }
 
   // Pop the lowest-rank valid pair, merge it, and enqueue the new neighbours.
-  while not(heap.is_empty()) {
+  while !heap.is_empty() {
     let m = match heap.pop() {
       Some(x) => x
       None => break
@@ -108,7 +108,7 @@ pub fn BPEModel::tokenize(
     // links stay the same, so we must re-validate the *current* pair: the left
     // symbol is alive, still points at the recorded right neighbour, and the
     // pair still has exactly the rank recorded when this entry was pushed.
-    if not(symbols[pos].alive) || symbols[pos].next != m.right {
+    if !symbols[pos].alive || symbols[pos].next != m.right {
       continue
     }
     let cur_rank = self.merges.get((symbols[pos].value, symbols[m.right].value))

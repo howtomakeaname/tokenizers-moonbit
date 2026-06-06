@@ -24,7 +24,7 @@ let comp_table : Ref[Map[Int, Int]?] = { val: None }
 fn parse_decomp(raw : String) -> Map[Int, Array[Int]] {
   let m : Map[Int, Array[Int]] = {}
   for line in raw.split("\n") {
-    let s = line.to_string()
+    let s = line.to_owned()
     if s == "" {
       continue
     }
@@ -32,13 +32,13 @@ fn parse_decomp(raw : String) -> Map[Int, Array[Int]] {
     let parts = s.split(":")
     let key_view = parts.next().unwrap()
     let rest = match parts.next() {
-      Some(r) => r.to_string()
+      Some(r) => r.to_owned()
       None => continue
     }
-    let cp = hex_to_int(key_view.to_string())
+    let cp = hex_to_int(key_view.to_owned())
     let seq : Array[Int] = []
     for tok in rest.split(" ") {
-      let t = tok.to_string()
+      let t = tok.to_owned()
       if t != "" {
         seq.push(hex_to_int(t))
       }
@@ -76,14 +76,14 @@ fn ccc_map() -> Map[Int, Int] {
     None => {
       let m : Map[Int, Int] = {}
       for line in ccc_raw().split("\n") {
-        let s = line.to_string()
+        let s = line.to_owned()
         if s == "" {
           continue
         }
         let parts = s.split(":")
-        let k = parts.next().unwrap().to_string()
+        let k = parts.next().unwrap().to_owned()
         match parts.next() {
-          Some(v) => m[hex_to_int(k)] = str_to_int(v.to_string())
+          Some(v) => m[hex_to_int(k)] = str_to_int(v.to_owned())
           None => ()
         }
       }
@@ -99,14 +99,14 @@ fn comp_map() -> Map[Int, Int] {
     None => {
       let m : Map[Int, Int] = {}
       for line in composition_raw().split("\n") {
-        let s = line.to_string()
+        let s = line.to_owned()
         if s == "" {
           continue
         }
         // "a b cp"
         let toks : Array[Int] = []
         for tok in s.split(" ") {
-          let t = tok.to_string()
+          let t = tok.to_owned()
           if t != "" {
             toks.push(hex_to_int(t))
           }
@@ -145,7 +145,7 @@ pub fn normalize_unicode(
   let result = if compose { canonical_compose(decomposed) } else { decomposed }
   let sb = StringBuilder::new()
   for cp in result {
-    sb.write_char(Char::from_int(cp))
+    sb.write_char(cp.unsafe_to_char())
   }
   sb.to_string()
 }
@@ -230,7 +230,7 @@ fn canonical_compose(cps : Array[Int]) -> Array[Int] {
     let composed = cmp.get(key)
     let blocked = last_cc >= cc && last_cc != -1 && cc != 0
     match composed {
-      Some(x) if not(blocked) && last_cc < cc => {
+      Some(x) if !blocked && last_cc < cc => {
         // compose into the starter
         out[starter_idx] = x
         starter = x

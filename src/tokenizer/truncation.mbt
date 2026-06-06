@@ -4,13 +4,13 @@
 pub(all) enum TruncationDirection {
   Left
   Right
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 pub(all) struct TruncationParams {
   max_length : Int
   stride : Int
   direction : TruncationDirection
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 /// Default truncation: right direction, no stride.
 pub fn TruncationParams::new(max_length : Int) -> TruncationParams {
@@ -24,12 +24,12 @@ fn slice_encoding(
   stop : Int,
 ) -> @types.Encoding {
   {
-    ids: enc.ids[start:stop].to_array(),
-    type_ids: enc.type_ids[start:stop].to_array(),
-    tokens: enc.tokens[start:stop].to_array(),
-    offsets: enc.offsets[start:stop].to_array(),
-    special_tokens_mask: enc.special_tokens_mask[start:stop].to_array(),
-    attention_mask: enc.attention_mask[start:stop].to_array(),
+    ids: enc.ids[start:stop].to_owned(),
+    type_ids: enc.type_ids[start:stop].to_owned(),
+    tokens: enc.tokens[start:stop].to_owned(),
+    offsets: enc.offsets[start:stop].to_owned(),
+    special_tokens_mask: enc.special_tokens_mask[start:stop].to_owned(),
+    attention_mask: enc.attention_mask[start:stop].to_owned(),
     overflowing: [],
   }
 }

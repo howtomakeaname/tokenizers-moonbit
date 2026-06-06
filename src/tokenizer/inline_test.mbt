@@ -18,14 +18,14 @@ test "inline BPE encode/decode runs on all backends" {
   let tok = Tokenizer::from_str(tiny_bpe)
   let enc = tok.encode("abc", add_special_tokens=false)
   // a+b -> ab, ab+c -> abc (id 4)
-  assert_eq(enc.ids, [4])
-  assert_eq(enc.tokens, ["abc"])
+  @test.assert_eq(enc.ids, [4])
+  @test.assert_eq(enc.tokens, ["abc"])
   // partial: "ab" then "c" unmergeable with nothing after
   let enc2 = tok.encode("abca", add_special_tokens=false)
-  assert_eq(enc2.tokens, ["abc", "a"])
-  assert_eq(enc2.ids, [4, 0])
+  @test.assert_eq(enc2.tokens, ["abc", "a"])
+  @test.assert_eq(enc2.ids, [4, 0])
   // round-trip lookups
-  assert_eq(tok.token_to_id("abc"), Some(4))
-  assert_eq(tok.id_to_token(3), Some("ab"))
-  assert_eq(tok.get_vocab_size(), 6)
+  @test.assert_eq(tok.token_to_id("abc"), Some(4))
+  @test.assert_eq(tok.id_to_token(3), Some("ab"))
+  @test.assert_eq(tok.get_vocab_size(), 6)
 }

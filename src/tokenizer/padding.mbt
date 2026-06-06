@@ -4,12 +4,12 @@
 pub(all) enum PaddingStrategy {
   BatchLongest
   Fixed(Int)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 pub(all) enum PaddingDirection {
   Left
   Right
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 pub(all) struct PaddingParams {
   strategy : PaddingStrategy
@@ -18,7 +18,7 @@ pub(all) struct PaddingParams {
   pad_type_id : Int
   pad_token : String
   pad_to_multiple_of : Int?
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 /// Default padding: right direction, pad id/token 0 / "[PAD]".
 pub fn PaddingParams::new(

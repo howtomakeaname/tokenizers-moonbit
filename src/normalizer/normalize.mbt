@@ -9,6 +9,8 @@ pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
     Lowercase => to_lowercase(input)
     Strip(left~, right~) => strip(input, left, right)
     StripAccents => strip_accents(input)
+    ByteLevel => byte_level_normalize(input)
+    Nmt => nmt_normalize(input)
     Prepend(prepend~) => prepend + input
     Replace(pattern~, content~) => replace_all(input, pattern, content)
     Sequence(steps) => {
@@ -42,6 +44,74 @@ pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
     // whitespace normalization it performs is implemented here for DeBERTa/SPM.
     Precompiled => precompiled_normalize(input)
   }
+}
+
+// HF ByteLevel normalizer maps every UTF-8 byte to the reversible GPT-2
+// byte-level alphabet. This is distinct from the ByteLevel pre-tokenizer: some
+// tokenizer.json files put byte-level mapping in the normalizer stage.
+fn byte_level_normalize(s : String) -> String {
+  let bytes = @utf8.encode(s)
+  let sb = StringBuilder::new()
+  for i in 0..<bytes.length() {
+    sb.write_char(byte_to_visible_char(bytes[i].to_int()))
+  }
+  sb.to_string()
+}
+
+fn byte_to_visible_char(b : Int) -> Char {
+  if is_byte_self_mapped(b) {
+    b.unsafe_to_char()
+  } else {
+    let mut n = 0
+    for x in 0..<b {
+      if !is_byte_self_mapped(x) {
+        n = n + 1
+      }
+    }
+    (256 + n).unsafe_to_char()
+  }
+}
+
+fn is_byte_self_mapped(b : Int) -> Bool {
+  (b >= 33 && b <= 126) || (b >= 161 && b <= 172) || (b >= 174 && b <= 255)
+}
+
+// Approximation of HF's Nmt normalizer: remove format/control characters that
+// should not survive tokenization and map common Unicode space separators to a
+// regular ASCII space. This covers the behaviour used by common SPM pipelines;
+// full category-table parity can be tightened later if a fixture requires it.
+fn nmt_normalize(s : String) -> String {
+  let sb = StringBuilder::new()
+  for c in s {
+    let u = c.to_int()
+    if u == 0 || u == 0xFFFD || is_nmt_control_or_format(u) {
+      continue
+    }
+    if is_nmt_space(u) {
+      sb.write_char(' ')
+    } else {
+      sb.write_char(c)
+    }
+  }
+  sb.to_string()
+}
+
+fn is_nmt_control_or_format(u : Int) -> Bool {
+  // Keep tab/newline/carriage-return as whitespace; drop the rest of C0/C1 and
+  // common Cf ranges such as ZWSP/BOM/variation selectors.
+  ((u >= 0 && u < 0x20) && u != 0x09 && u != 0x0A && u != 0x0D) ||
+  (u >= 0x7F && u <= 0x9F) ||
+  (u >= 0x200B && u <= 0x200F) ||
+  (u >= 0x202A && u <= 0x202E) ||
+  (u >= 0x2060 && u <= 0x206F) ||
+  u == 0xFEFF ||
+  (u >= 0xFE00 && u <= 0xFE0F)
+}
+
+fn is_nmt_space(u : Int) -> Bool {
+  u == 0x09 || u == 0x0A || u == 0x0D || u == 0x20 || u == 0x85 || u == 0xA0 ||
+  u == 0x1680 || (u >= 0x2000 && u <= 0x200A) || u == 0x2028 || u == 0x2029 ||
+  u == 0x202F || u == 0x205F || u == 0x3000
 }
 
 // Minimal SentencePiece Precompiled normalizer behavior: map whitespace runs to

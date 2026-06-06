@@ -22,8 +22,9 @@
 | `StripAccents` | ✅ |
 | `BertNormalizer` | ✅ |
 | `NFC` / `NFD` / `NFKC` / `NFKD` | ✅ |
+| `Nmt` | ✅ |
+| `ByteLevel` normalizer | ✅ |
 | `Precompiled` | 🚧 已覆盖常见空白折叠，完整 charsmap 待补 |
-| `Nmt`、byte-level normalizer | ⬜ |
 
 ## Pre-tokenizers
 
@@ -32,8 +33,8 @@
 | `ByteLevel` | ✅ |
 | `Whitespace`、`WhitespaceSplit`、`BertPreTokenizer`、`Punctuation`、`Metaspace`、`Sequence` | ✅ |
 | `Split`：GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet 正则族 | ✅ |
-| `Digits`、`Delimiter`、`FixedLength` | ✅ |
-| 任意 `Split` 正则、`UnicodeScripts` | 🚧 未识别 pattern 退化为单段 |
+| `Digits`、`Delimiter`、`FixedLength`、`UnicodeScripts` | ✅ |
+| 任意 `Split` 正则 | 🚧 未识别 pattern 退化为单段 |
 
 ## Post-processors
 
@@ -63,6 +64,7 @@ GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E
   charsmap 解码仍待实现。
 - **任意 Split 正则：** 当前识别主流 tokenizer 的常见正则族；通用 Unicode
   regex 引擎不在现阶段范围内。
+- **Regex Replace：** `Replace` normalizer/decoder 目前按字面量替换；正则替换待补。
 - **Offsets：** 当前返回字符偏移；HF 默认返回 byte offsets。
 - **Batch：** `encode_batch` 为串行实现，适配 wasm/js 目标。
 - **训练：** 不支持训练 tokenizer，仅加载并运行已有 tokenizer。

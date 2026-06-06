@@ -3,5 +3,8 @@
     "tokenizer-moonbit/types",
     { "path": "moonbitlang/core/encoding/utf8", "alias": "utf8" },
     "moonbitlang/core/buffer"
+  ],
+  "wbtest-import": [
+    "moonbitlang/core/test"
   ]
 }

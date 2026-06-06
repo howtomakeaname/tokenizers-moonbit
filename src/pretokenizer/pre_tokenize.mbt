@@ -16,7 +16,7 @@ pub fn PreTokenizer::pre_tokenize(
     Whitespace => whitespace(text, base_offset)
     WhitespaceSplit => whitespace_split(text, base_offset)
     BertPreTokenizer => bert_pre_tokenize(text, base_offset)
-    Punctuation => punctuation_split(text, base_offset)
+    Punctuation(behavior~) => punctuation_split(text, behavior, base_offset)
     Metaspace(replacement~, prepend_scheme~, split~) =>
       metaspace_pre_tokenize(text, replacement, prepend_scheme, split, base_offset)
     Split(pattern~, ..) => split_pre_tokenize(text, pattern, base_offset)
@@ -25,8 +25,7 @@ pub fn PreTokenizer::pre_tokenize(
     Delimiter(delimiter~) => delimiter_split(text, delimiter, base_offset)
     FixedLength(length~) => fixed_length_split(text, length, base_offset)
     Sequence(steps) => apply_sequence(steps, text, base_offset)
-    // Other variants are handled in later phases; default to a single piece.
-    _ => [{ value: text, offsets: (base_offset, base_offset + text.char_length()) }]
+    UnicodeScripts => unicode_scripts_split(text, base_offset)
   }
 }
 
@@ -316,19 +315,75 @@ fn bert_pre_tokenize(text : String, base_offset : Int) -> Array[@types.Split] {
   out
 }
 
-// Punctuation pre-tokenizer: isolate each punctuation char, keep other runs.
-fn punctuation_split(text : String, base_offset : Int) -> Array[@types.Split] {
+// Punctuation pre-tokenizer: split on Unicode punctuation and honor HF's
+// SplitBehavior semantics for the matched punctuation spans.
+fn punctuation_split(
+  text : String,
+  behavior : SplitBehavior,
+  base_offset : Int,
+) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
   let out : Array[@types.Split] = []
   let mut i = 0
   while i < n {
     if is_punct(chars[i]) {
-      out.push({
-        value: substr(chars, i, i + 1),
-        offsets: (base_offset + i, base_offset + i + 1),
-      })
-      i = i + 1
+      let start = i
+      while i < n && is_punct(chars[i]) {
+        i = i + 1
+      }
+      match behavior {
+        Removed => ()
+        Isolated => {
+          for k in start..<i {
+            out.push({
+              value: substr(chars, k, k + 1),
+              offsets: (base_offset + k, base_offset + k + 1),
+            })
+          }
+        }
+        Contiguous =>
+          out.push({
+            value: substr(chars, start, i),
+            offsets: (base_offset + start, base_offset + i),
+          })
+        MergedWithPrevious =>
+          if out.length() == 0 {
+            out.push({
+              value: substr(chars, start, i),
+              offsets: (base_offset + start, base_offset + i),
+            })
+          } else {
+            let idx = out.length() - 1
+            let prev = out[idx]
+            out[idx] = {
+              value: prev.value + substr(chars, start, i),
+              offsets: (prev.offsets.0, base_offset + i),
+            }
+          }
+        MergedWithNext => {
+          let start2 = start
+          while i < n && is_punct(chars[i]) {
+            i = i + 1
+          }
+          if i < n {
+            let mut j = i
+            while j < n && !is_punct(chars[j]) {
+              j = j + 1
+            }
+            out.push({
+              value: substr(chars, start2, j),
+              offsets: (base_offset + start2, base_offset + j),
+            })
+            i = j
+          } else {
+            out.push({
+              value: substr(chars, start2, i),
+              offsets: (base_offset + start2, base_offset + i),
+            })
+          }
+        }
+      }
     } else {
       let mut j = i
       while j < n && !is_punct(chars[j]) {
@@ -342,6 +397,78 @@ fn punctuation_split(text : String, base_offset : Int) -> Array[@types.Split] {
     }
   }
   out
+}
+
+// UnicodeScripts mirrors HF's splitter used by Unigram/SentencePiece: split
+// when the Unicode script changes. Spaces are Script::Any and therefore attach
+// to the surrounding script span; Hiragana, Katakana and U+30FC are folded into
+// Han to keep Japanese text together.
+fn unicode_scripts_split(text : String, base_offset : Int) -> Array[@types.Split] {
+  let chars = text.to_array()
+  let n = chars.length()
+  if n == 0 {
+    return []
+  }
+  let out : Array[@types.Split] = []
+  let mut start = 0
+  let mut last_script = -1
+  for i in 0..<n {
+    let script = fixed_script(chars[i])
+    if script != 0 && last_script != -1 && last_script != 0 && last_script != script {
+      out.push({
+        value: substr(chars, start, i),
+        offsets: (base_offset + start, base_offset + i),
+      })
+      start = i
+    }
+    if script != 0 {
+      last_script = script
+    }
+  }
+  out.push({ value: substr(chars, start, n), offsets: (base_offset + start, base_offset + n) })
+  out
+}
+
+fn fixed_script(c : Char) -> Int {
+  let u = c.to_int()
+  if c == ' ' {
+    0 // Any
+  } else if is_han_script(u) || is_hiragana(u) || is_katakana(u) || u == 0x30FC {
+    1 // Han-compatible (HF SentencePiece convention)
+  } else if (u >= 0x0041 && u <= 0x005A) || (u >= 0x0061 && u <= 0x007A) ||
+            (u >= 0x00C0 && u <= 0x024F) || (u >= 0x1E00 && u <= 0x1EFF) {
+    2 // Latin
+  } else if u >= 0x0370 && u <= 0x03FF {
+    3 // Greek
+  } else if u >= 0x0400 && u <= 0x052F {
+    4 // Cyrillic
+  } else if u >= 0x0600 && u <= 0x06FF {
+    5 // Arabic
+  } else if u >= 0x0900 && u <= 0x097F {
+    6 // Devanagari
+  } else if (u >= 0xAC00 && u <= 0xD7AF) || (u >= 0x1100 && u <= 0x11FF) ||
+            (u >= 0x3130 && u <= 0x318F) {
+    7 // Hangul
+  } else if is_number(c) || is_punct(c) || is_space(c) {
+    8 // Common
+  } else {
+    9 // Other
+  }
+}
+
+fn is_han_script(u : Int) -> Bool {
+  (u >= 0x3400 && u <= 0x4DBF) || (u >= 0x4E00 && u <= 0x9FFF) ||
+  (u >= 0xF900 && u <= 0xFAFF) || (u >= 0x20000 && u <= 0x2A6DF) ||
+  (u >= 0x2A700 && u <= 0x2B73F) || (u >= 0x2B740 && u <= 0x2B81F) ||
+  (u >= 0x2B820 && u <= 0x2CEAF)
+}
+
+fn is_hiragana(u : Int) -> Bool {
+  u >= 0x3040 && u <= 0x309F
+}
+
+fn is_katakana(u : Int) -> Bool {
+  (u >= 0x30A0 && u <= 0x30FF) || (u >= 0x31F0 && u <= 0x31FF)
 }
 
 /// Punctuation per Unicode P* plus ASCII punctuation ranges (approximated).
@@ -452,7 +579,7 @@ fn digits_split(
       }
     } else {
       let start = i
-      while i < n && not(is_number(chars[i])) {
+      while i < n && !is_number(chars[i]) {
         i = i + 1
       }
       out.push({
@@ -499,7 +626,7 @@ fn metaspace_pre_tokenize(
   let n = mapped.length()
   // split=false: emit the whole transformed string as a single piece (the
   // model's BPE then handles the runs, e.g. Mistral/Llama Metaspace).
-  if not(split) {
+  if !split {
     if n == 0 {
       return []
     }

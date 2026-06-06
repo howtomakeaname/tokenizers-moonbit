@@ -12,8 +12,11 @@ pub(all) enum Normalizer {
   Lowercase
   Strip(left~ : Bool, right~ : Bool)
   StripAccents
+  ByteLevel
   Replace(pattern~ : String, content~ : String)
   Prepend(prepend~ : String)
+  // Moses/NMT style cleanup used by SentencePiece-era tokenizers.
+  Nmt
   // SentencePiece Precompiled charsmap; treated as identity for now (TODO).
   Precompiled
   BertNormalizer(
@@ -36,6 +39,7 @@ pub fn Normalizer::from_json(j : Json) -> Normalizer raise @types.TokenizerError
     "NFKD" => NFKD
     "Lowercase" => Lowercase
     "StripAccents" => StripAccents
+    "ByteLevel" => ByteLevel
     "Strip" =>
       Strip(
         left=@types.get_bool(obj, "strip_left", default=true),
@@ -47,6 +51,7 @@ pub fn Normalizer::from_json(j : Json) -> Normalizer raise @types.TokenizerError
         content=@types.get_str(obj, "content", default=""),
       )
     "Prepend" => Prepend(prepend=@types.get_str(obj, "prepend", default=""))
+    "Nmt" => Nmt
     "Precompiled" => Precompiled
     "BertNormalizer" => {
       let lowercase = @types.get_bool(obj, "lowercase", default=true)

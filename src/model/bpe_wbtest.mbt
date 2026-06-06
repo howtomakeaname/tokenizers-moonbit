@@ -54,8 +54,8 @@ test "bpe merges adjacent pairs by rank" {
     [("l", "o"), ("lo", "w"), ("e", "r"), ("low", "er")],
   )
   let toks = model.tokenize("lower")
-  assert_eq(surfaces_of(toks), ["lower"])
-  assert_eq(ids_of(toks), [8])
+  @test.assert_eq(surfaces_of(toks), ["lower"])
+  @test.assert_eq(ids_of(toks), [8])
 }
 
 test "bpe stops when no merge applies and leaves separate symbols" {
@@ -64,8 +64,8 @@ test "bpe stops when no merge applies and leaves separate symbols" {
     [("a", "b")],
   )
   let toks = model.tokenize("abc")
-  assert_eq(surfaces_of(toks), ["ab", "c"])
-  assert_eq(ids_of(toks), [3, 2])
+  @test.assert_eq(surfaces_of(toks), ["ab", "c"])
+  @test.assert_eq(ids_of(toks), [3, 2])
 }
 
 test "bpe respects merge ranks over greedy order" {
@@ -77,7 +77,7 @@ test "bpe respects merge ranks over greedy order" {
   )
   let toks = model.tokenize("abc")
   // After b+c -> "a","bc"; pair (a,bc) not in merges -> stop.
-  assert_eq(surfaces_of(toks), ["a", "bc"])
+  @test.assert_eq(surfaces_of(toks), ["a", "bc"])
 }
 
 test "bpe offsets track code-point spans" {
@@ -86,5 +86,5 @@ test "bpe offsets track code-point spans" {
     [("a", "b")],
   )
   let toks = model.tokenize("ab", offset=3)
-  assert_eq(toks[0].offsets, (3, 5))
+  @test.assert_eq(toks[0].offsets, (3, 5))
 }

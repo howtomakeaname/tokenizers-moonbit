@@ -38,10 +38,10 @@ test "unigram byte_fallback emits utf8 byte tokens" {
     true,
   )
   let toks = model.tokenize("a😀", offset=7)
-  assert_eq(unigram_surfaces(toks), ["a", "<0xF0>", "<0x9F>", "<0x98>", "<0x80>"])
-  assert_eq(unigram_ids(toks), [1, 2, 3, 4, 5])
-  assert_eq(toks[1].offsets, (8, 9))
-  assert_eq(toks[4].offsets, (8, 9))
+  @test.assert_eq(unigram_surfaces(toks), ["a", "<0xF0>", "<0x9F>", "<0x98>", "<0x80>"])
+  @test.assert_eq(unigram_ids(toks), [1, 2, 3, 4, 5])
+  @test.assert_eq(toks[1].offsets, (8, 9))
+  @test.assert_eq(toks[4].offsets, (8, 9))
 }
 
 test "unigram byte_fallback requires all byte tokens" {
@@ -53,7 +53,7 @@ test "unigram byte_fallback requires all byte tokens" {
   )
   let toks = model.tokenize("😀")
   // Missing <0x98>/<0x80>, so the original unk fallback is preserved.
-  assert_eq(unigram_surfaces(toks), ["😀"])
-  assert_eq(unigram_ids(toks), [0])
+  @test.assert_eq(unigram_surfaces(toks), ["😀"])
+  @test.assert_eq(unigram_ids(toks), [0])
 }
 

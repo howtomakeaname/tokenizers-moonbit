@@ -16,7 +16,7 @@ priv struct CharTrie {
 
 fn CharTrie::new() -> CharTrie {
   // node 0 is the root.
-  { children: [Map::new()], terminal: [None] }
+  { children: [Map([])], terminal: [None] }
 }
 
 fn CharTrie::insert(self : CharTrie, content : String) -> Unit {
@@ -26,7 +26,7 @@ fn CharTrie::insert(self : CharTrie, content : String) -> Unit {
       Some(nx) => node = nx
       None => {
         let nx = self.children.length()
-        self.children.push(Map::new())
+        self.children.push(Map([]))
         self.terminal.push(None)
         self.children[node][c] = nx
         node = nx
@@ -71,7 +71,7 @@ struct AddedTokenInfo {
   rstrip : Bool
   normalized : Bool
   special : Bool
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 /// The added-vocabulary state attached to a Tokenizer.
 struct AddedVocabulary {
@@ -90,7 +90,7 @@ enum Segment {
   Special(info~ : AddedTokenInfo, offsets~ : (Int, Int))
   // Ordinary text to be normalized + pre-tokenized + modeled.
   Normal(text~ : String, base_offset~ : Int)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 /// Build an AddedVocabulary from parsed token infos.
 fn AddedVocabulary::new(tokens : Array[AddedTokenInfo]) -> AddedVocabulary {

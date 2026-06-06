@@ -34,7 +34,7 @@ fn run_parity(name : String) -> (Bool, Int) raise {
     let want = parse_int_array(obj, "ids")
     let got = tok.encode(text, add_special_tokens=false).ids
     if got != want {
-      assert_eq((name, text, got), (name, text, want))
+      @test.assert_eq((name, text, got), (name, text, want))
       mism = mism + 1
     }
   }
@@ -45,7 +45,7 @@ test "parity: encode matches python tokenizers across models" {
   for name in parity_models {
     let (ran, mism) = run_parity(name)
     if ran {
-      assert_eq((name, mism), (name, 0))
+      @test.assert_eq((name, mism), (name, 0))
     }
   }
 }

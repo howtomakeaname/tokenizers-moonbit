@@ -4,5 +4,8 @@
     "moonbitlang/core/encoding/utf8",
     "moonbitlang/core/int",
     { "path": "moonbitlang/core/priority_queue", "alias": "pq" }
+  ],
+  "wbtest-import": [
+    "moonbitlang/core/test"
   ]
 }
