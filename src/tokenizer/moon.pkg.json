@@ -1,0 +1,6 @@
+{
+  "import": [
+    "tokenizer-moonbit/types",
+    "moonbitlang/core/json"
+  ]
+}

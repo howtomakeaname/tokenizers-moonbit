@@ -1,0 +1,14 @@
+# MoonBit build artifacts
+/_build/
+target/
+.mooncakes/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Large test fixtures downloaded locally (real tokenizer.json files)
+# Keep small sample fixtures under tests/data/ but ignore big model files.
+tests/data/*.full.json
