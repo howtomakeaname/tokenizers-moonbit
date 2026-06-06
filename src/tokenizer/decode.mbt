@@ -6,13 +6,13 @@ pub fn Tokenizer::decode(
   ids : Array[Int],
   skip_special_tokens~ : Bool = true,
 ) -> String {
-  let special_ids = self.special_id_set()
   let tokens : Array[String] = []
   for id in ids {
-    if skip_special_tokens && special_ids.contains(id) {
+    if skip_special_tokens && self.added_vocabulary.is_special_id(id) {
       continue
     }
-    match self.model.id_to_token(id) {
+    // Added-vocabulary tokens take priority over the model's vocab.
+    match self.id_to_token(id) {
       Some(t) => tokens.push(t)
       None => () // unknown id: skip
     }
@@ -28,15 +28,4 @@ pub fn Tokenizer::decode(
       sb.to_string()
     }
   }
-}
-
-// Set of ids that are special/added tokens.
-fn Tokenizer::special_id_set(self : Tokenizer) -> @set.Set[Int] {
-  let s : @set.Set[Int] = @set.Set::new()
-  for at in self.added_tokens {
-    if at.special {
-      s.add(at.id)
-    }
-  }
-  s
 }

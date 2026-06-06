@@ -15,6 +15,17 @@ fn load_text(path : String) -> String? {
   }
 }
 
+test "gpt2 splits the <|endoftext|> special token out of text" {
+  guard load_text("tests/data/gpt2.full.json") is Some(model_json) else {
+    return
+  }
+  let tok = Tokenizer::from_str(model_json)
+  // Matches Python tokenizers: <|endoftext|> -> id 50256, recognized inline.
+  let enc = tok.encode("hello<|endoftext|>world", add_special_tokens=false)
+  assert_eq(enc.ids, [31373, 50256, 6894])
+  assert_eq(enc.tokens, ["hello", "<|endoftext|>", "world"])
+}
+
 test "gpt2 encode matches python tokenizers" {
   let model_path = "tests/data/gpt2.full.json"
   let expected_path = "tests/data/gpt2_expected.json"

@@ -9,7 +9,9 @@ pub fn Tokenizer::encode(
   text : String,
   add_special_tokens~ : Bool = true,
 ) -> @types.Encoding {
-  let raw = self.encode_raw(text)
+  // Special tokens present in the text are always recognized as single tokens;
+  // add_special_tokens only controls whether the post-processor template runs.
+  let raw = self.encode_raw(text, keep_special=true)
   if add_special_tokens {
     match self.post_processor {
       Some(pp) => pp.process(raw, None)
@@ -27,8 +29,8 @@ pub fn Tokenizer::encode_pair(
   text_b : String,
   add_special_tokens~ : Bool = true,
 ) -> @types.Encoding {
-  let a = self.encode_raw(text_a)
-  let b = self.encode_raw(text_b)
+  let a = self.encode_raw(text_a, keep_special=true)
+  let b = self.encode_raw(text_b, keep_special=true)
   if add_special_tokens {
     match self.post_processor {
       Some(pp) => pp.process(a, Some(b))
@@ -39,32 +41,66 @@ pub fn Tokenizer::encode_pair(
   }
 }
 
-// Run normalize -> pre_tokenize -> model, producing a raw Encoding (no special
-// tokens, all type_ids = 0).
-fn Tokenizer::encode_raw(self : Tokenizer, text : String) -> @types.Encoding {
-  let normalized = match self.normalizer {
-    Some(nm) => nm.normalize(text)
-    None => text
-  }
-  let pieces : Array[@types.Split] = match self.pre_tokenizer {
-    Some(pt) => pt.pre_tokenize(normalized)
-    None => [{ value: normalized, offsets: (0, normalized.char_length()) }]
-  }
+// Run added-vocabulary extraction -> normalize -> pre_tokenize -> model,
+// producing a raw Encoding (all type_ids = 0). `keep_special` controls whether
+// special added-tokens are emitted as single tokens (true) or folded back into
+// text (false), matching HF's add_special_tokens semantics.
+fn Tokenizer::encode_raw(
+  self : Tokenizer,
+  text : String,
+  keep_special~ : Bool,
+) -> @types.Encoding {
   let ids : Array[Int] = []
   let tokens : Array[String] = []
   let type_ids : Array[Int] = []
   let offsets : Array[(Int, Int)] = []
   let special_tokens_mask : Array[Int] = []
   let attention_mask : Array[Int] = []
-  for piece in pieces {
-    let toks = self.model.tokenize(piece.value, offset=piece.offsets.0)
-    for t in toks {
-      ids.push(t.id)
-      tokens.push(t.value)
-      type_ids.push(0)
-      offsets.push(t.offsets)
-      special_tokens_mask.push(0)
-      attention_mask.push(1)
+  fn emit(id : Int, value : String, offs : (Int, Int), special : Int) -> Unit {
+    ids.push(id)
+    tokens.push(value)
+    type_ids.push(0)
+    offsets.push(offs)
+    special_tokens_mask.push(special)
+    attention_mask.push(1)
+  }
+
+  // Stage 1: split out non-normalized added tokens against the original text.
+  for seg1 in self.added_vocabulary.extract_stage1(text, keep_special~) {
+    match seg1 {
+      Special(info~, offsets~) => emit(info.id, info.content, offsets, 1)
+      Normal(text=raw, base_offset~) => {
+        // Normalize this ordinary piece.
+        let normalized = match self.normalizer {
+          Some(nm) => nm.normalize(raw)
+          None => raw
+        }
+        // Stage 2: split out normalized added tokens within it.
+        for seg2 in self.added_vocabulary.extract_stage2(
+            normalized,
+            base_offset,
+            keep_special~,
+          ) {
+          match seg2 {
+            Special(info~, offsets~) => emit(info.id, info.content, offsets, 1)
+            Normal(text=ntext, base_offset=base2) => {
+              let pieces : Array[@types.Split] = match self.pre_tokenizer {
+                Some(pt) => pt.pre_tokenize(ntext, base_offset=base2)
+                None =>
+                  [{ value: ntext, offsets: (base2, base2 + ntext.char_length()) }]
+              }
+              for piece in pieces {
+                for t in self.model.tokenize(
+                    piece.value,
+                    offset=piece.offsets.0,
+                  ) {
+                  emit(t.id, t.value, t.offsets, 0)
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
   { ids, type_ids, tokens, offsets, special_tokens_mask, attention_mask }

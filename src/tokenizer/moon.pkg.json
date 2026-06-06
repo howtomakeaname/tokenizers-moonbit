@@ -7,7 +7,6 @@
     "tokenizer-moonbit/processor",
     "tokenizer-moonbit/decoder",
     "moonbitlang/core/json",
-    { "path": "moonbitlang/x/fs", "alias": "fs" },
-    { "path": "moonbitlang/core/set", "alias": "set" }
+    { "path": "moonbitlang/x/fs", "alias": "fs" }
   ]
 }

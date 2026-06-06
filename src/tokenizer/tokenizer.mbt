@@ -18,7 +18,7 @@ pub struct Tokenizer {
   model : @model.Model
   post_processor : @processor.PostProcessor?
   decoder : @decoder.Decoder?
-  added_tokens : Array[AddedToken]
+  added_vocabulary : AddedVocabulary
 }
 
 /// Load a tokenizer from the textual contents of a `tokenizer.json`.
@@ -50,8 +50,8 @@ pub fn Tokenizer::from_str(
     j,
   ))
   let decoder = decode_opt(root, "decoder", j => @decoder.Decoder::from_json(j))
-  let added_tokens = parse_added_tokens(root)
-  { normalizer, pre_tokenizer, model, post_processor, decoder, added_tokens }
+  let added_vocabulary = AddedVocabulary::new(parse_added_tokens(root))
+  { normalizer, pre_tokenizer, model, post_processor, decoder, added_vocabulary }
 }
 
 // Decode an optional component: absent key or JSON null -> None.
@@ -68,8 +68,8 @@ fn[T] decode_opt(
 
 fn parse_added_tokens(
   root : Map[String, Json],
-) -> Array[AddedToken] raise @types.TokenizerError {
-  let out : Array[AddedToken] = []
+) -> Array[AddedTokenInfo] raise @types.TokenizerError {
+  let out : Array[AddedTokenInfo] = []
   let arr = match root.get("added_tokens") {
     Some(Array(a)) => a
     _ => return out
@@ -79,6 +79,15 @@ fn parse_added_tokens(
     out.push({
       id: @types.get_int(obj, "id", default=-1),
       content: @types.get_str(obj, "content", default=""),
+      single_word: @types.get_bool(obj, "single_word", default=false),
+      lstrip: @types.get_bool(obj, "lstrip", default=false),
+      rstrip: @types.get_bool(obj, "rstrip", default=false),
+      // special tokens default to non-normalized; others default normalized.
+      normalized: @types.get_bool(
+        obj,
+        "normalized",
+        default=!@types.get_bool(obj, "special", default=false),
+      ),
       special: @types.get_bool(obj, "special", default=false),
     })
   }
@@ -90,12 +99,18 @@ pub fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int {
   self.model.vocab_size()
 }
 
-/// Look up a token id by surface string.
+/// Look up a token id by surface string (added vocabulary first, then model).
 pub fn Tokenizer::token_to_id(self : Tokenizer, token : String) -> Int? {
-  self.model.token_to_id(token)
+  match self.added_vocabulary.token_to_id(token) {
+    Some(id) => Some(id)
+    None => self.model.token_to_id(token)
+  }
 }
 
-/// Look up a token surface by id.
+/// Look up a token surface by id (added vocabulary first, then model).
 pub fn Tokenizer::id_to_token(self : Tokenizer, id : Int) -> String? {
-  self.model.id_to_token(id)
+  match self.added_vocabulary.id_to_token(id) {
+    Some(t) => Some(t)
+    None => self.model.id_to_token(id)
+  }
 }

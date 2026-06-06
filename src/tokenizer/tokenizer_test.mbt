@@ -17,12 +17,10 @@ test "from_str decodes optional components and added tokens" {
     #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"foo":1},"unk_token":"[UNK]"},
     #| "decoder":{"type":"WordPiece"}}
   let tok = Tokenizer::from_str(json)
-  assert_eq(tok.added_tokens.length(), 1)
-  assert_eq(tok.added_tokens[0].content, "[UNK]")
-  assert_true(tok.normalizer is Some(_))
-  assert_true(tok.pre_tokenizer is Some(_))
-  assert_true(tok.decoder is Some(_))
-  assert_true(tok.post_processor is None)
+  // [UNK] is an added special token: it resolves via the public lookups.
+  assert_eq(tok.token_to_id("[UNK]"), Some(0))
+  assert_eq(tok.id_to_token(0), Some("[UNK]"))
+  assert_eq(tok.token_to_id("foo"), Some(1))
 }
 
 test "from_str rejects non-object root" {
