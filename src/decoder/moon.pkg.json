@@ -1,5 +1,6 @@
 {
   "import": [
-    "tokenizer-moonbit/types"
+    "tokenizer-moonbit/types",
+    "tokenizer-moonbit/pretokenizer"
   ]
 }

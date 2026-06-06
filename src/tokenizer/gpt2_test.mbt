@@ -28,6 +28,9 @@ test "gpt2 encode matches python tokenizers" {
     let want_ids = parse_int_array(obj, "ids")
     let enc = tok.encode(text, add_special_tokens=false)
     assert_eq(enc.ids, want_ids)
+    // decode round-trip: ids -> text should match python's decoded output
+    let want_decoded = @types.get_str(obj, "decoded", default="")
+    assert_eq(tok.decode(enc.ids, skip_special_tokens=false), want_decoded)
   }
 }
 
