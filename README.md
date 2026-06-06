@@ -31,14 +31,48 @@ println(enc.ids)
 ## Status
 
 - [x] P0 — Project scaffold + JSON parsing wired up.
-- [ ] P1 — tokenizer.json deserialization (vocab / merges / component configs).
-- [ ] P2 — BPE encode (non byte-level).
-- [ ] P3 — Byte-level BPE + ByteLevel pre-tokenizer (GPT-2 parity).
-- [ ] P4 — decode.
-- [ ] P5 — WordPiece (BERT parity).
-- [ ] P6 — Unigram (T5 / ALBERT parity).
-- [ ] P7 — Normalizers / post-processors / special tokens.
-- [ ] P8 — Cross-backend verification.
+- [x] P1 — tokenizer.json deserialization (vocab / merges / component configs).
+- [x] P2 — BPE encode (non byte-level).
+- [x] P3 — Byte-level BPE + ByteLevel pre-tokenizer (GPT-2 parity).
+- [x] P4 — decode.
+- [x] P5 — WordPiece (BERT parity).
+- [x] P6 — Unigram (T5 parity).
+- [x] P7 — Post-processing / special tokens / `encode_pair`.
+- [x] P8 — Cross-backend verification (wasm / wasm-gc / js / native).
+
+Verified token-for-token against Python `tokenizers` for **GPT-2**, **BERT**
+(`bert-base-uncased`) and **T5** (`t5-small`).
+
+### Known gaps (TODO)
+
+- Unicode normalization (NFC/NFKC) and `strip_accents` need data tables; they
+  currently act as identity. The `Precompiled` (SentencePiece) normalizer is
+  also identity.
+- `\p{...}` Unicode classes in the GPT-2 pre-tokenizer use coarse range tables
+  (common scripts only).
+- `byte_fallback`, exact byte-level offset trimming, and training are not
+  implemented.
+
+## Tests
+
+Most tests embed tiny inline fixtures and run on every backend. The parity
+tests for GPT-2 / BERT / T5 load full `tokenizer.json` files that are **not**
+committed (they are large and git-ignored). To run them locally:
+
+```bash
+# download model fixtures
+curl -L -o tests/data/gpt2.full.json https://huggingface.co/gpt2/resolve/main/tokenizer.json
+curl -L -o tests/data/bert.full.json https://huggingface.co/bert-base-uncased/resolve/main/tokenizer.json
+curl -L -o tests/data/t5.full.json   https://huggingface.co/t5-small/resolve/main/tokenizer.json
+# (re)generate expected outputs with the Python `tokenizers` library
+python3 scripts/gen_expected.py      tests/data/gpt2.full.json tests/data/gpt2_expected.json
+python3 scripts/gen_expected_bert.py tests/data/bert.full.json tests/data/bert_expected.json
+python3 scripts/gen_expected_bert.py tests/data/t5.full.json   tests/data/t5_expected.json
+
+moon test --target native   # also: wasm, wasm-gc, js
+```
+
+The disk-backed tests self-skip gracefully when fixtures are absent.
 
 ## License
 

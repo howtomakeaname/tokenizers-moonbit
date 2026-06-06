@@ -9,6 +9,7 @@ target/
 .idea/
 .vscode/
 
-# Large test fixtures downloaded locally (real tokenizer.json files)
-# Keep small sample fixtures under tests/data/ but ignore big model files.
+# Large test fixtures downloaded locally (real tokenizer.json files) and the
+# expected outputs generated from them. Both are regenerable (see README).
 tests/data/*.full.json
+tests/data/*_expected.json
