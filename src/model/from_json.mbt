@@ -145,5 +145,5 @@ fn parse_unigram(
       _ => raise @types.VocabError("bad unigram vocab entry at index \{i}")
     }
   }
-  { vocab, vocab_r, unk_id: @types.get_int_opt(obj, "unk_id"), byte_fallback: @types.get_bool(obj, "byte_fallback", default=false) }
+  { vocab, vocab_r, unk_id: @types.get_int_opt(obj, "unk_id"), byte_fallback: @types.get_bool(obj, "byte_fallback", default=false), fuse_unk: @types.get_bool(obj, "fuse_unk", default=true) }
 }

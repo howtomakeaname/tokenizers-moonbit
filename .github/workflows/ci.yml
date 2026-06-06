@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MoonBit toolchain
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python tokenizers (for parity fixtures)
+        run: pip install tokenizers
+
+      - name: Fetch model fixtures
+        run: python3 scripts/fetch_models.py
+
+      - name: Generate parity expectations
+        run: python3 scripts/gen_parity.py
+
+      - name: moon check
+        run: moon check
+
+      - name: Run tests on all backends
+        run: |
+          for target in wasm wasm-gc js native; do
+            echo "== $target =="
+            moon test --target "$target"
+          done

@@ -47,6 +47,7 @@ pub struct UnigramModel {
   vocab_r : Map[Int, String]
   unk_id : Int?
   byte_fallback : Bool
+  fuse_unk : Bool
 }
 
 /// The model variants.

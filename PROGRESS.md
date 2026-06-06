@@ -19,7 +19,7 @@
 | P8 | 跨后端验证（wasm/wasm-gc/js/native） | ✅ |
 | R1 | AddedVocabulary（文本内 special token 预切分） | ✅ |
 | R2 | WordLevel + byte_fallback + fuse_unk + ignore_merges + ByteFallback decoder | ✅ |
-| R3 | 多模型对拍设施 + CI | ⬜ |
+| R3 | 多模型对拍设施 + CI | ✅ |
 | R4 | truncation / padding / encode_batch | ⬜ |
 | R5 | Unicode 归一化最小集（NFD+Mn / strip_accents） | ⬜ |
 | R6 | pre_tokenizer/decoder/template DSL 补全 | 🚧（ByteFallback 已在 R2 完成）|
@@ -28,12 +28,19 @@
 
 ## 已对齐验证的真实模型（与 Python `tokenizers` 逐 token id 一致）
 
-| 模型 | 类型 | 验证点 | 状态 |
-|---|---|---|---|
-| gpt2 | 字节级 BPE | encode/decode + `<|endoftext|>` 内联特殊 token | ✅ |
-| bert-base-uncased | WordPiece + BertNormalizer | encode + 特殊 token + type_ids/mask + encode_pair | ✅ |
-| t5-small | Unigram + Metaspace | encode | ✅ |
-| Llama (hf-internal-testing) | BPE + byte_fallback + Metaspace | encode（含 emoji 字节回退）+ decode 往返 | ✅ |
+通过表驱动的 `parity_test.mbt`（`scripts/fetch_models.py` + `scripts/gen_parity.py` 生成期望），覆盖 9 个真实模型：
+
+| 模型 | 类型 | 状态 |
+|---|---|---|
+| gpt2 | 字节级 BPE | ✅（+ `<|endoftext|>` 内联特殊 token / decode 往返）|
+| roberta-base | 字节级 BPE | ✅ |
+| llama (hf-internal-testing) | BPE + byte_fallback + Metaspace | ✅（emoji 字节回退 + decode 往返）|
+| bert-base-uncased | WordPiece | ✅（+ 特殊 token / type_ids / mask / encode_pair）|
+| bert-base-cased | WordPiece | ✅ |
+| distilbert-base-uncased | WordPiece | ✅ |
+| t5-small | Unigram + Metaspace | ✅ |
+| albert-base-v2 | Unigram | ✅ |
+| xlm-roberta-base | Unigram + NFKC | ✅ |
 
 ## 组件实现矩阵
 

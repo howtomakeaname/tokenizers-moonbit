@@ -7,6 +7,10 @@
 
 let neg_inf : Double = -1.0e308
 
+// Per-unknown-character penalty (kept finite so multiple unks can accumulate
+// without overflowing to -inf). Mirrors sentencepiece's kUnkPenalty scale.
+let unk_penalty : Double = 1.0e4
+
 /// Tokenize a single piece with this Unigram model.
 pub fn UnigramModel::tokenize(
   self : UnigramModel,
@@ -48,8 +52,7 @@ pub fn UnigramModel::tokenize(
     if best[end] == neg_inf && end > 0 {
       let start = end - 1
       if best[start] != neg_inf {
-        // use unk score (very low) so real tokens are always preferred
-        best[end] = best[start] + neg_inf / 2.0
+        best[end] = best[start] - unk_penalty
         back[end] = start
         best_tok[end] = make_piece(chars, start, end)
         best_id[end] = self.unk_id.unwrap_or(-1)
@@ -80,6 +83,35 @@ pub fn UnigramModel::tokenize(
   while k >= 0 {
     out.push(rev[k])
     k = k - 1
+  }
+  // fuse_unk: merge runs of adjacent unk tokens into one (HF default).
+  if self.fuse_unk {
+    match self.unk_id {
+      Some(uid) => fuse_unigram_unk(out, uid)
+      None => out
+    }
+  } else {
+    out
+  }
+}
+
+// Merge adjacent unk tokens (id == uid) into a single spanning token.
+fn fuse_unigram_unk(
+  toks : Array[@types.Token],
+  uid : Int,
+) -> Array[@types.Token] {
+  let out : Array[@types.Token] = []
+  for t in toks {
+    if t.id == uid && out.length() > 0 && out[out.length() - 1].id == uid {
+      let prev = out[out.length() - 1]
+      out[out.length() - 1] = @types.Token::{
+        id: uid,
+        value: prev.value + t.value,
+        offsets: (prev.offsets.0, t.offsets.1),
+      }
+    } else {
+      out.push(t)
+    }
   }
   out
 }
