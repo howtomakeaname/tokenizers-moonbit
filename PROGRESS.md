@@ -139,7 +139,7 @@
 | P1 | `sequence_ids` | ✅ | Encoding 增加字段和访问 API；覆盖 pair/special tokens |
 | P1 | token-char 映射 | ✅ | 已补 `token_to_sequence` / `token_to_chars` / `char_to_token`；覆盖 pair/special/byte offsets，并新增 lookup bench |
 | P1 | `word_ids` / word-char 映射 | ⬜ | 需补 word 边界传播、word_to_tokens/word_to_chars/char_to_word API；覆盖 pair/added tokens/overflow |
-| P1 | Truncation strategy 完整化 | ⬜ | 支持 LongestFirst/OnlyFirst/OnlySecond；pair encode 顺序与 HF 对齐 |
+| P1 | Truncation strategy 完整化 | ✅ | 支持 LongestFirst/OnlyFirst/OnlySecond；pair encode 按 HF 顺序：预留 special slots 后先截断 raw pair，再 post-process/pad |
 | P1 | ByteLevel post-processor `trim_offsets` 细节 | ⬜ | 空白修剪与 HF offsets 对齐；补 RoBERTa/GPT-2 offset 用例 |
 | P2 | Precompiled SentencePiece charsmap 完整解码 | ⬜ | 支持真实 charsmap；补 DeBERTa/Albert/XLM-R 复杂样例 |
 | P2 | 通用 Split/Replace 正则覆盖 | ⬜ | 对常见 Regex pattern 明确支持或显式 Unsupported；避免静默退化 |
@@ -147,6 +147,18 @@
 | P3 | `from_pretrained` / Hub 集成 | ⬜ | 明确 native/js/wasm 可行边界；至少支持本地目录结构 |
 | P3 | batch 并行 / word cache | ⬜ | benchmark 能反映收益；不破坏跨后端确定性 |
 | P4 | trainer / training API | ⏸ | 体量较大，推理兼容性完成后再启动 |
+
+### Benchmark 对比要求
+
+性能结论必须基于 `scripts/bench_compare.py` 的同机对比结果，而不是单独的
+`moon bench` 输出。每个性能相关改动至少记录：目标 backend、语料、模型、
+MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的项目
+应进入优化排期；`< 0.90x` 才能明确宣称本项目在该用例快于 HF。
+
+最近一次抽样（native / mixed / gpt2,bert,llama）：BERT encode/decode 快于 HF
+（约 0.5x），GPT-2 decode 快于 HF（约 0.48x），但 BPE encode 仍落后：llama
+encode 约 1.83x、gpt2 encode 约 1.43x；加载方面 bert/llama from_str 约
+1.2x 落后。下一轮性能优化优先级：BPE encode hot path > 大词表加载。
 
 ## 已知缺口与取舍（TODO）
 

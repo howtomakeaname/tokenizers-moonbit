@@ -13,6 +13,7 @@ pub fn Tokenizer::encode(
   // Special tokens present in the text are always recognized as single tokens;
   // add_special_tokens only controls whether the post-processor template runs.
   let raw = self.encode_raw(text, keep_special=true)
+  let raw = self.truncate_single_raw(raw, add_special_tokens~)
   let processed = if add_special_tokens {
     match self.post_processor {
       Some(pp) => pp.process(raw, None)
@@ -21,7 +22,7 @@ pub fn Tokenizer::encode(
   } else {
     raw
   }
-  self.finalize(processed)
+  self.finalize_padding(processed)
 }
 
 ///|
@@ -35,25 +36,61 @@ pub fn Tokenizer::encode_with_byte_offsets(
   encoding_with_byte_offsets(self.encode(text, add_special_tokens~), text)
 }
 
-// Apply truncation and (fixed) padding to a single encoding.
+// Apply fixed padding to a single encoding. Truncation is applied before
+// post-processing so the behavior matches HF tokenizers.
 
 ///|
-fn Tokenizer::finalize(
+fn Tokenizer::finalize_padding(
   self : Tokenizer,
   enc : @types.Encoding,
 ) -> @types.Encoding {
-  let truncated = match self.truncation {
-    Some(tp) => truncate_encoding(enc, tp)
-    None => enc
-  }
   match self.padding {
     Some(pp) =>
       match pp.strategy {
         // Fixed padding applies per-encoding; BatchLongest only in encode_batch.
-        Fixed(n) => pad_encoding(truncated, n, pp)
-        BatchLongest => truncated
+        Fixed(n) => pad_encoding(enc, n, pp)
+        BatchLongest => enc
       }
-    None => truncated
+    None => enc
+  }
+}
+
+///|
+fn Tokenizer::truncation_for_raw(
+  self : Tokenizer,
+  pair~ : Bool,
+  add_special_tokens~ : Bool,
+) -> TruncationParams? {
+  match self.truncation {
+    None => None
+    Some(tp) => {
+      let added = if add_special_tokens {
+        match self.post_processor {
+          Some(pp) => pp.added_tokens(pair~)
+          None => 0
+        }
+      } else {
+        0
+      }
+      let max_length = if tp.max_length > added {
+        tp.max_length - added
+      } else {
+        0
+      }
+      Some({ ..tp, max_length, })
+    }
+  }
+}
+
+///|
+fn Tokenizer::truncate_single_raw(
+  self : Tokenizer,
+  raw : @types.Encoding,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  match self.truncation_for_raw(pair=false, add_special_tokens~) {
+    Some(tp) => truncate_encoding(raw, tp)
+    None => raw
   }
 }
 
@@ -68,6 +105,7 @@ pub fn Tokenizer::encode_batch(
   // Encode + truncate each; defer padding to a batch pass.
   let encs = texts.map(t => {
     let raw = self.encode_raw(t, keep_special=true)
+    let raw = self.truncate_single_raw(raw, add_special_tokens~)
     let processed = if add_special_tokens {
       match self.post_processor {
         Some(pp) => pp.process(raw, None)
@@ -76,10 +114,7 @@ pub fn Tokenizer::encode_batch(
     } else {
       raw
     }
-    match self.truncation {
-      Some(tp) => truncate_encoding(processed, tp)
-      None => processed
-    }
+    processed
   })
   match self.padding {
     Some(pp) => pad_batch(encs, pp)
@@ -113,15 +148,19 @@ pub fn Tokenizer::encode_pair(
 ) -> @types.Encoding {
   let a = self.encode_raw(text_a, keep_special=true)
   let b = self.encode_raw(text_b, keep_special=true)
+  let (a, b) = match self.truncation_for_raw(pair=true, add_special_tokens~) {
+    Some(tp) => truncate_pair_raw(a, Some(b), tp)
+    None => (a, Some(b))
+  }
   let processed = if add_special_tokens {
     match self.post_processor {
-      Some(pp) => pp.process(a, Some(b))
-      None => concat_encodings(a, b)
+      Some(pp) => pp.process(a, b)
+      None => concat_encodings(a, b.unwrap())
     }
   } else {
-    concat_encodings(a, b)
+    concat_encodings(a, b.unwrap())
   }
-  self.finalize(processed)
+  self.finalize_padding(processed)
 }
 
 ///|

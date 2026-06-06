@@ -38,6 +38,42 @@ pub enum PostProcessor {
 }
 
 ///|
+/// Number of special tokens this processor inserts for single/pair encoding.
+/// Used to mirror HF truncation order: truncate raw sequences while reserving
+/// room for post-processor specials, then post-process, then pad.
+pub fn PostProcessor::added_tokens(
+  self : PostProcessor,
+  pair? : Bool = false,
+) -> Int {
+  match self {
+    TemplateProcessing(single~, pair=pair_template, ..) =>
+      count_specials(if pair { pair_template } else { single })
+    BertProcessing(..) => if pair { 3 } else { 2 }
+    RobertaProcessing(..) => if pair { 4 } else { 2 }
+    ByteLevel(..) => 0
+    Sequence(steps) => {
+      let mut n = 0
+      for step in steps {
+        n = n + step.added_tokens(pair~)
+      }
+      n
+    }
+  }
+}
+
+///|
+fn count_specials(pieces : Array[Piece]) -> Int {
+  let mut n = 0
+  for p in pieces {
+    match p {
+      SpecialTokenRef(..) => n = n + 1
+      SequenceRef(..) => ()
+    }
+  }
+  n
+}
+
+///|
 /// Parse a post_processor config object.
 pub fn PostProcessor::from_json(
   j : Json,

@@ -49,3 +49,47 @@ test "encode_pair applies fixed padding" {
   @test.assert_eq(enc.ids.length(), 8)
   @test.assert_eq(enc.attention_mask, [1, 1, 1, 1, 1, 0, 0, 0])
 }
+
+///|
+fn trunc_strategy_json(strategy : String) -> String {
+  "{\"version\":\"1.0\"," +
+  "\"truncation\":{\"direction\":\"Right\",\"max_length\":8,\"stride\":0,\"strategy\":\"" +
+  strategy +
+  "\"}," +
+  "\"pre_tokenizer\":{\"type\":\"WhitespaceSplit\"}," +
+  "\"model\":{\"type\":\"WordLevel\",\"vocab\":{\"[CLS]\":0,\"[SEP]\":1,\"a0\":10,\"a1\":11,\"a2\":12,\"a3\":13,\"a4\":14,\"b0\":20,\"b1\":21,\"b2\":22,\"b3\":23,\"b4\":24,\"[UNK]\":99},\"unk_token\":\"[UNK]\"}," +
+  "\"post_processor\":{\"type\":\"BertProcessing\",\"cls\":[\"[CLS]\",0],\"sep\":[\"[SEP]\",1]}}"
+}
+
+///|
+test "pair truncation LongestFirst reserves special token slots" {
+  let tok = Tokenizer::from_str(trunc_strategy_json("LongestFirst"))
+  let enc = tok.encode_pair("a0 a1 a2 a3 a4", "b0 b1 b2 b3 b4")
+  @test.assert_eq(enc.tokens, [
+    "[CLS]", "a0", "a1", "[SEP]", "b0", "b1", "b2", "[SEP]",
+  ])
+  @test.assert_eq(enc.sequence_ids(), [
+    None,
+    Some(0),
+    Some(0),
+    None,
+    Some(1),
+    Some(1),
+    Some(1),
+    None,
+  ])
+}
+
+///|
+test "pair truncation OnlyFirst and OnlySecond target one side" {
+  let first = Tokenizer::from_str(trunc_strategy_json("OnlyFirst"))
+  let enc_first = first.encode_pair("a0 a1 a2 a3 a4", "b0 b1 b2 b3 b4")
+  @test.assert_eq(enc_first.tokens, [
+    "[CLS]", "[SEP]", "b0", "b1", "b2", "b3", "b4", "[SEP]",
+  ])
+  let second = Tokenizer::from_str(trunc_strategy_json("OnlySecond"))
+  let enc_second = second.encode_pair("a0 a1 a2 a3 a4", "b0 b1 b2 b3 b4")
+  @test.assert_eq(enc_second.tokens, [
+    "[CLS]", "a0", "a1", "a2", "a3", "a4", "[SEP]", "[SEP]",
+  ])
+}

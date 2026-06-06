@@ -132,10 +132,16 @@ fn parse_truncation(j : Json) -> TruncationParams raise @types.TokenizerError {
     "Left" | "left" => TruncationDirection::Left
     _ => TruncationDirection::Right
   }
+  let strategy = match @types.get_str(obj, "strategy", default="LongestFirst") {
+    "OnlyFirst" | "only_first" => TruncationStrategy::OnlyFirst
+    "OnlySecond" | "only_second" => TruncationStrategy::OnlySecond
+    _ => TruncationStrategy::LongestFirst
+  }
   {
     max_length: @types.get_int(obj, "max_length", default=0),
     stride: @types.get_int(obj, "stride", default=0),
     direction,
+    strategy,
   }
 }
 
