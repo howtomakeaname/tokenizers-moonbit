@@ -1,7 +1,7 @@
 // Core shared types for the tokenizer library.
 
 /// The output of `Tokenizer::encode`, mirroring HuggingFace's `Encoding`.
-pub struct Encoding {
+pub(all) struct Encoding {
   ids : Array[Int]
   type_ids : Array[Int]
   tokens : Array[String]
@@ -11,7 +11,7 @@ pub struct Encoding {
 } derive(Show, Eq)
 
 /// A token produced by a model: its id, surface string and char offsets.
-pub struct Token {
+pub(all) struct Token {
   id : Int
   value : String
   offsets : (Int, Int)
@@ -19,7 +19,7 @@ pub struct Token {
 
 /// An intermediate piece produced by pre-tokenization: a substring plus the
 /// char offsets it occupies in the original (normalized) text.
-pub struct Split {
+pub(all) struct Split {
   value : String
   offsets : (Int, Int)
 } derive(Show, Eq)

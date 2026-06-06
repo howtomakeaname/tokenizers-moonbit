@@ -74,3 +74,17 @@ pub fn Model::vocab_size(self : Model) -> Int {
     Unigram(m) => m.vocab.length()
   }
 }
+
+/// Tokenize one pre-token (word) into tokens. `offset` is the char offset of
+/// the word within the original text.
+pub fn Model::tokenize(
+  self : Model,
+  word : String,
+  offset~ : Int = 0,
+) -> Array[@types.Token] {
+  match self {
+    BPE(m) => m.tokenize(word, offset~)
+    WordPiece(_) => [] // P5
+    Unigram(_) => [] // P6
+  }
+}
