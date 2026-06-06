@@ -1,0 +1,62 @@
+[
+  {
+    "text": "Hello world",
+    "ids": [
+      15496,
+      995
+    ],
+    "type_ids": [
+      0,
+      0
+    ],
+    "special_tokens_mask": [
+      0,
+      0
+    ]
+  },
+  {
+    "text": "The quick brown fox.",
+    "ids": [
+      464,
+      2068,
+      7586,
+      21831,
+      13
+    ],
+    "type_ids": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "special_tokens_mask": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "text": "tokenization is fun",
+    "ids": [
+      30001,
+      1634,
+      318,
+      1257
+    ],
+    "type_ids": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "special_tokens_mask": [
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+]
