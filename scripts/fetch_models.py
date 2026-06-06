@@ -30,6 +30,11 @@ MODELS = {
     "t5": "https://huggingface.co/t5-small/resolve/main/tokenizer.json",
     "albert": "https://huggingface.co/albert-base-v2/resolve/main/tokenizer.json",
     "xlm_roberta": "https://huggingface.co/xlm-roberta-base/resolve/main/tokenizer.json",
+    # Modern LLMs (Qwen/Llama-3 family Split pattern + ByteLevel)
+    "Qwen2.5": "https://huggingface.co/Qwen/Qwen2.5-0.5B/resolve/main/tokenizer.json",
+    "qwen3": "https://huggingface.co/Qwen/Qwen3-0.6B/resolve/main/tokenizer.json",
+    "deepseek": "https://huggingface.co/deepseek-ai/DeepSeek-V2-Lite/resolve/main/tokenizer.json",
+    "phi3": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct/resolve/main/tokenizer.json",
 }
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "tests", "data")

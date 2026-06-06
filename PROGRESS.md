@@ -41,6 +41,10 @@
 | t5-small | Unigram + Metaspace | ✅ |
 | albert-base-v2 | Unigram | ✅ |
 | xlm-roberta-base | Unigram + NFKC | ✅ |
+| Qwen2.5-0.5B | BPE + NFC + Split(Qwen 正则) + ByteLevel | ✅ |
+| Qwen3-0.6B | BPE + NFC + Split(Qwen 正则) + ByteLevel | ✅ |
+| DeepSeek-V2-Lite | BPE + 多步 Split + Digits + ByteLevel | ✅ |
+| Phi-3-mini | BPE + byte_fallback + Prepend | ✅ |
 
 ## 组件实现矩阵
 
@@ -69,7 +73,8 @@
 |---|---|
 | ByteLevel（手写 GPT-2 扫描）| ✅ |
 | Whitespace / WhitespaceSplit / BertPreTokenizer / Punctuation / Metaspace / Sequence | ✅ |
-| Split（完整 5 behavior）/ Digits / Delimiter / FixedLength / UnicodeScripts | ⬜ R6 |
+| Split（GPT-2 / Qwen-Llama3 家族正则）| ✅ 现代 LLM 主线 |
+| Split（任意正则）/ Digits / Delimiter / FixedLength / UnicodeScripts | 🚧 未识别 pattern 退化为单段 |
 
 ### Decoders
 | 组件 | 状态 |

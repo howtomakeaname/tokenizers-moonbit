@@ -19,10 +19,56 @@ pub fn PreTokenizer::pre_tokenize(
     Punctuation => punctuation_split(text, base_offset)
     Metaspace(replacement~, prepend_scheme~) =>
       metaspace_pre_tokenize(text, replacement, prepend_scheme, base_offset)
+    Split(pattern~, ..) => split_pre_tokenize(text, pattern, base_offset)
     Sequence(steps) => apply_sequence(steps, text, base_offset)
     // Other variants are handled in later phases; default to a single piece.
     _ => [{ value: text, offsets: (base_offset, base_offset + text.char_length()) }]
   }
+}
+
+// Split pre-tokenizer. We recognize the well-known GPT-2 / Qwen-Llama3 family
+// regexes (used verbatim by most modern models) and run a dedicated scanner.
+// Each match becomes one piece (HF's Split + Isolated over a full-coverage
+// regex). Offsets are tracked over the original char positions.
+fn split_pre_tokenize(
+  text : String,
+  pattern : String,
+  base_offset : Int,
+) -> Array[@types.Split] {
+  let pieces = if is_qwen_pattern(pattern) {
+    qwen_split(text)
+  } else if is_gpt2_pattern(pattern) {
+    gpt2_split(text)
+  } else {
+    // Unknown pattern: leave the text as a single piece (documented limit).
+    [text]
+  }
+  pieces_to_splits(pieces, base_offset)
+}
+
+// Recognize the Qwen2/Qwen3/Llama-3 pattern (single-digit \p{N}, (?i:...)).
+fn is_qwen_pattern(p : String) -> Bool {
+  p.contains("(?i:'s|'t") || (p.contains("\\p{N}|") && p.contains("[\\r\\n]*"))
+}
+
+// Recognize the classic GPT-2 pattern.
+fn is_gpt2_pattern(p : String) -> Bool {
+  p.contains("'s|'t|'re") && p.contains("?\\p{L}+")
+}
+
+// Turn raw piece strings into Splits with running char offsets.
+fn pieces_to_splits(
+  pieces : Array[String],
+  base_offset : Int,
+) -> Array[@types.Split] {
+  let out : Array[@types.Split] = []
+  let mut cursor = base_offset
+  for p in pieces {
+    let len = p.char_length()
+    out.push({ value: p, offsets: (cursor, cursor + len) })
+    cursor = cursor + len
+  }
+  out
 }
 
 // ByteLevel: optionally prepend a space, regex-split (GPT-2), byte-map pieces.

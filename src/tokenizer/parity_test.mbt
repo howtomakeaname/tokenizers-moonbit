@@ -5,10 +5,11 @@
 //
 // Covers every model family the port implements: byte-level BPE (gpt2/roberta),
 // byte_fallback BPE (llama), WordPiece cased+uncased (bert/bert_cased/
-// distilbert), and Unigram/SentencePiece (t5/albert/xlm_roberta).
+// distilbert), Unigram/SentencePiece (t5/albert/xlm_roberta), and modern LLMs
+// using the Qwen/Llama-3 Split pattern (Qwen2.5/Qwen3/DeepSeek/Phi-3).
 let parity_models : Array[String] = [
   "gpt2", "roberta", "llama", "bert", "bert_cased", "distilbert", "t5",
-  "albert", "xlm_roberta",
+  "albert", "xlm_roberta", "Qwen2.5", "qwen3", "deepseek", "phi3",
 ]
 
 // Run parity for one model; returns (ran, mismatches).

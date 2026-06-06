@@ -202,3 +202,142 @@ pub fn is_letter(c : Char) -> Bool {
   }
   false
 }
+
+// The Qwen2/Qwen3/Llama-3 family pre-tokenization pattern (also used by
+// DeepSeek-V3 etc.). It differs from GPT-2's in several ways:
+//   (?i:'s|'t|'re|'ve|'m|'ll|'d)            -- case-insensitive contractions
+//   |[^\r\n\p{L}\p{N}]?\p{L}+               -- letters, optionally prefixed by a
+//                                              single non-letter/digit/newline
+//   |\p{N}                                  -- a SINGLE digit (not a run)
+//   | ?[^\s\p{L}\p{N}]+[\r\n]*              -- punctuation run + trailing newlines
+//   |\s*[\r\n]+                             -- blank lines
+//   |\s+(?!\S)|\s+                          -- trailing / interior whitespace
+//
+// As with gpt2_split, each leftmost match becomes one piece (Split + Isolated).
+pub fn qwen_split(text : String) -> Array[String] {
+  let chars = text.to_array()
+  let n = chars.length()
+  let out : Array[String] = []
+  let mut i = 0
+  while i < n {
+    // 1) case-insensitive contraction 's 't 're 've 'm 'll 'd
+    let contr = match_contraction_ci(chars, i, n)
+    if contr > 0 {
+      out.push(slice(chars, i, i + contr))
+      i = i + contr
+      continue
+    }
+    let c = chars[i]
+    // 2) [^\r\n\p{L}\p{N}]? \p{L}+  : letters with an optional single non-LN
+    //    prefix char (that prefix may itself be a space or punctuation, but not
+    //    a newline). Try: optional one prefix char if the next char is a letter.
+    if !is_letter(c) && c != '\r' && c != '\n' && !is_number(c) {
+      if i + 1 < n && is_letter(chars[i + 1]) {
+        let mut j = i + 1
+        while j < n && is_letter(chars[j]) {
+          j = j + 1
+        }
+        out.push(slice(chars, i, j))
+        i = j
+        continue
+      }
+    }
+    if is_letter(c) {
+      let mut j = i
+      while j < n && is_letter(chars[j]) {
+        j = j + 1
+      }
+      out.push(slice(chars, i, j))
+      i = j
+      continue
+    }
+    // 3) \p{N} : a single digit
+    if is_number(c) {
+      out.push(slice(chars, i, i + 1))
+      i = i + 1
+      continue
+    }
+    // 4)  ?[^\s\p{L}\p{N}]+[\r\n]*  : optional leading space, punctuation run,
+    //    then any trailing \r\n characters.
+    let has_sp_prefix = c == ' ' &&
+      i + 1 < n &&
+      !is_space(chars[i + 1]) &&
+      !is_letter(chars[i + 1]) &&
+      !is_number(chars[i + 1])
+    let punct_start = if has_sp_prefix { i + 1 } else { i }
+    if punct_start < n &&
+      !is_space(chars[punct_start]) &&
+      !is_letter(chars[punct_start]) &&
+      !is_number(chars[punct_start]) {
+      let mut j = punct_start
+      while j < n && !is_space(chars[j]) && !is_letter(chars[j]) && !is_number(chars[j]) {
+        j = j + 1
+      }
+      // [\r\n]*
+      while j < n && (chars[j] == '\r' || chars[j] == '\n') {
+        j = j + 1
+      }
+      out.push(slice(chars, i, j))
+      i = j
+      continue
+    }
+    // 5) \s*[\r\n]+ : run of whitespace ending in newlines. Gather whitespace;
+    //    if it contains a newline, emit through the last newline.
+    if is_space(c) {
+      let mut j = i
+      while j < n && is_space(chars[j]) {
+        j = j + 1
+      }
+      // find last newline in [i, j)
+      let mut last_nl = -1
+      for k in i..<j {
+        if chars[k] == '\r' || chars[k] == '\n' {
+          last_nl = k
+        }
+      }
+      if last_nl >= 0 {
+        out.push(slice(chars, i, last_nl + 1))
+        i = last_nl + 1
+        continue
+      }
+      // 6) \s+(?!\S) | \s+ : trailing-aware whitespace (same as GPT-2).
+      if j < n && j - i > 1 {
+        out.push(slice(chars, i, j - 1))
+        i = j - 1
+      } else {
+        out.push(slice(chars, i, j))
+        i = j
+      }
+      continue
+    }
+    // Fallback (should not happen): consume one char.
+    out.push(slice(chars, i, i + 1))
+    i = i + 1
+  }
+  out
+}
+
+// Case-insensitive contraction match (Qwen uses (?i:...)).
+fn match_contraction_ci(chars : Array[Char], i : Int, n : Int) -> Int {
+  if i >= n || chars[i] != '\'' {
+    return 0
+  }
+  fn lower(k : Int) -> Char {
+    if i + k < n {
+      chars[i + k].to_ascii_lowercase()
+    } else {
+      '\u{0}'
+    }
+  }
+  let c1 = lower(1)
+  let c2 = lower(2)
+  if c1 == 's' || c1 == 't' || c1 == 'm' || c1 == 'd' {
+    return 2
+  }
+  if (c1 == 'r' && c2 == 'e') ||
+    (c1 == 'v' && c2 == 'e') ||
+    (c1 == 'l' && c2 == 'l') {
+    return 3
+  }
+  0
+}
