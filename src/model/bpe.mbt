@@ -27,6 +27,16 @@ pub fn BPEModel::tokenize(
     return []
   }
 
+  // ignore_merges fast path: if the whole word is directly in the vocab, emit
+  // it as a single token without running any merges (GPT-4 / tiktoken style).
+  if self.ignore_merges {
+    match self.vocab.get(word) {
+      Some(id) =>
+        return [@types.Token::{ id, value: word, offsets: (offset, offset + n) }]
+      None => ()
+    }
+  }
+
   // Build initial symbols, applying optional prefix/suffix like HF does.
   let symbols : Array[Symbol] = []
   for i, c in chars {
@@ -90,12 +100,7 @@ fn BPEModel::collect_tokens(
   chars : Array[Char],
   offset : Int,
 ) -> Array[@types.Token] {
-  let out : Array[@types.Token] = []
-  // Track char offsets by counting code points consumed per surviving symbol.
-  // The stored symbol values may carry prefix/suffix, so we recompute spans by
-  // walking lengths of the original chars covered. Simpler: track via a cursor
-  // over the linked list using each symbol's covered char count.
-  // We recompute char spans from the surviving order using char counts.
+  let raw : Array[@types.Token] = []
   let mut idx = 0
   // find head
   for i in 0..<symbols.length() {
@@ -107,29 +112,129 @@ fn BPEModel::collect_tokens(
   let mut char_pos = 0
   while idx >= 0 {
     let sym = symbols[idx]
-    // Number of original code points this symbol covers = (next start - start).
-    // We derive it from the contiguous chars; since merges only join adjacent
-    // symbols, covered length equals the span between this node and the next.
     let span = symbol_char_span(symbols, idx, chars.length())
-    let surface = make_surface(chars, char_pos, char_pos + span)
-    let token = match self.lookup(sym.value) {
-      Some(id) => @types.Token::{ id, value: sym.value, offsets: (offset + char_pos, offset + char_pos + span) }
-      None =>
-        match self.unk_token {
-          Some(unk) =>
-            match self.vocab.get(unk) {
-              Some(uid) =>
-                @types.Token::{ id: uid, value: unk, offsets: (offset + char_pos, offset + char_pos + span) }
-              None =>
-                @types.Token::{ id: -1, value: surface, offsets: (offset + char_pos, offset + char_pos + span) }
+    let start = offset + char_pos
+    let stop = offset + char_pos + span
+    match self.lookup(sym.value) {
+      Some(id) =>
+        raw.push(@types.Token::{ id, value: sym.value, offsets: (start, stop) })
+      None => {
+        // Try byte_fallback: encode the surface's bytes as <0xXX> tokens, but
+        // only if every byte token exists in the vocab (HF semantics).
+        let surface = make_surface(chars, char_pos, char_pos + span)
+        let fb = if self.byte_fallback {
+          self.try_byte_fallback(surface, start, stop)
+        } else {
+          None
+        }
+        match fb {
+          Some(toks) => for t in toks {
+              raw.push(t)
             }
           None =>
-            @types.Token::{ id: -1, value: sym.value, offsets: (offset + char_pos, offset + char_pos + span) }
+            // unk fallback
+            match self.unk_token {
+              Some(unk) =>
+                match self.vocab.get(unk) {
+                  Some(uid) =>
+                    raw.push(@types.Token::{
+                      id: uid,
+                      value: unk,
+                      offsets: (start, stop),
+                    })
+                  None =>
+                    raw.push(@types.Token::{
+                      id: -1,
+                      value: surface,
+                      offsets: (start, stop),
+                    })
+                }
+              None =>
+                raw.push(@types.Token::{
+                  id: -1,
+                  value: sym.value,
+                  offsets: (start, stop),
+                })
+            }
         }
+      }
     }
-    out.push(token)
     char_pos = char_pos + span
     idx = sym.next
+  }
+  // fuse_unk: merge adjacent unk tokens into one.
+  if self.fuse_unk {
+    fuse_unk_tokens(raw, self.unk_id())
+  } else {
+    raw
+  }
+}
+
+// The vocab id of the unk token, if any.
+fn BPEModel::unk_id(self : BPEModel) -> Int? {
+  match self.unk_token {
+    Some(unk) => self.vocab.get(unk)
+    None => None
+  }
+}
+
+// Try to represent `surface` as a sequence of <0xXX> byte tokens (uppercase,
+// two hex digits). Returns None if any byte token is missing from the vocab.
+fn BPEModel::try_byte_fallback(
+  self : BPEModel,
+  surface : String,
+  start : Int,
+  stop : Int,
+) -> Array[@types.Token]? {
+  let bytes = @utf8.encode(surface)
+  let toks : Array[@types.Token] = []
+  for i in 0..<bytes.length() {
+    let tok = byte_hex_token(bytes[i].to_int())
+    match self.vocab.get(tok) {
+      Some(id) =>
+        toks.push(@types.Token::{ id, value: tok, offsets: (start, stop) })
+      None => return None
+    }
+  }
+  Some(toks)
+}
+
+// "<0xE2>" style token: uppercase, fixed two hex digits.
+fn byte_hex_token(b : Int) -> String {
+  let digits = "0123456789ABCDEF"
+  let hi = digits.to_array()[b / 16]
+  let lo = digits.to_array()[b % 16]
+  let sb = StringBuilder::new()
+  sb.write_string("<0x")
+  sb.write_char(hi)
+  sb.write_char(lo)
+  sb.write_char('>')
+  sb.to_string()
+}
+
+// Merge runs of adjacent unk tokens (id == unk_id) into a single token whose
+// value is the concatenation and whose offsets span the run.
+fn fuse_unk_tokens(
+  toks : Array[@types.Token],
+  unk : Int?,
+) -> Array[@types.Token] {
+  match unk {
+    None => return toks
+    Some(_) => ()
+  }
+  let unk_id = unk.unwrap()
+  let out : Array[@types.Token] = []
+  for t in toks {
+    if t.id == unk_id && out.length() > 0 && out[out.length() - 1].id == unk_id {
+      let prev = out[out.length() - 1]
+      out[out.length() - 1] = @types.Token::{
+        id: unk_id,
+        value: prev.value + t.value,
+        offsets: (prev.offsets.0, t.offsets.1),
+      }
+    } else {
+      out.push(t)
+    }
   }
   out
 }

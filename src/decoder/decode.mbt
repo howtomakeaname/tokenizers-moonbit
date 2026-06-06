@@ -1,53 +1,114 @@
 // Decoding behaviour: token surfaces -> reconstructed text.
+//
+// Following HuggingFace, each decoder is a `decode_chain(tokens) -> tokens`
+// transform; `Sequence` composes them, and the final text is the join of the
+// resulting token list. This token-list model is required for decoders like
+// ByteFallback that must group consecutive byte tokens before a later Fuse.
 
 /// Decode a list of token surface strings back into text.
 pub fn Decoder::decode(self : Decoder, tokens : Array[String]) -> String {
+  let out = self.decode_chain(tokens)
+  let sb = StringBuilder::new()
+  for t in out {
+    sb.write_string(t)
+  }
+  sb.to_string()
+}
+
+/// Transform a token list (HF decode_chain semantics).
+pub fn Decoder::decode_chain(
+  self : Decoder,
+  tokens : Array[String],
+) -> Array[String] {
   match self {
-    ByteLevel(..) => {
-      // Concatenate all token surfaces, then map byte-level chars back to bytes
-      // and decode as UTF-8.
-      let sb = StringBuilder::new()
-      for t in tokens {
-        sb.write_string(t)
-      }
-      @pretokenizer.byte_level_decode_str(sb.to_string())
-    }
+    ByteLevel(..) =>
+      // Map byte-level chars back to bytes across the whole sequence.
+      [
+        @pretokenizer.byte_level_decode_str(join(tokens)),
+      ]
     WordPiece(prefix~, cleanup~) => decode_wordpiece(tokens, prefix, cleanup)
     BPEDecoder(suffix~) => decode_bpe(tokens, suffix)
     Metaspace(replacement~, ..) => decode_metaspace(tokens, replacement)
-    Fuse => {
-      let sb = StringBuilder::new()
-      for t in tokens {
-        sb.write_string(t)
-      }
-      sb.to_string()
-    }
-    Replace(pattern~, content~) => {
-      let sb = StringBuilder::new()
-      for t in tokens {
-        sb.write_string(t)
-      }
-      replace_all(sb.to_string(), pattern, content)
-    }
-    Strip(content~, start~, stop~) => {
-      // Apply per-token strip of up to `start`/`stop` leading/trailing `content`.
-      let out = StringBuilder::new()
-      for t in tokens {
-        out.write_string(strip_token(t, content, start, stop))
-      }
-      out.to_string()
-    }
+    Fuse => [join(tokens)]
+    Replace(pattern~, content~) =>
+      tokens.map(t => replace_all(t, pattern, content))
+    Strip(content~, start~, stop~) =>
+      tokens.map(t => strip_token(t, content, start, stop))
+    ByteFallback => decode_byte_fallback(tokens)
     Sequence(decoders) => {
-      // Run a decoder sequence: each step transforms the token list. For the
-      // simple text-producing steps we fold into one string progressively.
-      // Most real configs are Sequence of [Replace, ByteLevel, Fuse]; we apply
-      // them by decoding to a single string then re-wrapping as one token.
       let mut toks = tokens
       for d in decoders {
-        toks = [d.decode(toks)]
+        toks = d.decode_chain(toks)
       }
-      toks[0]
+      toks
     }
+  }
+}
+
+fn join(tokens : Array[String]) -> String {
+  let sb = StringBuilder::new()
+  for t in tokens {
+    sb.write_string(t)
+  }
+  sb.to_string()
+}
+
+// ByteFallback: group runs of "<0xXX>" tokens, decode their bytes as UTF-8.
+// Non-byte tokens pass through unchanged. Invalid UTF-8 byte runs become the
+// replacement char per byte (HF behaviour).
+fn decode_byte_fallback(tokens : Array[String]) -> Array[String] {
+  let out : Array[String] = []
+  let pending : Array[Int] = []
+  fn flush() -> Unit {
+    if pending.length() > 0 {
+      let bytes = @buffer.Buffer::Buffer()
+      for b in pending {
+        bytes.write_byte(b.to_byte())
+      }
+      out.push(@utf8.decode_lossy(bytes.to_bytes()[:]))
+      pending.clear()
+    }
+  }
+
+  for t in tokens {
+    match parse_byte_token(t) {
+      Some(b) => pending.push(b)
+      None => {
+        flush()
+        out.push(t)
+      }
+    }
+  }
+  flush()
+  out
+}
+
+// Parse "<0xXX>" -> byte value; None otherwise.
+fn parse_byte_token(t : String) -> Int? {
+  let cs = t.to_array()
+  if cs.length() != 6 {
+    return None
+  }
+  if cs[0] != '<' || cs[1] != '0' || cs[2] != 'x' || cs[5] != '>' {
+    return None
+  }
+  let hi = hex_val(cs[3])
+  let lo = hex_val(cs[4])
+  match (hi, lo) {
+    (Some(h), Some(l)) => Some(h * 16 + l)
+    _ => None
+  }
+}
+
+fn hex_val(c : Char) -> Int? {
+  if c >= '0' && c <= '9' {
+    Some(c.to_int() - '0'.to_int())
+  } else if c >= 'A' && c <= 'F' {
+    Some(c.to_int() - 'A'.to_int() + 10)
+  } else if c >= 'a' && c <= 'f' {
+    Some(c.to_int() - 'a'.to_int() + 10)
+  } else {
+    None
   }
 }
 
@@ -55,13 +116,12 @@ fn decode_wordpiece(
   tokens : Array[String],
   prefix : String,
   cleanup : Bool,
-) -> String {
+) -> Array[String] {
   let sb = StringBuilder::new()
   for i, t in tokens {
     if i == 0 {
       sb.write_string(t)
     } else if t.has_prefix(prefix) {
-      // continuation subword: drop prefix, no space
       sb.write_string(drop_prefix(t, prefix))
     } else {
       sb.write_char(' ')
@@ -69,46 +129,34 @@ fn decode_wordpiece(
     }
   }
   let s = sb.to_string()
-  if cleanup {
-    cleanup_text(s)
-  } else {
-    s
-  }
+  [if cleanup { cleanup_text(s) } else { s }]
 }
 
-fn decode_bpe(tokens : Array[String], suffix : String) -> String {
-  let sb = StringBuilder::new()
-  for t in tokens {
-    let piece = if t.has_suffix(suffix) {
-      drop_suffix(t, suffix) + " "
-    } else {
+fn decode_bpe(tokens : Array[String], suffix : String) -> Array[String] {
+  tokens.map(t => if t.has_suffix(suffix) { drop_suffix(t, suffix) + " " } else {
       t
-    }
-    sb.write_string(piece)
-  }
-  sb.to_string()
+    })
 }
 
-fn decode_metaspace(tokens : Array[String], replacement : Char) -> String {
-  // Replace the metaspace char with a regular space; the leading metaspace of
-  // the first token is dropped (HF prepend behaviour).
-  let sb = StringBuilder::new()
-  for t in tokens {
+fn decode_metaspace(
+  tokens : Array[String],
+  replacement : Char,
+) -> Array[String] {
+  let out : Array[String] = []
+  for i, t in tokens {
+    let sb = StringBuilder::new()
     for c in t {
-      if c == replacement {
-        sb.write_char(' ')
-      } else {
-        sb.write_char(c)
-      }
+      sb.write_char(if c == replacement { ' ' } else { c })
+    }
+    let s = sb.to_string()
+    // Drop the leading space introduced by the prepended metaspace on token 0.
+    if i == 0 && s.has_prefix(" ") {
+      out.push(drop_prefix(s, " "))
+    } else {
+      out.push(s)
     }
   }
-  let s = sb.to_string()
-  // Drop a single leading space introduced by the prepended metaspace.
-  if s.has_prefix(" ") {
-    drop_prefix(s, " ")
-  } else {
-    s
-  }
+  out
 }
 
 // --- small string helpers ---

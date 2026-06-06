@@ -24,6 +24,7 @@ fn mk_bpe(
     end_of_word_suffix: None,
     fuse_unk: false,
     byte_fallback: false,
+    ignore_merges: false,
   })
 }
 

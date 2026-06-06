@@ -19,6 +19,7 @@ pub fn Model::from_json(j : Json) -> Model raise @types.TokenizerError {
     "BPE" => BPE(parse_bpe(obj))
     "WordPiece" => WordPiece(parse_wordpiece(obj))
     "Unigram" => Unigram(parse_unigram(obj))
+    "WordLevel" => WordLevel(parse_wordlevel(obj))
     other => raise @types.UnsupportedComponent("model type: \{other}")
   }
 }
@@ -101,7 +102,15 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
     end_of_word_suffix: @types.get_str_opt(obj, "end_of_word_suffix"),
     fuse_unk: @types.get_bool(obj, "fuse_unk", default=false),
     byte_fallback: @types.get_bool(obj, "byte_fallback", default=false),
+    ignore_merges: @types.get_bool(obj, "ignore_merges", default=false),
   }
+}
+
+fn parse_wordlevel(
+  obj : Map[String, Json],
+) -> WordLevelModel raise @types.TokenizerError {
+  let (vocab, vocab_r) = parse_vocab(obj)
+  { vocab, vocab_r, unk_token: @types.get_str(obj, "unk_token", default="<unk>") }
 }
 
 fn parse_wordpiece(

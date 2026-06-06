@@ -20,6 +20,14 @@ pub struct BPEModel {
   end_of_word_suffix : String?
   fuse_unk : Bool
   byte_fallback : Bool
+  ignore_merges : Bool
+}
+
+/// WordLevel model state: a flat token->id map with an unk fallback.
+pub struct WordLevelModel {
+  vocab : Map[String, Int]
+  vocab_r : Map[Int, String]
+  unk_token : String
 }
 
 /// WordPiece model state.
@@ -46,6 +54,7 @@ pub enum Model {
   BPE(BPEModel)
   WordPiece(WordPieceModel)
   Unigram(UnigramModel)
+  WordLevel(WordLevelModel)
 }
 
 /// Look up a token surface by id (decode direction).
@@ -54,6 +63,7 @@ pub fn Model::id_to_token(self : Model, id : Int) -> String? {
     BPE(m) => m.vocab_r.get(id)
     WordPiece(m) => m.vocab_r.get(id)
     Unigram(m) => m.vocab_r.get(id)
+    WordLevel(m) => m.vocab_r.get(id)
   }
 }
 
@@ -63,6 +73,7 @@ pub fn Model::token_to_id(self : Model, token : String) -> Int? {
     BPE(m) => m.vocab.get(token)
     WordPiece(m) => m.vocab.get(token)
     Unigram(m) => m.vocab.get(token).map(fn(p) { p.0 })
+    WordLevel(m) => m.vocab.get(token)
   }
 }
 
@@ -72,6 +83,7 @@ pub fn Model::vocab_size(self : Model) -> Int {
     BPE(m) => m.vocab.length()
     WordPiece(m) => m.vocab.length()
     Unigram(m) => m.vocab.length()
+    WordLevel(m) => m.vocab.length()
   }
 }
 
@@ -86,5 +98,6 @@ pub fn Model::tokenize(
     BPE(m) => m.tokenize(word, offset~)
     WordPiece(m) => m.tokenize(word, offset~)
     Unigram(m) => m.tokenize(word, offset~)
+    WordLevel(m) => m.tokenize(word, offset~)
   }
 }

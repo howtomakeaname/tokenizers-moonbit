@@ -11,6 +11,8 @@ pub enum Decoder {
   Strip(content~ : Char, start~ : Int, stop~ : Int)
   Fuse
   Replace(pattern~ : String, content~ : String)
+  // Reassemble <0xXX> byte tokens into UTF-8 text.
+  ByteFallback
   Sequence(Array[Decoder])
 }
 
@@ -45,6 +47,7 @@ pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
       )
     "BPEDecoder" => BPEDecoder(suffix=@types.get_str(obj, "suffix", default="</w>"))
     "Fuse" => Fuse
+    "ByteFallback" => ByteFallback
     "Strip" =>
       Strip(
         content=@types.get_char(obj, "content", default=' '),
