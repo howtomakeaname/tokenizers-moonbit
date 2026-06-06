@@ -2,10 +2,9 @@
 //
 // P1 scope: enum + deserialization. Actual `normalize` behaviour for the
 // simple variants (Lowercase/Strip/Replace/Sequence/Prepend/BertNormalizer)
-// lands in P5/P7. The NFC/NFD/NFKC/NFKD variants are parsed here but require a
-// Unicode normalization data table (TODO); they currently act as identity.
+// and Unicode NFC/NFD/NFKC/NFKD are implemented in normalize.mbt.
 
-pub enum Normalizer {
+pub(all) enum Normalizer {
   NFC
   NFD
   NFKC

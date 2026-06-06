@@ -94,6 +94,82 @@ pub fn gpt2_split(text : String) -> Array[String] {
   out
 }
 
+/// Split text with CLIP's regex:
+///   <\|startoftext\|>|<\|endoftext\|>|'s|'t|'re|'ve|'m|'ll|'d|
+///   [\p{L}]+|[\p{N}]|[^\s\p{L}\p{N}]+
+///
+/// This differs from GPT-2 by not attaching leading spaces to following words
+/// and by emitting single digits. Whitespace is removed by the Split stage.
+pub fn clip_split(text : String) -> Array[String] {
+  let chars = text.to_array()
+  let n = chars.length()
+  let out : Array[String] = []
+  let mut i = 0
+  while i < n {
+    if is_space(chars[i]) {
+      i = i + 1
+      continue
+    }
+    let special = match_clip_special(chars, i, n)
+    if special > 0 {
+      out.push(slice(chars, i, i + special))
+      i = i + special
+      continue
+    }
+    let contr = match_contraction(chars, i, n)
+    if contr > 0 {
+      out.push(slice(chars, i, i + contr))
+      i = i + contr
+      continue
+    }
+    let c = chars[i]
+    if is_letter(c) {
+      let mut j = i
+      while j < n && is_letter(chars[j]) {
+        j = j + 1
+      }
+      out.push(slice(chars, i, j))
+      i = j
+      continue
+    }
+    if is_number(c) {
+      out.push(slice(chars, i, i + 1))
+      i = i + 1
+      continue
+    }
+    let mut j = i
+    while j < n && !is_space(chars[j]) && !is_letter(chars[j]) && !is_number(chars[j]) {
+      j = j + 1
+    }
+    out.push(slice(chars, i, j))
+    i = j
+  }
+  out
+}
+
+fn match_clip_special(chars : Array[Char], i : Int, n : Int) -> Int {
+  if matches_literal(chars, i, n, "<|startoftext|>") {
+    return 15
+  }
+  if matches_literal(chars, i, n, "<|endoftext|>") {
+    return 13
+  }
+  0
+}
+
+fn matches_literal(chars : Array[Char], i : Int, n : Int, lit : String) -> Bool {
+  let pat = lit.to_array()
+  if i + pat.length() > n {
+    return false
+  }
+  for k in 0..<pat.length() {
+    if chars[i + k] != pat[k] {
+      return false
+    }
+  }
+  true
+}
+
 // Match a contraction at position i; returns its char length or 0.
 fn match_contraction(chars : Array[Char], i : Int, n : Int) -> Int {
   if i >= n || chars[i] != '\'' {

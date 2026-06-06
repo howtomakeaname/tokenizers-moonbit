@@ -1,8 +1,7 @@
 // Normalization behaviour: text -> normalized text.
 //
-// P3 scope: enough to make GPT-2 work (which has a null normalizer). The
-// simple variants are implemented here; NFC/NFD/NFKC/NFKD act as identity
-// until a Unicode normalization table is added (TODO, see plan P7/risks).
+// P3 scope started with GPT-2/simple variants; this file now also routes
+// Unicode NFC/NFD/NFKC/NFKD through generated normalization tables.
 
 /// Apply this normalizer to a string.
 pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
@@ -35,21 +34,63 @@ pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
       }
       s
     }
-    // NFC/NFD/NFKC/NFKD/Precompiled: identity until full tables land (TODO).
-    _ => input
+    NFC => normalize_unicode(input, compat=false, compose=true)
+    NFD => normalize_unicode(input, compat=false, compose=false)
+    NFKC => normalize_unicode(input, compat=true, compose=true)
+    NFKD => normalize_unicode(input, compat=true, compose=false)
+    // Full SentencePiece precompiled charmap decoding is TODO; the common
+    // whitespace normalization it performs is implemented here for DeBERTa/SPM.
+    Precompiled => precompiled_normalize(input)
   }
+}
+
+// Minimal SentencePiece Precompiled normalizer behavior: map whitespace runs to
+// one ASCII space. This matches the part of the embedded charsmap that affects
+// the current fixture set (T5/ALBERT/XLM-R/DeBERTa) without decoding the full
+// binary charsmap yet.
+fn precompiled_normalize(s : String) -> String {
+  let sb = StringBuilder::new()
+  let mut prev_ws = false
+  for c in s {
+    if is_ws(c) {
+      if !prev_ws {
+        sb.write_char(' ')
+        prev_ws = true
+      }
+    } else {
+      sb.write_char(c)
+      prev_ws = false
+    }
+  }
+  sb.to_string()
 }
 
 // strip_accents: remove combining marks via the precomputed NFD-minus-Mn table.
 fn strip_accents(s : String) -> String {
   let sb = StringBuilder::new()
   for c in s {
-    match accent_map().get(c.to_int()) {
+    let cp = c.to_int()
+    if is_combining_mark(cp) {
+      continue
+    }
+    match accent_map().get(cp) {
       Some(stripped) => sb.write_string(stripped)
       None => sb.write_char(c)
     }
   }
   sb.to_string()
+}
+
+// HF StripAccents is NFD then drop Unicode category Mn. The precomputed
+// `accent_map` covers precomposed characters such as é -> e. This predicate
+// additionally drops already-decomposed combining marks, which is required when
+// StripAccents follows NFKD in tokenizer.json (e.g. ALBERT).
+fn is_combining_mark(cp : Int) -> Bool {
+  (cp >= 0x0300 && cp <= 0x036F) ||
+  (cp >= 0x1AB0 && cp <= 0x1AFF) ||
+  (cp >= 0x1DC0 && cp <= 0x1DFF) ||
+  (cp >= 0x20D0 && cp <= 0x20FF) ||
+  (cp >= 0xFE20 && cp <= 0xFE2F)
 }
 
 // Lazily-built map: code point -> accent-stripped form.

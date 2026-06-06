@@ -43,6 +43,8 @@ fn split_pre_tokenize(
     qwen_split(text)
   } else if is_gpt2_pattern(pattern) {
     gpt2_split(text)
+  } else if is_clip_pattern(pattern) {
+    clip_split(text)
   } else {
     // Unknown pattern: leave the text as a single piece (documented limit).
     [text]
@@ -58,6 +60,13 @@ fn is_qwen_pattern(p : String) -> Bool {
 // Recognize the classic GPT-2 pattern.
 fn is_gpt2_pattern(p : String) -> Bool {
   p.contains("'s|'t|'re") && p.contains("?\\p{L}+")
+}
+
+// CLIP uses a GPT-2-like Split regex but without optional leading spaces:
+// specials | contractions | [\p{L}]+ | [\p{N}] | [^\s\p{L}\p{N}]+.
+// This removes whitespace before ByteLevel maps the remaining pieces.
+fn is_clip_pattern(p : String) -> Bool {
+  p.contains("<\\|startoftext\\|>") && p.contains("[\\p{L}]+") && p.contains("[\\p{N}]")
 }
 
 // Turn raw piece strings into Splits with running char offsets.

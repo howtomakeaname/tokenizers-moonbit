@@ -41,6 +41,11 @@ MODELS = {
     "starcoder2": "https://huggingface.co/bigcode/starcoder2-3b/resolve/main/tokenizer.json",
     "gptneox": "https://huggingface.co/EleutherAI/gpt-neox-20b/resolve/main/tokenizer.json",
     "clip": "https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/tokenizer.json",
+    # Public DeBERTa-family fixture with tokenizer.json. The main Microsoft
+    # DeBERTa repos publish slow-tokenizer assets (vocab/spm) but no
+    # tokenizer.json, so the fetcher uses HF's tiny random DeBERTaV2 fixture for
+    # JSON-pipeline parity coverage.
+    "deberta": "https://huggingface.co/hf-internal-testing/tiny-random-DebertaV2Model/resolve/main/tokenizer.json",
 }
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "tests", "data")
