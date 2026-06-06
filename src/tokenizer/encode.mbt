@@ -12,13 +12,60 @@ pub fn Tokenizer::encode(
   // Special tokens present in the text are always recognized as single tokens;
   // add_special_tokens only controls whether the post-processor template runs.
   let raw = self.encode_raw(text, keep_special=true)
-  if add_special_tokens {
+  let processed = if add_special_tokens {
     match self.post_processor {
       Some(pp) => pp.process(raw, None)
       None => raw
     }
   } else {
     raw
+  }
+  self.finalize(processed)
+}
+
+// Apply truncation and (fixed) padding to a single encoding.
+fn Tokenizer::finalize(self : Tokenizer, enc : @types.Encoding) -> @types.Encoding {
+  let truncated = match self.truncation {
+    Some(tp) => truncate_encoding(enc, tp)
+    None => enc
+  }
+  match self.padding {
+    Some(pp) =>
+      match pp.strategy {
+        // Fixed padding applies per-encoding; BatchLongest only in encode_batch.
+        Fixed(n) => pad_encoding(truncated, n, pp)
+        BatchLongest => truncated
+      }
+    None => truncated
+  }
+}
+
+/// Encode a batch of texts. Applies truncation per item, then padding across
+/// the batch (BatchLongest pads to the longest in the batch).
+pub fn Tokenizer::encode_batch(
+  self : Tokenizer,
+  texts : Array[String],
+  add_special_tokens~ : Bool = true,
+) -> Array[@types.Encoding] {
+  // Encode + truncate each; defer padding to a batch pass.
+  let encs = texts.map(t => {
+    let raw = self.encode_raw(t, keep_special=true)
+    let processed = if add_special_tokens {
+      match self.post_processor {
+        Some(pp) => pp.process(raw, None)
+        None => raw
+      }
+    } else {
+      raw
+    }
+    match self.truncation {
+      Some(tp) => truncate_encoding(processed, tp)
+      None => processed
+    }
+  })
+  match self.padding {
+    Some(pp) => pad_batch(encs, pp)
+    None => encs
   }
 }
 
@@ -103,7 +150,7 @@ fn Tokenizer::encode_raw(
       }
     }
   }
-  { ids, type_ids, tokens, offsets, special_tokens_mask, attention_mask }
+  { ids, type_ids, tokens, offsets, special_tokens_mask, attention_mask, overflowing: [] }
 }
 
 // Concatenate two encodings (B gets type_id 1) without special tokens.
@@ -125,5 +172,5 @@ fn concat_encodings(
     special_tokens_mask.push(b.special_tokens_mask[i])
     attention_mask.push(b.attention_mask[i])
   }
-  { ids, type_ids, tokens, offsets, special_tokens_mask, attention_mask }
+  { ids, type_ids, tokens, offsets, special_tokens_mask, attention_mask, overflowing: [] }
 }

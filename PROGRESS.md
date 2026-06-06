@@ -20,7 +20,7 @@
 | R1 | AddedVocabulary（文本内 special token 预切分） | ✅ |
 | R2 | WordLevel + byte_fallback + fuse_unk + ignore_merges + ByteFallback decoder | ✅ |
 | R3 | 多模型对拍设施 + CI | ✅ |
-| R4 | truncation / padding / encode_batch | ⬜ |
+| R4 | truncation / padding / encode_batch | ✅ |
 | R5 | Unicode 归一化最小集（NFD+Mn / strip_accents） | ⬜ |
 | R6 | pre_tokenizer/decoder/template DSL 补全 | 🚧（ByteFallback 已在 R2 完成）|
 | R7 | benchmark 套件 + 与 HF 跑分 | ⬜ |
@@ -90,7 +90,7 @@
 | encode / encode_pair / decode | ✅ |
 | AddedVocabulary（single_word/lstrip/rstrip/normalized）| ✅ |
 | token_to_id / id_to_token / get_vocab_size | ✅ |
-| truncation / padding / encode_batch | ⬜ R4 |
+| truncation / padding / encode_batch | ✅ | with_truncation/with_padding builder；BatchLongest/Fixed；batch 串行 |
 | offsets（当前 char 偏移；HF 默认 byte）| 🚧 R4 评估 |
 
 ## 已知缺口与取舍（TODO）

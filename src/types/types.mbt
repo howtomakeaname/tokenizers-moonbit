@@ -8,6 +8,8 @@ pub(all) struct Encoding {
   offsets : Array[(Int, Int)]
   special_tokens_mask : Array[Int]
   attention_mask : Array[Int]
+  // Truncation overflow windows (empty unless truncation with stride trims).
+  overflowing : Array[Encoding]
 } derive(Show, Eq)
 
 /// A token produced by a model: its id, surface string and char offsets.
@@ -43,5 +45,6 @@ pub fn Encoding::empty() -> Encoding {
     offsets: [],
     special_tokens_mask: [],
     attention_mask: [],
+    overflowing: [],
   }
 }

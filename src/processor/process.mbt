@@ -161,5 +161,6 @@ fn build(out : Builder) -> @types.Encoding {
     offsets: out.offsets,
     special_tokens_mask: out.special_tokens_mask,
     attention_mask: out.attention_mask,
+    overflowing: [],
   }
 }

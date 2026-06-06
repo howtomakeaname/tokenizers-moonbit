@@ -19,6 +19,8 @@ pub struct Tokenizer {
   post_processor : @processor.PostProcessor?
   decoder : @decoder.Decoder?
   added_vocabulary : AddedVocabulary
+  mut truncation : TruncationParams?
+  mut padding : PaddingParams?
 }
 
 /// Load a tokenizer from the textual contents of a `tokenizer.json`.
@@ -51,7 +53,34 @@ pub fn Tokenizer::from_str(
   ))
   let decoder = decode_opt(root, "decoder", j => @decoder.Decoder::from_json(j))
   let added_vocabulary = AddedVocabulary::new(parse_added_tokens(root))
-  { normalizer, pre_tokenizer, model, post_processor, decoder, added_vocabulary }
+  {
+    normalizer,
+    pre_tokenizer,
+    model,
+    post_processor,
+    decoder,
+    added_vocabulary,
+    truncation: None,
+    padding: None,
+  }
+}
+
+/// Enable/disable truncation (builder; mutates and returns self).
+pub fn Tokenizer::with_truncation(
+  self : Tokenizer,
+  params : TruncationParams?,
+) -> Tokenizer {
+  self.truncation = params
+  self
+}
+
+/// Enable/disable padding (builder; mutates and returns self).
+pub fn Tokenizer::with_padding(
+  self : Tokenizer,
+  params : PaddingParams?,
+) -> Tokenizer {
+  self.padding = params
+  self
 }
 
 // Decode an optional component: absent key or JSON null -> None.
