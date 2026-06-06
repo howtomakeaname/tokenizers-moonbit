@@ -1,0 +1,254 @@
+[
+  {
+    "text": "Hello world",
+    "ids": [
+      15496,
+      995
+    ],
+    "tokens": [
+      "Hello",
+      "Ġworld"
+    ],
+    "decoded": "Hello world"
+  },
+  {
+    "text": "Hello, world!",
+    "ids": [
+      15496,
+      11,
+      995,
+      0
+    ],
+    "tokens": [
+      "Hello",
+      ",",
+      "Ġworld",
+      "!"
+    ],
+    "decoded": "Hello, world!"
+  },
+  {
+    "text": "I'm fine, thanks.",
+    "ids": [
+      40,
+      1101,
+      3734,
+      11,
+      5176,
+      13
+    ],
+    "tokens": [
+      "I",
+      "'m",
+      "Ġfine",
+      ",",
+      "Ġthanks",
+      "."
+    ],
+    "decoded": "I'm fine, thanks."
+  },
+  {
+    "text": "The quick brown fox jumps over the lazy dog.",
+    "ids": [
+      464,
+      2068,
+      7586,
+      21831,
+      18045,
+      625,
+      262,
+      16931,
+      3290,
+      13
+    ],
+    "tokens": [
+      "The",
+      "Ġquick",
+      "Ġbrown",
+      "Ġfox",
+      "Ġjumps",
+      "Ġover",
+      "Ġthe",
+      "Ġlazy",
+      "Ġdog",
+      "."
+    ],
+    "decoded": "The quick brown fox jumps over the lazy dog."
+  },
+  {
+    "text": " leading space",
+    "ids": [
+      3756,
+      2272
+    ],
+    "tokens": [
+      "Ġleading",
+      "Ġspace"
+    ],
+    "decoded": " leading space"
+  },
+  {
+    "text": "multiple   spaces",
+    "ids": [
+      48101,
+      220,
+      220,
+      9029
+    ],
+    "tokens": [
+      "multiple",
+      "Ġ",
+      "Ġ",
+      "Ġspaces"
+    ],
+    "decoded": "multiple   spaces"
+  },
+  {
+    "text": "tab\tand\nnewline",
+    "ids": [
+      8658,
+      197,
+      392,
+      198,
+      3605,
+      1370
+    ],
+    "tokens": [
+      "tab",
+      "ĉ",
+      "and",
+      "Ċ",
+      "new",
+      "line"
+    ],
+    "decoded": "tab\tand\nnewline"
+  },
+  {
+    "text": "naïve café",
+    "ids": [
+      2616,
+      38776,
+      40304
+    ],
+    "tokens": [
+      "na",
+      "Ã¯ve",
+      "ĠcafÃ©"
+    ],
+    "decoded": "naïve café"
+  },
+  {
+    "text": "日本語のテキスト",
+    "ids": [
+      33768,
+      98,
+      17312,
+      105,
+      45739,
+      252,
+      5641,
+      24336,
+      25084,
+      43302
+    ],
+    "tokens": [
+      "æĹ",
+      "¥",
+      "æľ",
+      "¬",
+      "èª",
+      "ŀ",
+      "ãģ®",
+      "ãĥĨ",
+      "ãĤŃ",
+      "ãĤ¹ãĥĪ"
+    ],
+    "decoded": "日本語のテキスト"
+  },
+  {
+    "text": "emoji 😀 test",
+    "ids": [
+      368,
+      31370,
+      30325,
+      222,
+      1332
+    ],
+    "tokens": [
+      "em",
+      "oji",
+      "ĠðŁĺ",
+      "Ģ",
+      "Ġtest"
+    ],
+    "decoded": "emoji 😀 test"
+  },
+  {
+    "text": "ABC123xyz",
+    "ids": [
+      24694,
+      10163,
+      5431,
+      89
+    ],
+    "tokens": [
+      "ABC",
+      "123",
+      "xy",
+      "z"
+    ],
+    "decoded": "ABC123xyz"
+  },
+  {
+    "text": "don't  can't  won't",
+    "ids": [
+      9099,
+      470,
+      220,
+      460,
+      470,
+      220,
+      1839,
+      470
+    ],
+    "tokens": [
+      "don",
+      "'t",
+      "Ġ",
+      "Ġcan",
+      "'t",
+      "Ġ",
+      "Ġwon",
+      "'t"
+    ],
+    "decoded": "don't  can't  won't"
+  },
+  {
+    "text": "  ",
+    "ids": [
+      220,
+      220
+    ],
+    "tokens": [
+      "Ġ",
+      "Ġ"
+    ],
+    "decoded": "  "
+  },
+  {
+    "text": "MoonBit is great",
+    "ids": [
+      31640,
+      13128,
+      318,
+      1049
+    ],
+    "tokens": [
+      "Moon",
+      "Bit",
+      "Ġis",
+      "Ġgreat"
+    ],
+    "decoded": "MoonBit is great"
+  }
+]

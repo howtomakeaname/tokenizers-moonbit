@@ -1,8 +1,11 @@
 {
   "name": "tokenizer-moonbit",
   "version": "0.1.0",
-  "license": "Apache-2.0",
+  "deps": {
+    "moonbitlang/x": "0.4.45"
+  },
   "readme": "README.md",
+  "license": "Apache-2.0",
   "keywords": [
     "tokenizer",
     "bpe",
@@ -13,6 +16,5 @@
     "llm"
   ],
   "description": "A MoonBit port of HuggingFace tokenizers. Loads tokenizer.json and runs BPE / byte-level BPE / WordPiece / Unigram tokenization across all backends.",
-  "source": "src",
-  "deps": {}
+  "source": "src"
 }

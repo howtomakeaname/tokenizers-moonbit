@@ -3,7 +3,18 @@
 /// Parse the `model` object into a `Model`.
 pub fn Model::from_json(j : Json) -> Model raise @types.TokenizerError {
   let obj = @types.as_object(j, "model")
-  let ty = @types.get_type(obj, "model")
+  // Some older tokenizer.json (e.g. gpt2) omit "type"; infer from fields.
+  let ty = match obj.get("type") {
+    Some(String(t)) => t
+    _ =>
+      if obj.contains("merges") {
+        "BPE"
+      } else if obj.contains("unk_id") {
+        "Unigram"
+      } else {
+        "WordPiece"
+      }
+  }
   match ty {
     "BPE" => BPE(parse_bpe(obj))
     "WordPiece" => WordPiece(parse_wordpiece(obj))

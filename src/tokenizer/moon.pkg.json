@@ -6,6 +6,7 @@
     "tokenizer-moonbit/model",
     "tokenizer-moonbit/processor",
     "tokenizer-moonbit/decoder",
-    "moonbitlang/core/json"
+    "moonbitlang/core/json",
+    { "path": "moonbitlang/x/fs", "alias": "fs" }
   ]
 }
