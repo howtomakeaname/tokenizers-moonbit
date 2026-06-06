@@ -25,6 +25,7 @@
 | R6 | pre_tokenizer/decoder/template DSL 补全 | 🚧（ByteFallback 已在 R2 完成）|
 | R7 | benchmark 套件 + 与 HF 跑分 | ✅ |
 | R8 | 文档 + 迁移指南 | ✅ |
+| R9 | HF 无缝迁移缺口收敛（API / offsets / charsmap / save / pretrained） | 🚧 |
 
 ## 已对齐验证的真实模型（与 Python `tokenizers` 逐 token id 一致）
 
@@ -116,9 +117,32 @@
 | from_str / from_file（x/fs 全后端）| ✅ |
 | encode / encode_pair / decode | ✅ |
 | AddedVocabulary（single_word/lstrip/rstrip/normalized）| ✅ |
-| token_to_id / id_to_token / get_vocab_size | ✅ |
+| token_to_id / id_to_token / get_vocab / get_vocab_size | ✅ | `get_vocab(with_added_tokens=true)` 默认包含 added tokens |
 | truncation / padding / encode_batch | ✅ | with_truncation/with_padding builder；BatchLongest/Fixed；batch 串行；encode_pair 已接入 finalize |
+| decode_batch | ✅ | 串行实现，保证 wasm/js/native 行为一致 |
+| tokenizer.json root truncation/padding 自动加载 | ✅ | 已解析 root-level `truncation` / `padding`，覆盖 Fixed/BatchLongest 与方向/倍数/pad 字段 |
 | offsets（当前 char 偏移；HF 默认 byte）| 🚧 R4 评估 |
+
+## R9：HF 迁移缺口排期
+
+目标：把「能跑主流 tokenizer.json 推理」推进到「大多数 HF tokenizers 推理用户低成本迁移」。训练器与 Hub 能力体量较大，单独排期；每项必须配套测试和 benchmark（涉及性能/API 的项）。
+
+| 优先级 | 项目 | 状态 | 验收标准 |
+|---|---|---|---|
+| P0 | `get_vocab(with_added_tokens=true)` | ✅ | 导出模型词表 + added_tokens；新增单测覆盖 with/without added tokens |
+| P0 | `decode_batch` | ✅ | API 行为与 `decode` 一致；新增单测与 batch decode bench |
+| P0 | root-level `truncation` / `padding` 自动加载 | ✅ | `Tokenizer::from_str` 直接应用 tokenizer.json 配置；新增单测覆盖 Fixed padding + truncation |
+| P0 | pre-commit 编译/测试门禁 | ✅ | 本地 pre-commit 运行 `moon check` + wasm/wasm-gc/js/native 全后端测试 |
+| P1 | byte offsets 模式 | ⬜ | 可选择输出 HF Rust 风格 byte offsets；新增中英/emoji offset 对拍 |
+| P1 | `word_ids` / `sequence_ids` / token-char 映射 | ⬜ | Encoding 增加必要字段和访问 API；覆盖 pair/added tokens/overflow |
+| P1 | Truncation strategy 完整化 | ⬜ | 支持 LongestFirst/OnlyFirst/OnlySecond；pair encode 顺序与 HF 对齐 |
+| P1 | ByteLevel post-processor `trim_offsets` 细节 | ⬜ | 空白修剪与 HF offsets 对齐；补 RoBERTa/GPT-2 offset 用例 |
+| P2 | Precompiled SentencePiece charsmap 完整解码 | ⬜ | 支持真实 charsmap；补 DeBERTa/Albert/XLM-R 复杂样例 |
+| P2 | 通用 Split/Replace 正则覆盖 | ⬜ | 对常见 Regex pattern 明确支持或显式 Unsupported；避免静默退化 |
+| P2 | save / to_json / from_file 对称性 | ⬜ | 加载后导出再加载，核心字段稳定；补 serialization 测试 |
+| P3 | `from_pretrained` / Hub 集成 | ⬜ | 明确 native/js/wasm 可行边界；至少支持本地目录结构 |
+| P3 | batch 并行 / word cache | ⬜ | benchmark 能反映收益；不破坏跨后端确定性 |
+| P4 | trainer / training API | ⏸ | 体量较大，推理兼容性完成后再启动 |
 
 ## 已知缺口与取舍（TODO）
 

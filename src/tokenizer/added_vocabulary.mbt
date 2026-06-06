@@ -9,16 +9,20 @@
 
 // A char-trie node-array. children[node] maps a Char to the next node index;
 // terminal[node] is Some(content) when a complete added-token ends there.
+
+///|
 priv struct CharTrie {
   children : Array[Map[Char, Int]]
   terminal : Array[String?]
 }
 
+///|
 fn CharTrie::new() -> CharTrie {
   // node 0 is the root.
   { children: [Map([])], terminal: [None] }
 }
 
+///|
 fn CharTrie::insert(self : CharTrie, content : String) -> Unit {
   let mut node = 0
   for c in content {
@@ -38,6 +42,8 @@ fn CharTrie::insert(self : CharTrie, content : String) -> Unit {
 
 // Find the longest token that is a prefix of chars[start..]; returns
 // (content, end_char_index) or None.
+
+///|
 fn CharTrie::longest_match(
   self : CharTrie,
   chars : Array[Char],
@@ -62,6 +68,7 @@ fn CharTrie::longest_match(
   last
 }
 
+///|
 /// Per-token configuration parsed from tokenizer.json "added_tokens".
 struct AddedTokenInfo {
   id : Int
@@ -73,6 +80,7 @@ struct AddedTokenInfo {
   special : Bool
 } derive(Debug, Eq)
 
+///|
 /// The added-vocabulary state attached to a Tokenizer.
 struct AddedVocabulary {
   by_content : Map[String, AddedTokenInfo]
@@ -84,6 +92,7 @@ struct AddedVocabulary {
   has_any : Bool
 }
 
+///|
 /// A segment of the input produced by extraction.
 enum Segment {
   // A matched added/special token; emitted directly, bypassing the model.
@@ -92,6 +101,7 @@ enum Segment {
   Normal(text~ : String, base_offset~ : Int)
 } derive(Debug, Eq)
 
+///|
 /// Build an AddedVocabulary from parsed token infos.
 fn AddedVocabulary::new(tokens : Array[AddedTokenInfo]) -> AddedVocabulary {
   let by_content : Map[String, AddedTokenInfo] = {}
@@ -116,17 +126,26 @@ fn AddedVocabulary::new(tokens : Array[AddedTokenInfo]) -> AddedVocabulary {
   }
 }
 
+///|
 fn AddedVocabulary::id_to_token(self : AddedVocabulary, id : Int) -> String? {
   self.id_to_content.get(id)
 }
 
-fn AddedVocabulary::token_to_id(
-  self : AddedVocabulary,
-  token : String,
-) -> Int? {
+///|
+fn AddedVocabulary::token_to_id(self : AddedVocabulary, token : String) -> Int? {
   self.by_content.get(token).map(t => t.id)
 }
 
+///|
+fn AddedVocabulary::get_vocab(self : AddedVocabulary) -> Map[String, Int] {
+  let out : Map[String, Int] = {}
+  for kv in self.by_content.to_array() {
+    out[kv.0] = kv.1.id
+  }
+  out
+}
+
+///|
 /// Whether the given id is a special added token.
 fn AddedVocabulary::is_special_id(self : AddedVocabulary, id : Int) -> Bool {
   match self.id_to_content.get(id) {
@@ -143,6 +162,8 @@ fn AddedVocabulary::is_special_id(self : AddedVocabulary, id : Int) -> Bool {
 // become Normal segments. `base` is the char offset of `text` in the original.
 // `keep_special` controls whether special tokens are emitted as Special (true)
 // or folded back into Normal text (false) — used for add_special_tokens=false.
+
+///|
 fn AddedVocabulary::split_with(
   self : AddedVocabulary,
   trie : CharTrie,
@@ -217,6 +238,7 @@ fn AddedVocabulary::split_with(
   out
 }
 
+///|
 /// Extract added tokens from text in two stages (HF order):
 /// 1) match non-normalized tokens against the original text;
 /// 2) (caller normalizes the Normal pieces, then) match normalized tokens.
@@ -233,6 +255,7 @@ fn AddedVocabulary::extract_stage1(
   self.split_with(self.non_normalized, text, 0, keep_special)
 }
 
+///|
 /// Stage 2: match normalized added tokens within an already-normalized string.
 fn AddedVocabulary::extract_stage2(
   self : AddedVocabulary,
@@ -246,6 +269,7 @@ fn AddedVocabulary::extract_stage2(
   self.split_with(self.normalized, normalized_text, base, keep_special)
 }
 
+///|
 fn is_word_char(c : Char) -> Bool {
   (c >= 'a' && c <= 'z') ||
   (c >= 'A' && c <= 'Z') ||
@@ -253,10 +277,12 @@ fn is_word_char(c : Char) -> Bool {
   c == '_'
 }
 
+///|
 fn is_ws(c : Char) -> Bool {
   c == ' ' || c == '\t' || c == '\n' || c == '\r'
 }
 
+///|
 fn char_str(c : Char) -> String {
   let sb = StringBuilder::new()
   sb.write_char(c)

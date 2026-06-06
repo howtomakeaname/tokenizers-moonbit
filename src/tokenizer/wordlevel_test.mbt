@@ -1,5 +1,6 @@
 // WordLevel model: whole-token lookup with unk fallback (inline, all backends).
 
+///|
 test "wordlevel maps whole tokens with unk fallback" {
   let json =
     #|{"model":{"type":"WordLevel",

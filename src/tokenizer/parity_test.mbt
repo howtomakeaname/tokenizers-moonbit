@@ -7,15 +7,18 @@
 // byte_fallback BPE (llama), WordPiece cased+uncased (bert/bert_cased/
 // distilbert), Unigram/SentencePiece (t5/albert/xlm_roberta), and modern LLMs
 // using the Qwen/Llama-3 Split pattern (Qwen2.5/Qwen3/DeepSeek/Phi-3).
+
+///|
 let parity_models : Array[String] = [
-  "gpt2", "roberta", "llama", "bert", "bert_cased", "distilbert", "t5",
-  "albert", "xlm_roberta", "Qwen2.5", "qwen3", "deepseek", "phi3",
-  "mistral", "falcon", "starcoder2", "gptneox", "clip", "deberta",
-  "llama3_2", "phi4_mini", "deepseek_r1_qwen", "deepseek_v3_2", "gpt_oss",
-  "glm4_5", "granite4", "qwen3_coder", "qwen3_vl", "bge_m3", "e5_multilingual",
+  "gpt2", "roberta", "llama", "bert", "bert_cased", "distilbert", "t5", "albert",
+  "xlm_roberta", "Qwen2.5", "qwen3", "deepseek", "phi3", "mistral", "falcon", "starcoder2",
+  "gptneox", "clip", "deberta", "llama3_2", "phi4_mini", "deepseek_r1_qwen", "deepseek_v3_2",
+  "gpt_oss", "glm4_5", "granite4", "qwen3_coder", "qwen3_vl", "bge_m3", "e5_multilingual",
 ]
 
 // Run parity for one model; returns (ran, mismatches).
+
+///|
 fn run_parity(name : String) -> (Bool, Int) raise {
   let model_path = "tests/data/\{name}.full.json"
   let parity_path = "tests/data/parity/\{name}.json"
@@ -41,6 +44,7 @@ fn run_parity(name : String) -> (Bool, Int) raise {
   (true, mism)
 }
 
+///|
 test "parity: encode matches python tokenizers across models" {
   for name in parity_models {
     let (ran, mism) = run_parity(name)

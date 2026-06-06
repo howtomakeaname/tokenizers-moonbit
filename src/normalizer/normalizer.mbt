@@ -4,6 +4,7 @@
 // simple variants (Lowercase/Strip/Replace/Sequence/Prepend/BertNormalizer)
 // and Unicode NFC/NFD/NFKC/NFKD are implemented in normalize.mbt.
 
+///|
 pub(all) enum Normalizer {
   NFC
   NFD
@@ -23,13 +24,16 @@ pub(all) enum Normalizer {
     clean_text~ : Bool,
     handle_chinese_chars~ : Bool,
     strip_accents~ : Bool,
-    lowercase~ : Bool,
+    lowercase~ : Bool
   )
   Sequence(Array[Normalizer])
 }
 
+///|
 /// Parse a normalizer config object (may be JSON null -> None upstream).
-pub fn Normalizer::from_json(j : Json) -> Normalizer raise @types.TokenizerError {
+pub fn Normalizer::from_json(
+  j : Json,
+) -> Normalizer raise @types.TokenizerError {
   let obj = @types.as_object(j, "normalizer")
   let ty = @types.get_type(obj, "normalizer")
   match ty {
@@ -63,7 +67,11 @@ pub fn Normalizer::from_json(j : Json) -> Normalizer raise @types.TokenizerError
       }
       BertNormalizer(
         clean_text=@types.get_bool(obj, "clean_text", default=true),
-        handle_chinese_chars=@types.get_bool(obj, "handle_chinese_chars", default=true),
+        handle_chinese_chars=@types.get_bool(
+          obj,
+          "handle_chinese_chars",
+          default=true,
+        ),
         strip_accents~,
         lowercase~,
       )
@@ -80,6 +88,8 @@ pub fn Normalizer::from_json(j : Json) -> Normalizer raise @types.TokenizerError
 }
 
 // HF "pattern" can be {"String": "x"} or {"Regex": "x"}; we keep the raw string.
+
+///|
 fn parse_pattern(obj : Map[String, Json]) -> String {
   match obj.get("pattern") {
     Some(Object(p)) =>

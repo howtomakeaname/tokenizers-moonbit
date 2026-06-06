@@ -5,17 +5,21 @@
 // Backtrack to recover the token sequence. Unmatched single chars fall back to
 // the unk token (unk_id) if present.
 
+///|
 let neg_inf : Double = -1.0e308
 
 // Per-unknown-character penalty (kept finite so multiple unks can accumulate
 // without overflowing to -inf). Mirrors sentencepiece's kUnkPenalty scale.
+
+///|
 let unk_penalty : Double = 1.0e4
 
+///|
 /// Tokenize a single piece with this Unigram model.
 pub fn UnigramModel::tokenize(
   self : UnigramModel,
   word : String,
-  offset~ : Int = 0,
+  offset? : Int = 0,
 ) -> Array[@types.Token] {
   let chars = word.to_array()
   let n = chars.length()
@@ -29,7 +33,7 @@ pub fn UnigramModel::tokenize(
   let best_tok : Array[String] = Array::make(n + 1, "")
   let best_id = Array::make(n + 1, -1)
   best[0] = 0.0
-  for end in 1..=n {
+  for end in 1..<=n {
     for start in 0..<end {
       if best[start] == neg_inf {
         continue
@@ -103,6 +107,7 @@ pub fn UnigramModel::tokenize(
   }
 }
 
+///|
 fn UnigramModel::expand_byte_fallback(
   self : UnigramModel,
   toks : Array[@types.Token],
@@ -114,7 +119,8 @@ fn UnigramModel::expand_byte_fallback(
       continue
     }
     match self.try_byte_fallback(t.value, t.offsets) {
-      Some(bytes) => for b in bytes {
+      Some(bytes) =>
+        for b in bytes {
           out.push(b)
         }
       None => out.push(t)
@@ -123,6 +129,7 @@ fn UnigramModel::expand_byte_fallback(
   out
 }
 
+///|
 fn UnigramModel::try_byte_fallback(
   self : UnigramModel,
   surface : String,
@@ -141,6 +148,8 @@ fn UnigramModel::try_byte_fallback(
 }
 
 // Merge adjacent unk tokens (id == uid) into a single spanning token.
+
+///|
 fn fuse_unigram_unk(
   toks : Array[@types.Token],
   uid : Int,
@@ -161,6 +170,7 @@ fn fuse_unigram_unk(
   out
 }
 
+///|
 fn make_piece(chars : Array[Char], start : Int, stop : Int) -> String {
   let sb = StringBuilder::new()
   for i in start..<stop {

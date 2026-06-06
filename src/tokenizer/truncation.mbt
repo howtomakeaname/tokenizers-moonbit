@@ -1,23 +1,28 @@
 // Truncation: cap an encoding's length, optionally producing stride windows
 // in `overflowing`. Mirrors HuggingFace TruncationParams.
 
+///|
 pub(all) enum TruncationDirection {
   Left
   Right
 } derive(Debug, Eq)
 
+///|
 pub(all) struct TruncationParams {
   max_length : Int
   stride : Int
   direction : TruncationDirection
 } derive(Debug, Eq)
 
+///|
 /// Default truncation: right direction, no stride.
 pub fn TruncationParams::new(max_length : Int) -> TruncationParams {
   { max_length, stride: 0, direction: Right }
 }
 
 // Slice an encoding's parallel arrays to [start, stop).
+
+///|
 fn slice_encoding(
   enc : @types.Encoding,
   start : Int,
@@ -34,6 +39,7 @@ fn slice_encoding(
   }
 }
 
+///|
 /// Truncate `enc` to `params.max_length`. With `stride > 0`, the trimmed tail
 /// is emitted as overflow windows (each overlapping the previous by `stride`).
 pub fn truncate_encoding(
@@ -62,9 +68,8 @@ pub fn truncate_encoding(
       }
       { ..main, overflowing: windows }
     }
-    Left => {
+    Left =>
       // Keep the last `max` tokens.
       slice_encoding(enc, n - max, n)
-    }
   }
 }

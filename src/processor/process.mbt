@@ -3,6 +3,7 @@
 // Operates on the model-produced Encoding(s). For single input, encoding_b is
 // None. Mirrors HuggingFace TemplateProcessing / Bert / Roberta / ByteLevel.
 
+///|
 /// Apply post-processing. `a` is the primary encoding; `b` is the optional
 /// second sequence (for pair inputs). Returns the assembled Encoding.
 pub fn PostProcessor::process(
@@ -33,6 +34,8 @@ pub fn PostProcessor::process(
 }
 
 // Build an Encoding by following a template of Sequence/SpecialToken pieces.
+
+///|
 fn apply_template(
   template : Array[Piece],
   special_tokens : Map[String, SpecialToken],
@@ -64,6 +67,8 @@ fn apply_template(
 }
 
 // BERT/RoBERTa: [CLS] A [SEP] (B [SEP]).
+
+///|
 fn bert_like(
   a : @types.Encoding,
   b : @types.Encoding?,
@@ -91,6 +96,8 @@ fn bert_like(
 }
 
 // No special tokens: concatenate a and optional b (type_id 0 / 1).
+
+///|
 fn merge_plain(a : @types.Encoding, b : @types.Encoding?) -> @types.Encoding {
   let out = new_builder()
   append_sequence(out, a, 0)
@@ -103,6 +110,7 @@ fn merge_plain(a : @types.Encoding, b : @types.Encoding?) -> @types.Encoding {
 
 // --- mutable builder for assembling an Encoding ---
 
+///|
 priv struct Builder {
   ids : Array[Int]
   type_ids : Array[Int]
@@ -112,6 +120,7 @@ priv struct Builder {
   attention_mask : Array[Int]
 }
 
+///|
 fn new_builder() -> Builder {
   {
     ids: [],
@@ -123,6 +132,7 @@ fn new_builder() -> Builder {
   }
 }
 
+///|
 fn append_sequence(out : Builder, enc : @types.Encoding, type_id : Int) -> Unit {
   for i in 0..<enc.ids.length() {
     out.ids.push(enc.ids[i])
@@ -134,6 +144,7 @@ fn append_sequence(out : Builder, enc : @types.Encoding, type_id : Int) -> Unit 
   }
 }
 
+///|
 fn append_special(out : Builder, st : SpecialToken, type_id : Int) -> Unit {
   for i in 0..<st.ids.length() {
     out.ids.push(st.ids[i])
@@ -145,6 +156,7 @@ fn append_special(out : Builder, st : SpecialToken, type_id : Int) -> Unit {
   }
 }
 
+///|
 fn push_special(out : Builder, id : Int, token : String, type_id : Int) -> Unit {
   out.ids.push(id)
   out.type_ids.push(type_id)
@@ -154,6 +166,7 @@ fn push_special(out : Builder, id : Int, token : String, type_id : Int) -> Unit 
   out.attention_mask.push(1)
 }
 
+///|
 fn build(out : Builder) -> @types.Encoding {
   {
     ids: out.ids,

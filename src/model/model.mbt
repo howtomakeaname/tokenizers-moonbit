@@ -7,6 +7,7 @@
 // P1 scope: data structures + deserialization from tokenizer.json.
 // tokenize/decode for each variant lands in P2 / P5 / P6.
 
+///|
 /// BPE model state.
 pub struct BPEModel {
   // token surface -> id
@@ -23,6 +24,7 @@ pub struct BPEModel {
   ignore_merges : Bool
 }
 
+///|
 /// WordLevel model state: a flat token->id map with an unk fallback.
 pub struct WordLevelModel {
   vocab : Map[String, Int]
@@ -30,6 +32,7 @@ pub struct WordLevelModel {
   unk_token : String
 }
 
+///|
 /// WordPiece model state.
 pub struct WordPieceModel {
   vocab : Map[String, Int]
@@ -39,6 +42,7 @@ pub struct WordPieceModel {
   max_input_chars_per_word : Int
 }
 
+///|
 /// Unigram model state.
 pub struct UnigramModel {
   // token surface -> (id, log-probability score)
@@ -50,6 +54,7 @@ pub struct UnigramModel {
   fuse_unk : Bool
 }
 
+///|
 /// The model variants.
 pub enum Model {
   BPE(BPEModel)
@@ -58,6 +63,7 @@ pub enum Model {
   WordLevel(WordLevelModel)
 }
 
+///|
 /// Look up a token surface by id (decode direction).
 pub fn Model::id_to_token(self : Model, id : Int) -> String? {
   match self {
@@ -68,6 +74,7 @@ pub fn Model::id_to_token(self : Model, id : Int) -> String? {
   }
 }
 
+///|
 /// Look up an id by token surface.
 pub fn Model::token_to_id(self : Model, token : String) -> Int? {
   match self {
@@ -78,6 +85,7 @@ pub fn Model::token_to_id(self : Model, token : String) -> Int? {
   }
 }
 
+///|
 /// Total vocabulary size.
 pub fn Model::vocab_size(self : Model) -> Int {
   match self {
@@ -88,12 +96,30 @@ pub fn Model::vocab_size(self : Model) -> Int {
   }
 }
 
+///|
+/// Return a copy of the model vocabulary as `token -> id`.
+pub fn Model::get_vocab(self : Model) -> Map[String, Int] {
+  match self {
+    BPE(m) => m.vocab.copy()
+    WordPiece(m) => m.vocab.copy()
+    Unigram(m) => {
+      let out : Map[String, Int] = {}
+      for kv in m.vocab.to_array() {
+        out[kv.0] = kv.1.0
+      }
+      out
+    }
+    WordLevel(m) => m.vocab.copy()
+  }
+}
+
+///|
 /// Tokenize one pre-token (word) into tokens. `offset` is the char offset of
 /// the word within the original text.
 pub fn Model::tokenize(
   self : Model,
   word : String,
-  offset~ : Int = 0,
+  offset? : Int = 0,
 ) -> Array[@types.Token] {
   match self {
     BPE(m) => m.tokenize(word, offset~)

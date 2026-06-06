@@ -4,6 +4,7 @@
 // P1 scope: enum + deserialization. `pre_tokenize` behaviour lands in P3
 // (ByteLevel/GPT-2) and P5/P6/P7 (the rest).
 
+///|
 /// How a Split pre-tokenizer treats the matched delimiter.
 pub enum SplitBehavior {
   Removed
@@ -13,13 +14,19 @@ pub enum SplitBehavior {
   Contiguous
 } derive(Eq, Debug)
 
+///|
 pub enum PreTokenizer {
   ByteLevel(add_prefix_space~ : Bool, use_regex~ : Bool, trim_offsets~ : Bool)
   Whitespace
   WhitespaceSplit
   Metaspace(replacement~ : Char, prepend_scheme~ : String, split~ : Bool)
   Punctuation(behavior~ : SplitBehavior)
-  Split(pattern~ : String, behavior~ : SplitBehavior, invert~ : Bool, regex~ : Bool)
+  Split(
+    pattern~ : String,
+    behavior~ : SplitBehavior,
+    invert~ : Bool,
+    regex~ : Bool
+  )
   BertPreTokenizer
   Digits(individual_digits~ : Bool)
   Delimiter(delimiter~ : Char)
@@ -28,6 +35,7 @@ pub enum PreTokenizer {
   Sequence(Array[PreTokenizer])
 }
 
+///|
 /// Parse a pre_tokenizer config object.
 pub fn PreTokenizer::from_json(
   j : Json,
@@ -52,10 +60,17 @@ pub fn PreTokenizer::from_json(
         split=@types.get_bool(obj, "split", default=true),
       )
     "Digits" =>
-      Digits(individual_digits=@types.get_bool(obj, "individual_digits", default=false))
+      Digits(
+        individual_digits=@types.get_bool(
+          obj,
+          "individual_digits",
+          default=false,
+        ),
+      )
     "Delimiter" | "CharDelimiterSplit" =>
       Delimiter(delimiter=@types.get_char(obj, "delimiter", default=' '))
-    "FixedLength" => FixedLength(length=@types.get_int(obj, "length", default=5))
+    "FixedLength" =>
+      FixedLength(length=@types.get_int(obj, "length", default=5))
     "UnicodeScripts" => UnicodeScripts
     "Split" => {
       let (pattern, regex) = parse_pattern_info(obj)
@@ -69,7 +84,10 @@ pub fn PreTokenizer::from_json(
     "Sequence" => {
       let arr = match obj.get("pretokenizers") {
         Some(Array(a)) => a
-        _ => raise @types.ParseError("pre_tokenizer Sequence missing pretokenizers")
+        _ =>
+          raise @types.ParseError(
+            "pre_tokenizer Sequence missing pretokenizers",
+          )
       }
       Sequence(arr.map(x => PreTokenizer::from_json(x)))
     }
@@ -77,6 +95,7 @@ pub fn PreTokenizer::from_json(
   }
 }
 
+///|
 fn parse_pattern_info(obj : Map[String, Json]) -> (String, Bool) {
   match obj.get("pattern") {
     Some(Object(p)) =>
@@ -93,6 +112,7 @@ fn parse_pattern_info(obj : Map[String, Json]) -> (String, Bool) {
   }
 }
 
+///|
 fn parse_behavior(obj : Map[String, Json]) -> SplitBehavior {
   match @types.get_str_opt(obj, "behavior") {
     Some("Removed") => Removed
@@ -106,9 +126,16 @@ fn parse_behavior(obj : Map[String, Json]) -> SplitBehavior {
 
 // Metaspace prepend scheme: new configs use "prepend_scheme"
 // ("always"/"never"/"first"); old configs use a bool "add_prefix_space".
+
+///|
 fn parse_prepend_scheme(obj : Map[String, Json]) -> String {
   match @types.get_str_opt(obj, "prepend_scheme") {
     Some(s) => s
-    None => if @types.get_bool(obj, "add_prefix_space", default=true) { "always" } else { "never" }
+    None =>
+      if @types.get_bool(obj, "add_prefix_space", default=true) {
+        "always"
+      } else {
+        "never"
+      }
   }
 }

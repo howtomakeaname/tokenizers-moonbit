@@ -1,0 +1,9 @@
+import {
+  "tokenizer-moonbit/types",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/buffer",
+}
+
+import {
+  "moonbitlang/core/test",
+} for "wbtest"

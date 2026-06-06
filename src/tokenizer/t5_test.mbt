@@ -1,6 +1,7 @@
 // Cross-check the T5 Unigram (SentencePiece) encoder against Python tokenizers.
 // add_special_tokens=false (post-processing covered in P7).
 
+///|
 test "t5 unigram encode matches python tokenizers" {
   guard load_text("tests/data/t5.full.json") is Some(model_json) else { return }
   guard load_text("tests/data/t5_expected.json") is Some(exp_json) else {

@@ -3,11 +3,12 @@
 // Pipeline: normalize -> pre_tokenize -> model.tokenize each piece -> assemble
 // a raw Encoding -> (optional) post-process to add special tokens / type_ids.
 
+///|
 /// Encode a single text into an `Encoding`.
 pub fn Tokenizer::encode(
   self : Tokenizer,
   text : String,
-  add_special_tokens~ : Bool = true,
+  add_special_tokens? : Bool = true,
 ) -> @types.Encoding {
   // Special tokens present in the text are always recognized as single tokens;
   // add_special_tokens only controls whether the post-processor template runs.
@@ -24,7 +25,12 @@ pub fn Tokenizer::encode(
 }
 
 // Apply truncation and (fixed) padding to a single encoding.
-fn Tokenizer::finalize(self : Tokenizer, enc : @types.Encoding) -> @types.Encoding {
+
+///|
+fn Tokenizer::finalize(
+  self : Tokenizer,
+  enc : @types.Encoding,
+) -> @types.Encoding {
   let truncated = match self.truncation {
     Some(tp) => truncate_encoding(enc, tp)
     None => enc
@@ -40,12 +46,13 @@ fn Tokenizer::finalize(self : Tokenizer, enc : @types.Encoding) -> @types.Encodi
   }
 }
 
+///|
 /// Encode a batch of texts. Applies truncation per item, then padding across
 /// the batch (BatchLongest pads to the longest in the batch).
 pub fn Tokenizer::encode_batch(
   self : Tokenizer,
   texts : Array[String],
-  add_special_tokens~ : Bool = true,
+  add_special_tokens? : Bool = true,
 ) -> Array[@types.Encoding] {
   // Encode + truncate each; defer padding to a batch pass.
   let encs = texts.map(t => {
@@ -69,12 +76,13 @@ pub fn Tokenizer::encode_batch(
   }
 }
 
+///|
 /// Encode a pair of texts (sequence A and B) into a single `Encoding`.
 pub fn Tokenizer::encode_pair(
   self : Tokenizer,
   text_a : String,
   text_b : String,
-  add_special_tokens~ : Bool = true,
+  add_special_tokens? : Bool = true,
 ) -> @types.Encoding {
   let a = self.encode_raw(text_a, keep_special=true)
   let b = self.encode_raw(text_b, keep_special=true)
@@ -93,6 +101,8 @@ pub fn Tokenizer::encode_pair(
 // producing a raw Encoding (all type_ids = 0). `keep_special` controls whether
 // special added-tokens are emitted as single tokens (true) or folded back into
 // text (false), matching HF's add_special_tokens semantics.
+
+///|
 fn Tokenizer::encode_raw(
   self : Tokenizer,
   text : String,
@@ -124,7 +134,8 @@ fn Tokenizer::encode_raw(
           None => raw
         }
         // Stage 2: split out normalized added tokens within it.
-        for seg2 in self.added_vocabulary.extract_stage2(
+        for
+          seg2 in self.added_vocabulary.extract_stage2(
             normalized,
             base_offset,
             keep_special~,
@@ -135,13 +146,16 @@ fn Tokenizer::encode_raw(
               let pieces : Array[@types.Split] = match self.pre_tokenizer {
                 Some(pt) => pt.pre_tokenize(ntext, base_offset=base2)
                 None =>
-                  [{ value: ntext, offsets: (base2, base2 + ntext.char_length()) }]
+                  [
+                    {
+                      value: ntext,
+                      offsets: (base2, base2 + ntext.char_length()),
+                    },
+                  ]
               }
               for piece in pieces {
-                for t in self.model.tokenize(
-                    piece.value,
-                    offset=piece.offsets.0,
-                  ) {
+                for
+                  t in self.model.tokenize(piece.value, offset=piece.offsets.0) {
                   emit(t.id, t.value, t.offsets, 0)
                 }
               }
@@ -151,10 +165,20 @@ fn Tokenizer::encode_raw(
       }
     }
   }
-  { ids, type_ids, tokens, offsets, special_tokens_mask, attention_mask, overflowing: [] }
+  {
+    ids,
+    type_ids,
+    tokens,
+    offsets,
+    special_tokens_mask,
+    attention_mask,
+    overflowing: [],
+  }
 }
 
 // Concatenate two encodings (B gets type_id 1) without special tokens.
+
+///|
 fn concat_encodings(
   a : @types.Encoding,
   b : @types.Encoding,
@@ -173,5 +197,13 @@ fn concat_encodings(
     special_tokens_mask.push(b.special_tokens_mask[i])
     attention_mask.push(b.attention_mask[i])
   }
-  { ids, type_ids, tokens, offsets, special_tokens_mask, attention_mask, overflowing: [] }
+  {
+    ids,
+    type_ids,
+    tokens,
+    offsets,
+    special_tokens_mask,
+    attention_mask,
+    overflowing: [],
+  }
 }

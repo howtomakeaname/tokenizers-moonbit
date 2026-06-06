@@ -4,6 +4,7 @@
 // added in later phases (P2+); for now they are declared as TODO stubs so the
 // public surface is visible.
 
+///|
 /// A loaded tokenizer: the full decoded pipeline.
 pub struct Tokenizer {
   normalizer : @normalizer.Normalizer?
@@ -16,6 +17,7 @@ pub struct Tokenizer {
   mut padding : PaddingParams?
 }
 
+///|
 /// Load a tokenizer from the textual contents of a `tokenizer.json`.
 ///
 /// Backend-agnostic main entry point: takes a `String`, no file IO, so it works
@@ -23,7 +25,7 @@ pub struct Tokenizer {
 pub fn Tokenizer::from_str(
   json : String,
 ) -> Tokenizer raise @types.TokenizerError {
-  let parsed = try @json.parse(json) catch {
+  let parsed = @json.parse(json) catch {
     err => raise @types.ParseError("invalid tokenizer.json: \{err}")
   }
   let root = @types.as_object(parsed, "tokenizer.json root")
@@ -35,17 +37,19 @@ pub fn Tokenizer::from_str(
   }
 
   // The rest are optional and may be JSON null.
-  let normalizer = decode_opt(root, "normalizer", j => @normalizer.Normalizer::from_json(
-    j,
-  ))
-  let pre_tokenizer = decode_opt(root, "pre_tokenizer", j => @pretokenizer.PreTokenizer::from_json(
-    j,
-  ))
-  let post_processor = decode_opt(root, "post_processor", j => @processor.PostProcessor::from_json(
-    j,
-  ))
+  let normalizer = decode_opt(root, "normalizer", j => {
+    @normalizer.Normalizer::from_json(j)
+  })
+  let pre_tokenizer = decode_opt(root, "pre_tokenizer", j => {
+    @pretokenizer.PreTokenizer::from_json(j)
+  })
+  let post_processor = decode_opt(root, "post_processor", j => {
+    @processor.PostProcessor::from_json(j)
+  })
   let decoder = decode_opt(root, "decoder", j => @decoder.Decoder::from_json(j))
   let added_vocabulary = AddedVocabulary::new(parse_added_tokens(root))
+  let truncation = decode_opt(root, "truncation", parse_truncation)
+  let padding = decode_opt(root, "padding", parse_padding)
   {
     normalizer,
     pre_tokenizer,
@@ -53,11 +57,12 @@ pub fn Tokenizer::from_str(
     post_processor,
     decoder,
     added_vocabulary,
-    truncation: None,
-    padding: None,
+    truncation,
+    padding,
   }
 }
 
+///|
 /// Enable/disable truncation (builder; mutates and returns self).
 pub fn Tokenizer::with_truncation(
   self : Tokenizer,
@@ -67,6 +72,7 @@ pub fn Tokenizer::with_truncation(
   self
 }
 
+///|
 /// Enable/disable padding (builder; mutates and returns self).
 pub fn Tokenizer::with_padding(
   self : Tokenizer,
@@ -77,6 +83,8 @@ pub fn Tokenizer::with_padding(
 }
 
 // Decode an optional component: absent key or JSON null -> None.
+
+///|
 fn[T] decode_opt(
   root : Map[String, Json],
   key : String,
@@ -88,6 +96,7 @@ fn[T] decode_opt(
   }
 }
 
+///|
 fn parse_added_tokens(
   root : Map[String, Json],
 ) -> Array[AddedTokenInfo] raise @types.TokenizerError {
@@ -116,11 +125,75 @@ fn parse_added_tokens(
   out
 }
 
-/// Vocabulary size of the underlying model.
-pub fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int {
-  self.model.vocab_size()
+///|
+fn parse_truncation(j : Json) -> TruncationParams raise @types.TokenizerError {
+  let obj = @types.as_object(j, "truncation")
+  let direction = match @types.get_str(obj, "direction", default="Right") {
+    "Left" | "left" => TruncationDirection::Left
+    _ => TruncationDirection::Right
+  }
+  {
+    max_length: @types.get_int(obj, "max_length", default=0),
+    stride: @types.get_int(obj, "stride", default=0),
+    direction,
+  }
 }
 
+///|
+fn parse_padding_strategy(obj : Map[String, Json]) -> PaddingStrategy {
+  match obj.get("strategy") {
+    Some(String("Fixed")) => Fixed(@types.get_int(obj, "length", default=0))
+    Some(Object(o)) =>
+      match o.get("Fixed") {
+        Some(Number(n, ..)) => Fixed(n.to_int())
+        _ => BatchLongest
+      }
+    _ => BatchLongest
+  }
+}
+
+///|
+fn parse_padding(j : Json) -> PaddingParams raise @types.TokenizerError {
+  let obj = @types.as_object(j, "padding")
+  let direction = match @types.get_str(obj, "direction", default="Right") {
+    "Left" | "left" => PaddingDirection::Left
+    _ => PaddingDirection::Right
+  }
+  {
+    strategy: parse_padding_strategy(obj),
+    direction,
+    pad_id: @types.get_int(obj, "pad_id", default=0),
+    pad_type_id: @types.get_int(obj, "pad_type_id", default=0),
+    pad_token: @types.get_str(obj, "pad_token", default="[PAD]"),
+    pad_to_multiple_of: @types.get_int_opt(obj, "pad_to_multiple_of"),
+  }
+}
+
+///|
+/// Vocabulary size of the underlying model.
+pub fn Tokenizer::get_vocab_size(
+  self : Tokenizer,
+  with_added_tokens? : Bool = true,
+) -> Int {
+  self.get_vocab(with_added_tokens~).length()
+}
+
+///|
+/// Export vocabulary as `token -> id`; includes added tokens by default.
+pub fn Tokenizer::get_vocab(
+  self : Tokenizer,
+  with_added_tokens? : Bool = true,
+) -> Map[String, Int] {
+  let vocab = self.model.get_vocab()
+  if with_added_tokens {
+    for kv in self.added_vocabulary.get_vocab().to_array() {
+      vocab[kv.0] = kv.1
+    }
+  }
+  vocab
+}
+
+///|
 /// Look up a token id by surface string (added vocabulary first, then model).
 pub fn Tokenizer::token_to_id(self : Tokenizer, token : String) -> Int? {
   match self.added_vocabulary.token_to_id(token) {
@@ -129,6 +202,7 @@ pub fn Tokenizer::token_to_id(self : Tokenizer, token : String) -> Int? {
   }
 }
 
+///|
 /// Look up a token surface by id (added vocabulary first, then model).
 pub fn Tokenizer::id_to_token(self : Tokenizer, id : Int) -> String? {
   match self.added_vocabulary.id_to_token(id) {

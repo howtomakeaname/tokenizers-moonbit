@@ -1,5 +1,6 @@
 // Deserialization of the `model` section of a tokenizer.json.
 
+///|
 /// Parse the `model` object into a `Model`.
 pub fn Model::from_json(j : Json) -> Model raise @types.TokenizerError {
   let obj = @types.as_object(j, "model")
@@ -25,6 +26,8 @@ pub fn Model::from_json(j : Json) -> Model raise @types.TokenizerError {
 }
 
 // Build forward (token->id) and reverse (id->token) maps from a vocab object.
+
+///|
 fn parse_vocab(
   obj : Map[String, Json],
 ) -> (Map[String, Int], Map[Int, String]) raise @types.TokenizerError {
@@ -50,6 +53,8 @@ fn parse_vocab(
 
 // Parse merges, supporting both the new [["a","b"], ...] and legacy
 // ["a b", ...] formats. The value stored is the rank (array index).
+
+///|
 fn parse_merges(
   obj : Map[String, Json],
 ) -> Map[(String, String), Int] raise @types.TokenizerError {
@@ -74,6 +79,8 @@ fn parse_merges(
 
 // Split a string on the first occurrence of `sep`; the remainder (which may
 // itself contain `sep`) becomes the right half.
+
+///|
 fn split_once(s : String, sep : Char) -> (String, String) {
   let left = StringBuilder::new()
   let right = StringBuilder::new()
@@ -90,6 +97,7 @@ fn split_once(s : String, sep : Char) -> (String, String) {
   (left.to_string(), right.to_string())
 }
 
+///|
 fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
   let (vocab, vocab_r) = parse_vocab(obj)
   let merges = parse_merges(obj)
@@ -98,7 +106,9 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
     vocab_r,
     merges,
     unk_token: @types.get_str_opt(obj, "unk_token"),
-    continuing_subword_prefix: @types.get_str_opt(obj, "continuing_subword_prefix"),
+    continuing_subword_prefix: @types.get_str_opt(
+      obj, "continuing_subword_prefix",
+    ),
     end_of_word_suffix: @types.get_str_opt(obj, "end_of_word_suffix"),
     fuse_unk: @types.get_bool(obj, "fuse_unk", default=false),
     byte_fallback: @types.get_bool(obj, "byte_fallback", default=false),
@@ -106,13 +116,19 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
   }
 }
 
+///|
 fn parse_wordlevel(
   obj : Map[String, Json],
 ) -> WordLevelModel raise @types.TokenizerError {
   let (vocab, vocab_r) = parse_vocab(obj)
-  { vocab, vocab_r, unk_token: @types.get_str(obj, "unk_token", default="<unk>") }
+  {
+    vocab,
+    vocab_r,
+    unk_token: @types.get_str(obj, "unk_token", default="<unk>"),
+  }
 }
 
+///|
 fn parse_wordpiece(
   obj : Map[String, Json],
 ) -> WordPieceModel raise @types.TokenizerError {
@@ -121,11 +137,20 @@ fn parse_wordpiece(
     vocab,
     vocab_r,
     unk_token: @types.get_str(obj, "unk_token", default="[UNK]"),
-    continuing_subword_prefix: @types.get_str(obj, "continuing_subword_prefix", default="##"),
-    max_input_chars_per_word: @types.get_int(obj, "max_input_chars_per_word", default=100),
+    continuing_subword_prefix: @types.get_str(
+      obj,
+      "continuing_subword_prefix",
+      default="##",
+    ),
+    max_input_chars_per_word: @types.get_int(
+      obj,
+      "max_input_chars_per_word",
+      default=100,
+    ),
   }
 }
 
+///|
 fn parse_unigram(
   obj : Map[String, Json],
 ) -> UnigramModel raise @types.TokenizerError {
@@ -145,5 +170,11 @@ fn parse_unigram(
       _ => raise @types.VocabError("bad unigram vocab entry at index \{i}")
     }
   }
-  { vocab, vocab_r, unk_id: @types.get_int_opt(obj, "unk_id"), byte_fallback: @types.get_bool(obj, "byte_fallback", default=false), fuse_unk: @types.get_bool(obj, "fuse_unk", default=true) }
+  {
+    vocab,
+    vocab_r,
+    unk_id: @types.get_int_opt(obj, "unk_id"),
+    byte_fallback: @types.get_bool(obj, "byte_fallback", default=false),
+    fuse_unk: @types.get_bool(obj, "fuse_unk", default=true),
+  }
 }

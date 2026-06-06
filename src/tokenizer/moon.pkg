@@ -1,0 +1,15 @@
+import {
+  "tokenizer-moonbit/types",
+  "tokenizer-moonbit/normalizer",
+  "tokenizer-moonbit/pretokenizer",
+  "tokenizer-moonbit/model",
+  "tokenizer-moonbit/processor",
+  "tokenizer-moonbit/decoder",
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs",
+}
+
+import {
+  "moonbitlang/core/bench",
+  "moonbitlang/core/test",
+} for "test"

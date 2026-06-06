@@ -1,10 +1,11 @@
 // WordLevel tokenization: the whole pre-token is a single vocabulary lookup,
 // falling back to the unk token when absent.
 
+///|
 pub fn WordLevelModel::tokenize(
   self : WordLevelModel,
   word : String,
-  offset~ : Int = 0,
+  offset? : Int = 0,
 ) -> Array[@types.Token] {
   let span = word.char_length()
   match self.vocab.get(word) {
@@ -21,7 +22,13 @@ pub fn WordLevelModel::tokenize(
             },
           ]
         None =>
-          [@types.Token::{ id: -1, value: word, offsets: (offset, offset + span) }]
+          [
+            @types.Token::{
+              id: -1,
+              value: word,
+              offsets: (offset, offset + span),
+            },
+          ]
       }
   }
 }

@@ -8,6 +8,7 @@
 // Unicode ranges covering the common scripts (Latin, CJK, Greek, Cyrillic,
 // Hiragana/Katakana, Hangul, digits). Rare scripts are TODO.
 
+///|
 /// Split text into GPT-2 pre-tokens (as raw substrings, before byte-level map).
 pub fn gpt2_split(text : String) -> Array[String] {
   let chars = text.to_array()
@@ -39,7 +40,10 @@ pub fn gpt2_split(text : String) -> Array[String] {
         }
       } else {
         // other (non-space, non-letter, non-number)
-        while j < n && !is_space(chars[j]) && !is_letter(chars[j]) && !is_number(chars[j]) {
+        while j < n &&
+              !is_space(chars[j]) &&
+              !is_letter(chars[j]) &&
+              !is_number(chars[j]) {
           j = j + 1
         }
       }
@@ -68,7 +72,10 @@ pub fn gpt2_split(text : String) -> Array[String] {
     if !is_space(c) {
       // [^\s\p{L}\p{N}]+
       let mut j = i
-      while j < n && !is_space(chars[j]) && !is_letter(chars[j]) && !is_number(chars[j]) {
+      while j < n &&
+            !is_space(chars[j]) &&
+            !is_letter(chars[j]) &&
+            !is_number(chars[j]) {
         j = j + 1
       }
       out.push(slice(chars, i, j))
@@ -94,6 +101,7 @@ pub fn gpt2_split(text : String) -> Array[String] {
   out
 }
 
+///|
 /// Split text with CLIP's regex:
 ///   <\|startoftext\|>|<\|endoftext\|>|'s|'t|'re|'ve|'m|'ll|'d|
 ///   [\p{L}]+|[\p{N}]|[^\s\p{L}\p{N}]+
@@ -138,7 +146,10 @@ pub fn clip_split(text : String) -> Array[String] {
       continue
     }
     let mut j = i
-    while j < n && !is_space(chars[j]) && !is_letter(chars[j]) && !is_number(chars[j]) {
+    while j < n &&
+          !is_space(chars[j]) &&
+          !is_letter(chars[j]) &&
+          !is_number(chars[j]) {
       j = j + 1
     }
     out.push(slice(chars, i, j))
@@ -147,6 +158,7 @@ pub fn clip_split(text : String) -> Array[String] {
   out
 }
 
+///|
 fn match_clip_special(chars : Array[Char], i : Int, n : Int) -> Int {
   if matches_literal(chars, i, n, "<|startoftext|>") {
     return 15
@@ -157,6 +169,7 @@ fn match_clip_special(chars : Array[Char], i : Int, n : Int) -> Int {
   0
 }
 
+///|
 fn matches_literal(chars : Array[Char], i : Int, n : Int, lit : String) -> Bool {
   let pat = lit.to_array()
   if i + pat.length() > n {
@@ -171,6 +184,8 @@ fn matches_literal(chars : Array[Char], i : Int, n : Int, lit : String) -> Bool 
 }
 
 // Match a contraction at position i; returns its char length or 0.
+
+///|
 fn match_contraction(chars : Array[Char], i : Int, n : Int) -> Int {
   if i >= n || chars[i] != '\'' {
     return 0
@@ -197,6 +212,7 @@ fn match_contraction(chars : Array[Char], i : Int, n : Int) -> Int {
   0
 }
 
+///|
 fn slice(chars : Array[Char], start : Int, stop : Int) -> String {
   let sb = StringBuilder::new()
   for k in start..<stop {
@@ -207,6 +223,7 @@ fn slice(chars : Array[Char], start : Int, stop : Int) -> String {
 
 // --- character class predicates ---
 
+///|
 /// Whitespace per Unicode \s (common ones).
 pub fn is_space(c : Char) -> Bool {
   let u = c.to_int()
@@ -223,6 +240,7 @@ pub fn is_space(c : Char) -> Bool {
   u == 0x3000
 }
 
+///|
 /// Decimal-number-ish (Unicode \p{N}, approximated by common ranges).
 pub fn is_number(c : Char) -> Bool {
   let u = c.to_int()
@@ -233,6 +251,7 @@ pub fn is_number(c : Char) -> Bool {
   (u >= 0xFF10 && u <= 0xFF19) // Fullwidth
 }
 
+///|
 /// Letter (Unicode \p{L}), approximated by common script ranges.
 pub fn is_letter(c : Char) -> Bool {
   let u = c.to_int()
@@ -290,10 +309,13 @@ pub fn is_letter(c : Char) -> Bool {
 //   |\s+(?!\S)|\s+                          -- trailing / interior whitespace
 //
 // As with gpt2_split, each leftmost match becomes one piece (Split + Isolated).
+
+///|
 pub fn qwen_split(text : String) -> Array[String] {
   qwen_split_max_digits(text, max_digits=1)
 }
 
+///|
 pub fn qwen_split_max_digits(text : String, max_digits~ : Int) -> Array[String] {
   let chars = text.to_array()
   let n = chars.length()
@@ -356,7 +378,10 @@ pub fn qwen_split_max_digits(text : String, max_digits~ : Int) -> Array[String] 
       !is_letter(chars[punct_start]) &&
       !is_number(chars[punct_start]) {
       let mut j = punct_start
-      while j < n && !is_space(chars[j]) && !is_letter(chars[j]) && !is_number(chars[j]) {
+      while j < n &&
+            !is_space(chars[j]) &&
+            !is_letter(chars[j]) &&
+            !is_number(chars[j]) {
         j = j + 1
       }
       // [\r\n]*
@@ -415,6 +440,8 @@ pub fn qwen_split_max_digits(text : String, max_digits~ : Int) -> Array[String] 
 // The important difference from the Qwen/Llama-3 scanner is that contractions
 // are an optional suffix of a letter token. For example, HF pre-tokenizes
 // "I'm" as one piece, not as "I" + "'m".
+
+///|
 pub fn o200k_split(text : String) -> Array[String] {
   let chars = text.to_array()
   let n = chars.length()
@@ -451,7 +478,10 @@ pub fn o200k_split(text : String) -> Array[String] {
       !is_letter(chars[punct_start]) &&
       !is_number(chars[punct_start]) {
       let mut j = punct_start
-      while j < n && !is_space(chars[j]) && !is_letter(chars[j]) && !is_number(chars[j]) {
+      while j < n &&
+            !is_space(chars[j]) &&
+            !is_letter(chars[j]) &&
+            !is_number(chars[j]) {
         j = j + 1
       }
       while j < n && (chars[j] == '\r' || chars[j] == '\n' || chars[j] == '/') {
@@ -492,6 +522,7 @@ pub fn o200k_split(text : String) -> Array[String] {
   out
 }
 
+///|
 fn match_o200k_letter_piece(chars : Array[Char], i : Int, n : Int) -> Int {
   let has_prefix = !is_letter(chars[i]) &&
     chars[i] != '\r' &&
@@ -516,7 +547,7 @@ fn match_o200k_letter_piece(chars : Array[Char], i : Int, n : Int) -> Int {
   }
   if j > lower_start {
     let c = match_contraction_ci(chars, j, n)
-    return (j + c) - i
+    return j + c - i
   }
 
   // Second alternative: upper/title/modifier/other/mark+ then lower/modifier/
@@ -533,35 +564,42 @@ fn match_o200k_letter_piece(chars : Array[Char], i : Int, n : Int) -> Int {
     j = j + 1
   }
   let c = match_contraction_ci(chars, j, n)
-  (j + c) - i
+  j + c - i
 }
 
+///|
 fn is_o200k_letter_class(c : Char) -> Bool {
   is_letter(c) || is_combining_mark_approx(c)
 }
 
+///|
 fn is_o200k_upper_prefix_class(c : Char) -> Bool {
   is_uppercase_letter_approx(c) || is_o200k_uncased_or_mark(c)
 }
 
+///|
 fn is_o200k_lower_tail_class(c : Char) -> Bool {
   is_lowercase_letter_approx(c) || is_o200k_uncased_or_mark(c)
 }
 
+///|
 fn is_o200k_uncased_or_mark(c : Char) -> Bool {
   is_uncased_letter_approx(c) || is_combining_mark_approx(c)
 }
 
+///|
 fn is_uppercase_letter_approx(c : Char) -> Bool {
   let u = c.to_int()
   (u >= 0x41 && u <= 0x5A) || (u >= 0xC0 && u <= 0xDE && u != 0xD7)
 }
 
+///|
 fn is_lowercase_letter_approx(c : Char) -> Bool {
   let u = c.to_int()
   (u >= 0x61 && u <= 0x7A) || (u >= 0xDF && u <= 0xFF && u != 0xF7)
 }
 
+///|
 fn is_uncased_letter_approx(c : Char) -> Bool {
   let u = c.to_int()
   // Scripts without case in our approximation map to Lo/Lm-like classes.
@@ -573,6 +611,7 @@ fn is_uncased_letter_approx(c : Char) -> Bool {
   (u >= 0xAC00 && u <= 0xD7A3)
 }
 
+///|
 fn is_combining_mark_approx(c : Char) -> Bool {
   let u = c.to_int()
   (u >= 0x0300 && u <= 0x036F) ||
@@ -583,6 +622,8 @@ fn is_combining_mark_approx(c : Char) -> Bool {
 }
 
 // Case-insensitive contraction match (Qwen uses (?i:...)).
+
+///|
 fn match_contraction_ci(chars : Array[Char], i : Int, n : Int) -> Int {
   if i >= n || chars[i] != '\'' {
     return 0

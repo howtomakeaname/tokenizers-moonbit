@@ -1,5 +1,6 @@
 // Core shared types for the tokenizer library.
 
+///|
 /// The output of `Tokenizer::encode`, mirroring HuggingFace's `Encoding`.
 pub(all) struct Encoding {
   ids : Array[Int]
@@ -12,6 +13,7 @@ pub(all) struct Encoding {
   overflowing : Array[Encoding]
 } derive(Debug, Eq)
 
+///|
 /// A token produced by a model: its id, surface string and char offsets.
 pub(all) struct Token {
   id : Int
@@ -19,6 +21,7 @@ pub(all) struct Token {
   offsets : (Int, Int)
 } derive(Debug, Eq)
 
+///|
 /// An intermediate piece produced by pre-tokenization: a substring plus the
 /// char offsets it occupies in the original (normalized) text.
 pub(all) struct Split {
@@ -26,6 +29,7 @@ pub(all) struct Split {
   offsets : (Int, Int)
 } derive(Debug, Eq)
 
+///|
 /// Errors raised across the tokenizer pipeline.
 pub(all) suberror TokenizerError {
   /// The tokenizer.json could not be parsed or had an unexpected shape.
@@ -36,6 +40,7 @@ pub(all) suberror TokenizerError {
   VocabError(String)
 } derive(Debug)
 
+///|
 /// Build an empty `Encoding`.
 pub fn Encoding::empty() -> Encoding {
   {

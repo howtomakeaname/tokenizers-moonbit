@@ -3,6 +3,7 @@
 // P3 scope started with GPT-2/simple variants; this file now also routes
 // Unicode NFC/NFD/NFKC/NFKD through generated normalization tables.
 
+///|
 /// Apply this normalizer to a string.
 pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
   match self {
@@ -20,7 +21,12 @@ pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
       }
       s
     }
-    BertNormalizer(clean_text~, handle_chinese_chars~, strip_accents=sa, lowercase~) => {
+    BertNormalizer(
+      clean_text~,
+      handle_chinese_chars~,
+      strip_accents=sa,
+      lowercase~
+    ) => {
       let mut s = input
       if clean_text {
         s = bert_clean_text(s)
@@ -49,6 +55,8 @@ pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
 // HF ByteLevel normalizer maps every UTF-8 byte to the reversible GPT-2
 // byte-level alphabet. This is distinct from the ByteLevel pre-tokenizer: some
 // tokenizer.json files put byte-level mapping in the normalizer stage.
+
+///|
 fn byte_level_normalize(s : String) -> String {
   let bytes = @utf8.encode(s)
   let sb = StringBuilder::new()
@@ -58,6 +66,7 @@ fn byte_level_normalize(s : String) -> String {
   sb.to_string()
 }
 
+///|
 fn byte_to_visible_char(b : Int) -> Char {
   if is_byte_self_mapped(b) {
     b.unsafe_to_char()
@@ -72,6 +81,7 @@ fn byte_to_visible_char(b : Int) -> Char {
   }
 }
 
+///|
 fn is_byte_self_mapped(b : Int) -> Bool {
   (b >= 33 && b <= 126) || (b >= 161 && b <= 172) || (b >= 174 && b <= 255)
 }
@@ -80,6 +90,8 @@ fn is_byte_self_mapped(b : Int) -> Bool {
 // should not survive tokenization and map common Unicode space separators to a
 // regular ASCII space. This covers the behaviour used by common SPM pipelines;
 // full category-table parity can be tightened later if a fixture requires it.
+
+///|
 fn nmt_normalize(s : String) -> String {
   let sb = StringBuilder::new()
   for c in s {
@@ -96,6 +108,7 @@ fn nmt_normalize(s : String) -> String {
   sb.to_string()
 }
 
+///|
 fn is_nmt_control_or_format(u : Int) -> Bool {
   // Keep tab/newline/carriage-return as whitespace; drop the rest of C0/C1 and
   // common Cf ranges such as ZWSP/BOM/variation selectors.
@@ -108,16 +121,29 @@ fn is_nmt_control_or_format(u : Int) -> Bool {
   (u >= 0xFE00 && u <= 0xFE0F)
 }
 
+///|
 fn is_nmt_space(u : Int) -> Bool {
-  u == 0x09 || u == 0x0A || u == 0x0D || u == 0x20 || u == 0x85 || u == 0xA0 ||
-  u == 0x1680 || (u >= 0x2000 && u <= 0x200A) || u == 0x2028 || u == 0x2029 ||
-  u == 0x202F || u == 0x205F || u == 0x3000
+  u == 0x09 ||
+  u == 0x0A ||
+  u == 0x0D ||
+  u == 0x20 ||
+  u == 0x85 ||
+  u == 0xA0 ||
+  u == 0x1680 ||
+  (u >= 0x2000 && u <= 0x200A) ||
+  u == 0x2028 ||
+  u == 0x2029 ||
+  u == 0x202F ||
+  u == 0x205F ||
+  u == 0x3000
 }
 
 // Minimal SentencePiece Precompiled normalizer behavior: map whitespace runs to
 // one ASCII space. This matches the part of the embedded charsmap that affects
 // the current fixture set (T5/ALBERT/XLM-R/DeBERTa) without decoding the full
 // binary charsmap yet.
+
+///|
 fn precompiled_normalize(s : String) -> String {
   let sb = StringBuilder::new()
   let mut prev_ws = false
@@ -136,6 +162,8 @@ fn precompiled_normalize(s : String) -> String {
 }
 
 // strip_accents: remove combining marks via the precomputed NFD-minus-Mn table.
+
+///|
 fn strip_accents(s : String) -> String {
   let sb = StringBuilder::new()
   for c in s {
@@ -155,6 +183,8 @@ fn strip_accents(s : String) -> String {
 // `accent_map` covers precomposed characters such as é -> e. This predicate
 // additionally drops already-decomposed combining marks, which is required when
 // StripAccents follows NFKD in tokenizer.json (e.g. ALBERT).
+
+///|
 fn is_combining_mark(cp : Int) -> Bool {
   (cp >= 0x0300 && cp <= 0x036F) ||
   (cp >= 0x1AB0 && cp <= 0x1AFF) ||
@@ -164,8 +194,11 @@ fn is_combining_mark(cp : Int) -> Bool {
 }
 
 // Lazily-built map: code point -> accent-stripped form.
+
+///|
 let accent_map_cache : Ref[Map[Int, String]?] = { val: None }
 
+///|
 fn accent_map() -> Map[Int, String] {
   match accent_map_cache.val {
     Some(m) => m
@@ -182,6 +215,8 @@ fn accent_map() -> Map[Int, String] {
 
 // BertNormalizer clean_text: drop control chars and 0xFFFD, map whitespace to
 // a single space.
+
+///|
 fn bert_clean_text(s : String) -> String {
   let sb = StringBuilder::new()
   for c in s {
@@ -199,6 +234,8 @@ fn bert_clean_text(s : String) -> String {
 }
 
 // BertNormalizer handle_chinese_chars: surround each CJK char with spaces.
+
+///|
 fn bert_pad_chinese(s : String) -> String {
   let sb = StringBuilder::new()
   for c in s {
@@ -213,6 +250,7 @@ fn bert_pad_chinese(s : String) -> String {
   sb.to_string()
 }
 
+///|
 fn is_control(c : Char) -> Bool {
   // \t \n \r are treated as whitespace, not control, by BERT.
   if c == '\t' || c == '\n' || c == '\r' {
@@ -222,6 +260,7 @@ fn is_control(c : Char) -> Bool {
   (u >= 0 && u < 0x20) || u == 0x7F
 }
 
+///|
 fn is_chinese_char(c : Char) -> Bool {
   let u = c.to_int()
   (u >= 0x4E00 && u <= 0x9FFF) ||
@@ -230,6 +269,7 @@ fn is_chinese_char(c : Char) -> Bool {
   (u >= 0xF900 && u <= 0xFAFF)
 }
 
+///|
 fn to_lowercase(s : String) -> String {
   let sb = StringBuilder::new()
   for c in s {
@@ -238,6 +278,7 @@ fn to_lowercase(s : String) -> String {
   sb.to_string()
 }
 
+///|
 fn strip(s : String, left : Bool, right : Bool) -> String {
   let chars = s.to_array()
   let n = chars.length()
@@ -260,11 +301,14 @@ fn strip(s : String, left : Bool, right : Bool) -> String {
   sb.to_string()
 }
 
+///|
 fn is_ws(c : Char) -> Bool {
   c == ' ' || c == '\t' || c == '\n' || c == '\r'
 }
 
 // Literal substring replacement (HF "Replace" with a String pattern).
+
+///|
 fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern.is_empty() {
     return s
@@ -287,6 +331,7 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   sb.to_string()
 }
 
+///|
 fn matches_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
   for k in 0..<pat.length() {
     if src[at + k] != pat[k] {

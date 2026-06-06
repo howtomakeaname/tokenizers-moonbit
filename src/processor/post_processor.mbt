@@ -3,6 +3,7 @@
 //
 // P1 scope: enum + deserialization. `process` behaviour lands in P7.
 
+///|
 /// One piece of a processing template: either a reference to an input sequence
 /// (A or B) or a literal special token, each tagged with a type_id.
 pub enum Piece {
@@ -10,6 +11,7 @@ pub enum Piece {
   SpecialTokenRef(id~ : String, type_id~ : Int)
 } derive(Debug, Eq)
 
+///|
 /// A special token definition: its surface and the ids/tokens it expands to.
 pub struct SpecialToken {
   id : String
@@ -17,23 +19,25 @@ pub struct SpecialToken {
   tokens : Array[String]
 } derive(Debug, Eq)
 
+///|
 pub enum PostProcessor {
   TemplateProcessing(
     single~ : Array[Piece],
     pair~ : Array[Piece],
-    special_tokens~ : Map[String, SpecialToken],
+    special_tokens~ : Map[String, SpecialToken]
   )
   BertProcessing(sep~ : (String, Int), cls~ : (String, Int))
   RobertaProcessing(
     sep~ : (String, Int),
     cls~ : (String, Int),
     trim_offsets~ : Bool,
-    add_prefix_space~ : Bool,
+    add_prefix_space~ : Bool
   )
   ByteLevel(add_prefix_space~ : Bool, trim_offsets~ : Bool, use_regex~ : Bool)
   Sequence(Array[PostProcessor])
 }
 
+///|
 /// Parse a post_processor config object.
 pub fn PostProcessor::from_json(
   j : Json,
@@ -68,7 +72,8 @@ pub fn PostProcessor::from_json(
     "Sequence" => {
       let arr = match obj.get("processors") {
         Some(Array(a)) => a
-        _ => raise @types.ParseError("post_processor Sequence missing processors")
+        _ =>
+          raise @types.ParseError("post_processor Sequence missing processors")
       }
       Sequence(arr.map(x => PostProcessor::from_json(x)))
     }
@@ -77,6 +82,8 @@ pub fn PostProcessor::from_json(
 }
 
 // Bert/Roberta store sep/cls as ["[SEP]", 102].
+
+///|
 fn parse_token_id_pair(
   obj : Map[String, Json],
   key : String,
@@ -87,6 +94,7 @@ fn parse_token_id_pair(
   }
 }
 
+///|
 fn parse_pieces(
   obj : Map[String, Json],
   key : String,
@@ -122,6 +130,7 @@ fn parse_pieces(
   out
 }
 
+///|
 fn parse_special_tokens(
   obj : Map[String, Json],
 ) -> Map[String, SpecialToken] raise @types.TokenizerError {

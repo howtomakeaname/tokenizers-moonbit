@@ -11,16 +11,24 @@
 // lazily on first use.
 
 // cp -> decomposition (fully recursive)
+
+///|
 let canon_decomp : Ref[Map[Int, Array[Int]]?] = { val: None }
 
+///|
 let compat_decomp : Ref[Map[Int, Array[Int]]?] = { val: None }
 
 // cp -> combining class (absent => 0)
+
+///|
 let ccc_table : Ref[Map[Int, Int]?] = { val: None }
 
 // (a,b) packed as a*0x110000+b -> composed cp
+
+///|
 let comp_table : Ref[Map[Int, Int]?] = { val: None }
 
+///|
 fn parse_decomp(raw : String) -> Map[Int, Array[Int]] {
   let m : Map[Int, Array[Int]] = {}
   for line in raw.split("\n") {
@@ -48,6 +56,7 @@ fn parse_decomp(raw : String) -> Map[Int, Array[Int]] {
   m
 }
 
+///|
 fn canon_map() -> Map[Int, Array[Int]] {
   match canon_decomp.val {
     Some(m) => m
@@ -59,6 +68,7 @@ fn canon_map() -> Map[Int, Array[Int]] {
   }
 }
 
+///|
 fn compat_map() -> Map[Int, Array[Int]] {
   match compat_decomp.val {
     Some(m) => m
@@ -70,6 +80,7 @@ fn compat_map() -> Map[Int, Array[Int]] {
   }
 }
 
+///|
 fn ccc_map() -> Map[Int, Int] {
   match ccc_table.val {
     Some(m) => m
@@ -93,6 +104,7 @@ fn ccc_map() -> Map[Int, Int] {
   }
 }
 
+///|
 fn comp_map() -> Map[Int, Int] {
   match comp_table.val {
     Some(m) => m
@@ -121,10 +133,12 @@ fn comp_map() -> Map[Int, Int] {
   }
 }
 
+///|
 fn ccc_of(cp : Int) -> Int {
   ccc_map().get(cp).unwrap_or(0)
 }
 
+///|
 /// Normalize a string. `compat` selects NFKC/NFKD; `compose` selects the C
 /// forms (recompose after decomposition).
 pub fn normalize_unicode(
@@ -154,6 +168,8 @@ pub fn normalize_unicode(
 // decomposition table; `cm` is the canonical table used to recurse into the
 // canonical part of a compatibility mapping. Both tables are already fully
 // recursive, so a single lookup suffices.
+
+///|
 fn decompose_cp(
   cp : Int,
   table : Map[Int, Array[Int]],
@@ -164,14 +180,16 @@ fn decompose_cp(
   ignore(cm)
   ignore(compat)
   match table.get(cp) {
-    Some(seq) => for x in seq {
+    Some(seq) =>
+      for x in seq {
         out.push(x)
       }
     None =>
       // For compatibility form, also fall back to canonical decomposition.
       if compat {
         match cm.get(cp) {
-          Some(seq) => for x in seq {
+          Some(seq) =>
+            for x in seq {
               out.push(x)
             }
           None => out.push(cp)
@@ -184,6 +202,8 @@ fn decompose_cp(
 
 // Stable canonical ordering: reorder combining marks so CCC is non-decreasing
 // within each run, preserving order of equal-CCC marks.
+
+///|
 fn canonical_order(cps : Array[Int]) -> Unit {
   let n = cps.length()
   let mut i = 1
@@ -211,6 +231,8 @@ fn canonical_order(cps : Array[Int]) -> Unit {
 
 // Canonical composition (UAX #15): walk left-to-right keeping a "last starter",
 // and try to compose it with each following combining mark / starter.
+
+///|
 fn canonical_compose(cps : Array[Int]) -> Array[Int] {
   let n = cps.length()
   if n == 0 {
@@ -252,6 +274,7 @@ fn canonical_compose(cps : Array[Int]) -> Array[Int] {
   out
 }
 
+///|
 fn hex_to_int(s : String) -> Int {
   let mut v = 0
   for c in s {
@@ -269,6 +292,7 @@ fn hex_to_int(s : String) -> Int {
   v
 }
 
+///|
 fn str_to_int(s : String) -> Int {
   let mut v = 0
   for c in s {

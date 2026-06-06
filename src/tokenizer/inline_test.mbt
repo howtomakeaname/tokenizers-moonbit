@@ -4,6 +4,7 @@
 // this test embeds a tiny tokenizer.json so it runs identically on every
 // backend, including wasm / wasm-gc where the large fixtures are absent.
 
+///|
 let tiny_bpe : String =
   #|{
   #|  "model": {
@@ -14,6 +15,7 @@ let tiny_bpe : String =
   #|  }
   #|}
 
+///|
 test "inline BPE encode/decode runs on all backends" {
   let tok = Tokenizer::from_str(tiny_bpe)
   let enc = tok.encode("abc", add_special_tokens=false)

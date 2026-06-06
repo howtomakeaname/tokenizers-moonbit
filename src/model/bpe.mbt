@@ -7,6 +7,8 @@
 
 // A symbol in the working sequence, modeled as a node in a doubly linked list
 // over an array (so merges are O(1) splices).
+
+///|
 priv struct Symbol {
   mut value : String
   mut prev : Int
@@ -18,13 +20,16 @@ priv struct Symbol {
 // `rank` is the BPE merge rank (lower applied first). Stored in a max-heap, so
 // Compare is defined so that a *smaller* rank (and then smaller pos) is "greater"
 // and thus pops first. `right` lets us detect stale entries after merges.
+
+///|
 priv struct Merge {
   rank : Int
   pos : Int
   right : Int
 } derive(Eq)
 
-impl Compare for Merge with compare(self, other) {
+///|
+impl Compare for Merge with fn compare(self, other) {
   // Smaller rank should pop first => it must compare as "greater".
   if self.rank != other.rank {
     other.rank - self.rank
@@ -34,12 +39,13 @@ impl Compare for Merge with compare(self, other) {
   }
 }
 
+///|
 /// Tokenize a single word with this BPE model.
 /// `offset` is the char offset of `word` within the original text.
 pub fn BPEModel::tokenize(
   self : BPEModel,
   word : String,
-  offset~ : Int = 0,
+  offset? : Int = 0,
 ) -> Array[@types.Token] {
   let chars = word.to_array()
   let n = chars.length()
@@ -52,7 +58,9 @@ pub fn BPEModel::tokenize(
   if self.ignore_merges {
     match self.vocab.get(word) {
       Some(id) =>
-        return [@types.Token::{ id, value: word, offsets: (offset, offset + n) }]
+        return [
+          @types.Token::{ id, value: word, offsets: (offset, offset + n) },
+        ]
       None => ()
     }
   }
@@ -134,6 +142,8 @@ pub fn BPEModel::tokenize(
 }
 
 // Walk the linked list from the head and emit tokens.
+
+///|
 fn BPEModel::collect_tokens(
   self : BPEModel,
   symbols : Array[Symbol],
@@ -168,7 +178,8 @@ fn BPEModel::collect_tokens(
           None
         }
         match fb {
-          Some(toks) => for t in toks {
+          Some(toks) =>
+            for t in toks {
               raw.push(t)
             }
           None =>
@@ -211,6 +222,8 @@ fn BPEModel::collect_tokens(
 }
 
 // The vocab id of the unk token, if any.
+
+///|
 fn BPEModel::unk_id(self : BPEModel) -> Int? {
   match self.unk_token {
     Some(unk) => self.vocab.get(unk)
@@ -220,6 +233,8 @@ fn BPEModel::unk_id(self : BPEModel) -> Int? {
 
 // Try to represent `surface` as a sequence of <0xXX> byte tokens (uppercase,
 // two hex digits). Returns None if any byte token is missing from the vocab.
+
+///|
 fn BPEModel::try_byte_fallback(
   self : BPEModel,
   surface : String,
@@ -240,6 +255,8 @@ fn BPEModel::try_byte_fallback(
 }
 
 // "<0xE2>" style token: uppercase, fixed two hex digits.
+
+///|
 fn byte_hex_token(b : Int) -> String {
   let digits = "0123456789ABCDEF"
   let hi = digits.to_array()[b / 16]
@@ -254,6 +271,8 @@ fn byte_hex_token(b : Int) -> String {
 
 // Merge runs of adjacent unk tokens (id == unk_id) into a single token whose
 // value is the concatenation and whose offsets span the run.
+
+///|
 fn fuse_unk_tokens(
   toks : Array[@types.Token],
   unk : Int?,
@@ -281,6 +300,8 @@ fn fuse_unk_tokens(
 
 // Count code points covered by the symbol at `idx`, by measuring the gap to the
 // next alive node (in original char index space).
+
+///|
 fn symbol_char_span(symbols : Array[Symbol], idx : Int, total : Int) -> Int {
   // The initial symbol array index equals the starting char index, and merges
   // keep `next` pointing at the next start. So span = next_index - idx, or
@@ -293,6 +314,7 @@ fn symbol_char_span(symbols : Array[Symbol], idx : Int, total : Int) -> Int {
   }
 }
 
+///|
 fn make_surface(chars : Array[Char], start : Int, stop : Int) -> String {
   let sb = StringBuilder::new()
   for i in start..<stop {
@@ -301,11 +323,14 @@ fn make_surface(chars : Array[Char], start : Int, stop : Int) -> String {
   sb.to_string()
 }
 
+///|
 fn BPEModel::lookup(self : BPEModel, value : String) -> Int? {
   self.vocab.get(value)
 }
 
 // Build a one-character String.
+
+///|
 fn char_str(c : Char) -> String {
   let sb = StringBuilder::new()
   sb.write_char(c)

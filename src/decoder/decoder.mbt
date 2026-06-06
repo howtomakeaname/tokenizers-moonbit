@@ -3,6 +3,7 @@
 // P1 scope: enum + deserialization. `decode` behaviour lands in P4 (ByteLevel)
 // and P5/P6 (WordPiece/Metaspace).
 
+///|
 pub enum Decoder {
   ByteLevel(add_prefix_space~ : Bool, trim_offsets~ : Bool, use_regex~ : Bool)
   WordPiece(prefix~ : String, cleanup~ : Bool)
@@ -18,6 +19,7 @@ pub enum Decoder {
   Sequence(Array[Decoder])
 }
 
+///|
 /// Parse a decoder config object.
 pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
   let obj = @types.as_object(j, "decoder")
@@ -47,13 +49,18 @@ pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
             }
         },
       )
-    "BPEDecoder" => BPEDecoder(suffix=@types.get_str(obj, "suffix", default="</w>"))
+    "BPEDecoder" =>
+      BPEDecoder(suffix=@types.get_str(obj, "suffix", default="</w>"))
     "Fuse" => Fuse
     "ByteFallback" => ByteFallback
     "CTC" =>
       CTC(
         pad_token=@types.get_str(obj, "pad_token", default="<pad>"),
-        word_delimiter_token=@types.get_str(obj, "word_delimiter_token", default="|"),
+        word_delimiter_token=@types.get_str(
+          obj,
+          "word_delimiter_token",
+          default="|",
+        ),
         cleanup=@types.get_bool(obj, "cleanup", default=true),
       )
     "Strip" =>
@@ -78,6 +85,7 @@ pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
   }
 }
 
+///|
 fn parse_pattern(obj : Map[String, Json]) -> String {
   match obj.get("pattern") {
     Some(Object(p)) =>

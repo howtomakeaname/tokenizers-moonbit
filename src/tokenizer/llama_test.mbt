@@ -1,6 +1,7 @@
 // Cross-check Llama BPE (byte_fallback + Metaspace) against Python tokenizers.
 // The emoji case exercises byte_fallback: 😀 -> <0xF0><0x9F><0x98><0x80>.
 
+///|
 test "llama byte-fallback BPE matches python tokenizers" {
   guard load_text("tests/data/llama.full.json") is Some(model_json) else {
     return
@@ -19,6 +20,7 @@ test "llama byte-fallback BPE matches python tokenizers" {
   }
 }
 
+///|
 test "llama decode round-trip reconstructs text incl. emoji" {
   guard load_text("tests/data/llama.full.json") is Some(model_json) else {
     return

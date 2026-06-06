@@ -1,8 +1,0 @@
-{
-  "import": [
-    "tokenizer-moonbit/types",
-    "tokenizer-moonbit/pretokenizer",
-    { "path": "moonbitlang/core/encoding/utf8", "alias": "utf8" },
-    "moonbitlang/core/buffer"
-  ]
-}

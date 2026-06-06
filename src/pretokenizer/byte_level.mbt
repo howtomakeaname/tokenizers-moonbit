@@ -6,25 +6,30 @@
 
 // Lazily-initialized tables. byte_to_char[b] is the char for byte b;
 // char_to_byte maps that char back to b.
+
+///|
 let byte_to_char : Array[Char] = build_byte_to_char()
 
+///|
 let char_to_byte : Map[Char, Int] = build_char_to_byte()
 
+///|
 fn build_bs() -> Array[Int] {
   // The "printable" byte ranges that map to themselves.
   let bs : Array[Int] = []
-  for b in 33..=126 {
+  for b in 33..<=126 {
     bs.push(b)
   }
-  for b in 161..=172 {
+  for b in 161..<=172 {
     bs.push(b)
   }
-  for b in 174..=255 {
+  for b in 174..<=255 {
     bs.push(b)
   }
   bs
 }
 
+///|
 fn build_byte_to_char() -> Array[Char] {
   let bs = build_bs()
   // cs starts as a copy of bs; remaining bytes get assigned 256+n.
@@ -48,6 +53,7 @@ fn build_byte_to_char() -> Array[Char] {
   table
 }
 
+///|
 fn build_char_to_byte() -> Map[Char, Int] {
   let m : Map[Char, Int] = {}
   let table = build_byte_to_char()
@@ -57,6 +63,7 @@ fn build_char_to_byte() -> Map[Char, Int] {
   m
 }
 
+///|
 /// Map a string to its byte-level representation: encode to UTF-8, then map
 /// each byte to its visible char.
 pub fn byte_level_encode_str(s : String) -> String {
@@ -71,6 +78,7 @@ pub fn byte_level_encode_str(s : String) -> String {
   sb.to_string()
 }
 
+///|
 /// Inverse of `byte_level_encode_str`: map each char back to a byte, then
 /// decode the byte sequence as UTF-8 (lossy).
 pub fn byte_level_decode_str(s : String) -> String {

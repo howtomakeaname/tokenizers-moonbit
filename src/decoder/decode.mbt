@@ -5,6 +5,7 @@
 // resulting token list. This token-list model is required for decoders like
 // ByteFallback that must group consecutive byte tokens before a later Fuse.
 
+///|
 /// Decode a list of token surface strings back into text.
 pub fn Decoder::decode(self : Decoder, tokens : Array[String]) -> String {
   let out = self.decode_chain(tokens)
@@ -15,6 +16,7 @@ pub fn Decoder::decode(self : Decoder, tokens : Array[String]) -> String {
   sb.to_string()
 }
 
+///|
 /// Transform a token list (HF decode_chain semantics).
 pub fn Decoder::decode_chain(
   self : Decoder,
@@ -23,9 +25,7 @@ pub fn Decoder::decode_chain(
   match self {
     ByteLevel(..) =>
       // Map byte-level chars back to bytes across the whole sequence.
-      [
-        @pretokenizer.byte_level_decode_str(join(tokens)),
-      ]
+      [@pretokenizer.byte_level_decode_str(join(tokens))]
     WordPiece(prefix~, cleanup~) => decode_wordpiece(tokens, prefix, cleanup)
     BPEDecoder(suffix~) => decode_bpe(tokens, suffix)
     Metaspace(replacement~, ..) => decode_metaspace(tokens, replacement)
@@ -47,6 +47,7 @@ pub fn Decoder::decode_chain(
   }
 }
 
+///|
 fn join(tokens : Array[String]) -> String {
   let sb = StringBuilder::new()
   for t in tokens {
@@ -58,6 +59,8 @@ fn join(tokens : Array[String]) -> String {
 // ByteFallback: group runs of "<0xXX>" tokens, decode their bytes as UTF-8.
 // Non-byte tokens pass through unchanged. Invalid UTF-8 byte runs become the
 // replacement char per byte (HF behaviour).
+
+///|
 fn decode_byte_fallback(tokens : Array[String]) -> Array[String] {
   let out : Array[String] = []
   let pending : Array[Int] = []
@@ -87,6 +90,8 @@ fn decode_byte_fallback(tokens : Array[String]) -> Array[String] {
 
 // CTC decoder: collapse consecutive duplicate tokens, drop pad tokens, and map
 // the word-delimiter token to a space. Optional cleanup of punctuation spacing.
+
+///|
 fn decode_ctc(
   tokens : Array[String],
   pad_token : String,
@@ -119,6 +124,8 @@ fn decode_ctc(
 }
 
 // Parse "<0xXX>" -> byte value; None otherwise.
+
+///|
 fn parse_byte_token(t : String) -> Int? {
   let cs = t.to_array()
   if cs.length() != 6 {
@@ -135,6 +142,7 @@ fn parse_byte_token(t : String) -> Int? {
   }
 }
 
+///|
 fn hex_val(c : Char) -> Int? {
   if c >= '0' && c <= '9' {
     Some(c.to_int() - '0'.to_int())
@@ -147,6 +155,7 @@ fn hex_val(c : Char) -> Int? {
   }
 }
 
+///|
 fn decode_wordpiece(
   tokens : Array[String],
   prefix : String,
@@ -167,12 +176,18 @@ fn decode_wordpiece(
   [if cleanup { cleanup_text(s) } else { s }]
 }
 
+///|
 fn decode_bpe(tokens : Array[String], suffix : String) -> Array[String] {
-  tokens.map(t => if t.has_suffix(suffix) { drop_suffix(t, suffix) + " " } else {
+  tokens.map(t => {
+    if t.has_suffix(suffix) {
+      drop_suffix(t, suffix) + " "
+    } else {
       t
-    })
+    }
+  })
 }
 
+///|
 fn decode_metaspace(
   tokens : Array[String],
   replacement : Char,
@@ -196,6 +211,7 @@ fn decode_metaspace(
 
 // --- small string helpers ---
 
+///|
 fn drop_prefix(s : String, prefix : String) -> String {
   let pc = prefix.char_length()
   let chars = s.to_array()
@@ -206,6 +222,7 @@ fn drop_prefix(s : String, prefix : String) -> String {
   sb.to_string()
 }
 
+///|
 fn drop_suffix(s : String, suffix : String) -> String {
   let sc = suffix.char_length()
   let chars = s.to_array()
@@ -216,6 +233,7 @@ fn drop_suffix(s : String, suffix : String) -> String {
   sb.to_string()
 }
 
+///|
 fn strip_token(t : String, content : Char, start : Int, stop : Int) -> String {
   let chars = t.to_array()
   let n = chars.length()
@@ -240,6 +258,8 @@ fn strip_token(t : String, content : Char, start : Int, stop : Int) -> String {
 
 // BERT-style detokenization cleanup: remove spaces before punctuation, fix
 // contractions like " ' s" -> "'s".
+
+///|
 fn cleanup_text(s : String) -> String {
   let replacements = [
     (" .", "."),
@@ -262,6 +282,7 @@ fn cleanup_text(s : String) -> String {
   out
 }
 
+///|
 fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern.is_empty() {
     return s
@@ -284,6 +305,7 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   sb.to_string()
 }
 
+///|
 fn matches_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
   for k in 0..<pat.length() {
     if src[at + k] != pat[k] {

@@ -5,11 +5,12 @@
 // the `##` prefix). If any segment fails to match, the whole word becomes the
 // unk token. Words longer than `max_input_chars_per_word` are unk.
 
+///|
 /// Tokenize a single word with this WordPiece model.
 pub fn WordPieceModel::tokenize(
   self : WordPieceModel,
   word : String,
-  offset~ : Int = 0,
+  offset? : Int = 0,
 ) -> Array[@types.Token] {
   let chars = word.to_array()
   let n = chars.length()
@@ -73,6 +74,7 @@ pub fn WordPieceModel::tokenize(
   }
 }
 
+///|
 fn make_sub(chars : Array[Char], start : Int, stop : Int) -> String {
   let sb = StringBuilder::new()
   for i in start..<stop {

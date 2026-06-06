@@ -5,9 +5,10 @@
 // via from_file / x.fs; this test runs on native and js. The large model file
 // is git-ignored, so the test is skipped gracefully when it is absent.
 
+///|
 fn load_text(path : String) -> String? {
   if @fs.path_exists(path) {
-    try Some(@fs.read_file_to_string(path)) catch {
+    Some(@fs.read_file_to_string(path)) catch {
       _ => None
     }
   } else {
@@ -15,6 +16,7 @@ fn load_text(path : String) -> String? {
   }
 }
 
+///|
 test "gpt2 splits the <|endoftext|> special token out of text" {
   guard load_text("tests/data/gpt2.full.json") is Some(model_json) else {
     return
@@ -26,6 +28,7 @@ test "gpt2 splits the <|endoftext|> special token out of text" {
   @test.assert_eq(enc.tokens, ["hello", "<|endoftext|>", "world"])
 }
 
+///|
 test "gpt2 encode matches python tokenizers" {
   let model_path = "tests/data/gpt2.full.json"
   let expected_path = "tests/data/gpt2_expected.json"
@@ -41,10 +44,14 @@ test "gpt2 encode matches python tokenizers" {
     @test.assert_eq(enc.ids, want_ids)
     // decode round-trip: ids -> text should match python's decoded output
     let want_decoded = @types.get_str(obj, "decoded", default="")
-    @test.assert_eq(tok.decode(enc.ids, skip_special_tokens=false), want_decoded)
+    @test.assert_eq(
+      tok.decode(enc.ids, skip_special_tokens=false),
+      want_decoded,
+    )
   }
 }
 
+///|
 fn parse_int_array(obj : Map[String, Json], key : String) -> Array[Int] {
   let out : Array[Int] = []
   match obj.get(key) {

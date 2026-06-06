@@ -1,16 +1,19 @@
 // Padding: extend encodings to a common length. Mirrors HuggingFace
 // PaddingParams.
 
+///|
 pub(all) enum PaddingStrategy {
   BatchLongest
   Fixed(Int)
 } derive(Debug, Eq)
 
+///|
 pub(all) enum PaddingDirection {
   Left
   Right
 } derive(Debug, Eq)
 
+///|
 pub(all) struct PaddingParams {
   strategy : PaddingStrategy
   direction : PaddingDirection
@@ -20,11 +23,12 @@ pub(all) struct PaddingParams {
   pad_to_multiple_of : Int?
 } derive(Debug, Eq)
 
+///|
 /// Default padding: right direction, pad id/token 0 / "[PAD]".
 pub fn PaddingParams::new(
   strategy : PaddingStrategy,
-  pad_id~ : Int = 0,
-  pad_token~ : String = "[PAD]",
+  pad_id? : Int = 0,
+  pad_token? : String = "[PAD]",
 ) -> PaddingParams {
   {
     strategy,
@@ -36,6 +40,7 @@ pub fn PaddingParams::new(
   }
 }
 
+///|
 fn round_up(n : Int, multiple : Int) -> Int {
   if multiple <= 0 || n % multiple == 0 {
     n
@@ -44,6 +49,7 @@ fn round_up(n : Int, multiple : Int) -> Int {
   }
 }
 
+///|
 /// Pad a single encoding to `target_len` (no-op if already >= target).
 pub fn pad_encoding(
   enc : @types.Encoding,
@@ -85,6 +91,7 @@ pub fn pad_encoding(
   }
 }
 
+///|
 /// Pad a batch of encodings according to the strategy.
 pub fn pad_batch(
   encodings : Array[@types.Encoding],
@@ -106,6 +113,7 @@ pub fn pad_batch(
   encodings.map(e => pad_encoding(e, target, params))
 }
 
+///|
 fn[T] concat(a : Array[T], b : Array[T]) -> Array[T] {
   let out = a.copy()
   for x in b {

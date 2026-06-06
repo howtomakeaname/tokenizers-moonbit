@@ -1,0 +1,10 @@
+import {
+  "tokenizer-moonbit/types",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/int",
+  "moonbitlang/core/priority_queue" @pq,
+}
+
+import {
+  "moonbitlang/core/test",
+} for "wbtest"

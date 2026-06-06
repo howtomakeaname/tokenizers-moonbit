@@ -1,6 +1,7 @@
 // Cross-check the BERT WordPiece encoder against Python `tokenizers`.
 // add_special_tokens=false (post-processing/[CLS]/[SEP] is covered in P7).
 
+///|
 test "bert wordpiece encode matches python tokenizers" {
   guard load_text("tests/data/bert.full.json") is Some(model_json) else {
     return

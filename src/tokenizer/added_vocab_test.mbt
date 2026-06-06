@@ -1,6 +1,7 @@
 // AddedVocabulary: special/added tokens are extracted from text before the
 // model runs, even when they appear in the middle of text.
 
+///|
 let av_bpe : String =
   #|{
   #|  "added_tokens": [
@@ -15,6 +16,7 @@ let av_bpe : String =
   #|  }
   #|}
 
+///|
 test "added tokens split out of surrounding text" {
   let tok = Tokenizer::from_str(av_bpe)
   let enc = tok.encode("<s>abc</s>", add_special_tokens=false)
@@ -24,6 +26,7 @@ test "added tokens split out of surrounding text" {
   @test.assert_eq(enc.special_tokens_mask, [1, 0, 1])
 }
 
+///|
 test "added token in the middle of text" {
   let tok = Tokenizer::from_str(av_bpe)
   let enc = tok.encode("ab[MASK]ab", add_special_tokens=false)
@@ -31,6 +34,7 @@ test "added token in the middle of text" {
   @test.assert_eq(enc.ids, [3, 7, 3])
 }
 
+///|
 test "lstrip/rstrip eats surrounding whitespace" {
   let tok = Tokenizer::from_str(av_bpe)
   // [MASK] has lstrip+rstrip: the spaces around it are absorbed into the token.
@@ -38,6 +42,7 @@ test "lstrip/rstrip eats surrounding whitespace" {
   @test.assert_eq(enc.tokens, ["ab", "[MASK]", "ab"])
 }
 
+///|
 test "decode skips special added tokens" {
   let tok = Tokenizer::from_str(av_bpe)
   let s = tok.decode([5, 4, 6], skip_special_tokens=true)

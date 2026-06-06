@@ -3,12 +3,13 @@
 // The model then runs on each piece's `value`. Offsets are tracked in code
 // points relative to the original normalized string.
 
+///|
 /// Apply this pre-tokenizer to a single normalized string starting at char
 /// `base_offset`, producing pieces.
 pub fn PreTokenizer::pre_tokenize(
   self : PreTokenizer,
   text : String,
-  base_offset~ : Int = 0,
+  base_offset? : Int = 0,
 ) -> Array[@types.Split] {
   match self {
     ByteLevel(add_prefix_space~, use_regex~, ..) =>
@@ -18,7 +19,9 @@ pub fn PreTokenizer::pre_tokenize(
     BertPreTokenizer => bert_pre_tokenize(text, base_offset)
     Punctuation(behavior~) => punctuation_split(text, behavior, base_offset)
     Metaspace(replacement~, prepend_scheme~, split~) =>
-      metaspace_pre_tokenize(text, replacement, prepend_scheme, split, base_offset)
+      metaspace_pre_tokenize(
+        text, replacement, prepend_scheme, split, base_offset,
+      )
     Split(pattern~, ..) => split_pre_tokenize(text, pattern, base_offset)
     Digits(individual_digits~) =>
       digits_split(text, individual_digits, base_offset)
@@ -33,6 +36,8 @@ pub fn PreTokenizer::pre_tokenize(
 // regexes (used verbatim by most modern models) and run a dedicated scanner.
 // Each match becomes one piece (HF's Split + Isolated over a full-coverage
 // regex). Offsets are tracked over the original char positions.
+
+///|
 fn split_pre_tokenize(
   text : String,
   pattern : String,
@@ -60,30 +65,42 @@ fn split_pre_tokenize(
 }
 
 // Recognize the Qwen2/Qwen3/Llama-3 pattern (single-digit \p{N}, (?i:...)).
+
+///|
 fn is_qwen_pattern(p : String) -> Bool {
   p.contains("(?i:'s|'t") || (p.contains("\\p{N}|") && p.contains("[\\r\\n]*"))
 }
 
 // Llama-3 / GLM style: Qwen/Llama regex but groups numbers as \p{N}{1,3}.
+
+///|
 fn is_qwen_triplet_pattern(p : String) -> Bool {
-  p.contains("(?i:'s|'t") && p.contains("\\p{N}{1,3}") && p.contains("[\\r\\n]*")
+  p.contains("(?i:'s|'t") &&
+  p.contains("\\p{N}{1,3}") &&
+  p.contains("[\\r\\n]*")
 }
 
 // o200k-style regex used by GPT-OSS / Phi-4-mini: case-aware letter branches,
 // optional contractions, number chunks of up to 3, punctuation, whitespace.
+
+///|
 fn is_o200k_pattern(p : String) -> Bool {
   p.contains("\\p{Lu}") && p.contains("\\p{Ll}") && p.contains("\\p{N}{1,3}")
 }
 
+///|
 fn is_digit_triplet_pattern(p : String) -> Bool {
   p == "\\p{N}{1,3}" || (p.contains("\\p{N}{1,3}") && !p.contains("|"))
 }
 
+///|
 fn is_cjk_range_pattern(p : String) -> Bool {
   p.contains("一-龥") && p.contains("぀-ゟ") && p.contains("゠-ヿ")
 }
 
 // Recognize the classic GPT-2 pattern.
+
+///|
 fn is_gpt2_pattern(p : String) -> Bool {
   p.contains("'s|'t|'re") && p.contains("?\\p{L}+")
 }
@@ -91,11 +108,17 @@ fn is_gpt2_pattern(p : String) -> Bool {
 // CLIP uses a GPT-2-like Split regex but without optional leading spaces:
 // specials | contractions | [\p{L}]+ | [\p{N}] | [^\s\p{L}\p{N}]+.
 // This removes whitespace before ByteLevel maps the remaining pieces.
+
+///|
 fn is_clip_pattern(p : String) -> Bool {
-  p.contains("<\\|startoftext\\|>") && p.contains("[\\p{L}]+") && p.contains("[\\p{N}]")
+  p.contains("<\\|startoftext\\|>") &&
+  p.contains("[\\p{L}]+") &&
+  p.contains("[\\p{N}]")
 }
 
 // Turn raw piece strings into Splits with running char offsets.
+
+///|
 fn pieces_to_splits(
   pieces : Array[String],
   base_offset : Int,
@@ -110,6 +133,7 @@ fn pieces_to_splits(
   out
 }
 
+///|
 fn digit_chunk_split(text : String, max_digits~ : Int) -> Array[String] {
   let chars = text.to_array()
   let n = chars.length()
@@ -136,6 +160,7 @@ fn digit_chunk_split(text : String, max_digits~ : Int) -> Array[String] {
   out
 }
 
+///|
 fn cjk_range_split(text : String) -> Array[String] {
   let chars = text.to_array()
   let n = chars.length()
@@ -152,6 +177,7 @@ fn cjk_range_split(text : String) -> Array[String] {
   out
 }
 
+///|
 fn is_cjk_range_char(c : Char) -> Bool {
   let u = c.to_int()
   (u >= 0x4E00 && u <= 0x9FA5) ||
@@ -160,6 +186,8 @@ fn is_cjk_range_char(c : Char) -> Bool {
 }
 
 // ByteLevel: optionally prepend a space, regex-split (GPT-2), byte-map pieces.
+
+///|
 fn byte_level_pre_tokenize(
   text : String,
   add_prefix_space : Bool,
@@ -181,11 +209,22 @@ fn byte_level_pre_tokenize(
   for p in pieces {
     let plen = p.char_length()
     let start_in_input = cursor
-    let orig_start = if prefixed { base_offset + start_in_input - 1 } else { base_offset + start_in_input }
+    let orig_start = if prefixed {
+      base_offset + start_in_input - 1
+    } else {
+      base_offset + start_in_input
+    }
     let orig_end = orig_start + plen
     out.push({
       value: byte_level_encode_str(p),
-      offsets: (if orig_start < base_offset { base_offset } else { orig_start }, orig_end),
+      offsets: (
+        if orig_start < base_offset {
+          base_offset
+        } else {
+          orig_start
+        },
+        orig_end,
+      ),
     })
     cursor = cursor + plen
   }
@@ -193,6 +232,8 @@ fn byte_level_pre_tokenize(
 }
 
 // Whitespace pre-tokenizer: \w+|[^\w\s]+ (ASCII-approximated word runs).
+
+///|
 fn whitespace(text : String, base_offset : Int) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
@@ -224,6 +265,8 @@ fn whitespace(text : String, base_offset : Int) -> Array[@types.Split] {
 }
 
 // WhitespaceSplit: split on runs of whitespace only.
+
+///|
 fn whitespace_split(text : String, base_offset : Int) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
@@ -248,6 +291,8 @@ fn whitespace_split(text : String, base_offset : Int) -> Array[@types.Split] {
 }
 
 // Sequence: run each step, feeding the previous pieces through the next.
+
+///|
 fn apply_sequence(
   steps : Array[PreTokenizer],
   text : String,
@@ -268,6 +313,7 @@ fn apply_sequence(
   current
 }
 
+///|
 fn starts_with_space(s : String) -> Bool {
   match s.iter().next() {
     Some(c) => is_space(c)
@@ -275,12 +321,15 @@ fn starts_with_space(s : String) -> Bool {
   }
 }
 
+///|
 fn is_word_char(c : Char) -> Bool {
   is_letter(c) || is_number(c) || c == '_'
 }
 
 // BertPreTokenizer: split on whitespace, isolate punctuation, and split CJK
 // characters each into their own piece.
+
+///|
 fn bert_pre_tokenize(text : String, base_offset : Int) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
@@ -303,7 +352,10 @@ fn bert_pre_tokenize(text : String, base_offset : Int) -> Array[@types.Split] {
     }
     // a run of non-space, non-punct, non-cjk chars
     let mut j = i
-    while j < n && !is_space(chars[j]) && !is_punct(chars[j]) && !is_cjk(chars[j]) {
+    while j < n &&
+          !is_space(chars[j]) &&
+          !is_punct(chars[j]) &&
+          !is_cjk(chars[j]) {
       j = j + 1
     }
     out.push({
@@ -317,6 +369,8 @@ fn bert_pre_tokenize(text : String, base_offset : Int) -> Array[@types.Split] {
 
 // Punctuation pre-tokenizer: split on Unicode punctuation and honor HF's
 // SplitBehavior semantics for the matched punctuation spans.
+
+///|
 fn punctuation_split(
   text : String,
   behavior : SplitBehavior,
@@ -334,14 +388,13 @@ fn punctuation_split(
       }
       match behavior {
         Removed => ()
-        Isolated => {
+        Isolated =>
           for k in start..<i {
             out.push({
               value: substr(chars, k, k + 1),
               offsets: (base_offset + k, base_offset + k + 1),
             })
           }
-        }
         Contiguous =>
           out.push({
             value: substr(chars, start, i),
@@ -403,7 +456,12 @@ fn punctuation_split(
 // when the Unicode script changes. Spaces are Script::Any and therefore attach
 // to the surrounding script span; Hiragana, Katakana and U+30FC are folded into
 // Han to keep Japanese text together.
-fn unicode_scripts_split(text : String, base_offset : Int) -> Array[@types.Split] {
+
+///|
+fn unicode_scripts_split(
+  text : String,
+  base_offset : Int,
+) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
   if n == 0 {
@@ -414,7 +472,10 @@ fn unicode_scripts_split(text : String, base_offset : Int) -> Array[@types.Split
   let mut last_script = -1
   for i in 0..<n {
     let script = fixed_script(chars[i])
-    if script != 0 && last_script != -1 && last_script != 0 && last_script != script {
+    if script != 0 &&
+      last_script != -1 &&
+      last_script != 0 &&
+      last_script != script {
       out.push({
         value: substr(chars, start, i),
         offsets: (base_offset + start, base_offset + i),
@@ -425,18 +486,24 @@ fn unicode_scripts_split(text : String, base_offset : Int) -> Array[@types.Split
       last_script = script
     }
   }
-  out.push({ value: substr(chars, start, n), offsets: (base_offset + start, base_offset + n) })
+  out.push({
+    value: substr(chars, start, n),
+    offsets: (base_offset + start, base_offset + n),
+  })
   out
 }
 
+///|
 fn fixed_script(c : Char) -> Int {
   let u = c.to_int()
   if c == ' ' {
     0 // Any
   } else if is_han_script(u) || is_hiragana(u) || is_katakana(u) || u == 0x30FC {
     1 // Han-compatible (HF SentencePiece convention)
-  } else if (u >= 0x0041 && u <= 0x005A) || (u >= 0x0061 && u <= 0x007A) ||
-            (u >= 0x00C0 && u <= 0x024F) || (u >= 0x1E00 && u <= 0x1EFF) {
+  } else if (u >= 0x0041 && u <= 0x005A) ||
+    (u >= 0x0061 && u <= 0x007A) ||
+    (u >= 0x00C0 && u <= 0x024F) ||
+    (u >= 0x1E00 && u <= 0x1EFF) {
     2 // Latin
   } else if u >= 0x0370 && u <= 0x03FF {
     3 // Greek
@@ -446,8 +513,9 @@ fn fixed_script(c : Char) -> Int {
     5 // Arabic
   } else if u >= 0x0900 && u <= 0x097F {
     6 // Devanagari
-  } else if (u >= 0xAC00 && u <= 0xD7AF) || (u >= 0x1100 && u <= 0x11FF) ||
-            (u >= 0x3130 && u <= 0x318F) {
+  } else if (u >= 0xAC00 && u <= 0xD7AF) ||
+    (u >= 0x1100 && u <= 0x11FF) ||
+    (u >= 0x3130 && u <= 0x318F) {
     7 // Hangul
   } else if is_number(c) || is_punct(c) || is_space(c) {
     8 // Common
@@ -456,21 +524,28 @@ fn fixed_script(c : Char) -> Int {
   }
 }
 
+///|
 fn is_han_script(u : Int) -> Bool {
-  (u >= 0x3400 && u <= 0x4DBF) || (u >= 0x4E00 && u <= 0x9FFF) ||
-  (u >= 0xF900 && u <= 0xFAFF) || (u >= 0x20000 && u <= 0x2A6DF) ||
-  (u >= 0x2A700 && u <= 0x2B73F) || (u >= 0x2B740 && u <= 0x2B81F) ||
+  (u >= 0x3400 && u <= 0x4DBF) ||
+  (u >= 0x4E00 && u <= 0x9FFF) ||
+  (u >= 0xF900 && u <= 0xFAFF) ||
+  (u >= 0x20000 && u <= 0x2A6DF) ||
+  (u >= 0x2A700 && u <= 0x2B73F) ||
+  (u >= 0x2B740 && u <= 0x2B81F) ||
   (u >= 0x2B820 && u <= 0x2CEAF)
 }
 
+///|
 fn is_hiragana(u : Int) -> Bool {
   u >= 0x3040 && u <= 0x309F
 }
 
+///|
 fn is_katakana(u : Int) -> Bool {
   (u >= 0x30A0 && u <= 0x30FF) || (u >= 0x31F0 && u <= 0x31FF)
 }
 
+///|
 /// Punctuation per Unicode P* plus ASCII punctuation ranges (approximated).
 pub fn is_punct(c : Char) -> Bool {
   let u = c.to_int()
@@ -482,6 +557,7 @@ pub fn is_punct(c : Char) -> Bool {
   (u >= 0x3000 && u <= 0x303F) // CJK symbols and punctuation
 }
 
+///|
 /// CJK ideograph ranges (for Bert per-char splitting).
 pub fn is_cjk(c : Char) -> Bool {
   let u = c.to_int()
@@ -491,6 +567,7 @@ pub fn is_cjk(c : Char) -> Bool {
   (u >= 0x20000 && u <= 0x2A6DF)
 }
 
+///|
 fn substr(chars : Array[Char], start : Int, stop : Int) -> String {
   let sb = StringBuilder::new()
   for k in start..<stop {
@@ -500,6 +577,8 @@ fn substr(chars : Array[Char], start : Int, stop : Int) -> String {
 }
 
 // CharDelimiterSplit ("Delimiter"): split on a single char, dropping it.
+
+///|
 fn delimiter_split(
   text : String,
   delim : Char,
@@ -527,6 +606,8 @@ fn delimiter_split(
 }
 
 // FixedLength: split into chunks of `length` code points.
+
+///|
 fn fixed_length_split(
   text : String,
   length : Int,
@@ -550,6 +631,8 @@ fn fixed_length_split(
 
 // Digits pre-tokenizer: isolate digit runs. individual_digits=true makes each
 // digit its own piece; false keeps a contiguous digit run together.
+
+///|
 fn digits_split(
   text : String,
   individual_digits : Bool,
@@ -594,6 +677,8 @@ fn digits_split(
 // Metaspace (SentencePiece): replace spaces with `replacement` (▁) and, when
 // prepend_scheme != "never", prepend one to the start. Pieces are split so each
 // begins with the replacement char (i.e. on each ▁ boundary).
+
+///|
 fn metaspace_pre_tokenize(
   text : String,
   replacement : Char,
@@ -645,7 +730,8 @@ fn metaspace_pre_tokenize(
     }
     let value = substr(mapped, start, i)
     let off_start = base_offset + origin[start]
-    let off_end = base_offset + (if i < n { origin[i] } else { origin[n - 1] + 1 })
+    let off_end = base_offset +
+      (if i < n { origin[i] } else { origin[n - 1] + 1 })
     out.push({ value, offsets: (off_start, off_end) })
   }
   out
