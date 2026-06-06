@@ -19,6 +19,7 @@ fn mk_unigram(
     unk_id,
     byte_fallback,
     fuse_unk,
+    cache: {},
   })
 }
 

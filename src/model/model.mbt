@@ -56,6 +56,7 @@ pub struct UnigramModel {
   unk_id : Int?
   byte_fallback : Bool
   fuse_unk : Bool
+  cache : Map[String, Array[@types.Token]]
 }
 
 ///|

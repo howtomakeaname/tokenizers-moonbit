@@ -72,7 +72,7 @@
 | BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效 + word cache；native mixed 抽样 gpt2/llama encode 快于 HF |
 | byte_fallback / fuse_unk / ignore_merges | ✅ | |
 | WordPiece | ✅ | 贪心最长前缀 |
-| Unigram | ✅ | Viterbi DP；`byte_fallback` / `fuse_unk` supported |
+| Unigram | ✅ | Viterbi DP + word cache；`byte_fallback` / `fuse_unk` supported；native mixed 抽样 t5/bge/e5 encode 快于 HF |
 | WordLevel | ✅ | |
 | dropout / word cache | ⏸ | 进一步优化（merge 已用优先队列堆）|
 
@@ -160,9 +160,9 @@ MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的
 `mixed` 矩阵。最近一次全模型抽样（native / mixed，BPE word cache 后）：BPE/
 WordPiece/CLIP 主线大多快于 HF（gpt2 0.43x、llama 0.28x、Qwen2.5 0.58x、
 bert 0.53x、clip 0.48x）；decode 多数约 0.5x 或同水平；加载大模型基本同
-水平。主要剩余性能缺口集中在 Unigram/SentencePiece/embedding tokenizer encode：
-e5_multilingual 2.70x、bge_m3 2.62x、t5 2.10x 慢于 HF。下一轮性能优化优先级：
-Unigram DP/cache > 大词表 JSON 加载/解析 > batch 并行。
+水平。Unigram word cache 后，t5 encode 0.39x、bge_m3 0.42x、e5_multilingual
+0.43x，已由主要性能短板转为快于 HF。下一轮性能优化优先级：完整
+`--corpus all` 矩阵复测 > 大词表 JSON 加载/解析 > batch 并行。
 
 ## 已知缺口与取舍（TODO）
 

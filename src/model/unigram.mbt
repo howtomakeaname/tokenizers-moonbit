@@ -26,6 +26,10 @@ pub fn UnigramModel::tokenize(
   if n == 0 {
     return []
   }
+  match self.cache.get(word) {
+    Some(cached) => return shift_unigram_tokens(cached, offset)
+    None => ()
+  }
   // best[i] = best score to reach position i; back[i] = start of last token;
   // best_tok[i] = the token surface used for that last step.
   let best = Array::make(n + 1, neg_inf)
@@ -74,11 +78,7 @@ pub fn UnigramModel::tokenize(
     }
     let is_unk = !self.vocab.contains(best_tok[pos])
     let id = if is_unk { self.unk_id.unwrap_or(-1) } else { best_id[pos] }
-    rev.push(@types.Token::{
-      id,
-      value: best_tok[pos],
-      offsets: (offset + start, offset + pos),
-    })
+    rev.push(@types.Token::{ id, value: best_tok[pos], offsets: (start, pos) })
     pos = start
   }
   // reverse into order
@@ -97,7 +97,7 @@ pub fn UnigramModel::tokenize(
   }
   // fuse_unk: merge runs of adjacent unk tokens into one (HF default). Run this
   // after byte_fallback so successfully expanded bytes are not fused as unk.
-  if self.fuse_unk {
+  let rel = if self.fuse_unk {
     match self.unk_id {
       Some(uid) => fuse_unigram_unk(expanded, uid)
       None => expanded
@@ -105,6 +105,23 @@ pub fn UnigramModel::tokenize(
   } else {
     expanded
   }
+  self.cache[word] = rel
+  shift_unigram_tokens(rel, offset)
+}
+
+///|
+fn shift_unigram_tokens(
+  tokens : Array[@types.Token],
+  offset : Int,
+) -> Array[@types.Token] {
+  if offset == 0 {
+    return tokens.copy()
+  }
+  tokens.map(t => @types.Token::{
+    id: t.id,
+    value: t.value,
+    offsets: (t.offsets.0 + offset, t.offsets.1 + offset),
+  })
 }
 
 ///|

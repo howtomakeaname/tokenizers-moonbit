@@ -74,13 +74,17 @@ performance claims.
 | gpt2 (byte-level BPE) | ~144 µs | ~331 µs | ~0.44x |
 | bert (WordPiece) | ~212 µs | ~439 µs | ~0.48x |
 | llama (byte_fallback BPE) | ~62 µs | ~225 µs | ~0.28x |
+| t5 (Unigram/SentencePiece) | ~144 µs | ~373 µs | ~0.39x |
+| bge_m3 (embedding Unigram) | ~120 µs | ~285 µs | ~0.42x |
+| e5_multilingual (embedding Unigram) | ~121 µs | ~285 µs | ~0.43x |
 
 decode (gpt2): native ~20 µs, js ~129 µs.
 load `from_str` (gpt2, ~1.3 MB json): native ~30 ms, js ~72 ms.
 
 The BPE merge loop uses a priority-queue heap with lazy stale removal plus a
-word-level cache. On repeated mixed-corpus workloads this makes GPT-2 and Llama
-encode faster than the HF native baseline on the sampled machine. Re-run
+word-level cache. Unigram/SentencePiece uses the same cache idea after Viterbi.
+On repeated mixed-corpus workloads this makes GPT-2, Llama, T5 and embedding
+tokenizers faster than the HF native baseline on the sampled machine. Re-run
 `scripts/bench_compare.py` on your target hardware before quoting numbers.
 
 ## How to read the results
