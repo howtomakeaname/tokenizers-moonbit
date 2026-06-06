@@ -39,7 +39,15 @@ fn split_pre_tokenize(
   pattern : String,
   base_offset : Int,
 ) -> Array[@types.Split] {
-  let pieces = if is_qwen_pattern(pattern) {
+  let pieces = if is_cjk_range_pattern(pattern) {
+    cjk_range_split(text)
+  } else if is_digit_triplet_pattern(pattern) {
+    digit_chunk_split(text, max_digits=3)
+  } else if is_o200k_pattern(pattern) {
+    o200k_split(text)
+  } else if is_qwen_triplet_pattern(pattern) {
+    qwen_split_max_digits(text, max_digits=3)
+  } else if is_qwen_pattern(pattern) {
     qwen_split(text)
   } else if is_gpt2_pattern(pattern) {
     gpt2_split(text)
@@ -55,6 +63,25 @@ fn split_pre_tokenize(
 // Recognize the Qwen2/Qwen3/Llama-3 pattern (single-digit \p{N}, (?i:...)).
 fn is_qwen_pattern(p : String) -> Bool {
   p.contains("(?i:'s|'t") || (p.contains("\\p{N}|") && p.contains("[\\r\\n]*"))
+}
+
+// Llama-3 / GLM style: Qwen/Llama regex but groups numbers as \p{N}{1,3}.
+fn is_qwen_triplet_pattern(p : String) -> Bool {
+  p.contains("(?i:'s|'t") && p.contains("\\p{N}{1,3}") && p.contains("[\\r\\n]*")
+}
+
+// o200k-style regex used by GPT-OSS / Phi-4-mini: case-aware letter branches,
+// optional contractions, number chunks of up to 3, punctuation, whitespace.
+fn is_o200k_pattern(p : String) -> Bool {
+  p.contains("\\p{Lu}") && p.contains("\\p{Ll}") && p.contains("\\p{N}{1,3}")
+}
+
+fn is_digit_triplet_pattern(p : String) -> Bool {
+  p == "\\p{N}{1,3}" || (p.contains("\\p{N}{1,3}") && !p.contains("|"))
+}
+
+fn is_cjk_range_pattern(p : String) -> Bool {
+  p.contains("一-龥") && p.contains("぀-ゟ") && p.contains("゠-ヿ")
 }
 
 // Recognize the classic GPT-2 pattern.
@@ -82,6 +109,55 @@ fn pieces_to_splits(
     cursor = cursor + len
   }
   out
+}
+
+fn digit_chunk_split(text : String, max_digits~ : Int) -> Array[String] {
+  let chars = text.to_array()
+  let n = chars.length()
+  let out : Array[String] = []
+  let mut i = 0
+  while i < n {
+    if is_number(chars[i]) {
+      let mut j = i
+      let mut count = 0
+      while j < n && is_number(chars[j]) && count < max_digits {
+        j = j + 1
+        count = count + 1
+      }
+      out.push(substr(chars, i, j))
+      i = j
+    } else {
+      let start = i
+      while i < n && !is_number(chars[i]) {
+        i = i + 1
+      }
+      out.push(substr(chars, start, i))
+    }
+  }
+  out
+}
+
+fn cjk_range_split(text : String) -> Array[String] {
+  let chars = text.to_array()
+  let n = chars.length()
+  let out : Array[String] = []
+  let mut i = 0
+  while i < n {
+    let cjk = is_cjk_range_char(chars[i])
+    let start = i
+    while i < n && is_cjk_range_char(chars[i]) == cjk {
+      i = i + 1
+    }
+    out.push(substr(chars, start, i))
+  }
+  out
+}
+
+fn is_cjk_range_char(c : Char) -> Bool {
+  let u = c.to_int()
+  (u >= 0x4E00 && u <= 0x9FA5) ||
+  (u >= 0x3040 && u <= 0x309F) ||
+  (u >= 0x30A0 && u <= 0x30FF)
 }
 
 // ByteLevel: optionally prepend a space, regex-split (GPT-2), byte-map pieces.

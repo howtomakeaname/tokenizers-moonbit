@@ -2,7 +2,9 @@
 
 These benchmarks measure encode/decode throughput and load time, and pair the
 MoonBit results with the Python `tokenizers` (Rust) baseline on the **same
-corpus** to show a like-for-like comparison.
+corpora**.
+
+Chinese version: [`docs/zh/benchmarks.md`](../zh/benchmarks.md)
 
 ## How to reproduce
 
@@ -20,13 +22,20 @@ pip install tokenizers
 python3 scripts/bench_python.py
 ```
 
-Corpus: a mixed English / CJK / punctuation paragraph repeated to ~1.5 KB
-(`bench_corpus()` in `src/tokenizer/bench_test.mbt`).
+Corpora:
 
-## Results (encode, µs per encode of the corpus)
+- `short`: chat-style short input; measures interactive overhead.
+- `mixed`: English + CJK + punctuation paragraph repeated to roughly 1.5 KB.
+- `code`: MoonBit-like code, identifiers and comments; targets coder models.
+- `long`: repeated mixed + code text; stresses BPE merge loops and vocab lookup.
+
+The MoonBit corpora live in `src/tokenizer/bench_test.mbt`. The Python baseline
+uses the same corpus names in `scripts/bench_python.py`.
+
+## Results (historical mixed corpus)
 
 > Indicative numbers from a developer laptop; absolute values vary by machine.
-> The point is the **ratio** and the **portability story**, not the exact µs.
+> The point is the ratio and deployment story, not the exact microseconds.
 
 | model | MoonBit native | MoonBit js | Python `tokenizers` (Rust, native) |
 |---|---|---|---|
@@ -38,40 +47,30 @@ Corpus: a mixed English / CJK / punctuation paragraph repeated to ~1.5 KB
 decode (gpt2): native ~20 µs, js ~129 µs.
 load `from_str` (gpt2, ~1.3 MB json): native ~30 ms, js ~72 ms.
 
-\* The BPE merge loop uses a priority-queue heap (pairing heap) with lazy stale
-removal — the same algorithm class as the Rust crate. This took `llama` encode
-from ~2.97 ms down to ~405 µs on native (≈7× faster), bringing byte_fallback
-BPE within ~2× of Rust. (The js number above predates the optimization on that
-backend; re-run `moon bench --target js` to refresh.)
+\* The BPE merge loop uses a priority-queue heap with lazy stale removal. This
+took `llama` encode from ~2.97 ms down to ~405 µs on native.
 
-## How to read this — the scenario-differentiated story
+## How to read the results
 
-**1. Correctness is the headline, and it is exact.** Across **13 real models**
-(gpt2, roberta, bert±cased, distilbert, t5, albert, xlm-roberta, llama,
-Qwen2.5, Qwen3, DeepSeek-V2, Phi-3) every encode matches Python `tokenizers`
-**token-for-token**. A faster tokenizer that disagrees with the reference is
-useless; this one agrees.
+**Correctness first.** With optional fixtures present, parity tests cover 31 real
+models and compare token ids against Python `tokenizers`. A faster tokenizer
+that disagrees with the reference is not useful.
 
-**2. Where it wins: portability.** The Rust `tokenizers` crate is fast on a
-server, but to run it in a **browser / edge / JS runtime** you must compile it
-to WASM (a multi-MB artifact + glue) or call a native addon. `tokenizer-moonbit`
-compiles **the same source** to `js`, `wasm`, `wasm-gc` and `native` with no
-FFI and no separate toolchain — you get a working tokenizer directly in the
-target the model runs in.
+**Portability is the main differentiator.** Rust `tokenizers` is fast on a
+server. In browsers, edge runtimes and pure JS environments, you typically need
+an additional WASM artifact, glue code or a native addon. `tokenizer-moonbit`
+compiles the same source to `js`, `wasm`, `wasm-gc` and `native`.
 
-**3. Throughput is in the same ballpark — sometimes faster.** On native,
-WordPiece (bert) is already **faster than** the Rust baseline here, and
-byte-level BPE / Split models are within ~1.5–1.6×. The JS backend (the one
-that matters for in-browser inference) runs the same corpus in well under a
-millisecond for most models.
-
-**4. Honest gaps.** Throughput is within ~1.5–2× of the Rust crate across model
-families on native; `from_str` load of a multi-MB vocab is the slowest path
-(~30 ms native) and is a candidate for further work. Correctness is unaffected
-in all cases.
+**Throughput is in the same range.** Native byte-level BPE and Split models are
+within the same order of magnitude as the Rust baseline, and WordPiece can be
+faster for the measured corpus. The JS backend remains practical for browser
+inference workloads.
 
 ## Notes
 
-- `encode_batch` is single-threaded by design (the target is wasm/js, which are
-  single-threaded); the Rust crate uses rayon for batch parallelism.
-- Numbers above are encode-only of one fixed corpus; real workloads vary.
+- `encode_batch` is single-threaded by design; the Rust crate uses rayon for
+  batch parallelism.
+- Re-run the benchmark matrix before quoting numbers. Hardware, backend and
+  corpus mix matter.
+- The current matrix reports encode/decode/load across short, mixed, code and
+  long-document workloads.

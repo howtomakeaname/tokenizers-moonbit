@@ -46,6 +46,21 @@ MODELS = {
     # tokenizer.json, so the fetcher uses HF's tiny random DeBERTaV2 fixture for
     # JSON-pipeline parity coverage.
     "deberta": "https://huggingface.co/hf-internal-testing/tiny-random-DebertaV2Model/resolve/main/tokenizer.json",
+    # 2024-2026 mainstream coverage matrix: Llama 3.x, Phi-4, DeepSeek, GPT-OSS,
+    # GLM, Granite, Qwen3 coder/VL and embedding models. These are public
+    # tokenizer.json fixtures when available; if a repo is gated/renamed the
+    # fetcher skips it without breaking local tests.
+    "llama3_2": "https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct/resolve/main/tokenizer.json",
+    "phi4_mini": "https://huggingface.co/microsoft/Phi-4-mini-instruct/resolve/main/tokenizer.json",
+    "deepseek_r1_qwen": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B/resolve/main/tokenizer.json",
+    "deepseek_v3_2": "https://huggingface.co/deepseek-ai/DeepSeek-V3.2/resolve/main/tokenizer.json",
+    "gpt_oss": "https://huggingface.co/openai/gpt-oss-20b/resolve/main/tokenizer.json",
+    "glm4_5": "https://huggingface.co/zai-org/GLM-4.5-Air/resolve/main/tokenizer.json",
+    "granite4": "https://huggingface.co/ibm-granite/granite-4.0-tiny-preview/resolve/main/tokenizer.json",
+    "qwen3_coder": "https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct/resolve/main/tokenizer.json",
+    "qwen3_vl": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct/resolve/main/tokenizer.json",
+    "bge_m3": "https://huggingface.co/BAAI/bge-m3/resolve/main/tokenizer.json",
+    "e5_multilingual": "https://huggingface.co/intfloat/multilingual-e5-large/resolve/main/tokenizer.json",
 }
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "tests", "data")

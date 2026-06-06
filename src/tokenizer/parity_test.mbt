@@ -11,6 +11,8 @@ let parity_models : Array[String] = [
   "gpt2", "roberta", "llama", "bert", "bert_cased", "distilbert", "t5",
   "albert", "xlm_roberta", "Qwen2.5", "qwen3", "deepseek", "phi3",
   "mistral", "falcon", "starcoder2", "gptneox", "clip", "deberta",
+  "llama3_2", "phi4_mini", "deepseek_r1_qwen", "deepseek_v3_2", "gpt_oss",
+  "glm4_5", "granite4", "qwen3_coder", "qwen3_vl", "bge_m3", "e5_multilingual",
 ]
 
 // Run parity for one model; returns (ran, mismatches).
@@ -32,6 +34,7 @@ fn run_parity(name : String) -> (Bool, Int) raise {
     let want = parse_int_array(obj, "ids")
     let got = tok.encode(text, add_special_tokens=false).ids
     if got != want {
+      assert_eq((name, text, got), (name, text, want))
       mism = mism + 1
     }
   }

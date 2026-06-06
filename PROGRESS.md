@@ -28,7 +28,7 @@
 
 ## 已对齐验证的真实模型（与 Python `tokenizers` 逐 token id 一致）
 
-通过表驱动的 `parity_test.mbt`（`scripts/fetch_models.py` + `scripts/gen_parity.py` 生成期望），覆盖 19 个真实/公开 tokenizer.json 模型：
+通过表驱动的 `parity_test.mbt`（`scripts/fetch_models.py` + `scripts/gen_parity.py` 生成期望），覆盖 31 个真实/公开 tokenizer.json 模型（fixture 缺失时自动跳过）：
 
 | 模型 | 类型 | 状态 |
 |---|---|---|
@@ -51,6 +51,17 @@
 | GPT-NeoX-20B | BPE | ✅ |
 | CLIP ViT-B/32 | BPE + CLIP Split + ByteLevel | ✅ |
 | tiny-random-DeBERTaV2 | Unigram + Metaspace + Precompiled whitespace | ✅ |
+| Llama-3.2-1B-Instruct | BPE + Llama-3/Qwen Split + ByteLevel | ✅ |
+| Phi-4-mini-instruct | BPE + o200k Split + ByteLevel | ✅ |
+| DeepSeek-R1-Distill-Qwen | BPE + Qwen Split | ✅ |
+| DeepSeek-V3.2 | BPE + Qwen/Llama3 Split | ✅ |
+| GPT-OSS | BPE + o200k Split | ✅ |
+| GLM-4.5-Air | BPE + digit triplet / modern Split | ✅ |
+| Granite-4 | BPE / modern LLM tokenizer | ✅ |
+| Qwen3-Coder | BPE + Qwen Split + code workloads | ✅ |
+| Qwen3-VL | BPE + Qwen Split + multimodal tokenizer | ✅ |
+| BAAI/bge-m3 | embedding tokenizer | ✅ |
+| multilingual-e5-large | multilingual embedding tokenizer | ✅ |
 
 ## 组件实现矩阵
 
@@ -79,7 +90,7 @@
 |---|---|
 | ByteLevel（手写 GPT-2 扫描）| ✅ |
 | Whitespace / WhitespaceSplit / BertPreTokenizer / Punctuation / Metaspace / Sequence | ✅ |
-| Split（GPT-2 / Qwen-Llama3 / CLIP 家族正则）| ✅ 现代 LLM/CLIP 主线 |
+| Split（GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet 家族正则）| ✅ 现代 LLM/CLIP 主线 |
 | Digits / Delimiter / FixedLength | ✅ |
 | Split（任意正则）/ UnicodeScripts | 🚧 未识别 pattern 退化为单段 |
 
@@ -122,8 +133,8 @@ moon test --target wasm         # 也支持 wasm-gc / js / native
 ```
 
 - 内联小样本测试在所有后端运行。
-- 大模型对拍测试（gpt2/bert/t5/llama）需先下载 `tests/data/*.full.json`（见 README），缺失时测试自动跳过。
-- 期望输出由 `scripts/gen_expected*.py`（Python `tokenizers`）生成。
+- 大模型对拍测试需先下载 `tests/data/*.full.json`（见 README 的 `scripts/fetch_models.py`），缺失时测试自动跳过。
+- 期望输出由 `scripts/gen_parity.py`（Python `tokenizers`）生成。
 
 ## 代码结构
 
@@ -135,13 +146,13 @@ src/
   model/         enum Model{BPE,WordPiece,Unigram,WordLevel} + 各 tokenize
   processor/     enum PostProcessor + process
   decoder/       enum Decoder + decode_chain
-  tokenizer/     Tokenizer 组装；added_vocabulary；encode/decode/from_file
-scripts/         gen_expected*.py（对拍期望生成）
+  tokenizer/     Tokenizer 组装；added_vocabulary；encode/decode/from_file；bench_test
+scripts/         fetch_models.py / gen_parity.py / bench_python.py
 tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 ```
 
 ## 接替开发建议
 
 - 新增组件变体：在对应包的 enum 加变体 → from_json 加 "type" 分派 → 实现行为 → 加对拍测试。
-- 新增模型对拍：下载 tokenizer.json 到 `tests/data/<name>.full.json`，用 `scripts/gen_expected*.py` 生成期望，仿照 `llama_test.mbt` 写测试。
+- 新增模型对拍：在 `scripts/fetch_models.py` 加模型 URL，下载 tokenizer.json 到 `tests/data/<name>.full.json`，用 `scripts/gen_parity.py` 生成期望，并把模型名加入 `src/tokenizer/parity_test.mbt`。
 - 每完成一个可验证单元就 commit（conventional commits，scope 用包名）。

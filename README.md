@@ -4,46 +4,53 @@ A MoonBit port of [HuggingFace `tokenizers`](https://github.com/huggingface/toke
 
 Load a standard `tokenizer.json` and run encode/decode across **all MoonBit
 backends** — `wasm`, `wasm-gc`, `js`, `native` — with no native dependencies.
-Targeted at LLM / edge / browser use cases where the Rust `tokenizers` crate is
-unavailable or heavyweight to ship.
+The project targets LLM, edge and browser use cases where the Rust
+`tokenizers` crate is unavailable or heavy to ship.
 
 > Status: actively developed. See [`PROGRESS.md`](./PROGRESS.md) for the full
 > capability matrix and roadmap.
+>
+> 中文文档：[`README.zh.md`](./README.zh.md)
 
 ## Why this project
 
 - **Runs everywhere MoonBit runs.** One pure-MoonBit implementation compiles to
   wasm/wasm-gc/js/native. No FFI, no platform-specific binaries.
 - **Faithful to HuggingFace.** Output is checked token-for-token against the
-  Python `tokenizers` library for real models (GPT-2, BERT, T5, Llama).
-- **Loads `tokenizer.json` directly.** No conversion step; drop in the same file
-  your Python pipeline uses.
+  Python `tokenizers` library for real models, including classic encoders,
+  modern LLM tokenizers, coder tokenizers, multimodal tokenizers and embedding
+  tokenizers.
+- **Loads `tokenizer.json` directly.** No conversion step; use the same file as
+  your Python or Transformers pipeline.
 
 ## Supported
 
 - **Models:** BPE, byte-level BPE (with `byte_fallback` / `fuse_unk` /
   `ignore_merges`), WordPiece, Unigram, WordLevel.
 - **Pipeline:** Normalizer → Pre-tokenizer → Model → Post-processor → Decoder,
-  plus an AddedVocabulary stage that splits special/added tokens (e.g.
-  `<|endoftext|>`, `[MASK]`) out of text — including mid-text — with
-  `single_word` / `lstrip` / `rstrip` / `normalized` semantics.
-- **API:** `encode`, `encode_pair`, `encode_batch`, `decode`, truncation /
+  plus AddedVocabulary for special/added tokens such as `<|endoftext|>` and
+  `[MASK]`, including `single_word`, `lstrip`, `rstrip` and `normalized` flags.
+- **API:** `encode`, `encode_pair`, `encode_batch`, `decode`, truncation and
   padding builders, `token_to_id`, `id_to_token`, `get_vocab_size`.
 
-Verified token-for-token against Python `tokenizers` across **13 real models**:
-gpt2, roberta, bert (±cased), distilbert, t5, albert, xlm-roberta, llama,
-**Qwen2.5, Qwen3, DeepSeek-V2, Phi-3**.
+With optional fixtures present, parity tests compare against Python
+`tokenizers` across **31 real models**: gpt2, roberta, llama, bert/bert-cased,
+distilbert, t5, albert, xlm-roberta, Qwen2.5, Qwen3, DeepSeek-V2, Phi-3,
+Mistral, Falcon, StarCoder2, GPT-NeoX, CLIP, DeBERTa, Llama-3.2, Phi-4-mini,
+DeepSeek-R1-Distill-Qwen, DeepSeek-V3.2, GPT-OSS, GLM-4.5, Granite-4,
+Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
 
-See [`docs/components.md`](./docs/components.md) for the exact per-component
-status and known gaps, and [`PROGRESS.md`](./PROGRESS.md) for the roadmap.
+See [`docs/components.md`](./docs/components.md) for per-component status and
+known gaps, and [`PROGRESS.md`](./PROGRESS.md) for the roadmap.
 
 ## Documentation
 
-- [Usage guide](./docs/usage.md) — load, encode/decode, truncation, padding, batches
+- [Usage guide](./docs/usage.md) — loading, encode/decode, truncation, padding, batches
 - [API reference](./docs/api.md)
 - [Supported components & limitations](./docs/components.md)
 - [Migrating from HuggingFace](./docs/migration-from-hf.md)
 - [Benchmarks](./docs/benchmarks/README.md)
+- [中文文档](./README.zh.md)
 
 ## Quick start
 
@@ -67,15 +74,13 @@ let pair = tok.encode_pair("question", "context")
 let text = tok.decode(enc.ids, skip_special_tokens=true)
 ```
 
-`encode(text, add_special_tokens=false)` skips the post-processor template
-(special tokens already present in the text are still recognized).
+`encode(text, add_special_tokens=false)` skips the post-processor template.
+Special tokens already present in the text are still recognized.
 
 ## Migrating from HuggingFace
 
-If you already use the Python `tokenizers` / `transformers`, see the
+If you already use Python `tokenizers` or Transformers, see the
 [migration guide](./docs/migration-from-hf.md) for a side-by-side API mapping.
-
-Quick taste:
 
 | HuggingFace (Python) | MoonBit |
 |---|---|
@@ -94,29 +99,23 @@ moon test                    # default backend (wasm-gc)
 moon test --target native    # also: wasm, wasm-gc, js
 ```
 
-Inline tests run on every backend. The model-parity tests load full
-`tokenizer.json` files that are **not committed** (large, git-ignored). To run
-them locally:
+Inline tests run on every backend. Model-parity tests load full
+`tokenizer.json` files that are large and git-ignored. To run them locally:
 
 ```bash
-# download model fixtures
-curl -L -o tests/data/gpt2.full.json  https://huggingface.co/gpt2/resolve/main/tokenizer.json
-curl -L -o tests/data/bert.full.json  https://huggingface.co/bert-base-uncased/resolve/main/tokenizer.json
-curl -L -o tests/data/t5.full.json    https://huggingface.co/t5-small/resolve/main/tokenizer.json
-curl -L -o tests/data/llama.full.json https://huggingface.co/hf-internal-testing/llama-tokenizer/resolve/main/tokenizer.json
+# download model fixtures (classic + modern matrix; gated/renamed models skip)
+python3 scripts/fetch_models.py
 
-# generate expected outputs with the Python `tokenizers` library
+# generate expected outputs with Python tokenizers
 pip install tokenizers
-python3 scripts/gen_expected.py      tests/data/gpt2.full.json  tests/data/gpt2_expected.json
-python3 scripts/gen_expected_bert.py tests/data/bert.full.json  tests/data/bert_expected.json
-python3 scripts/gen_expected_bert.py tests/data/t5.full.json    tests/data/t5_expected.json
+python3 scripts/gen_parity.py
 
 moon test --target native
 ```
 
-Parity tests self-skip gracefully when fixtures are absent.
+Parity tests self-skip when fixtures are absent.
 
 ## License
 
-Apache-2.0. Inspired by and follows the algorithms / file format of
+Apache-2.0. Inspired by and follows the algorithms and file format of
 HuggingFace `tokenizers` (Apache-2.0). See [`LICENSE`](./LICENSE).

@@ -1,7 +1,9 @@
 # API Reference
 
-All public types live in the `@tokenizer` package (and shared types in
-`@types`). Signatures below use MoonBit notation.
+All public types live in the `@tokenizer` package, with shared types in
+`@types`. Signatures below use MoonBit notation.
+
+Chinese version: [`docs/zh/api.md`](./zh/api.md)
 
 ## Loading
 
@@ -10,8 +12,8 @@ fn Tokenizer::from_str(json : String) -> Tokenizer raise TokenizerError
 fn from_file(path : String) -> Tokenizer raise TokenizerError
 ```
 
-- `from_str` — parse `tokenizer.json` text; no file IO; all backends.
-- `from_file` — read via `moonbitlang/x/fs` then `from_str`.
+- `from_str` parses `tokenizer.json` text; it does no file IO and works on all backends.
+- `from_file` reads via `moonbitlang/x/fs` and then calls `from_str`.
 
 ## Encoding / decoding
 
@@ -34,14 +36,15 @@ fn Tokenizer::decode(
 ) -> String
 ```
 
-## Configuration (builders)
+## Configuration builders
 
 ```moonbit
 fn Tokenizer::with_truncation(self : Tokenizer, params : TruncationParams?) -> Tokenizer
 fn Tokenizer::with_padding(self : Tokenizer, params : PaddingParams?) -> Tokenizer
 ```
 
-Builders mutate and return `self`, so they chain: `from_str(j).with_padding(..)`.
+Builders mutate and return `self`, so they can be chained:
+`from_str(j).with_padding(..)`.
 
 ## Vocabulary
 
@@ -51,7 +54,7 @@ fn Tokenizer::id_to_token(self : Tokenizer, id : Int) -> String?
 fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 ```
 
-Both lookups consult the added/special vocabulary first, then the model.
+Lookups consult the added/special vocabulary first, then the model vocabulary.
 
 ## Types
 
@@ -104,7 +107,7 @@ fn PaddingParams::new(
 ```moonbit
 pub(all) suberror TokenizerError {
   ParseError(String)            // malformed / unexpected tokenizer.json
-  UnsupportedComponent(String)  // a component type not yet implemented
+  UnsupportedComponent(String)  // component type not yet implemented
   VocabError(String)            // malformed vocab / merges
 }
 ```

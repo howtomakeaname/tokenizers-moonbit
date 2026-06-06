@@ -1,0 +1,68 @@
+# 组件与限制
+
+本页列出已实现的 `tokenizer.json` 组件。未知组件会在加载阶段抛出
+`UnsupportedComponent`。
+
+英文版：[`../components.md`](../components.md)
+
+## Models
+
+| `type` | 状态 | 说明 |
+|---|---|---|
+| `BPE` / byte-level BPE | ✅ | 支持 `byte_fallback`、`fuse_unk`、`ignore_merges` |
+| `WordPiece` | ✅ | 贪心最长匹配，支持 `##` 前缀 |
+| `Unigram` | ✅ | Viterbi；支持 `byte_fallback`、`fuse_unk` |
+| `WordLevel` | ✅ | 整词查表，支持 unk |
+
+## Normalizers
+
+| `type` | 状态 |
+|---|---|
+| `Lowercase`、`Strip`、`Replace`、`Prepend`、`Sequence` | ✅ |
+| `StripAccents` | ✅ |
+| `BertNormalizer` | ✅ |
+| `NFC` / `NFD` / `NFKC` / `NFKD` | ✅ |
+| `Precompiled` | 🚧 已覆盖常见空白折叠，完整 charsmap 待补 |
+| `Nmt`、byte-level normalizer | ⬜ |
+
+## Pre-tokenizers
+
+| `type` | 状态 |
+|---|---|
+| `ByteLevel` | ✅ |
+| `Whitespace`、`WhitespaceSplit`、`BertPreTokenizer`、`Punctuation`、`Metaspace`、`Sequence` | ✅ |
+| `Split`：GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet 正则族 | ✅ |
+| `Digits`、`Delimiter`、`FixedLength` | ✅ |
+| 任意 `Split` 正则、`UnicodeScripts` | 🚧 未识别 pattern 退化为单段 |
+
+## Post-processors
+
+| `type` | 状态 |
+|---|---|
+| `TemplateProcessing`、`BertProcessing`、`RobertaProcessing`、`ByteLevel`、`Sequence` | ✅ |
+
+## Decoders
+
+| `type` | 状态 |
+|---|---|
+| `ByteLevel`、`WordPiece`、`BPEDecoder`、`Metaspace`、`Fuse`、`Replace`、`Strip`、`Sequence` | ✅ |
+| `ByteFallback` | ✅ |
+| `CTC` | ✅ |
+
+## 已验证模型
+
+在可选 fixture 存在时，31 个真实模型与 Python `tokenizers` token id 对齐：
+gpt2、roberta、llama、bert/bert-cased、distilbert、t5、albert、xlm-roberta、
+Qwen2.5、Qwen3、DeepSeek-V2、Phi-3、Mistral、Falcon、StarCoder2、GPT-NeoX、
+CLIP、DeBERTa、Llama-3.2、Phi-4-mini、DeepSeek-R1-Distill-Qwen、DeepSeek-V3.2、
+GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E5。
+
+## 限制
+
+- **Precompiled charsmap：** 仅覆盖常见 SentencePiece 空白折叠；完整二进制
+  charsmap 解码仍待实现。
+- **任意 Split 正则：** 当前识别主流 tokenizer 的常见正则族；通用 Unicode
+  regex 引擎不在现阶段范围内。
+- **Offsets：** 当前返回字符偏移；HF 默认返回 byte offsets。
+- **Batch：** `encode_batch` 为串行实现，适配 wasm/js 目标。
+- **训练：** 不支持训练 tokenizer，仅加载并运行已有 tokenizer。

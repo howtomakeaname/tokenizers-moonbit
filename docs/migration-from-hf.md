@@ -3,6 +3,8 @@
 `tokenizer-moonbit` mirrors the HuggingFace `tokenizers` API closely. This guide
 maps common Python usage to MoonBit. The same `tokenizer.json` works in both.
 
+Chinese version: [`docs/zh/migration-from-hf.md`](./zh/migration-from-hf.md)
+
 ## Loading
 
 | HuggingFace (Python) | MoonBit |
@@ -11,18 +13,16 @@ maps common Python usage to MoonBit. The same `tokenizer.json` works in both.
 | `Tokenizer.from_str(s)` | `@tokenizer.Tokenizer::from_str(s)` |
 
 ```python
-# Python
 from tokenizers import Tokenizer
 tok = Tokenizer.from_file("tokenizer.json")
 ```
 
 ```moonbit
-// MoonBit
 let tok = @tokenizer.from_file("tokenizer.json")
 ```
 
-> `from_str` takes the JSON text and does no file IO, so it works on every
-> backend (wasm/wasm-gc/js/native). `from_file` uses `moonbitlang/x/fs`.
+`from_str` takes JSON text and does no file IO, so it works on every backend.
+`from_file` uses `moonbitlang/x/fs`.
 
 ## Encoding
 
@@ -30,10 +30,9 @@ let tok = @tokenizer.from_file("tokenizer.json")
 |---|---|
 | `tok.encode(text)` | `tok.encode(text)` |
 | `tok.encode(text, add_special_tokens=False)` | `tok.encode(text, add_special_tokens=false)` |
-| `tok.encode(a, b)` (pair) | `tok.encode_pair(a, b)` |
+| `tok.encode(a, b)` | `tok.encode_pair(a, b)` |
 
 ```python
-# Python
 enc = tok.encode("Hello world")
 enc.ids            # [15496, 995]
 enc.tokens         # ['Hello', 'Ġworld']
@@ -41,7 +40,6 @@ enc.attention_mask # [1, 1]
 ```
 
 ```moonbit
-// MoonBit
 let enc = tok.encode("Hello world")
 enc.ids            // [15496, 995]
 enc.tokens         // ["Hello", "Ġworld"]
@@ -57,7 +55,7 @@ enc.attention_mask // [1, 1]
 | `enc.type_ids` | `enc.type_ids` | `Array[Int]` |
 | `enc.attention_mask` | `enc.attention_mask` | `Array[Int]` |
 | `enc.special_tokens_mask` | `enc.special_tokens_mask` | `Array[Int]` |
-| `enc.offsets` | `enc.offsets` | `Array[(Int, Int)]`; currently char offsets (see Differences) |
+| `enc.offsets` | `enc.offsets` | `Array[(Int, Int)]`; currently char offsets |
 
 ## Decoding
 
@@ -76,22 +74,17 @@ enc.attention_mask // [1, 1]
 
 ## Differences to be aware of
 
-- **Booleans:** MoonBit uses `true`/`false` (lowercase) and named arguments use
-  `name=value` (e.g. `add_special_tokens=false`).
-- **Optionals:** lookups return `Int?` / `String?` (`Some`/`None`) instead of
-  `None`/`int`.
-- **Offsets:** HuggingFace's default `encode` returns **byte** offsets relative
-  to the original text. This port currently returns **char** offsets. Byte
-  offsets are on the roadmap.
-- **Not yet available:** `enable_truncation` / `enable_padding` / `encode_batch`
-  are planned (see [`PROGRESS.md`](../PROGRESS.md)). Unicode normalization
-  (NFC/NFKC) currently acts as identity; `strip_accents` support is on the
-  roadmap.
-- **Training is out of scope.** This library loads and runs existing
-  tokenizers; it does not train new ones.
+- **Booleans:** MoonBit uses `true`/`false` and named arguments use `name=value`.
+- **Optionals:** lookups return `Int?` / `String?` (`Some`/`None`).
+- **Offsets:** HuggingFace returns byte offsets by default; this port currently
+  returns char offsets.
+- **Configuration style:** HuggingFace mutates via `enable_truncation` /
+  `enable_padding`; MoonBit uses chainable `with_truncation` / `with_padding`.
+- **Training:** out of scope. This library loads and runs existing tokenizers.
 
 ## Verified models
 
-Output is checked token-for-token against Python `tokenizers` for: GPT-2
-(byte-level BPE), BERT (WordPiece), T5 (Unigram), and Llama (byte_fallback BPE).
-See [`PROGRESS.md`](../PROGRESS.md) for the up-to-date list.
+With optional fixtures present, output is checked token-for-token against Python
+`tokenizers` for 31 real models, covering BPE, byte-level BPE, byte_fallback BPE,
+WordPiece, Unigram, WordLevel, Qwen/Llama-3/o200k Split patterns, coder,
+multimodal and embedding tokenizers. See [`PROGRESS.md`](../PROGRESS.md).

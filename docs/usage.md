@@ -3,18 +3,21 @@
 `tokenizer-moonbit` loads a HuggingFace `tokenizer.json` and runs encode/decode
 on every MoonBit backend. This guide covers the common tasks.
 
+Chinese version: [`docs/zh/usage.md`](./zh/usage.md)
+
 ## Loading
 
 ```moonbit
-// From the JSON text (backend-agnostic, no file IO — works on wasm too):
+// From JSON text (backend-agnostic, no file IO):
 let tok = @tokenizer.Tokenizer::from_str(json_text)
 
-// From a file path (uses moonbitlang/x/fs, available on all backends):
+// From a file path (uses moonbitlang/x/fs):
 let tok = @tokenizer.from_file("tokenizer.json")
 ```
 
-Both may raise `@types.TokenizerError` on malformed JSON or an unsupported
-component; handle with `try`/`catch` or propagate with `raise`.
+Both functions may raise `@types.TokenizerError` on malformed JSON or an
+unsupported component. Handle it with `try`/`catch` or propagate it with
+`raise`.
 
 ## Encoding
 
@@ -28,9 +31,9 @@ let enc = tok.encode("Hello world")
 // enc.offsets             : Array[(Int, Int)]   // char offsets
 ```
 
-`add_special_tokens` (default `true`) controls whether the post-processor
-template (e.g. `[CLS]` … `[SEP]`) runs. Special tokens that literally appear in
-the text are always recognized regardless:
+`add_special_tokens` defaults to `true` and controls whether the post-processor
+template runs. Special tokens that literally appear in the text are still
+recognized.
 
 ```moonbit
 let enc = tok.encode("text", add_special_tokens=false)
@@ -49,8 +52,8 @@ let enc = tok.encode_pair("question", "context")
 let batch = tok.encode_batch(["first text", "second"])
 ```
 
-Batching is single-threaded (the target is wasm/js). Combine with padding to get
-rectangular output (see below).
+Batching is single-threaded by design. Combine it with padding for rectangular
+outputs.
 
 ## Decoding
 
