@@ -27,11 +27,23 @@ unavailable or heavyweight to ship.
   plus an AddedVocabulary stage that splits special/added tokens (e.g.
   `<|endoftext|>`, `[MASK]`) out of text — including mid-text — with
   `single_word` / `lstrip` / `rstrip` / `normalized` semantics.
-- **API:** `encode`, `encode_pair`, `decode`, `token_to_id`, `id_to_token`,
-  `get_vocab_size`.
+- **API:** `encode`, `encode_pair`, `encode_batch`, `decode`, truncation /
+  padding builders, `token_to_id`, `id_to_token`, `get_vocab_size`.
 
-See [`PROGRESS.md`](./PROGRESS.md) for the exact per-component status and known
-gaps (Unicode normalization, truncation/padding, batching are on the roadmap).
+Verified token-for-token against Python `tokenizers` across **13 real models**:
+gpt2, roberta, bert (±cased), distilbert, t5, albert, xlm-roberta, llama,
+**Qwen2.5, Qwen3, DeepSeek-V2, Phi-3**.
+
+See [`docs/components.md`](./docs/components.md) for the exact per-component
+status and known gaps, and [`PROGRESS.md`](./PROGRESS.md) for the roadmap.
+
+## Documentation
+
+- [Usage guide](./docs/usage.md) — load, encode/decode, truncation, padding, batches
+- [API reference](./docs/api.md)
+- [Supported components & limitations](./docs/components.md)
+- [Migrating from HuggingFace](./docs/migration-from-hf.md)
+- [Benchmarks](./docs/benchmarks/README.md)
 
 ## Quick start
 
