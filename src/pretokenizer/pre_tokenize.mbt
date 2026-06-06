@@ -17,6 +17,8 @@ pub fn PreTokenizer::pre_tokenize(
     WhitespaceSplit => whitespace_split(text, base_offset)
     BertPreTokenizer => bert_pre_tokenize(text, base_offset)
     Punctuation => punctuation_split(text, base_offset)
+    Metaspace(replacement~, prepend_scheme~) =>
+      metaspace_pre_tokenize(text, replacement, prepend_scheme, base_offset)
     Sequence(steps) => apply_sequence(steps, text, base_offset)
     // Other variants are handled in later phases; default to a single piece.
     _ => [{ value: text, offsets: (base_offset, base_offset + text.char_length()) }]
@@ -233,4 +235,50 @@ fn substr(chars : Array[Char], start : Int, stop : Int) -> String {
     sb.write_char(chars[k])
   }
   sb.to_string()
+}
+
+// Metaspace (SentencePiece): replace spaces with `replacement` (▁) and, when
+// prepend_scheme != "never", prepend one to the start. Pieces are split so each
+// begins with the replacement char (i.e. on each ▁ boundary).
+fn metaspace_pre_tokenize(
+  text : String,
+  replacement : Char,
+  prepend_scheme : String,
+  base_offset : Int,
+) -> Array[@types.Split] {
+  let prepend = prepend_scheme != "never"
+  // Build the transformed char list, tracking original char offsets.
+  // A prepended replacement maps to the original start offset.
+  let src = text.to_array()
+  // Replace spaces with `replacement`.
+  let mapped : Array[Char] = []
+  let origin : Array[Int] = [] // original index for each mapped char
+  if prepend && (src.length() == 0 || src[0] != ' ') {
+    mapped.push(replacement)
+    origin.push(0)
+  }
+  for i, c in src {
+    if c == ' ' {
+      mapped.push(replacement)
+    } else {
+      mapped.push(c)
+    }
+    origin.push(i)
+  }
+  // Split so each piece starts at a replacement boundary.
+  let out : Array[@types.Split] = []
+  let n = mapped.length()
+  let mut i = 0
+  while i < n {
+    let start = i
+    i = i + 1
+    while i < n && mapped[i] != replacement {
+      i = i + 1
+    }
+    let value = substr(mapped, start, i)
+    let off_start = base_offset + origin[start]
+    let off_end = base_offset + (if i < n { origin[i] } else { origin[n - 1] + 1 })
+    out.push({ value, offsets: (off_start, off_end) })
+  }
+  out
 }

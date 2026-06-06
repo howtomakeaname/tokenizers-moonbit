@@ -15,6 +15,8 @@ pub enum Normalizer {
   StripAccents
   Replace(pattern~ : String, content~ : String)
   Prepend(prepend~ : String)
+  // SentencePiece Precompiled charsmap; treated as identity for now (TODO).
+  Precompiled
   BertNormalizer(
     clean_text~ : Bool,
     handle_chinese_chars~ : Bool,
@@ -45,6 +47,7 @@ pub fn Normalizer::from_json(j : Json) -> Normalizer raise @types.TokenizerError
         content=@types.get_str(obj, "content", default=""),
       )
     "Prepend" => Prepend(prepend=@types.get_str(obj, "prepend", default=""))
+    "Precompiled" => Precompiled
     "BertNormalizer" =>
       BertNormalizer(
         clean_text=@types.get_bool(obj, "clean_text", default=true),

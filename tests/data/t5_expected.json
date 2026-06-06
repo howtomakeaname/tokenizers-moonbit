@@ -1,0 +1,162 @@
+[
+  {
+    "text": "Hello world",
+    "ids": [
+      8774,
+      296
+    ],
+    "tokens": [
+      "▁Hello",
+      "▁world"
+    ]
+  },
+  {
+    "text": "The quick brown fox.",
+    "ids": [
+      37,
+      1704,
+      4216,
+      3,
+      20400,
+      5
+    ],
+    "tokens": [
+      "▁The",
+      "▁quick",
+      "▁brown",
+      "▁",
+      "fox",
+      "."
+    ]
+  },
+  {
+    "text": "unaffable",
+    "ids": [
+      73,
+      4127,
+      179
+    ],
+    "tokens": [
+      "▁un",
+      "aff",
+      "able"
+    ]
+  },
+  {
+    "text": "tokenization is fun",
+    "ids": [
+      14145,
+      1707,
+      19,
+      694
+    ],
+    "tokens": [
+      "▁token",
+      "ization",
+      "▁is",
+      "▁fun"
+    ]
+  },
+  {
+    "text": "Don't panic!",
+    "ids": [
+      1008,
+      31,
+      17,
+      13647,
+      55
+    ],
+    "tokens": [
+      "▁Don",
+      "'",
+      "t",
+      "▁panic",
+      "!"
+    ]
+  },
+  {
+    "text": "HELLO World",
+    "ids": [
+      454,
+      12735,
+      667,
+      1150
+    ],
+    "tokens": [
+      "▁H",
+      "ELL",
+      "O",
+      "▁World"
+    ]
+  },
+  {
+    "text": "running runner runs",
+    "ids": [
+      1180,
+      3,
+      10806,
+      3154
+    ],
+    "tokens": [
+      "▁running",
+      "▁",
+      "runner",
+      "▁runs"
+    ]
+  },
+  {
+    "text": "a b c 1 2 3",
+    "ids": [
+      3,
+      9,
+      3,
+      115,
+      3,
+      75,
+      209,
+      204,
+      220
+    ],
+    "tokens": [
+      "▁",
+      "a",
+      "▁",
+      "b",
+      "▁",
+      "c",
+      "▁1",
+      "▁2",
+      "▁3"
+    ]
+  },
+  {
+    "text": "supercalifragilistic",
+    "ids": [
+      1355,
+      15534,
+      20791,
+      173,
+      3040
+    ],
+    "tokens": [
+      "▁super",
+      "cali",
+      "frag",
+      "il",
+      "istic"
+    ]
+  },
+  {
+    "text": "New York City",
+    "ids": [
+      368,
+      1060,
+      896
+    ],
+    "tokens": [
+      "▁New",
+      "▁York",
+      "▁City"
+    ]
+  }
+]

@@ -45,7 +45,7 @@ pub fn PreTokenizer::from_json(
     "Metaspace" =>
       Metaspace(
         replacement=@types.get_char(obj, "replacement", default='▁'),
-        prepend_scheme=@types.get_str(obj, "prepend_scheme", default="always"),
+        prepend_scheme=parse_prepend_scheme(obj),
       )
     "Digits" =>
       Digits(individual_digits=@types.get_bool(obj, "individual_digits", default=false))
@@ -90,5 +90,14 @@ fn parse_behavior(obj : Map[String, Json]) -> SplitBehavior {
     Some("MergedWithNext") => MergedWithNext
     Some("Contiguous") => Contiguous
     _ => Isolated
+  }
+}
+
+// Metaspace prepend scheme: new configs use "prepend_scheme"
+// ("always"/"never"/"first"); old configs use a bool "add_prefix_space".
+fn parse_prepend_scheme(obj : Map[String, Json]) -> String {
+  match @types.get_str_opt(obj, "prepend_scheme") {
+    Some(s) => s
+    None => if @types.get_bool(obj, "add_prefix_space", default=true) { "always" } else { "never" }
   }
 }

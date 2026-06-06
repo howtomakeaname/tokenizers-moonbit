@@ -33,7 +33,15 @@ pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
     "Metaspace" =>
       Metaspace(
         replacement=@types.get_char(obj, "replacement", default='▁'),
-        prepend_scheme=@types.get_str(obj, "prepend_scheme", default="always"),
+        prepend_scheme=match @types.get_str_opt(obj, "prepend_scheme") {
+          Some(s) => s
+          None =>
+            if @types.get_bool(obj, "add_prefix_space", default=true) {
+              "always"
+            } else {
+              "never"
+            }
+        },
       )
     "BPEDecoder" => BPEDecoder(suffix=@types.get_str(obj, "suffix", default="</w>"))
     "Fuse" => Fuse
