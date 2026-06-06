@@ -23,7 +23,7 @@
 | R4 | truncation / padding / encode_batch | ✅ |
 | R5 | Unicode 归一化最小集（NFD+Mn / strip_accents） | ✅ |
 | R6 | pre_tokenizer/decoder/template DSL 补全 | 🚧（ByteFallback 已在 R2 完成）|
-| R7 | benchmark 套件 + 与 HF 跑分 | ⬜ |
+| R7 | benchmark 套件 + 与 HF 跑分 | ✅ |
 | R8 | 文档 + 迁移指南 | 🚧（本文件 + README + 迁移指南进行中）|
 
 ## 已对齐验证的真实模型（与 Python `tokenizers` 逐 token id 一致）

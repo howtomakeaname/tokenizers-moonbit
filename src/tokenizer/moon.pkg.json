@@ -8,5 +8,8 @@
     "tokenizer-moonbit/decoder",
     "moonbitlang/core/json",
     { "path": "moonbitlang/x/fs", "alias": "fs" }
+  ],
+  "test-import": [
+    "moonbitlang/core/bench"
   ]
 }
