@@ -35,6 +35,8 @@ pub fn Decoder::decode_chain(
     Strip(content~, start~, stop~) =>
       tokens.map(t => strip_token(t, content, start, stop))
     ByteFallback => decode_byte_fallback(tokens)
+    CTC(pad_token~, word_delimiter_token~, cleanup~) =>
+      decode_ctc(tokens, pad_token, word_delimiter_token, cleanup)
     Sequence(decoders) => {
       let mut toks = tokens
       for d in decoders {
@@ -81,6 +83,39 @@ fn decode_byte_fallback(tokens : Array[String]) -> Array[String] {
   }
   flush()
   out
+}
+
+// CTC decoder: collapse consecutive duplicate tokens, drop pad tokens, and map
+// the word-delimiter token to a space. Optional cleanup of punctuation spacing.
+fn decode_ctc(
+  tokens : Array[String],
+  pad_token : String,
+  word_delimiter_token : String,
+  cleanup : Bool,
+) -> Array[String] {
+  let out : Array[String] = []
+  let mut prev = ""
+  let mut first = true
+  for t in tokens {
+    if not(first) && t == prev {
+      continue // collapse consecutive duplicates
+    }
+    first = false
+    prev = t
+    if t == pad_token {
+      continue
+    }
+    if t == word_delimiter_token {
+      out.push(" ")
+    } else {
+      out.push(t)
+    }
+  }
+  if cleanup {
+    out.map(s => cleanup_text(s))
+  } else {
+    out
+  }
 }
 
 // Parse "<0xXX>" -> byte value; None otherwise.

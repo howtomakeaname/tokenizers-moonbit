@@ -35,6 +35,12 @@ MODELS = {
     "qwen3": "https://huggingface.co/Qwen/Qwen3-0.6B/resolve/main/tokenizer.json",
     "deepseek": "https://huggingface.co/deepseek-ai/DeepSeek-V2-Lite/resolve/main/tokenizer.json",
     "phi3": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct/resolve/main/tokenizer.json",
+    # BPE with Metaspace / Sequence pre-tokenizers
+    "mistral": "https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3/resolve/main/tokenizer.json",
+    "falcon": "https://huggingface.co/tiiuae/falcon-7b/resolve/main/tokenizer.json",
+    "starcoder2": "https://huggingface.co/bigcode/starcoder2-3b/resolve/main/tokenizer.json",
+    "gptneox": "https://huggingface.co/EleutherAI/gpt-neox-20b/resolve/main/tokenizer.json",
+    "clip": "https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/tokenizer.json",
 }
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "tests", "data")

@@ -13,6 +13,8 @@ pub enum Decoder {
   Replace(pattern~ : String, content~ : String)
   // Reassemble <0xXX> byte tokens into UTF-8 text.
   ByteFallback
+  // CTC decoder (speech models): dedup repeats, drop pad, delimiter -> space.
+  CTC(pad_token~ : String, word_delimiter_token~ : String, cleanup~ : Bool)
   Sequence(Array[Decoder])
 }
 
@@ -48,6 +50,12 @@ pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
     "BPEDecoder" => BPEDecoder(suffix=@types.get_str(obj, "suffix", default="</w>"))
     "Fuse" => Fuse
     "ByteFallback" => ByteFallback
+    "CTC" =>
+      CTC(
+        pad_token=@types.get_str(obj, "pad_token", default="<pad>"),
+        word_delimiter_token=@types.get_str(obj, "word_delimiter_token", default="|"),
+        cleanup=@types.get_bool(obj, "cleanup", default=true),
+      )
     "Strip" =>
       Strip(
         content=@types.get_char(obj, "content", default=' '),

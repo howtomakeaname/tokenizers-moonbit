@@ -17,9 +17,13 @@ pub fn PreTokenizer::pre_tokenize(
     WhitespaceSplit => whitespace_split(text, base_offset)
     BertPreTokenizer => bert_pre_tokenize(text, base_offset)
     Punctuation => punctuation_split(text, base_offset)
-    Metaspace(replacement~, prepend_scheme~) =>
-      metaspace_pre_tokenize(text, replacement, prepend_scheme, base_offset)
+    Metaspace(replacement~, prepend_scheme~, split~) =>
+      metaspace_pre_tokenize(text, replacement, prepend_scheme, split, base_offset)
     Split(pattern~, ..) => split_pre_tokenize(text, pattern, base_offset)
+    Digits(individual_digits~) =>
+      digits_split(text, individual_digits, base_offset)
+    Delimiter(delimiter~) => delimiter_split(text, delimiter, base_offset)
+    FixedLength(length~) => fixed_length_split(text, length, base_offset)
     Sequence(steps) => apply_sequence(steps, text, base_offset)
     // Other variants are handled in later phases; default to a single piece.
     _ => [{ value: text, offsets: (base_offset, base_offset + text.char_length()) }]
@@ -283,6 +287,98 @@ fn substr(chars : Array[Char], start : Int, stop : Int) -> String {
   sb.to_string()
 }
 
+// CharDelimiterSplit ("Delimiter"): split on a single char, dropping it.
+fn delimiter_split(
+  text : String,
+  delim : Char,
+  base_offset : Int,
+) -> Array[@types.Split] {
+  let chars = text.to_array()
+  let n = chars.length()
+  let out : Array[@types.Split] = []
+  let mut i = 0
+  while i < n {
+    if chars[i] == delim {
+      i = i + 1
+      continue
+    }
+    let start = i
+    while i < n && chars[i] != delim {
+      i = i + 1
+    }
+    out.push({
+      value: substr(chars, start, i),
+      offsets: (base_offset + start, base_offset + i),
+    })
+  }
+  out
+}
+
+// FixedLength: split into chunks of `length` code points.
+fn fixed_length_split(
+  text : String,
+  length : Int,
+  base_offset : Int,
+) -> Array[@types.Split] {
+  let chars = text.to_array()
+  let n = chars.length()
+  let step = if length <= 0 { 1 } else { length }
+  let out : Array[@types.Split] = []
+  let mut i = 0
+  while i < n {
+    let stop = if i + step < n { i + step } else { n }
+    out.push({
+      value: substr(chars, i, stop),
+      offsets: (base_offset + i, base_offset + stop),
+    })
+    i = stop
+  }
+  out
+}
+
+// Digits pre-tokenizer: isolate digit runs. individual_digits=true makes each
+// digit its own piece; false keeps a contiguous digit run together.
+fn digits_split(
+  text : String,
+  individual_digits : Bool,
+  base_offset : Int,
+) -> Array[@types.Split] {
+  let chars = text.to_array()
+  let n = chars.length()
+  let out : Array[@types.Split] = []
+  let mut i = 0
+  while i < n {
+    if is_number(chars[i]) {
+      if individual_digits {
+        out.push({
+          value: substr(chars, i, i + 1),
+          offsets: (base_offset + i, base_offset + i + 1),
+        })
+        i = i + 1
+      } else {
+        let start = i
+        while i < n && is_number(chars[i]) {
+          i = i + 1
+        }
+        out.push({
+          value: substr(chars, start, i),
+          offsets: (base_offset + start, base_offset + i),
+        })
+      }
+    } else {
+      let start = i
+      while i < n && not(is_number(chars[i])) {
+        i = i + 1
+      }
+      out.push({
+        value: substr(chars, start, i),
+        offsets: (base_offset + start, base_offset + i),
+      })
+    }
+  }
+  out
+}
+
 // Metaspace (SentencePiece): replace spaces with `replacement` (▁) and, when
 // prepend_scheme != "never", prepend one to the start. Pieces are split so each
 // begins with the replacement char (i.e. on each ▁ boundary).
@@ -290,13 +386,17 @@ fn metaspace_pre_tokenize(
   text : String,
   replacement : Char,
   prepend_scheme : String,
+  split : Bool,
   base_offset : Int,
 ) -> Array[@types.Split] {
-  let prepend = prepend_scheme != "never"
-  // Build the transformed char list, tracking original char offsets.
-  // A prepended replacement maps to the original start offset.
+  // prepend_scheme: "always" -> always prepend; "first" -> only on the very
+  // first piece of the whole input (base_offset == 0); "never" -> never.
+  let prepend = match prepend_scheme {
+    "never" => false
+    "first" => base_offset == 0
+    _ => true
+  }
   let src = text.to_array()
-  // Replace spaces with `replacement`.
   let mapped : Array[Char] = []
   let origin : Array[Int] = [] // original index for each mapped char
   if prepend && (src.length() == 0 || src[0] != ' ') {
@@ -311,9 +411,19 @@ fn metaspace_pre_tokenize(
     }
     origin.push(i)
   }
-  // Split so each piece starts at a replacement boundary.
-  let out : Array[@types.Split] = []
   let n = mapped.length()
+  // split=false: emit the whole transformed string as a single piece (the
+  // model's BPE then handles the runs, e.g. Mistral/Llama Metaspace).
+  if not(split) {
+    if n == 0 {
+      return []
+    }
+    let value = substr(mapped, 0, n)
+    let off_end = base_offset + (origin[n - 1] + 1)
+    return [{ value, offsets: (base_offset + origin[0], off_end) }]
+  }
+  // split=true: each piece starts at a replacement boundary.
+  let out : Array[@types.Split] = []
   let mut i = 0
   while i < n {
     let start = i

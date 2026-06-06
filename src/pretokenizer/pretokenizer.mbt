@@ -17,11 +17,13 @@ pub enum PreTokenizer {
   ByteLevel(add_prefix_space~ : Bool, use_regex~ : Bool, trim_offsets~ : Bool)
   Whitespace
   WhitespaceSplit
-  Metaspace(replacement~ : Char, prepend_scheme~ : String)
+  Metaspace(replacement~ : Char, prepend_scheme~ : String, split~ : Bool)
   Punctuation
   Split(pattern~ : String, behavior~ : SplitBehavior, invert~ : Bool)
   BertPreTokenizer
   Digits(individual_digits~ : Bool)
+  Delimiter(delimiter~ : Char)
+  FixedLength(length~ : Int)
   Sequence(Array[PreTokenizer])
 }
 
@@ -46,9 +48,13 @@ pub fn PreTokenizer::from_json(
       Metaspace(
         replacement=@types.get_char(obj, "replacement", default='▁'),
         prepend_scheme=parse_prepend_scheme(obj),
+        split=@types.get_bool(obj, "split", default=true),
       )
     "Digits" =>
       Digits(individual_digits=@types.get_bool(obj, "individual_digits", default=false))
+    "Delimiter" =>
+      Delimiter(delimiter=@types.get_char(obj, "delimiter", default=' '))
+    "FixedLength" => FixedLength(length=@types.get_int(obj, "length", default=5))
     "Split" =>
       Split(
         pattern=parse_pattern(obj),

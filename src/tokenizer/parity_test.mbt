@@ -10,6 +10,7 @@
 let parity_models : Array[String] = [
   "gpt2", "roberta", "llama", "bert", "bert_cased", "distilbert", "t5",
   "albert", "xlm_roberta", "Qwen2.5", "qwen3", "deepseek", "phi3",
+  "mistral", "falcon", "starcoder2", "gptneox",
 ]
 
 // Run parity for one model; returns (ran, mismatches).
