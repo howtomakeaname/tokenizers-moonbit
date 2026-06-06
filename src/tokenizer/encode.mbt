@@ -24,6 +24,17 @@ pub fn Tokenizer::encode(
   self.finalize(processed)
 }
 
+///|
+/// Encode a single text and return UTF-8 byte offsets, matching HF's default
+/// Rust/Python offset convention more closely than MoonBit char offsets.
+pub fn Tokenizer::encode_with_byte_offsets(
+  self : Tokenizer,
+  text : String,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  encoding_with_byte_offsets(self.encode(text, add_special_tokens~), text)
+}
+
 // Apply truncation and (fixed) padding to a single encoding.
 
 ///|
@@ -77,6 +88,22 @@ pub fn Tokenizer::encode_batch(
 }
 
 ///|
+/// Encode a batch with UTF-8 byte offsets. Batch execution remains serial for
+/// deterministic cross-backend behavior.
+pub fn Tokenizer::encode_batch_with_byte_offsets(
+  self : Tokenizer,
+  texts : Array[String],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  let encs = self.encode_batch(texts, add_special_tokens~)
+  let out : Array[@types.Encoding] = []
+  for i in 0..<encs.length() {
+    out.push(encoding_with_byte_offsets(encs[i], texts[i]))
+  }
+  out
+}
+
+///|
 /// Encode a pair of texts (sequence A and B) into a single `Encoding`.
 pub fn Tokenizer::encode_pair(
   self : Tokenizer,
@@ -97,6 +124,111 @@ pub fn Tokenizer::encode_pair(
   self.finalize(processed)
 }
 
+///|
+/// Encode a pair and return UTF-8 byte offsets for each sequence. Special and
+/// padding tokens keep `(0, 0)` offsets.
+pub fn Tokenizer::encode_pair_with_byte_offsets(
+  self : Tokenizer,
+  text_a : String,
+  text_b : String,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  let enc = self.encode_pair(text_a, text_b, add_special_tokens~)
+  encoding_with_pair_byte_offsets(enc, text_a, text_b)
+}
+
+///|
+/// Convert an existing single-sequence encoding's char offsets to UTF-8 byte
+/// offsets using the original input text.
+fn encoding_with_byte_offsets(
+  enc : @types.Encoding,
+  text : String,
+) -> @types.Encoding {
+  let table = char_to_byte_table(text)
+  convert_offsets(enc, table, None)
+}
+
+///|
+/// Convert a pair encoding's char offsets to UTF-8 byte offsets using the two
+/// original input texts and `sequence_ids`.
+fn encoding_with_pair_byte_offsets(
+  enc : @types.Encoding,
+  text_a : String,
+  text_b : String,
+) -> @types.Encoding {
+  let table_a = char_to_byte_table(text_a)
+  let table_b = char_to_byte_table(text_b)
+  convert_offsets(enc, table_a, Some(table_b))
+}
+
+///|
+fn convert_offsets(
+  enc : @types.Encoding,
+  table_a : Array[Int],
+  table_b : Array[Int]?,
+) -> @types.Encoding {
+  let offsets : Array[(Int, Int)] = []
+  for i in 0..<enc.offsets.length() {
+    let table = match enc.sequence_ids[i] {
+      Some(1) => table_b.unwrap_or(table_a)
+      Some(_) => table_a
+      None => table_a
+    }
+    offsets.push(
+      (
+        char_to_byte(enc.offsets[i].0, table),
+        char_to_byte(enc.offsets[i].1, table),
+      ),
+    )
+  }
+  {
+    ids: enc.ids.copy(),
+    type_ids: enc.type_ids.copy(),
+    tokens: enc.tokens.copy(),
+    offsets,
+    special_tokens_mask: enc.special_tokens_mask.copy(),
+    attention_mask: enc.attention_mask.copy(),
+    sequence_ids: enc.sequence_ids.copy(),
+    overflowing: enc.overflowing.map(e => convert_offsets(e, table_a, table_b)),
+  }
+}
+
+///|
+fn char_to_byte_table(text : String) -> Array[Int] {
+  let out : Array[Int] = [0]
+  let mut pos = 0
+  for c in text {
+    pos = pos + utf8_len(c)
+    out.push(pos)
+  }
+  out
+}
+
+///|
+fn char_to_byte(pos : Int, table : Array[Int]) -> Int {
+  if pos <= 0 {
+    0
+  } else if pos >= table.length() {
+    table[table.length() - 1]
+  } else {
+    table[pos]
+  }
+}
+
+///|
+fn utf8_len(c : Char) -> Int {
+  let cp = c.to_int()
+  if cp <= 0x7F {
+    1
+  } else if cp <= 0x7FF {
+    2
+  } else if cp <= 0xFFFF {
+    3
+  } else {
+    4
+  }
+}
+
 // Run added-vocabulary extraction -> normalize -> pre_tokenize -> model,
 // producing a raw Encoding (all type_ids = 0). `keep_special` controls whether
 // special added-tokens are emitted as single tokens (true) or folded back into
@@ -114,6 +246,7 @@ fn Tokenizer::encode_raw(
   let offsets : Array[(Int, Int)] = []
   let special_tokens_mask : Array[Int] = []
   let attention_mask : Array[Int] = []
+  let sequence_ids : Array[Int?] = []
   fn emit(id : Int, value : String, offs : (Int, Int), special : Int) -> Unit {
     ids.push(id)
     tokens.push(value)
@@ -121,6 +254,7 @@ fn Tokenizer::encode_raw(
     offsets.push(offs)
     special_tokens_mask.push(special)
     attention_mask.push(1)
+    sequence_ids.push(Some(0))
   }
 
   // Stage 1: split out non-normalized added tokens against the original text.
@@ -172,6 +306,7 @@ fn Tokenizer::encode_raw(
     offsets,
     special_tokens_mask,
     attention_mask,
+    sequence_ids,
     overflowing: [],
   }
 }
@@ -189,6 +324,7 @@ fn concat_encodings(
   let offsets = a.offsets.copy()
   let special_tokens_mask = a.special_tokens_mask.copy()
   let attention_mask = a.attention_mask.copy()
+  let sequence_ids = a.sequence_ids.copy()
   for i in 0..<b.ids.length() {
     ids.push(b.ids[i])
     tokens.push(b.tokens[i])
@@ -196,6 +332,7 @@ fn concat_encodings(
     offsets.push(b.offsets[i])
     special_tokens_mask.push(b.special_tokens_mask[i])
     attention_mask.push(b.attention_mask[i])
+    sequence_ids.push(Some(1))
   }
   {
     ids,
@@ -204,6 +341,7 @@ fn concat_encodings(
     offsets,
     special_tokens_mask,
     attention_mask,
+    sequence_ids,
     overflowing: [],
   }
 }

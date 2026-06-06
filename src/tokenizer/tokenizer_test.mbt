@@ -31,6 +31,38 @@ test "decode_batch decodes each id sequence" {
 }
 
 ///|
+test "encode_with_byte_offsets converts unicode char offsets" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"我":0,"🙂":1,"a":2,"[UNK]":3},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode_with_byte_offsets("我 🙂 a", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["我", "🙂", "a"])
+  @test.assert_eq(enc.offsets, [(0, 3), (4, 8), (9, 10)])
+  @test.assert_eq(enc.sequence_ids(), [Some(0), Some(0), Some(0)])
+}
+
+///|
+test "encode_pair tracks sequence ids separate from type ids" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"[CLS]":0,"[SEP]":1,"我":2,"b":3,"[UNK]":4},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","cls":["[CLS]",0],"sep":["[SEP]",1]}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode_pair_with_byte_offsets(
+    "我",
+    "b",
+    add_special_tokens=true,
+  )
+  @test.assert_eq(enc.tokens, ["[CLS]", "我", "[SEP]", "b", "[SEP]"])
+  @test.assert_eq(enc.offsets, [(0, 0), (0, 3), (0, 0), (0, 1), (0, 0)])
+  @test.assert_eq(enc.sequence_ids(), [None, Some(0), None, Some(1), None])
+  @test.assert_eq(enc.type_ids, [0, 0, 0, 1, 1])
+}
+
+///|
 test "from_str loads root truncation and padding config" {
   let json =
     #|{"version":"1.0",

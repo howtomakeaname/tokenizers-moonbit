@@ -82,6 +82,19 @@ fn bench_encode_case(
 }
 
 ///|
+fn bench_encode_byte_offsets_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+  text : String,
+) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  b.bench(name="\{model}-encode-byte-offsets-\{case_name}", fn() {
+    b.keep(tok.encode_with_byte_offsets(text, add_special_tokens=false))
+  })
+}
+
+///|
 fn bench_decode_case(
   b : @bench.T,
   model : String,
@@ -171,6 +184,14 @@ test "bench encode matrix (modern models x corpora)" (b : @bench.T) {
     bench_encode_case(b, model, "mixed", mixed, add_special_tokens=false)
     bench_encode_case(b, model, "code", code, add_special_tokens=false)
     bench_encode_case(b, model, "long", long, add_special_tokens=false)
+  }
+}
+
+///|
+test "bench encode byte offsets matrix" (b : @bench.T) {
+  let mixed = corpus_mixed()
+  for model in ["gpt2", "bert", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder"] {
+    bench_encode_byte_offsets_case(b, model, "mixed", mixed)
   }
 }
 

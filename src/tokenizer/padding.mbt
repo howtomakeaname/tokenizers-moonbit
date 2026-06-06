@@ -67,6 +67,7 @@ pub fn pad_encoding(
   let pad_offs : Array[(Int, Int)] = Array::make(pad, (0, 0))
   let pad_special = Array::make(pad, 1)
   let pad_attn = Array::make(pad, 0)
+  let pad_seq : Array[Int?] = Array::make(pad, None)
   match params.direction {
     Right =>
       {
@@ -76,6 +77,7 @@ pub fn pad_encoding(
         offsets: concat(enc.offsets, pad_offs),
         special_tokens_mask: concat(enc.special_tokens_mask, pad_special),
         attention_mask: concat(enc.attention_mask, pad_attn),
+        sequence_ids: concat(enc.sequence_ids, pad_seq),
         overflowing: [],
       }
     Left =>
@@ -86,6 +88,7 @@ pub fn pad_encoding(
         offsets: concat(pad_offs, enc.offsets),
         special_tokens_mask: concat(pad_special, enc.special_tokens_mask),
         attention_mask: concat(pad_attn, enc.attention_mask),
+        sequence_ids: concat(pad_seq, enc.sequence_ids),
         overflowing: [],
       }
   }

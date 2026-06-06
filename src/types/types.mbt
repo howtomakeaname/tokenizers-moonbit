@@ -9,9 +9,18 @@ pub(all) struct Encoding {
   offsets : Array[(Int, Int)]
   special_tokens_mask : Array[Int]
   attention_mask : Array[Int]
+  // Sequence id for each token: Some(0) for A, Some(1) for B, None for
+  // post-processor/padding special tokens. Mirrors HF Encoding.sequence_ids().
+  sequence_ids : Array[Int?]
   // Truncation overflow windows (empty unless truncation with stride trims).
   overflowing : Array[Encoding]
 } derive(Debug, Eq)
+
+///|
+/// Return per-token sequence ids (`None` for special/padding tokens).
+pub fn Encoding::sequence_ids(self : Encoding) -> Array[Int?] {
+  self.sequence_ids.copy()
+}
 
 ///|
 /// A token produced by a model: its id, surface string and char offsets.
@@ -50,6 +59,7 @@ pub fn Encoding::empty() -> Encoding {
     offsets: [],
     special_tokens_mask: [],
     attention_mask: [],
+    sequence_ids: [],
     overflowing: [],
   }
 }

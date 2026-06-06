@@ -35,6 +35,7 @@ fn slice_encoding(
     offsets: enc.offsets[start:stop].to_owned(),
     special_tokens_mask: enc.special_tokens_mask[start:stop].to_owned(),
     attention_mask: enc.attention_mask[start:stop].to_owned(),
+    sequence_ids: enc.sequence_ids[start:stop].to_owned(),
     overflowing: [],
   }
 }

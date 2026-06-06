@@ -121,7 +121,8 @@
 | truncation / padding / encode_batch | ✅ | with_truncation/with_padding builder；BatchLongest/Fixed；batch 串行；encode_pair 已接入 finalize |
 | decode_batch | ✅ | 串行实现，保证 wasm/js/native 行为一致 |
 | tokenizer.json root truncation/padding 自动加载 | ✅ | 已解析 root-level `truncation` / `padding`，覆盖 Fixed/BatchLongest 与方向/倍数/pad 字段 |
-| offsets（当前 char 偏移；HF 默认 byte）| 🚧 R4 评估 |
+| offsets | ✅/🚧 | 默认保留 char offsets；新增 `encode_with_byte_offsets` / `encode_pair_with_byte_offsets` 对齐 HF byte offsets；ByteLevel trim_offsets 仍待补强 |
+| sequence_ids | ✅ | `Encoding::sequence_ids()`；special/padding 为 None，pair 序列为 Some(0)/Some(1) |
 
 ## R9：HF 迁移缺口排期
 
@@ -133,8 +134,9 @@
 | P0 | `decode_batch` | ✅ | API 行为与 `decode` 一致；新增单测与 batch decode bench |
 | P0 | root-level `truncation` / `padding` 自动加载 | ✅ | `Tokenizer::from_str` 直接应用 tokenizer.json 配置；新增单测覆盖 Fixed padding + truncation |
 | P0 | pre-commit 编译/测试门禁 | ✅ | 本地 pre-commit 运行 `moon check` + wasm/wasm-gc/js/native 全后端测试 |
-| P1 | byte offsets 模式 | ⬜ | 可选择输出 HF Rust 风格 byte offsets；新增中英/emoji offset 对拍 |
-| P1 | `word_ids` / `sequence_ids` / token-char 映射 | ⬜ | Encoding 增加必要字段和访问 API；覆盖 pair/added tokens/overflow |
+| P1 | byte offsets 模式 | ✅ | 可选择输出 HF Rust 风格 byte offsets；新增中英/emoji offset 对拍与 bench |
+| P1 | `sequence_ids` | ✅ | Encoding 增加字段和访问 API；覆盖 pair/special tokens |
+| P1 | `word_ids` / token-char 映射 | ⬜ | 需补 word 边界传播、char_to_token/token_to_chars API；覆盖 pair/added tokens/overflow |
 | P1 | Truncation strategy 完整化 | ⬜ | 支持 LongestFirst/OnlyFirst/OnlySecond；pair encode 顺序与 HF 对齐 |
 | P1 | ByteLevel post-processor `trim_offsets` 细节 | ⬜ | 空白修剪与 HF offsets 对齐；补 RoBERTa/GPT-2 offset 用例 |
 | P2 | Precompiled SentencePiece charsmap 完整解码 | ⬜ | 支持真实 charsmap；补 DeBERTa/Albert/XLM-R 复杂样例 |

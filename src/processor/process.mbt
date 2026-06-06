@@ -54,7 +54,8 @@ fn apply_template(
         } else {
           a
         }
-        append_sequence(out, enc, type_id)
+        let seq_id = if id == "B" { 1 } else { 0 }
+        append_sequence_with_id(out, enc, type_id, seq_id)
       }
       SpecialTokenRef(id~, type_id~) =>
         match special_tokens.get(id) {
@@ -78,7 +79,7 @@ fn bert_like(
 ) -> @types.Encoding {
   let out = new_builder()
   push_special(out, cls.1, cls.0, 0)
-  append_sequence(out, a, 0)
+  append_sequence_with_id(out, a, 0, 0)
   push_special(out, sep.1, sep.0, 0)
   match b {
     Some(eb) => {
@@ -87,7 +88,7 @@ fn bert_like(
         push_special(out, sep.1, sep.0, 0)
       }
       let pair_type_id = if roberta { 0 } else { 1 }
-      append_sequence(out, eb, pair_type_id)
+      append_sequence_with_id(out, eb, pair_type_id, 1)
       push_special(out, sep.1, sep.0, pair_type_id)
     }
     None => ()
@@ -100,9 +101,9 @@ fn bert_like(
 ///|
 fn merge_plain(a : @types.Encoding, b : @types.Encoding?) -> @types.Encoding {
   let out = new_builder()
-  append_sequence(out, a, 0)
+  append_sequence_with_id(out, a, 0, 0)
   match b {
-    Some(eb) => append_sequence(out, eb, 1)
+    Some(eb) => append_sequence_with_id(out, eb, 1, 1)
     None => ()
   }
   build(out)
@@ -118,6 +119,7 @@ priv struct Builder {
   offsets : Array[(Int, Int)]
   special_tokens_mask : Array[Int]
   attention_mask : Array[Int]
+  sequence_ids : Array[Int?]
 }
 
 ///|
@@ -129,11 +131,17 @@ fn new_builder() -> Builder {
     offsets: [],
     special_tokens_mask: [],
     attention_mask: [],
+    sequence_ids: [],
   }
 }
 
 ///|
-fn append_sequence(out : Builder, enc : @types.Encoding, type_id : Int) -> Unit {
+fn append_sequence_with_id(
+  out : Builder,
+  enc : @types.Encoding,
+  type_id : Int,
+  seq_id : Int,
+) -> Unit {
   for i in 0..<enc.ids.length() {
     out.ids.push(enc.ids[i])
     out.type_ids.push(type_id)
@@ -141,6 +149,7 @@ fn append_sequence(out : Builder, enc : @types.Encoding, type_id : Int) -> Unit 
     out.offsets.push(enc.offsets[i])
     out.special_tokens_mask.push(0)
     out.attention_mask.push(1)
+    out.sequence_ids.push(Some(seq_id))
   }
 }
 
@@ -153,6 +162,7 @@ fn append_special(out : Builder, st : SpecialToken, type_id : Int) -> Unit {
     out.offsets.push((0, 0))
     out.special_tokens_mask.push(1)
     out.attention_mask.push(1)
+    out.sequence_ids.push(None)
   }
 }
 
@@ -164,6 +174,7 @@ fn push_special(out : Builder, id : Int, token : String, type_id : Int) -> Unit 
   out.offsets.push((0, 0))
   out.special_tokens_mask.push(1)
   out.attention_mask.push(1)
+  out.sequence_ids.push(None)
 }
 
 ///|
@@ -175,6 +186,7 @@ fn build(out : Builder) -> @types.Encoding {
     offsets: out.offsets,
     special_tokens_mask: out.special_tokens_mask,
     attention_mask: out.attention_mask,
+    sequence_ids: out.sequence_ids,
     overflowing: [],
   }
 }
