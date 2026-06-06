@@ -21,7 +21,7 @@
 | R2 | WordLevel + byte_fallback + fuse_unk + ignore_merges + ByteFallback decoder | ✅ |
 | R3 | 多模型对拍设施 + CI | ✅ |
 | R4 | truncation / padding / encode_batch | ✅ |
-| R5 | Unicode 归一化最小集（NFD+Mn / strip_accents） | ⬜ |
+| R5 | Unicode 归一化最小集（NFD+Mn / strip_accents） | ✅ |
 | R6 | pre_tokenizer/decoder/template DSL 补全 | 🚧（ByteFallback 已在 R2 完成）|
 | R7 | benchmark 套件 + 与 HF 跑分 | ⬜ |
 | R8 | 文档 + 迁移指南 | 🚧（本文件 + README + 迁移指南进行中）|
@@ -58,8 +58,9 @@
 | 组件 | 状态 |
 |---|---|
 | Lowercase / Strip / Replace / Prepend / Sequence | ✅ |
-| BertNormalizer（仅 lowercase）| 🚧 clean_text/handle_chinese_chars/strip_accents 见 R5 |
-| NFC/NFD/NFKC/NFKD / StripAccents | ⏸ identity，R5 做 NFD+Mn 最小集 |
+| BertNormalizer（clean_text/handle_chinese_chars/strip_accents/lowercase）| ✅ |
+| StripAccents（NFD+Mn 最小表，1006 条，lazy 加载）| ✅ |
+| NFC/NFD/NFKC/NFKD | ⏸ identity（NFKC 视需要补；当前 9 模型对拍不依赖）|
 | Precompiled（SentencePiece charsmap）| ⏸ identity |
 | Nmt / ByteLevel-normalizer | ⬜ |
 

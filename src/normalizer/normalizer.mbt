@@ -20,6 +20,7 @@ pub enum Normalizer {
   BertNormalizer(
     clean_text~ : Bool,
     handle_chinese_chars~ : Bool,
+    strip_accents~ : Bool,
     lowercase~ : Bool,
   )
   Sequence(Array[Normalizer])
@@ -48,12 +49,21 @@ pub fn Normalizer::from_json(j : Json) -> Normalizer raise @types.TokenizerError
       )
     "Prepend" => Prepend(prepend=@types.get_str(obj, "prepend", default=""))
     "Precompiled" => Precompiled
-    "BertNormalizer" =>
+    "BertNormalizer" => {
+      let lowercase = @types.get_bool(obj, "lowercase", default=true)
+      // strip_accents defaults to the lowercase value when absent/null (HF).
+      let strip_accents = match obj.get("strip_accents") {
+        Some(True) => true
+        Some(False) => false
+        _ => lowercase
+      }
       BertNormalizer(
         clean_text=@types.get_bool(obj, "clean_text", default=true),
         handle_chinese_chars=@types.get_bool(obj, "handle_chinese_chars", default=true),
-        lowercase=@types.get_bool(obj, "lowercase", default=true),
+        strip_accents~,
+        lowercase~,
       )
+    }
     "Sequence" => {
       let arr = match obj.get("normalizers") {
         Some(Array(a)) => a

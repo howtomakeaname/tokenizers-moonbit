@@ -33,6 +33,8 @@ CASES = [
     "emoji test",
     "New York City",
     "unaffable",
+    "café résumé",
+    "naïve Zürich",
 ]
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "tests", "data")
