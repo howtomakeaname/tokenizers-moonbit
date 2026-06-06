@@ -2,79 +2,109 @@
 
 A MoonBit port of [HuggingFace `tokenizers`](https://github.com/huggingface/tokenizers).
 
-It loads a standard `tokenizer.json` and runs tokenization across **all MoonBit
-backends** (wasm / wasm-gc / js / native), targeting LLM / edge use cases.
+Load a standard `tokenizer.json` and run encode/decode across **all MoonBit
+backends** — `wasm`, `wasm-gc`, `js`, `native` — with no native dependencies.
+Targeted at LLM / edge / browser use cases where the Rust `tokenizers` crate is
+unavailable or heavyweight to ship.
 
-> Status: **work in progress.** See `STATUS` below for which phases are done.
+> Status: actively developed. See [`PROGRESS.md`](./PROGRESS.md) for the full
+> capability matrix and roadmap.
 
-## Goals
+## Why this project
 
-- Load HuggingFace `tokenizer.json` directly.
-- Support the three core model types:
-  - **BPE / byte-level BPE** (GPT-2, RoBERTa, Llama, ...)
-  - **WordPiece** (BERT, ...)
-  - **Unigram** (SentencePiece: T5, ALBERT, ...)
-- Full pipeline: Normalizer → Pre-tokenizer → Model → Post-processor → Decoder.
-- `encode` / `decode` verified token-for-token against Python `transformers`.
+- **Runs everywhere MoonBit runs.** One pure-MoonBit implementation compiles to
+  wasm/wasm-gc/js/native. No FFI, no platform-specific binaries.
+- **Faithful to HuggingFace.** Output is checked token-for-token against the
+  Python `tokenizers` library for real models (GPT-2, BERT, T5, Llama).
+- **Loads `tokenizer.json` directly.** No conversion step; drop in the same file
+  your Python pipeline uses.
+
+## Supported
+
+- **Models:** BPE, byte-level BPE (with `byte_fallback` / `fuse_unk` /
+  `ignore_merges`), WordPiece, Unigram, WordLevel.
+- **Pipeline:** Normalizer → Pre-tokenizer → Model → Post-processor → Decoder,
+  plus an AddedVocabulary stage that splits special/added tokens (e.g.
+  `<|endoftext|>`, `[MASK]`) out of text — including mid-text — with
+  `single_word` / `lstrip` / `rstrip` / `normalized` semantics.
+- **API:** `encode`, `encode_pair`, `decode`, `token_to_id`, `id_to_token`,
+  `get_vocab_size`.
+
+See [`PROGRESS.md`](./PROGRESS.md) for the exact per-component status and known
+gaps (Unicode normalization, truncation/padding, batching are on the roadmap).
 
 ## Quick start
 
 ```moonbit
+// Load from a tokenizer.json string (backend-agnostic, no file IO):
 let tok = @tokenizer.Tokenizer::from_str(json_text)
+
+// Or load from a file (uses moonbitlang/x/fs, available on all backends):
+let tok = @tokenizer.from_file("tokenizer.json")
+
+// Encode:
 let enc = tok.encode("Hello world")
-println(enc.ids)
+println(enc.ids)            // [Int]
+println(enc.tokens)         // [String]
+println(enc.attention_mask) // [Int]
+
+// Encode a pair (adds [CLS]/[SEP] etc. via the post-processor):
+let pair = tok.encode_pair("question", "context")
+
+// Decode:
+let text = tok.decode(enc.ids, skip_special_tokens=true)
 ```
 
-`from_str(json : String)` is backend-agnostic (no file IO). `from_file(path)`
-(backed by `moonbitlang/x/fs`) is available on all backends for convenience.
+`encode(text, add_special_tokens=false)` skips the post-processor template
+(special tokens already present in the text are still recognized).
 
-## Status
+## Migrating from HuggingFace
 
-- [x] P0 — Project scaffold + JSON parsing wired up.
-- [x] P1 — tokenizer.json deserialization (vocab / merges / component configs).
-- [x] P2 — BPE encode (non byte-level).
-- [x] P3 — Byte-level BPE + ByteLevel pre-tokenizer (GPT-2 parity).
-- [x] P4 — decode.
-- [x] P5 — WordPiece (BERT parity).
-- [x] P6 — Unigram (T5 parity).
-- [x] P7 — Post-processing / special tokens / `encode_pair`.
-- [x] P8 — Cross-backend verification (wasm / wasm-gc / js / native).
+If you already use the Python `tokenizers` / `transformers`, see the
+[migration guide](./docs/migration-from-hf.md) for a side-by-side API mapping.
 
-Verified token-for-token against Python `tokenizers` for **GPT-2**, **BERT**
-(`bert-base-uncased`) and **T5** (`t5-small`).
+Quick taste:
 
-### Known gaps (TODO)
+| HuggingFace (Python) | MoonBit |
+|---|---|
+| `Tokenizer.from_file("tokenizer.json")` | `@tokenizer.from_file("tokenizer.json")` |
+| `tok.encode(text)` | `tok.encode(text)` |
+| `tok.encode(text, add_special_tokens=False)` | `tok.encode(text, add_special_tokens=false)` |
+| `tok.encode(a, b)` | `tok.encode_pair(a, b)` |
+| `tok.decode(ids, skip_special_tokens=True)` | `tok.decode(ids, skip_special_tokens=true)` |
+| `enc.ids / enc.tokens / enc.attention_mask` | `enc.ids / enc.tokens / enc.attention_mask` |
 
-- Unicode normalization (NFC/NFKC) and `strip_accents` need data tables; they
-  currently act as identity. The `Precompiled` (SentencePiece) normalizer is
-  also identity.
-- `\p{...}` Unicode classes in the GPT-2 pre-tokenizer use coarse range tables
-  (common scripts only).
-- `byte_fallback`, exact byte-level offset trimming, and training are not
-  implemented.
+## Building & testing
 
-## Tests
+```bash
+export PATH="$HOME/.moon/bin:$PATH"
+moon test                    # default backend (wasm-gc)
+moon test --target native    # also: wasm, wasm-gc, js
+```
 
-Most tests embed tiny inline fixtures and run on every backend. The parity
-tests for GPT-2 / BERT / T5 load full `tokenizer.json` files that are **not**
-committed (they are large and git-ignored). To run them locally:
+Inline tests run on every backend. The model-parity tests load full
+`tokenizer.json` files that are **not committed** (large, git-ignored). To run
+them locally:
 
 ```bash
 # download model fixtures
-curl -L -o tests/data/gpt2.full.json https://huggingface.co/gpt2/resolve/main/tokenizer.json
-curl -L -o tests/data/bert.full.json https://huggingface.co/bert-base-uncased/resolve/main/tokenizer.json
-curl -L -o tests/data/t5.full.json   https://huggingface.co/t5-small/resolve/main/tokenizer.json
-# (re)generate expected outputs with the Python `tokenizers` library
-python3 scripts/gen_expected.py      tests/data/gpt2.full.json tests/data/gpt2_expected.json
-python3 scripts/gen_expected_bert.py tests/data/bert.full.json tests/data/bert_expected.json
-python3 scripts/gen_expected_bert.py tests/data/t5.full.json   tests/data/t5_expected.json
+curl -L -o tests/data/gpt2.full.json  https://huggingface.co/gpt2/resolve/main/tokenizer.json
+curl -L -o tests/data/bert.full.json  https://huggingface.co/bert-base-uncased/resolve/main/tokenizer.json
+curl -L -o tests/data/t5.full.json    https://huggingface.co/t5-small/resolve/main/tokenizer.json
+curl -L -o tests/data/llama.full.json https://huggingface.co/hf-internal-testing/llama-tokenizer/resolve/main/tokenizer.json
 
-moon test --target native   # also: wasm, wasm-gc, js
+# generate expected outputs with the Python `tokenizers` library
+pip install tokenizers
+python3 scripts/gen_expected.py      tests/data/gpt2.full.json  tests/data/gpt2_expected.json
+python3 scripts/gen_expected_bert.py tests/data/bert.full.json  tests/data/bert_expected.json
+python3 scripts/gen_expected_bert.py tests/data/t5.full.json    tests/data/t5_expected.json
+
+moon test --target native
 ```
 
-The disk-backed tests self-skip gracefully when fixtures are absent.
+Parity tests self-skip gracefully when fixtures are absent.
 
 ## License
 
 Apache-2.0. Inspired by and follows the algorithms / file format of
-HuggingFace `tokenizers` (Apache-2.0). See `LICENSE`.
+HuggingFace `tokenizers` (Apache-2.0). See [`LICENSE`](./LICENSE).
