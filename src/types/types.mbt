@@ -23,6 +23,51 @@ pub fn Encoding::sequence_ids(self : Encoding) -> Array[Int?] {
 }
 
 ///|
+/// Return the input sequence id that produced token `token`, or `None` for
+/// special/padding tokens and out-of-range indices.
+pub fn Encoding::token_to_sequence(self : Encoding, token : Int) -> Int? {
+  if token < 0 || token >= self.sequence_ids.length() {
+    None
+  } else {
+    self.sequence_ids[token]
+  }
+}
+
+///|
+/// Return `(sequence_id, offsets)` for token `token`, mirroring HF's
+/// `Encoding.token_to_chars`. Special/padding tokens return `None`.
+pub fn Encoding::token_to_chars(
+  self : Encoding,
+  token : Int,
+) -> (Int, (Int, Int))? {
+  match self.token_to_sequence(token) {
+    Some(seq) => Some((seq, self.offsets[token]))
+    None => None
+  }
+}
+
+///|
+/// Return the first token index in `sequence_id` whose offsets contain `pos`.
+/// Offsets are half-open: `[start, end)`, matching HF tokenizers.
+pub fn Encoding::char_to_token(
+  self : Encoding,
+  pos : Int,
+  sequence_id? : Int = 0,
+) -> Int? {
+  for i in 0..<self.offsets.length() {
+    guard self.sequence_ids[i] is Some(seq) else { continue }
+    if seq != sequence_id {
+      continue
+    }
+    let (start, stop) = self.offsets[i]
+    if pos >= start && pos < stop {
+      return Some(i)
+    }
+  }
+  None
+}
+
+///|
 /// A token produced by a model: its id, surface string and char offsets.
 pub(all) struct Token {
   id : Int

@@ -124,6 +124,33 @@ fn bench_decode_batch_case(
 }
 
 ///|
+fn bench_offset_lookup_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+  text : String,
+) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  let enc = tok.encode_with_byte_offsets(text, add_special_tokens=false)
+  guard enc.ids.length() > 0 else { return }
+  let positions = [0, 1, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+  b.bench(name="\{model}-offset-lookup-\{case_name}", fn() {
+    let mut acc = 0
+    for p in positions {
+      match enc.char_to_token(p) {
+        Some(i) => acc = acc + i
+        None => ()
+      }
+      match enc.token_to_chars(acc % enc.ids.length()) {
+        Some((seq, offs)) => acc = acc + seq + offs.0 + offs.1
+        None => ()
+      }
+    }
+    b.keep(acc)
+  })
+}
+
+///|
 fn bench_load_case(b : @bench.T, model : String) -> Unit {
   guard load_text("tests/data/\{model}.full.json") is Some(json) else { return }
   b.bench(name="\{model}-from_str", fn() {
@@ -223,6 +250,14 @@ test "bench decode_batch matrix" (b : @bench.T) {
       "gpt2", "bert", "t5", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder",
     ] {
     bench_decode_batch_case(b, model, "mixedx8", mixed)
+  }
+}
+
+///|
+test "bench offset lookup matrix" (b : @bench.T) {
+  let mixed = corpus_mixed()
+  for model in ["gpt2", "bert", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder"] {
+    bench_offset_lookup_case(b, model, "mixed", mixed)
   }
 }
 
