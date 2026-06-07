@@ -81,8 +81,8 @@ enc.attention_mask // [1, 1]
 - **Configuration style:** HuggingFace mutates via `enable_truncation` /
   `enable_padding`; MoonBit uses chainable `with_truncation` / `with_padding`.
 - **Training:** deterministic WordLevel training is supported, including custom
-  pre-tokenizers and pre-tokenized token streams. BPE / WordPiece / Unigram
-  trainers are not implemented yet.
+  pre-tokenizers, pre-tokenized token streams, `min_frequency`, `special_tokens`,
+  and `vocab_size`. BPE / WordPiece / Unigram trainers are not implemented yet.
 
 ## Verified models
 

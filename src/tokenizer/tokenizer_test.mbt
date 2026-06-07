@@ -320,6 +320,25 @@ test "train_wordlevel_from_tokens preserves pretokenized stream order" {
 }
 
 ///|
+test "train_wordlevel respects vocab_size cap for corpus tokens" {
+  let tok = Tokenizer::train_wordlevel(
+    ["alpha beta gamma alpha"],
+    unk_token="[UNK]",
+    special_tokens=["[PAD]"],
+    vocab_size=Some(4),
+  )
+  @test.assert_eq(tok.get_vocab_size(), 4)
+  @test.assert_eq(tok.token_to_id("[PAD]"), Some(0))
+  @test.assert_eq(tok.token_to_id("[UNK]"), Some(1))
+  @test.assert_eq(tok.token_to_id("alpha"), Some(2))
+  @test.assert_eq(tok.token_to_id("beta"), Some(3))
+  @test.assert_eq(tok.token_to_id("gamma"), None)
+  @test.assert_eq(tok.encode("alpha gamma", add_special_tokens=false).ids, [
+    2, 1,
+  ])
+}
+
+///|
 test "trained wordlevel tokenizer can save and reload" {
   let tok = Tokenizer::train_wordlevel(
     ["hello moon", "hello tokenizer"],

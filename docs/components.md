@@ -80,4 +80,5 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   directly.
 - **Training:** deterministic WordLevel training is supported with default
   `WhitespaceSplit`, caller-provided pre-tokenizers, or pre-tokenized token
-  streams; BPE / WordPiece / Unigram trainers remain future work.
+  streams, including `min_frequency`, `special_tokens`, and `vocab_size`; BPE /
+  WordPiece / Unigram trainers remain future work.

@@ -11,6 +11,7 @@ pub fn Model::train_wordlevel(
   unk_token? : String = "[UNK]",
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
 ) -> Model {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -21,6 +22,7 @@ pub fn Model::train_wordlevel(
     unk_token~,
     min_frequency~,
     special_tokens~,
+    vocab_size~,
   )
 }
 
@@ -33,6 +35,7 @@ pub fn Model::train_wordlevel_from_tokens(
   unk_token? : String = "[UNK]",
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
 ) -> Model {
   let counts : Map[String, Int] = {}
   let order : Array[String] = []
@@ -65,11 +68,22 @@ pub fn Model::train_wordlevel_from_tokens(
   add_token(unk_token)
   for tok in order {
     match counts.get(tok) {
-      Some(n) => if n >= min_frequency { add_token(tok) }
+      Some(n) =>
+        if n >= min_frequency && under_vocab_limit(vocab.length(), vocab_size) {
+          add_token(tok)
+        }
       None => ()
     }
   }
   WordLevel({ vocab, vocab_r, unk_token })
+}
+
+///|
+fn under_vocab_limit(current_size : Int, vocab_size : Int?) -> Bool {
+  match vocab_size {
+    Some(limit) => limit <= 0 || current_size < limit
+    None => true
+  }
 }
 
 ///|

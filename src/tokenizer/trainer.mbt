@@ -9,6 +9,7 @@ pub fn Tokenizer::train_wordlevel(
   unk_token? : String = "[UNK]",
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
 ) -> Tokenizer {
   Tokenizer::train_wordlevel_with_pretokenizer(
     texts,
@@ -16,6 +17,7 @@ pub fn Tokenizer::train_wordlevel(
     unk_token~,
     min_frequency~,
     special_tokens~,
+    vocab_size~,
   )
 }
 
@@ -28,6 +30,7 @@ pub fn Tokenizer::train_wordlevel_with_pretokenizer(
   unk_token? : String = "[UNK]",
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
 ) -> Tokenizer {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -41,6 +44,7 @@ pub fn Tokenizer::train_wordlevel_with_pretokenizer(
     min_frequency~,
     special_tokens~,
     pre_tokenizer=Some(pre_tokenizer),
+    vocab_size~,
   )
 }
 
@@ -55,6 +59,7 @@ pub fn Tokenizer::train_wordlevel_from_tokens(
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
   pre_tokenizer? : @pretokenizer.PreTokenizer? = None,
+  vocab_size? : Int? = None,
 ) -> Tokenizer {
   {
     normalizer: None,
@@ -64,6 +69,7 @@ pub fn Tokenizer::train_wordlevel_from_tokens(
       unk_token~,
       min_frequency~,
       special_tokens~,
+      vocab_size~,
     ),
     post_processor: None,
     decoder: None,
