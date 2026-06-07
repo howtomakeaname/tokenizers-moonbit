@@ -172,6 +172,15 @@ fn bench_load_case(b : @bench.T, model : String) -> Unit {
 }
 
 ///|
+fn bench_to_json_case(b : @bench.T, model : String) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  b.bench(name="\{model}-to_json", fn() {
+    let j = try? tok.to_json()
+    b.keep(j)
+  })
+}
+
+///|
 fn bytelevel_trim_fixture(trim_offsets : Bool) -> Tokenizer raise {
   let trim = if trim_offsets { "true" } else { "false" }
   let json =
@@ -309,5 +318,12 @@ test "bench load from_str matrix" (b : @bench.T) {
       "gpt2", "bert", "t5", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder",
     ] {
     bench_load_case(b, model)
+  }
+}
+
+///|
+test "bench to_json matrix" (b : @bench.T) {
+  for model in ["gpt2", "bert", "t5", "llama", "Qwen2.5", "qwen3_coder"] {
+    bench_to_json_case(b, model)
   }
 }

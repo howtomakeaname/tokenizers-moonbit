@@ -15,6 +15,10 @@ pub struct Tokenizer {
   added_vocabulary : AddedVocabulary
   mut truncation : TruncationParams?
   mut padding : PaddingParams?
+  // Original tokenizer.json payload. `to_json`/`save` preserve it verbatim so a
+  // loaded HF tokenizer can round-trip through MoonBit without losing fields we
+  // do not yet model (trainers, metadata, full regex text, etc.).
+  source_json : String?
 }
 
 ///|
@@ -59,6 +63,20 @@ pub fn Tokenizer::from_str(
     added_vocabulary,
     truncation,
     padding,
+    source_json: Some(json),
+  }
+}
+
+///|
+/// Export this tokenizer back to tokenizer.json text. For tokenizers loaded via
+/// `from_str` / `from_file`, this preserves the original JSON verbatim so that
+/// unsupported-but-parseable HF metadata survives a load/save round-trip.
+pub fn Tokenizer::to_json(
+  self : Tokenizer,
+) -> String raise @types.TokenizerError {
+  match self.source_json {
+    Some(json) => json
+    None => raise @types.ParseError("tokenizer has no serialized source")
   }
 }
 

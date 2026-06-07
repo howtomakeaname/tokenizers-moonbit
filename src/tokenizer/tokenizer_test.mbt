@@ -125,3 +125,41 @@ test "from_str supports legacy string merges format" {
   // merge of "h"+"e" produced surface "he" present in vocab
   @test.assert_eq(tok.token_to_id("he"), Some(2))
 }
+
+///|
+test "to_json round-trips loaded tokenizer behavior" {
+  let json =
+    #|{"version":"1.0",
+    #| "added_tokens":[{"id":4,"content":"[SPECIAL]","special":true}],
+    #| "normalizer":{"type":"Lowercase"},
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[UNK]":2,"[PAD]":3,"[SPECIAL]":4},"unk_token":"[UNK]"},
+    #| "truncation":{"direction":"Right","max_length":3,"stride":0,"strategy":"LongestFirst"},
+    #| "padding":{"strategy":"Fixed","length":5,"direction":"Right","pad_id":3,"pad_type_id":0,"pad_token":"[PAD]"}}
+  let tok = Tokenizer::from_str(json)
+  let out = tok.to_json()
+  @test.assert_eq(out, json)
+  let tok2 = Tokenizer::from_str(out)
+  let enc1 = tok.encode("HELLO moon extra [SPECIAL]", add_special_tokens=false)
+  let enc2 = tok2.encode("HELLO moon extra [SPECIAL]", add_special_tokens=false)
+  @test.assert_eq(enc2.ids, enc1.ids)
+  @test.assert_eq(enc2.tokens, enc1.tokens)
+  @test.assert_eq(enc2.attention_mask, enc1.attention_mask)
+}
+
+///|
+test "save and Tokenizer::from_file preserve tokenizer behavior" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let path = "_build/tokenizer_save_roundtrip.json"
+  tok.save(path)
+  let loaded = Tokenizer::from_file(path)
+  @test.assert_eq(loaded.to_json(), json)
+  @test.assert_eq(
+    loaded.encode("hello moon", add_special_tokens=false).ids,
+    tok.encode("hello moon", add_special_tokens=false).ids,
+  )
+}
