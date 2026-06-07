@@ -65,13 +65,14 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   full binary charsmap decoding is still TODO.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
   CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\S+`,
-  `\s+$`, and `[\r\n]` are recognized. Unsupported regexes raise
+  `\s+$`, `[\r\n]`, `\d+`, and `\D+` are recognized. Unsupported regexes raise
   `UnsupportedComponent` at load time instead of silently producing mismatched
   splits. MoonBit's core regex lacks `\p{L}`/`\p{N}` support, so a general
   Unicode regex engine is future work.
 - **Regex `Replace`:** `Replace` normalizer/decoder supports common whitespace
   regex replacements such as `\s+`, `^\s+`, `\s+$`, `[\r\n]+`, `[^\S\r\n]+`,
-  and ` {2,}`; more complex regex replacement remains future work.
+  ` {2,}`, plus digit runs `\d+` / `\D+`; more complex regex replacement
+  remains future work.
 - **Offsets:** char-based by default, relative to the original text. Optional
   byte-offset encode APIs are available for HuggingFace-style byte offsets.
 - **Batching:** single-threaded by design for wasm/js targets.

@@ -420,6 +420,18 @@ fn bench_decoder_replace_trailing_regex_case(
 }
 
 ///|
+fn bench_decoder_replace_digit_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("\\d+", "#")
+  let tokens = ["abc123", " def4567", " 890xyz", " MoonBit2026"]
+  b.bench(name="decoder-replace-digit-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_split_trailing_ws_regex_case(b : @bench.T, case_name : String) -> Unit {
   let pt = @pretokenizer.PreTokenizer::split(
     "\\s+$",
@@ -443,6 +455,20 @@ fn bench_split_nonspace_regex_case(b : @bench.T, case_name : String) -> Unit {
   )
   let text = corpus_mixed()
   b.bench(name="pretokenizer-split-nonspace-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_digit_regex_case(b : @bench.T, case_name : String) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "\\d+",
+    @pretokenizer.SplitBehavior::removed(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " 12345 2026"
+  b.bench(name="pretokenizer-split-digit-regex-\{case_name}", fn() {
     b.keep(pt.pre_tokenize(text, base_offset=0))
   })
 }
@@ -675,6 +701,11 @@ test "bench decoder replace trailing regex" (b : @bench.T) {
 }
 
 ///|
+test "bench decoder replace digit regex" (b : @bench.T) {
+  bench_decoder_replace_digit_regex_case(b, "mixed")
+}
+
+///|
 test "bench split trailing whitespace regex" (b : @bench.T) {
   bench_split_trailing_ws_regex_case(b, "mixed")
 }
@@ -682,4 +713,9 @@ test "bench split trailing whitespace regex" (b : @bench.T) {
 ///|
 test "bench split nonspace regex" (b : @bench.T) {
   bench_split_nonspace_regex_case(b, "mixed")
+}
+
+///|
+test "bench split digit regex" (b : @bench.T) {
+  bench_split_digit_regex_case(b, "mixed")
 }

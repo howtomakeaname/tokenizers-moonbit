@@ -129,6 +129,10 @@ fn simple_regex_matches(
     Some(trailing_run_match(chars, fn(c) { is_space(c) }))
   } else if pattern == "[\\r\\n]" || pattern == "[\r\n]" {
     Some(run_matches(chars, fn(c) { c == '\r' || c == '\n' }))
+  } else if pattern == "\\d+" || pattern == "[0-9]+" || pattern == "\\p{N}+" {
+    Some(run_matches(chars, fn(c) { is_number(c) }))
+  } else if pattern == "\\D+" || pattern == "[^0-9]+" {
+    Some(run_matches(chars, fn(c) { !is_number(c) }))
   } else if pattern == "\\p{N}{1,3}" || pattern == "[0-9][0-9][0-9]" {
     Some(number_run_matches(chars, max_digits=3))
   } else {
@@ -144,6 +148,11 @@ fn is_simple_regex_pattern(pattern : String) -> Bool {
   pattern == "\\s+$" ||
   pattern == "[\\r\\n]" ||
   pattern == "[\r\n]" ||
+  pattern == "\\d+" ||
+  pattern == "[0-9]+" ||
+  pattern == "\\p{N}+" ||
+  pattern == "\\D+" ||
+  pattern == "[^0-9]+" ||
   pattern == "\\p{N}{1,3}" ||
   pattern == "[0-9][0-9][0-9]"
 }

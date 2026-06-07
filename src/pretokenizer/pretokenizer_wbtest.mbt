@@ -101,6 +101,28 @@ test "split pretokenizer supports common regex spans" {
     (8, 9),
     (9, 10),
   ])
+
+  let digit_runs = PreTokenizer::Split(
+    pattern="\\d+",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab123cd45", base_offset=2)
+  @test.assert_eq(digit_runs.map(x => x.value), ["ab", "123", "cd", "45"])
+  @test.assert_eq(digit_runs.map(x => x.offsets), [
+    (2, 4),
+    (4, 7),
+    (7, 9),
+    (9, 11),
+  ])
+
+  let nondigit_runs = PreTokenizer::Split(
+    pattern="\\D+",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab123cd45", base_offset=0)
+  @test.assert_eq(nondigit_runs.map(x => x.value), ["123", "45"])
 }
 
 ///|

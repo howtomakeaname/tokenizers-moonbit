@@ -96,4 +96,12 @@ test "Replace normalizer supports common regex whitespace patterns" {
     ),
     "a_b\n_c",
   )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\d+", content="#").normalize("a12b003"),
+    "a#b#",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\D+", content="_").normalize("a12bc003"),
+    "_12_003",
+  )
 }

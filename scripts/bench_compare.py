@@ -327,6 +327,12 @@ def hf_decoder_replace_trailing_regex_us() -> float:
     return timed_us(lambda: decoder.decode(tokens), 2_000)
 
 
+def hf_decoder_replace_digit_regex_us() -> float:
+    decoder = hf_decoders.Replace(Regex(r"\d+"), "#")
+    tokens = ["abc123", " def4567", " 890xyz", " MoonBit2026"]
+    return timed_us(lambda: decoder.decode(tokens), 2_000)
+
+
 def hf_split_trailing_ws_regex_us() -> float:
     pt = hf_pre_tokenizers.Split(Regex(r"\s+$"), "removed", invert=False)
     text = CORPORA["mixed"] + "\t \n"
@@ -336,6 +342,12 @@ def hf_split_trailing_ws_regex_us() -> float:
 def hf_split_nonspace_regex_us() -> float:
     pt = hf_pre_tokenizers.Split(Regex(r"\S+"), "removed", invert=False)
     text = CORPORA["mixed"]
+    return timed_us(lambda: pt.pre_tokenize_str(text), 2_000)
+
+
+def hf_split_digit_regex_us() -> float:
+    pt = hf_pre_tokenizers.Split(Regex(r"\d+"), "removed", invert=False)
+    text = CORPORA["mixed"] + " 12345 2026"
     return timed_us(lambda: pt.pre_tokenize_str(text), 2_000)
 
 
@@ -378,12 +390,18 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     decoder_replace_trailing_key = "decoder-replace-trailing-regex-mixed"
     if decoder_replace_trailing_key in moon:
         rows.append(Row(decoder_replace_trailing_key, moon[decoder_replace_trailing_key], hf_decoder_replace_trailing_regex_us()))
+    decoder_replace_digit_key = "decoder-replace-digit-regex-mixed"
+    if decoder_replace_digit_key in moon:
+        rows.append(Row(decoder_replace_digit_key, moon[decoder_replace_digit_key], hf_decoder_replace_digit_regex_us()))
     split_trailing_ws_key = "pretokenizer-split-trailing-ws-regex-mixed"
     if split_trailing_ws_key in moon:
         rows.append(Row(split_trailing_ws_key, moon[split_trailing_ws_key], hf_split_trailing_ws_regex_us()))
     split_nonspace_key = "pretokenizer-split-nonspace-regex-mixed"
     if split_nonspace_key in moon:
         rows.append(Row(split_nonspace_key, moon[split_nonspace_key], hf_split_nonspace_regex_us()))
+    split_digit_key = "pretokenizer-split-digit-regex-mixed"
+    if split_digit_key in moon:
+        rows.append(Row(split_digit_key, moon[split_digit_key], hf_split_digit_regex_us()))
     for model in models:
         tok, path = load_tokenizer(model)
         if tok is None:

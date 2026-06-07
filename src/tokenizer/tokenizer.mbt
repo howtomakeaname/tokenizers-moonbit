@@ -91,10 +91,10 @@ pub fn Tokenizer::to_json(
             None => "null"
           }
           let json = "{\"version\":\"1.0\",\"pre_tokenizer\":" +
-          pt_json +
-          ",\"model\":" +
-          model_json +
-          "}"
+            pt_json +
+            ",\"model\":" +
+            model_json +
+            "}"
           self.source_json = Some(json)
           json
         }

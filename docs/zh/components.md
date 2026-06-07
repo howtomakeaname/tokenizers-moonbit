@@ -63,10 +63,10 @@ GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E
 - **Precompiled charsmap：** 仅覆盖常见 SentencePiece 空白折叠；完整二进制
   charsmap 解码仍待实现。
 - **任意 Split 正则：** 当前识别主流 tokenizer 的常见正则族，并覆盖 `\s+`、
-  `\S+`、`\s+$`、`[\r\n]` 等简单 span；复杂未知 pattern 会在加载时抛出
+  `\S+`、`\s+$`、`[\r\n]`、`\d+`、`\D+` 等简单 span；复杂未知 pattern 会在加载时抛出
   `UnsupportedComponent`，避免静默产生不对齐切分。通用 Unicode regex 引擎不在现阶段范围内。
 - **Regex Replace：** `Replace` normalizer/decoder 已支持 `\s+`、`^\s+`、`\s+$`、
-  `[\r\n]+`、`[^\S\r\n]+`、` {2,}` 等常见空白正则替换；更复杂正则替换待补。
+  `[\r\n]+`、`[^\S\r\n]+`、` {2,}` 以及 `\d+` / `\D+` 数字 run 替换；更复杂正则替换待补。
 - **Offsets：** 默认返回字符偏移；可通过 byte-offset encode API 对齐 HF byte offsets。
 - **Batch：** `encode_batch` 为串行实现，适配 wasm/js 目标。
 - **性能：** BPE 合并使用优先队列与惰性失效，并带 word cache；加载时直接填充

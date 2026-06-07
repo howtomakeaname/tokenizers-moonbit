@@ -326,6 +326,12 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern == "[\\r\\n]+" || pattern == "[\r\n]+" {
     return replace_char_runs(s, content, fn(c) { c == '\r' || c == '\n' })
   }
+  if pattern == "\\d+" || pattern == "[0-9]+" || pattern == "\\p{N}+" {
+    return replace_char_runs(s, content, fn(c) { is_ascii_digit(c) })
+  }
+  if pattern == "\\D+" || pattern == "[^0-9]+" {
+    return replace_char_runs(s, content, fn(c) { !is_ascii_digit(c) })
+  }
   if pattern == "[ \\t]+" {
     return replace_char_runs(s, content, fn(c) { c == ' ' || c == '\t' })
   }
@@ -419,6 +425,11 @@ fn replace_char_runs(
     }
   }
   sb.to_string()
+}
+
+///|
+fn is_ascii_digit(c : Char) -> Bool {
+  c >= '0' && c <= '9'
 }
 
 ///|
