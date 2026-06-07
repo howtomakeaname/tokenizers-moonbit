@@ -10,11 +10,57 @@ pub fn Tokenizer::train_wordlevel(
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
 ) -> Tokenizer {
+  Tokenizer::train_wordlevel_with_pretokenizer(
+    texts,
+    @pretokenizer.PreTokenizer::whitespace_split(),
+    unk_token~,
+    min_frequency~,
+    special_tokens~,
+  )
+}
+
+///|
+/// Train a WordLevel tokenizer using a caller-provided pre-tokenizer, mirroring
+/// HF's `Tokenizer.pre_tokenizer + WordLevelTrainer` workflow.
+pub fn Tokenizer::train_wordlevel_with_pretokenizer(
+  texts : Array[String],
+  pre_tokenizer : @pretokenizer.PreTokenizer,
+  unk_token? : String = "[UNK]",
+  min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [],
+) -> Tokenizer {
+  let tokenized : Array[Array[String]] = []
+  for text in texts {
+    tokenized.push(
+      pre_tokenizer.pre_tokenize(text, base_offset=0).map(x => x.value),
+    )
+  }
+  Tokenizer::train_wordlevel_from_tokens(
+    tokenized,
+    unk_token~,
+    min_frequency~,
+    special_tokens~,
+    pre_tokenizer=Some(pre_tokenizer),
+  )
+}
+
+///|
+/// Train a WordLevel tokenizer from pre-tokenized token streams. If a
+/// pre-tokenizer is supplied, it is attached to the returned tokenizer for raw
+/// text encoding and serialization; otherwise raw encode treats input as a
+/// single model piece.
+pub fn Tokenizer::train_wordlevel_from_tokens(
+  tokenized_texts : Array[Array[String]],
+  unk_token? : String = "[UNK]",
+  min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [],
+  pre_tokenizer? : @pretokenizer.PreTokenizer? = None,
+) -> Tokenizer {
   {
     normalizer: None,
-    pre_tokenizer: Some(@pretokenizer.PreTokenizer::whitespace_split()),
-    model: @model.Model::train_wordlevel(
-      texts,
+    pre_tokenizer,
+    model: @model.Model::train_wordlevel_from_tokens(
+      tokenized_texts,
       unk_token~,
       min_frequency~,
       special_tokens~,

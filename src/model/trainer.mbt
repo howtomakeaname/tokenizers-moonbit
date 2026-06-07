@@ -12,15 +12,37 @@ pub fn Model::train_wordlevel(
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
 ) -> Model {
+  let tokenized : Array[Array[String]] = []
+  for text in texts {
+    tokenized.push(whitespace_words(text))
+  }
+  Model::train_wordlevel_from_tokens(
+    tokenized,
+    unk_token~,
+    min_frequency~,
+    special_tokens~,
+  )
+}
+
+///|
+/// Train a deterministic WordLevel model from pre-tokenized token streams.
+/// Special tokens are assigned first, followed by `unk_token`, then corpus tokens
+/// in first-seen order that meet `min_frequency`.
+pub fn Model::train_wordlevel_from_tokens(
+  tokenized_texts : Array[Array[String]],
+  unk_token? : String = "[UNK]",
+  min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [],
+) -> Model {
   let counts : Map[String, Int] = {}
   let order : Array[String] = []
-  for text in texts {
-    for word in whitespace_words(text) {
-      match counts.get(word) {
-        Some(n) => counts[word] = n + 1
+  for tokens in tokenized_texts {
+    for tok in tokens {
+      match counts.get(tok) {
+        Some(n) => counts[tok] = n + 1
         None => {
-          counts[word] = 1
-          order.push(word)
+          counts[tok] = 1
+          order.push(tok)
         }
       }
     }

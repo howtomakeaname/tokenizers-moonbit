@@ -58,4 +58,5 @@ enc.attention_mask
 - 当前 offsets 为字符偏移；HF 默认返回 byte offsets。
 - HF 使用 `enable_truncation` / `enable_padding` 修改 tokenizer；MoonBit 使用
   `with_truncation` / `with_padding` 链式配置。
-- 本库不训练 tokenizer，只负责加载和运行已有 tokenizer。
+- 已支持确定性 WordLevel 训练（含自定义 pre-tokenizer 与已预切分 token 流）；BPE /
+  WordPiece / Unigram trainer 尚未实现。

@@ -279,6 +279,47 @@ test "train_wordlevel builds deterministic tokenizer" {
 }
 
 ///|
+test "train_wordlevel supports custom pretokenizer" {
+  let pt = @pretokenizer.PreTokenizer::split(
+    ",",
+    @pretokenizer.SplitBehavior::removed(),
+    false,
+    false,
+  )
+  let tok = Tokenizer::train_wordlevel_with_pretokenizer(
+    ["hello,world", "hello"],
+    pt,
+    unk_token="[UNK]",
+  )
+  @test.assert_eq(tok.token_to_id("[UNK]"), Some(0))
+  @test.assert_eq(tok.token_to_id("hello"), Some(1))
+  @test.assert_eq(tok.token_to_id("world"), Some(2))
+  let enc = tok.encode("hello,missing", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["hello", "[UNK]"])
+  @test.assert_eq(enc.ids, [1, 0])
+
+  let loaded = Tokenizer::from_str(tok.to_json())
+  @test.assert_eq(
+    loaded.encode("world,missing", add_special_tokens=false).ids,
+    [2, 0],
+  )
+}
+
+///|
+test "train_wordlevel_from_tokens preserves pretokenized stream order" {
+  let tok = Tokenizer::train_wordlevel_from_tokens(
+    [["hello", ",", "world"], ["hello"]],
+    unk_token="[UNK]",
+    special_tokens=["[PAD]"],
+  )
+  @test.assert_eq(tok.token_to_id("[PAD]"), Some(0))
+  @test.assert_eq(tok.token_to_id("[UNK]"), Some(1))
+  @test.assert_eq(tok.token_to_id("hello"), Some(2))
+  @test.assert_eq(tok.token_to_id(","), Some(3))
+  @test.assert_eq(tok.token_to_id("world"), Some(4))
+}
+
+///|
 test "trained wordlevel tokenizer can save and reload" {
   let tok = Tokenizer::train_wordlevel(
     ["hello moon", "hello tokenizer"],

@@ -58,6 +58,104 @@ pub fn PreTokenizer::split(
 }
 
 ///|
+/// Serialize simple pre-tokenizers created through the training API.
+pub fn PreTokenizer::to_json(self : PreTokenizer) -> String? {
+  match self {
+    WhitespaceSplit => Some("{\"type\":\"WhitespaceSplit\"}")
+    Whitespace => Some("{\"type\":\"Whitespace\"}")
+    BertPreTokenizer => Some("{\"type\":\"BertPreTokenizer\"}")
+    Split(pattern~, behavior~, invert~, regex~) =>
+      Some(split_to_json(pattern, behavior, invert, regex))
+    Sequence(steps) => sequence_to_json(steps)
+    _ => None
+  }
+}
+
+///|
+fn split_to_json(
+  pattern : String,
+  behavior : SplitBehavior,
+  invert : Bool,
+  regex : Bool,
+) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"Split\",\"pattern\":{")
+  if regex {
+    sb.write_string("\"Regex\":")
+  } else {
+    sb.write_string("\"String\":")
+  }
+  write_json_string(sb, pattern)
+  sb.write_string("},\"behavior\":")
+  write_json_string(sb, behavior_to_json(behavior))
+  sb.write_string(",\"invert\":")
+  sb.write_string(if invert { "true" } else { "false" })
+  sb.write_char('}')
+  sb.to_string()
+}
+
+///|
+fn sequence_to_json(steps : Array[PreTokenizer]) -> String? {
+  let parts : Array[String] = []
+  for step in steps {
+    match step.to_json() {
+      Some(json) => parts.push(json)
+      None => return None
+    }
+  }
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"Sequence\",\"pretokenizers\":[")
+  for i, part in parts {
+    if i > 0 {
+      sb.write_char(',')
+    }
+    sb.write_string(part)
+  }
+  sb.write_string("]}")
+  Some(sb.to_string())
+}
+
+///|
+fn behavior_to_json(behavior : SplitBehavior) -> String {
+  match behavior {
+    Removed => "Removed"
+    Isolated => "Isolated"
+    MergedWithPrevious => "MergedWithPrevious"
+    MergedWithNext => "MergedWithNext"
+    Contiguous => "Contiguous"
+  }
+}
+
+///|
+fn write_json_string(sb : StringBuilder, s : String) -> Unit {
+  sb.write_char('"')
+  for c in s {
+    match c {
+      '"' => sb.write_string("\\\"")
+      '\\' => sb.write_string("\\\\")
+      '\n' => sb.write_string("\\n")
+      '\r' => sb.write_string("\\r")
+      '\t' => sb.write_string("\\t")
+      _ =>
+        if c.to_int() < 0x20 {
+          write_control_escape(sb, c.to_int())
+        } else {
+          sb.write_char(c)
+        }
+    }
+  }
+  sb.write_char('"')
+}
+
+///|
+fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
+  let digits = "0123456789ABCDEF".to_array()
+  sb.write_string("\\u00")
+  sb.write_char(digits[u / 16 % 16])
+  sb.write_char(digits[u % 16])
+}
+
+///|
 /// Parse a pre_tokenizer config object.
 pub fn PreTokenizer::from_json(
   j : Json,

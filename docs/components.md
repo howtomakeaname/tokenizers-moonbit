@@ -78,5 +78,6 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
 - **Performance:** BPE merging uses a priority-queue heap with lazy stale
   removal plus word caching; BPE loading fills dense reverse vocab tables
   directly.
-- **Training:** deterministic WordLevel training is supported; BPE / WordPiece /
-  Unigram trainers remain future work.
+- **Training:** deterministic WordLevel training is supported with default
+  `WhitespaceSplit`, caller-provided pre-tokenizers, or pre-tokenized token
+  streams; BPE / WordPiece / Unigram trainers remain future work.

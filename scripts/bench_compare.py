@@ -163,6 +163,22 @@ def hf_train_wordlevel_us(text: str) -> float:
     return timed_us(train_once, 60)
 
 
+def hf_train_wordlevel_split_us(text: str) -> float:
+    corpus = [text] * 4
+
+    def train_once() -> Tokenizer:
+        tok = Tokenizer(hf_models.WordLevel(unk_token="[UNK]"))
+        tok.pre_tokenizer = hf_pre_tokenizers.Split(",", "removed", invert=False)
+        trainer = hf_trainers.WordLevelTrainer(
+            min_frequency=1,
+            special_tokens=["[PAD]", "[UNK]"],
+        )
+        tok.train_from_iterator(corpus, trainer=trainer)
+        return tok
+
+    return timed_us(train_once, 60)
+
+
 def hf_decoder_replace_regex_us() -> float:
     decoder = hf_decoders.Replace(Regex(r"\s+"), " ")
     tokens = [
@@ -204,6 +220,9 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     train_key = "wordlevel-train-mixedx4"
     if train_key in moon:
         rows.append(Row(train_key, moon[train_key], hf_train_wordlevel_us(CORPORA["mixed"])))
+    train_split_key = "wordlevel-train-split-mixedx4"
+    if train_split_key in moon:
+        rows.append(Row(train_split_key, moon[train_split_key], hf_train_wordlevel_split_us(CORPORA["mixed"])))
     decoder_replace_key = "decoder-replace-regex-mixed"
     if decoder_replace_key in moon:
         rows.append(Row(decoder_replace_key, moon[decoder_replace_key], hf_decoder_replace_regex_us()))

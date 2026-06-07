@@ -78,10 +78,24 @@ pub fn Tokenizer::to_json(
     Some(json) => json
     None =>
       match self.model.to_json() {
-        Some(model_json) =>
-          "{\"version\":\"1.0\",\"pre_tokenizer\":{\"type\":\"WhitespaceSplit\"},\"model\":" +
+        Some(model_json) => {
+          let pt_json = match self.pre_tokenizer {
+            Some(pt) =>
+              match pt.to_json() {
+                Some(json) => json
+                None =>
+                  raise @types.ParseError(
+                    "pre_tokenizer has no serialized form",
+                  )
+              }
+            None => "null"
+          }
+          "{\"version\":\"1.0\",\"pre_tokenizer\":" +
+          pt_json +
+          ",\"model\":" +
           model_json +
           "}"
+        }
         None => raise @types.ParseError("tokenizer has no serialized source")
       }
   }

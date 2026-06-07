@@ -221,6 +221,32 @@ fn bench_train_wordlevel_case(
 }
 
 ///|
+fn bench_train_wordlevel_split_case(
+  b : @bench.T,
+  case_name : String,
+  text : String,
+) -> Unit {
+  let corpus = [text, text, text, text]
+  let pt = @pretokenizer.PreTokenizer::split(
+    ",",
+    @pretokenizer.SplitBehavior::removed(),
+    false,
+    false,
+  )
+  b.bench(name="wordlevel-train-split-\{case_name}", fn() {
+    b.keep(
+      Tokenizer::train_wordlevel_with_pretokenizer(
+        corpus,
+        pt,
+        unk_token="[UNK]",
+        min_frequency=1,
+        special_tokens=["[PAD]"],
+      ),
+    )
+  })
+}
+
+///|
 fn bench_decoder_replace_regex_case(b : @bench.T, case_name : String) -> Unit {
   let decoder = @decoder.Decoder::replace("\\s+", " ")
   let tokens = [
@@ -444,6 +470,11 @@ test "bench from_pretrained file matrix" (b : @bench.T) {
 ///|
 test "bench train wordlevel" (b : @bench.T) {
   bench_train_wordlevel_case(b, "mixedx4", corpus_mixed())
+}
+
+///|
+test "bench train wordlevel split pretokenizer" (b : @bench.T) {
+  bench_train_wordlevel_split_case(b, "mixedx4", corpus_mixed())
 }
 
 ///|

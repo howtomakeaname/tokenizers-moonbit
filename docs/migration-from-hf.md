@@ -80,7 +80,9 @@ enc.attention_mask // [1, 1]
   returns char offsets.
 - **Configuration style:** HuggingFace mutates via `enable_truncation` /
   `enable_padding`; MoonBit uses chainable `with_truncation` / `with_padding`.
-- **Training:** out of scope. This library loads and runs existing tokenizers.
+- **Training:** deterministic WordLevel training is supported, including custom
+  pre-tokenizers and pre-tokenized token streams. BPE / WordPiece / Unigram
+  trainers are not implemented yet.
 
 ## Verified models
 
