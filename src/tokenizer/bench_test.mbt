@@ -246,6 +246,20 @@ fn bench_split_trailing_ws_regex_case(b : @bench.T, case_name : String) -> Unit 
 }
 
 ///|
+fn bench_split_nonspace_regex_case(b : @bench.T, case_name : String) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "\\S+",
+    @pretokenizer.SplitBehavior::removed(),
+    false,
+    true,
+  )
+  let text = corpus_mixed()
+  b.bench(name="pretokenizer-split-nonspace-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
 fn bytelevel_trim_fixture(trim_offsets : Bool) -> Tokenizer raise {
   let trim = if trim_offsets { "true" } else { "false" }
   let json =
@@ -425,4 +439,9 @@ test "bench decoder replace regex" (b : @bench.T) {
 ///|
 test "bench split trailing whitespace regex" (b : @bench.T) {
   bench_split_trailing_ws_regex_case(b, "mixed")
+}
+
+///|
+test "bench split nonspace regex" (b : @bench.T) {
+  bench_split_nonspace_regex_case(b, "mixed")
 }

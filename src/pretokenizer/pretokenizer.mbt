@@ -96,6 +96,11 @@ pub fn PreTokenizer::from_json(
     "UnicodeScripts" => UnicodeScripts
     "Split" => {
       let (pattern, regex) = parse_pattern_info(obj)
+      if regex && !is_supported_split_regex(pattern) {
+        raise @types.UnsupportedComponent(
+          "pre_tokenizer Split regex: \{pattern}",
+        )
+      }
       Split(
         pattern~,
         behavior=parse_behavior(obj),

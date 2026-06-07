@@ -181,6 +181,12 @@ def hf_split_trailing_ws_regex_us() -> float:
     return timed_us(lambda: pt.pre_tokenize_str(text), 2_000)
 
 
+def hf_split_nonspace_regex_us() -> float:
+    pt = hf_pre_tokenizers.Split(Regex(r"\S+"), "removed", invert=False)
+    text = CORPORA["mixed"]
+    return timed_us(lambda: pt.pre_tokenize_str(text), 2_000)
+
+
 def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     moon = run_moon_bench(target)
     rows: list[Row] = []
@@ -193,6 +199,9 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     split_trailing_ws_key = "pretokenizer-split-trailing-ws-regex-mixed"
     if split_trailing_ws_key in moon:
         rows.append(Row(split_trailing_ws_key, moon[split_trailing_ws_key], hf_split_trailing_ws_regex_us()))
+    split_nonspace_key = "pretokenizer-split-nonspace-regex-mixed"
+    if split_nonspace_key in moon:
+        rows.append(Row(split_nonspace_key, moon[split_nonspace_key], hf_split_nonspace_regex_us()))
     for model in models:
         tok, path = load_tokenizer(model)
         if tok is None:

@@ -64,9 +64,10 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
 - **Precompiled charsmap:** common SentencePiece whitespace folding is covered;
   full binary charsmap decoding is still TODO.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
-  CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\s+$`,
-  and `[\r\n]` are recognized. Other regexes are not executed and pass through
-  as one piece. MoonBit's core regex lacks `\p{L}`/`\p{N}` support, so a general
+  CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\S+`,
+  `\s+$`, and `[\r\n]` are recognized. Unsupported regexes raise
+  `UnsupportedComponent` at load time instead of silently producing mismatched
+  splits. MoonBit's core regex lacks `\p{L}`/`\p{N}` support, so a general
   Unicode regex engine is future work.
 - **Regex `Replace`:** `Replace` normalizer/decoder supports common whitespace
   regex replacements such as `\s+` and ` {2,}`; more complex regex replacement

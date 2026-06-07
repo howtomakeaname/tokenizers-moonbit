@@ -86,6 +86,21 @@ test "split pretokenizer supports common regex spans" {
     regex=true,
   ).pre_tokenize("abc12345de", base_offset=0)
   @test.assert_eq(digits.map(x => x.value), ["abc", "123", "45", "de"])
+
+  let nonspace = PreTokenizer::Split(
+    pattern="\\S+",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a b\t中", base_offset=5)
+  @test.assert_eq(nonspace.map(x => x.value), ["a", " ", "b", "\t", "中"])
+  @test.assert_eq(nonspace.map(x => x.offsets), [
+    (5, 6),
+    (6, 7),
+    (7, 8),
+    (8, 9),
+    (9, 10),
+  ])
 }
 
 ///|

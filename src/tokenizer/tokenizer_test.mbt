@@ -143,6 +143,20 @@ test "from_str rejects non-object root" {
 }
 
 ///|
+test "from_str rejects unsupported Split regex" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"Split","pattern":{"Regex":"\\p{L}{2,4}(?=x)"},"behavior":"Isolated","invert":false},
+    #| "model":{"type":"WordLevel","vocab":{"[UNK]":0},"unk_token":"[UNK]"}}
+  let mut raised = false
+  try Tokenizer::from_str(json) |> ignore catch {
+    @types.UnsupportedComponent(_) => raised = true
+    _ => raised = false
+  }
+  assert_true(raised)
+}
+
+///|
 test "from_str supports legacy string merges format" {
   let json =
     #|{"model":{"type":"BPE","vocab":{"h":0,"e":1,"he":2},"merges":["h e"]}}

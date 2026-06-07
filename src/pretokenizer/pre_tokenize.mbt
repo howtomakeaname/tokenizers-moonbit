@@ -39,6 +39,19 @@ pub fn PreTokenizer::pre_tokenize(
 // regex). Offsets are tracked over the original char positions.
 
 ///|
+fn is_supported_split_regex(pattern : String) -> Bool {
+  is_cjk_range_pattern(pattern) ||
+  is_digit_triplet_pattern(pattern) ||
+  is_o200k_pattern(pattern) ||
+  is_qwen_triplet_pattern(pattern) ||
+  is_qwen_pattern(pattern) ||
+  is_gpt2_pattern(pattern) ||
+  is_clip_pattern(pattern) ||
+  is_simple_regex_pattern(pattern) ||
+  is_known_passthrough_split_regex(pattern)
+}
+
+///|
 fn split_pre_tokenize(
   text : String,
   pattern : String,
@@ -110,6 +123,8 @@ fn simple_regex_matches(
 ) -> Array[MatchSpan]? {
   if pattern == "\\s+" {
     Some(run_matches(chars, fn(c) { is_space(c) }))
+  } else if pattern == "\\S+" || pattern == "[^\\s]+" {
+    Some(run_matches(chars, fn(c) { !is_space(c) }))
   } else if pattern == "\\s+$" {
     Some(trailing_run_match(chars, fn(c) { is_space(c) }))
   } else if pattern == "[\\r\\n]" || pattern == "[\r\n]" {
@@ -119,6 +134,30 @@ fn simple_regex_matches(
   } else {
     None
   }
+}
+
+///|
+fn is_simple_regex_pattern(pattern : String) -> Bool {
+  pattern == "\\s+" ||
+  pattern == "\\S+" ||
+  pattern == "[^\\s]+" ||
+  pattern == "\\s+$" ||
+  pattern == "[\\r\\n]" ||
+  pattern == "[\r\n]" ||
+  pattern == "\\p{N}{1,3}" ||
+  pattern == "[0-9][0-9][0-9]"
+}
+
+///|
+fn is_known_passthrough_split_regex(pattern : String) -> Bool {
+  // Some real-world tokenizers use multi-step Split sequences with very large
+  // Unicode range patterns. Existing parity relies on passing these steps
+  // through unchanged before later ByteLevel/Digits stages; keep those known
+  // patterns loadable while still rejecting arbitrary unknown regexes.
+  (pattern.contains("\\s?[A-Za-z") && pattern.contains("𞤀-𞥃")) ||
+  pattern.contains("\\s?[!-/:-~") ||
+  (pattern.contains("一-龥") && pattern.contains("가-")) ||
+  (pattern.contains("[!\"") && pattern.contains("\\p{P}\\p{S}"))
 }
 
 ///|
