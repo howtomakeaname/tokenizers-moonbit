@@ -182,3 +182,22 @@ test "from_pretrained loads local directory or tokenizer file" {
     0, 1,
   ])
 }
+
+///|
+test "encode_batch reuses duplicate inputs without aliasing encodings" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[PAD]":2,"[UNK]":3},"unk_token":"[UNK]"},
+    #| "padding":{"strategy":"BatchLongest","direction":"Right","pad_id":2,"pad_type_id":0,"pad_token":"[PAD]"}}
+  let tok = Tokenizer::from_str(json)
+  let batch = tok.encode_batch(
+    ["hello", "hello moon", "hello"],
+    add_special_tokens=false,
+  )
+  @test.assert_eq(batch[0].ids, [0, 2])
+  @test.assert_eq(batch[1].ids, [0, 1])
+  @test.assert_eq(batch[2].ids, [0, 2])
+  @test.assert_eq(batch[0].attention_mask, [1, 0])
+  @test.assert_eq(batch[2].attention_mask, [1, 0])
+}

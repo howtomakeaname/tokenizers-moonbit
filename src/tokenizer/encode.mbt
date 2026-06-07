@@ -102,20 +102,31 @@ pub fn Tokenizer::encode_batch(
   texts : Array[String],
   add_special_tokens? : Bool = true,
 ) -> Array[@types.Encoding] {
+  if texts.length() == 0 {
+    return []
+  }
   // Encode + truncate each; defer padding to a batch pass.
-  let encs = texts.map(t => {
-    let raw = self.encode_raw(t, keep_special=true)
-    let raw = self.truncate_single_raw(raw, add_special_tokens~)
-    let processed = if add_special_tokens {
-      match self.post_processor {
-        Some(pp) => pp.process(raw, None)
-        None => raw
+  let encs : Array[@types.Encoding] = []
+  let cache : Map[String, @types.Encoding] = {}
+  for t in texts {
+    match cache.get(t) {
+      Some(enc) => encs.push(copy_encoding(enc))
+      None => {
+        let raw = self.encode_raw(t, keep_special=true)
+        let raw = self.truncate_single_raw(raw, add_special_tokens~)
+        let processed = if add_special_tokens {
+          match self.post_processor {
+            Some(pp) => pp.process(raw, None)
+            None => raw
+          }
+        } else {
+          raw
+        }
+        cache[t] = copy_encoding(processed)
+        encs.push(processed)
       }
-    } else {
-      raw
     }
-    processed
-  })
+  }
   match self.padding {
     Some(pp) => pad_batch(encs, pp)
     None => encs
@@ -399,5 +410,20 @@ fn concat_encodings(
     sequence_ids,
     word_ids,
     overflowing: [],
+  }
+}
+
+///|
+fn copy_encoding(enc : @types.Encoding) -> @types.Encoding {
+  {
+    ids: enc.ids.copy(),
+    type_ids: enc.type_ids.copy(),
+    tokens: enc.tokens.copy(),
+    offsets: enc.offsets.copy(),
+    special_tokens_mask: enc.special_tokens_mask.copy(),
+    attention_mask: enc.attention_mask.copy(),
+    sequence_ids: enc.sequence_ids.copy(),
+    word_ids: enc.word_ids.copy(),
+    overflowing: enc.overflowing.map(e => copy_encoding(e)),
   }
 }
