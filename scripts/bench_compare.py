@@ -115,14 +115,31 @@ def hf_encode_us(tok: Tokenizer, text: str) -> float:
     return timed_us(lambda: tok.encode(text, add_special_tokens=False), iters)
 
 
+def hf_encode_batch_us(tok: Tokenizer, text: str) -> float:
+    batch = [text] * 8
+    iters = iterations_for(text)
+    return timed_us(lambda: tok.encode_batch(batch, add_special_tokens=False), iters)
+
+
 def hf_decode_us(tok: Tokenizer, text: str) -> float:
     ids = tok.encode(text, add_special_tokens=False).ids
     iters = iterations_for(text)
     return timed_us(lambda: tok.decode(ids, skip_special_tokens=False), iters)
 
 
+def hf_decode_batch_us(tok: Tokenizer, text: str) -> float:
+    ids = tok.encode(text, add_special_tokens=False).ids
+    batch = [ids] * 8
+    iters = iterations_for(text)
+    return timed_us(lambda: tok.decode_batch(batch, skip_special_tokens=False), iters)
+
+
 def hf_load_us(path: str) -> float:
     return timed_us(lambda: Tokenizer.from_file(path), 30)
+
+
+def hf_to_json_us(tok: Tokenizer) -> float:
+    return timed_us(lambda: tok.to_str(pretty=False), 30)
 
 
 def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
@@ -136,16 +153,36 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
         for corpus in corpora:
             text = CORPORA[corpus]
             encode_key = f"{model}-encode-{corpus}"
+            encode_byte_offsets_key = f"{model}-encode-byte-offsets-{corpus}"
             if encode_key in moon:
                 rows.append(Row(encode_key, moon[encode_key], hf_encode_us(tok, text)))
+            if encode_byte_offsets_key in moon:
+                # HF encodings carry byte offsets by default, so plain encode is
+                # the closest same-work baseline for MoonBit's explicit byte
+                # offset conversion API.
+                rows.append(Row(encode_byte_offsets_key, moon[encode_byte_offsets_key], hf_encode_us(tok, text)))
         # Decode benches are currently standardized on the mixed corpus in
         # src/tokenizer/bench_test.mbt; include them once per model.
         decode_key = f"{model}-decode-mixed"
+        decode_batch_key = f"{model}-decode-batch-mixedx8"
+        encode_batch_key = f"{model}-encode-batch-mixedx8"
         load_key = f"{model}-from_str"
+        pretrained_key = f"{model}-from_pretrained-file"
+        to_json_key = f"{model}-to_json"
         if decode_key in moon:
             rows.append(Row(decode_key, moon[decode_key], hf_decode_us(tok, CORPORA["mixed"])))
+        if decode_batch_key in moon:
+            rows.append(Row(decode_batch_key, moon[decode_batch_key], hf_decode_batch_us(tok, CORPORA["mixed"])))
+        if encode_batch_key in moon:
+            rows.append(Row(encode_batch_key, moon[encode_batch_key], hf_encode_batch_us(tok, CORPORA["mixed"])))
         if load_key in moon:
             rows.append(Row(load_key, moon[load_key], hf_load_us(path)))
+        if pretrained_key in moon:
+            # Local file from_pretrained is intentionally equivalent to HF's
+            # from_file baseline; Hub/network fetching is outside this script.
+            rows.append(Row(pretrained_key, moon[pretrained_key], hf_load_us(path)))
+        if to_json_key in moon:
+            rows.append(Row(to_json_key, moon[to_json_key], hf_to_json_us(tok)))
     return rows
 
 

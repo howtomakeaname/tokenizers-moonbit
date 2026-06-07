@@ -151,7 +151,8 @@
 ### Benchmark 对比要求
 
 性能结论必须基于 `scripts/bench_compare.py` 的同机对比结果，而不是单独的
-`moon bench` 输出。每个性能相关改动至少记录：目标 backend、语料、模型、
+`moon bench` 输出。脚本会对 encode / explicit byte offsets / decode /
+encode_batch / decode_batch / from_str / local from_pretrained / to_json 输出
 MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的项目
 应进入优化排期；`< 0.90x` 才能明确宣称本项目在该用例快于 HF。
 
