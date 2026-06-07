@@ -132,7 +132,7 @@
 | 优先级 | 项目 | 状态 | 验收标准 |
 |---|---|---|---|
 | P0 | `get_vocab(with_added_tokens=true)` | ✅ | 导出模型词表 + added_tokens；新增单测覆盖 with/without added tokens |
-| P0 | `decode_batch` | ✅ | API 行为与 `decode` 一致；新增单测与 batch decode bench |
+| P0 | `decode_batch` | ✅ | API 行为与 `decode` 一致；新增单测与 batch decode bench；对重复 id 序列做单批缓存 |
 | P0 | root-level `truncation` / `padding` 自动加载 | ✅ | `Tokenizer::from_str` 直接应用 tokenizer.json 配置；新增单测覆盖 Fixed padding + truncation |
 | P0 | CI / pre-commit 编译测试门禁 | ✅ | 本地 pre-commit 运行 `moon check` + wasm/wasm-gc/js/native 全后端测试；GitHub Actions 覆盖格式/多 target 测试、Python 脚本编译、parity smoke 与 quick HF benchmark smoke |
 | P1 | byte offsets 模式 | ✅ | 可选择输出 HF Rust 风格 byte offsets；新增中英/emoji offset 对拍与 bench |
@@ -168,7 +168,8 @@ llama from_str 仍约 1.14x）。Legacy BPE merges 解析改为 code-unit 扫描
 vocab reverse array 预分配后，大 BPE tokenizer 加载路径减少 StringBuilder 与
 Array 增长分配；`from_pretrained` 增加单项 source cache 后，完整 native
 `--corpus all` 复测已无 `>1.10x` 慢项：主流 encode 在 short/mixed/code/long
-均快于 HF（约 0.25x–0.68x），decode/decode_batch 同档或快于 HF，from_str 与
+均快于 HF（约 0.25x–0.68x）；decode 同档或快于 HF，decode_batch 增加重复 id
+序列单批缓存后 quick native 抽样进一步改善（bert 约 0.27x、llama 约 0.29x）；from_str 与
 local from_pretrained-file 同档或快于 HF（llama 约 1.05x/1.00x，Qwen2.5 约
 0.82x/0.81x，qwen3_coder 约 0.82x/0.81x）。下一轮性能优化优先级：大词表 JSON
 解析 > 完整 `--corpus all` 回归门禁/夜间化。

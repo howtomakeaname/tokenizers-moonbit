@@ -31,6 +31,16 @@ test "decode_batch decodes each id sequence" {
 }
 
 ///|
+test "decode_batch handles duplicate id sequences" {
+  let json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0," ":1,"moon":2},"unk_token":"hello"}}
+  let tok = Tokenizer::from_str(json)
+  @test.assert_eq(tok.decode_batch([[0, 1, 2], [0, 1, 2], [], []]), [
+    "hello moon", "hello moon", "", "",
+  ])
+}
+
+///|
 test "encode_with_byte_offsets converts unicode char offsets" {
   let json =
     #|{"version":"1.0",
