@@ -50,3 +50,49 @@ test "roberta encode_pair keeps all type ids zero" {
   }
   @test.assert_eq(enc.special_tokens_mask[0], 1)
 }
+
+///|
+test "bytelevel post-processor trims whitespace offsets" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":true},
+    #| "model":{"type":"WordLevel","vocab":{"a":0,"Ġ":1,"Ġb":2,"[UNK]":3},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"ByteLevel","trim_offsets":true}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode("a  b", add_special_tokens=true)
+  @test.assert_eq(enc.tokens, ["a", "Ġ", "Ġb"])
+  @test.assert_eq(enc.offsets, [(0, 1), (2, 2), (3, 4)])
+  @test.assert_eq(enc.char_to_token(1), None)
+  @test.assert_eq(enc.char_to_token(3), Some(2))
+
+  let leading = tok.encode(" b", add_special_tokens=true)
+  @test.assert_eq(leading.tokens, ["Ġb"])
+  @test.assert_eq(leading.offsets, [(0, 2)])
+}
+
+///|
+test "bytelevel post-processor can keep raw offsets" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":true},
+    #| "model":{"type":"WordLevel","vocab":{"a":0,"Ġ":1,"Ġb":2,"[UNK]":3},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"ByteLevel","trim_offsets":false}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode("a  b", add_special_tokens=true)
+  @test.assert_eq(enc.tokens, ["a", "Ġ", "Ġb"])
+  @test.assert_eq(enc.offsets, [(0, 1), (1, 2), (2, 4)])
+}
+
+///|
+test "roberta post-processor trims bytelevel offsets before specials" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":true},
+    #| "model":{"type":"WordLevel","vocab":{"a":0,"Ġ":1,"Ġb":2,"[UNK]":3},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"RobertaProcessing","sep":["</s>",4],"cls":["<s>",5],"trim_offsets":true,"add_prefix_space":false}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode("a  b", add_special_tokens=true)
+  @test.assert_eq(enc.tokens, ["<s>", "a", "Ġ", "Ġb", "</s>"])
+  @test.assert_eq(enc.offsets, [(0, 0), (0, 1), (2, 2), (3, 4), (0, 0)])
+  @test.assert_eq(enc.sequence_ids(), [None, Some(0), Some(0), Some(0), None])
+}

@@ -172,6 +172,17 @@ fn bench_load_case(b : @bench.T, model : String) -> Unit {
 }
 
 ///|
+fn bytelevel_trim_fixture(trim_offsets : Bool) -> Tokenizer raise {
+  let trim = if trim_offsets { "true" } else { "false" }
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":true},
+    #| "model":{"type":"WordLevel","vocab":{"a":0,"Ġ":1,"Ġb":2,"ĠMoonBit":3,"Ġtokenizers":4,"Ġare":5,"Ġfast":6,".":7,"[UNK]":8},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"ByteLevel","trim_offsets":
+  Tokenizer::from_str(json + trim + "}}")
+}
+
+///|
 test "bench encode (gpt2)" (b : @bench.T) {
   guard load_model("gpt2") is Some(tok) else { return }
   let text = corpus_mixed()
@@ -271,6 +282,15 @@ test "bench offset lookup matrix" (b : @bench.T) {
   for model in ["gpt2", "bert", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder"] {
     bench_offset_lookup_case(b, model, "mixed", mixed)
   }
+}
+
+///|
+test "bench bytelevel trim offsets" (b : @bench.T) {
+  let tok = bytelevel_trim_fixture(true)
+  let text = "a  b MoonBit tokenizers are fast. a  b MoonBit tokenizers are fast."
+  b.bench(name="bytelevel-post-trim-offsets", fn() {
+    b.keep(tok.encode(text, add_special_tokens=true))
+  })
 }
 
 ///|

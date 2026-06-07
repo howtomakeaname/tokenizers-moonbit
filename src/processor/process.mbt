@@ -20,9 +20,25 @@ pub fn PostProcessor::process(
       apply_template(template, special_tokens, a, b)
     }
     BertProcessing(sep~, cls~) => bert_like(a, b, cls, sep, false)
-    RobertaProcessing(sep~, cls~, ..) => bert_like(a, b, cls, sep, true)
-    // ByteLevel post-processor only adjusts offsets; pass through.
-    ByteLevel(..) => merge_plain(a, b)
+    RobertaProcessing(sep~, cls~, trim_offsets~, add_prefix_space~) => {
+      let a = process_byte_level_offsets(a, trim_offsets, add_prefix_space)
+      let b = match b {
+        Some(eb) =>
+          Some(process_byte_level_offsets(eb, trim_offsets, add_prefix_space))
+        None => None
+      }
+      bert_like(a, b, cls, sep, true)
+    }
+    // ByteLevel post-processor adjusts byte-level whitespace offsets.
+    ByteLevel(add_prefix_space~, trim_offsets~, ..) => {
+      let a = process_byte_level_offsets(a, trim_offsets, add_prefix_space)
+      let b = match b {
+        Some(eb) =>
+          Some(process_byte_level_offsets(eb, trim_offsets, add_prefix_space))
+        None => None
+      }
+      merge_plain(a, b)
+    }
     Sequence(steps) => {
       let mut acc = a
       for step in steps {
@@ -107,6 +123,111 @@ fn merge_plain(a : @types.Encoding, b : @types.Encoding?) -> @types.Encoding {
     None => ()
   }
   build(out)
+}
+
+// ByteLevel post-processing mirrors HF's offset trimming: byte-level spaces
+// (the visible GPT-2 space char `Ġ`) are trimmed from offsets for non-initial
+// leading whitespace and trailing whitespace. Token strings and ids are not
+// changed.
+
+///|
+fn process_byte_level_offsets(
+  enc : @types.Encoding,
+  trim_offsets : Bool,
+  add_prefix_space : Bool,
+) -> @types.Encoding {
+  if !trim_offsets {
+    return enc
+  }
+  ignore(add_prefix_space)
+  let offsets : Array[(Int, Int)] = []
+  for i in 0..<enc.tokens.length() {
+    offsets.push(process_token_offset(enc.tokens[i], enc.offsets[i]))
+  }
+  {
+    ids: enc.ids.copy(),
+    type_ids: enc.type_ids.copy(),
+    tokens: enc.tokens.copy(),
+    offsets,
+    special_tokens_mask: enc.special_tokens_mask.copy(),
+    attention_mask: enc.attention_mask.copy(),
+    sequence_ids: enc.sequence_ids.copy(),
+    word_ids: enc.word_ids.copy(),
+    overflowing: enc.overflowing.map(e => {
+      process_byte_level_offsets(e, trim_offsets, add_prefix_space)
+    }),
+  }
+}
+
+///|
+fn process_token_offset(token : String, offsets : (Int, Int)) -> (Int, Int) {
+  let leading_spaces = count_leading_byte_spaces(token)
+  let trailing_spaces = count_trailing_byte_spaces(token)
+  let mut start = offsets.0
+  let mut stop = offsets.1
+  if leading_spaces > 0 && start > 0 {
+    start = min_int(start + leading_spaces, stop)
+  }
+  if trailing_spaces > 0 {
+    if stop >= trailing_spaces {
+      stop = max_int(stop - trailing_spaces, start)
+    } else {
+      stop = start
+    }
+  }
+  (start, stop)
+}
+
+///|
+fn count_leading_byte_spaces(token : String) -> Int {
+  let mut n = 0
+  for c in token {
+    if is_byte_level_space(c) {
+      n = n + 1
+    } else {
+      break
+    }
+  }
+  n
+}
+
+///|
+fn count_trailing_byte_spaces(token : String) -> Int {
+  let chars = token.to_array()
+  let mut n = 0
+  let mut i = chars.length() - 1
+  while i >= 0 {
+    if is_byte_level_space(chars[i]) {
+      n = n + 1
+      i = i - 1
+    } else {
+      break
+    }
+  }
+  n
+}
+
+///|
+fn is_byte_level_space(c : Char) -> Bool {
+  c == 'Ġ'
+}
+
+///|
+fn min_int(a : Int, b : Int) -> Int {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn max_int(a : Int, b : Int) -> Int {
+  if a > b {
+    a
+  } else {
+    b
+  }
 }
 
 // --- mutable builder for assembling an Encoding ---
