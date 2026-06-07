@@ -232,6 +232,21 @@ fn bench_decoder_replace_regex_case(b : @bench.T, case_name : String) -> Unit {
 }
 
 ///|
+fn bench_decoder_replace_trailing_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("\\s+$", "")
+  let tokens = [
+    "The quick brown fox", " jumps over the lazy dog.", " MoonBit wasm tokenizers.",
+    "\t \n",
+  ]
+  b.bench(name="decoder-replace-trailing-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_split_trailing_ws_regex_case(b : @bench.T, case_name : String) -> Unit {
   let pt = @pretokenizer.PreTokenizer::split(
     "\\s+$",
@@ -434,6 +449,11 @@ test "bench train wordlevel" (b : @bench.T) {
 ///|
 test "bench decoder replace regex" (b : @bench.T) {
   bench_decoder_replace_regex_case(b, "mixed")
+}
+
+///|
+test "bench decoder replace trailing regex" (b : @bench.T) {
+  bench_decoder_replace_trailing_regex_case(b, "mixed")
 }
 
 ///|

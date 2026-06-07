@@ -295,8 +295,29 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern == " {2,}" {
     return replace_space_runs(s, content, min_run=2)
   }
+  if pattern == "^\\s+" {
+    return replace_leading_runs(s, content, fn(c) {
+      is_unicode_whitespace(c.to_int())
+    })
+  }
   if pattern == "\\s+" {
     return replace_whitespace_runs(s, content)
+  }
+  if pattern == "\\s+$" {
+    return replace_trailing_runs(s, content, fn(c) {
+      is_unicode_whitespace(c.to_int())
+    })
+  }
+  if pattern == "[\\r\\n]+" || pattern == "[\r\n]+" {
+    return replace_char_runs(s, content, fn(c) { c == '\r' || c == '\n' })
+  }
+  if pattern == "[ \\t]+" {
+    return replace_char_runs(s, content, fn(c) { c == ' ' || c == '\t' })
+  }
+  if pattern == "[^\\S\\r\\n]+" {
+    return replace_char_runs(s, content, fn(c) {
+      is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
+    })
   }
   let pat = pattern.to_array()
   let src = s.to_array()
@@ -310,6 +331,75 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       i = i + m
     } else {
       sb.write_char(src[i])
+      i = i + 1
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn replace_leading_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+) -> String {
+  let chars = s.to_array()
+  let n = chars.length()
+  let mut i = 0
+  while i < n && pred(chars[i]) {
+    i = i + 1
+  }
+  if i == 0 {
+    return s
+  }
+  let sb = StringBuilder::new()
+  sb.write_string(content)
+  for k in i..<n {
+    sb.write_char(chars[k])
+  }
+  sb.to_string()
+}
+
+///|
+fn replace_trailing_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+) -> String {
+  let chars = s.to_array()
+  let mut stop = chars.length()
+  while stop > 0 && pred(chars[stop - 1]) {
+    stop = stop - 1
+  }
+  if stop == chars.length() {
+    return s
+  }
+  let sb = StringBuilder::new()
+  for k in 0..<stop {
+    sb.write_char(chars[k])
+  }
+  sb.write_string(content)
+  sb.to_string()
+}
+
+///|
+fn replace_char_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+) -> String {
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder::new()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      while i < n && pred(chars[i]) {
+        i = i + 1
+      }
+      sb.write_string(content)
+    } else {
+      sb.write_char(chars[i])
       i = i + 1
     }
   }
