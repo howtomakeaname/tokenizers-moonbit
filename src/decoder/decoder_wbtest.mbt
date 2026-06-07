@@ -8,9 +8,7 @@ test "Replace decoder supports common regex whitespace patterns" {
   )
   @test.assert_eq(
     Decoder::Replace(pattern="\\s+", content=" ").decode([
-      "a\t",
-      "\u{a0}b\n",
-      "\u{3000}c",
+      "a\t", "\u{a0}b\n", "\u{3000}c",
     ]),
     "a  b  c",
   )

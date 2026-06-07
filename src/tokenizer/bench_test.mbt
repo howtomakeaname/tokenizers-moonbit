@@ -224,11 +224,7 @@ fn bench_train_wordlevel_case(
 fn bench_decoder_replace_regex_case(b : @bench.T, case_name : String) -> Unit {
   let decoder = @decoder.Decoder::replace("\\s+", " ")
   let tokens = [
-    "The\tquick",
-    "\u{a0}brown\nfox",
-    "\u{3000}jumps",
-    " over\tthe lazy dog.",
-    " MoonBit\nwasm\u{3000}tokenizers.",
+    "The\tquick", "\u{a0}brown\nfox", "\u{3000}jumps", " over\tthe lazy dog.", " MoonBit\nwasm\u{3000}tokenizers.",
   ]
   b.bench(name="decoder-replace-regex-\{case_name}", fn() {
     b.keep(decoder.decode(tokens))
