@@ -75,7 +75,7 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   byte-offset encode APIs are available for HuggingFace-style byte offsets.
 - **Batching:** single-threaded by design for wasm/js targets.
 - **Performance:** BPE merging uses a priority-queue heap with lazy stale
-  removal. A word-to-token cache and faster multi-MB vocab loading remain useful
-  optimizations.
+  removal plus word caching; BPE loading fills dense reverse vocab tables
+  directly.
 - **Training:** deterministic WordLevel training is supported; BPE / WordPiece /
   Unigram trainers remain future work.

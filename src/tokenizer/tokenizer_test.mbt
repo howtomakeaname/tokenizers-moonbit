@@ -10,6 +10,21 @@ test "from_str parses a minimal BPE tokenizer.json" {
 }
 
 ///|
+test "BPE ignore_merges uses whole-token fast path before fallback merges" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"BPE","vocab":{"a":0,"b":1,"c":2,"ab":3,"abc":4},"merges":[["a","b"]],"ignore_merges":true}}
+  let tok = Tokenizer::from_str(json)
+  let direct = tok.encode("abc", add_special_tokens=false)
+  @test.assert_eq(direct.tokens, ["abc"])
+  @test.assert_eq(direct.ids, [4])
+  let fallback = tok.encode("ab c", add_special_tokens=false)
+  @test.assert_eq(fallback.tokens, ["ab", "c"])
+  @test.assert_eq(fallback.ids, [3, 2])
+}
+
+///|
 test "get_vocab can include added tokens" {
   let json =
     #|{"version":"1.0",

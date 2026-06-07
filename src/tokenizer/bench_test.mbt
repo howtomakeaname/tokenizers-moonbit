@@ -388,7 +388,8 @@ test "bench load from_str (gpt2)" (b : @bench.T) {
 test "bench load from_str matrix" (b : @bench.T) {
   for
     model in [
-      "gpt2", "bert", "t5", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder",
+      "gpt2", "bert", "t5", "llama", "Qwen2.5", "llama3_2", "phi4_mini", "gpt_oss",
+      "qwen3_coder",
     ] {
     bench_load_case(b, model)
   }
@@ -403,7 +404,10 @@ test "bench to_json matrix" (b : @bench.T) {
 
 ///|
 test "bench from_pretrained file matrix" (b : @bench.T) {
-  for model in ["gpt2", "bert", "t5", "llama", "Qwen2.5", "qwen3_coder"] {
+  for
+    model in [
+      "gpt2", "bert", "t5", "llama", "Qwen2.5", "llama3_2", "gpt_oss", "qwen3_coder",
+    ] {
     bench_from_pretrained_case(b, model)
   }
 }

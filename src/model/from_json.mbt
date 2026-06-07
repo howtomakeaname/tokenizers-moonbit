@@ -45,7 +45,11 @@ fn parse_vocab(
       Number(n, ..) => {
         let id = n.to_int()
         vocab[token] = id
-        set_vocab_r(vocab_r, id, token)
+        if id >= 0 && id < vocab_r.length() {
+          vocab_r[id] = Some(token)
+        } else {
+          set_vocab_r(vocab_r, id, token)
+        }
       }
       _ => raise @types.VocabError("vocab entry \{token} has non-numeric id")
     }
@@ -113,6 +117,7 @@ fn split_legacy_merge(s : String) -> (String, String) {
 ///|
 fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
   let (vocab, vocab_r) = parse_vocab(obj)
+  let ignore_merges = @types.get_bool(obj, "ignore_merges", default=false)
   let merges = parse_merges(obj)
   {
     vocab,
@@ -125,7 +130,7 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
     end_of_word_suffix: @types.get_str_opt(obj, "end_of_word_suffix"),
     fuse_unk: @types.get_bool(obj, "fuse_unk", default=false),
     byte_fallback: @types.get_bool(obj, "byte_fallback", default=false),
-    ignore_merges: @types.get_bool(obj, "ignore_merges", default=false),
+    ignore_merges,
     cache: {},
   }
 }

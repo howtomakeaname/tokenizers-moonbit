@@ -69,4 +69,6 @@ GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E
   空白正则替换；更复杂正则替换待补。
 - **Offsets：** 默认返回字符偏移；可通过 byte-offset encode API 对齐 HF byte offsets。
 - **Batch：** `encode_batch` 为串行实现，适配 wasm/js 目标。
+- **性能：** BPE 合并使用优先队列与惰性失效，并带 word cache；加载时直接填充
+  dense 反向词表。
 - **训练：** 已支持确定性 WordLevel 训练；BPE / WordPiece / Unigram trainer 待补。

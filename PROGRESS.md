@@ -69,7 +69,7 @@
 ### Models
 | 组件 | 状态 | 备注 |
 |---|---|---|
-| BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效 + word cache；decode 反查使用 dense id array；native mixed 抽样 gpt2/llama encode 快于 HF |
+| BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效 + word cache；decode 反查使用 dense id array 并在加载时直接填充；native mixed 抽样 gpt2/llama encode 快于 HF |
 | byte_fallback / fuse_unk / ignore_merges | ✅ | |
 | WordPiece | ✅ | 贪心最长前缀 |
 | Unigram | ✅ | Viterbi DP + word cache；`byte_fallback` / `fuse_unk` supported；native mixed 抽样 t5/bge/e5 encode 快于 HF |
