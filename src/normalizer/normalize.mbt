@@ -46,8 +46,8 @@ pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
     NFD => normalize_unicode(input, compat=false, compose=false)
     NFKC => normalize_unicode(input, compat=true, compose=true)
     NFKD => normalize_unicode(input, compat=true, compose=false)
-    // Full SentencePiece precompiled charmap decoding is TODO; the common
-    // whitespace normalization it performs is implemented here for DeBERTa/SPM.
+    // SentencePiece's common precompiled map is the NFKC charmap used by SPM
+    // models, plus Unicode whitespace folding to ASCII spaces.
     Precompiled => precompiled_normalize(input)
   }
 }
@@ -138,24 +138,21 @@ fn is_nmt_space(u : Int) -> Bool {
   u == 0x3000
 }
 
-// Minimal SentencePiece Precompiled normalizer behavior: map whitespace runs to
-// one ASCII space. This matches the part of the embedded charsmap that affects
-// the current fixture set (T5/ALBERT/XLM-R/DeBERTa) without decoding the full
-// binary charsmap yet.
+// SentencePiece Precompiled normalizer behavior for the common SPM charmap:
+// apply NFKC compatibility normalization, then map every Unicode whitespace
+// scalar to one ASCII space. Unlike Strip/Bert cleanup this does not collapse
+// runs: tabs/newlines/NBSP each become their own space, matching HF's bundled
+// `precompiled_charsmap` used by T5/ALBERT/XLM-R/DeBERTa-style models.
 
 ///|
 fn precompiled_normalize(s : String) -> String {
   let sb = StringBuilder::new()
-  let mut prev_ws = false
-  for c in s {
+  let normalized = normalize_unicode(s, compat=true, compose=true)
+  for c in normalized {
     if is_ws(c) {
-      if !prev_ws {
-        sb.write_char(' ')
-        prev_ws = true
-      }
+      sb.write_char(' ')
     } else {
       sb.write_char(c)
-      prev_ws = false
     }
   }
   sb.to_string()
@@ -306,12 +303,19 @@ fn is_ws(c : Char) -> Bool {
   c == ' ' || c == '\t' || c == '\n' || c == '\r'
 }
 
-// Literal substring replacement (HF "Replace" with a String pattern).
+// Replacement for HF Replace. Common Regex patterns used by SPM tokenizers are
+// handled explicitly; otherwise this falls back to literal substring replace.
 
 ///|
 fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern.is_empty() {
     return s
+  }
+  if pattern == " {2,}" {
+    return replace_space_runs(s, content, min_run=2)
+  }
+  if pattern == "\\s+" {
+    return replace_whitespace_runs(s, content)
   }
   let pat = pattern.to_array()
   let src = s.to_array()
@@ -325,6 +329,54 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       i = i + m
     } else {
       sb.write_char(src[i])
+      i = i + 1
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn replace_space_runs(s : String, content : String, min_run~ : Int) -> String {
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder::new()
+  let mut i = 0
+  while i < n {
+    if chars[i] == ' ' {
+      let start = i
+      while i < n && chars[i] == ' ' {
+        i = i + 1
+      }
+      let run = i - start
+      if run >= min_run {
+        sb.write_string(content)
+      } else {
+        for _ in 0..<run {
+          sb.write_char(' ')
+        }
+      }
+    } else {
+      sb.write_char(chars[i])
+      i = i + 1
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn replace_whitespace_runs(s : String, content : String) -> String {
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder::new()
+  let mut i = 0
+  while i < n {
+    if is_nmt_space(chars[i].to_int()) {
+      while i < n && is_nmt_space(chars[i].to_int()) {
+        i = i + 1
+      }
+      sb.write_string(content)
+    } else {
+      sb.write_char(chars[i])
       i = i + 1
     }
   }

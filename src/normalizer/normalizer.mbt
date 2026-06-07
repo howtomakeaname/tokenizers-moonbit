@@ -18,7 +18,7 @@ pub(all) enum Normalizer {
   Prepend(prepend~ : String)
   // Moses/NMT style cleanup used by SentencePiece-era tokenizers.
   Nmt
-  // SentencePiece Precompiled charsmap; treated as identity for now (TODO).
+  // SentencePiece Precompiled charsmap; common SPM NFKC+whitespace map.
   Precompiled
   BertNormalizer(
     clean_text~ : Bool,
