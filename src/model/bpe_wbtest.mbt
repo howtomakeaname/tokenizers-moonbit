@@ -8,10 +8,10 @@ fn mk_bpe(
   merges : Array[(String, String)],
 ) -> Model {
   let v : Map[String, Int] = {}
-  let vr : Map[Int, String] = {}
+  let vr : Array[String?] = []
   for kv in vocab {
     v[kv.0] = kv.1
-    vr[kv.1] = kv.0
+    set_vocab_r(vr, kv.1, kv.0)
   }
   let m : Map[(String, String), Int] = {}
   for i, p in merges {

@@ -8,10 +8,10 @@ fn mk_unigram(
   fuse_unk : Bool,
 ) -> Model {
   let v : Map[String, (Int, Double)] = {}
-  let vr : Map[Int, String] = {}
+  let vr : Array[String?] = []
   for i, kv in vocab {
     v[kv.0] = (i, kv.1)
-    vr[i] = kv.0
+    set_vocab_r(vr, i, kv.0)
   }
   Unigram(UnigramModel::{
     vocab: v,

@@ -30,9 +30,9 @@ pub fn Model::from_json(j : Json) -> Model raise @types.TokenizerError {
 ///|
 fn parse_vocab(
   obj : Map[String, Json],
-) -> (Map[String, Int], Map[Int, String]) raise @types.TokenizerError {
+) -> (Map[String, Int], Array[String?]) raise @types.TokenizerError {
   let vocab : Map[String, Int] = {}
-  let vocab_r : Map[Int, String] = {}
+  let vocab_r : Array[String?] = []
   let vobj = match obj.get("vocab") {
     Some(Object(v)) => v
     _ => raise @types.VocabError("model.vocab must be an object")
@@ -43,12 +43,23 @@ fn parse_vocab(
       Number(n, ..) => {
         let id = n.to_int()
         vocab[token] = id
-        vocab_r[id] = token
+        set_vocab_r(vocab_r, id, token)
       }
       _ => raise @types.VocabError("vocab entry \{token} has non-numeric id")
     }
   }
   (vocab, vocab_r)
+}
+
+///|
+fn set_vocab_r(vocab_r : Array[String?], id : Int, token : String) -> Unit {
+  if id < 0 {
+    return
+  }
+  while vocab_r.length() <= id {
+    vocab_r.push(None)
+  }
+  vocab_r[id] = Some(token)
 }
 
 // Parse merges, supporting both the new [["a","b"], ...] and legacy
@@ -157,7 +168,7 @@ fn parse_unigram(
 ) -> UnigramModel raise @types.TokenizerError {
   // Unigram vocab is an array of [token, score] pairs; index is the id.
   let vocab : Map[String, (Int, Double)] = {}
-  let vocab_r : Map[Int, String] = {}
+  let vocab_r : Array[String?] = []
   let varr = match obj.get("vocab") {
     Some(Array(a)) => a
     _ => raise @types.VocabError("unigram model.vocab must be an array")
@@ -166,7 +177,7 @@ fn parse_unigram(
     match entry {
       Array([String(token), Number(score, ..)]) => {
         vocab[token] = (i, score)
-        vocab_r[i] = token
+        set_vocab_r(vocab_r, i, token)
       }
       _ => raise @types.VocabError("bad unigram vocab entry at index \{i}")
     }

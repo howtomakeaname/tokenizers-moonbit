@@ -69,7 +69,7 @@
 ### Models
 | 组件 | 状态 | 备注 |
 |---|---|---|
-| BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效 + word cache；native mixed 抽样 gpt2/llama encode 快于 HF |
+| BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效 + word cache；decode 反查使用 dense id array；native mixed 抽样 gpt2/llama encode 快于 HF |
 | byte_fallback / fuse_unk / ignore_merges | ✅ | |
 | WordPiece | ✅ | 贪心最长前缀 |
 | Unigram | ✅ | Viterbi DP + word cache；`byte_fallback` / `fuse_unk` supported；native mixed 抽样 t5/bge/e5 encode 快于 HF |
@@ -162,8 +162,10 @@ MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的
 WordPiece/CLIP 主线大多快于 HF（gpt2 0.43x、llama 0.28x、Qwen2.5 0.58x、
 bert 0.53x、clip 0.48x）；decode 多数约 0.5x 或同水平；加载大模型基本同
 水平。Unigram word cache 后，t5 encode 0.39x、bge_m3 0.42x、e5_multilingual
-0.43x，已由主要性能短板转为快于 HF。下一轮性能优化优先级：完整
-`--corpus all` 矩阵复测 > 大词表 JSON 加载/解析 > batch 并行。
+0.43x，已由主要性能短板转为快于 HF。Dense vocab reverse map 后，加载
+抽样改善明显（bert/Qwen2.5/phi4/qwen3_coder from_str 已达到同档或快于 HF，
+llama from_str 仍约 1.14x）。下一轮性能优化优先级：完整 `--corpus all`
+矩阵复测 > llama/from_pretrained 文件读取路径 > 大词表 JSON 解析。
 
 ## 已知缺口与取舍（TODO）
 

@@ -12,8 +12,9 @@
 pub struct BPEModel {
   // token surface -> id
   vocab : Map[String, Int]
-  // id -> token surface (for decode)
-  vocab_r : Map[Int, String]
+  // id -> token surface (for decode). Dense array is cheaper to build and
+  // faster to query than an Int-keyed map for HF vocabularies.
+  vocab_r : Array[String?]
   // merge pair (left, right) -> rank (lower = applied earlier)
   merges : Map[(String, String), Int]
   unk_token : String?
@@ -32,7 +33,7 @@ pub struct BPEModel {
 /// WordLevel model state: a flat token->id map with an unk fallback.
 pub struct WordLevelModel {
   vocab : Map[String, Int]
-  vocab_r : Map[Int, String]
+  vocab_r : Array[String?]
   unk_token : String
 }
 
@@ -40,7 +41,7 @@ pub struct WordLevelModel {
 /// WordPiece model state.
 pub struct WordPieceModel {
   vocab : Map[String, Int]
-  vocab_r : Map[Int, String]
+  vocab_r : Array[String?]
   unk_token : String
   continuing_subword_prefix : String
   max_input_chars_per_word : Int
@@ -52,7 +53,7 @@ pub struct UnigramModel {
   // token surface -> (id, log-probability score)
   vocab : Map[String, (Int, Double)]
   // id -> token surface
-  vocab_r : Map[Int, String]
+  vocab_r : Array[String?]
   unk_id : Int?
   byte_fallback : Bool
   fuse_unk : Bool
@@ -72,10 +73,19 @@ pub enum Model {
 /// Look up a token surface by id (decode direction).
 pub fn Model::id_to_token(self : Model, id : Int) -> String? {
   match self {
-    BPE(m) => m.vocab_r.get(id)
-    WordPiece(m) => m.vocab_r.get(id)
-    Unigram(m) => m.vocab_r.get(id)
-    WordLevel(m) => m.vocab_r.get(id)
+    BPE(m) => lookup_id(m.vocab_r, id)
+    WordPiece(m) => lookup_id(m.vocab_r, id)
+    Unigram(m) => lookup_id(m.vocab_r, id)
+    WordLevel(m) => lookup_id(m.vocab_r, id)
+  }
+}
+
+///|
+fn lookup_id(vocab_r : Array[String?], id : Int) -> String? {
+  if id < 0 || id >= vocab_r.length() {
+    None
+  } else {
+    vocab_r[id]
   }
 }
 
