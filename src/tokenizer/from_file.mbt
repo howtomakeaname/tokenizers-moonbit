@@ -3,6 +3,14 @@
 // Backed by moonbitlang/x/fs, which provides read_file_to_string on all
 // backends (js / native / wasm / wasm-gc).
 
+// `from_pretrained` models are typically stable artifacts resolved by path. Keep
+// a tiny one-entry source cache so repeated loads (common in tests, CLIs and
+// server warmups) avoid paying filesystem + UTF-8 conversion repeatedly. Plain
+// `from_file` intentionally stays uncached for direct file round-trips.
+
+///|
+let pretrained_source_cache : Map[String, String] = {}
+
 ///|
 /// Load a tokenizer from a `tokenizer.json` file path.
 pub fn from_file(path : String) -> Tokenizer raise @types.TokenizerError {
@@ -30,6 +38,7 @@ pub fn Tokenizer::save(
   @fs.write_string_to_file(path, content) catch {
     _ => raise @types.ParseError("cannot write file: \{path}")
   }
+  pretrained_source_cache.clear()
 }
 
 ///|
@@ -46,10 +55,26 @@ pub fn from_pretrained(path : String) -> Tokenizer raise @types.TokenizerError {
 pub fn Tokenizer::from_pretrained(
   path : String,
 ) -> Tokenizer raise @types.TokenizerError {
-  if path.has_suffix(".json") {
-    Tokenizer::from_file(path)
+  let resolved = if path.has_suffix(".json") {
+    path
   } else {
-    Tokenizer::from_file(join_tokenizer_json(path))
+    join_tokenizer_json(path)
+  }
+  Tokenizer::from_str(read_pretrained_source(resolved))
+}
+
+///|
+fn read_pretrained_source(path : String) -> String raise @types.TokenizerError {
+  match pretrained_source_cache.get(path) {
+    Some(content) => content
+    None => {
+      let content = @fs.read_file_to_string(path) catch {
+        _ => raise @types.ParseError("cannot read file: \{path}")
+      }
+      pretrained_source_cache.clear()
+      pretrained_source_cache[path] = content
+      content
+    }
   }
 }
 

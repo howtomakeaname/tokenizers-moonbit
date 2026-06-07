@@ -184,6 +184,25 @@ test "from_pretrained loads local directory or tokenizer file" {
 }
 
 ///|
+test "save invalidates from_pretrained source cache" {
+  let path = "_build/tokenizer_cache_invalidation.json"
+  let json1 =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"old":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let json2 =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"new":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  Tokenizer::from_str(json1).save(path)
+  let old_tok = Tokenizer::from_pretrained(path)
+  @test.assert_eq(old_tok.encode("old", add_special_tokens=false).ids, [0])
+  Tokenizer::from_str(json2).save(path)
+  let new_tok = Tokenizer::from_pretrained(path)
+  @test.assert_eq(new_tok.encode("new", add_special_tokens=false).ids, [0])
+}
+
+///|
 test "encode_batch reuses duplicate inputs without aliasing encodings" {
   let json =
     #|{"version":"1.0",
