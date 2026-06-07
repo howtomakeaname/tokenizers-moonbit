@@ -20,6 +20,11 @@ pub enum Decoder {
 }
 
 ///|
+pub fn Decoder::replace(pattern : String, content : String) -> Decoder {
+  Replace(pattern~, content~)
+}
+
+///|
 /// Parse a decoder config object.
 pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
   let obj = @types.as_object(j, "decoder")

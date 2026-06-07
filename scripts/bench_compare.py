@@ -24,6 +24,8 @@ from bench_python import CORPORA, DATA, MODELS
 
 try:
     from tokenizers import Tokenizer
+    from tokenizers import Regex
+    from tokenizers import decoders as hf_decoders
     from tokenizers import models as hf_models
     from tokenizers import pre_tokenizers as hf_pre_tokenizers
     from tokenizers import trainers as hf_trainers
@@ -161,12 +163,27 @@ def hf_train_wordlevel_us(text: str) -> float:
     return timed_us(train_once, 60)
 
 
+def hf_decoder_replace_regex_us() -> float:
+    decoder = hf_decoders.Replace(Regex(r"\s+"), " ")
+    tokens = [
+        "The\tquick",
+        "\u00a0brown\nfox",
+        "\u3000jumps",
+        " over\tthe lazy dog.",
+        " MoonBit\nwasm\u3000tokenizers.",
+    ]
+    return timed_us(lambda: decoder.decode(tokens), 2_000)
+
+
 def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     moon = run_moon_bench(target)
     rows: list[Row] = []
     train_key = "wordlevel-train-mixedx4"
     if train_key in moon:
         rows.append(Row(train_key, moon[train_key], hf_train_wordlevel_us(CORPORA["mixed"])))
+    decoder_replace_key = "decoder-replace-regex-mixed"
+    if decoder_replace_key in moon:
+        rows.append(Row(decoder_replace_key, moon[decoder_replace_key], hf_decoder_replace_regex_us()))
     for model in models:
         tok, path = load_tokenizer(model)
         if tok is None:

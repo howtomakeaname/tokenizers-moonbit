@@ -282,10 +282,21 @@ fn cleanup_text(s : String) -> String {
   out
 }
 
+// Replacement for HF decoder Replace. HF distinguishes literal String patterns
+// from Regex patterns in JSON, but this lightweight representation keeps the
+// pattern string only. Handle the common Regex forms seen in SentencePiece-style
+// decoder configs explicitly, then fall back to literal substring replacement.
+
 ///|
 fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern.is_empty() {
     return s
+  }
+  if pattern == " {2,}" {
+    return replace_space_runs(s, content, min_run=2)
+  }
+  if pattern == "\\s+" {
+    return replace_whitespace_runs(s, content)
   }
   let pat = pattern.to_array()
   let src = s.to_array()
@@ -303,6 +314,71 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     }
   }
   sb.to_string()
+}
+
+///|
+fn replace_space_runs(s : String, content : String, min_run~ : Int) -> String {
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder::new()
+  let mut i = 0
+  while i < n {
+    if chars[i] == ' ' {
+      let start = i
+      while i < n && chars[i] == ' ' {
+        i = i + 1
+      }
+      let run = i - start
+      if run >= min_run {
+        sb.write_string(content)
+      } else {
+        for _ in 0..<run {
+          sb.write_char(' ')
+        }
+      }
+    } else {
+      sb.write_char(chars[i])
+      i = i + 1
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn replace_whitespace_runs(s : String, content : String) -> String {
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder::new()
+  let mut i = 0
+  while i < n {
+    if is_unicode_whitespace(chars[i].to_int()) {
+      while i < n && is_unicode_whitespace(chars[i].to_int()) {
+        i = i + 1
+      }
+      sb.write_string(content)
+    } else {
+      sb.write_char(chars[i])
+      i = i + 1
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn is_unicode_whitespace(u : Int) -> Bool {
+  u == 0x09 ||
+  u == 0x0A ||
+  u == 0x0D ||
+  u == 0x20 ||
+  u == 0x85 ||
+  u == 0xA0 ||
+  u == 0x1680 ||
+  (u >= 0x2000 && u <= 0x200A) ||
+  u == 0x2028 ||
+  u == 0x2029 ||
+  u == 0x202F ||
+  u == 0x205F ||
+  u == 0x3000
 }
 
 ///|

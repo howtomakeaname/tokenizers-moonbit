@@ -221,6 +221,21 @@ fn bench_train_wordlevel_case(
 }
 
 ///|
+fn bench_decoder_replace_regex_case(b : @bench.T, case_name : String) -> Unit {
+  let decoder = @decoder.Decoder::replace("\\s+", " ")
+  let tokens = [
+    "The\tquick",
+    "\u{a0}brown\nfox",
+    "\u{3000}jumps",
+    " over\tthe lazy dog.",
+    " MoonBit\nwasm\u{3000}tokenizers.",
+  ]
+  b.bench(name="decoder-replace-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bytelevel_trim_fixture(trim_offsets : Bool) -> Tokenizer raise {
   let trim = if trim_offsets { "true" } else { "false" }
   let json =
@@ -386,4 +401,9 @@ test "bench from_pretrained file matrix" (b : @bench.T) {
 ///|
 test "bench train wordlevel" (b : @bench.T) {
   bench_train_wordlevel_case(b, "mixedx4", corpus_mixed())
+}
+
+///|
+test "bench decoder replace regex" (b : @bench.T) {
+  bench_decoder_replace_regex_case(b, "mixed")
 }
