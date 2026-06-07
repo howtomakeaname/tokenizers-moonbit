@@ -232,6 +232,20 @@ fn bench_decoder_replace_regex_case(b : @bench.T, case_name : String) -> Unit {
 }
 
 ///|
+fn bench_split_trailing_ws_regex_case(b : @bench.T, case_name : String) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "\\s+$",
+    @pretokenizer.SplitBehavior::removed(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + "\t \n"
+  b.bench(name="pretokenizer-split-trailing-ws-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
 fn bytelevel_trim_fixture(trim_offsets : Bool) -> Tokenizer raise {
   let trim = if trim_offsets { "true" } else { "false" }
   let json =
@@ -402,4 +416,9 @@ test "bench train wordlevel" (b : @bench.T) {
 ///|
 test "bench decoder replace regex" (b : @bench.T) {
   bench_decoder_replace_regex_case(b, "mixed")
+}
+
+///|
+test "bench split trailing whitespace regex" (b : @bench.T) {
+  bench_split_trailing_ws_regex_case(b, "mixed")
 }

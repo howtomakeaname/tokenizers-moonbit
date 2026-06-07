@@ -43,6 +43,21 @@ pub fn PreTokenizer::whitespace_split() -> PreTokenizer {
 }
 
 ///|
+pub fn SplitBehavior::removed() -> SplitBehavior {
+  Removed
+}
+
+///|
+pub fn PreTokenizer::split(
+  pattern : String,
+  behavior : SplitBehavior,
+  invert : Bool,
+  regex : Bool,
+) -> PreTokenizer {
+  Split(pattern~, behavior~, invert~, regex~)
+}
+
+///|
 /// Parse a pre_tokenizer config object.
 pub fn PreTokenizer::from_json(
   j : Json,

@@ -175,6 +175,12 @@ def hf_decoder_replace_regex_us() -> float:
     return timed_us(lambda: decoder.decode(tokens), 2_000)
 
 
+def hf_split_trailing_ws_regex_us() -> float:
+    pt = hf_pre_tokenizers.Split(Regex(r"\s+$"), "removed", invert=False)
+    text = CORPORA["mixed"] + "\t \n"
+    return timed_us(lambda: pt.pre_tokenize_str(text), 2_000)
+
+
 def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     moon = run_moon_bench(target)
     rows: list[Row] = []
@@ -184,6 +190,9 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     decoder_replace_key = "decoder-replace-regex-mixed"
     if decoder_replace_key in moon:
         rows.append(Row(decoder_replace_key, moon[decoder_replace_key], hf_decoder_replace_regex_us()))
+    split_trailing_ws_key = "pretokenizer-split-trailing-ws-regex-mixed"
+    if split_trailing_ws_key in moon:
+        rows.append(Row(split_trailing_ws_key, moon[split_trailing_ws_key], hf_split_trailing_ws_regex_us()))
     for model in models:
         tok, path = load_tokenizer(model)
         if tok is None:

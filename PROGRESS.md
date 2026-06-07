@@ -95,7 +95,7 @@
 | Punctuation SplitBehavior | ✅ | Removed / Isolated / MergedWithPrevious / MergedWithNext / Contiguous |
 | Split（GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet 家族正则）| ✅ 现代 LLM/CLIP 主线 |
 | Digits / Delimiter / FixedLength / UnicodeScripts | ✅ |
-| Split（任意正则）| 🚧 已覆盖主流 GPT/Qwen/o200k/CLIP/CJK/digit regex + 简单 literal / `\\s+` / `[\\r\\n]`；复杂未知 pattern 仍退化为单段 |
+| Split（任意正则）| 🚧 已覆盖主流 GPT/Qwen/o200k/CLIP/CJK/digit regex + 简单 literal / `\\s+` / `\\s+$` / `[\\r\\n]`；复杂未知 pattern 仍退化为单段 |
 
 ### Decoders
 | 组件 | 状态 |
@@ -142,7 +142,7 @@
 | P1 | Truncation strategy 完整化 | ✅ | 支持 LongestFirst/OnlyFirst/OnlySecond；pair encode 按 HF 顺序：预留 special slots 后先截断 raw pair，再 post-process/pad |
 | P1 | ByteLevel post-processor `trim_offsets` 细节 | ✅ | 空白修剪与 HF offsets 对齐；已补 ByteLevel / RoBERTa offset 用例与 micro bench |
 | P2 | Precompiled SentencePiece charsmap 完整解码 | 🚧 | 已支持主流 SPM NFKC charsmap行为并补兼容字符/空白用例；完整二进制 trie 解码仍待做 |
-| P2 | 通用 Split/Replace 正则覆盖 | 🚧 | Normalizer/Decoder Replace 已支持 `\\s+` / ` {2,}`；Split 已补 literal / `\\s+` / `[\\r\\n]` / digit triplet 的行为与 offset 测试；复杂未知 pattern 仍需显式 Unsupported |
+| P2 | 通用 Split/Replace 正则覆盖 | 🚧 | Normalizer/Decoder Replace 已支持 `\\s+` / ` {2,}`；Split 已补 literal / `\\s+` / `\\s+$` / `[\\r\\n]` / digit triplet 的行为与 offset 测试；复杂未知 pattern 仍需显式 Unsupported |
 | P2 | save / to_json / from_file 对称性 | ✅ | `to_json` 保留原始 tokenizer.json；`Tokenizer::from_file` / `save` 可往返；补 serialization 测试与 to_json bench |
 | P3 | `from_pretrained` / Hub 集成 | 🚧 | 已支持本地 HF 目录（`tokenizer.json`）和 tokenizer 文件路径，并对稳定 pretrained 路径做单项 source cache；Hub 网络下载需外部脚本/应用层集成 |
 | P3 | batch 并行 / word cache | 🚧 | BPE/Unigram word cache 已完成；encode_batch 对重复输入做单批缓存并补 bench；并行仍待运行时能力评估 |
@@ -177,7 +177,7 @@ local from_pretrained-file 同档或快于 HF（llama 约 1.05x/1.00x，Qwen2.5 
 ## 已知缺口与取舍（TODO）
 
 1. **Precompiled charsmap**：当前覆盖主流 SentencePiece NFKC charsmap 与 Unicode 空白映射；完整二进制 trie 解码仍是 TODO。
-2. **正则**：core 正则不支持 `\p{L}`；GPT/Qwen/o200k 主线已手写扫描器。通用 Split 已补 literal、`\\s+`、`[\\r\\n]`、digit triplet；复杂未知 pattern 仍退化为单段。Replace normalizer/decoder 已补 `\\s+` / ` {2,}`；更复杂 Replace pattern 仍按字面量处理。
+2. **正则**：core 正则不支持 `\p{L}`；GPT/Qwen/o200k 主线已手写扫描器。通用 Split 已补 literal、`\\s+`、`\\s+$`、`[\\r\\n]`、digit triplet；复杂未知 pattern 仍退化为单段。Replace normalizer/decoder 已补 `\\s+` / ` {2,}`；更复杂 Replace pattern 仍按字面量处理。
 3. **训练 / Hub 集成**：当前定位 inference-first；`to_json`/`save` 已支持原始 JSON 往返，`from_pretrained` 已支持本地目录/文件与稳定路径 source cache；WordLevel trainer 产物已支持序列化保存。BPE/WordPiece/Unigram trainer 和 Hub 网络下载 API 暂未实现。
 4. **性能**：BPE merge 已用优先队列(pairing heap)+惰性失效，llama 提速约 7x、与 Rust 同量级；进一步可加 word→tokens 缓存与多 MB 词表加载优化。
 5. **batch 并行**：MoonBit 单线程，encode_batch 串行；已对重复输入做批内缓存（场景定位 wasm/js 边缘端）。

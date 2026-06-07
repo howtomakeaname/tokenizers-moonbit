@@ -32,7 +32,7 @@ Chinese version: [`docs/zh/components.md`](./zh/components.md)
 |---|---|
 | `ByteLevel` (GPT-2 scanner) | ✅ |
 | `Whitespace`, `WhitespaceSplit`, `BertPreTokenizer`, `Punctuation`, `Metaspace`, `Sequence` | ✅ |
-| `Split` with GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet regex families | ✅ |
+| `Split` with GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet / trailing-whitespace regex families | ✅ |
 | `Digits`, `Delimiter`, `FixedLength`, `UnicodeScripts` | ✅ |
 | `Split` with arbitrary regex | 🚧 unrecognized patterns fall back to one piece |
 
@@ -64,15 +64,18 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
 - **Precompiled charsmap:** common SentencePiece whitespace folding is covered;
   full binary charsmap decoding is still TODO.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
-  CJK / digit-triplet patterns are recognized. Other regexes are not executed
-  and pass through as one piece. MoonBit's core regex lacks `\p{L}`/`\p{N}`
-  support, so a general Unicode regex engine is future work.
-- **Regex `Replace`:** `Replace` normalizer/decoder currently implements literal
-  replacement; regex replacement is future work.
-- **Offsets:** char-based, relative to the original text. HuggingFace's default
-  `encode` returns byte offsets; byte-offset mode is future work.
+  CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\s+$`,
+  and `[\r\n]` are recognized. Other regexes are not executed and pass through
+  as one piece. MoonBit's core regex lacks `\p{L}`/`\p{N}` support, so a general
+  Unicode regex engine is future work.
+- **Regex `Replace`:** `Replace` normalizer/decoder supports common whitespace
+  regex replacements such as `\s+` and ` {2,}`; more complex regex replacement
+  remains future work.
+- **Offsets:** char-based by default, relative to the original text. Optional
+  byte-offset encode APIs are available for HuggingFace-style byte offsets.
 - **Batching:** single-threaded by design for wasm/js targets.
 - **Performance:** BPE merging uses a priority-queue heap with lazy stale
   removal. A word-to-token cache and faster multi-MB vocab loading remain useful
   optimizations.
-- **Training:** out of scope. The library loads and runs existing tokenizers.
+- **Training:** deterministic WordLevel training is supported; BPE / WordPiece /
+  Unigram trainers remain future work.

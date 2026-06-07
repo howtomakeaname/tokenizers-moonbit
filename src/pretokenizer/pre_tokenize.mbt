@@ -110,6 +110,8 @@ fn simple_regex_matches(
 ) -> Array[MatchSpan]? {
   if pattern == "\\s+" {
     Some(run_matches(chars, fn(c) { is_space(c) }))
+  } else if pattern == "\\s+$" {
+    Some(trailing_run_match(chars, fn(c) { is_space(c) }))
   } else if pattern == "[\\r\\n]" || pattern == "[\r\n]" {
     Some(run_matches(chars, fn(c) { c == '\r' || c == '\n' }))
   } else if pattern == "\\p{N}{1,3}" || pattern == "[0-9][0-9][0-9]" {
@@ -134,6 +136,22 @@ fn run_matches(chars : Array[Char], pred : (Char) -> Bool) -> Array[MatchSpan] {
     } else {
       i = i + 1
     }
+  }
+  out
+}
+
+///|
+fn trailing_run_match(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+) -> Array[MatchSpan] {
+  let out : Array[MatchSpan] = []
+  let mut i = chars.length()
+  while i > 0 && pred(chars[i - 1]) {
+    i = i - 1
+  }
+  if i < chars.length() {
+    out.push({ start: i, stop: chars.length() })
   }
   out
 }

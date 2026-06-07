@@ -87,3 +87,23 @@ test "split pretokenizer supports common regex spans" {
   ).pre_tokenize("abc12345de", base_offset=0)
   @test.assert_eq(digits.map(x => x.value), ["abc", "123", "45", "de"])
 }
+
+///|
+test "split pretokenizer supports trailing whitespace regex" {
+  let removed = PreTokenizer::Split(
+    pattern="\\s+$",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("abc  def\t\n", base_offset=7)
+  @test.assert_eq(removed.map(x => x.value), ["abc  def"])
+  @test.assert_eq(removed.map(x => x.offsets), [(7, 15)])
+
+  let isolated = PreTokenizer::Split(
+    pattern="\\s+$",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("abc  ", base_offset=0)
+  @test.assert_eq(isolated.map(x => x.value), ["abc", "  "])
+}
