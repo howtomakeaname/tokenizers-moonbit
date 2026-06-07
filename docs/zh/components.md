@@ -75,3 +75,6 @@ GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E
   pre-tokenizer 或已预切分 token 流，并支持 `min_frequency`、`special_tokens`、
   `vocab_size` 以及 HF 风格的频次/词典序词表排序；BPE / WordPiece / Unigram
   trainer 待补。
+- **构造型 tokenizer 序列化：** 训练得到的 WordLevel tokenizer 可序列化常见
+  pre-tokenizer，如 ByteLevel、Metaspace、Punctuation、Split、Digits、Delimiter、
+  FixedLength、UnicodeScripts 和 Sequence。

@@ -267,6 +267,28 @@ fn bench_train_wordlevel_capped_case(
 }
 
 ///|
+fn bench_trained_wordlevel_to_json_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let tok = Tokenizer::train_wordlevel_with_pretokenizer(
+    [corpus_mixed(), corpus_mixed()],
+    @pretokenizer.PreTokenizer::split(
+      ",",
+      @pretokenizer.SplitBehavior::removed(),
+      false,
+      false,
+    ),
+    unk_token="[UNK]",
+    special_tokens=["[PAD]"],
+  )
+  b.bench(name="wordlevel-trained-to_json-\{case_name}", fn() {
+    let json = try? tok.to_json()
+    b.keep(json)
+  })
+}
+
+///|
 fn bench_decoder_replace_regex_case(b : @bench.T, case_name : String) -> Unit {
   let decoder = @decoder.Decoder::replace("\\s+", " ")
   let tokens = [
@@ -500,6 +522,11 @@ test "bench train wordlevel split pretokenizer" (b : @bench.T) {
 ///|
 test "bench train wordlevel capped" (b : @bench.T) {
   bench_train_wordlevel_capped_case(b, "mixedx4", corpus_mixed())
+}
+
+///|
+test "bench trained wordlevel to_json" (b : @bench.T) {
+  bench_trained_wordlevel_to_json_case(b, "split")
 }
 
 ///|

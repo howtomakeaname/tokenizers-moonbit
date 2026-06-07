@@ -83,3 +83,6 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   streams, including `min_frequency`, `special_tokens`, `vocab_size`, and
   HF-style frequency/lexical vocab ordering; BPE / WordPiece / Unigram trainers
   remain future work.
+- **Constructed tokenizer serialization:** trained WordLevel tokenizers serialize
+  common pre-tokenizers such as ByteLevel, Metaspace, Punctuation, Split, Digits,
+  Delimiter, FixedLength, UnicodeScripts, and Sequence.

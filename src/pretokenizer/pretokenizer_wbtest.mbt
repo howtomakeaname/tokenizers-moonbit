@@ -122,3 +122,52 @@ test "split pretokenizer supports trailing whitespace regex" {
   ).pre_tokenize("abc  ", base_offset=0)
   @test.assert_eq(isolated.map(x => x.value), ["abc", "  "])
 }
+
+///|
+test "pretokenizer to_json covers serializable variants" {
+  @test.assert_eq(
+    PreTokenizer::ByteLevel(
+      add_prefix_space=true,
+      use_regex=false,
+      trim_offsets=true,
+    ).to_json(),
+    Some(
+      "{\"type\":\"ByteLevel\",\"add_prefix_space\":true,\"use_regex\":false,\"trim_offsets\":true}",
+    ),
+  )
+  @test.assert_eq(
+    PreTokenizer::Punctuation(behavior=MergedWithPrevious).to_json(),
+    Some("{\"type\":\"Punctuation\",\"behavior\":\"MergedWithPrevious\"}"),
+  )
+  @test.assert_eq(
+    PreTokenizer::Metaspace(
+      replacement='▁',
+      prepend_scheme="always",
+      split=true,
+    ).to_json(),
+    Some(
+      "{\"type\":\"Metaspace\",\"replacement\":\"▁\",\"prepend_scheme\":\"always\",\"split\":true}",
+    ),
+  )
+  @test.assert_eq(
+    PreTokenizer::Digits(individual_digits=true).to_json(),
+    Some("{\"type\":\"Digits\",\"individual_digits\":true}"),
+  )
+  @test.assert_eq(
+    PreTokenizer::Delimiter(delimiter='\t').to_json(),
+    Some("{\"type\":\"Delimiter\",\"delimiter\":\"\\t\"}"),
+  )
+  @test.assert_eq(
+    PreTokenizer::FixedLength(length=4).to_json(),
+    Some("{\"type\":\"FixedLength\",\"length\":4}"),
+  )
+  @test.assert_eq(
+    PreTokenizer::Sequence([
+      PreTokenizer::WhitespaceSplit,
+      PreTokenizer::Digits(individual_digits=false),
+    ]).to_json(),
+    Some(
+      "{\"type\":\"Sequence\",\"pretokenizers\":[{\"type\":\"WhitespaceSplit\"},{\"type\":\"Digits\",\"individual_digits\":false}]}",
+    ),
+  )
+}
