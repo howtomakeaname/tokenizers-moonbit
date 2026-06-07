@@ -32,11 +32,13 @@ fn parse_vocab(
   obj : Map[String, Json],
 ) -> (Map[String, Int], Array[String?]) raise @types.TokenizerError {
   let vocab : Map[String, Int] = {}
-  let vocab_r : Array[String?] = []
   let vobj = match obj.get("vocab") {
     Some(Object(v)) => v
     _ => raise @types.VocabError("model.vocab must be an object")
   }
+  // HF vocab ids are dense in practice; pre-size the reverse table to avoid
+  // repeated growth while loading 50k-150k token BPE/WordPiece vocabularies.
+  let vocab_r : Array[String?] = Array::make(vobj.length(), None)
   for kv in vobj {
     let (token, idj) = kv
     match idj {
@@ -168,11 +170,11 @@ fn parse_unigram(
 ) -> UnigramModel raise @types.TokenizerError {
   // Unigram vocab is an array of [token, score] pairs; index is the id.
   let vocab : Map[String, (Int, Double)] = {}
-  let vocab_r : Array[String?] = []
   let varr = match obj.get("vocab") {
     Some(Array(a)) => a
     _ => raise @types.VocabError("unigram model.vocab must be an array")
   }
+  let vocab_r : Array[String?] = Array::make(varr.length(), None)
   for i, entry in varr {
     match entry {
       Array([String(token), Number(score, ..)]) => {
