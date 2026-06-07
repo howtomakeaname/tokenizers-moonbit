@@ -238,3 +238,27 @@ test "train_wordlevel builds deterministic tokenizer" {
   @test.assert_eq(enc.ids, [2, 1])
   @test.assert_eq(tok.decode(enc.ids, skip_special_tokens=false), "hello[UNK]")
 }
+
+///|
+test "trained wordlevel tokenizer can save and reload" {
+  let tok = Tokenizer::train_wordlevel(
+    ["hello moon", "hello tokenizer"],
+    unk_token="<unk>",
+    special_tokens=["<pad>"],
+  )
+  let json = tok.to_json()
+  let loaded = Tokenizer::from_str(json)
+  @test.assert_eq(loaded.token_to_id("<pad>"), Some(0))
+  @test.assert_eq(loaded.token_to_id("<unk>"), Some(1))
+  @test.assert_eq(
+    loaded.encode("hello missing", add_special_tokens=false).ids,
+    [2, 1],
+  )
+  let path = "_build/trained_wordlevel_tokenizer.json"
+  tok.save(path)
+  let from_file = Tokenizer::from_file(path)
+  @test.assert_eq(
+    from_file.encode("moon missing", add_special_tokens=false).ids,
+    [3, 1],
+  )
+}

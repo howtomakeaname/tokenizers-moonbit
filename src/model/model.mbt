@@ -129,6 +129,71 @@ pub fn Model::get_vocab(self : Model) -> Map[String, Int] {
 }
 
 ///|
+/// Serialize supported constructed models to a tokenizer.json `model` object.
+/// Loaded HF tokenizers preserve their original JSON at the tokenizer layer;
+/// this fallback is mainly for tokenizers created by the training API.
+pub fn Model::to_json(self : Model) -> String? {
+  match self {
+    WordLevel(m) => Some(wordlevel_to_json(m))
+    _ => None
+  }
+}
+
+///|
+fn wordlevel_to_json(m : WordLevelModel) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"WordLevel\",\"vocab\":{")
+  let mut first = true
+  for id in 0..<m.vocab_r.length() {
+    match m.vocab_r[id] {
+      Some(tok) => {
+        if !first {
+          sb.write_char(',')
+        }
+        first = false
+        write_json_string(sb, tok)
+        sb.write_char(':')
+        sb.write_string(id.to_string())
+      }
+      None => ()
+    }
+  }
+  sb.write_string("},\"unk_token\":")
+  write_json_string(sb, m.unk_token)
+  sb.write_char('}')
+  sb.to_string()
+}
+
+///|
+fn write_json_string(sb : StringBuilder, s : String) -> Unit {
+  sb.write_char('"')
+  for c in s {
+    match c {
+      '"' => sb.write_string("\\\"")
+      '\\' => sb.write_string("\\\\")
+      '\n' => sb.write_string("\\n")
+      '\r' => sb.write_string("\\r")
+      '\t' => sb.write_string("\\t")
+      _ =>
+        if c.to_int() < 0x20 {
+          write_control_escape(sb, c.to_int())
+        } else {
+          sb.write_char(c)
+        }
+    }
+  }
+  sb.write_char('"')
+}
+
+///|
+fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
+  let digits = "0123456789ABCDEF".to_array()
+  sb.write_string("\\u00")
+  sb.write_char(digits[u / 16 % 16])
+  sb.write_char(digits[u % 16])
+}
+
+///|
 /// Tokenize one pre-token (word) into tokens. `offset` is the char offset of
 /// the word within the original text.
 pub fn Model::tokenize(
