@@ -360,6 +360,40 @@ fn bench_trained_bpe_to_json_case(b : @bench.T, case_name : String) -> Unit {
 }
 
 ///|
+fn bench_train_unigram_case(
+  b : @bench.T,
+  case_name : String,
+  text : String,
+) -> Unit {
+  let corpus = [text, text, text, text]
+  b.bench(name="unigram-train-\{case_name}", fn() {
+    b.keep(
+      Tokenizer::train_unigram(
+        corpus,
+        unk_token="<unk>",
+        min_frequency=1,
+        special_tokens=["<pad>"],
+        vocab_size=Some(512),
+      ),
+    )
+  })
+}
+
+///|
+fn bench_trained_unigram_to_json_case(b : @bench.T, case_name : String) -> Unit {
+  let tok = Tokenizer::train_unigram(
+    [corpus_mixed(), corpus_mixed()],
+    unk_token="<unk>",
+    special_tokens=["<pad>"],
+    vocab_size=Some(512),
+  )
+  b.bench(name="unigram-trained-to_json-\{case_name}", fn() {
+    let json = try? tok.to_json()
+    b.keep(json)
+  })
+}
+
+///|
 fn bench_decoder_replace_regex_case(b : @bench.T, case_name : String) -> Unit {
   let decoder = @decoder.Decoder::replace("\\s+", " ")
   let tokens = [
@@ -618,6 +652,16 @@ test "bench train bpe" (b : @bench.T) {
 ///|
 test "bench trained bpe to_json" (b : @bench.T) {
   bench_trained_bpe_to_json_case(b, "mixed")
+}
+
+///|
+test "bench train unigram" (b : @bench.T) {
+  bench_train_unigram_case(b, "mixedx4", corpus_mixed())
+}
+
+///|
+test "bench trained unigram to_json" (b : @bench.T) {
+  bench_trained_unigram_to_json_case(b, "mixed")
 }
 
 ///|

@@ -484,3 +484,49 @@ test "train_bpe respects vocab_size cap" {
   @test.assert_eq(tok.token_to_id("[UNK]"), Some(1))
   @test.assert_eq(tok.token_to_id("lower"), None)
 }
+
+///|
+test "train_unigram prefers learned whole words" {
+  let tok = Tokenizer::train_unigram(["hello hello help"], unk_token="<unk>", special_tokens=[
+    "<pad>",
+  ])
+  @test.assert_eq(tok.token_to_id("<pad>"), Some(0))
+  @test.assert_eq(tok.token_to_id("<unk>"), Some(1))
+  assert_true(tok.token_to_id("hello") is Some(_))
+  let enc = tok.encode("hello help", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["hello", "help"])
+}
+
+///|
+test "train_unigram supports custom pretokenizer and reload" {
+  let pt = @pretokenizer.PreTokenizer::split(
+    ",",
+    @pretokenizer.SplitBehavior::removed(),
+    false,
+    false,
+  )
+  let tok = Tokenizer::train_unigram_with_pretokenizer(
+    ["moon,moon,bit"],
+    pt,
+    unk_token="<unk>",
+    special_tokens=["<pad>"],
+  )
+  let loaded = Tokenizer::from_str(tok.to_json())
+  @test.assert_eq(loaded.encode("moon,bit", add_special_tokens=false).tokens, [
+    "moon", "bit",
+  ])
+}
+
+///|
+test "train_unigram respects vocab_size cap" {
+  let tok = Tokenizer::train_unigram(
+    ["ab ac"],
+    unk_token="<unk>",
+    special_tokens=["<pad>"],
+    vocab_size=Some(4),
+  )
+  @test.assert_eq(tok.get_vocab_size(), 4)
+  @test.assert_eq(tok.token_to_id("<pad>"), Some(0))
+  @test.assert_eq(tok.token_to_id("<unk>"), Some(1))
+  @test.assert_eq(tok.token_to_id("ab"), None)
+}

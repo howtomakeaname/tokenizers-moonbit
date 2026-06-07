@@ -82,10 +82,10 @@ enc.attention_mask // [1, 1]
   `enable_padding`; MoonBit uses chainable `with_truncation` / `with_padding`.
 - **Training:** deterministic WordLevel training is supported, including custom
   pre-tokenizers, pre-tokenized token streams, `min_frequency`, `special_tokens`,
-  `vocab_size`, and HF-style frequency/lexical vocab ordering. WordPiece and BPE
-  trainer MVPs are available for the same input modes with common controls such
-  as continuation-prefix, end-of-word suffix, and `max_input_chars_per_word`.
-  Unigram trainer is not implemented yet.
+  `vocab_size`, and HF-style frequency/lexical vocab ordering. WordPiece, BPE,
+  and Unigram trainer MVPs are available for the same input modes with common
+  controls such as continuation-prefix, end-of-word suffix,
+  `max_input_chars_per_word`, and `byte_fallback`.
 
 ## Verified models
 

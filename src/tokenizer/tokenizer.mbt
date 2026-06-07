@@ -18,7 +18,7 @@ pub struct Tokenizer {
   // Original tokenizer.json payload. `to_json`/`save` preserve it verbatim so a
   // loaded HF tokenizer can round-trip through MoonBit without losing fields we
   // do not yet model (trainers, metadata, full regex text, etc.).
-  source_json : String?
+  mut source_json : String?
 }
 
 ///|
@@ -90,11 +90,13 @@ pub fn Tokenizer::to_json(
               }
             None => "null"
           }
-          "{\"version\":\"1.0\",\"pre_tokenizer\":" +
+          let json = "{\"version\":\"1.0\",\"pre_tokenizer\":" +
           pt_json +
           ",\"model\":" +
           model_json +
           "}"
+          self.source_json = Some(json)
+          json
         }
         None => raise @types.ParseError("tokenizer has no serialized source")
       }

@@ -60,5 +60,6 @@ enc.attention_mask
   `with_truncation` / `with_padding` 链式配置。
 - 已支持确定性 WordLevel 训练（含自定义 pre-tokenizer、已预切分 token 流、
   `min_frequency`、`special_tokens`、`vocab_size` 以及 HF 风格的频次/词典序词表排序）；
-  也已提供 WordPiece / BPE trainer MVP，支持相同输入模式以及 continuation prefix、
-  end-of-word suffix、`max_input_chars_per_word` 等常见参数；Unigram trainer 尚未实现。
+  也已提供 WordPiece / BPE / Unigram trainer MVP，支持相同输入模式以及
+  continuation prefix、end-of-word suffix、`max_input_chars_per_word`、`byte_fallback`
+  等常见参数。

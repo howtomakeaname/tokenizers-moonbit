@@ -137,7 +137,7 @@ pub fn Model::to_json(self : Model) -> String? {
     BPE(m) => Some(bpe_to_json(m))
     WordLevel(m) => Some(wordlevel_to_json(m))
     WordPiece(m) => Some(wordpiece_to_json(m))
-    _ => None
+    Unigram(m) => Some(unigram_to_json(m))
   }
 }
 
@@ -206,6 +206,86 @@ fn wordpiece_to_json(m : WordPieceModel) -> String {
   write_vocab_json(sb, m.vocab_r)
   sb.write_string("}}")
   sb.to_string()
+}
+
+///|
+fn unigram_to_json(m : UnigramModel) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"Unigram\",\"vocab\":")
+  write_unigram_vocab_json(sb, m)
+  match m.unk_id {
+    Some(id) => {
+      sb.write_string(",\"unk_id\":")
+      sb.write_string(id.to_string())
+    }
+    None => ()
+  }
+  if m.byte_fallback {
+    sb.write_string(",\"byte_fallback\":true")
+  }
+  if !m.fuse_unk {
+    sb.write_string(",\"fuse_unk\":false")
+  }
+  sb.write_char('}')
+  sb.to_string()
+}
+
+///|
+fn write_unigram_vocab_json(sb : StringBuilder, m : UnigramModel) -> Unit {
+  sb.write_char('[')
+  let mut first = true
+  for id in 0..<m.vocab_r.length() {
+    match m.vocab_r[id] {
+      Some(tok) => {
+        if !first {
+          sb.write_char(',')
+        }
+        first = false
+        sb.write_char('[')
+        write_json_string(sb, tok)
+        sb.write_char(',')
+        let score = match m.vocab.get(tok) {
+          Some(p) => p.1
+          None => 0.0
+        }
+        write_unigram_score(sb, score)
+        sb.write_char(']')
+      }
+      None => ()
+    }
+  }
+  sb.write_char(']')
+}
+
+///|
+fn write_unigram_score(sb : StringBuilder, score : Double) -> Unit {
+  // Trained MVP scores are intentionally simple; avoid Double::to_string on the
+  // hot serialization path for the common values created by the trainer.
+  if score == 0.0 {
+    sb.write_char('0')
+  } else if score == -10.0 {
+    sb.write_string("-10")
+  } else if score == 1.0 {
+    sb.write_char('1')
+  } else if score == 2.0 {
+    sb.write_char('2')
+  } else if score == 3.0 {
+    sb.write_char('3')
+  } else if score == 4.0 {
+    sb.write_char('4')
+  } else if score == 5.0 {
+    sb.write_char('5')
+  } else if score == 6.0 {
+    sb.write_char('6')
+  } else if score == 7.0 {
+    sb.write_char('7')
+  } else if score == 8.0 {
+    sb.write_char('8')
+  } else if score == 9.0 {
+    sb.write_char('9')
+  } else {
+    sb.write_string(score.to_string())
+  }
 }
 
 ///|

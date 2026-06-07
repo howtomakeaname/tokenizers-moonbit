@@ -481,6 +481,106 @@ fn replace_bpe_pair(
 }
 
 ///|
+/// Train a deterministic Unigram model from whitespace-delimited text.
+///
+/// This MVP provides a compact, serializable Unigram vocabulary suitable for
+/// local migration workflows. It reserves the unk token, then adds a character
+/// alphabet and high-frequency whole pre-tokens with deterministic scores that
+/// make known whole words preferred over character segmentation.
+pub fn Model::train_unigram(
+  texts : Array[String],
+  unk_token? : String = "<unk>",
+  min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
+  byte_fallback? : Bool = false,
+  fuse_unk? : Bool = true,
+) -> Model {
+  let tokenized : Array[Array[String]] = []
+  for text in texts {
+    tokenized.push(whitespace_words(text))
+  }
+  Model::train_unigram_from_tokens(
+    tokenized,
+    unk_token~,
+    min_frequency~,
+    special_tokens~,
+    vocab_size~,
+    byte_fallback~,
+    fuse_unk~,
+  )
+}
+
+///|
+/// Train a deterministic Unigram model from pre-tokenized token streams.
+pub fn Model::train_unigram_from_tokens(
+  tokenized_texts : Array[Array[String]],
+  unk_token? : String = "<unk>",
+  min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
+  byte_fallback? : Bool = false,
+  fuse_unk? : Bool = true,
+) -> Model {
+  let word_counts : Map[String, Int] = {}
+  let word_order : Array[String] = []
+  let char_counts : Map[String, Int] = {}
+  let char_order : Array[String] = []
+  for tokens in tokenized_texts {
+    for tok in tokens {
+      bump_count(word_counts, word_order, tok)
+      for c in tok.to_array() {
+        bump_count(char_counts, char_order, char_string(c))
+      }
+    }
+  }
+
+  let vocab : Map[String, (Int, Double)] = {}
+  let vocab_r : Array[String?] = []
+  fn add_token(tok : String, score : Double) -> Int? {
+    if vocab.contains(tok) || !under_vocab_limit(vocab_r.length(), vocab_size) {
+      return None
+    }
+    let id = vocab_r.length()
+    vocab[tok] = (id, score)
+    vocab_r.push(Some(tok))
+    Some(id)
+  }
+
+  let mut unk_id : Int? = None
+  for tok in special_tokens {
+    let id = add_token(tok, 0.0)
+    if tok == unk_token {
+      unk_id = id
+    }
+  }
+  if unk_id is None {
+    unk_id = add_token(unk_token, 0.0)
+  }
+
+  let chars = sorted_wordlevel_candidates(char_order, char_counts, 1)
+  for item in chars {
+    ignore(add_token(item.0, -10.0))
+  }
+
+  let words = sorted_wordlevel_candidates(
+    word_order, word_counts, min_frequency,
+  )
+  for item in words {
+    ignore(add_token(item.0, unigram_word_score(item.1)))
+  }
+
+  Unigram({ vocab, vocab_r, unk_id, byte_fallback, fuse_unk, cache: {} })
+}
+
+///|
+fn unigram_word_score(freq : Int) -> Double {
+  // Keep scores deterministic and simple: frequent words get slightly better
+  // scores, and all whole words beat character-piece paths.
+  freq.to_double()
+}
+
+///|
 fn whitespace_words(text : String) -> Array[String] {
   let chars = text.to_array()
   let out : Array[String] = []

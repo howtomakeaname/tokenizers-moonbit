@@ -265,6 +265,45 @@ def hf_trained_bpe_to_json_us(text: str) -> float:
     return timed_us(lambda: tok.to_str(pretty=False), 100)
 
 
+def hf_train_unigram_us(text: str) -> float:
+    corpus = [text] * 4
+
+    def train_once() -> Tokenizer:
+        tok = Tokenizer(hf_models.Unigram())
+        tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+        trainer = hf_trainers.UnigramTrainer(
+            vocab_size=512,
+            special_tokens=["<pad>", "<unk>"],
+            unk_token="<unk>",
+        )
+        tok.train_from_iterator(corpus, trainer=trainer)
+        return tok
+
+    return timed_us(train_once, 30)
+
+
+def hf_trained_unigram_to_json_us(text: str) -> float:
+    counts: dict[str, int] = {}
+    char_counts: dict[str, int] = {}
+    for sample in [text, text]:
+        for word in sample.split():
+            counts[word] = counts.get(word, 0) + 1
+            for ch in word:
+                char_counts[ch] = char_counts.get(ch, 0) + 1
+    vocab: list[tuple[str, float]] = [("<pad>", 0.0), ("<unk>", 0.0)]
+    for ch, _ in sorted(char_counts.items(), key=lambda kv: (-kv[1], kv[0])):
+        if ch not in {tok for tok, _ in vocab} and len(vocab) < 512:
+            vocab.append((ch, -10.0))
+    seen = {tok for tok, _ in vocab}
+    for word, freq in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])):
+        if word not in seen and len(vocab) < 512:
+            vocab.append((word, float(freq)))
+            seen.add(word)
+    tok = Tokenizer(hf_models.Unigram(vocab, unk_id=1))
+    tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+    return timed_us(lambda: tok.to_str(pretty=False), 100)
+
+
 def hf_decoder_replace_regex_us() -> float:
     decoder = hf_decoders.Replace(Regex(r"\s+"), " ")
     tokens = [
@@ -327,6 +366,12 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     bpe_to_json_key = "bpe-trained-to_json-mixed"
     if bpe_to_json_key in moon:
         rows.append(Row(bpe_to_json_key, moon[bpe_to_json_key], hf_trained_bpe_to_json_us(CORPORA["mixed"])))
+    unigram_train_key = "unigram-train-mixedx4"
+    if unigram_train_key in moon:
+        rows.append(Row(unigram_train_key, moon[unigram_train_key], hf_train_unigram_us(CORPORA["mixed"])))
+    unigram_to_json_key = "unigram-trained-to_json-mixed"
+    if unigram_to_json_key in moon:
+        rows.append(Row(unigram_to_json_key, moon[unigram_to_json_key], hf_trained_unigram_to_json_us(CORPORA["mixed"])))
     decoder_replace_key = "decoder-replace-regex-mixed"
     if decoder_replace_key in moon:
         rows.append(Row(decoder_replace_key, moon[decoder_replace_key], hf_decoder_replace_regex_us()))

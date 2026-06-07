@@ -257,3 +257,89 @@ pub fn Tokenizer::train_bpe_from_tokens(
     source_json: None,
   }
 }
+
+///|
+/// Train a deterministic Unigram tokenizer from whitespace-delimited text.
+pub fn Tokenizer::train_unigram(
+  texts : Array[String],
+  unk_token? : String = "<unk>",
+  min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
+  byte_fallback? : Bool = false,
+  fuse_unk? : Bool = true,
+) -> Tokenizer {
+  Tokenizer::train_unigram_with_pretokenizer(
+    texts,
+    @pretokenizer.PreTokenizer::whitespace_split(),
+    unk_token~,
+    min_frequency~,
+    special_tokens~,
+    vocab_size~,
+    byte_fallback~,
+    fuse_unk~,
+  )
+}
+
+///|
+/// Train a Unigram tokenizer with a caller-provided pre-tokenizer.
+pub fn Tokenizer::train_unigram_with_pretokenizer(
+  texts : Array[String],
+  pre_tokenizer : @pretokenizer.PreTokenizer,
+  unk_token? : String = "<unk>",
+  min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
+  byte_fallback? : Bool = false,
+  fuse_unk? : Bool = true,
+) -> Tokenizer {
+  let tokenized : Array[Array[String]] = []
+  for text in texts {
+    tokenized.push(
+      pre_tokenizer.pre_tokenize(text, base_offset=0).map(x => x.value),
+    )
+  }
+  Tokenizer::train_unigram_from_tokens(
+    tokenized,
+    unk_token~,
+    min_frequency~,
+    special_tokens~,
+    pre_tokenizer=Some(pre_tokenizer),
+    vocab_size~,
+    byte_fallback~,
+    fuse_unk~,
+  )
+}
+
+///|
+/// Train a Unigram tokenizer from pre-tokenized token streams.
+pub fn Tokenizer::train_unigram_from_tokens(
+  tokenized_texts : Array[Array[String]],
+  unk_token? : String = "<unk>",
+  min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [],
+  pre_tokenizer? : @pretokenizer.PreTokenizer? = None,
+  vocab_size? : Int? = None,
+  byte_fallback? : Bool = false,
+  fuse_unk? : Bool = true,
+) -> Tokenizer {
+  {
+    normalizer: None,
+    pre_tokenizer,
+    model: @model.Model::train_unigram_from_tokens(
+      tokenized_texts,
+      unk_token~,
+      min_frequency~,
+      special_tokens~,
+      vocab_size~,
+      byte_fallback~,
+      fuse_unk~,
+    ),
+    post_processor: None,
+    decoder: None,
+    added_vocabulary: AddedVocabulary::new([]),
+    truncation: None,
+    padding: None,
+    source_json: None,
+  }
+}
