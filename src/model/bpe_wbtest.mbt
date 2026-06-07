@@ -91,3 +91,10 @@ test "bpe offsets track code-point spans" {
   let toks = model.tokenize("ab", offset=3)
   @test.assert_eq(toks[0].offsets, (3, 5))
 }
+
+///|
+test "legacy merge splitter preserves right side spaces" {
+  @test.assert_eq(split_legacy_merge("Ġ t"), ("Ġ", "t"))
+  @test.assert_eq(split_legacy_merge("a b c"), ("a", "b c"))
+  @test.assert_eq(split_legacy_merge("abc"), ("abc", ""))
+}

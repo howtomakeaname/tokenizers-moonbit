@@ -80,7 +80,7 @@ fn parse_merges(
       // New format: ["a", "b"]
       Array([String(a), String(b)]) => (a, b)
       // Legacy format: "a b"
-      String(s) => split_once(s, ' ')
+      String(s) => split_legacy_merge(s)
       _ => raise @types.VocabError("bad merge entry at index \{i}")
     }
     merges[pair] = i
@@ -88,24 +88,24 @@ fn parse_merges(
   merges
 }
 
-// Split a string on the first occurrence of `sep`; the remainder (which may
-// itself contain `sep`) becomes the right half.
+// Split a legacy merge string on the first ASCII space. This path is exercised
+// tens of thousands of times when loading GPT/Llama/Qwen-style tokenizer.json
+// files, so use code-unit scanning plus substring instead of building both
+// sides character-by-character.
 
 ///|
-fn split_once(s : String, sep : Char) -> (String, String) {
-  let left = StringBuilder::new()
-  let right = StringBuilder::new()
-  let mut seen = false
-  for c in s {
-    if !seen && c == sep {
-      seen = true
-    } else if seen {
-      right.write_char(c)
-    } else {
-      left.write_char(c)
+fn split_legacy_merge(s : String) -> (String, String) {
+  let n = s.length()
+  let space = ' '.to_int()
+  for i in 0..<n {
+    if s.unsafe_get(i).to_int() == space {
+      return (
+        s.unsafe_substring(start=0, end=i),
+        s.unsafe_substring(start=i + 1, end=n),
+      )
     }
   }
-  (left.to_string(), right.to_string())
+  (s, "")
 }
 
 ///|
