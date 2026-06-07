@@ -31,3 +31,33 @@ pub fn Tokenizer::save(
     _ => raise @types.ParseError("cannot write file: \{path}")
   }
 }
+
+///|
+/// Load a tokenizer from a local HF-style directory containing `tokenizer.json`,
+/// or directly from a tokenizer JSON file path. Network/Hub fetching is kept
+/// outside the core library so all MoonBit backends stay deterministic.
+pub fn from_pretrained(path : String) -> Tokenizer raise @types.TokenizerError {
+  Tokenizer::from_pretrained(path)
+}
+
+///|
+/// Load a tokenizer from a local HF-style directory containing `tokenizer.json`,
+/// or directly from a tokenizer JSON file path.
+pub fn Tokenizer::from_pretrained(
+  path : String,
+) -> Tokenizer raise @types.TokenizerError {
+  if path.has_suffix(".json") {
+    Tokenizer::from_file(path)
+  } else {
+    Tokenizer::from_file(join_tokenizer_json(path))
+  }
+}
+
+///|
+fn join_tokenizer_json(path : String) -> String {
+  if path.has_suffix("/") {
+    path + "tokenizer.json"
+  } else {
+    path + "/tokenizer.json"
+  }
+}

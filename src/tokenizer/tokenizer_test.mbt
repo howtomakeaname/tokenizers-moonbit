@@ -163,3 +163,22 @@ test "save and Tokenizer::from_file preserve tokenizer behavior" {
     tok.encode("hello moon", add_special_tokens=false).ids,
   )
 }
+
+///|
+test "from_pretrained loads local directory or tokenizer file" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"local":0,"dir":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let path = "_build/tokenizer.json"
+  tok.save(path)
+  let from_dir = Tokenizer::from_pretrained("_build")
+  let from_file = Tokenizer::from_pretrained(path)
+  @test.assert_eq(from_dir.encode("local dir", add_special_tokens=false).ids, [
+    0, 1,
+  ])
+  @test.assert_eq(from_file.encode("local dir", add_special_tokens=false).ids, [
+    0, 1,
+  ])
+}

@@ -181,6 +181,16 @@ fn bench_to_json_case(b : @bench.T, model : String) -> Unit raise {
 }
 
 ///|
+fn bench_from_pretrained_case(b : @bench.T, model : String) -> Unit {
+  let path = "tests/data/\{model}.full.json"
+  guard load_text(path) is Some(_) else { return }
+  b.bench(name="\{model}-from_pretrained-file", fn() {
+    let t = try? Tokenizer::from_pretrained(path)
+    b.keep(t)
+  })
+}
+
+///|
 fn bytelevel_trim_fixture(trim_offsets : Bool) -> Tokenizer raise {
   let trim = if trim_offsets { "true" } else { "false" }
   let json =
@@ -325,5 +335,12 @@ test "bench load from_str matrix" (b : @bench.T) {
 test "bench to_json matrix" (b : @bench.T) {
   for model in ["gpt2", "bert", "t5", "llama", "Qwen2.5", "qwen3_coder"] {
     bench_to_json_case(b, model)
+  }
+}
+
+///|
+test "bench from_pretrained file matrix" (b : @bench.T) {
+  for model in ["gpt2", "bert", "t5", "llama", "Qwen2.5", "qwen3_coder"] {
+    bench_from_pretrained_case(b, model)
   }
 }
