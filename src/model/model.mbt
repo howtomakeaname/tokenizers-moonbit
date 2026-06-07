@@ -135,6 +135,7 @@ pub fn Model::get_vocab(self : Model) -> Map[String, Int] {
 pub fn Model::to_json(self : Model) -> String? {
   match self {
     WordLevel(m) => Some(wordlevel_to_json(m))
+    WordPiece(m) => Some(wordpiece_to_json(m))
     _ => None
   }
 }
@@ -161,6 +162,35 @@ fn wordlevel_to_json(m : WordLevelModel) -> String {
   sb.write_string("},\"unk_token\":")
   write_json_string(sb, m.unk_token)
   sb.write_char('}')
+  sb.to_string()
+}
+
+///|
+fn wordpiece_to_json(m : WordPieceModel) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"WordPiece\",\"unk_token\":")
+  write_json_string(sb, m.unk_token)
+  sb.write_string(",\"continuing_subword_prefix\":")
+  write_json_string(sb, m.continuing_subword_prefix)
+  sb.write_string(",\"max_input_chars_per_word\":")
+  sb.write_string(m.max_input_chars_per_word.to_string())
+  sb.write_string(",\"vocab\":{")
+  let mut first = true
+  for id in 0..<m.vocab_r.length() {
+    match m.vocab_r[id] {
+      Some(tok) => {
+        if !first {
+          sb.write_char(',')
+        }
+        first = false
+        write_json_string(sb, tok)
+        sb.write_char(':')
+        sb.write_string(id.to_string())
+      }
+      None => ()
+    }
+  }
+  sb.write_string("}}")
   sb.to_string()
 }
 

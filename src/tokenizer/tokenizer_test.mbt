@@ -376,3 +376,60 @@ test "trained wordlevel tokenizer can save and reload" {
     [3, 1],
   )
 }
+
+///|
+test "train_wordpiece builds alphabet and whole-word tokens" {
+  let tok = Tokenizer::train_wordpiece(
+    ["hello hell", "hello helper"],
+    unk_token="[UNK]",
+    special_tokens=["[PAD]"],
+  )
+  @test.assert_eq(tok.token_to_id("[PAD]"), Some(0))
+  @test.assert_eq(tok.token_to_id("[UNK]"), Some(1))
+  assert_true(tok.token_to_id("h") is Some(_))
+  assert_true(tok.token_to_id("##e") is Some(_))
+  assert_true(tok.token_to_id("hello") is Some(_))
+  let enc = tok.encode("hello help", add_special_tokens=false)
+  @test.assert_eq(enc.tokens[0], "hello")
+  @test.assert_eq(enc.tokens[1], "h")
+  @test.assert_eq(enc.tokens[2], "##e")
+  @test.assert_eq(enc.tokens[3], "##l")
+  @test.assert_eq(enc.tokens[4], "##p")
+}
+
+///|
+test "train_wordpiece supports custom pretokenizer and to_json reload" {
+  let pt = @pretokenizer.PreTokenizer::split(
+    ",",
+    @pretokenizer.SplitBehavior::removed(),
+    false,
+    false,
+  )
+  let tok = Tokenizer::train_wordpiece_with_pretokenizer(
+    ["moon,bit", "moon"],
+    pt,
+    unk_token="[UNK]",
+    continuing_subword_prefix="@@",
+    special_tokens=["[PAD]"],
+  )
+  assert_true(tok.token_to_id("moon") is Some(_))
+  assert_true(tok.token_to_id("@@o") is Some(_))
+  let loaded = Tokenizer::from_str(tok.to_json())
+  @test.assert_eq(loaded.encode("moon,bit", add_special_tokens=false).tokens, [
+    "moon", "bit",
+  ])
+}
+
+///|
+test "train_wordpiece respects vocab_size cap" {
+  let tok = Tokenizer::train_wordpiece(
+    ["ab ac"],
+    unk_token="[UNK]",
+    special_tokens=["[PAD]"],
+    vocab_size=Some(4),
+  )
+  @test.assert_eq(tok.get_vocab_size(), 4)
+  @test.assert_eq(tok.token_to_id("[PAD]"), Some(0))
+  @test.assert_eq(tok.token_to_id("[UNK]"), Some(1))
+  @test.assert_eq(tok.token_to_id("a"), Some(2))
+}

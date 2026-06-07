@@ -108,6 +108,135 @@ fn under_vocab_limit(current_size : Int, vocab_size : Int?) -> Bool {
 }
 
 ///|
+/// Train a deterministic WordPiece model from whitespace-delimited text.
+///
+/// This MVP keeps the HF-compatible WordPiece model shape and common trainer
+/// knobs (`special_tokens`, `min_frequency`, `vocab_size`, continuation
+/// prefix). It reserves specials/unk first, then the per-character alphabet,
+/// then high-frequency whole words so seen corpus words encode compactly while
+/// unseen words can still fall back to character pieces when the alphabet fits.
+pub fn Model::train_wordpiece(
+  texts : Array[String],
+  unk_token? : String = "[UNK]",
+  continuing_subword_prefix? : String = "##",
+  min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
+  max_input_chars_per_word? : Int = 100,
+) -> Model {
+  let tokenized : Array[Array[String]] = []
+  for text in texts {
+    tokenized.push(whitespace_words(text))
+  }
+  Model::train_wordpiece_from_tokens(
+    tokenized,
+    unk_token~,
+    continuing_subword_prefix~,
+    min_frequency~,
+    special_tokens~,
+    vocab_size~,
+    max_input_chars_per_word~,
+  )
+}
+
+///|
+/// Train a deterministic WordPiece model from pre-tokenized token streams.
+pub fn Model::train_wordpiece_from_tokens(
+  tokenized_texts : Array[Array[String]],
+  unk_token? : String = "[UNK]",
+  continuing_subword_prefix? : String = "##",
+  min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
+  max_input_chars_per_word? : Int = 100,
+) -> Model {
+  let word_counts : Map[String, Int] = {}
+  let word_order : Array[String] = []
+  let piece_counts : Map[String, Int] = {}
+  let piece_order : Array[String] = []
+  for tokens in tokenized_texts {
+    for tok in tokens {
+      bump_count(word_counts, word_order, tok)
+      add_wordpiece_alphabet(
+        tok, continuing_subword_prefix, piece_counts, piece_order,
+      )
+    }
+  }
+
+  let vocab : Map[String, Int] = {}
+  let vocab_r : Array[String?] = []
+  fn add_token(tok : String) -> Unit {
+    if vocab.contains(tok) || !under_vocab_limit(vocab.length(), vocab_size) {
+      return
+    }
+    let id = vocab.length()
+    vocab[tok] = id
+    vocab_r.push(Some(tok))
+  }
+
+  for tok in special_tokens {
+    add_token(tok)
+  }
+  add_token(unk_token)
+
+  let alphabet = sorted_wordlevel_candidates(piece_order, piece_counts, 1)
+  for item in alphabet {
+    add_token(item.0)
+  }
+
+  let words = sorted_wordlevel_candidates(
+    word_order, word_counts, min_frequency,
+  )
+  for item in words {
+    add_token(item.0)
+  }
+
+  WordPiece({
+    vocab,
+    vocab_r,
+    unk_token,
+    continuing_subword_prefix,
+    max_input_chars_per_word,
+  })
+}
+
+///|
+fn bump_count(
+  counts : Map[String, Int],
+  order : Array[String],
+  tok : String,
+) -> Unit {
+  match counts.get(tok) {
+    Some(n) => counts[tok] = n + 1
+    None => {
+      counts[tok] = 1
+      order.push(tok)
+    }
+  }
+}
+
+///|
+fn add_wordpiece_alphabet(
+  tok : String,
+  prefix : String,
+  counts : Map[String, Int],
+  order : Array[String],
+) -> Unit {
+  let chars = tok.to_array()
+  for i, c in chars {
+    let piece = if i == 0 { char_string(c) } else { prefix + char_string(c) }
+    bump_count(counts, order, piece)
+  }
+}
+
+///|
+fn char_string(c : Char) -> String {
+  let sb = StringBuilder::new()
+  sb.write_char(c)
+  sb.to_string()
+}
+
+///|
 fn whitespace_words(text : String) -> Array[String] {
   let chars = text.to_array()
   let out : Array[String] = []

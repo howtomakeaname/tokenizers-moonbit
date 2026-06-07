@@ -207,6 +207,35 @@ def hf_trained_wordlevel_to_json_us(text: str) -> float:
     return timed_us(lambda: tok.to_str(pretty=False), 100)
 
 
+def hf_train_wordpiece_us(text: str) -> float:
+    corpus = [text] * 4
+
+    def train_once() -> Tokenizer:
+        tok = Tokenizer(hf_models.WordPiece(unk_token="[UNK]"))
+        tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+        trainer = hf_trainers.WordPieceTrainer(
+            vocab_size=512,
+            min_frequency=1,
+            special_tokens=["[PAD]", "[UNK]"],
+        )
+        tok.train_from_iterator(corpus, trainer=trainer)
+        return tok
+
+    return timed_us(train_once, 60)
+
+
+def hf_trained_wordpiece_to_json_us(text: str) -> float:
+    tok = Tokenizer(hf_models.WordPiece(unk_token="[UNK]"))
+    tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+    trainer = hf_trainers.WordPieceTrainer(
+        vocab_size=512,
+        min_frequency=1,
+        special_tokens=["[PAD]", "[UNK]"],
+    )
+    tok.train_from_iterator([text, text], trainer=trainer)
+    return timed_us(lambda: tok.to_str(pretty=False), 100)
+
+
 def hf_decoder_replace_regex_us() -> float:
     decoder = hf_decoders.Replace(Regex(r"\s+"), " ")
     tokens = [
@@ -257,6 +286,12 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     trained_to_json_key = "wordlevel-trained-to_json-split"
     if trained_to_json_key in moon:
         rows.append(Row(trained_to_json_key, moon[trained_to_json_key], hf_trained_wordlevel_to_json_us(CORPORA["mixed"])))
+    wordpiece_train_key = "wordpiece-train-mixedx4"
+    if wordpiece_train_key in moon:
+        rows.append(Row(wordpiece_train_key, moon[wordpiece_train_key], hf_train_wordpiece_us(CORPORA["mixed"])))
+    wordpiece_to_json_key = "wordpiece-trained-to_json-mixed"
+    if wordpiece_to_json_key in moon:
+        rows.append(Row(wordpiece_to_json_key, moon[wordpiece_to_json_key], hf_trained_wordpiece_to_json_us(CORPORA["mixed"])))
     decoder_replace_key = "decoder-replace-regex-mixed"
     if decoder_replace_key in moon:
         rows.append(Row(decoder_replace_key, moon[decoder_replace_key], hf_decoder_replace_regex_us()))
