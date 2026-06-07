@@ -73,9 +73,9 @@ GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E
   dense 反向词表。
 - **训练：** 已支持确定性 WordLevel 训练，可使用默认 `WhitespaceSplit`、调用方传入的
   pre-tokenizer 或已预切分 token 流，并支持 `min_frequency`、`special_tokens`、
-  `vocab_size` 以及 HF 风格的频次/词典序词表排序；也已提供确定性 WordPiece
-  trainer MVP，支持相同输入模式以及 continuation prefix、`max_input_chars_per_word`
-  等参数；BPE / Unigram trainer 待补。
-- **构造型 tokenizer 序列化：** 训练得到的 WordLevel / WordPiece tokenizer 可序列化常见
+  `vocab_size` 以及 HF 风格的频次/词典序词表排序；也已提供确定性 WordPiece 与
+  BPE trainer MVP，支持相同输入模式以及 continuation prefix、end-of-word suffix、
+  `max_input_chars_per_word` 等常见参数；Unigram trainer 待补。
+- **构造型 tokenizer 序列化：** 训练得到的 WordLevel / WordPiece / BPE tokenizer 可序列化常见
   pre-tokenizer，如 ByteLevel、Metaspace、Punctuation、Split、Digits、Delimiter、
   FixedLength、UnicodeScripts 和 Sequence。

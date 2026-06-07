@@ -81,9 +81,10 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
 - **Training:** deterministic WordLevel training is supported with default
   `WhitespaceSplit`, caller-provided pre-tokenizers, or pre-tokenized token
   streams, including `min_frequency`, `special_tokens`, `vocab_size`, and
-  HF-style frequency/lexical vocab ordering. A deterministic WordPiece trainer
-  MVP is also available with the same input modes plus continuation-prefix and
-  `max_input_chars_per_word` knobs; BPE / Unigram trainers remain future work.
-- **Constructed tokenizer serialization:** trained WordLevel and WordPiece tokenizers serialize
+  HF-style frequency/lexical vocab ordering. Deterministic WordPiece and BPE
+  trainer MVPs are also available with the same input modes and common knobs
+  such as continuation-prefix / end-of-word suffix / `max_input_chars_per_word`;
+  Unigram trainer remains future work.
+- **Constructed tokenizer serialization:** trained WordLevel, WordPiece, and BPE tokenizers serialize
   common pre-tokenizers such as ByteLevel, Metaspace, Punctuation, Split, Digits,
   Delimiter, FixedLength, UnicodeScripts, and Sequence.

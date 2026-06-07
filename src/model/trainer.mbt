@@ -237,6 +237,250 @@ fn char_string(c : Char) -> String {
 }
 
 ///|
+/// Train a deterministic BPE model from whitespace-delimited text.
+///
+/// This MVP implements the core HF BPETrainer loop: reserve special/unk tokens,
+/// seed a character alphabet, repeatedly pick the highest-frequency adjacent
+/// pair (frequency desc, lexical tie-break), add the merged token, and rewrite
+/// the corpus. It intentionally omits advanced trainer knobs such as dropout,
+/// initial alphabet limits, and byte-level alphabet generation.
+pub fn Model::train_bpe(
+  texts : Array[String],
+  unk_token? : String? = Some("[UNK]"),
+  min_frequency? : Int = 2,
+  special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
+  continuing_subword_prefix? : String? = None,
+  end_of_word_suffix? : String? = None,
+  fuse_unk? : Bool = false,
+) -> Model {
+  let tokenized : Array[Array[String]] = []
+  for text in texts {
+    tokenized.push(whitespace_words(text))
+  }
+  Model::train_bpe_from_tokens(
+    tokenized,
+    unk_token~,
+    min_frequency~,
+    special_tokens~,
+    vocab_size~,
+    continuing_subword_prefix~,
+    end_of_word_suffix~,
+    fuse_unk~,
+  )
+}
+
+///|
+/// Train a deterministic BPE model from pre-tokenized token streams.
+pub fn Model::train_bpe_from_tokens(
+  tokenized_texts : Array[Array[String]],
+  unk_token? : String? = Some("[UNK]"),
+  min_frequency? : Int = 2,
+  special_tokens? : Array[String] = [],
+  vocab_size? : Int? = None,
+  continuing_subword_prefix? : String? = None,
+  end_of_word_suffix? : String? = None,
+  fuse_unk? : Bool = false,
+) -> Model {
+  let word_counts : Map[String, Int] = {}
+  let word_order : Array[String] = []
+  let alphabet_counts : Map[String, Int] = {}
+  let alphabet_order : Array[String] = []
+  for tokens in tokenized_texts {
+    for tok in tokens {
+      bump_count(word_counts, word_order, tok)
+      add_bpe_alphabet(
+        tok, continuing_subword_prefix, end_of_word_suffix, alphabet_counts, alphabet_order,
+      )
+    }
+  }
+
+  let vocab : Map[String, Int] = {}
+  let vocab_r : Array[String?] = []
+  fn add_token(tok : String) -> Bool {
+    if vocab.contains(tok) || !under_vocab_limit(vocab.length(), vocab_size) {
+      return false
+    }
+    let id = vocab.length()
+    vocab[tok] = id
+    vocab_r.push(Some(tok))
+    true
+  }
+
+  for tok in special_tokens {
+    ignore(add_token(tok))
+  }
+  match unk_token {
+    Some(unk) => ignore(add_token(unk))
+    None => ()
+  }
+  let alphabet = sorted_wordlevel_candidates(alphabet_order, alphabet_counts, 1)
+  for item in alphabet {
+    ignore(add_token(item.0))
+  }
+
+  let words : Array[Array[String]] = []
+  let freqs : Array[Int] = []
+  for word in word_order {
+    match word_counts.get(word) {
+      Some(n) => {
+        words.push(
+          bpe_initial_symbols(
+            word, continuing_subword_prefix, end_of_word_suffix,
+          ),
+        )
+        freqs.push(n)
+      }
+      None => ()
+    }
+  }
+
+  let merges : Map[(String, String), Int] = {}
+  while under_vocab_limit(vocab.length(), vocab_size) {
+    let pair = best_bpe_pair(words, freqs, min_frequency)
+    match pair {
+      None => break
+      Some(p) => {
+        let merged = p.0 + p.1
+        if !add_token(merged) {
+          break
+        }
+        merges[p] = merges.length()
+        for i in 0..<words.length() {
+          words[i] = replace_bpe_pair(words[i], p, merged)
+        }
+      }
+    }
+  }
+
+  BPE({
+    vocab,
+    vocab_r,
+    merges,
+    unk_token,
+    continuing_subword_prefix,
+    end_of_word_suffix,
+    fuse_unk,
+    byte_fallback: false,
+    ignore_merges: false,
+    cache: {},
+  })
+}
+
+///|
+fn add_bpe_alphabet(
+  tok : String,
+  prefix : String?,
+  suffix : String?,
+  counts : Map[String, Int],
+  order : Array[String],
+) -> Unit {
+  let symbols = bpe_initial_symbols(tok, prefix, suffix)
+  for sym in symbols {
+    bump_count(counts, order, sym)
+  }
+}
+
+///|
+fn bpe_initial_symbols(
+  tok : String,
+  prefix : String?,
+  suffix : String?,
+) -> Array[String] {
+  let chars = tok.to_array()
+  let out : Array[String] = []
+  let n = chars.length()
+  for i, c in chars {
+    let mut s = char_string(c)
+    if i > 0 {
+      match prefix {
+        Some(p) => s = p + s
+        None => ()
+      }
+    }
+    if i == n - 1 {
+      match suffix {
+        Some(x) => s = s + x
+        None => ()
+      }
+    }
+    out.push(s)
+  }
+  out
+}
+
+///|
+fn best_bpe_pair(
+  words : Array[Array[String]],
+  freqs : Array[Int],
+  min_frequency : Int,
+) -> (String, String)? {
+  let counts : Map[(String, String), Int] = {}
+  let order : Array[(String, String)] = []
+  for i, parts in words {
+    if parts.length() < 2 {
+      continue
+    }
+    for j in 0..<(parts.length() - 1) {
+      let p = (parts[j], parts[j + 1])
+      match counts.get(p) {
+        Some(n) => counts[p] = n + freqs[i]
+        None => {
+          counts[p] = freqs[i]
+          order.push(p)
+        }
+      }
+    }
+  }
+  let mut best : (String, String)? = None
+  let mut best_count = min_frequency - 1
+  for p in order {
+    match counts.get(p) {
+      Some(n) =>
+        if n > best_count || (n == best_count && bpe_pair_less(p, best)) {
+          best = Some(p)
+          best_count = n
+        }
+      None => ()
+    }
+  }
+  best
+}
+
+///|
+fn bpe_pair_less(p : (String, String), best : (String, String)?) -> Bool {
+  match best {
+    None => true
+    Some(b) =>
+      if p.0 != b.0 {
+        p.0.compare(b.0) < 0
+      } else {
+        p.1.compare(b.1) < 0
+      }
+  }
+}
+
+///|
+fn replace_bpe_pair(
+  parts : Array[String],
+  pair : (String, String),
+  merged : String,
+) -> Array[String] {
+  let out : Array[String] = []
+  let mut i = 0
+  while i < parts.length() {
+    if i + 1 < parts.length() && parts[i] == pair.0 && parts[i + 1] == pair.1 {
+      out.push(merged)
+      i = i + 2
+    } else {
+      out.push(parts[i])
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
 fn whitespace_words(text : String) -> Array[String] {
   let chars = text.to_array()
   let out : Array[String] = []

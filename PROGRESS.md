@@ -146,7 +146,7 @@
 | P2 | save / to_json / from_file 对称性 | ✅ | `to_json` 保留原始 tokenizer.json；`Tokenizer::from_file` / `save` 可往返；补 serialization 测试与 to_json bench |
 | P3 | `from_pretrained` / Hub 集成 | 🚧 | 已支持本地 HF 目录（`tokenizer.json`）和 tokenizer 文件路径，并对稳定 pretrained 路径做单项 source cache；Hub 网络下载需外部脚本/应用层集成 |
 | P3 | batch 并行 / word cache | 🚧 | BPE/Unigram word cache 已完成；encode_batch 对重复输入做单批缓存并补 bench；并行仍待运行时能力评估 |
-| P4 | trainer / training API | 🚧 | 已提供确定性 WordLevel trainer（WhitespaceSplit / 自定义 pre-tokenizer / 预切分 token 流 + min_frequency + special tokens + vocab_size + HF 风格频次/词典序排序）；新增确定性 WordPiece trainer MVP（同输入模式 + continuation prefix + max_input_chars_per_word + vocab_size），训练结果可 `to_json`/`save` 往返，常见 pre-tokenizer 可序列化，并加入 HF trainer bench；BPE/Unigram trainer 待排期 |
+| P4 | trainer / training API | 🚧 | 已提供确定性 WordLevel trainer（WhitespaceSplit / 自定义 pre-tokenizer / 预切分 token 流 + min_frequency + special tokens + vocab_size + HF 风格频次/词典序排序）；新增确定性 WordPiece / BPE trainer MVP（同输入模式 + continuation prefix / end_of_word_suffix / max_input_chars_per_word + vocab_size），训练结果可 `to_json`/`save` 往返，常见 pre-tokenizer 可序列化，并加入 HF trainer bench；Unigram trainer 待排期 |
 
 ### Benchmark 对比要求
 
@@ -178,7 +178,7 @@ local from_pretrained-file 同档或快于 HF（llama 约 1.05x/1.00x，Qwen2.5 
 
 1. **Precompiled charsmap**：当前覆盖主流 SentencePiece NFKC charsmap 与 Unicode 空白映射；完整二进制 trie 解码仍是 TODO。
 2. **正则**：core 正则不支持 `\p{L}`；GPT/Qwen/o200k 主线已手写扫描器。通用 Split 已补 literal、`\\s+`、`\\S+`、`\\s+$`、`[\\r\\n]`、digit triplet；复杂未知 pattern 加载期显式 Unsupported，避免静默不对齐。Replace normalizer/decoder 已补 `\\s+` / `^\\s+` / `\\s+$` / `[\\r\\n]+` / `[^\\S\\r\\n]+` / ` {2,}`；更复杂 Replace pattern 仍按字面量处理。
-3. **训练 / Hub 集成**：当前定位 inference-first；`to_json`/`save` 已支持原始 JSON 往返，`from_pretrained` 已支持本地目录/文件与稳定路径 source cache；WordLevel trainer 产物已支持序列化保存，并支持自定义 pre-tokenizer / 预切分 token 流 / vocab_size / HF 风格频次与词典序排序；WordPiece trainer MVP 已支持相同输入模式、continuation prefix、`max_input_chars_per_word` 与 `vocab_size`，常见 pre-tokenizer 可序列化。BPE/Unigram trainer 和 Hub 网络下载 API 暂未实现。
+3. **训练 / Hub 集成**：当前定位 inference-first；`to_json`/`save` 已支持原始 JSON 往返，`from_pretrained` 已支持本地目录/文件与稳定路径 source cache；WordLevel trainer 产物已支持序列化保存，并支持自定义 pre-tokenizer / 预切分 token 流 / vocab_size / HF 风格频次与词典序排序；WordPiece / BPE trainer MVP 已支持相同输入模式、continuation prefix / end-of-word suffix、`max_input_chars_per_word` 与 `vocab_size`，常见 pre-tokenizer 可序列化。Unigram trainer 和 Hub 网络下载 API 暂未实现。
 4. **性能**：BPE merge 已用优先队列(pairing heap)+惰性失效，llama 提速约 7x、与 Rust 同量级；进一步可加 word→tokens 缓存与多 MB 词表加载优化。
 5. **batch 并行**：MoonBit 单线程，encode_batch 串行；已对重复输入做批内缓存（场景定位 wasm/js 边缘端）。
 

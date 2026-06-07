@@ -433,3 +433,54 @@ test "train_wordpiece respects vocab_size cap" {
   @test.assert_eq(tok.token_to_id("[UNK]"), Some(1))
   @test.assert_eq(tok.token_to_id("a"), Some(2))
 }
+
+///|
+test "train_bpe learns frequent merges" {
+  let tok = Tokenizer::train_bpe(
+    ["lower lower low", "lower"],
+    unk_token=Some("[UNK]"),
+    special_tokens=["[PAD]"],
+    min_frequency=2,
+  )
+  @test.assert_eq(tok.token_to_id("[PAD]"), Some(0))
+  @test.assert_eq(tok.token_to_id("[UNK]"), Some(1))
+  assert_true(tok.token_to_id("lower") is Some(_))
+  let enc = tok.encode("lower low", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["lower", "low"])
+}
+
+///|
+test "train_bpe supports custom pretokenizer and reload" {
+  let pt = @pretokenizer.PreTokenizer::split(
+    ",",
+    @pretokenizer.SplitBehavior::removed(),
+    false,
+    false,
+  )
+  let tok = Tokenizer::train_bpe_with_pretokenizer(
+    ["moon,moon,bit"],
+    pt,
+    unk_token=Some("[UNK]"),
+    special_tokens=["[PAD]"],
+    min_frequency=1,
+  )
+  let loaded = Tokenizer::from_str(tok.to_json())
+  @test.assert_eq(loaded.encode("moon,bit", add_special_tokens=false).tokens, [
+    "moon", "bit",
+  ])
+}
+
+///|
+test "train_bpe respects vocab_size cap" {
+  let tok = Tokenizer::train_bpe(
+    ["lower lower"],
+    unk_token=Some("[UNK]"),
+    special_tokens=["[PAD]"],
+    vocab_size=Some(4),
+    min_frequency=1,
+  )
+  @test.assert_eq(tok.get_vocab_size(), 4)
+  @test.assert_eq(tok.token_to_id("[PAD]"), Some(0))
+  @test.assert_eq(tok.token_to_id("[UNK]"), Some(1))
+  @test.assert_eq(tok.token_to_id("lower"), None)
+}

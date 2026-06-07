@@ -236,6 +236,35 @@ def hf_trained_wordpiece_to_json_us(text: str) -> float:
     return timed_us(lambda: tok.to_str(pretty=False), 100)
 
 
+def hf_train_bpe_us(text: str) -> float:
+    corpus = [text] * 4
+
+    def train_once() -> Tokenizer:
+        tok = Tokenizer(hf_models.BPE(unk_token="[UNK]"))
+        tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+        trainer = hf_trainers.BpeTrainer(
+            vocab_size=512,
+            min_frequency=2,
+            special_tokens=["[PAD]", "[UNK]"],
+        )
+        tok.train_from_iterator(corpus, trainer=trainer)
+        return tok
+
+    return timed_us(train_once, 30)
+
+
+def hf_trained_bpe_to_json_us(text: str) -> float:
+    tok = Tokenizer(hf_models.BPE(unk_token="[UNK]"))
+    tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+    trainer = hf_trainers.BpeTrainer(
+        vocab_size=512,
+        min_frequency=2,
+        special_tokens=["[PAD]", "[UNK]"],
+    )
+    tok.train_from_iterator([text, text], trainer=trainer)
+    return timed_us(lambda: tok.to_str(pretty=False), 100)
+
+
 def hf_decoder_replace_regex_us() -> float:
     decoder = hf_decoders.Replace(Regex(r"\s+"), " ")
     tokens = [
@@ -292,6 +321,12 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     wordpiece_to_json_key = "wordpiece-trained-to_json-mixed"
     if wordpiece_to_json_key in moon:
         rows.append(Row(wordpiece_to_json_key, moon[wordpiece_to_json_key], hf_trained_wordpiece_to_json_us(CORPORA["mixed"])))
+    bpe_train_key = "bpe-train-mixedx4"
+    if bpe_train_key in moon:
+        rows.append(Row(bpe_train_key, moon[bpe_train_key], hf_train_bpe_us(CORPORA["mixed"])))
+    bpe_to_json_key = "bpe-trained-to_json-mixed"
+    if bpe_to_json_key in moon:
+        rows.append(Row(bpe_to_json_key, moon[bpe_to_json_key], hf_trained_bpe_to_json_us(CORPORA["mixed"])))
     decoder_replace_key = "decoder-replace-regex-mixed"
     if decoder_replace_key in moon:
         rows.append(Row(decoder_replace_key, moon[decoder_replace_key], hf_decoder_replace_regex_us()))

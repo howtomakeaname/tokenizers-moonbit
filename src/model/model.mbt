@@ -134,6 +134,7 @@ pub fn Model::get_vocab(self : Model) -> Map[String, Int] {
 /// this fallback is mainly for tokenizers created by the training API.
 pub fn Model::to_json(self : Model) -> String? {
   match self {
+    BPE(m) => Some(bpe_to_json(m))
     WordLevel(m) => Some(wordlevel_to_json(m))
     WordPiece(m) => Some(wordpiece_to_json(m))
     _ => None
@@ -141,24 +142,51 @@ pub fn Model::to_json(self : Model) -> String? {
 }
 
 ///|
+fn bpe_to_json(m : BPEModel) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"BPE\",\"vocab\":{")
+  write_vocab_json(sb, m.vocab_r)
+  sb.write_string("},\"merges\":")
+  write_merges_json(sb, m.merges)
+  match m.unk_token {
+    Some(unk) => {
+      sb.write_string(",\"unk_token\":")
+      write_json_string(sb, unk)
+    }
+    None => ()
+  }
+  match m.continuing_subword_prefix {
+    Some(p) => {
+      sb.write_string(",\"continuing_subword_prefix\":")
+      write_json_string(sb, p)
+    }
+    None => ()
+  }
+  match m.end_of_word_suffix {
+    Some(suf) => {
+      sb.write_string(",\"end_of_word_suffix\":")
+      write_json_string(sb, suf)
+    }
+    None => ()
+  }
+  if m.fuse_unk {
+    sb.write_string(",\"fuse_unk\":true")
+  }
+  if m.byte_fallback {
+    sb.write_string(",\"byte_fallback\":true")
+  }
+  if m.ignore_merges {
+    sb.write_string(",\"ignore_merges\":true")
+  }
+  sb.write_char('}')
+  sb.to_string()
+}
+
+///|
 fn wordlevel_to_json(m : WordLevelModel) -> String {
   let sb = StringBuilder::new()
   sb.write_string("{\"type\":\"WordLevel\",\"vocab\":{")
-  let mut first = true
-  for id in 0..<m.vocab_r.length() {
-    match m.vocab_r[id] {
-      Some(tok) => {
-        if !first {
-          sb.write_char(',')
-        }
-        first = false
-        write_json_string(sb, tok)
-        sb.write_char(':')
-        sb.write_string(id.to_string())
-      }
-      None => ()
-    }
-  }
+  write_vocab_json(sb, m.vocab_r)
   sb.write_string("},\"unk_token\":")
   write_json_string(sb, m.unk_token)
   sb.write_char('}')
@@ -175,9 +203,16 @@ fn wordpiece_to_json(m : WordPieceModel) -> String {
   sb.write_string(",\"max_input_chars_per_word\":")
   sb.write_string(m.max_input_chars_per_word.to_string())
   sb.write_string(",\"vocab\":{")
+  write_vocab_json(sb, m.vocab_r)
+  sb.write_string("}}")
+  sb.to_string()
+}
+
+///|
+fn write_vocab_json(sb : StringBuilder, vocab_r : Array[String?]) -> Unit {
   let mut first = true
-  for id in 0..<m.vocab_r.length() {
-    match m.vocab_r[id] {
+  for id in 0..<vocab_r.length() {
+    match vocab_r[id] {
       Some(tok) => {
         if !first {
           sb.write_char(',')
@@ -190,8 +225,39 @@ fn wordpiece_to_json(m : WordPieceModel) -> String {
       None => ()
     }
   }
-  sb.write_string("}}")
-  sb.to_string()
+}
+
+///|
+fn write_merges_json(
+  sb : StringBuilder,
+  merges : Map[(String, String), Int],
+) -> Unit {
+  let ordered : Array[(String, String)?] = Array::make(merges.length(), None)
+  for kv in merges {
+    let (pair, rank) = kv
+    if rank >= 0 && rank < ordered.length() {
+      ordered[rank] = Some(pair)
+    }
+  }
+  sb.write_char('[')
+  let mut first = true
+  for item in ordered {
+    match item {
+      Some(pair) => {
+        if !first {
+          sb.write_char(',')
+        }
+        first = false
+        sb.write_char('[')
+        write_json_string(sb, pair.0)
+        sb.write_char(',')
+        write_json_string(sb, pair.1)
+        sb.write_char(']')
+      }
+      None => ()
+    }
+  }
+  sb.write_char(']')
 }
 
 ///|

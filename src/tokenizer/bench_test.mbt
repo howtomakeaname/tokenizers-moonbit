@@ -326,6 +326,40 @@ fn bench_trained_wordpiece_to_json_case(
 }
 
 ///|
+fn bench_train_bpe_case(
+  b : @bench.T,
+  case_name : String,
+  text : String,
+) -> Unit {
+  let corpus = [text, text, text, text]
+  b.bench(name="bpe-train-\{case_name}", fn() {
+    b.keep(
+      Tokenizer::train_bpe(
+        corpus,
+        unk_token=Some("[UNK]"),
+        min_frequency=2,
+        special_tokens=["[PAD]"],
+        vocab_size=Some(512),
+      ),
+    )
+  })
+}
+
+///|
+fn bench_trained_bpe_to_json_case(b : @bench.T, case_name : String) -> Unit {
+  let tok = Tokenizer::train_bpe(
+    [corpus_mixed(), corpus_mixed()],
+    unk_token=Some("[UNK]"),
+    special_tokens=["[PAD]"],
+    vocab_size=Some(512),
+  )
+  b.bench(name="bpe-trained-to_json-\{case_name}", fn() {
+    let json = try? tok.to_json()
+    b.keep(json)
+  })
+}
+
+///|
 fn bench_decoder_replace_regex_case(b : @bench.T, case_name : String) -> Unit {
   let decoder = @decoder.Decoder::replace("\\s+", " ")
   let tokens = [
@@ -574,6 +608,16 @@ test "bench train wordpiece" (b : @bench.T) {
 ///|
 test "bench trained wordpiece to_json" (b : @bench.T) {
   bench_trained_wordpiece_to_json_case(b, "mixed")
+}
+
+///|
+test "bench train bpe" (b : @bench.T) {
+  bench_train_bpe_case(b, "mixedx4", corpus_mixed())
+}
+
+///|
+test "bench trained bpe to_json" (b : @bench.T) {
+  bench_trained_bpe_to_json_case(b, "mixed")
 }
 
 ///|
