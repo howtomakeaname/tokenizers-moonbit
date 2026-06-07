@@ -223,6 +223,54 @@ test "from_pretrained loads local directory or tokenizer file" {
 }
 
 ///|
+fn ensure_dir(path : String) -> Unit {
+  @fs.create_dir(path) catch {
+    _ => ()
+  }
+}
+
+///|
+test "from_pretrained resolves local HuggingFace hub cache snapshots" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hub":0,"cache":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let root = "_build/hf_cache_test"
+  let hub = root + "/hub"
+  let repo = hub + "/models--org--toy-tokenizer"
+  let refs = repo + "/refs"
+  let snapshots = repo + "/snapshots"
+  let rev = snapshots + "/abc123"
+  ensure_dir(root)
+  ensure_dir(hub)
+  ensure_dir(repo)
+  ensure_dir(refs)
+  ensure_dir(snapshots)
+  ensure_dir(rev)
+  @fs.write_string_to_file(refs + "/main", "abc123\n") catch {
+    _ => ()
+  }
+  @fs.write_string_to_file(rev + "/tokenizer.json", json) catch {
+    _ => ()
+  }
+
+  let explicit = Tokenizer::from_pretrained_cached(
+    "org/toy-tokenizer",
+    cache_dir=Some(hub),
+  )
+  @test.assert_eq(explicit.encode("hub cache", add_special_tokens=false).ids, [
+    0, 1,
+  ])
+
+  @sys.set_env_var("HUGGINGFACE_HUB_CACHE", hub)
+  let implicit = Tokenizer::from_pretrained("org/toy-tokenizer")
+  @test.assert_eq(
+    implicit.encode("cache missing", add_special_tokens=false).ids,
+    [1, 2],
+  )
+}
+
+///|
 test "save invalidates from_pretrained source cache" {
   let path = "_build/tokenizer_cache_invalidation.json"
   let json1 =

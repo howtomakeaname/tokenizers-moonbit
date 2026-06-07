@@ -10,10 +10,20 @@ Chinese version: [`docs/zh/api.md`](./zh/api.md)
 ```moonbit
 fn Tokenizer::from_str(json : String) -> Tokenizer raise TokenizerError
 fn from_file(path : String) -> Tokenizer raise TokenizerError
+fn from_pretrained(path_or_model_id : String) -> Tokenizer raise TokenizerError
+fn from_pretrained_cached(
+  model_id : String, revision? : String = "main", cache_dir? : String? = None,
+) -> Tokenizer raise TokenizerError
 ```
 
 - `from_str` parses `tokenizer.json` text; it does no file IO and works on all backends.
 - `from_file` reads via `moonbitlang/x/fs` and then calls `from_str`.
+- `from_pretrained` accepts a tokenizer JSON file, a local directory containing
+  `tokenizer.json`, or an already-populated HuggingFace Hub cache entry. It does
+  not perform network downloads; it resolves `$HUGGINGFACE_HUB_CACHE`,
+  `$HF_HOME/hub`, then `$HOME/.cache/huggingface/hub`.
+- `from_pretrained_cached` lets callers provide an explicit local Hub cache root
+  and revision, matching offline `local_files_only=True` workflows.
 
 ## Encoding / decoding
 

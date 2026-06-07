@@ -425,6 +425,7 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
         encode_batch_key = f"{model}-encode-batch-mixedx8"
         load_key = f"{model}-from_str"
         pretrained_key = f"{model}-from_pretrained-file"
+        pretrained_hub_cache_key = f"{model}-from_pretrained-hub-cache"
         to_json_key = f"{model}-to_json"
         if decode_key in moon:
             rows.append(Row(decode_key, moon[decode_key], hf_decode_us(tok, CORPORA["mixed"])))
@@ -438,6 +439,10 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
             # Local file from_pretrained is intentionally equivalent to HF's
             # from_file baseline; Hub/network fetching is outside this script.
             rows.append(Row(pretrained_key, moon[pretrained_key], hf_load_us(path)))
+        if pretrained_hub_cache_key in moon:
+            # MoonBit resolves the local HF cache metadata before reading the
+            # same tokenizer.json payload; compare against HF's file load core.
+            rows.append(Row(pretrained_hub_cache_key, moon[pretrained_hub_cache_key], hf_load_us(path)))
         if to_json_key in moon:
             rows.append(Row(to_json_key, moon[to_json_key], hf_to_json_us(tok)))
     return rows

@@ -205,6 +205,42 @@ fn bench_from_pretrained_case(b : @bench.T, model : String) -> Unit {
 }
 
 ///|
+fn bench_ensure_dir(path : String) -> Unit {
+  @fs.create_dir(path) catch {
+    _ => ()
+  }
+}
+
+///|
+fn bench_from_pretrained_hub_cache_case(b : @bench.T, model : String) -> Unit {
+  let path = "tests/data/\{model}.full.json"
+  guard load_text(path) is Some(content) else { return }
+  let root = "_build/bench_hf_cache"
+  let repo = root + "/models--bench--" + model
+  let refs = repo + "/refs"
+  let snapshots = repo + "/snapshots"
+  let rev = snapshots + "/benchrev"
+  bench_ensure_dir(root)
+  bench_ensure_dir(repo)
+  bench_ensure_dir(refs)
+  bench_ensure_dir(snapshots)
+  bench_ensure_dir(rev)
+  @fs.write_string_to_file(refs + "/main", "benchrev\n") catch {
+    _ => ()
+  }
+  @fs.write_string_to_file(rev + "/tokenizer.json", content) catch {
+    _ => ()
+  }
+  b.bench(name="\{model}-from_pretrained-hub-cache", fn() {
+    let t = try? Tokenizer::from_pretrained_cached(
+      "bench/" + model,
+      cache_dir=Some(root),
+    )
+    b.keep(t)
+  })
+}
+
+///|
 fn bench_train_wordlevel_case(
   b : @bench.T,
   case_name : String,
@@ -638,6 +674,11 @@ test "bench from_pretrained file matrix" (b : @bench.T) {
     ] {
     bench_from_pretrained_case(b, model)
   }
+}
+
+///|
+test "bench from_pretrained hub cache" (b : @bench.T) {
+  bench_from_pretrained_hub_cache_case(b, "gpt2")
 }
 
 ///|
