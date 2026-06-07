@@ -22,7 +22,8 @@ pub fn PreTokenizer::pre_tokenize(
       metaspace_pre_tokenize(
         text, replacement, prepend_scheme, split, base_offset,
       )
-    Split(pattern~, ..) => split_pre_tokenize(text, pattern, base_offset)
+    Split(pattern~, behavior~, invert~, regex~) =>
+      split_pre_tokenize(text, pattern, behavior, invert, regex, base_offset)
     Digits(individual_digits~) =>
       digits_split(text, individual_digits, base_offset)
     Delimiter(delimiter~) => delimiter_split(text, delimiter, base_offset)
@@ -41,6 +42,9 @@ pub fn PreTokenizer::pre_tokenize(
 fn split_pre_tokenize(
   text : String,
   pattern : String,
+  behavior : SplitBehavior,
+  invert : Bool,
+  regex : Bool,
   base_offset : Int,
 ) -> Array[@types.Split] {
   let pieces = if is_cjk_range_pattern(pattern) {
@@ -58,10 +62,217 @@ fn split_pre_tokenize(
   } else if is_clip_pattern(pattern) {
     clip_split(text)
   } else {
-    // Unknown pattern: leave the text as a single piece (documented limit).
-    [text]
+    return split_with_simple_pattern(
+      text, pattern, behavior, invert, regex, base_offset,
+    )
   }
   pieces_to_splits(pieces, base_offset)
+}
+
+///|
+priv struct MatchSpan {
+  start : Int
+  stop : Int
+}
+
+///|
+fn split_with_simple_pattern(
+  text : String,
+  pattern : String,
+  behavior : SplitBehavior,
+  invert : Bool,
+  regex : Bool,
+  base_offset : Int,
+) -> Array[@types.Split] {
+  let chars = text.to_array()
+  let matches = if regex {
+    simple_regex_matches(chars, pattern)
+  } else {
+    literal_matches(chars, pattern)
+  }
+  match matches {
+    Some(spans) =>
+      apply_split_matches(chars, spans, behavior, invert, base_offset)
+    None =>
+      [
+        @types.Split::{
+          value: text,
+          offsets: (base_offset, base_offset + chars.length()),
+        },
+      ]
+  }
+}
+
+///|
+fn simple_regex_matches(
+  chars : Array[Char],
+  pattern : String,
+) -> Array[MatchSpan]? {
+  if pattern == "\\s+" {
+    Some(run_matches(chars, fn(c) { is_space(c) }))
+  } else if pattern == "[\\r\\n]" || pattern == "[\r\n]" {
+    Some(run_matches(chars, fn(c) { c == '\r' || c == '\n' }))
+  } else if pattern == "\\p{N}{1,3}" || pattern == "[0-9][0-9][0-9]" {
+    Some(number_run_matches(chars, max_digits=3))
+  } else {
+    None
+  }
+}
+
+///|
+fn run_matches(chars : Array[Char], pred : (Char) -> Bool) -> Array[MatchSpan] {
+  let out : Array[MatchSpan] = []
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let start = i
+      while i < n && pred(chars[i]) {
+        i = i + 1
+      }
+      out.push({ start, stop: i })
+    } else {
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
+fn number_run_matches(
+  chars : Array[Char],
+  max_digits~ : Int,
+) -> Array[MatchSpan] {
+  let out : Array[MatchSpan] = []
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if is_number(chars[i]) {
+      let start = i
+      let mut count = 0
+      while i < n && is_number(chars[i]) && count < max_digits {
+        i = i + 1
+        count = count + 1
+      }
+      out.push({ start, stop: i })
+    } else {
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
+fn literal_matches(chars : Array[Char], pattern : String) -> Array[MatchSpan]? {
+  if pattern.is_empty() {
+    return None
+  }
+  let pat = pattern.to_array()
+  let out : Array[MatchSpan] = []
+  let n = chars.length()
+  let m = pat.length()
+  let mut i = 0
+  while i < n {
+    if i + m <= n && chars_match_at(chars, i, pat) {
+      out.push({ start: i, stop: i + m })
+      i = i + m
+    } else {
+      i = i + 1
+    }
+  }
+  Some(out)
+}
+
+///|
+fn chars_match_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
+  for k in 0..<pat.length() {
+    if src[at + k] != pat[k] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn apply_split_matches(
+  chars : Array[Char],
+  matches : Array[MatchSpan],
+  behavior : SplitBehavior,
+  invert : Bool,
+  base_offset : Int,
+) -> Array[@types.Split] {
+  let out : Array[@types.Split] = []
+  let mut cursor = 0
+  let mut pending_next : MatchSpan? = None
+  fn emit_span(span : MatchSpan) -> Unit {
+    if span.stop <= span.start {
+      return
+    }
+    out.push({
+      value: substr(chars, span.start, span.stop),
+      offsets: (base_offset + span.start, base_offset + span.stop),
+    })
+  }
+  fn emit_non_delim(span : MatchSpan) -> Unit {
+    match pending_next {
+      Some(p) => {
+        out.push({
+          value: substr(chars, p.start, p.stop) +
+          substr(chars, span.start, span.stop),
+          offsets: (base_offset + p.start, base_offset + span.stop),
+        })
+        pending_next = None
+      }
+      None => emit_span(span)
+    }
+  }
+  fn emit_delim(span : MatchSpan) -> Unit {
+    match behavior {
+      Removed => ()
+      Isolated | Contiguous => emit_span(span)
+      MergedWithPrevious =>
+        if out.length() > 0 {
+          let idx = out.length() - 1
+          let prev = out[idx]
+          out[idx] = {
+            value: prev.value + substr(chars, span.start, span.stop),
+            offsets: (prev.offsets.0, base_offset + span.stop),
+          }
+        } else {
+          emit_span(span)
+        }
+      MergedWithNext => pending_next = Some(span)
+    }
+  }
+  for m in matches {
+    if cursor < m.start {
+      let gap = { start: cursor, stop: m.start }
+      if invert {
+        emit_delim(gap)
+      } else {
+        emit_non_delim(gap)
+      }
+    }
+    if invert {
+      emit_non_delim(m)
+    } else {
+      emit_delim(m)
+    }
+    cursor = m.stop
+  }
+  if cursor < chars.length() {
+    let tail = { start: cursor, stop: chars.length() }
+    if invert {
+      emit_delim(tail)
+    } else {
+      emit_non_delim(tail)
+    }
+  }
+  match pending_next {
+    Some(p) => emit_span(p)
+    None => ()
+  }
+  out
 }
 
 // Recognize the Qwen2/Qwen3/Llama-3 pattern (single-digit \p{N}, (?i:...)).
