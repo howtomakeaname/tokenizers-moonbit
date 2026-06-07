@@ -45,6 +45,7 @@ pub struct WordPieceModel {
   unk_token : String
   continuing_subword_prefix : String
   max_input_chars_per_word : Int
+  cache : Map[String, Array[@types.Token]]
 }
 
 ///|

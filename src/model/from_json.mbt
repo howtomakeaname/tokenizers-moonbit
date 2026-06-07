@@ -166,6 +166,7 @@ fn parse_wordpiece(
       "max_input_chars_per_word",
       default=100,
     ),
+    cache: {},
   }
 }
 

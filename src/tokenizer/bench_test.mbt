@@ -177,6 +177,16 @@ fn bench_offset_lookup_case(
 }
 
 ///|
+fn bench_wordpiece_repeated_case(b : @bench.T) -> Unit raise {
+  guard load_model("bert") is Some(tok) else { return }
+  let text = "tokenization tokenization tokenization tokenization tokenization"
+  ignore(tok.encode(text, add_special_tokens=false))
+  b.bench(name="bert-wordpiece-cache-repeat", fn() {
+    b.keep(tok.encode(text, add_special_tokens=false))
+  })
+}
+
+///|
 fn bench_load_case(b : @bench.T, model : String) -> Unit {
   guard load_text("tests/data/\{model}.full.json") is Some(json) else { return }
   b.bench(name="\{model}-from_str", fn() {
@@ -628,6 +638,11 @@ test "bench offset lookup matrix" (b : @bench.T) {
   for model in ["gpt2", "bert", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder"] {
     bench_offset_lookup_case(b, model, "mixed", mixed)
   }
+}
+
+///|
+test "bench wordpiece repeated word cache" (b : @bench.T) {
+  bench_wordpiece_repeated_case(b)
 }
 
 ///|

@@ -133,6 +133,18 @@ test "from_str decodes optional components and added tokens" {
 }
 
 ///|
+test "WordPiece repeated words keep offsets with word cache" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"token":1,"##ization":2},"unk_token":"[UNK]","continuing_subword_prefix":"##"}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode("tokenization tokenization", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["token", "##ization", "token", "##ization"])
+  @test.assert_eq(enc.offsets, [(0, 5), (5, 12), (13, 18), (18, 25)])
+}
+
+///|
 test "from_str rejects non-object root" {
   let mut raised = false
   try Tokenizer::from_str("[1, 2, 3]") |> ignore catch {

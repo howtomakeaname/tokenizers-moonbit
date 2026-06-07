@@ -197,6 +197,7 @@ pub fn Model::train_wordpiece_from_tokens(
     unk_token,
     continuing_subword_prefix,
     max_input_chars_per_word,
+    cache: {},
   })
 }
 

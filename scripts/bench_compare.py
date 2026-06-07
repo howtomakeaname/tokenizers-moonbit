@@ -402,6 +402,15 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     split_digit_key = "pretokenizer-split-digit-regex-mixed"
     if split_digit_key in moon:
         rows.append(Row(split_digit_key, moon[split_digit_key], hf_split_digit_regex_us()))
+    wordpiece_cache_key = "bert-wordpiece-cache-repeat"
+    if wordpiece_cache_key in moon:
+        bert_tok, _ = load_tokenizer("bert")
+        if bert_tok is not None:
+            rows.append(Row(
+                wordpiece_cache_key,
+                moon[wordpiece_cache_key],
+                hf_encode_us(bert_tok, "tokenization tokenization tokenization tokenization tokenization"),
+            ))
     for model in models:
         tok, path = load_tokenizer(model)
         if tok is None:

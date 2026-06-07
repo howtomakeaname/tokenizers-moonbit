@@ -17,15 +17,17 @@ pub fn WordPieceModel::tokenize(
   if n == 0 {
     return []
   }
+  match self.cache.get(word) {
+    Some(cached) => return shift_wordpiece_tokens(cached, offset)
+    None => ()
+  }
   let unk_id = self.vocab.get(self.unk_token).unwrap_or(-1)
   if n > self.max_input_chars_per_word {
-    return [
-      @types.Token::{
-        id: unk_id,
-        value: self.unk_token,
-        offsets: (offset, offset + n),
-      },
+    let rel = [
+      @types.Token::{ id: unk_id, value: self.unk_token, offsets: (0, n) },
     ]
+    self.cache[word] = rel
+    return shift_wordpiece_tokens(rel, offset)
   }
   let out : Array[@types.Token] = []
   let mut start = 0
@@ -55,23 +57,37 @@ pub fn WordPieceModel::tokenize(
         out.push(@types.Token::{
           id: self.vocab.get(tok).unwrap_or(unk_id),
           value: tok,
-          offsets: (offset + start, offset + cur_end),
+          offsets: (start, cur_end),
         })
         start = cur_end
       }
     }
   }
   if is_bad {
-    [
-      @types.Token::{
-        id: unk_id,
-        value: self.unk_token,
-        offsets: (offset, offset + n),
-      },
+    let rel = [
+      @types.Token::{ id: unk_id, value: self.unk_token, offsets: (0, n) },
     ]
+    self.cache[word] = rel
+    shift_wordpiece_tokens(rel, offset)
   } else {
-    out
+    self.cache[word] = out
+    shift_wordpiece_tokens(out, offset)
   }
+}
+
+///|
+fn shift_wordpiece_tokens(
+  tokens : Array[@types.Token],
+  offset : Int,
+) -> Array[@types.Token] {
+  if offset == 0 {
+    return tokens.copy()
+  }
+  tokens.map(t => @types.Token::{
+    id: t.id,
+    value: t.value,
+    offsets: (t.offsets.0 + offset, t.offsets.1 + offset),
+  })
 }
 
 ///|
