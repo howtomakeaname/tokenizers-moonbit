@@ -205,6 +205,22 @@ fn bench_from_pretrained_case(b : @bench.T, model : String) -> Unit {
 }
 
 ///|
+fn bench_train_wordlevel_case(
+  b : @bench.T,
+  case_name : String,
+  text : String,
+) -> Unit {
+  let corpus = [text, text, text, text]
+  b.bench(name="wordlevel-train-\{case_name}", fn() {
+    b.keep(
+      Tokenizer::train_wordlevel(corpus, unk_token="[UNK]", min_frequency=1, special_tokens=[
+        "[PAD]",
+      ]),
+    )
+  })
+}
+
+///|
 fn bytelevel_trim_fixture(trim_offsets : Bool) -> Tokenizer raise {
   let trim = if trim_offsets { "true" } else { "false" }
   let json =
@@ -365,4 +381,9 @@ test "bench from_pretrained file matrix" (b : @bench.T) {
   for model in ["gpt2", "bert", "t5", "llama", "Qwen2.5", "qwen3_coder"] {
     bench_from_pretrained_case(b, model)
   }
+}
+
+///|
+test "bench train wordlevel" (b : @bench.T) {
+  bench_train_wordlevel_case(b, "mixedx4", corpus_mixed())
 }

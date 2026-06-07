@@ -146,7 +146,7 @@
 | P2 | save / to_json / from_file 对称性 | ✅ | `to_json` 保留原始 tokenizer.json；`Tokenizer::from_file` / `save` 可往返；补 serialization 测试与 to_json bench |
 | P3 | `from_pretrained` / Hub 集成 | 🚧 | 已支持本地 HF 目录（`tokenizer.json`）和 tokenizer 文件路径；Hub 网络下载需外部脚本/应用层集成 |
 | P3 | batch 并行 / word cache | 🚧 | BPE/Unigram word cache 已完成；encode_batch 对重复输入做单批缓存并补 bench；并行仍待运行时能力评估 |
-| P4 | trainer / training API | ⏸ | 体量较大，推理兼容性完成后再启动 |
+| P4 | trainer / training API | 🚧 | 已提供确定性 WordLevel trainer MVP（WhitespaceSplit + min_frequency + special tokens）并加入 HF trainer bench；BPE/WordPiece/Unigram trainer 待排期 |
 
 ### Benchmark 对比要求
 

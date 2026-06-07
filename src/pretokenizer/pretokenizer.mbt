@@ -36,6 +36,13 @@ pub enum PreTokenizer {
 }
 
 ///|
+/// Public constructor for a WhitespaceSplit pre-tokenizer, used by higher-level
+/// training helpers without exposing cross-package enum construction details.
+pub fn PreTokenizer::whitespace_split() -> PreTokenizer {
+  WhitespaceSplit
+}
+
+///|
 /// Parse a pre_tokenizer config object.
 pub fn PreTokenizer::from_json(
   j : Json,

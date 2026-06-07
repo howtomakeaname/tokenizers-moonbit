@@ -201,3 +201,21 @@ test "encode_batch reuses duplicate inputs without aliasing encodings" {
   @test.assert_eq(batch[0].attention_mask, [1, 0])
   @test.assert_eq(batch[2].attention_mask, [1, 0])
 }
+
+///|
+test "train_wordlevel builds deterministic tokenizer" {
+  let tok = Tokenizer::train_wordlevel(
+    ["hello moon", "hello tokenizer", "rare"],
+    unk_token="[UNK]",
+    min_frequency=2,
+    special_tokens=["[PAD]"],
+  )
+  @test.assert_eq(tok.token_to_id("[PAD]"), Some(0))
+  @test.assert_eq(tok.token_to_id("[UNK]"), Some(1))
+  @test.assert_eq(tok.token_to_id("hello"), Some(2))
+  @test.assert_eq(tok.token_to_id("moon"), None)
+  let enc = tok.encode("hello moon", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["hello", "[UNK]"])
+  @test.assert_eq(enc.ids, [2, 1])
+  @test.assert_eq(tok.decode(enc.ids, skip_special_tokens=false), "hello[UNK]")
+}

@@ -24,6 +24,9 @@ from bench_python import CORPORA, DATA, MODELS
 
 try:
     from tokenizers import Tokenizer
+    from tokenizers import models as hf_models
+    from tokenizers import pre_tokenizers as hf_pre_tokenizers
+    from tokenizers import trainers as hf_trainers
 except Exception as exc:  # pragma: no cover - environment diagnostic
     print("ERROR: Python package 'tokenizers' is required: pip install tokenizers", file=sys.stderr)
     raise SystemExit(2) from exc
@@ -142,9 +145,28 @@ def hf_to_json_us(tok: Tokenizer) -> float:
     return timed_us(lambda: tok.to_str(pretty=False), 30)
 
 
+def hf_train_wordlevel_us(text: str) -> float:
+    corpus = [text] * 4
+
+    def train_once() -> Tokenizer:
+        tok = Tokenizer(hf_models.WordLevel(unk_token="[UNK]"))
+        tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+        trainer = hf_trainers.WordLevelTrainer(
+            min_frequency=1,
+            special_tokens=["[PAD]", "[UNK]"],
+        )
+        tok.train_from_iterator(corpus, trainer=trainer)
+        return tok
+
+    return timed_us(train_once, 60)
+
+
 def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     moon = run_moon_bench(target)
     rows: list[Row] = []
+    train_key = "wordlevel-train-mixedx4"
+    if train_key in moon:
+        rows.append(Row(train_key, moon[train_key], hf_train_wordlevel_us(CORPORA["mixed"])))
     for model in models:
         tok, path = load_tokenizer(model)
         if tok is None:
