@@ -3,7 +3,8 @@
 // This is intentionally small but useful for inference users that need to build
 // a vocabulary from local corpora without depending on HF. It mirrors the common
 // WordLevelTrainer behavior: reserve special tokens first, count whitespace
-// pre-tokens, then keep tokens meeting min_frequency in first-seen order.
+// pre-tokens, then keep tokens meeting min_frequency sorted by frequency
+// descending with lexical tie-breaks.
 
 ///|
 pub fn Model::train_wordlevel(
@@ -29,7 +30,7 @@ pub fn Model::train_wordlevel(
 ///|
 /// Train a deterministic WordLevel model from pre-tokenized token streams.
 /// Special tokens are assigned first, followed by `unk_token`, then corpus tokens
-/// in first-seen order that meet `min_frequency`.
+/// ordered by frequency descending with lexical tie-breaks.
 pub fn Model::train_wordlevel_from_tokens(
   tokenized_texts : Array[Array[String]],
   unk_token? : String = "[UNK]",
@@ -66,16 +67,36 @@ pub fn Model::train_wordlevel_from_tokens(
     add_token(tok)
   }
   add_token(unk_token)
-  for tok in order {
-    match counts.get(tok) {
-      Some(n) =>
-        if n >= min_frequency && under_vocab_limit(vocab.length(), vocab_size) {
-          add_token(tok)
-        }
-      None => ()
+  let candidates = sorted_wordlevel_candidates(order, counts, min_frequency)
+  for item in candidates {
+    if under_vocab_limit(vocab.length(), vocab_size) {
+      add_token(item.0)
     }
   }
   WordLevel({ vocab, vocab_r, unk_token })
+}
+
+///|
+fn sorted_wordlevel_candidates(
+  order : Array[String],
+  counts : Map[String, Int],
+  min_frequency : Int,
+) -> Array[(String, Int)] {
+  let candidates : Array[(String, Int)] = []
+  for tok in order {
+    match counts.get(tok) {
+      Some(n) => if n >= min_frequency { candidates.push((tok, n)) }
+      None => ()
+    }
+  }
+  candidates.sort_by(fn(a, b) {
+    if a.1 != b.1 {
+      b.1.compare(a.1)
+    } else {
+      a.0.compare(b.0)
+    }
+  })
+  candidates
 }
 
 ///|

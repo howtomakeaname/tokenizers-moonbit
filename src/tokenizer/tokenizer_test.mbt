@@ -279,6 +279,21 @@ test "train_wordlevel builds deterministic tokenizer" {
 }
 
 ///|
+test "train_wordlevel orders tokens like HF by frequency then token" {
+  let tok = Tokenizer::train_wordlevel(
+    ["b a a c c c d", "b b a"],
+    unk_token="[UNK]",
+    special_tokens=["[PAD]"],
+  )
+  @test.assert_eq(tok.token_to_id("[PAD]"), Some(0))
+  @test.assert_eq(tok.token_to_id("[UNK]"), Some(1))
+  @test.assert_eq(tok.token_to_id("a"), Some(2))
+  @test.assert_eq(tok.token_to_id("b"), Some(3))
+  @test.assert_eq(tok.token_to_id("c"), Some(4))
+  @test.assert_eq(tok.token_to_id("d"), Some(5))
+}
+
+///|
 test "train_wordlevel supports custom pretokenizer" {
   let pt = @pretokenizer.PreTokenizer::split(
     ",",

@@ -82,7 +82,8 @@ enc.attention_mask // [1, 1]
   `enable_padding`; MoonBit uses chainable `with_truncation` / `with_padding`.
 - **Training:** deterministic WordLevel training is supported, including custom
   pre-tokenizers, pre-tokenized token streams, `min_frequency`, `special_tokens`,
-  and `vocab_size`. BPE / WordPiece / Unigram trainers are not implemented yet.
+  `vocab_size`, and HF-style frequency/lexical vocab ordering. BPE / WordPiece /
+  Unigram trainers are not implemented yet.
 
 ## Verified models
 

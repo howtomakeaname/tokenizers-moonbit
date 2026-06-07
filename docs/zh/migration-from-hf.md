@@ -59,5 +59,5 @@ enc.attention_mask
 - HF 使用 `enable_truncation` / `enable_padding` 修改 tokenizer；MoonBit 使用
   `with_truncation` / `with_padding` 链式配置。
 - 已支持确定性 WordLevel 训练（含自定义 pre-tokenizer、已预切分 token 流、
-  `min_frequency`、`special_tokens`、`vocab_size`）；BPE / WordPiece / Unigram
-  trainer 尚未实现。
+  `min_frequency`、`special_tokens`、`vocab_size` 以及 HF 风格的频次/词典序词表排序）；
+  BPE / WordPiece / Unigram trainer 尚未实现。

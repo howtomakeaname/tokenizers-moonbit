@@ -73,4 +73,5 @@ GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E
   dense 反向词表。
 - **训练：** 已支持确定性 WordLevel 训练，可使用默认 `WhitespaceSplit`、调用方传入的
   pre-tokenizer 或已预切分 token 流，并支持 `min_frequency`、`special_tokens`、
-  `vocab_size`；BPE / WordPiece / Unigram trainer 待补。
+  `vocab_size` 以及 HF 风格的频次/词典序词表排序；BPE / WordPiece / Unigram
+  trainer 待补。
