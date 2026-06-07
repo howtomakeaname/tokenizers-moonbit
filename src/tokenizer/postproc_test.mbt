@@ -96,3 +96,25 @@ test "roberta post-processor trims bytelevel offsets before specials" {
   @test.assert_eq(enc.offsets, [(0, 0), (0, 1), (2, 2), (3, 4), (0, 0)])
   @test.assert_eq(enc.sequence_ids(), [None, Some(0), Some(0), Some(0), None])
 }
+
+///|
+test "template processing parses HF string DSL" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"<s>":0,"</s>":1,"hello":2,"world":3,"[UNK]":4},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"TemplateProcessing",
+    #|   "single":"<s>:0 $A </s>:0",
+    #|   "pair":"<s>:0 $A </s>:0 $B:1 </s>:1",
+    #|   "special_tokens":{"<s>":{"id":"<s>","ids":[0],"tokens":["<s>"]},"</s>":{"id":"</s>","ids":[1],"tokens":["</s>"]}}}}
+  let tok = Tokenizer::from_str(json)
+  let single = tok.encode("hello", add_special_tokens=true)
+  @test.assert_eq(single.tokens, ["<s>", "hello", "</s>"])
+  @test.assert_eq(single.type_ids, [0, 0, 0])
+  @test.assert_eq(single.special_tokens_mask, [1, 0, 1])
+
+  let pair = tok.encode_pair("hello", "world", add_special_tokens=true)
+  @test.assert_eq(pair.tokens, ["<s>", "hello", "</s>", "world", "</s>"])
+  @test.assert_eq(pair.type_ids, [0, 0, 0, 1, 1])
+  @test.assert_eq(pair.sequence_ids(), [None, Some(0), None, Some(1), None])
+}

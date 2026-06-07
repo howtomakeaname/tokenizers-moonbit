@@ -109,7 +109,7 @@
 |---|---|
 | TemplateProcessing（预解析 pieces）/ Bert / Roberta / ByteLevel / Sequence | ✅ |
 | RobertaProcessing pair type_ids | ✅ | 与 HF 一致，pair 两段均为 type_id 0 |
-| TemplateProcessing 字符串模板 DSL（$A/$B/$0:1）| ⬜ R6 |
+| TemplateProcessing 字符串模板 DSL（$A/$B/$0:1）| ✅ |
 
 ### Tokenizer 核心
 | 能力 | 状态 |

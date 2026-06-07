@@ -135,35 +135,144 @@ fn parse_pieces(
   obj : Map[String, Json],
   key : String,
 ) -> Array[Piece] raise @types.TokenizerError {
-  let arr = match obj.get(key) {
-    Some(Array(a)) => a
-    _ => []
-  }
   let out : Array[Piece] = []
-  for entry in arr {
-    let eobj = @types.as_object(entry, "template piece")
-    match eobj.get("Sequence") {
-      Some(Object(s)) =>
-        out.push(
-          SequenceRef(
-            id=@types.get_str(s, "id", default="A"),
-            type_id=@types.get_int(s, "type_id", default=0),
-          ),
-        )
-      _ =>
-        match eobj.get("SpecialToken") {
-          Some(Object(s)) =>
-            out.push(
-              SpecialTokenRef(
-                id=@types.get_str(s, "id", default=""),
-                type_id=@types.get_int(s, "type_id", default=0),
-              ),
-            )
+  match obj.get(key) {
+    Some(String(s)) =>
+      for p in parse_template_string(s) {
+        out.push(p)
+      }
+    Some(Array(arr)) =>
+      for entry in arr {
+        match entry {
+          String(s) => out.push(parse_template_token(s))
+          Object(eobj) =>
+            match eobj.get("Sequence") {
+              Some(Object(s)) =>
+                out.push(
+                  SequenceRef(
+                    id=@types.get_str(s, "id", default="A"),
+                    type_id=@types.get_int(s, "type_id", default=0),
+                  ),
+                )
+              _ =>
+                match eobj.get("SpecialToken") {
+                  Some(Object(s)) =>
+                    out.push(
+                      SpecialTokenRef(
+                        id=@types.get_str(s, "id", default=""),
+                        type_id=@types.get_int(s, "type_id", default=0),
+                      ),
+                    )
+                  _ => raise @types.ParseError("unknown template piece")
+                }
+            }
           _ => raise @types.ParseError("unknown template piece")
         }
+      }
+    _ => ()
+  }
+  out
+}
+
+///|
+fn parse_template_string(
+  s : String,
+) -> Array[Piece] raise @types.TokenizerError {
+  let out : Array[Piece] = []
+  for tok in split_template_ws(s) {
+    out.push(parse_template_token(tok))
+  }
+  out
+}
+
+///|
+fn parse_template_token(tok : String) -> Piece raise @types.TokenizerError {
+  if tok.is_empty() {
+    raise @types.ParseError("empty template token")
+  }
+  let (id, type_id) = split_template_type(tok)
+  if id.has_prefix("$") {
+    let seq = drop_first_char(id)
+    let seq = match seq {
+      "0" => "A"
+      "1" => "B"
+      "A" | "B" => seq
+      other => raise @types.ParseError("unknown template sequence: \{other}")
+    }
+    SequenceRef(id=seq, type_id~)
+  } else {
+    SpecialTokenRef(id~, type_id~)
+  }
+}
+
+///|
+fn split_template_ws(s : String) -> Array[String] {
+  let chars = s.to_array()
+  let out : Array[String] = []
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    while i < n && is_template_ws(chars[i]) {
+      i = i + 1
+    }
+    let start = i
+    while i < n && !is_template_ws(chars[i]) {
+      i = i + 1
+    }
+    if i > start {
+      out.push(slice_chars(chars, start, i))
     }
   }
   out
+}
+
+///|
+fn split_template_type(tok : String) -> (String, Int) {
+  let chars = tok.to_array()
+  for i in 0..<chars.length() {
+    if chars[i] == ':' {
+      return (
+        slice_chars(chars, 0, i),
+        parse_decimal(slice_chars(chars, i + 1, chars.length())),
+      )
+    }
+  }
+  (tok, 0)
+}
+
+///|
+fn parse_decimal(s : String) -> Int {
+  let mut out = 0
+  for c in s {
+    if c >= '0' && c <= '9' {
+      out = out * 10 + (c.to_int() - '0'.to_int())
+    }
+  }
+  out
+}
+
+///|
+fn drop_first_char(s : String) -> String {
+  let chars = s.to_array()
+  if chars.length() <= 1 {
+    ""
+  } else {
+    slice_chars(chars, 1, chars.length())
+  }
+}
+
+///|
+fn is_template_ws(c : Char) -> Bool {
+  c == ' ' || c == '\t' || c == '\n' || c == '\r'
+}
+
+///|
+fn slice_chars(chars : Array[Char], start : Int, stop : Int) -> String {
+  let sb = StringBuilder::new()
+  for i in start..<stop {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
 }
 
 ///|
