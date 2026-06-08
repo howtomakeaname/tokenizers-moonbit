@@ -60,6 +60,14 @@ pub fn simple_split_regex_matches(
     pattern == "[^\\w]+" ||
     pattern == "[^A-Za-z0-9_]+" {
     Some(run_matches(chars, fn(c) { !is_word_char(c) }))
+  } else if pattern == "[A-Za-z]+" || pattern == "[a-zA-Z]+" {
+    Some(run_matches(chars, fn(c) { is_ascii_letter(c) }))
+  } else if pattern == "^[A-Za-z]+" || pattern == "^[a-zA-Z]+" {
+    Some(leading_run_match(chars, fn(c) { is_ascii_letter(c) }))
+  } else if pattern == "[A-Za-z]+$" || pattern == "[a-zA-Z]+$" {
+    Some(trailing_run_match(chars, fn(c) { is_ascii_letter(c) }))
+  } else if pattern == "[^A-Za-z]+" || pattern == "[^a-zA-Z]+" {
+    Some(run_matches(chars, fn(c) { !is_ascii_letter(c) }))
   } else if pattern == "\\p{L}+" ||
     pattern == "\\p{Letter}+" ||
     pattern == "[\\p{L}]+" ||
@@ -230,6 +238,14 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\W+" ||
   pattern == "[^\\w]+" ||
   pattern == "[^A-Za-z0-9_]+" ||
+  pattern == "[A-Za-z]+" ||
+  pattern == "[a-zA-Z]+" ||
+  pattern == "^[A-Za-z]+" ||
+  pattern == "^[a-zA-Z]+" ||
+  pattern == "[A-Za-z]+$" ||
+  pattern == "[a-zA-Z]+$" ||
+  pattern == "[^A-Za-z]+" ||
+  pattern == "[^a-zA-Z]+" ||
   pattern == "\\p{L}+" ||
   pattern == "\\p{Letter}+" ||
   pattern == "[\\p{L}]+" ||

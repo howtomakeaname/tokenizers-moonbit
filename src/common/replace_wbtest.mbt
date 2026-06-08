@@ -103,6 +103,24 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(non_words[0].stop, 4)
   @test.assert_eq(non_words[1].start, 5)
   @test.assert_eq(non_words[1].stop, 6)
+  guard simple_split_regex_matches("abé_12,CD中".to_array(), "[A-Za-z]+")
+    is Some(ascii_letters) else {
+    abort("expected ASCII letter matches")
+  }
+  @test.assert_eq(ascii_letters.length(), 2)
+  @test.assert_eq(ascii_letters[0].start, 0)
+  @test.assert_eq(ascii_letters[0].stop, 2)
+  @test.assert_eq(ascii_letters[1].start, 7)
+  @test.assert_eq(ascii_letters[1].stop, 9)
+  guard simple_split_regex_matches("abé_12,CD中".to_array(), "[^A-Za-z]+")
+    is Some(non_ascii_letters) else {
+    abort("expected non-ASCII-letter matches")
+  }
+  @test.assert_eq(non_ascii_letters.length(), 2)
+  @test.assert_eq(non_ascii_letters[0].start, 2)
+  @test.assert_eq(non_ascii_letters[0].stop, 7)
+  @test.assert_eq(non_ascii_letters[1].start, 9)
+  @test.assert_eq(non_ascii_letters[1].stop, 10)
   guard simple_split_regex_matches("abé中12!Ж".to_array(), "\\p{L}+")
     is Some(letters) else {
     abort("expected letter matches")
@@ -222,6 +240,8 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("^\\p{L}+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\d+$"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Letter}]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[^a-zA-Z]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{Punctuation}+$"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Symbol}]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{P}\\p{S}]+"), true)

@@ -433,6 +433,26 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       !@common.is_word_char(c)
     })
   }
+  if pattern == "[A-Za-z]+" || pattern == "[a-zA-Z]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_ascii_letter(c)
+    })
+  }
+  if pattern == "^[A-Za-z]+" || pattern == "^[a-zA-Z]+" {
+    return @common.replace_leading_runs(s, content, fn(c) {
+      @common.is_ascii_letter(c)
+    })
+  }
+  if pattern == "[A-Za-z]+$" || pattern == "[a-zA-Z]+$" {
+    return @common.replace_trailing_runs(s, content, fn(c) {
+      @common.is_ascii_letter(c)
+    })
+  }
+  if pattern == "[^A-Za-z]+" || pattern == "[^a-zA-Z]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      !@common.is_ascii_letter(c)
+    })
+  }
   if pattern == "\\p{L}+" ||
     pattern == "\\p{Letter}+" ||
     pattern == "[\\p{L}]+" ||

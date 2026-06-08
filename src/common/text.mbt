@@ -15,12 +15,15 @@ pub fn is_ascii_digit(c : Char) -> Bool {
 }
 
 ///|
+/// ASCII alphabetic predicate for regex classes like `[A-Za-z]+`.
+pub fn is_ascii_letter(c : Char) -> Bool {
+  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
+///|
 /// Word-boundary approximation used by AddedVocabulary single_word matching.
 pub fn is_word_char(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') ||
-  (c >= 'A' && c <= 'Z') ||
-  is_ascii_digit(c) ||
-  c == '_'
+  is_ascii_letter(c) || is_ascii_digit(c) || c == '_'
 }
 
 ///|

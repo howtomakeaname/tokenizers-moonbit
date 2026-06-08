@@ -599,6 +599,23 @@ fn bench_split_digit_regex_case(b : @bench.T, case_name : String) -> Unit {
 }
 
 ///|
+fn bench_split_ascii_letter_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "[A-Za-z]+",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " ASCIIonly words_with_digits abc123é中 XYZ"
+  b.bench(name="pretokenizer-split-ascii-letter-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
 fn bench_split_bounded_digit_regex_case(
   b : @bench.T,
   case_name : String,
@@ -904,6 +921,11 @@ test "bench split nonspace regex" (b : @bench.T) {
 ///|
 test "bench split digit regex" (b : @bench.T) {
   bench_split_digit_regex_case(b, "mixed")
+}
+
+///|
+test "bench split ascii letter regex" (b : @bench.T) {
+  bench_split_ascii_letter_regex_case(b, "mixed")
 }
 
 ///|
