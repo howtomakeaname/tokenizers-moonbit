@@ -616,6 +616,20 @@ fn bench_split_ascii_letter_regex_case(
 }
 
 ///|
+fn bench_split_ascii_alnum_regex_case(b : @bench.T, case_name : String) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "[A-Za-z0-9]+",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " ASCII123 words_with_digits abc123é中 XYZ_42"
+  b.bench(name="pretokenizer-split-ascii-alnum-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
 fn bench_split_bounded_digit_regex_case(
   b : @bench.T,
   case_name : String,
@@ -926,6 +940,11 @@ test "bench split digit regex" (b : @bench.T) {
 ///|
 test "bench split ascii letter regex" (b : @bench.T) {
   bench_split_ascii_letter_regex_case(b, "mixed")
+}
+
+///|
+test "bench split ascii alnum regex" (b : @bench.T) {
+  bench_split_ascii_alnum_regex_case(b, "mixed")
 }
 
 ///|

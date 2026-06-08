@@ -21,9 +21,16 @@ pub fn is_ascii_letter(c : Char) -> Bool {
 }
 
 ///|
+/// ASCII alphanumeric predicate for regex classes like `[A-Za-z0-9]+` that do
+/// not include `_` (unlike `\w`).
+pub fn is_ascii_alnum(c : Char) -> Bool {
+  is_ascii_letter(c) || is_ascii_digit(c)
+}
+
+///|
 /// Word-boundary approximation used by AddedVocabulary single_word matching.
 pub fn is_word_char(c : Char) -> Bool {
-  is_ascii_letter(c) || is_ascii_digit(c) || c == '_'
+  is_ascii_alnum(c) || c == '_'
 }
 
 ///|

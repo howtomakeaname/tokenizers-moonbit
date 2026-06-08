@@ -68,7 +68,8 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   `^\s+`, `\s+$`, `\s{2,}`, `[\r\n]+`, `[^\S\r\n]+`, `\d+`, `\D+`,
   bounded digit runs (`\d{1,2}` / `\d{1,3}` / `\d{1,4}` and `\p{N}` aliases),
   anchored digit/word/letter runs, `\w+`, `\W+`,
-  ASCII letter classes (`[A-Za-z]+` / `[^A-Za-z]+`), `\p{L}+`, `\P{L}+`, punctuation
+  ASCII alnum/letter classes (`[A-Za-z0-9]+`, `[A-Za-z]+` and inverse forms),
+  `\p{L}+`, `\P{L}+`, punctuation
   classes (`\p{P}+` / `\P{P}+`) and symbol classes (`\p{S}+` / `\P{S}+`)
   are recognized, including common union/inverse classes such as
   `[\p{P}\p{S}]+` and `[^\s\p{L}\p{N}]+`.
@@ -80,7 +81,7 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   ` {2,}`, `\s{2,}` and horizontal whitespace min-run forms, digit runs
   `\d+` / `\D+`, common bounded digit runs such as
   `\d{1,3}`, anchored digit/word/letter runs, word runs `\w+` / `\W+`,
-  ASCII letter runs `[A-Za-z]+` / `[^A-Za-z]+`, and
+  ASCII alnum/letter runs `[A-Za-z0-9]+` / `[A-Za-z]+` and inverse forms, and
   letter/punctuation/symbol runs (`\p{L}+`, `\p{P}+`, `\p{S}+` and inverse
   forms), plus common union/inverse classes like `[\p{P}\p{S}]+` and
   `[^\s\p{L}\p{N}]+`; more complex regex replacement remains future work.

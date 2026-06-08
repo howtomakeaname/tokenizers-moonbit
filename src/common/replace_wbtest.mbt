@@ -103,6 +103,28 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(non_words[0].stop, 4)
   @test.assert_eq(non_words[1].start, 5)
   @test.assert_eq(non_words[1].stop, 6)
+  guard simple_split_regex_matches("ab_12,CD中".to_array(), "[A-Za-z0-9]+")
+    is Some(ascii_alnum) else {
+    abort("expected ASCII alnum matches")
+  }
+  @test.assert_eq(ascii_alnum.length(), 3)
+  @test.assert_eq(ascii_alnum[0].start, 0)
+  @test.assert_eq(ascii_alnum[0].stop, 2)
+  @test.assert_eq(ascii_alnum[1].start, 3)
+  @test.assert_eq(ascii_alnum[1].stop, 5)
+  @test.assert_eq(ascii_alnum[2].start, 6)
+  @test.assert_eq(ascii_alnum[2].stop, 8)
+  guard simple_split_regex_matches("ab_12,CD中".to_array(), "[^A-Za-z0-9]+")
+    is Some(non_ascii_alnum) else {
+    abort("expected non-ASCII-alnum matches")
+  }
+  @test.assert_eq(non_ascii_alnum.length(), 3)
+  @test.assert_eq(non_ascii_alnum[0].start, 2)
+  @test.assert_eq(non_ascii_alnum[0].stop, 3)
+  @test.assert_eq(non_ascii_alnum[1].start, 5)
+  @test.assert_eq(non_ascii_alnum[1].stop, 6)
+  @test.assert_eq(non_ascii_alnum[2].start, 8)
+  @test.assert_eq(non_ascii_alnum[2].stop, 9)
   guard simple_split_regex_matches("abé_12,CD中".to_array(), "[A-Za-z]+")
     is Some(ascii_letters) else {
     abort("expected ASCII letter matches")
@@ -240,6 +262,8 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("^\\p{L}+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\d+$"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Letter}]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z0-9]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[^a-zA-Z0-9]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^a-zA-Z]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{Punctuation}+$"), true)

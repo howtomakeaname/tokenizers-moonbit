@@ -214,6 +214,32 @@ test "split pretokenizer supports common regex spans" {
   ).pre_tokenize("ab_12,中!cd", base_offset=0)
   @test.assert_eq(nonword_runs.map(x => x.value), ["ab_12", "cd"])
 
+  let ascii_alnum = PreTokenizer::Split(
+    pattern="[A-Za-z0-9]+",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab_12,CD中", base_offset=2)
+  @test.assert_eq(ascii_alnum.map(x => x.value), [
+    "ab", "_", "12", ",", "CD", "中",
+  ])
+  @test.assert_eq(ascii_alnum.map(x => x.offsets), [
+    (2, 4),
+    (4, 5),
+    (5, 7),
+    (7, 8),
+    (8, 10),
+    (10, 11),
+  ])
+
+  let non_ascii_alnum = PreTokenizer::Split(
+    pattern="[^A-Za-z0-9]+",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab_12,CD中", base_offset=0)
+  @test.assert_eq(non_ascii_alnum.map(x => x.value), ["ab", "12", "CD"])
+
   let bounded_words = PreTokenizer::Split(
     pattern="\\b\\w+\\b",
     behavior=Isolated,
