@@ -99,6 +99,36 @@ pub fn replace_char_runs(
 }
 
 ///|
+pub fn replace_bounded_char_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  max_run~ : Int,
+) -> String {
+  if max_run <= 0 {
+    return s
+  }
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder::new()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let mut count = 0
+      while i < n && pred(chars[i]) && count < max_run {
+        i = i + 1
+        count = count + 1
+      }
+      sb.write_string(content)
+    } else {
+      sb.write_char(chars[i])
+      i = i + 1
+    }
+  }
+  sb.to_string()
+}
+
+///|
 pub fn replace_space_runs(
   s : String,
   content : String,

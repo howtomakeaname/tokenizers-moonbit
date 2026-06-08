@@ -19,6 +19,15 @@ test "replace helpers cover regex run semantics" {
     replace_char_runs("a12b003", "#", fn(c) { is_ascii_digit(c) }),
     "a#b#",
   )
+  @test.assert_eq(
+    replace_bounded_char_runs(
+      "a12345b",
+      "#",
+      fn(c) { is_ascii_digit(c) },
+      max_run=3,
+    ),
+    "a##b",
+  )
   @test.assert_eq(replace_space_runs("a  b   c", "_", min_run=2), "a_b_c")
   @test.assert_eq(replace_whitespace_runs("a\t\u{3000}b\n", " "), "a b ")
 }
@@ -34,6 +43,15 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(digits[0].stop, 3)
   @test.assert_eq(digits[1].start, 6)
   @test.assert_eq(digits[1].stop, 9)
+  guard simple_split_regex_matches("a12345b".to_array(), "\\d{1,3}")
+    is Some(bounded_digits) else {
+    abort("expected bounded digit matches")
+  }
+  @test.assert_eq(bounded_digits.length(), 2)
+  @test.assert_eq(bounded_digits[0].start, 1)
+  @test.assert_eq(bounded_digits[0].stop, 4)
+  @test.assert_eq(bounded_digits[1].start, 4)
+  @test.assert_eq(bounded_digits[1].stop, 6)
   guard simple_split_regex_matches(chars, "\\w+") is Some(words) else {
     abort("expected word matches")
   }

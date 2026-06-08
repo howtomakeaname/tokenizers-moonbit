@@ -65,14 +65,15 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   full binary charsmap decoding is still TODO.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
   CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\S+`,
-  `\s+$`, `[\r\n]`, `\d+`, `\D+`, `\w+`, `\W+`, `\p{L}+`, and `\P{L}+` are
-  recognized. Unsupported regexes raise `UnsupportedComponent` at load time
-  instead of silently producing mismatched splits. A full Unicode regex engine
-  remains future work.
+  `\s+$`, `[\r\n]`, `\d+`, `\D+`, `\d{1,3}`, `\p{N}{1,3}`, `\w+`, `\W+`,
+  `\p{L}+`, and `\P{L}+` are recognized. Unsupported regexes raise
+  `UnsupportedComponent` at load time instead of silently producing mismatched
+  splits. A full Unicode regex engine remains future work.
 - **Regex `Replace`:** `Replace` normalizer/decoder supports common whitespace
   regex replacements such as `\s+`, `^\s+`, `\s+$`, `[\r\n]+`, `[^\S\r\n]+`,
-  ` {2,}`, digit runs `\d+` / `\D+`, word runs `\w+` / `\W+`, and letter runs
-  `\p{L}+` / `\P{L}+`; more complex regex replacement remains future work.
+  ` {2,}`, digit runs `\d+` / `\D+`, common bounded digit runs such as
+  `\d{1,3}`, word runs `\w+` / `\W+`, and letter runs `\p{L}+` / `\P{L}+`;
+  more complex regex replacement remains future work.
 - **Offsets:** char-based by default, relative to the original text. Optional
   byte-offset encode APIs are available for HuggingFace-style byte offsets.
 - **Batching:** single-threaded by design for wasm/js targets.

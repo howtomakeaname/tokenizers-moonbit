@@ -327,15 +327,49 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       c == '\r' || c == '\n'
     })
   }
-  if pattern == "\\d+" || pattern == "[0-9]+" || pattern == "\\p{N}+" {
+  if pattern == "\\d+" ||
+    pattern == "[0-9]+" ||
+    pattern == "\\p{N}+" ||
+    pattern == "\\p{Number}+" ||
+    pattern == "[\\p{N}]+" ||
+    pattern == "[\\p{Number}]+" {
     return @common.replace_char_runs(s, content, fn(c) {
-      @common.is_ascii_digit(c)
+      @common.is_decimal_number(c)
     })
   }
   if pattern == "\\D+" || pattern == "[^0-9]+" {
     return @common.replace_char_runs(s, content, fn(c) {
-      !@common.is_ascii_digit(c)
+      !@common.is_decimal_number(c)
     })
+  }
+  if pattern == "\\p{N}{1,3}" ||
+    pattern == "\\p{Number}{1,3}" ||
+    pattern == "[\\p{N}]{1,3}" ||
+    pattern == "[\\p{Number}]{1,3}" ||
+    pattern == "\\d{1,3}" ||
+    pattern == "[0-9]{1,3}" {
+    return @common.replace_bounded_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_decimal_number(c) },
+      max_run=3,
+    )
+  }
+  if pattern == "\\d{1,2}" || pattern == "[0-9]{1,2}" {
+    return @common.replace_bounded_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_decimal_number(c) },
+      max_run=2,
+    )
+  }
+  if pattern == "\\d{1,4}" || pattern == "[0-9]{1,4}" {
+    return @common.replace_bounded_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_decimal_number(c) },
+      max_run=4,
+    )
   }
   if pattern == "[ \\t]+" {
     return @common.replace_char_runs(s, content, fn(c) { c == ' ' || c == '\t' })

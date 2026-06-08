@@ -39,11 +39,22 @@ pub fn simple_split_regex_matches(
     pattern == "[^\\p{L}]+" ||
     pattern == "[^\\p{Letter}]+" {
     Some(run_matches(chars, fn(c) { !is_unicode_letter(c) }))
-  } else if pattern == "\\d+" || pattern == "[0-9]+" || pattern == "\\p{N}+" {
+  } else if pattern == "\\d+" ||
+    pattern == "[0-9]+" ||
+    pattern == "\\p{N}+" ||
+    pattern == "\\p{Number}+" ||
+    pattern == "[\\p{N}]+" ||
+    pattern == "[\\p{Number}]+" {
     Some(run_matches(chars, fn(c) { is_decimal_number(c) }))
   } else if pattern == "\\D+" || pattern == "[^0-9]+" {
     Some(run_matches(chars, fn(c) { !is_decimal_number(c) }))
-  } else if pattern == "\\p{N}{1,3}" || pattern == "[0-9][0-9][0-9]" {
+  } else if pattern == "\\p{N}{1,3}" ||
+    pattern == "\\p{Number}{1,3}" ||
+    pattern == "[\\p{N}]{1,3}" ||
+    pattern == "[\\p{Number}]{1,3}" ||
+    pattern == "\\d{1,3}" ||
+    pattern == "[0-9]{1,3}" ||
+    pattern == "[0-9][0-9][0-9]" {
     Some(number_run_matches(chars, max_digits=3))
   } else {
     None
@@ -76,9 +87,17 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\d+" ||
   pattern == "[0-9]+" ||
   pattern == "\\p{N}+" ||
+  pattern == "\\p{Number}+" ||
+  pattern == "[\\p{N}]+" ||
+  pattern == "[\\p{Number}]+" ||
   pattern == "\\D+" ||
   pattern == "[^0-9]+" ||
   pattern == "\\p{N}{1,3}" ||
+  pattern == "\\p{Number}{1,3}" ||
+  pattern == "[\\p{N}]{1,3}" ||
+  pattern == "[\\p{Number}]{1,3}" ||
+  pattern == "\\d{1,3}" ||
+  pattern == "[0-9]{1,3}" ||
   pattern == "[0-9][0-9][0-9]"
 }
 
