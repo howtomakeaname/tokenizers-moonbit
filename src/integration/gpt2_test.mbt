@@ -6,22 +6,11 @@
 // is git-ignored, so the test is skipped gracefully when it is absent.
 
 ///|
-fn load_text(path : String) -> String? {
-  if @fs.path_exists(path) {
-    Some(@fs.read_file_to_string(path)) catch {
-      _ => None
-    }
-  } else {
-    None
-  }
-}
-
-///|
 test "gpt2 splits the <|endoftext|> special token out of text" {
   guard load_text("tests/data/gpt2.full.json") is Some(model_json) else {
     return
   }
-  let tok = Tokenizer::from_str(model_json)
+  let tok = @tokenizer.Tokenizer::from_str(model_json)
   // Matches Python tokenizers: <|endoftext|> -> id 50256, recognized inline.
   let enc = tok.encode("hello<|endoftext|>world", add_special_tokens=false)
   @test.assert_eq(enc.ids, [31373, 50256, 6894])
@@ -34,7 +23,7 @@ test "gpt2 encode matches python tokenizers" {
   let expected_path = "tests/data/gpt2_expected.json"
   guard load_text(model_path) is Some(model_json) else { return }
   guard load_text(expected_path) is Some(exp_json) else { return }
-  let tok = Tokenizer::from_str(model_json)
+  let tok = @tokenizer.Tokenizer::from_str(model_json)
   let cases = @types.as_array(@json.parse(exp_json), "expected")
   for case in cases {
     let obj = @types.as_object(case, "case")
@@ -49,20 +38,4 @@ test "gpt2 encode matches python tokenizers" {
       want_decoded,
     )
   }
-}
-
-///|
-fn parse_int_array(obj : Map[String, Json], key : String) -> Array[Int] {
-  let out : Array[Int] = []
-  match obj.get(key) {
-    Some(Array(a)) =>
-      for x in a {
-        match x {
-          Number(n, ..) => out.push(n.to_int())
-          _ => ()
-        }
-      }
-    _ => ()
-  }
-  out
 }

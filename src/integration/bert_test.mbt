@@ -9,7 +9,7 @@ test "bert wordpiece encode matches python tokenizers" {
   guard load_text("tests/data/bert_expected.json") is Some(exp_json) else {
     return
   }
-  let tok = Tokenizer::from_str(model_json)
+  let tok = @tokenizer.Tokenizer::from_str(model_json)
   let cases = @types.as_array(@json.parse(exp_json), "expected")
   for case in cases {
     let obj = @types.as_object(case, "case")

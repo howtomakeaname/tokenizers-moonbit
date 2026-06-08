@@ -24,7 +24,7 @@ fn run_parity(name : String) -> (Bool, Int) raise {
   let parity_path = "tests/data/parity/\{name}.json"
   guard load_text(model_path) is Some(model_json) else { return (false, 0) }
   guard load_text(parity_path) is Some(parity_json) else { return (false, 0) }
-  let tok = Tokenizer::from_str(model_json)
+  let tok = @tokenizer.Tokenizer::from_str(model_json)
   let root = @types.as_object(@json.parse(parity_json), "parity")
   let cases = match root.get("cases") {
     Some(Array(a)) => a

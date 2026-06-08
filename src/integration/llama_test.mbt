@@ -9,7 +9,7 @@ test "llama byte-fallback BPE matches python tokenizers" {
   guard load_text("tests/data/llama_expected.json") is Some(exp_json) else {
     return
   }
-  let tok = Tokenizer::from_str(model_json)
+  let tok = @tokenizer.Tokenizer::from_str(model_json)
   let cases = @types.as_array(@json.parse(exp_json), "expected")
   for case in cases {
     let obj = @types.as_object(case, "case")
@@ -25,7 +25,7 @@ test "llama decode round-trip reconstructs text incl. emoji" {
   guard load_text("tests/data/llama.full.json") is Some(model_json) else {
     return
   }
-  let tok = Tokenizer::from_str(model_json)
+  let tok = @tokenizer.Tokenizer::from_str(model_json)
   // emoji survives the byte_fallback encode -> ByteFallback decode round-trip.
   for text in ["Hello world", "emoji 😀 test", "日本語"] {
     let enc = tok.encode(text, add_special_tokens=false)

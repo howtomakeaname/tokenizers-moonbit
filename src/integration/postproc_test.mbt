@@ -8,7 +8,7 @@ test "bert post-processing adds CLS/SEP and masks" {
   guard load_text("tests/data/bert_special_expected.json") is Some(exp_json) else {
     return
   }
-  let tok = Tokenizer::from_str(model_json)
+  let tok = @tokenizer.Tokenizer::from_str(model_json)
   let cases = @types.as_array(@json.parse(exp_json), "expected")
   for case in cases {
     let obj = @types.as_object(case, "case")
@@ -30,7 +30,7 @@ test "bert encode_pair builds [CLS] A [SEP] B [SEP] with type ids" {
   guard load_text("tests/data/bert.full.json") is Some(model_json) else {
     return
   }
-  let tok = Tokenizer::from_str(model_json)
+  let tok = @tokenizer.Tokenizer::from_str(model_json)
   let enc = tok.encode_pair("hello", "world", add_special_tokens=true)
   // [CLS] hello [SEP] world [SEP]
   @test.assert_eq(enc.tokens, ["[CLS]", "hello", "[SEP]", "world", "[SEP]"])
@@ -43,7 +43,7 @@ test "roberta encode_pair keeps all type ids zero" {
   guard load_text("tests/data/roberta.full.json") is Some(model_json) else {
     return
   }
-  let tok = Tokenizer::from_str(model_json)
+  let tok = @tokenizer.Tokenizer::from_str(model_json)
   let enc = tok.encode_pair("hello", "world", add_special_tokens=true)
   for tid in enc.type_ids {
     @test.assert_eq(tid, 0)
@@ -58,7 +58,7 @@ test "bytelevel post-processor trims whitespace offsets" {
     #| "pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":true},
     #| "model":{"type":"WordLevel","vocab":{"a":0,"Ġ":1,"Ġb":2,"[UNK]":3},"unk_token":"[UNK]"},
     #| "post_processor":{"type":"ByteLevel","trim_offsets":true}}
-  let tok = Tokenizer::from_str(json)
+  let tok = @tokenizer.Tokenizer::from_str(json)
   let enc = tok.encode("a  b", add_special_tokens=true)
   @test.assert_eq(enc.tokens, ["a", "Ġ", "Ġb"])
   @test.assert_eq(enc.offsets, [(0, 1), (2, 2), (3, 4)])
@@ -77,7 +77,7 @@ test "bytelevel post-processor can keep raw offsets" {
     #| "pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":true},
     #| "model":{"type":"WordLevel","vocab":{"a":0,"Ġ":1,"Ġb":2,"[UNK]":3},"unk_token":"[UNK]"},
     #| "post_processor":{"type":"ByteLevel","trim_offsets":false}}
-  let tok = Tokenizer::from_str(json)
+  let tok = @tokenizer.Tokenizer::from_str(json)
   let enc = tok.encode("a  b", add_special_tokens=true)
   @test.assert_eq(enc.tokens, ["a", "Ġ", "Ġb"])
   @test.assert_eq(enc.offsets, [(0, 1), (1, 2), (2, 4)])
@@ -90,7 +90,7 @@ test "roberta post-processor trims bytelevel offsets before specials" {
     #| "pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":true},
     #| "model":{"type":"WordLevel","vocab":{"a":0,"Ġ":1,"Ġb":2,"[UNK]":3},"unk_token":"[UNK]"},
     #| "post_processor":{"type":"RobertaProcessing","sep":["</s>",4],"cls":["<s>",5],"trim_offsets":true,"add_prefix_space":false}}
-  let tok = Tokenizer::from_str(json)
+  let tok = @tokenizer.Tokenizer::from_str(json)
   let enc = tok.encode("a  b", add_special_tokens=true)
   @test.assert_eq(enc.tokens, ["<s>", "a", "Ġ", "Ġb", "</s>"])
   @test.assert_eq(enc.offsets, [(0, 0), (0, 1), (2, 2), (3, 4), (0, 0)])
@@ -107,7 +107,7 @@ test "template processing parses HF string DSL" {
     #|   "single":"<s>:0 $A </s>:0",
     #|   "pair":"<s>:0 $A </s>:0 $B:1 </s>:1",
     #|   "special_tokens":{"<s>":{"id":"<s>","ids":[0],"tokens":["<s>"]},"</s>":{"id":"</s>","ids":[1],"tokens":["</s>"]}}}}
-  let tok = Tokenizer::from_str(json)
+  let tok = @tokenizer.Tokenizer::from_str(json)
   let single = tok.encode("hello", add_special_tokens=true)
   @test.assert_eq(single.tokens, ["<s>", "hello", "</s>"])
   @test.assert_eq(single.type_ids, [0, 0, 0])

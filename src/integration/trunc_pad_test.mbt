@@ -4,8 +4,8 @@
 ///|
 test "truncation caps length (gpt2, right, max=5)" {
   guard load_text("tests/data/gpt2.full.json") is Some(mj) else { return }
-  let tok = Tokenizer::from_str(mj).with_truncation(
-    Some(TruncationParams::new(5)),
+  let tok = @tokenizer.Tokenizer::from_str(mj).with_truncation(
+    Some(@tokenizer.TruncationParams::new(5)),
   )
   let enc = tok.encode(
     "The quick brown fox jumps over the lazy dog",
@@ -17,8 +17,8 @@ test "truncation caps length (gpt2, right, max=5)" {
 ///|
 test "fixed padding pads right with attention mask (gpt2, len=8)" {
   guard load_text("tests/data/gpt2.full.json") is Some(mj) else { return }
-  let tok = Tokenizer::from_str(mj).with_padding(
-    Some(PaddingParams::new(Fixed(8), pad_id=0, pad_token="!")),
+  let tok = @tokenizer.Tokenizer::from_str(mj).with_padding(
+    Some(@tokenizer.PaddingParams::new(@tokenizer.Fixed(8), pad_id=0, pad_token="!")),
   )
   let enc = tok.encode("Hello world", add_special_tokens=false)
   @test.assert_eq(enc.ids, [15496, 995, 0, 0, 0, 0, 0, 0])
@@ -28,8 +28,8 @@ test "fixed padding pads right with attention mask (gpt2, len=8)" {
 ///|
 test "batch padding pads to longest in batch" {
   guard load_text("tests/data/gpt2.full.json") is Some(mj) else { return }
-  let tok = Tokenizer::from_str(mj).with_padding(
-    Some(PaddingParams::new(BatchLongest)),
+  let tok = @tokenizer.Tokenizer::from_str(mj).with_padding(
+    Some(@tokenizer.PaddingParams::new(@tokenizer.BatchLongest)),
   )
   let batch = tok.encode_batch(["Hello world", "a"], add_special_tokens=false)
   // longest is "Hello world" (2 tokens); both padded to length 2.
@@ -42,8 +42,8 @@ test "batch padding pads to longest in batch" {
 ///|
 test "encode_pair applies fixed padding" {
   guard load_text("tests/data/bert.full.json") is Some(mj) else { return }
-  let tok = Tokenizer::from_str(mj).with_padding(
-    Some(PaddingParams::new(Fixed(8), pad_id=0, pad_token="[PAD]")),
+  let tok = @tokenizer.Tokenizer::from_str(mj).with_padding(
+    Some(@tokenizer.PaddingParams::new(@tokenizer.Fixed(8), pad_id=0, pad_token="[PAD]")),
   )
   let enc = tok.encode_pair("hello", "world", add_special_tokens=true)
   @test.assert_eq(enc.ids.length(), 8)
@@ -63,7 +63,7 @@ fn trunc_strategy_json(strategy : String) -> String {
 
 ///|
 test "pair truncation LongestFirst reserves special token slots" {
-  let tok = Tokenizer::from_str(trunc_strategy_json("LongestFirst"))
+  let tok = @tokenizer.Tokenizer::from_str(trunc_strategy_json("LongestFirst"))
   let enc = tok.encode_pair("a0 a1 a2 a3 a4", "b0 b1 b2 b3 b4")
   @test.assert_eq(enc.tokens, [
     "[CLS]", "a0", "a1", "[SEP]", "b0", "b1", "b2", "[SEP]",
@@ -82,12 +82,12 @@ test "pair truncation LongestFirst reserves special token slots" {
 
 ///|
 test "pair truncation OnlyFirst and OnlySecond target one side" {
-  let first = Tokenizer::from_str(trunc_strategy_json("OnlyFirst"))
+  let first = @tokenizer.Tokenizer::from_str(trunc_strategy_json("OnlyFirst"))
   let enc_first = first.encode_pair("a0 a1 a2 a3 a4", "b0 b1 b2 b3 b4")
   @test.assert_eq(enc_first.tokens, [
     "[CLS]", "[SEP]", "b0", "b1", "b2", "b3", "b4", "[SEP]",
   ])
-  let second = Tokenizer::from_str(trunc_strategy_json("OnlySecond"))
+  let second = @tokenizer.Tokenizer::from_str(trunc_strategy_json("OnlySecond"))
   let enc_second = second.encode_pair("a0 a1 a2 a3 a4", "b0 b1 b2 b3 b4")
   @test.assert_eq(enc_second.tokens, [
     "[CLS]", "a0", "a1", "a2", "a3", "a4", "[SEP]", "[SEP]",
