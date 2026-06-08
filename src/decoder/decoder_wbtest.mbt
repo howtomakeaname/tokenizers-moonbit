@@ -63,10 +63,20 @@ test "Replace decoder supports common regex whitespace patterns" {
     "a##b",
   )
   @test.assert_eq(
+    Decoder::Replace(pattern="\\d{2}", content="#").decode(["a123", "45b"]),
+    "a#3#b",
+  )
+  @test.assert_eq(
     Decoder::Replace(pattern="\\p{Number}+", content="#").decode([
       "a１２", "b٣",
     ]),
     "a#b#",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="[\\p{Number}]{4}", content="#").decode([
+      "a１２٣٤5b",
+    ]),
+    "a#5b",
   )
   @test.assert_eq(
     Decoder::Replace(pattern="^\\d+", content="#").decode(["123", "abc456"]),

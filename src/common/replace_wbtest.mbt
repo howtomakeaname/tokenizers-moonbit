@@ -41,6 +41,15 @@ test "replace helpers cover regex run semantics" {
     ),
     "a##b",
   )
+  @test.assert_eq(
+    replace_exact_char_runs(
+      "a12345b",
+      "#",
+      fn(c) { is_ascii_digit(c) },
+      exact_run=2,
+    ),
+    "a##5b",
+  )
   @test.assert_eq(replace_space_runs("a  b   c", "_", min_run=2), "a_b_c")
   @test.assert_eq(replace_whitespace_runs("a\t\u{3000}b\n", " "), "a b ")
 }
@@ -73,6 +82,25 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(min_digits[0].stop, 5)
   @test.assert_eq(min_digits[1].start, 6)
   @test.assert_eq(min_digits[1].stop, 9)
+  guard simple_split_regex_matches("a12345b".to_array(), "\\d{2}")
+    is Some(exact_digits) else {
+    abort("expected exact digit matches")
+  }
+  @test.assert_eq(exact_digits.length(), 2)
+  @test.assert_eq(exact_digits[0].start, 1)
+  @test.assert_eq(exact_digits[0].stop, 3)
+  @test.assert_eq(exact_digits[1].start, 3)
+  @test.assert_eq(exact_digits[1].stop, 5)
+  guard simple_split_regex_matches(
+      "a１２٣٤5b".to_array(),
+      "[\\p{Number}]{4}",
+    )
+    is Some(exact_unicode_digits) else {
+    abort("expected exact Unicode digit matches")
+  }
+  @test.assert_eq(exact_unicode_digits.length(), 1)
+  @test.assert_eq(exact_unicode_digits[0].start, 1)
+  @test.assert_eq(exact_unicode_digits[0].stop, 5)
   guard simple_split_regex_matches("a１２b٣".to_array(), "\\P{N}+")
     is Some(non_numbers) else {
     abort("expected inverse number matches")
@@ -291,6 +319,8 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("[\\d]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^\\d]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\d]{2,}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\d{2}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\p{Number}]{4}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z0-9]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^a-zA-Z0-9]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z]+"), true)

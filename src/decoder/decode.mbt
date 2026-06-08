@@ -460,6 +460,48 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       min_run=2,
     )
   }
+  if pattern == "\\p{N}{2}" ||
+    pattern == "\\p{Number}{2}" ||
+    pattern == "[\\p{N}]{2}" ||
+    pattern == "[\\p{Number}]{2}" ||
+    pattern == "\\d{2}" ||
+    pattern == "[\\d]{2}" ||
+    pattern == "[0-9]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_decimal_number(c) },
+      exact_run=2,
+    )
+  }
+  if pattern == "\\p{N}{3}" ||
+    pattern == "\\p{Number}{3}" ||
+    pattern == "[\\p{N}]{3}" ||
+    pattern == "[\\p{Number}]{3}" ||
+    pattern == "\\d{3}" ||
+    pattern == "[\\d]{3}" ||
+    pattern == "[0-9]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_decimal_number(c) },
+      exact_run=3,
+    )
+  }
+  if pattern == "\\p{N}{4}" ||
+    pattern == "\\p{Number}{4}" ||
+    pattern == "[\\p{N}]{4}" ||
+    pattern == "[\\p{Number}]{4}" ||
+    pattern == "\\d{4}" ||
+    pattern == "[\\d]{4}" ||
+    pattern == "[0-9]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_decimal_number(c) },
+      exact_run=4,
+    )
+  }
   if pattern == "\\p{N}{1,3}" ||
     pattern == "\\p{Number}{1,3}" ||
     pattern == "[\\p{N}]{1,3}" ||

@@ -213,6 +213,30 @@ test "split pretokenizer supports common regex spans" {
     (10, 13),
   ])
 
+  let exact_digit_runs = PreTokenizer::Split(
+    pattern="\\d{2}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a12345b", base_offset=1)
+  @test.assert_eq(exact_digit_runs.map(x => x.value), ["a", "12", "34", "5b"])
+  @test.assert_eq(exact_digit_runs.map(x => x.offsets), [
+    (1, 2),
+    (2, 4),
+    (4, 6),
+    (6, 8),
+  ])
+
+  let exact_unicode_digit_runs = PreTokenizer::Split(
+    pattern="[\\p{Number}]{4}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a１２٣٤5b", base_offset=0)
+  @test.assert_eq(exact_unicode_digit_runs.map(x => x.value), [
+    "a", "１２٣٤", "5b",
+  ])
+
   let nondigit_runs = PreTokenizer::Split(
     pattern="\\D+",
     behavior=Removed,

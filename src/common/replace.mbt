@@ -185,6 +185,43 @@ pub fn replace_bounded_char_runs(
 }
 
 ///|
+pub fn replace_exact_char_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  exact_run~ : Int,
+) -> String {
+  if exact_run <= 0 {
+    return s
+  }
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder::new()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let start = i
+      while i < n && pred(chars[i]) {
+        i = i + 1
+      }
+      let run = i - start
+      let full = run / exact_run
+      let rem = run % exact_run
+      for _ in 0..<full {
+        sb.write_string(content)
+      }
+      for k in (i - rem)..<i {
+        sb.write_char(chars[k])
+      }
+    } else {
+      sb.write_char(chars[i])
+      i = i + 1
+    }
+  }
+  sb.to_string()
+}
+
+///|
 pub fn replace_space_runs(
   s : String,
   content : String,

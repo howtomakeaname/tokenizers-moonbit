@@ -540,6 +540,18 @@ fn bench_decoder_replace_digit_class_regex_case(
 }
 
 ///|
+fn bench_decoder_replace_exact_digit_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("\\d{2}", "#")
+  let tokens = ["abc12345", " def4567", " 890xyz", " MoonBit2026"]
+  b.bench(name="decoder-replace-exact-digit-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_decoder_replace_punctuation_regex_case(
   b : @bench.T,
   case_name : String,
@@ -620,6 +632,20 @@ fn bench_split_digit_class_regex_case(b : @bench.T, case_name : String) -> Unit 
   )
   let text = corpus_mixed() + " a1b12c１２3 20260608"
   b.bench(name="pretokenizer-split-digit-class-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_exact_digit_regex_case(b : @bench.T, case_name : String) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "\\d{2}",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " 123456789 20260608 42"
+  b.bench(name="pretokenizer-split-exact-digit-regex-\{case_name}", fn() {
     b.keep(pt.pre_tokenize(text, base_offset=0))
   })
 }
@@ -944,6 +970,11 @@ test "bench decoder replace digit class regex" (b : @bench.T) {
 }
 
 ///|
+test "bench decoder replace exact digit regex" (b : @bench.T) {
+  bench_decoder_replace_exact_digit_regex_case(b, "mixed")
+}
+
+///|
 test "bench decoder replace punct-symbol regex" (b : @bench.T) {
   bench_decoder_replace_punctuation_regex_case(b, "mixed")
 }
@@ -971,6 +1002,11 @@ test "bench split digit regex" (b : @bench.T) {
 ///|
 test "bench split digit class regex" (b : @bench.T) {
   bench_split_digit_class_regex_case(b, "mixed")
+}
+
+///|
+test "bench split exact digit regex" (b : @bench.T) {
+  bench_split_exact_digit_regex_case(b, "mixed")
 }
 
 ///|

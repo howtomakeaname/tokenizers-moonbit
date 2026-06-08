@@ -207,6 +207,30 @@ pub fn simple_split_regex_matches(
     pattern == "[\\p{N}]{2,}" ||
     pattern == "[\\p{Number}]{2,}" {
     Some(run_matches_min(chars, fn(c) { is_decimal_number(c) }, min_run=2))
+  } else if pattern == "\\p{N}{2}" ||
+    pattern == "\\p{Number}{2}" ||
+    pattern == "[\\p{N}]{2}" ||
+    pattern == "[\\p{Number}]{2}" ||
+    pattern == "\\d{2}" ||
+    pattern == "[\\d]{2}" ||
+    pattern == "[0-9]{2}" {
+    Some(number_exact_matches(chars, exact_digits=2))
+  } else if pattern == "\\p{N}{3}" ||
+    pattern == "\\p{Number}{3}" ||
+    pattern == "[\\p{N}]{3}" ||
+    pattern == "[\\p{Number}]{3}" ||
+    pattern == "\\d{3}" ||
+    pattern == "[\\d]{3}" ||
+    pattern == "[0-9]{3}" {
+    Some(number_exact_matches(chars, exact_digits=3))
+  } else if pattern == "\\p{N}{4}" ||
+    pattern == "\\p{Number}{4}" ||
+    pattern == "[\\p{N}]{4}" ||
+    pattern == "[\\p{Number}]{4}" ||
+    pattern == "\\d{4}" ||
+    pattern == "[\\d]{4}" ||
+    pattern == "[0-9]{4}" {
+    Some(number_exact_matches(chars, exact_digits=4))
   } else if pattern == "\\p{N}{1,2}" ||
     pattern == "\\p{Number}{1,2}" ||
     pattern == "[\\p{N}]{1,2}" ||
@@ -388,6 +412,27 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\p{Number}{2,}" ||
   pattern == "[\\p{N}]{2,}" ||
   pattern == "[\\p{Number}]{2,}" ||
+  pattern == "\\p{N}{2}" ||
+  pattern == "\\p{Number}{2}" ||
+  pattern == "[\\p{N}]{2}" ||
+  pattern == "[\\p{Number}]{2}" ||
+  pattern == "\\d{2}" ||
+  pattern == "[\\d]{2}" ||
+  pattern == "[0-9]{2}" ||
+  pattern == "\\p{N}{3}" ||
+  pattern == "\\p{Number}{3}" ||
+  pattern == "[\\p{N}]{3}" ||
+  pattern == "[\\p{Number}]{3}" ||
+  pattern == "\\d{3}" ||
+  pattern == "[\\d]{3}" ||
+  pattern == "[0-9]{3}" ||
+  pattern == "\\p{N}{4}" ||
+  pattern == "\\p{Number}{4}" ||
+  pattern == "[\\p{N}]{4}" ||
+  pattern == "[\\p{Number}]{4}" ||
+  pattern == "\\d{4}" ||
+  pattern == "[\\d]{4}" ||
+  pattern == "[0-9]{4}" ||
   pattern == "\\p{N}{1,2}" ||
   pattern == "\\p{Number}{1,2}" ||
   pattern == "[\\p{N}]{1,2}" ||
@@ -533,6 +578,37 @@ fn number_run_matches(chars : Array[Char], max_digits~ : Int) -> Array[Span] {
         count = count + 1
       }
       out.push({ start, stop: i })
+    } else {
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
+fn number_exact_matches(
+  chars : Array[Char],
+  exact_digits~ : Int,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  if exact_digits <= 0 {
+    return out
+  }
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if is_decimal_number(chars[i]) {
+      let start = i
+      while i < n && is_decimal_number(chars[i]) {
+        i = i + 1
+      }
+      let run = i - start
+      let full_stop = start + run / exact_digits * exact_digits
+      let mut j = start
+      while j < full_stop {
+        out.push({ start: j, stop: j + exact_digits })
+        j = j + exact_digits
+      }
     } else {
       i = i + 1
     }
