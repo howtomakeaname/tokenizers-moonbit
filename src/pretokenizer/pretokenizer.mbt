@@ -48,6 +48,11 @@ pub fn SplitBehavior::removed() -> SplitBehavior {
 }
 
 ///|
+pub fn SplitBehavior::isolated() -> SplitBehavior {
+  Isolated
+}
+
+///|
 pub fn PreTokenizer::split(
   pattern : String,
   behavior : SplitBehavior,

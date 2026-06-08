@@ -181,6 +181,28 @@ test "split pretokenizer supports common regex spans" {
     regex=true,
   ).pre_tokenize("abé中12!Ж", base_offset=0)
   @test.assert_eq(non_letters.map(x => x.value), ["abé中", "Ж"])
+
+  let punctuation = PreTokenizer::Split(
+    pattern="\\p{P}+",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("hi,!$+🙂ok。", base_offset=1)
+  @test.assert_eq(punctuation.map(x => x.value), ["hi", ",!", "$+🙂ok", "。"])
+  @test.assert_eq(punctuation.map(x => x.offsets), [
+    (1, 3),
+    (3, 5),
+    (5, 10),
+    (10, 11),
+  ])
+
+  let symbols = PreTokenizer::Split(
+    pattern="\\p{Symbol}+",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a$+🙂,b=≤c", base_offset=0)
+  @test.assert_eq(symbols.map(x => x.value), ["a", ",b", "c"])
 }
 
 ///|

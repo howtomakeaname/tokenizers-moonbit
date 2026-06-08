@@ -67,6 +67,68 @@ pub fn is_unicode_letter(c : Char) -> Bool {
 }
 
 ///|
+/// Unicode `\p{P}` / `\p{Punctuation}` approximation for regex-compatible
+/// Split/Replace fast paths. This intentionally separates ASCII punctuation
+/// from ASCII symbols (`$`, `+`, `<`, `=`, `>`, `^`, `` ` ``, `|`, `~`) so
+/// `\p{P}` and `\p{S}` behave closer to HF's Rust regex engine than the older
+/// broad pre-tokenizer punctuation helper.
+pub fn is_unicode_punctuation(c : Char) -> Bool {
+  let u = c.to_int()
+  (u >= 0x21 && u <= 0x23) ||
+  (u >= 0x25 && u <= 0x2A) ||
+  (u >= 0x2C && u <= 0x2F) ||
+  (u >= 0x3A && u <= 0x3B) ||
+  u == 0x3F ||
+  u == 0x40 ||
+  (u >= 0x5B && u <= 0x5D) ||
+  u == 0x5F ||
+  (u >= 0x7B && u <= 0x7D) ||
+  (u >= 0x2010 && u <= 0x2027) ||
+  (u >= 0x2030 && u <= 0x2043) ||
+  (u >= 0x2045 && u <= 0x2051) ||
+  (u >= 0x2053 && u <= 0x205E) ||
+  (u >= 0x3001 && u <= 0x303F) ||
+  (u >= 0xFE10 && u <= 0xFE1F) ||
+  (u >= 0xFE30 && u <= 0xFE4F) ||
+  (u >= 0xFF01 && u <= 0xFF03) ||
+  (u >= 0xFF05 && u <= 0xFF0A) ||
+  (u >= 0xFF0C && u <= 0xFF0F) ||
+  (u >= 0xFF1A && u <= 0xFF1B) ||
+  u == 0xFF1F ||
+  u == 0xFF20 ||
+  (u >= 0xFF3B && u <= 0xFF3D) ||
+  u == 0xFF3F ||
+  (u >= 0xFF5B && u <= 0xFF5D) ||
+  (u >= 0xFF5F && u <= 0xFF65)
+}
+
+///|
+/// Unicode `\p{S}` / `\p{Symbol}` approximation for common tokenizer regexes.
+/// Covers ASCII math/currency/modifier symbols plus currency, math, technical,
+/// dingbat and emoji blocks frequently seen in LLM tokenizers.
+pub fn is_unicode_symbol(c : Char) -> Bool {
+  let u = c.to_int()
+  u == 0x24 ||
+  u == 0x2B ||
+  (u >= 0x3C && u <= 0x3E) ||
+  u == 0x5E ||
+  u == 0x60 ||
+  u == 0x7C ||
+  u == 0x7E ||
+  (u >= 0x20A0 && u <= 0x20CF) ||
+  (u >= 0x2100 && u <= 0x214F) ||
+  (u >= 0x2190 && u <= 0x21FF) ||
+  (u >= 0x2200 && u <= 0x22FF) ||
+  (u >= 0x2300 && u <= 0x23FF) ||
+  (u >= 0x2460 && u <= 0x24FF) ||
+  (u >= 0x2500 && u <= 0x25FF) ||
+  (u >= 0x2600 && u <= 0x27BF) ||
+  (u >= 0x2B00 && u <= 0x2BFF) ||
+  (u >= 0x1F000 && u <= 0x1FAFF) ||
+  (u >= 0xFFE0 && u <= 0xFFE6)
+}
+
+///|
 /// Unicode whitespace coverage used for the common HF Regex `\s` subset.
 pub fn is_unicode_whitespace(u : Int) -> Bool {
   u == 0x09 ||

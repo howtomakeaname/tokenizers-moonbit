@@ -55,6 +55,46 @@ pub fn simple_split_regex_matches(
     pattern == "[^\\p{L}]+" ||
     pattern == "[^\\p{Letter}]+" {
     Some(run_matches(chars, fn(c) { !is_unicode_letter(c) }))
+  } else if pattern == "\\p{P}+" ||
+    pattern == "\\p{Punctuation}+" ||
+    pattern == "[\\p{P}]+" ||
+    pattern == "[\\p{Punctuation}]+" {
+    Some(run_matches(chars, fn(c) { is_unicode_punctuation(c) }))
+  } else if pattern == "^\\p{P}+" ||
+    pattern == "^\\p{Punctuation}+" ||
+    pattern == "^[\\p{P}]+" ||
+    pattern == "^[\\p{Punctuation}]+" {
+    Some(leading_run_match(chars, fn(c) { is_unicode_punctuation(c) }))
+  } else if pattern == "\\p{P}+$" ||
+    pattern == "\\p{Punctuation}+$" ||
+    pattern == "[\\p{P}]+$" ||
+    pattern == "[\\p{Punctuation}]+$" {
+    Some(trailing_run_match(chars, fn(c) { is_unicode_punctuation(c) }))
+  } else if pattern == "\\P{P}+" ||
+    pattern == "\\P{Punctuation}+" ||
+    pattern == "[^\\p{P}]+" ||
+    pattern == "[^\\p{Punctuation}]+" {
+    Some(run_matches(chars, fn(c) { !is_unicode_punctuation(c) }))
+  } else if pattern == "\\p{S}+" ||
+    pattern == "\\p{Symbol}+" ||
+    pattern == "[\\p{S}]+" ||
+    pattern == "[\\p{Symbol}]+" {
+    Some(run_matches(chars, fn(c) { is_unicode_symbol(c) }))
+  } else if pattern == "^\\p{S}+" ||
+    pattern == "^\\p{Symbol}+" ||
+    pattern == "^[\\p{S}]+" ||
+    pattern == "^[\\p{Symbol}]+" {
+    Some(leading_run_match(chars, fn(c) { is_unicode_symbol(c) }))
+  } else if pattern == "\\p{S}+$" ||
+    pattern == "\\p{Symbol}+$" ||
+    pattern == "[\\p{S}]+$" ||
+    pattern == "[\\p{Symbol}]+$" {
+    Some(trailing_run_match(chars, fn(c) { is_unicode_symbol(c) }))
+  } else if pattern == "\\P{S}+" ||
+    pattern == "\\P{Symbol}+" ||
+    pattern == "[^\\p{S}]+" ||
+    pattern == "[^\\p{Symbol}]+" {
+    Some(run_matches(chars, fn(c) { !is_unicode_symbol(c) }))
   } else if pattern == "\\d+" ||
     pattern == "[0-9]+" ||
     pattern == "\\p{N}+" ||
@@ -127,6 +167,38 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\P{Letter}+" ||
   pattern == "[^\\p{L}]+" ||
   pattern == "[^\\p{Letter}]+" ||
+  pattern == "\\p{P}+" ||
+  pattern == "\\p{Punctuation}+" ||
+  pattern == "[\\p{P}]+" ||
+  pattern == "[\\p{Punctuation}]+" ||
+  pattern == "^\\p{P}+" ||
+  pattern == "^\\p{Punctuation}+" ||
+  pattern == "^[\\p{P}]+" ||
+  pattern == "^[\\p{Punctuation}]+" ||
+  pattern == "\\p{P}+$" ||
+  pattern == "\\p{Punctuation}+$" ||
+  pattern == "[\\p{P}]+$" ||
+  pattern == "[\\p{Punctuation}]+$" ||
+  pattern == "\\P{P}+" ||
+  pattern == "\\P{Punctuation}+" ||
+  pattern == "[^\\p{P}]+" ||
+  pattern == "[^\\p{Punctuation}]+" ||
+  pattern == "\\p{S}+" ||
+  pattern == "\\p{Symbol}+" ||
+  pattern == "[\\p{S}]+" ||
+  pattern == "[\\p{Symbol}]+" ||
+  pattern == "^\\p{S}+" ||
+  pattern == "^\\p{Symbol}+" ||
+  pattern == "^[\\p{S}]+" ||
+  pattern == "^[\\p{Symbol}]+" ||
+  pattern == "\\p{S}+$" ||
+  pattern == "\\p{Symbol}+$" ||
+  pattern == "[\\p{S}]+$" ||
+  pattern == "[\\p{Symbol}]+$" ||
+  pattern == "\\P{S}+" ||
+  pattern == "\\P{Symbol}+" ||
+  pattern == "[^\\p{S}]+" ||
+  pattern == "[^\\p{Symbol}]+" ||
   pattern == "\\d+" ||
   pattern == "[0-9]+" ||
   pattern == "\\p{N}+" ||

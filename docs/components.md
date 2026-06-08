@@ -66,7 +66,9 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
   CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\S+`,
   `^\s+`, `\s+$`, `[\r\n]`, `\d+`, `\D+`, `\d{1,3}`, `\p{N}{1,3}`, anchored
-  digit/word/letter runs, `\w+`, `\W+`, `\p{L}+`, and `\P{L}+` are recognized.
+  digit/word/letter runs, `\w+`, `\W+`, `\p{L}+`, `\P{L}+`, punctuation
+  classes (`\p{P}+` / `\P{P}+`) and symbol classes (`\p{S}+` / `\P{S}+`)
+  are recognized.
   Unsupported regexes raise `UnsupportedComponent` at load time instead of
   silently producing mismatched splits. A full Unicode regex engine remains
   future work.
@@ -74,8 +76,8 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   regex replacements such as `\s+`, `^\s+`, `\s+$`, `[\r\n]+`, `[^\S\r\n]+`,
   ` {2,}`, digit runs `\d+` / `\D+`, common bounded digit runs such as
   `\d{1,3}`, anchored digit/word/letter runs, word runs `\w+` / `\W+`, and
-  letter runs `\p{L}+` / `\P{L}+`; more complex regex replacement remains
-  future work.
+  letter/punctuation/symbol runs (`\p{L}+`, `\p{P}+`, `\p{S}+` and inverse
+  forms); more complex regex replacement remains future work.
 - **Offsets:** char-based by default, relative to the original text. Optional
   byte-offset encode APIs are available for HuggingFace-style byte offsets.
 - **Batching:** single-threaded by design for wasm/js targets.

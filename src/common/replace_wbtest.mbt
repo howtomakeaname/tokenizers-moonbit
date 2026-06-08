@@ -90,6 +90,24 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(non_letters.length(), 1)
   @test.assert_eq(non_letters[0].start, 4)
   @test.assert_eq(non_letters[0].stop, 7)
+  guard simple_split_regex_matches("hi,!$+🙂ok。".to_array(), "\\p{P}+")
+    is Some(punctuation) else {
+    abort("expected punctuation matches")
+  }
+  @test.assert_eq(punctuation.length(), 2)
+  @test.assert_eq(punctuation[0].start, 2)
+  @test.assert_eq(punctuation[0].stop, 4)
+  @test.assert_eq(punctuation[1].start, 9)
+  @test.assert_eq(punctuation[1].stop, 10)
+  guard simple_split_regex_matches("a$+🙂,b=≤c".to_array(), "\\p{S}+")
+    is Some(symbols) else {
+    abort("expected symbol matches")
+  }
+  @test.assert_eq(symbols.length(), 2)
+  @test.assert_eq(symbols[0].start, 1)
+  @test.assert_eq(symbols[0].stop, 4)
+  @test.assert_eq(symbols[1].start, 6)
+  @test.assert_eq(symbols[1].stop, 8)
   guard simple_split_regex_matches(chars, "\\s+") is Some(spaces) else {
     abort("expected whitespace matches")
   }
@@ -124,5 +142,7 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("^\\p{L}+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\d+$"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Letter}]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\p{Punctuation}+$"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\p{Symbol}]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{N}{1,3}"), true)
 }

@@ -514,6 +514,18 @@ fn bench_decoder_replace_digit_regex_case(
 }
 
 ///|
+fn bench_decoder_replace_punctuation_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("\\p{P}+", "_")
+  let tokens = ["hi,!", "$+🙂ok。", " code(a+b);", " path/to/file.rs"]
+  b.bench(name="decoder-replace-punctuation-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_split_trailing_ws_regex_case(b : @bench.T, case_name : String) -> Unit {
   let pt = @pretokenizer.PreTokenizer::split(
     "\\s+$",
@@ -551,6 +563,20 @@ fn bench_split_digit_regex_case(b : @bench.T, case_name : String) -> Unit {
   )
   let text = corpus_mixed() + " 12345 2026"
   b.bench(name="pretokenizer-split-digit-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_punctuation_regex_case(b : @bench.T, case_name : String) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "\\p{P}+",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " $+🙂 ok。 code(a+b); path/to/file.rs"
+  b.bench(name="pretokenizer-split-punctuation-regex-\{case_name}", fn() {
     b.keep(pt.pre_tokenize(text, base_offset=0))
   })
 }
@@ -803,6 +829,11 @@ test "bench decoder replace digit regex" (b : @bench.T) {
 }
 
 ///|
+test "bench decoder replace punctuation regex" (b : @bench.T) {
+  bench_decoder_replace_punctuation_regex_case(b, "mixed")
+}
+
+///|
 test "bench split trailing whitespace regex" (b : @bench.T) {
   bench_split_trailing_ws_regex_case(b, "mixed")
 }
@@ -815,4 +846,9 @@ test "bench split nonspace regex" (b : @bench.T) {
 ///|
 test "bench split digit regex" (b : @bench.T) {
   bench_split_digit_regex_case(b, "mixed")
+}
+
+///|
+test "bench split punctuation regex" (b : @bench.T) {
+  bench_split_punctuation_regex_case(b, "mixed")
 }

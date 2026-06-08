@@ -515,6 +515,70 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       !@common.is_unicode_letter(c)
     })
   }
+  if pattern == "\\p{P}+" ||
+    pattern == "\\p{Punctuation}+" ||
+    pattern == "[\\p{P}]+" ||
+    pattern == "[\\p{Punctuation}]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_unicode_punctuation(c)
+    })
+  }
+  if pattern == "^\\p{P}+" ||
+    pattern == "^\\p{Punctuation}+" ||
+    pattern == "^[\\p{P}]+" ||
+    pattern == "^[\\p{Punctuation}]+" {
+    return @common.replace_leading_runs(s, content, fn(c) {
+      @common.is_unicode_punctuation(c)
+    })
+  }
+  if pattern == "\\p{P}+$" ||
+    pattern == "\\p{Punctuation}+$" ||
+    pattern == "[\\p{P}]+$" ||
+    pattern == "[\\p{Punctuation}]+$" {
+    return @common.replace_trailing_runs(s, content, fn(c) {
+      @common.is_unicode_punctuation(c)
+    })
+  }
+  if pattern == "\\P{P}+" ||
+    pattern == "\\P{Punctuation}+" ||
+    pattern == "[^\\p{P}]+" ||
+    pattern == "[^\\p{Punctuation}]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      !@common.is_unicode_punctuation(c)
+    })
+  }
+  if pattern == "\\p{S}+" ||
+    pattern == "\\p{Symbol}+" ||
+    pattern == "[\\p{S}]+" ||
+    pattern == "[\\p{Symbol}]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_unicode_symbol(c)
+    })
+  }
+  if pattern == "^\\p{S}+" ||
+    pattern == "^\\p{Symbol}+" ||
+    pattern == "^[\\p{S}]+" ||
+    pattern == "^[\\p{Symbol}]+" {
+    return @common.replace_leading_runs(s, content, fn(c) {
+      @common.is_unicode_symbol(c)
+    })
+  }
+  if pattern == "\\p{S}+$" ||
+    pattern == "\\p{Symbol}+$" ||
+    pattern == "[\\p{S}]+$" ||
+    pattern == "[\\p{Symbol}]+$" {
+    return @common.replace_trailing_runs(s, content, fn(c) {
+      @common.is_unicode_symbol(c)
+    })
+  }
+  if pattern == "\\P{S}+" ||
+    pattern == "\\P{Symbol}+" ||
+    pattern == "[^\\p{S}]+" ||
+    pattern == "[^\\p{Symbol}]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      !@common.is_unicode_symbol(c)
+    })
+  }
   if pattern == "[^\\S\\r\\n]+" {
     return @common.replace_char_runs(s, content, fn(c) {
       @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'

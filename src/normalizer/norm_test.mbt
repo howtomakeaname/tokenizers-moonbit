@@ -158,4 +158,26 @@ test "Replace normalizer supports common regex whitespace patterns" {
     Normalizer::Replace(pattern="\\p{L}+$", content="L").normalize("12Жabc"),
     "12L",
   )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\p{P}+", content="_").normalize(
+      "hi,!$+🙂ok。",
+    ),
+    "hi_$+🙂ok_",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="^\\p{Punctuation}+", content="").normalize(
+      "？！hello!",
+    ),
+    "hello!",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\p{Symbol}+", content="S").normalize(
+      "a$+🙂,b=≤c",
+    ),
+    "aS,bSc",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\p{S}+$", content="").normalize("ok🙂+"),
+    "ok",
+  )
 }
