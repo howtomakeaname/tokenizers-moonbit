@@ -355,7 +355,5 @@ fn BPEModel::lookup(self : BPEModel, value : String) -> Int? {
 
 ///|
 fn char_str(c : Char) -> String {
-  let sb = StringBuilder::new()
-  sb.write_char(c)
-  sb.to_string()
+  @common.char_string(c)
 }

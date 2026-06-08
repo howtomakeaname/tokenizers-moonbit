@@ -1,6 +1,6 @@
 # Usage
 
-`tokenizer-moonbit` loads a HuggingFace `tokenizer.json` and runs encode/decode
+`tokenizers-moonbit` loads a HuggingFace `tokenizer.json` and runs encode/decode
 on every MoonBit backend. This guide covers the common tasks.
 
 Chinese version: [`docs/zh/usage.md`](./zh/usage.md)

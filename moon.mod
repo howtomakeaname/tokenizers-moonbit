@@ -1,4 +1,4 @@
-name = "tokenizer-moonbit"
+name = "tokenizers-moonbit"
 
 version = "0.1.0"
 

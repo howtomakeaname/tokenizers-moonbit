@@ -149,7 +149,7 @@ fn precompiled_normalize(s : String) -> String {
   let sb = StringBuilder::new()
   let normalized = normalize_unicode(s, compat=true, compose=true)
   for c in normalized {
-    if is_ws(c) {
+    if @common.is_ascii_whitespace(c) {
       sb.write_char(' ')
     } else {
       sb.write_char(c)
@@ -221,7 +221,7 @@ fn bert_clean_text(s : String) -> String {
     if u == 0 || u == 0xFFFD || is_control(c) {
       continue
     }
-    if is_ws(c) {
+    if @common.is_ascii_whitespace(c) {
       sb.write_char(' ')
     } else {
       sb.write_char(c)
@@ -282,12 +282,12 @@ fn strip(s : String, left : Bool, right : Bool) -> String {
   let mut start = 0
   let mut stop = n
   if left {
-    while start < stop && is_ws(chars[start]) {
+    while start < stop && @common.is_ascii_whitespace(chars[start]) {
       start = start + 1
     }
   }
   if right {
-    while stop > start && is_ws(chars[stop - 1]) {
+    while stop > start && @common.is_ascii_whitespace(chars[stop - 1]) {
       stop = stop - 1
     }
   }
@@ -296,11 +296,6 @@ fn strip(s : String, left : Bool, right : Bool) -> String {
     sb.write_char(chars[k])
   }
   sb.to_string()
-}
-
-///|
-fn is_ws(c : Char) -> Bool {
-  c == ' ' || c == '\t' || c == '\n' || c == '\r'
 }
 
 // Replacement for HF Replace. Common Regex patterns used by SPM tokenizers are
@@ -315,29 +310,33 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     return replace_space_runs(s, content, min_run=2)
   }
   if pattern == "^\\s+" {
-    return replace_leading_runs(s, content, fn(c) { is_nmt_space(c.to_int()) })
+    return replace_leading_runs(s, content, fn(c) {
+      @common.is_unicode_whitespace(c.to_int())
+    })
   }
   if pattern == "\\s+" {
     return replace_whitespace_runs(s, content)
   }
   if pattern == "\\s+$" {
-    return replace_trailing_runs(s, content, fn(c) { is_nmt_space(c.to_int()) })
+    return replace_trailing_runs(s, content, fn(c) {
+      @common.is_unicode_whitespace(c.to_int())
+    })
   }
   if pattern == "[\\r\\n]+" || pattern == "[\r\n]+" {
     return replace_char_runs(s, content, fn(c) { c == '\r' || c == '\n' })
   }
   if pattern == "\\d+" || pattern == "[0-9]+" || pattern == "\\p{N}+" {
-    return replace_char_runs(s, content, fn(c) { is_ascii_digit(c) })
+    return replace_char_runs(s, content, fn(c) { @common.is_ascii_digit(c) })
   }
   if pattern == "\\D+" || pattern == "[^0-9]+" {
-    return replace_char_runs(s, content, fn(c) { !is_ascii_digit(c) })
+    return replace_char_runs(s, content, fn(c) { !@common.is_ascii_digit(c) })
   }
   if pattern == "[ \\t]+" {
     return replace_char_runs(s, content, fn(c) { c == ' ' || c == '\t' })
   }
   if pattern == "[^\\S\\r\\n]+" {
     return replace_char_runs(s, content, fn(c) {
-      is_nmt_space(c.to_int()) && c != '\r' && c != '\n'
+      @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
     })
   }
   let pat = pattern.to_array()
@@ -428,11 +427,6 @@ fn replace_char_runs(
 }
 
 ///|
-fn is_ascii_digit(c : Char) -> Bool {
-  c >= '0' && c <= '9'
-}
-
-///|
 fn replace_space_runs(s : String, content : String, min_run~ : Int) -> String {
   let chars = s.to_array()
   let n = chars.length()
@@ -467,8 +461,8 @@ fn replace_whitespace_runs(s : String, content : String) -> String {
   let sb = StringBuilder::new()
   let mut i = 0
   while i < n {
-    if is_nmt_space(chars[i].to_int()) {
-      while i < n && is_nmt_space(chars[i].to_int()) {
+    if @common.is_unicode_whitespace(chars[i].to_int()) {
+      while i < n && @common.is_unicode_whitespace(chars[i].to_int()) {
         i = i + 1
       }
       sb.write_string(content)

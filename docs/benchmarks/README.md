@@ -95,7 +95,7 @@ that disagrees with the reference is not useful.
 
 **Portability is the main differentiator.** Rust `tokenizers` is fast on a
 server. In browsers, edge runtimes and pure JS environments, you typically need
-an additional WASM artifact, glue code or a native addon. `tokenizer-moonbit`
+an additional WASM artifact, glue code or a native addon. `tokenizers-moonbit`
 compiles the same source to `js`, `wasm`, `wasm-gc` and `native`.
 
 **Throughput is in the same range.** Native byte-level BPE and Split models are

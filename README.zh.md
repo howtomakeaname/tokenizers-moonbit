@@ -1,4 +1,4 @@
-# tokenizer-moonbit
+# tokenizers-moonbit
 
 MoonBit 版 HuggingFace `tokenizers`。直接加载标准 `tokenizer.json`，在
 `wasm`、`wasm-gc`、`js`、`native` 后端运行同一套 encode/decode 实现，无 native

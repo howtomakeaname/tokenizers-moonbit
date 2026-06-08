@@ -297,7 +297,7 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   }
   if pattern == "^\\s+" {
     return replace_leading_runs(s, content, fn(c) {
-      is_unicode_whitespace(c.to_int())
+      @common.is_unicode_whitespace(c.to_int())
     })
   }
   if pattern == "\\s+" {
@@ -305,24 +305,24 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   }
   if pattern == "\\s+$" {
     return replace_trailing_runs(s, content, fn(c) {
-      is_unicode_whitespace(c.to_int())
+      @common.is_unicode_whitespace(c.to_int())
     })
   }
   if pattern == "[\\r\\n]+" || pattern == "[\r\n]+" {
     return replace_char_runs(s, content, fn(c) { c == '\r' || c == '\n' })
   }
   if pattern == "\\d+" || pattern == "[0-9]+" || pattern == "\\p{N}+" {
-    return replace_char_runs(s, content, fn(c) { is_ascii_digit(c) })
+    return replace_char_runs(s, content, fn(c) { @common.is_ascii_digit(c) })
   }
   if pattern == "\\D+" || pattern == "[^0-9]+" {
-    return replace_char_runs(s, content, fn(c) { !is_ascii_digit(c) })
+    return replace_char_runs(s, content, fn(c) { !@common.is_ascii_digit(c) })
   }
   if pattern == "[ \\t]+" {
     return replace_char_runs(s, content, fn(c) { c == ' ' || c == '\t' })
   }
   if pattern == "[^\\S\\r\\n]+" {
     return replace_char_runs(s, content, fn(c) {
-      is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
+      @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
     })
   }
   let pat = pattern.to_array()
@@ -413,11 +413,6 @@ fn replace_char_runs(
 }
 
 ///|
-fn is_ascii_digit(c : Char) -> Bool {
-  c >= '0' && c <= '9'
-}
-
-///|
 fn replace_space_runs(s : String, content : String, min_run~ : Int) -> String {
   let chars = s.to_array()
   let n = chars.length()
@@ -452,8 +447,8 @@ fn replace_whitespace_runs(s : String, content : String) -> String {
   let sb = StringBuilder::new()
   let mut i = 0
   while i < n {
-    if is_unicode_whitespace(chars[i].to_int()) {
-      while i < n && is_unicode_whitespace(chars[i].to_int()) {
+    if @common.is_unicode_whitespace(chars[i].to_int()) {
+      while i < n && @common.is_unicode_whitespace(chars[i].to_int()) {
         i = i + 1
       }
       sb.write_string(content)
@@ -463,23 +458,6 @@ fn replace_whitespace_runs(s : String, content : String) -> String {
     }
   }
   sb.to_string()
-}
-
-///|
-fn is_unicode_whitespace(u : Int) -> Bool {
-  u == 0x09 ||
-  u == 0x0A ||
-  u == 0x0D ||
-  u == 0x20 ||
-  u == 0x85 ||
-  u == 0xA0 ||
-  u == 0x1680 ||
-  (u >= 0x2000 && u <= 0x200A) ||
-  u == 0x2028 ||
-  u == 0x2029 ||
-  u == 0x202F ||
-  u == 0x205F ||
-  u == 0x3000
 }
 
 ///|

@@ -1,4 +1,4 @@
-# 开发进度与任务跟踪（tokenizer-moonbit）
+# 开发进度与任务跟踪（tokenizers-moonbit）
 
 本文件用于跟踪实现进度，便于后续开发者接替。每个阶段标注状态、产出文件、验证方式与已知缺口。
 
@@ -26,6 +26,22 @@
 | R7 | benchmark 套件 + 与 HF 跑分 | ✅ |
 | R8 | 文档 + 迁移指南 | ✅ |
 | R9 | HF 无缝迁移缺口收敛（API / offsets / charsmap / save / pretrained） | 🚧 |
+| R10 | 架构治理与模块化（公共库 / 测试与基准分层 / HF 风格组件边界） | 🚧 |
+
+## R10：架构治理与模块化计划
+
+目标：在不破坏现有 HF parity、全后端测试与 benchmark 对比的前提下，逐步把项目整理成更接近 HF tokenizers 的组件化结构：公共工具层 → normalizers / pre_tokenizers / models / processors / decoders → tokenizer façade → tests/bench harness。
+
+迁移原则：每一步都必须是小步可回滚；先抽无状态、无依赖的公共 helper，再移动测试/bench；所有阶段完成后运行 `moon test --target wasm/wasm-gc/js/native`，性能结论仍以 `scripts/bench_compare.py` 的 Moon/HF ratio 为准。
+
+| 阶段 | 内容 | 状态 | 验证 |
+|---|---|---|---|
+| A0 | 项目名从 `tokenizer-moonbit` 修正为 `tokenizers-moonbit`，同步 module/import/doc/script 引用 | ✅ | wasm/wasm-gc/js/native 测试通过 |
+| A1 | 新增 dependency-free `common` 包，先承载跨组件复用的字符谓词与 tiny string helper | ✅ | wasm/wasm-gc/js/native 测试通过；`bench_compare.py --quick --target native` 通过 |
+| A2 | 继续抽离通用 Regex 子集/replace-run helper，统一 normalizer/decoder/pretokenizer 的简单正则语义 | ⬜ | 增补 regex 单测 + HF 对拍 |
+| A3 | 拆分 bench harness：将 tokenizer 包内超大 `bench_test.mbt` 迁移到独立 bench 包/目录，仅通过公开 API 依赖 tokenizer | ⬜ | `moon bench` + `scripts/bench_compare.py --quick` |
+| A4 | 分层整理测试：保留组件 wbtest 贴近源码，新增/迁移集成 parity 用例到 tests-facing package，避免源码目录膨胀 | ⬜ | 全后端测试 + fixture 缺失自动跳过 |
+| A5 | 梳理 public API façade：tokenizer 包只暴露稳定 API，组件包保持 HF pipeline 边界清晰 | ⬜ | API 文档/示例编译 + 迁移指南同步 |
 
 ## 已对齐验证的真实模型（与 Python `tokenizers` 逐 token id 一致）
 

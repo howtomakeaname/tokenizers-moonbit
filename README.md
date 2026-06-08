@@ -1,4 +1,4 @@
-# tokenizer-moonbit
+# tokenizers-moonbit
 
 A MoonBit port of [HuggingFace `tokenizers`](https://github.com/huggingface/tokenizers).
 

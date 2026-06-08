@@ -232,9 +232,7 @@ fn add_wordpiece_alphabet(
 
 ///|
 fn char_string(c : Char) -> String {
-  let sb = StringBuilder::new()
-  sb.write_char(c)
-  sb.to_string()
+  @common.char_string(c)
 }
 
 ///|

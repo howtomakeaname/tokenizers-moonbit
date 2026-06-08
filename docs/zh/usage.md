@@ -1,6 +1,6 @@
 # 使用指南
 
-`tokenizer-moonbit` 直接加载 HuggingFace `tokenizer.json`，在 MoonBit 各后端执行
+`tokenizers-moonbit` 直接加载 HuggingFace `tokenizer.json`，在 MoonBit 各后端执行
 encode/decode。
 
 英文版：[`../usage.md`](../usage.md)

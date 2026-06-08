@@ -1,6 +1,6 @@
 # 从 HuggingFace 迁移
 
-`tokenizer-moonbit` 尽量保持与 HuggingFace `tokenizers` 相近的调用方式，并复用
+`tokenizers-moonbit` 尽量保持与 HuggingFace `tokenizers` 相近的调用方式，并复用
 同一个 `tokenizer.json`。
 
 英文版：[`../migration-from-hf.md`](../migration-from-hf.md)

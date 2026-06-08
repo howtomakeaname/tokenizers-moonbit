@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Compare tokenizer-moonbit with HuggingFace tokenizers on the same host.
+"""Compare tokenizers-moonbit with HuggingFace tokenizers on the same host.
 
 This script intentionally reports **ratios** instead of only standalone timings:
-`moonbit_us / hf_us`, where lower is better for tokenizer-moonbit. It runs
+`moonbit_us / hf_us`, where lower is better for tokenizers-moonbit. It runs
 `moon bench --target <target>`, parses MoonBit's benchmark table, then measures
 HF `tokenizers` on the same tokenizer.json fixtures and corpora.
 

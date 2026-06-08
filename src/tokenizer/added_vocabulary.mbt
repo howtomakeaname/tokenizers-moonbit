@@ -271,20 +271,15 @@ fn AddedVocabulary::extract_stage2(
 
 ///|
 fn is_word_char(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') ||
-  (c >= 'A' && c <= 'Z') ||
-  (c >= '0' && c <= '9') ||
-  c == '_'
+  @common.is_word_char(c)
 }
 
 ///|
 fn is_ws(c : Char) -> Bool {
-  c == ' ' || c == '\t' || c == '\n' || c == '\r'
+  @common.is_ascii_whitespace(c)
 }
 
 ///|
 fn char_str(c : Char) -> String {
-  let sb = StringBuilder::new()
-  sb.write_char(c)
-  sb.to_string()
+  @common.char_string(c)
 }

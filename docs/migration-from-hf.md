@@ -1,6 +1,6 @@
 # Migrating from HuggingFace `tokenizers`
 
-`tokenizer-moonbit` mirrors the HuggingFace `tokenizers` API closely. This guide
+`tokenizers-moonbit` mirrors the HuggingFace `tokenizers` API closely. This guide
 maps common Python usage to MoonBit. The same `tokenizer.json` works in both.
 
 Chinese version: [`docs/zh/migration-from-hf.md`](./zh/migration-from-hf.md)
