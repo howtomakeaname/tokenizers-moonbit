@@ -337,6 +337,26 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       @common.is_decimal_number(c)
     })
   }
+  if pattern == "^\\d+" ||
+    pattern == "^[0-9]+" ||
+    pattern == "^\\p{N}+" ||
+    pattern == "^\\p{Number}+" ||
+    pattern == "^[\\p{N}]+" ||
+    pattern == "^[\\p{Number}]+" {
+    return @common.replace_leading_runs(s, content, fn(c) {
+      @common.is_decimal_number(c)
+    })
+  }
+  if pattern == "\\d+$" ||
+    pattern == "[0-9]+$" ||
+    pattern == "\\p{N}+$" ||
+    pattern == "\\p{Number}+$" ||
+    pattern == "[\\p{N}]+$" ||
+    pattern == "[\\p{Number}]+$" {
+    return @common.replace_trailing_runs(s, content, fn(c) {
+      @common.is_decimal_number(c)
+    })
+  }
   if pattern == "\\D+" || pattern == "[^0-9]+" {
     return @common.replace_char_runs(s, content, fn(c) {
       !@common.is_decimal_number(c)
@@ -382,6 +402,16 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       @common.is_word_char(c)
     })
   }
+  if pattern == "^\\w+" || pattern == "^[A-Za-z0-9_]+" {
+    return @common.replace_leading_runs(s, content, fn(c) {
+      @common.is_word_char(c)
+    })
+  }
+  if pattern == "\\w+$" || pattern == "[A-Za-z0-9_]+$" {
+    return @common.replace_trailing_runs(s, content, fn(c) {
+      @common.is_word_char(c)
+    })
+  }
   if pattern == "\\W+" || pattern == "[^\\w]+" || pattern == "[^A-Za-z0-9_]+" {
     return @common.replace_char_runs(s, content, fn(c) {
       !@common.is_word_char(c)
@@ -392,6 +422,22 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     pattern == "[\\p{L}]+" ||
     pattern == "[\\p{Letter}]+" {
     return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_unicode_letter(c)
+    })
+  }
+  if pattern == "^\\p{L}+" ||
+    pattern == "^\\p{Letter}+" ||
+    pattern == "^[\\p{L}]+" ||
+    pattern == "^[\\p{Letter}]+" {
+    return @common.replace_leading_runs(s, content, fn(c) {
+      @common.is_unicode_letter(c)
+    })
+  }
+  if pattern == "\\p{L}+$" ||
+    pattern == "\\p{Letter}+$" ||
+    pattern == "[\\p{L}]+$" ||
+    pattern == "[\\p{Letter}]+$" {
+    return @common.replace_trailing_runs(s, content, fn(c) {
       @common.is_unicode_letter(c)
     })
   }

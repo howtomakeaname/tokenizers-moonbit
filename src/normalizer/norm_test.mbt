@@ -111,6 +111,14 @@ test "Replace normalizer supports common regex whitespace patterns" {
     "a#b#",
   )
   @test.assert_eq(
+    Normalizer::Replace(pattern="^\\d+", content="#").normalize("123abc456"),
+    "#abc456",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\d+$", content="#").normalize("123abc456"),
+    "123abc#",
+  )
+  @test.assert_eq(
     Normalizer::Replace(pattern="\\D+", content="_").normalize("a12bc003"),
     "_12_003",
   )
@@ -123,6 +131,14 @@ test "Replace normalizer supports common regex whitespace patterns" {
     "ab_12-cd",
   )
   @test.assert_eq(
+    Normalizer::Replace(pattern="^\\w+", content="W").normalize("ab_12,cd"),
+    "W,cd",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\w+$", content="W").normalize("ab,cd_12"),
+    "ab,W",
+  )
+  @test.assert_eq(
     Normalizer::Replace(pattern="\\p{L}+", content="L").normalize(
       "abé中12!Ж",
     ),
@@ -133,5 +149,13 @@ test "Replace normalizer supports common regex whitespace patterns" {
       "abé中12!Ж",
     ),
     "abé中-Ж",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="^\\p{L}+", content="L").normalize("Жabc12é"),
+    "L12é",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\p{L}+$", content="L").normalize("12Жabc"),
+    "12L",
   )
 }
