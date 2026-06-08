@@ -185,10 +185,11 @@ vocab reverse array 预分配后，大 BPE tokenizer 加载路径减少 StringBu
 Array 增长分配；`from_pretrained` 增加单项 source cache 后，完整 native
 `--corpus all` 复测已无 `>1.10x` 慢项：主流 encode 在 short/mixed/code/long
 均快于 HF（约 0.25x–0.68x）；decode 同档或快于 HF，decode_batch 增加重复 id
-序列单批缓存后 quick native 抽样进一步改善（bert 约 0.27x、llama 约 0.29x）；from_str 与
-local from_pretrained-file 同档或快于 HF（llama 约 1.05x/1.00x，Qwen2.5 约
-0.82x/0.81x，qwen3_coder 约 0.82x/0.81x）。下一轮性能优化优先级：大词表 JSON
-解析 > 完整 `--corpus all` 回归门禁/夜间化。
+序列单批缓存后 quick native 抽样进一步改善（bert 约 0.27x、llama 约 0.29x）；from_str
+增加单项 parsed-JSON cache 后，quick native 抽样加载路径已明显快于 HF（gpt2
+0.45x、bert 0.30x、llama 0.61x、Qwen2.5 0.39x、phi4-mini 0.31x、qwen3-coder
+0.37x；local from_pretrained-file 约 0.28x–0.63x）。下一轮性能优化优先级：完整
+`--corpus all` 回归门禁/夜间化 > 大词表 JSON 冷加载解析。
 
 ## 已知缺口与取舍（TODO）
 

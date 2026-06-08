@@ -10,6 +10,23 @@ test "from_str parses a minimal BPE tokenizer.json" {
 }
 
 ///|
+test "from_str parse cache returns fresh tokenizer state" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[PAD]":2,"[UNK]":3},"unk_token":"[UNK]"}}
+  let first = Tokenizer::from_str(json).with_padding(
+    Some(PaddingParams::new(Fixed(4), pad_id=2, pad_token="[PAD]")),
+  )
+  @test.assert_eq(first.encode("hello", add_special_tokens=false).ids, [
+    0, 2, 2, 2,
+  ])
+  let second = Tokenizer::from_str(json)
+  @test.assert_eq(second.encode("hello", add_special_tokens=false).ids, [0])
+  @test.assert_eq(second.encode("moon", add_special_tokens=false).ids, [1])
+}
+
+///|
 test "BPE ignore_merges uses whole-token fast path before fallback merges" {
   let json =
     #|{"version":"1.0",

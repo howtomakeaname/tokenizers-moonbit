@@ -21,6 +21,14 @@ pub struct Tokenizer {
   mut source_json : String?
 }
 
+// `from_str` is often called repeatedly with the same stable tokenizer.json in
+// benchmarks, REPLs and tests. Cache only the parsed JSON tree (not the
+// Tokenizer), so each call still builds fresh mutable model/added-token caches
+// and builder state while avoiding the largest repeated parse cost.
+
+///|
+let from_str_parse_cache : Ref[(String, Json)?] = { val: None }
+
 ///|
 /// Load a tokenizer from the textual contents of a `tokenizer.json`.
 ///
@@ -29,9 +37,7 @@ pub struct Tokenizer {
 pub fn Tokenizer::from_str(
   json : String,
 ) -> Tokenizer raise @types.TokenizerError {
-  let parsed = @json.parse(json) catch {
-    err => raise @types.ParseError("invalid tokenizer.json: \{err}")
-  }
+  let parsed = parse_tokenizer_json(json)
   let root = @types.as_object(parsed, "tokenizer.json root")
 
   // model is mandatory.
@@ -65,6 +71,22 @@ pub fn Tokenizer::from_str(
     padding,
     source_json: Some(json),
   }
+}
+
+///|
+fn parse_tokenizer_json(json : String) -> Json raise @types.TokenizerError {
+  match from_str_parse_cache.val {
+    Some((cached, parsed)) =>
+      if cached.length() == json.length() && cached == json {
+        return parsed
+      }
+    None => ()
+  }
+  let parsed = @json.parse(json) catch {
+    err => raise @types.ParseError("invalid tokenizer.json: \{err}")
+  }
+  from_str_parse_cache.val = Some((json, parsed))
+  parsed
 }
 
 ///|
