@@ -265,11 +265,19 @@ fn bench_from_pretrained_hub_cache_case(b : @bench.T, model : String) -> Unit {
 fn bench_from_pretrained_multi_cache_case(b : @bench.T) -> Unit {
   guard load_text("tests/data/gpt2.full.json") is Some(_) else { return }
   guard load_text("tests/data/bert.full.json") is Some(_) else { return }
-  ignore(try? @tokenizer.Tokenizer::from_pretrained("tests/data/gpt2.full.json"))
-  ignore(try? @tokenizer.Tokenizer::from_pretrained("tests/data/bert.full.json"))
+  ignore(
+    try? @tokenizer.Tokenizer::from_pretrained("tests/data/gpt2.full.json"),
+  )
+  ignore(
+    try? @tokenizer.Tokenizer::from_pretrained("tests/data/bert.full.json"),
+  )
   b.bench(name="from_pretrained-multi-cache-hit", fn() {
-    let a = try? @tokenizer.Tokenizer::from_pretrained("tests/data/gpt2.full.json")
-    let b2 = try? @tokenizer.Tokenizer::from_pretrained("tests/data/bert.full.json")
+    let a = try? @tokenizer.Tokenizer::from_pretrained(
+      "tests/data/gpt2.full.json",
+    )
+    let b2 = try? @tokenizer.Tokenizer::from_pretrained(
+      "tests/data/bert.full.json",
+    )
     b.keep(a)
     b.keep(b2)
   })
@@ -284,9 +292,12 @@ fn bench_train_wordlevel_case(
   let corpus = [text, text, text, text]
   b.bench(name="wordlevel-train-\{case_name}", fn() {
     b.keep(
-      @tokenizer.Tokenizer::train_wordlevel(corpus, unk_token="[UNK]", min_frequency=1, special_tokens=[
-        "[PAD]",
-      ]),
+      @tokenizer.Tokenizer::train_wordlevel(
+        corpus,
+        unk_token="[UNK]",
+        min_frequency=1,
+        special_tokens=["[PAD]"],
+      ),
     )
   })
 }

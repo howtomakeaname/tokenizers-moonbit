@@ -3,7 +3,11 @@
 // Char arrays so offsets/behaviour stay identical across MoonBit backends.
 
 ///|
-pub fn replace_literal(s : String, pattern : String, content : String) -> String {
+pub fn replace_literal(
+  s : String,
+  pattern : String,
+  content : String,
+) -> String {
   if pattern.is_empty() {
     return s
   }
@@ -95,7 +99,11 @@ pub fn replace_char_runs(
 }
 
 ///|
-pub fn replace_space_runs(s : String, content : String, min_run~ : Int) -> String {
+pub fn replace_space_runs(
+  s : String,
+  content : String,
+  min_run~ : Int,
+) -> String {
   let chars = s.to_array()
   let n = chars.length()
   let sb = StringBuilder::new()

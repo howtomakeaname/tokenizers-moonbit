@@ -27,4 +27,3 @@ fn parse_int_array(obj : Map[String, Json], key : String) -> Array[Int] {
   }
   out
 }
-

@@ -309,16 +309,35 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     })
   }
   if pattern == "[\\r\\n]+" || pattern == "[\r\n]+" {
-    return @common.replace_char_runs(s, content, fn(c) { c == '\r' || c == '\n' })
+    return @common.replace_char_runs(s, content, fn(c) {
+      c == '\r' || c == '\n'
+    })
   }
   if pattern == "\\d+" || pattern == "[0-9]+" || pattern == "\\p{N}+" {
-    return @common.replace_char_runs(s, content, fn(c) { @common.is_ascii_digit(c) })
+    return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_ascii_digit(c)
+    })
   }
   if pattern == "\\D+" || pattern == "[^0-9]+" {
-    return @common.replace_char_runs(s, content, fn(c) { !@common.is_ascii_digit(c) })
+    return @common.replace_char_runs(s, content, fn(c) {
+      !@common.is_ascii_digit(c)
+    })
   }
   if pattern == "[ \\t]+" {
     return @common.replace_char_runs(s, content, fn(c) { c == ' ' || c == '\t' })
+  }
+  if pattern == "\\w+" ||
+    pattern == "[A-Za-z0-9_]+" ||
+    pattern == "\\b\\w+\\b" ||
+    pattern == "\\b[A-Za-z0-9_]+\\b" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_word_char(c)
+    })
+  }
+  if pattern == "\\W+" || pattern == "[^\\w]+" || pattern == "[^A-Za-z0-9_]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      !@common.is_word_char(c)
+    })
   }
   if pattern == "[^\\S\\r\\n]+" {
     return @common.replace_char_runs(s, content, fn(c) {

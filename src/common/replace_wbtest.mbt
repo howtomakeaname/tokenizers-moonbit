@@ -4,7 +4,9 @@
 test "replace helpers cover regex run semantics" {
   @test.assert_eq(replace_literal("a@@b@@", "@@", "-"), "a-b-")
   @test.assert_eq(
-    replace_leading_runs("\t  abc", "", fn(c) { is_unicode_whitespace(c.to_int()) }),
+    replace_leading_runs("\t  abc", "", fn(c) {
+      is_unicode_whitespace(c.to_int())
+    }),
     "abc",
   )
   @test.assert_eq(
@@ -32,6 +34,24 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(digits[0].stop, 3)
   @test.assert_eq(digits[1].start, 6)
   @test.assert_eq(digits[1].stop, 9)
+  guard simple_split_regex_matches(chars, "\\w+") is Some(words) else {
+    abort("expected word matches")
+  }
+  @test.assert_eq(words.length(), 3)
+  @test.assert_eq(words[0].start, 0)
+  @test.assert_eq(words[0].stop, 3)
+  @test.assert_eq(words[1].start, 4)
+  @test.assert_eq(words[1].stop, 5)
+  @test.assert_eq(words[2].start, 6)
+  @test.assert_eq(words[2].stop, 9)
+  guard simple_split_regex_matches(chars, "\\W+") is Some(non_words) else {
+    abort("expected non-word matches")
+  }
+  @test.assert_eq(non_words.length(), 2)
+  @test.assert_eq(non_words[0].start, 3)
+  @test.assert_eq(non_words[0].stop, 4)
+  @test.assert_eq(non_words[1].start, 5)
+  @test.assert_eq(non_words[1].stop, 6)
   guard simple_split_regex_matches(chars, "\\s+") is Some(spaces) else {
     abort("expected whitespace matches")
   }
@@ -41,5 +61,6 @@ test "split regex helpers cover simple patterns" {
   }
   @test.assert_eq(lit.length(), 1)
   @test.assert_eq(lit[0].start, 1)
+  @test.assert_eq(is_simple_split_regex_pattern("\\b\\w+\\b"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{N}{1,3}"), true)
 }

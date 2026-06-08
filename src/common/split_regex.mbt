@@ -20,6 +20,15 @@ pub fn simple_split_regex_matches(
     Some(trailing_run_match(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
   } else if pattern == "[\\r\\n]" || pattern == "[\r\n]" {
     Some(run_matches(chars, fn(c) { c == '\r' || c == '\n' }))
+  } else if pattern == "\\w+" ||
+    pattern == "[A-Za-z0-9_]+" ||
+    pattern == "\\b\\w+\\b" ||
+    pattern == "\\b[A-Za-z0-9_]+\\b" {
+    Some(run_matches(chars, fn(c) { is_word_char(c) }))
+  } else if pattern == "\\W+" ||
+    pattern == "[^\\w]+" ||
+    pattern == "[^A-Za-z0-9_]+" {
+    Some(run_matches(chars, fn(c) { !is_word_char(c) }))
   } else if pattern == "\\d+" || pattern == "[0-9]+" || pattern == "\\p{N}+" {
     Some(run_matches(chars, fn(c) { is_decimal_number(c) }))
   } else if pattern == "\\D+" || pattern == "[^0-9]+" {
@@ -39,6 +48,13 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\s+$" ||
   pattern == "[\\r\\n]" ||
   pattern == "[\r\n]" ||
+  pattern == "\\w+" ||
+  pattern == "[A-Za-z0-9_]+" ||
+  pattern == "\\b\\w+\\b" ||
+  pattern == "\\b[A-Za-z0-9_]+\\b" ||
+  pattern == "\\W+" ||
+  pattern == "[^\\w]+" ||
+  pattern == "[^A-Za-z0-9_]+" ||
   pattern == "\\d+" ||
   pattern == "[0-9]+" ||
   pattern == "\\p{N}+" ||
@@ -99,7 +115,10 @@ fn run_matches(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] {
 }
 
 ///|
-fn trailing_run_match(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] {
+fn trailing_run_match(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+) -> Array[Span] {
   let out : Array[Span] = []
   let mut i = chars.length()
   while i > 0 && pred(chars[i - 1]) {

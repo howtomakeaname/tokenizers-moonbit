@@ -18,7 +18,13 @@ test "truncation caps length (gpt2, right, max=5)" {
 test "fixed padding pads right with attention mask (gpt2, len=8)" {
   guard load_text("tests/data/gpt2.full.json") is Some(mj) else { return }
   let tok = @tokenizer.Tokenizer::from_str(mj).with_padding(
-    Some(@tokenizer.PaddingParams::new(@tokenizer.Fixed(8), pad_id=0, pad_token="!")),
+    Some(
+      @tokenizer.PaddingParams::new(
+        @tokenizer.Fixed(8),
+        pad_id=0,
+        pad_token="!",
+      ),
+    ),
   )
   let enc = tok.encode("Hello world", add_special_tokens=false)
   @test.assert_eq(enc.ids, [15496, 995, 0, 0, 0, 0, 0, 0])
@@ -43,7 +49,13 @@ test "batch padding pads to longest in batch" {
 test "encode_pair applies fixed padding" {
   guard load_text("tests/data/bert.full.json") is Some(mj) else { return }
   let tok = @tokenizer.Tokenizer::from_str(mj).with_padding(
-    Some(@tokenizer.PaddingParams::new(@tokenizer.Fixed(8), pad_id=0, pad_token="[PAD]")),
+    Some(
+      @tokenizer.PaddingParams::new(
+        @tokenizer.Fixed(8),
+        pad_id=0,
+        pad_token="[PAD]",
+      ),
+    ),
   )
   let enc = tok.encode_pair("hello", "world", add_special_tokens=true)
   @test.assert_eq(enc.ids.length(), 8)

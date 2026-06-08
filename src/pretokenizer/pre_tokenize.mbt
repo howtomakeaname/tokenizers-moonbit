@@ -110,6 +110,7 @@ fn split_with_simple_pattern(
   }
 }
 
+///|
 fn is_known_passthrough_split_regex(pattern : String) -> Bool {
   // Some real-world tokenizers use multi-step Split sequences with very large
   // Unicode range patterns. Existing parity relies on passing these steps
@@ -121,6 +122,7 @@ fn is_known_passthrough_split_regex(pattern : String) -> Bool {
   (pattern.contains("[!\"") && pattern.contains("\\p{P}\\p{S}"))
 }
 
+///|
 fn apply_split_matches(
   chars : Array[Char],
   matches : Array[@common.Span],
