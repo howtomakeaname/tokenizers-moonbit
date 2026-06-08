@@ -173,6 +173,14 @@ pub fn simple_split_regex_matches(
     Some(trailing_run_match(chars, fn(c) { is_decimal_number(c) }))
   } else if pattern == "\\D+" || pattern == "[^0-9]+" {
     Some(run_matches(chars, fn(c) { !is_decimal_number(c) }))
+  } else if pattern == "\\p{N}{1,2}" ||
+    pattern == "\\p{Number}{1,2}" ||
+    pattern == "[\\p{N}]{1,2}" ||
+    pattern == "[\\p{Number}]{1,2}" ||
+    pattern == "\\d{1,2}" ||
+    pattern == "[0-9]{1,2}" ||
+    pattern == "[0-9][0-9]" {
+    Some(number_run_matches(chars, max_digits=2))
   } else if pattern == "\\p{N}{1,3}" ||
     pattern == "\\p{Number}{1,3}" ||
     pattern == "[\\p{N}]{1,3}" ||
@@ -181,6 +189,14 @@ pub fn simple_split_regex_matches(
     pattern == "[0-9]{1,3}" ||
     pattern == "[0-9][0-9][0-9]" {
     Some(number_run_matches(chars, max_digits=3))
+  } else if pattern == "\\p{N}{1,4}" ||
+    pattern == "\\p{Number}{1,4}" ||
+    pattern == "[\\p{N}]{1,4}" ||
+    pattern == "[\\p{Number}]{1,4}" ||
+    pattern == "\\d{1,4}" ||
+    pattern == "[0-9]{1,4}" ||
+    pattern == "[0-9][0-9][0-9][0-9]" {
+    Some(number_run_matches(chars, max_digits=4))
   } else {
     None
   }
@@ -303,13 +319,27 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "[\\p{Number}]+$" ||
   pattern == "\\D+" ||
   pattern == "[^0-9]+" ||
+  pattern == "\\p{N}{1,2}" ||
+  pattern == "\\p{Number}{1,2}" ||
+  pattern == "[\\p{N}]{1,2}" ||
+  pattern == "[\\p{Number}]{1,2}" ||
+  pattern == "\\d{1,2}" ||
+  pattern == "[0-9]{1,2}" ||
+  pattern == "[0-9][0-9]" ||
   pattern == "\\p{N}{1,3}" ||
   pattern == "\\p{Number}{1,3}" ||
   pattern == "[\\p{N}]{1,3}" ||
   pattern == "[\\p{Number}]{1,3}" ||
   pattern == "\\d{1,3}" ||
   pattern == "[0-9]{1,3}" ||
-  pattern == "[0-9][0-9][0-9]"
+  pattern == "[0-9][0-9][0-9]" ||
+  pattern == "\\p{N}{1,4}" ||
+  pattern == "\\p{Number}{1,4}" ||
+  pattern == "[\\p{N}]{1,4}" ||
+  pattern == "[\\p{Number}]{1,4}" ||
+  pattern == "\\d{1,4}" ||
+  pattern == "[0-9]{1,4}" ||
+  pattern == "[0-9][0-9][0-9][0-9]"
 }
 
 ///|

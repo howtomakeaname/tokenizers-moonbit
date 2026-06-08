@@ -65,6 +65,26 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(bounded_digits[0].stop, 4)
   @test.assert_eq(bounded_digits[1].start, 4)
   @test.assert_eq(bounded_digits[1].stop, 6)
+  guard simple_split_regex_matches("a12345b".to_array(), "\\d{1,2}")
+    is Some(bounded_digits_2) else {
+    abort("expected bounded digit max-2 matches")
+  }
+  @test.assert_eq(bounded_digits_2.length(), 3)
+  @test.assert_eq(bounded_digits_2[0].start, 1)
+  @test.assert_eq(bounded_digits_2[0].stop, 3)
+  @test.assert_eq(bounded_digits_2[1].start, 3)
+  @test.assert_eq(bounded_digits_2[1].stop, 5)
+  @test.assert_eq(bounded_digits_2[2].start, 5)
+  @test.assert_eq(bounded_digits_2[2].stop, 6)
+  guard simple_split_regex_matches("a12345b".to_array(), "\\p{N}{1,4}")
+    is Some(bounded_digits_4) else {
+    abort("expected bounded digit max-4 matches")
+  }
+  @test.assert_eq(bounded_digits_4.length(), 2)
+  @test.assert_eq(bounded_digits_4[0].start, 1)
+  @test.assert_eq(bounded_digits_4[0].stop, 5)
+  @test.assert_eq(bounded_digits_4[1].start, 5)
+  @test.assert_eq(bounded_digits_4[1].stop, 6)
   guard simple_split_regex_matches(chars, "\\w+") is Some(words) else {
     abort("expected word matches")
   }
@@ -209,5 +229,7 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("\\s{2,}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^\\S\\r\\n]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\r\\n]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\d{1,2}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{N}{1,3}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\p{Number}]{1,4}"), true)
 }

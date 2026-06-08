@@ -66,7 +66,8 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
   CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\S+`,
   `^\s+`, `\s+$`, `\s{2,}`, `[\r\n]+`, `[^\S\r\n]+`, `\d+`, `\D+`,
-  `\d{1,3}`, `\p{N}{1,3}`, anchored digit/word/letter runs, `\w+`, `\W+`,
+  bounded digit runs (`\d{1,2}` / `\d{1,3}` / `\d{1,4}` and `\p{N}` aliases),
+  anchored digit/word/letter runs, `\w+`, `\W+`,
   `\p{L}+`, `\P{L}+`, punctuation
   classes (`\p{P}+` / `\P{P}+`) and symbol classes (`\p{S}+` / `\P{S}+`)
   are recognized, including common union/inverse classes such as

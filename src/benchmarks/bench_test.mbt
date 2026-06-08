@@ -599,6 +599,23 @@ fn bench_split_digit_regex_case(b : @bench.T, case_name : String) -> Unit {
 }
 
 ///|
+fn bench_split_bounded_digit_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "\\d{1,4}",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " 123456789 20260608 42"
+  b.bench(name="pretokenizer-split-bounded-digit-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
 fn bench_split_punctuation_regex_case(b : @bench.T, case_name : String) -> Unit {
   let pt = @pretokenizer.PreTokenizer::split(
     "[\\p{P}\\p{S}]+",
@@ -887,6 +904,11 @@ test "bench split nonspace regex" (b : @bench.T) {
 ///|
 test "bench split digit regex" (b : @bench.T) {
   bench_split_digit_regex_case(b, "mixed")
+}
+
+///|
+test "bench split bounded digit regex" (b : @bench.T) {
+  bench_split_bounded_digit_regex_case(b, "mixed")
 }
 
 ///|
