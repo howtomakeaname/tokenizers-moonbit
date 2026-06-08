@@ -6,6 +6,17 @@
 // baseline in scripts/bench_python.py for the "same correctness, runs in the
 // browser" story (see docs/benchmarks).
 
+///|
+fn load_text(path : String) -> String? {
+  if @fs.path_exists(path) {
+    Some(@fs.read_file_to_string(path)) catch {
+      _ => None
+    }
+  } else {
+    None
+  }
+}
+
 // A short chat-style input: startup latency / interactive generation path.
 
 ///|
@@ -60,9 +71,9 @@ fn corpus_long_doc() -> String {
 }
 
 ///|
-fn load_model(name : String) -> Tokenizer? raise {
+fn load_model(name : String) -> @tokenizer.Tokenizer? raise {
   match load_text("tests/data/\{name}.full.json") {
-    Some(j) => Some(Tokenizer::from_str(j))
+    Some(j) => Some(@tokenizer.Tokenizer::from_str(j))
     None => None
   }
 }
@@ -190,7 +201,7 @@ fn bench_wordpiece_repeated_case(b : @bench.T) -> Unit raise {
 fn bench_load_case(b : @bench.T, model : String) -> Unit {
   guard load_text("tests/data/\{model}.full.json") is Some(json) else { return }
   b.bench(name="\{model}-from_str", fn() {
-    let t = try? Tokenizer::from_str(json)
+    let t = try? @tokenizer.Tokenizer::from_str(json)
     b.keep(t)
   })
 }
@@ -209,7 +220,7 @@ fn bench_from_pretrained_case(b : @bench.T, model : String) -> Unit {
   let path = "tests/data/\{model}.full.json"
   guard load_text(path) is Some(_) else { return }
   b.bench(name="\{model}-from_pretrained-file", fn() {
-    let t = try? Tokenizer::from_pretrained(path)
+    let t = try? @tokenizer.Tokenizer::from_pretrained(path)
     b.keep(t)
   })
 }
@@ -242,7 +253,7 @@ fn bench_from_pretrained_hub_cache_case(b : @bench.T, model : String) -> Unit {
     _ => ()
   }
   b.bench(name="\{model}-from_pretrained-hub-cache", fn() {
-    let t = try? Tokenizer::from_pretrained_cached(
+    let t = try? @tokenizer.Tokenizer::from_pretrained_cached(
       "bench/" + model,
       cache_dir=Some(root),
     )
@@ -254,11 +265,11 @@ fn bench_from_pretrained_hub_cache_case(b : @bench.T, model : String) -> Unit {
 fn bench_from_pretrained_multi_cache_case(b : @bench.T) -> Unit {
   guard load_text("tests/data/gpt2.full.json") is Some(_) else { return }
   guard load_text("tests/data/bert.full.json") is Some(_) else { return }
-  ignore(try? Tokenizer::from_pretrained("tests/data/gpt2.full.json"))
-  ignore(try? Tokenizer::from_pretrained("tests/data/bert.full.json"))
+  ignore(try? @tokenizer.Tokenizer::from_pretrained("tests/data/gpt2.full.json"))
+  ignore(try? @tokenizer.Tokenizer::from_pretrained("tests/data/bert.full.json"))
   b.bench(name="from_pretrained-multi-cache-hit", fn() {
-    let a = try? Tokenizer::from_pretrained("tests/data/gpt2.full.json")
-    let b2 = try? Tokenizer::from_pretrained("tests/data/bert.full.json")
+    let a = try? @tokenizer.Tokenizer::from_pretrained("tests/data/gpt2.full.json")
+    let b2 = try? @tokenizer.Tokenizer::from_pretrained("tests/data/bert.full.json")
     b.keep(a)
     b.keep(b2)
   })
@@ -273,7 +284,7 @@ fn bench_train_wordlevel_case(
   let corpus = [text, text, text, text]
   b.bench(name="wordlevel-train-\{case_name}", fn() {
     b.keep(
-      Tokenizer::train_wordlevel(corpus, unk_token="[UNK]", min_frequency=1, special_tokens=[
+      @tokenizer.Tokenizer::train_wordlevel(corpus, unk_token="[UNK]", min_frequency=1, special_tokens=[
         "[PAD]",
       ]),
     )
@@ -295,7 +306,7 @@ fn bench_train_wordlevel_split_case(
   )
   b.bench(name="wordlevel-train-split-\{case_name}", fn() {
     b.keep(
-      Tokenizer::train_wordlevel_with_pretokenizer(
+      @tokenizer.Tokenizer::train_wordlevel_with_pretokenizer(
         corpus,
         pt,
         unk_token="[UNK]",
@@ -315,7 +326,7 @@ fn bench_train_wordlevel_capped_case(
   let corpus = [text, text, text, text]
   b.bench(name="wordlevel-train-capped-\{case_name}", fn() {
     b.keep(
-      Tokenizer::train_wordlevel(
+      @tokenizer.Tokenizer::train_wordlevel(
         corpus,
         unk_token="[UNK]",
         min_frequency=1,
@@ -331,7 +342,7 @@ fn bench_trained_wordlevel_to_json_case(
   b : @bench.T,
   case_name : String,
 ) -> Unit {
-  let tok = Tokenizer::train_wordlevel_with_pretokenizer(
+  let tok = @tokenizer.Tokenizer::train_wordlevel_with_pretokenizer(
     [corpus_mixed(), corpus_mixed()],
     @pretokenizer.PreTokenizer::split(
       ",",
@@ -357,7 +368,7 @@ fn bench_train_wordpiece_case(
   let corpus = [text, text, text, text]
   b.bench(name="wordpiece-train-\{case_name}", fn() {
     b.keep(
-      Tokenizer::train_wordpiece(
+      @tokenizer.Tokenizer::train_wordpiece(
         corpus,
         unk_token="[UNK]",
         min_frequency=1,
@@ -373,7 +384,7 @@ fn bench_trained_wordpiece_to_json_case(
   b : @bench.T,
   case_name : String,
 ) -> Unit {
-  let tok = Tokenizer::train_wordpiece(
+  let tok = @tokenizer.Tokenizer::train_wordpiece(
     [corpus_mixed(), corpus_mixed()],
     unk_token="[UNK]",
     special_tokens=["[PAD]"],
@@ -394,7 +405,7 @@ fn bench_train_bpe_case(
   let corpus = [text, text, text, text]
   b.bench(name="bpe-train-\{case_name}", fn() {
     b.keep(
-      Tokenizer::train_bpe(
+      @tokenizer.Tokenizer::train_bpe(
         corpus,
         unk_token=Some("[UNK]"),
         min_frequency=2,
@@ -407,7 +418,7 @@ fn bench_train_bpe_case(
 
 ///|
 fn bench_trained_bpe_to_json_case(b : @bench.T, case_name : String) -> Unit {
-  let tok = Tokenizer::train_bpe(
+  let tok = @tokenizer.Tokenizer::train_bpe(
     [corpus_mixed(), corpus_mixed()],
     unk_token=Some("[UNK]"),
     special_tokens=["[PAD]"],
@@ -428,7 +439,7 @@ fn bench_train_unigram_case(
   let corpus = [text, text, text, text]
   b.bench(name="unigram-train-\{case_name}", fn() {
     b.keep(
-      Tokenizer::train_unigram(
+      @tokenizer.Tokenizer::train_unigram(
         corpus,
         unk_token="<unk>",
         min_frequency=1,
@@ -441,7 +452,7 @@ fn bench_train_unigram_case(
 
 ///|
 fn bench_trained_unigram_to_json_case(b : @bench.T, case_name : String) -> Unit {
-  let tok = Tokenizer::train_unigram(
+  let tok = @tokenizer.Tokenizer::train_unigram(
     [corpus_mixed(), corpus_mixed()],
     unk_token="<unk>",
     special_tokens=["<pad>"],
@@ -534,14 +545,14 @@ fn bench_split_digit_regex_case(b : @bench.T, case_name : String) -> Unit {
 }
 
 ///|
-fn bytelevel_trim_fixture(trim_offsets : Bool) -> Tokenizer raise {
+fn bytelevel_trim_fixture(trim_offsets : Bool) -> @tokenizer.Tokenizer raise {
   let trim = if trim_offsets { "true" } else { "false" }
   let json =
     #|{"version":"1.0",
     #| "pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":true},
     #| "model":{"type":"WordLevel","vocab":{"a":0,"Ġ":1,"Ġb":2,"ĠMoonBit":3,"Ġtokenizers":4,"Ġare":5,"Ġfast":6,".":7,"[UNK]":8},"unk_token":"[UNK]"},
     #| "post_processor":{"type":"ByteLevel","trim_offsets":
-  Tokenizer::from_str(json + trim + "}}")
+  @tokenizer.Tokenizer::from_str(json + trim + "}}")
 }
 
 ///|
@@ -672,7 +683,7 @@ test "bench bytelevel trim offsets" (b : @bench.T) {
 test "bench load from_str (gpt2)" (b : @bench.T) {
   guard load_text("tests/data/gpt2.full.json") is Some(json) else { return }
   b.bench(name="gpt2-from_str", fn() {
-    let t = try? Tokenizer::from_str(json)
+    let t = try? @tokenizer.Tokenizer::from_str(json)
     b.keep(t)
   })
 }

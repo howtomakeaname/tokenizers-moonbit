@@ -39,7 +39,7 @@
 | A0 | 项目名从 `tokenizer-moonbit` 修正为 `tokenizers-moonbit`，同步 module/import/doc/script 引用 | ✅ | wasm/wasm-gc/js/native 测试通过 |
 | A1 | 新增 dependency-free `common` 包，先承载跨组件复用的字符谓词与 tiny string helper | ✅ | wasm/wasm-gc/js/native 测试通过；`bench_compare.py --quick --target native` 通过 |
 | A2 | 继续抽离通用 Regex 子集/replace-run helper，统一 normalizer/decoder/pretokenizer 的简单正则语义 | ✅ | 已抽 common replace/run helper 与 Split 简单正则 span helper，并新增 wbtest；wasm/wasm-gc/js/native 测试通过，`bench_compare.py --quick --target native` 通过 |
-| A3 | 拆分 bench harness：将 tokenizer 包内超大 `bench_test.mbt` 迁移到独立 bench 包/目录，仅通过公开 API 依赖 tokenizer | ⬜ | `moon bench` + `scripts/bench_compare.py --quick` |
+| A3 | 拆分 bench harness：将 tokenizer 包内超大 `bench_test.mbt` 迁移到独立 benchmarks 包/目录，仅通过公开 API 依赖 tokenizer | ✅ | wasm/wasm-gc/js/native 测试通过；`scripts/bench_compare.py --quick --target native` 通过 |
 | A4 | 分层整理测试：保留组件 wbtest 贴近源码，新增/迁移集成 parity 用例到 tests-facing package，避免源码目录膨胀 | ⬜ | 全后端测试 + fixture 缺失自动跳过 |
 | A5 | 梳理 public API façade：tokenizer 包只暴露稳定 API，组件包保持 HF pipeline 边界清晰 | ⬜ | API 文档/示例编译 + 迁移指南同步 |
 
