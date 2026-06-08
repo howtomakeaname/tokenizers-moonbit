@@ -602,6 +602,18 @@ fn bench_decoder_replace_bounded_quantifier_regex_case(
 }
 
 ///|
+fn bench_decoder_replace_bounded_inverse_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("[^\\s\\p{L}\\p{N}]{1,3}", "#")
+  let tokens = ["ab,$+🙂", " cd。42", " path/to/file.rs", " done!!!"]
+  b.bench(name="decoder-replace-bounded-inverse-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_decoder_replace_punctuation_regex_case(
   b : @bench.T,
   case_name : String,
@@ -903,6 +915,23 @@ fn bench_split_bounded_union_regex_case(
 }
 
 ///|
+fn bench_split_bounded_inverse_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "[^\\s\\p{L}\\p{N}]{1,3}",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " $+🙂 wait!!! ok?! path/to/file.rs"
+  b.bench(name="pretokenizer-split-bounded-inverse-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
 fn bytelevel_trim_fixture(trim_offsets : Bool) -> @tokenizer.Tokenizer raise {
   let trim = if trim_offsets { "true" } else { "false" }
   let json =
@@ -1185,6 +1214,11 @@ test "bench decoder replace bounded quantifier regex" (b : @bench.T) {
 }
 
 ///|
+test "bench decoder replace bounded inverse regex" (b : @bench.T) {
+  bench_decoder_replace_bounded_inverse_regex_case(b, "mixed")
+}
+
+///|
 test "bench decoder replace punct-symbol regex" (b : @bench.T) {
   bench_decoder_replace_punctuation_regex_case(b, "mixed")
 }
@@ -1282,4 +1316,9 @@ test "bench split union quantifier regex" (b : @bench.T) {
 ///|
 test "bench split bounded union regex" (b : @bench.T) {
   bench_split_bounded_union_regex_case(b, "mixed")
+}
+
+///|
+test "bench split bounded inverse regex" (b : @bench.T) {
+  bench_split_bounded_inverse_regex_case(b, "mixed")
 }

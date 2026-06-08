@@ -84,6 +84,20 @@ test "replace helpers cover regex run semantics" {
     replace_bounded_simple_regex("a,$+🙂b", "[\\p{P}\\p{S}]{1,3}", "_"),
     Some("a__b"),
   )
+  @test.assert_eq(
+    replace_bounded_simple_regex("a12 bc003", "\\D{1,3}", "_"),
+    Some("_12_003"),
+  )
+  @test.assert_eq(
+    replace_bounded_simple_regex("ab_12,中!cd", "\\W{1,2}", "-"),
+    Some("ab_12--cd"),
+  )
+  @test.assert_eq(
+    replace_bounded_simple_regex(
+      "ab,$+🙂 cd。42", "[^\\s\\p{L}\\p{N}]{1,3}", "#",
+    ),
+    Some("ab## cd#42"),
+  )
   @test.assert_eq(replace_space_runs("a  b   c", "_", min_run=2), "a_b_c")
   @test.assert_eq(replace_whitespace_runs("a\t\u{3000}b\n", " "), "a b ")
 }
@@ -461,6 +475,38 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(non_alnum_nonspace[0].stop, 6)
   @test.assert_eq(non_alnum_nonspace[1].start, 9)
   @test.assert_eq(non_alnum_nonspace[1].stop, 10)
+  guard simple_split_regex_matches("a12 bc003".to_array(), "\\D{1,3}")
+    is Some(bounded_non_digits) else {
+    abort("expected bounded non-digit matches")
+  }
+  @test.assert_eq(bounded_non_digits.length(), 2)
+  @test.assert_eq(bounded_non_digits[0].start, 0)
+  @test.assert_eq(bounded_non_digits[0].stop, 1)
+  @test.assert_eq(bounded_non_digits[1].start, 3)
+  @test.assert_eq(bounded_non_digits[1].stop, 6)
+  guard simple_split_regex_matches("ab_12,中!cd".to_array(), "\\W{1,2}")
+    is Some(bounded_non_words) else {
+    abort("expected bounded non-word matches")
+  }
+  @test.assert_eq(bounded_non_words.length(), 2)
+  @test.assert_eq(bounded_non_words[0].start, 5)
+  @test.assert_eq(bounded_non_words[0].stop, 7)
+  @test.assert_eq(bounded_non_words[1].start, 7)
+  @test.assert_eq(bounded_non_words[1].stop, 8)
+  guard simple_split_regex_matches(
+      "ab,$+🙂 cd。42".to_array(),
+      "[^\\s\\p{L}\\p{N}]{1,3}",
+    )
+    is Some(bounded_non_alnum_nonspace) else {
+    abort("expected bounded inverse non-space/letter/number matches")
+  }
+  @test.assert_eq(bounded_non_alnum_nonspace.length(), 3)
+  @test.assert_eq(bounded_non_alnum_nonspace[0].start, 2)
+  @test.assert_eq(bounded_non_alnum_nonspace[0].stop, 5)
+  @test.assert_eq(bounded_non_alnum_nonspace[1].start, 5)
+  @test.assert_eq(bounded_non_alnum_nonspace[1].stop, 6)
+  @test.assert_eq(bounded_non_alnum_nonspace[2].start, 9)
+  @test.assert_eq(bounded_non_alnum_nonspace[2].stop, 10)
   guard simple_split_regex_matches(chars, "\\s+") is Some(spaces) else {
     abort("expected whitespace matches")
   }
@@ -559,4 +605,17 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("[\\d]{1,3}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{N}{1,3}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Number}]{1,4}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\D{1,3}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\P{Number}{1,4}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\S{1,3}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\W{1,2}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[^A-Za-z]{1,3}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\P{L}{1,4}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\P{Punctuation}{1,3}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\P{Symbol}{1,2}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[^\\p{P}\\p{S}]{1,3}"), true)
+  @test.assert_eq(
+    is_simple_split_regex_pattern("[^\\s\\p{L}\\p{N}]{1,3}"),
+    true,
+  )
 }

@@ -554,6 +554,52 @@ test "split pretokenizer supports common regex spans" {
     regex=true,
   ).pre_tokenize("ab,$+🙂 cd。42", base_offset=0)
   @test.assert_eq(non_alnum_nonspace.map(x => x.value), ["ab", " cd", "42"])
+
+  let bounded_non_digits = PreTokenizer::Split(
+    pattern="\\D{1,3}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a12 bc003", base_offset=2)
+  @test.assert_eq(bounded_non_digits.map(x => x.value), [
+    "a", "12", " bc", "003",
+  ])
+  @test.assert_eq(bounded_non_digits.map(x => x.offsets), [
+    (2, 3),
+    (3, 5),
+    (5, 8),
+    (8, 11),
+  ])
+
+  let bounded_non_words = PreTokenizer::Split(
+    pattern="\\W{1,2}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab_12,中!cd", base_offset=0)
+  @test.assert_eq(bounded_non_words.map(x => x.value), [
+    "ab_12", ",中", "!", "cd",
+  ])
+
+  let bounded_inverse_union = PreTokenizer::Split(
+    pattern="[^\\p{P}\\p{S}]{1,3}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab,$+🙂 cd。42", base_offset=0)
+  @test.assert_eq(bounded_inverse_union.map(x => x.value), [
+    "ab", ",$+🙂", " cd", "。", "42",
+  ])
+
+  let bounded_non_alnum_nonspace = PreTokenizer::Split(
+    pattern="[^\\s\\p{L}\\p{N}]{1,3}",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab,$+🙂 cd。42", base_offset=0)
+  @test.assert_eq(bounded_non_alnum_nonspace.map(x => x.value), [
+    "ab", " cd", "42",
+  ])
 }
 
 ///|

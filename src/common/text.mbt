@@ -187,6 +187,51 @@ pub fn bounded_regex_kind(pattern : String) -> (Int, Int)? {
   if newlines > 0 {
     return Some((3, newlines))
   }
+  let non_ws = bounded_max_variants(
+    pattern,
+    ["\\S{1,2}", "[^\\s]{1,2}"],
+    ["\\S{1,3}", "[^\\s]{1,3}"],
+    ["\\S{1,4}", "[^\\s]{1,4}"],
+  )
+  if non_ws > 0 {
+    return Some((12, non_ws))
+  }
+  let digit = bounded_max_variants(
+    pattern,
+    [
+      "\\d{1,2}", "[\\d]{1,2}", "[0-9]{1,2}", "\\p{N}{1,2}", "\\p{Number}{1,2}",
+      "[\\p{N}]{1,2}", "[\\p{Number}]{1,2}",
+    ],
+    [
+      "\\d{1,3}", "[\\d]{1,3}", "[0-9]{1,3}", "\\p{N}{1,3}", "\\p{Number}{1,3}",
+      "[\\p{N}]{1,3}", "[\\p{Number}]{1,3}",
+    ],
+    [
+      "\\d{1,4}", "[\\d]{1,4}", "[0-9]{1,4}", "\\p{N}{1,4}", "\\p{Number}{1,4}",
+      "[\\p{N}]{1,4}", "[\\p{Number}]{1,4}",
+    ],
+  )
+  if digit > 0 {
+    return Some((11, digit))
+  }
+  let non_digit = bounded_max_variants(
+    pattern,
+    [
+      "\\D{1,2}", "[\\D]{1,2}", "[^\\d]{1,2}", "[^0-9]{1,2}", "\\P{N}{1,2}", "\\P{Number}{1,2}",
+      "[^\\p{N}]{1,2}", "[^\\p{Number}]{1,2}",
+    ],
+    [
+      "\\D{1,3}", "[\\D]{1,3}", "[^\\d]{1,3}", "[^0-9]{1,3}", "\\P{N}{1,3}", "\\P{Number}{1,3}",
+      "[^\\p{N}]{1,3}", "[^\\p{Number}]{1,3}",
+    ],
+    [
+      "\\D{1,4}", "[\\D]{1,4}", "[^\\d]{1,4}", "[^0-9]{1,4}", "\\P{N}{1,4}", "\\P{Number}{1,4}",
+      "[^\\p{N}]{1,4}", "[^\\p{Number}]{1,4}",
+    ],
+  )
+  if non_digit > 0 {
+    return Some((14, non_digit))
+  }
   let word = bounded_max(pattern, "\\w{1,2}", "\\w{1,3}", "\\w{1,4}")
   if word > 0 {
     return Some((4, word))
@@ -196,6 +241,15 @@ pub fn bounded_regex_kind(pattern : String) -> (Int, Int)? {
   )
   if word_class > 0 {
     return Some((4, word_class))
+  }
+  let non_word = bounded_max_variants(
+    pattern,
+    ["\\W{1,2}", "[^\\w]{1,2}", "[^A-Za-z0-9_]{1,2}"],
+    ["\\W{1,3}", "[^\\w]{1,3}", "[^A-Za-z0-9_]{1,3}"],
+    ["\\W{1,4}", "[^\\w]{1,4}", "[^A-Za-z0-9_]{1,4}"],
+  )
+  if non_word > 0 {
+    return Some((13, non_word))
   }
   let alnum = bounded_max(
     pattern, "[A-Za-z0-9]{1,2}", "[A-Za-z0-9]{1,3}", "[A-Za-z0-9]{1,4}",
@@ -209,6 +263,15 @@ pub fn bounded_regex_kind(pattern : String) -> (Int, Int)? {
   if alnum_alt > 0 {
     return Some((5, alnum_alt))
   }
+  let non_alnum = bounded_max_variants(
+    pattern,
+    ["[^A-Za-z0-9]{1,2}", "[^a-zA-Z0-9]{1,2}"],
+    ["[^A-Za-z0-9]{1,3}", "[^a-zA-Z0-9]{1,3}"],
+    ["[^A-Za-z0-9]{1,4}", "[^a-zA-Z0-9]{1,4}"],
+  )
+  if non_alnum > 0 {
+    return Some((15, non_alnum))
+  }
   let ascii_letter = bounded_max(
     pattern, "[A-Za-z]{1,2}", "[A-Za-z]{1,3}", "[A-Za-z]{1,4}",
   )
@@ -220,6 +283,15 @@ pub fn bounded_regex_kind(pattern : String) -> (Int, Int)? {
   )
   if ascii_letter_alt > 0 {
     return Some((6, ascii_letter_alt))
+  }
+  let non_ascii_letter = bounded_max_variants(
+    pattern,
+    ["[^A-Za-z]{1,2}", "[^a-zA-Z]{1,2}"],
+    ["[^A-Za-z]{1,3}", "[^a-zA-Z]{1,3}"],
+    ["[^A-Za-z]{1,4}", "[^a-zA-Z]{1,4}"],
+  )
+  if non_ascii_letter > 0 {
+    return Some((16, non_ascii_letter))
   }
   let letter = bounded_max(pattern, "\\p{L}{1,2}", "\\p{L}{1,3}", "\\p{L}{1,4}")
   if letter > 0 {
@@ -242,6 +314,15 @@ pub fn bounded_regex_kind(pattern : String) -> (Int, Int)? {
   )
   if letter_long_class > 0 {
     return Some((7, letter_long_class))
+  }
+  let non_letter = bounded_max_variants(
+    pattern,
+    ["\\P{L}{1,2}", "\\P{Letter}{1,2}", "[^\\p{L}]{1,2}", "[^\\p{Letter}]{1,2}"],
+    ["\\P{L}{1,3}", "\\P{Letter}{1,3}", "[^\\p{L}]{1,3}", "[^\\p{Letter}]{1,3}"],
+    ["\\P{L}{1,4}", "\\P{Letter}{1,4}", "[^\\p{L}]{1,4}", "[^\\p{Letter}]{1,4}"],
+  )
+  if non_letter > 0 {
+    return Some((17, non_letter))
   }
   let punctuation = bounded_max(
     pattern, "\\p{P}{1,2}", "\\p{P}{1,3}", "\\p{P}{1,4}",
@@ -267,6 +348,21 @@ pub fn bounded_regex_kind(pattern : String) -> (Int, Int)? {
   if punctuation_long_class > 0 {
     return Some((8, punctuation_long_class))
   }
+  let non_punctuation = bounded_max_variants(
+    pattern,
+    [
+      "\\P{P}{1,2}", "\\P{Punctuation}{1,2}", "[^\\p{P}]{1,2}", "[^\\p{Punctuation}]{1,2}",
+    ],
+    [
+      "\\P{P}{1,3}", "\\P{Punctuation}{1,3}", "[^\\p{P}]{1,3}", "[^\\p{Punctuation}]{1,3}",
+    ],
+    [
+      "\\P{P}{1,4}", "\\P{Punctuation}{1,4}", "[^\\p{P}]{1,4}", "[^\\p{Punctuation}]{1,4}",
+    ],
+  )
+  if non_punctuation > 0 {
+    return Some((18, non_punctuation))
+  }
   let symbol = bounded_max(pattern, "\\p{S}{1,2}", "\\p{S}{1,3}", "\\p{S}{1,4}")
   if symbol > 0 {
     return Some((9, symbol))
@@ -288,6 +384,15 @@ pub fn bounded_regex_kind(pattern : String) -> (Int, Int)? {
   )
   if symbol_long_class > 0 {
     return Some((9, symbol_long_class))
+  }
+  let non_symbol = bounded_max_variants(
+    pattern,
+    ["\\P{S}{1,2}", "\\P{Symbol}{1,2}", "[^\\p{S}]{1,2}", "[^\\p{Symbol}]{1,2}"],
+    ["\\P{S}{1,3}", "\\P{Symbol}{1,3}", "[^\\p{S}]{1,3}", "[^\\p{Symbol}]{1,3}"],
+    ["\\P{S}{1,4}", "\\P{Symbol}{1,4}", "[^\\p{S}]{1,4}", "[^\\p{Symbol}]{1,4}"],
+  )
+  if non_symbol > 0 {
+    return Some((19, non_symbol))
   }
   let punct_symbol = bounded_max(
     pattern, "[\\p{P}\\p{S}]{1,2}", "[\\p{P}\\p{S}]{1,3}", "[\\p{P}\\p{S}]{1,4}",
@@ -315,6 +420,42 @@ pub fn bounded_regex_kind(pattern : String) -> (Int, Int)? {
   if symbol_punct_long > 0 {
     return Some((10, symbol_punct_long))
   }
+  let non_punct_symbol = bounded_max_variants(
+    pattern,
+    [
+      "[^\\p{P}\\p{S}]{1,2}", "[^\\p{S}\\p{P}]{1,2}", "[^\\p{Punctuation}\\p{Symbol}]{1,2}",
+      "[^\\p{Symbol}\\p{Punctuation}]{1,2}",
+    ],
+    [
+      "[^\\p{P}\\p{S}]{1,3}", "[^\\p{S}\\p{P}]{1,3}", "[^\\p{Punctuation}\\p{Symbol}]{1,3}",
+      "[^\\p{Symbol}\\p{Punctuation}]{1,3}",
+    ],
+    [
+      "[^\\p{P}\\p{S}]{1,4}", "[^\\p{S}\\p{P}]{1,4}", "[^\\p{Punctuation}\\p{Symbol}]{1,4}",
+      "[^\\p{Symbol}\\p{Punctuation}]{1,4}",
+    ],
+  )
+  if non_punct_symbol > 0 {
+    return Some((20, non_punct_symbol))
+  }
+  let non_space_letter_number = bounded_max_variants(
+    pattern,
+    [
+      "[^\\s\\p{L}\\p{N}]{1,2}", "[^\\s\\p{N}\\p{L}]{1,2}", "[^\\p{L}\\p{N}\\s]{1,2}",
+      "[^\\p{N}\\p{L}\\s]{1,2}", "[^\\s\\p{Letter}\\p{Number}]{1,2}",
+    ],
+    [
+      "[^\\s\\p{L}\\p{N}]{1,3}", "[^\\s\\p{N}\\p{L}]{1,3}", "[^\\p{L}\\p{N}\\s]{1,3}",
+      "[^\\p{N}\\p{L}\\s]{1,3}", "[^\\s\\p{Letter}\\p{Number}]{1,3}",
+    ],
+    [
+      "[^\\s\\p{L}\\p{N}]{1,4}", "[^\\s\\p{N}\\p{L}]{1,4}", "[^\\p{L}\\p{N}\\s]{1,4}",
+      "[^\\p{N}\\p{L}\\s]{1,4}", "[^\\s\\p{Letter}\\p{Number}]{1,4}",
+    ],
+  )
+  if non_space_letter_number > 0 {
+    return Some((21, non_space_letter_number))
+  }
   None
 }
 
@@ -340,6 +481,31 @@ fn bounded_max(pattern : String, p2 : String, p3 : String, p4 : String) -> Int {
 }
 
 ///|
+fn bounded_max_variants(
+  pattern : String,
+  p2 : Array[String],
+  p3 : Array[String],
+  p4 : Array[String],
+) -> Int {
+  for p in p2 {
+    if pattern == p {
+      return 2
+    }
+  }
+  for p in p3 {
+    if pattern == p {
+      return 3
+    }
+  }
+  for p in p4 {
+    if pattern == p {
+      return 4
+    }
+  }
+  0
+}
+
+///|
 pub fn bounded_regex_kind_pred(kind : Int, c : Char) -> Bool {
   match kind {
     1 => is_unicode_whitespace(c.to_int())
@@ -353,6 +519,16 @@ pub fn bounded_regex_kind_pred(kind : Int, c : Char) -> Bool {
     9 => is_unicode_symbol(c)
     10 => is_unicode_punctuation_or_symbol(c)
     11 => is_decimal_number(c)
+    12 => !is_unicode_whitespace(c.to_int())
+    13 => !is_word_char(c)
+    14 => !is_decimal_number(c)
+    15 => !is_ascii_alnum(c)
+    16 => !is_ascii_letter(c)
+    17 => !is_unicode_letter(c)
+    18 => !is_unicode_punctuation(c)
+    19 => !is_unicode_symbol(c)
+    20 => !is_unicode_punctuation_or_symbol(c)
+    21 => is_not_whitespace_letter_or_number(c)
     _ => false
   }
 }

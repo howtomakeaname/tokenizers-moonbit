@@ -78,7 +78,10 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   `\w{2}` / `{1,2}` / `{1,3}` / `{1,4}` bounded word, ASCII letter/alnum and
   Unicode letter forms / `[A-Za-z]{2,}` / `\p{L}{3}`), punctuation/symbol quantifier runs
   (`\p{P}{2,}` / `\p{P}{2}` / `\p{S}{2}` / `{1,n}` bounded punctuation,
-  symbol and `\p{P}\p{S}` union forms / `[\p{P}\p{S}]{2,}`), `\w+`, `\W+`,
+  symbol and `\p{P}\p{S}` union forms / `[\p{P}\p{S}]{2,}`), inverse
+  bounded runs (`\D{1,n}`, `\S{1,n}`, `\W{1,n}`, `\P{L}{1,n}`,
+  `\P{P}{1,n}`, `\P{S}{1,n}`, inverse ASCII classes and
+  `[^\s\p{L}\p{N}]{1,n}`), `\w+`, `\W+`,
   ASCII alnum/letter classes (`[A-Za-z0-9]+`, `[A-Za-z]+` and inverse forms),
   `\p{L}+`, `\P{L}+`, punctuation
   classes (`\p{P}+` / `\P{P}+`) and symbol classes (`\p{S}+` / `\P{S}+`)
@@ -98,8 +101,9 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   word, ASCII letter/alnum and Unicode letter forms / `[A-Za-z]{2,}` / `\p{L}{3}`),
   punctuation/symbol quantifier runs (`\p{P}{2,}` / `\p{P}{2}` / `\p{S}{2}` /
   `{1,n}` bounded punctuation, symbol and `\p{P}\p{S}` union forms /
-  `[\p{P}\p{S}]{2,}`), common bounded digit runs such as
-  `\d{1,3}`, anchored digit/word/letter runs, word runs `\w+` / `\W+`,
+  `[\p{P}\p{S}]{2,}`), common bounded positive and inverse runs such as
+  `\d{1,3}`, `\D{1,3}`, `\W{1,2}`, `\P{L}{1,4}` and
+  `[^\s\p{L}\p{N}]{1,3}`, anchored digit/word/letter runs, word runs `\w+` / `\W+`,
   ASCII alnum/letter runs `[A-Za-z0-9]+` / `[A-Za-z]+` and inverse forms, and
   letter/punctuation/symbol runs (`\p{L}+`, `\p{P}+`, `\p{S}+` and inverse
   forms), plus common union/inverse classes like `[\p{P}\p{S}]+` and

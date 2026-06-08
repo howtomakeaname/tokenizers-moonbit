@@ -8,10 +8,90 @@
 ///|
 /// Decode a list of token surface strings back into text.
 pub fn Decoder::decode(self : Decoder, tokens : Array[String]) -> String {
+  match self {
+    Replace(pattern~, content~) =>
+      return decode_replace_direct(tokens, pattern, content)
+    _ => ()
+  }
   let out = self.decode_chain(tokens)
   let sb = StringBuilder::new()
   for t in out {
     sb.write_string(t)
+  }
+  sb.to_string()
+}
+
+///|
+fn decode_replace_direct(
+  tokens : Array[String],
+  pattern : String,
+  content : String,
+) -> String {
+  if pattern == "\\s+" {
+    return decode_replace_char_runs_direct(tokens, content, fn(c) {
+      @common.is_unicode_whitespace(c.to_int())
+    })
+  }
+  if pattern == "\\s+$" {
+    return decode_replace_trailing_runs_direct(tokens, content, fn(c) {
+      @common.is_unicode_whitespace(c.to_int())
+    })
+  }
+  if pattern == "\\d+" || pattern == "[\\d]+" || pattern == "[0-9]+" {
+    return decode_replace_char_runs_direct(tokens, content, fn(c) {
+      @common.is_decimal_number(c)
+    })
+  }
+  let sb = StringBuilder::new()
+  for t in tokens {
+    sb.write_string(replace_all(t, pattern, content))
+  }
+  sb.to_string()
+}
+
+///|
+fn decode_replace_char_runs_direct(
+  tokens : Array[String],
+  content : String,
+  pred : (Char) -> Bool,
+) -> String {
+  let sb = StringBuilder::new()
+  for t in tokens {
+    let mut in_run = false
+    for c in t {
+      if pred(c) {
+        if !in_run {
+          sb.write_string(content)
+          in_run = true
+        }
+      } else {
+        sb.write_char(c)
+        in_run = false
+      }
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn decode_replace_trailing_runs_direct(
+  tokens : Array[String],
+  content : String,
+  pred : (Char) -> Bool,
+) -> String {
+  let sb = StringBuilder::new()
+  for t in tokens {
+    let chars = t.to_array()
+    let mut stop = chars.length()
+    while stop > 0 && pred(chars[stop - 1]) {
+      stop = stop - 1
+    }
+    for i in 0..<stop {
+      sb.write_char(chars[i])
+    }
+    if stop < chars.length() {
+      sb.write_string(content)
+    }
   }
   sb.to_string()
 }

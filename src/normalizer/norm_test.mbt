@@ -400,4 +400,38 @@ test "Replace normalizer supports common regex whitespace patterns" {
     ),
     "ok",
   )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\D{1,3}", content="_").normalize("a12 bc003"),
+    "_12_003",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\W{1,2}", content="-").normalize(
+      "ab_12,中!cd",
+    ),
+    "ab_12--cd",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="[^A-Za-z]{1,3}", content="-").normalize(
+      "abé_12,CD中",
+    ),
+    "ab--CD-",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\P{L}{1,4}", content="-").normalize(
+      "abé中12!🙂Ж",
+    ),
+    "abé中-Ж",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="[^\\p{P}\\p{S}]{1,3}", content="N").normalize(
+      "ab,$+🙂 cd。42",
+    ),
+    "N,$+🙂N。N",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="[^\\s\\p{L}\\p{N}]{1,3}", content="#").normalize(
+      "ab,$+🙂 cd。42",
+    ),
+    "ab## cd#42",
+  )
 }
