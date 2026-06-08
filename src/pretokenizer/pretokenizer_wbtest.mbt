@@ -189,6 +189,30 @@ test "split pretokenizer supports common regex spans" {
     (9, 11),
   ])
 
+  let digit_class_runs = PreTokenizer::Split(
+    pattern="[\\d]+",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab123cd45", base_offset=2)
+  @test.assert_eq(digit_class_runs.map(x => x.value), ["ab", "123", "cd", "45"])
+
+  let min_digit_class_runs = PreTokenizer::Split(
+    pattern="[\\d]{2,}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a1b12c１２3", base_offset=4)
+  @test.assert_eq(min_digit_class_runs.map(x => x.value), [
+    "a1b", "12", "c", "１２3",
+  ])
+  @test.assert_eq(min_digit_class_runs.map(x => x.offsets), [
+    (4, 7),
+    (7, 9),
+    (9, 10),
+    (10, 13),
+  ])
+
   let nondigit_runs = PreTokenizer::Split(
     pattern="\\D+",
     behavior=Removed,
@@ -196,6 +220,16 @@ test "split pretokenizer supports common regex spans" {
     regex=true,
   ).pre_tokenize("ab123cd45", base_offset=0)
   @test.assert_eq(nondigit_runs.map(x => x.value), ["123", "45"])
+
+  let inverse_unicode_number_runs = PreTokenizer::Split(
+    pattern="\\P{N}+",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a１２b٣", base_offset=0)
+  @test.assert_eq(inverse_unicode_number_runs.map(x => x.value), [
+    "１２", "٣",
+  ])
 
   let word_runs = PreTokenizer::Split(
     pattern="\\w+",

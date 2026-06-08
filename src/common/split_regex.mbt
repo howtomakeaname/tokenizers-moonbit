@@ -167,6 +167,7 @@ pub fn simple_split_regex_matches(
     pattern == "[^\\s\\p{Letter}\\p{Number}]+" {
     Some(run_matches(chars, fn(c) { is_not_whitespace_letter_or_number(c) }))
   } else if pattern == "\\d+" ||
+    pattern == "[\\d]+" ||
     pattern == "[0-9]+" ||
     pattern == "\\p{N}+" ||
     pattern == "\\p{Number}+" ||
@@ -174,6 +175,7 @@ pub fn simple_split_regex_matches(
     pattern == "[\\p{Number}]+" {
     Some(run_matches(chars, fn(c) { is_decimal_number(c) }))
   } else if pattern == "^\\d+" ||
+    pattern == "^[\\d]+" ||
     pattern == "^[0-9]+" ||
     pattern == "^\\p{N}+" ||
     pattern == "^\\p{Number}+" ||
@@ -181,19 +183,36 @@ pub fn simple_split_regex_matches(
     pattern == "^[\\p{Number}]+" {
     Some(leading_run_match(chars, fn(c) { is_decimal_number(c) }))
   } else if pattern == "\\d+$" ||
+    pattern == "[\\d]+$" ||
     pattern == "[0-9]+$" ||
     pattern == "\\p{N}+$" ||
     pattern == "\\p{Number}+$" ||
     pattern == "[\\p{N}]+$" ||
     pattern == "[\\p{Number}]+$" {
     Some(trailing_run_match(chars, fn(c) { is_decimal_number(c) }))
-  } else if pattern == "\\D+" || pattern == "[^0-9]+" {
+  } else if pattern == "\\D+" ||
+    pattern == "[\\D]+" ||
+    pattern == "[^\\d]+" ||
+    pattern == "[^0-9]+" ||
+    pattern == "\\P{N}+" ||
+    pattern == "\\P{Number}+" ||
+    pattern == "[^\\p{N}]+" ||
+    pattern == "[^\\p{Number}]+" {
     Some(run_matches(chars, fn(c) { !is_decimal_number(c) }))
+  } else if pattern == "\\d{2,}" ||
+    pattern == "[\\d]{2,}" ||
+    pattern == "[0-9]{2,}" ||
+    pattern == "\\p{N}{2,}" ||
+    pattern == "\\p{Number}{2,}" ||
+    pattern == "[\\p{N}]{2,}" ||
+    pattern == "[\\p{Number}]{2,}" {
+    Some(run_matches_min(chars, fn(c) { is_decimal_number(c) }, min_run=2))
   } else if pattern == "\\p{N}{1,2}" ||
     pattern == "\\p{Number}{1,2}" ||
     pattern == "[\\p{N}]{1,2}" ||
     pattern == "[\\p{Number}]{1,2}" ||
     pattern == "\\d{1,2}" ||
+    pattern == "[\\d]{1,2}" ||
     pattern == "[0-9]{1,2}" ||
     pattern == "[0-9][0-9]" {
     Some(number_run_matches(chars, max_digits=2))
@@ -202,6 +221,7 @@ pub fn simple_split_regex_matches(
     pattern == "[\\p{N}]{1,3}" ||
     pattern == "[\\p{Number}]{1,3}" ||
     pattern == "\\d{1,3}" ||
+    pattern == "[\\d]{1,3}" ||
     pattern == "[0-9]{1,3}" ||
     pattern == "[0-9][0-9][0-9]" {
     Some(number_run_matches(chars, max_digits=3))
@@ -210,6 +230,7 @@ pub fn simple_split_regex_matches(
     pattern == "[\\p{N}]{1,4}" ||
     pattern == "[\\p{Number}]{1,4}" ||
     pattern == "\\d{1,4}" ||
+    pattern == "[\\d]{1,4}" ||
     pattern == "[0-9]{1,4}" ||
     pattern == "[0-9][0-9][0-9][0-9]" {
     Some(number_run_matches(chars, max_digits=4))
@@ -332,30 +353,47 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "[^\\p{N}\\p{L}\\s]+" ||
   pattern == "[^\\s\\p{Letter}\\p{Number}]+" ||
   pattern == "\\d+" ||
+  pattern == "[\\d]+" ||
   pattern == "[0-9]+" ||
   pattern == "\\p{N}+" ||
   pattern == "\\p{Number}+" ||
   pattern == "[\\p{N}]+" ||
   pattern == "[\\p{Number}]+" ||
   pattern == "^\\d+" ||
+  pattern == "^[\\d]+" ||
   pattern == "^[0-9]+" ||
   pattern == "^\\p{N}+" ||
   pattern == "^\\p{Number}+" ||
   pattern == "^[\\p{N}]+" ||
   pattern == "^[\\p{Number}]+" ||
   pattern == "\\d+$" ||
+  pattern == "[\\d]+$" ||
   pattern == "[0-9]+$" ||
   pattern == "\\p{N}+$" ||
   pattern == "\\p{Number}+$" ||
   pattern == "[\\p{N}]+$" ||
   pattern == "[\\p{Number}]+$" ||
   pattern == "\\D+" ||
+  pattern == "[\\D]+" ||
+  pattern == "[^\\d]+" ||
   pattern == "[^0-9]+" ||
+  pattern == "\\P{N}+" ||
+  pattern == "\\P{Number}+" ||
+  pattern == "[^\\p{N}]+" ||
+  pattern == "[^\\p{Number}]+" ||
+  pattern == "\\d{2,}" ||
+  pattern == "[\\d]{2,}" ||
+  pattern == "[0-9]{2,}" ||
+  pattern == "\\p{N}{2,}" ||
+  pattern == "\\p{Number}{2,}" ||
+  pattern == "[\\p{N}]{2,}" ||
+  pattern == "[\\p{Number}]{2,}" ||
   pattern == "\\p{N}{1,2}" ||
   pattern == "\\p{Number}{1,2}" ||
   pattern == "[\\p{N}]{1,2}" ||
   pattern == "[\\p{Number}]{1,2}" ||
   pattern == "\\d{1,2}" ||
+  pattern == "[\\d]{1,2}" ||
   pattern == "[0-9]{1,2}" ||
   pattern == "[0-9][0-9]" ||
   pattern == "\\p{N}{1,3}" ||
@@ -363,6 +401,7 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "[\\p{N}]{1,3}" ||
   pattern == "[\\p{Number}]{1,3}" ||
   pattern == "\\d{1,3}" ||
+  pattern == "[\\d]{1,3}" ||
   pattern == "[0-9]{1,3}" ||
   pattern == "[0-9][0-9][0-9]" ||
   pattern == "\\p{N}{1,4}" ||
@@ -370,6 +409,7 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "[\\p{N}]{1,4}" ||
   pattern == "[\\p{Number}]{1,4}" ||
   pattern == "\\d{1,4}" ||
+  pattern == "[\\d]{1,4}" ||
   pattern == "[0-9]{1,4}" ||
   pattern == "[0-9][0-9][0-9][0-9]"
 }

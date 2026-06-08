@@ -336,6 +336,7 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     })
   }
   if pattern == "\\d+" ||
+    pattern == "[\\d]+" ||
     pattern == "[0-9]+" ||
     pattern == "\\p{N}+" ||
     pattern == "\\p{Number}+" ||
@@ -346,6 +347,7 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     })
   }
   if pattern == "^\\d+" ||
+    pattern == "^[\\d]+" ||
     pattern == "^[0-9]+" ||
     pattern == "^\\p{N}+" ||
     pattern == "^\\p{Number}+" ||
@@ -356,6 +358,7 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     })
   }
   if pattern == "\\d+$" ||
+    pattern == "[\\d]+$" ||
     pattern == "[0-9]+$" ||
     pattern == "\\p{N}+$" ||
     pattern == "\\p{Number}+$" ||
@@ -365,16 +368,38 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       @common.is_decimal_number(c)
     })
   }
-  if pattern == "\\D+" || pattern == "[^0-9]+" {
+  if pattern == "\\D+" ||
+    pattern == "[\\D]+" ||
+    pattern == "[^\\d]+" ||
+    pattern == "[^0-9]+" ||
+    pattern == "\\P{N}+" ||
+    pattern == "\\P{Number}+" ||
+    pattern == "[^\\p{N}]+" ||
+    pattern == "[^\\p{Number}]+" {
     return @common.replace_char_runs(s, content, fn(c) {
       !@common.is_decimal_number(c)
     })
+  }
+  if pattern == "\\d{2,}" ||
+    pattern == "[\\d]{2,}" ||
+    pattern == "[0-9]{2,}" ||
+    pattern == "\\p{N}{2,}" ||
+    pattern == "\\p{Number}{2,}" ||
+    pattern == "[\\p{N}]{2,}" ||
+    pattern == "[\\p{Number}]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_decimal_number(c) },
+      min_run=2,
+    )
   }
   if pattern == "\\p{N}{1,3}" ||
     pattern == "\\p{Number}{1,3}" ||
     pattern == "[\\p{N}]{1,3}" ||
     pattern == "[\\p{Number}]{1,3}" ||
     pattern == "\\d{1,3}" ||
+    pattern == "[\\d]{1,3}" ||
     pattern == "[0-9]{1,3}" {
     return @common.replace_bounded_char_runs(
       s,
@@ -383,7 +408,7 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       max_run=3,
     )
   }
-  if pattern == "\\d{1,2}" || pattern == "[0-9]{1,2}" {
+  if pattern == "\\d{1,2}" || pattern == "[\\d]{1,2}" || pattern == "[0-9]{1,2}" {
     return @common.replace_bounded_char_runs(
       s,
       content,
@@ -391,7 +416,7 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       max_run=2,
     )
   }
-  if pattern == "\\d{1,4}" || pattern == "[0-9]{1,4}" {
+  if pattern == "\\d{1,4}" || pattern == "[\\d]{1,4}" || pattern == "[0-9]{1,4}" {
     return @common.replace_bounded_char_runs(
       s,
       content,

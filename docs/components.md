@@ -66,7 +66,9 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
   CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\S+`,
   `^\s+`, `\s+$`, `\s{2,}`, `[\r\n]+`, `[^\S\r\n]+`, `\d+`, `\D+`,
-  bounded digit runs (`\d{1,2}` / `\d{1,3}` / `\d{1,4}` and `\p{N}` aliases),
+  bracketed digit aliases (`[\d]+`, `[^\d]+`, `\P{N}+`), min digit runs
+  (`\d{2,}` / `[\d]{2,}`), bounded digit runs (`\d{1,2}` / `\d{1,3}` /
+  `\d{1,4}` and `\p{N}` aliases),
   anchored digit/word/letter runs, `\w+`, `\W+`,
   ASCII alnum/letter classes (`[A-Za-z0-9]+`, `[A-Za-z]+` and inverse forms),
   `\p{L}+`, `\P{L}+`, punctuation
@@ -79,7 +81,8 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
 - **Regex `Replace`:** `Replace` normalizer/decoder supports common whitespace
   regex replacements such as `\s+`, `^\s+`, `\s+$`, `[\r\n]+`, `[^\S\r\n]+`,
   ` {2,}`, `\s{2,}` and horizontal whitespace min-run forms, digit runs
-  `\d+` / `\D+`, common bounded digit runs such as
+  `\d+` / `[\d]+` / `\D+` / `\P{N}+`, min digit runs such as `\d{2,}` /
+  `[\d]{2,}`, common bounded digit runs such as
   `\d{1,3}`, anchored digit/word/letter runs, word runs `\w+` / `\W+`,
   ASCII alnum/letter runs `[A-Za-z0-9]+` / `[A-Za-z]+` and inverse forms, and
   letter/punctuation/symbol runs (`\p{L}+`, `\p{P}+`, `\p{S}+` and inverse

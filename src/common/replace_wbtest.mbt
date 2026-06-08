@@ -56,6 +56,32 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(digits[0].stop, 3)
   @test.assert_eq(digits[1].start, 6)
   @test.assert_eq(digits[1].stop, 9)
+  guard simple_split_regex_matches(chars, "[\\d]+") is Some(class_digits) else {
+    abort("expected digit class matches")
+  }
+  @test.assert_eq(class_digits.length(), 2)
+  @test.assert_eq(class_digits[0].start, 1)
+  @test.assert_eq(class_digits[0].stop, 3)
+  @test.assert_eq(class_digits[1].start, 6)
+  @test.assert_eq(class_digits[1].stop, 9)
+  guard simple_split_regex_matches("a1b12c１２3".to_array(), "[\\d]{2,}")
+    is Some(min_digits) else {
+    abort("expected min digit class matches")
+  }
+  @test.assert_eq(min_digits.length(), 2)
+  @test.assert_eq(min_digits[0].start, 3)
+  @test.assert_eq(min_digits[0].stop, 5)
+  @test.assert_eq(min_digits[1].start, 6)
+  @test.assert_eq(min_digits[1].stop, 9)
+  guard simple_split_regex_matches("a１２b٣".to_array(), "\\P{N}+")
+    is Some(non_numbers) else {
+    abort("expected inverse number matches")
+  }
+  @test.assert_eq(non_numbers.length(), 2)
+  @test.assert_eq(non_numbers[0].start, 0)
+  @test.assert_eq(non_numbers[0].stop, 1)
+  @test.assert_eq(non_numbers[1].start, 3)
+  @test.assert_eq(non_numbers[1].stop, 4)
   guard simple_split_regex_matches("a12345b".to_array(), "\\d{1,3}")
     is Some(bounded_digits) else {
     abort("expected bounded digit matches")
@@ -262,6 +288,9 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("^\\p{L}+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\d+$"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Letter}]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\d]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[^\\d]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\d]{2,}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z0-9]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^a-zA-Z0-9]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z]+"), true)
@@ -274,6 +303,7 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("[^\\S\\r\\n]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\r\\n]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\d{1,2}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\d]{1,3}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{N}{1,3}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Number}]{1,4}"), true)
 }
