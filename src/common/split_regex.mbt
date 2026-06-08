@@ -145,6 +145,32 @@ pub fn simple_split_regex_matches(
     pattern == "[\\p{P}]+" ||
     pattern == "[\\p{Punctuation}]+" {
     Some(run_matches(chars, fn(c) { is_unicode_punctuation(c) }))
+  } else if pattern == "\\p{P}{2,}" ||
+    pattern == "\\p{Punctuation}{2,}" ||
+    pattern == "[\\p{P}]{2,}" ||
+    pattern == "[\\p{Punctuation}]{2,}" {
+    Some(run_matches_min(chars, fn(c) { is_unicode_punctuation(c) }, min_run=2))
+  } else if pattern == "\\p{P}{2}" ||
+    pattern == "\\p{Punctuation}{2}" ||
+    pattern == "[\\p{P}]{2}" ||
+    pattern == "[\\p{Punctuation}]{2}" {
+    Some(
+      run_matches_exact(chars, fn(c) { is_unicode_punctuation(c) }, exact_run=2),
+    )
+  } else if pattern == "\\p{P}{3}" ||
+    pattern == "\\p{Punctuation}{3}" ||
+    pattern == "[\\p{P}]{3}" ||
+    pattern == "[\\p{Punctuation}]{3}" {
+    Some(
+      run_matches_exact(chars, fn(c) { is_unicode_punctuation(c) }, exact_run=3),
+    )
+  } else if pattern == "\\p{P}{4}" ||
+    pattern == "\\p{Punctuation}{4}" ||
+    pattern == "[\\p{P}]{4}" ||
+    pattern == "[\\p{Punctuation}]{4}" {
+    Some(
+      run_matches_exact(chars, fn(c) { is_unicode_punctuation(c) }, exact_run=4),
+    )
   } else if pattern == "^\\p{P}+" ||
     pattern == "^\\p{Punctuation}+" ||
     pattern == "^[\\p{P}]+" ||
@@ -165,6 +191,26 @@ pub fn simple_split_regex_matches(
     pattern == "[\\p{S}]+" ||
     pattern == "[\\p{Symbol}]+" {
     Some(run_matches(chars, fn(c) { is_unicode_symbol(c) }))
+  } else if pattern == "\\p{S}{2,}" ||
+    pattern == "\\p{Symbol}{2,}" ||
+    pattern == "[\\p{S}]{2,}" ||
+    pattern == "[\\p{Symbol}]{2,}" {
+    Some(run_matches_min(chars, fn(c) { is_unicode_symbol(c) }, min_run=2))
+  } else if pattern == "\\p{S}{2}" ||
+    pattern == "\\p{Symbol}{2}" ||
+    pattern == "[\\p{S}]{2}" ||
+    pattern == "[\\p{Symbol}]{2}" {
+    Some(run_matches_exact(chars, fn(c) { is_unicode_symbol(c) }, exact_run=2))
+  } else if pattern == "\\p{S}{3}" ||
+    pattern == "\\p{Symbol}{3}" ||
+    pattern == "[\\p{S}]{3}" ||
+    pattern == "[\\p{Symbol}]{3}" {
+    Some(run_matches_exact(chars, fn(c) { is_unicode_symbol(c) }, exact_run=3))
+  } else if pattern == "\\p{S}{4}" ||
+    pattern == "\\p{Symbol}{4}" ||
+    pattern == "[\\p{S}]{4}" ||
+    pattern == "[\\p{Symbol}]{4}" {
+    Some(run_matches_exact(chars, fn(c) { is_unicode_symbol(c) }, exact_run=4))
   } else if pattern == "^\\p{S}+" ||
     pattern == "^\\p{Symbol}+" ||
     pattern == "^[\\p{S}]+" ||
@@ -407,10 +453,32 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\P{Letter}+" ||
   pattern == "[^\\p{L}]+" ||
   pattern == "[^\\p{Letter}]+" ||
+  is_simple_punctuation_symbol_regex_pattern(pattern) ||
+  is_simple_number_regex_pattern(pattern)
+}
+
+///|
+fn is_simple_punctuation_symbol_regex_pattern(pattern : String) -> Bool {
   pattern == "\\p{P}+" ||
   pattern == "\\p{Punctuation}+" ||
   pattern == "[\\p{P}]+" ||
   pattern == "[\\p{Punctuation}]+" ||
+  pattern == "\\p{P}{2,}" ||
+  pattern == "\\p{Punctuation}{2,}" ||
+  pattern == "[\\p{P}]{2,}" ||
+  pattern == "[\\p{Punctuation}]{2,}" ||
+  pattern == "\\p{P}{2}" ||
+  pattern == "\\p{Punctuation}{2}" ||
+  pattern == "[\\p{P}]{2}" ||
+  pattern == "[\\p{Punctuation}]{2}" ||
+  pattern == "\\p{P}{3}" ||
+  pattern == "\\p{Punctuation}{3}" ||
+  pattern == "[\\p{P}]{3}" ||
+  pattern == "[\\p{Punctuation}]{3}" ||
+  pattern == "\\p{P}{4}" ||
+  pattern == "\\p{Punctuation}{4}" ||
+  pattern == "[\\p{P}]{4}" ||
+  pattern == "[\\p{Punctuation}]{4}" ||
   pattern == "^\\p{P}+" ||
   pattern == "^\\p{Punctuation}+" ||
   pattern == "^[\\p{P}]+" ||
@@ -427,6 +495,22 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\p{Symbol}+" ||
   pattern == "[\\p{S}]+" ||
   pattern == "[\\p{Symbol}]+" ||
+  pattern == "\\p{S}{2,}" ||
+  pattern == "\\p{Symbol}{2,}" ||
+  pattern == "[\\p{S}]{2,}" ||
+  pattern == "[\\p{Symbol}]{2,}" ||
+  pattern == "\\p{S}{2}" ||
+  pattern == "\\p{Symbol}{2}" ||
+  pattern == "[\\p{S}]{2}" ||
+  pattern == "[\\p{Symbol}]{2}" ||
+  pattern == "\\p{S}{3}" ||
+  pattern == "\\p{Symbol}{3}" ||
+  pattern == "[\\p{S}]{3}" ||
+  pattern == "[\\p{Symbol}]{3}" ||
+  pattern == "\\p{S}{4}" ||
+  pattern == "\\p{Symbol}{4}" ||
+  pattern == "[\\p{S}]{4}" ||
+  pattern == "[\\p{Symbol}]{4}" ||
   pattern == "^\\p{S}+" ||
   pattern == "^\\p{Symbol}+" ||
   pattern == "^[\\p{S}]+" ||
@@ -459,7 +543,11 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "[^\\s\\p{N}\\p{L}]+" ||
   pattern == "[^\\p{L}\\p{N}\\s]+" ||
   pattern == "[^\\p{N}\\p{L}\\s]+" ||
-  pattern == "[^\\s\\p{Letter}\\p{Number}]+" ||
+  pattern == "[^\\s\\p{Letter}\\p{Number}]+"
+}
+
+///|
+fn is_simple_number_regex_pattern(pattern : String) -> Bool {
   pattern == "\\d+" ||
   pattern == "[\\d]+" ||
   pattern == "[0-9]+" ||

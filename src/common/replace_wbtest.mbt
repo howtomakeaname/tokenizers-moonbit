@@ -269,6 +269,20 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(punctuation[0].stop, 4)
   @test.assert_eq(punctuation[1].start, 9)
   @test.assert_eq(punctuation[1].stop, 10)
+  guard simple_split_regex_matches("hi,!?ok。".to_array(), "\\p{P}{2,}")
+    is Some(min_punctuation) else {
+    abort("expected min punctuation matches")
+  }
+  @test.assert_eq(min_punctuation.length(), 1)
+  @test.assert_eq(min_punctuation[0].start, 2)
+  @test.assert_eq(min_punctuation[0].stop, 5)
+  guard simple_split_regex_matches("hi,!?ok。".to_array(), "\\p{P}{2}")
+    is Some(exact_punctuation) else {
+    abort("expected exact punctuation matches")
+  }
+  @test.assert_eq(exact_punctuation.length(), 1)
+  @test.assert_eq(exact_punctuation[0].start, 2)
+  @test.assert_eq(exact_punctuation[0].stop, 4)
   guard simple_split_regex_matches("a$+🙂,b=≤c".to_array(), "\\p{S}+")
     is Some(symbols) else {
     abort("expected symbol matches")
@@ -278,6 +292,15 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(symbols[0].stop, 4)
   @test.assert_eq(symbols[1].start, 6)
   @test.assert_eq(symbols[1].stop, 8)
+  guard simple_split_regex_matches("a$+🙂,b=≤c".to_array(), "\\p{S}{2}")
+    is Some(exact_symbols) else {
+    abort("expected exact symbol matches")
+  }
+  @test.assert_eq(exact_symbols.length(), 2)
+  @test.assert_eq(exact_symbols[0].start, 1)
+  @test.assert_eq(exact_symbols[0].stop, 3)
+  @test.assert_eq(exact_symbols[1].start, 6)
+  @test.assert_eq(exact_symbols[1].stop, 8)
   guard simple_split_regex_matches(
       "ab,$+🙂 cd。42".to_array(),
       "[\\p{P}\\p{S}]+",
@@ -378,7 +401,10 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^a-zA-Z]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{Punctuation}+$"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\p{P}{2,}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\p{P}{2}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Symbol}]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\p{Symbol}]{2}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{P}\\p{S}]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^\\s\\p{L}\\p{N}]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\s{2,}"), true)

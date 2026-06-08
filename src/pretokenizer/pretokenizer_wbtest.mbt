@@ -407,6 +407,22 @@ test "split pretokenizer supports common regex spans" {
     (10, 11),
   ])
 
+  let min_punctuation = PreTokenizer::Split(
+    pattern="\\p{P}{2,}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("hi,!?ok。", base_offset=0)
+  @test.assert_eq(min_punctuation.map(x => x.value), ["hi", ",!?", "ok。"])
+
+  let exact_punctuation = PreTokenizer::Split(
+    pattern="\\p{P}{2}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("hi,!?ok。", base_offset=0)
+  @test.assert_eq(exact_punctuation.map(x => x.value), ["hi", ",!", "?ok。"])
+
   let symbols = PreTokenizer::Split(
     pattern="\\p{Symbol}+",
     behavior=Removed,
@@ -414,6 +430,16 @@ test "split pretokenizer supports common regex spans" {
     regex=true,
   ).pre_tokenize("a$+🙂,b=≤c", base_offset=0)
   @test.assert_eq(symbols.map(x => x.value), ["a", ",b", "c"])
+
+  let exact_symbols = PreTokenizer::Split(
+    pattern="\\p{S}{2}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a$+🙂,b=≤c", base_offset=0)
+  @test.assert_eq(exact_symbols.map(x => x.value), [
+    "a", "$+", "🙂,b", "=≤", "c",
+  ])
 
   let punct_symbols = PreTokenizer::Split(
     pattern="[\\p{P}\\p{S}]+",

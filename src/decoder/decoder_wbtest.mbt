@@ -201,6 +201,16 @@ test "Replace decoder supports common regex whitespace patterns" {
     "hi_$+🙂ok_",
   )
   @test.assert_eq(
+    Decoder::Replace(pattern="\\p{P}{2,}", content="_").decode([
+      "hi,!?", "ok。",
+    ]),
+    "hi_ok。",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="\\p{P}{2}", content="_").decode(["hi,!?", "ok。"]),
+    "hi_?ok。",
+  )
+  @test.assert_eq(
     Decoder::Replace(pattern="^\\p{Punctuation}+", content="").decode([
       "？！", "hello!",
     ]),
@@ -211,6 +221,12 @@ test "Replace decoder supports common regex whitespace patterns" {
       "a$+🙂", ",b=≤c",
     ]),
     "aS,bSc",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="\\p{S}{2}", content="S").decode([
+      "a$+🙂", ",b=≤c",
+    ]),
+    "aS🙂,bSc",
   )
   @test.assert_eq(
     Decoder::Replace(pattern="\\p{S}+$", content="").decode(["ok", "🙂+"]),

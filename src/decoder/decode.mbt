@@ -786,6 +786,50 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       @common.is_unicode_punctuation(c)
     })
   }
+  if pattern == "\\p{P}{2,}" ||
+    pattern == "\\p{Punctuation}{2,}" ||
+    pattern == "[\\p{P}]{2,}" ||
+    pattern == "[\\p{Punctuation}]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_punctuation(c) },
+      min_run=2,
+    )
+  }
+  if pattern == "\\p{P}{2}" ||
+    pattern == "\\p{Punctuation}{2}" ||
+    pattern == "[\\p{P}]{2}" ||
+    pattern == "[\\p{Punctuation}]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_punctuation(c) },
+      exact_run=2,
+    )
+  }
+  if pattern == "\\p{P}{3}" ||
+    pattern == "\\p{Punctuation}{3}" ||
+    pattern == "[\\p{P}]{3}" ||
+    pattern == "[\\p{Punctuation}]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_punctuation(c) },
+      exact_run=3,
+    )
+  }
+  if pattern == "\\p{P}{4}" ||
+    pattern == "\\p{Punctuation}{4}" ||
+    pattern == "[\\p{P}]{4}" ||
+    pattern == "[\\p{Punctuation}]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_punctuation(c) },
+      exact_run=4,
+    )
+  }
   if pattern == "^\\p{P}+" ||
     pattern == "^\\p{Punctuation}+" ||
     pattern == "^[\\p{P}]+" ||
@@ -817,6 +861,50 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     return @common.replace_char_runs(s, content, fn(c) {
       @common.is_unicode_symbol(c)
     })
+  }
+  if pattern == "\\p{S}{2,}" ||
+    pattern == "\\p{Symbol}{2,}" ||
+    pattern == "[\\p{S}]{2,}" ||
+    pattern == "[\\p{Symbol}]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_symbol(c) },
+      min_run=2,
+    )
+  }
+  if pattern == "\\p{S}{2}" ||
+    pattern == "\\p{Symbol}{2}" ||
+    pattern == "[\\p{S}]{2}" ||
+    pattern == "[\\p{Symbol}]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_symbol(c) },
+      exact_run=2,
+    )
+  }
+  if pattern == "\\p{S}{3}" ||
+    pattern == "\\p{Symbol}{3}" ||
+    pattern == "[\\p{S}]{3}" ||
+    pattern == "[\\p{Symbol}]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_symbol(c) },
+      exact_run=3,
+    )
+  }
+  if pattern == "\\p{S}{4}" ||
+    pattern == "\\p{Symbol}{4}" ||
+    pattern == "[\\p{S}]{4}" ||
+    pattern == "[\\p{Symbol}]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_symbol(c) },
+      exact_run=4,
+    )
   }
   if pattern == "^\\p{S}+" ||
     pattern == "^\\p{Symbol}+" ||
