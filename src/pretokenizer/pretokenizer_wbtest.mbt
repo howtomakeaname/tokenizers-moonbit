@@ -272,6 +272,24 @@ test "split pretokenizer supports common regex spans" {
   ).pre_tokenize("ab_12,中!cd", base_offset=0)
   @test.assert_eq(nonword_runs.map(x => x.value), ["ab_12", "cd"])
 
+  let min_word_runs = PreTokenizer::Split(
+    pattern="\\w{2,}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab_12,x,cde", base_offset=1)
+  @test.assert_eq(min_word_runs.map(x => x.value), ["ab_12", ",x,", "cde"])
+
+  let exact_word_runs = PreTokenizer::Split(
+    pattern="\\w{2}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab_12,cde", base_offset=0)
+  @test.assert_eq(exact_word_runs.map(x => x.value), [
+    "ab", "_1", "2,", "cd", "e",
+  ])
+
   let ascii_alnum = PreTokenizer::Split(
     pattern="[A-Za-z0-9]+",
     behavior=Isolated,
@@ -298,6 +316,16 @@ test "split pretokenizer supports common regex spans" {
   ).pre_tokenize("ab_12,CD中", base_offset=0)
   @test.assert_eq(non_ascii_alnum.map(x => x.value), ["ab", "12", "CD"])
 
+  let exact_ascii_alnum = PreTokenizer::Split(
+    pattern="[A-Za-z0-9]{3}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab12_cde中", base_offset=0)
+  @test.assert_eq(exact_ascii_alnum.map(x => x.value), [
+    "ab1", "2_", "cde", "中",
+  ])
+
   let bounded_words = PreTokenizer::Split(
     pattern="\\b\\w+\\b",
     behavior=Isolated,
@@ -318,6 +346,26 @@ test "split pretokenizer supports common regex spans" {
     (5, 10),
     (10, 12),
     (12, 13),
+  ])
+
+  let min_ascii_letters = PreTokenizer::Split(
+    pattern="[A-Za-z]{2,}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("abé_cdef中", base_offset=0)
+  @test.assert_eq(min_ascii_letters.map(x => x.value), [
+    "ab", "é_", "cdef", "中",
+  ])
+
+  let exact_unicode_letters = PreTokenizer::Split(
+    pattern="\\p{L}{3}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("abé中12Жxy", base_offset=0)
+  @test.assert_eq(exact_unicode_letters.map(x => x.value), [
+    "abé", "中12", "Жxy",
   ])
 
   let non_ascii_letters = PreTokenizer::Split(

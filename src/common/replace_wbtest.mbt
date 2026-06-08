@@ -149,6 +149,26 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(words[1].stop, 5)
   @test.assert_eq(words[2].start, 6)
   @test.assert_eq(words[2].stop, 9)
+  guard simple_split_regex_matches("ab_12,cde!".to_array(), "\\w{2,}")
+    is Some(min_words) else {
+    abort("expected min word matches")
+  }
+  @test.assert_eq(min_words.length(), 2)
+  @test.assert_eq(min_words[0].start, 0)
+  @test.assert_eq(min_words[0].stop, 5)
+  @test.assert_eq(min_words[1].start, 6)
+  @test.assert_eq(min_words[1].stop, 9)
+  guard simple_split_regex_matches("ab_12,cde!".to_array(), "\\w{2}")
+    is Some(exact_words) else {
+    abort("expected exact word matches")
+  }
+  @test.assert_eq(exact_words.length(), 3)
+  @test.assert_eq(exact_words[0].start, 0)
+  @test.assert_eq(exact_words[0].stop, 2)
+  @test.assert_eq(exact_words[1].start, 2)
+  @test.assert_eq(exact_words[1].stop, 4)
+  @test.assert_eq(exact_words[2].start, 6)
+  @test.assert_eq(exact_words[2].stop, 8)
   guard simple_split_regex_matches(chars, "\\W+") is Some(non_words) else {
     abort("expected non-word matches")
   }
@@ -168,6 +188,15 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(ascii_alnum[1].stop, 5)
   @test.assert_eq(ascii_alnum[2].start, 6)
   @test.assert_eq(ascii_alnum[2].stop, 8)
+  guard simple_split_regex_matches("ab12_cde中".to_array(), "[A-Za-z0-9]{3}")
+    is Some(exact_ascii_alnum) else {
+    abort("expected exact ASCII alnum matches")
+  }
+  @test.assert_eq(exact_ascii_alnum.length(), 2)
+  @test.assert_eq(exact_ascii_alnum[0].start, 0)
+  @test.assert_eq(exact_ascii_alnum[0].stop, 3)
+  @test.assert_eq(exact_ascii_alnum[1].start, 5)
+  @test.assert_eq(exact_ascii_alnum[1].stop, 8)
   guard simple_split_regex_matches("ab_12,CD中".to_array(), "[^A-Za-z0-9]+")
     is Some(non_ascii_alnum) else {
     abort("expected non-ASCII-alnum matches")
@@ -188,6 +217,15 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(ascii_letters[0].stop, 2)
   @test.assert_eq(ascii_letters[1].start, 7)
   @test.assert_eq(ascii_letters[1].stop, 9)
+  guard simple_split_regex_matches("abé_cdef中".to_array(), "[A-Za-z]{2,}")
+    is Some(min_ascii_letters) else {
+    abort("expected min ASCII letter matches")
+  }
+  @test.assert_eq(min_ascii_letters.length(), 2)
+  @test.assert_eq(min_ascii_letters[0].start, 0)
+  @test.assert_eq(min_ascii_letters[0].stop, 2)
+  @test.assert_eq(min_ascii_letters[1].start, 4)
+  @test.assert_eq(min_ascii_letters[1].stop, 8)
   guard simple_split_regex_matches("abé_12,CD中".to_array(), "[^A-Za-z]+")
     is Some(non_ascii_letters) else {
     abort("expected non-ASCII-letter matches")
@@ -206,6 +244,15 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(letters[0].stop, 4)
   @test.assert_eq(letters[1].start, 7)
   @test.assert_eq(letters[1].stop, 8)
+  guard simple_split_regex_matches("abé中12Жxy".to_array(), "\\p{L}{3}")
+    is Some(exact_letters) else {
+    abort("expected exact Unicode letter matches")
+  }
+  @test.assert_eq(exact_letters.length(), 2)
+  @test.assert_eq(exact_letters[0].start, 0)
+  @test.assert_eq(exact_letters[0].stop, 3)
+  @test.assert_eq(exact_letters[1].start, 6)
+  @test.assert_eq(exact_letters[1].stop, 9)
   guard simple_split_regex_matches("abé中12!Ж".to_array(), "\\P{L}+")
     is Some(non_letters) else {
     abort("expected non-letter matches")
@@ -316,6 +363,11 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("^\\p{L}+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\d+$"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Letter}]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\w{2,}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\w{2}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z0-9]{3}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z]{2,}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\p{L}{3}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\d]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^\\d]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\d]{2,}"), true)

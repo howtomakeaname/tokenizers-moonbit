@@ -60,8 +60,24 @@ pub fn simple_split_regex_matches(
     pattern == "[^\\w]+" ||
     pattern == "[^A-Za-z0-9_]+" {
     Some(run_matches(chars, fn(c) { !is_word_char(c) }))
+  } else if pattern == "\\w{2,}" || pattern == "[A-Za-z0-9_]{2,}" {
+    Some(run_matches_min(chars, fn(c) { is_word_char(c) }, min_run=2))
+  } else if pattern == "\\w{2}" || pattern == "[A-Za-z0-9_]{2}" {
+    Some(run_matches_exact(chars, fn(c) { is_word_char(c) }, exact_run=2))
+  } else if pattern == "\\w{3}" || pattern == "[A-Za-z0-9_]{3}" {
+    Some(run_matches_exact(chars, fn(c) { is_word_char(c) }, exact_run=3))
+  } else if pattern == "\\w{4}" || pattern == "[A-Za-z0-9_]{4}" {
+    Some(run_matches_exact(chars, fn(c) { is_word_char(c) }, exact_run=4))
   } else if pattern == "[A-Za-z0-9]+" || pattern == "[a-zA-Z0-9]+" {
     Some(run_matches(chars, fn(c) { is_ascii_alnum(c) }))
+  } else if pattern == "[A-Za-z0-9]{2,}" || pattern == "[a-zA-Z0-9]{2,}" {
+    Some(run_matches_min(chars, fn(c) { is_ascii_alnum(c) }, min_run=2))
+  } else if pattern == "[A-Za-z0-9]{2}" || pattern == "[a-zA-Z0-9]{2}" {
+    Some(run_matches_exact(chars, fn(c) { is_ascii_alnum(c) }, exact_run=2))
+  } else if pattern == "[A-Za-z0-9]{3}" || pattern == "[a-zA-Z0-9]{3}" {
+    Some(run_matches_exact(chars, fn(c) { is_ascii_alnum(c) }, exact_run=3))
+  } else if pattern == "[A-Za-z0-9]{4}" || pattern == "[a-zA-Z0-9]{4}" {
+    Some(run_matches_exact(chars, fn(c) { is_ascii_alnum(c) }, exact_run=4))
   } else if pattern == "^[A-Za-z0-9]+" || pattern == "^[a-zA-Z0-9]+" {
     Some(leading_run_match(chars, fn(c) { is_ascii_alnum(c) }))
   } else if pattern == "[A-Za-z0-9]+$" || pattern == "[a-zA-Z0-9]+$" {
@@ -70,6 +86,14 @@ pub fn simple_split_regex_matches(
     Some(run_matches(chars, fn(c) { !is_ascii_alnum(c) }))
   } else if pattern == "[A-Za-z]+" || pattern == "[a-zA-Z]+" {
     Some(run_matches(chars, fn(c) { is_ascii_letter(c) }))
+  } else if pattern == "[A-Za-z]{2,}" || pattern == "[a-zA-Z]{2,}" {
+    Some(run_matches_min(chars, fn(c) { is_ascii_letter(c) }, min_run=2))
+  } else if pattern == "[A-Za-z]{2}" || pattern == "[a-zA-Z]{2}" {
+    Some(run_matches_exact(chars, fn(c) { is_ascii_letter(c) }, exact_run=2))
+  } else if pattern == "[A-Za-z]{3}" || pattern == "[a-zA-Z]{3}" {
+    Some(run_matches_exact(chars, fn(c) { is_ascii_letter(c) }, exact_run=3))
+  } else if pattern == "[A-Za-z]{4}" || pattern == "[a-zA-Z]{4}" {
+    Some(run_matches_exact(chars, fn(c) { is_ascii_letter(c) }, exact_run=4))
   } else if pattern == "^[A-Za-z]+" || pattern == "^[a-zA-Z]+" {
     Some(leading_run_match(chars, fn(c) { is_ascii_letter(c) }))
   } else if pattern == "[A-Za-z]+$" || pattern == "[a-zA-Z]+$" {
@@ -81,6 +105,26 @@ pub fn simple_split_regex_matches(
     pattern == "[\\p{L}]+" ||
     pattern == "[\\p{Letter}]+" {
     Some(run_matches(chars, fn(c) { is_unicode_letter(c) }))
+  } else if pattern == "\\p{L}{2,}" ||
+    pattern == "\\p{Letter}{2,}" ||
+    pattern == "[\\p{L}]{2,}" ||
+    pattern == "[\\p{Letter}]{2,}" {
+    Some(run_matches_min(chars, fn(c) { is_unicode_letter(c) }, min_run=2))
+  } else if pattern == "\\p{L}{2}" ||
+    pattern == "\\p{Letter}{2}" ||
+    pattern == "[\\p{L}]{2}" ||
+    pattern == "[\\p{Letter}]{2}" {
+    Some(run_matches_exact(chars, fn(c) { is_unicode_letter(c) }, exact_run=2))
+  } else if pattern == "\\p{L}{3}" ||
+    pattern == "\\p{Letter}{3}" ||
+    pattern == "[\\p{L}]{3}" ||
+    pattern == "[\\p{Letter}]{3}" {
+    Some(run_matches_exact(chars, fn(c) { is_unicode_letter(c) }, exact_run=3))
+  } else if pattern == "\\p{L}{4}" ||
+    pattern == "\\p{Letter}{4}" ||
+    pattern == "[\\p{L}]{4}" ||
+    pattern == "[\\p{Letter}]{4}" {
+    Some(run_matches_exact(chars, fn(c) { is_unicode_letter(c) }, exact_run=4))
   } else if pattern == "^\\p{L}+" ||
     pattern == "^\\p{Letter}+" ||
     pattern == "^[\\p{L}]+" ||
@@ -291,8 +335,24 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\W+" ||
   pattern == "[^\\w]+" ||
   pattern == "[^A-Za-z0-9_]+" ||
+  pattern == "\\w{2,}" ||
+  pattern == "[A-Za-z0-9_]{2,}" ||
+  pattern == "\\w{2}" ||
+  pattern == "[A-Za-z0-9_]{2}" ||
+  pattern == "\\w{3}" ||
+  pattern == "[A-Za-z0-9_]{3}" ||
+  pattern == "\\w{4}" ||
+  pattern == "[A-Za-z0-9_]{4}" ||
   pattern == "[A-Za-z0-9]+" ||
   pattern == "[a-zA-Z0-9]+" ||
+  pattern == "[A-Za-z0-9]{2,}" ||
+  pattern == "[a-zA-Z0-9]{2,}" ||
+  pattern == "[A-Za-z0-9]{2}" ||
+  pattern == "[a-zA-Z0-9]{2}" ||
+  pattern == "[A-Za-z0-9]{3}" ||
+  pattern == "[a-zA-Z0-9]{3}" ||
+  pattern == "[A-Za-z0-9]{4}" ||
+  pattern == "[a-zA-Z0-9]{4}" ||
   pattern == "^[A-Za-z0-9]+" ||
   pattern == "^[a-zA-Z0-9]+" ||
   pattern == "[A-Za-z0-9]+$" ||
@@ -301,6 +361,14 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "[^a-zA-Z0-9]+" ||
   pattern == "[A-Za-z]+" ||
   pattern == "[a-zA-Z]+" ||
+  pattern == "[A-Za-z]{2,}" ||
+  pattern == "[a-zA-Z]{2,}" ||
+  pattern == "[A-Za-z]{2}" ||
+  pattern == "[a-zA-Z]{2}" ||
+  pattern == "[A-Za-z]{3}" ||
+  pattern == "[a-zA-Z]{3}" ||
+  pattern == "[A-Za-z]{4}" ||
+  pattern == "[a-zA-Z]{4}" ||
   pattern == "^[A-Za-z]+" ||
   pattern == "^[a-zA-Z]+" ||
   pattern == "[A-Za-z]+$" ||
@@ -311,6 +379,22 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\p{Letter}+" ||
   pattern == "[\\p{L}]+" ||
   pattern == "[\\p{Letter}]+" ||
+  pattern == "\\p{L}{2,}" ||
+  pattern == "\\p{Letter}{2,}" ||
+  pattern == "[\\p{L}]{2,}" ||
+  pattern == "[\\p{Letter}]{2,}" ||
+  pattern == "\\p{L}{2}" ||
+  pattern == "\\p{Letter}{2}" ||
+  pattern == "[\\p{L}]{2}" ||
+  pattern == "[\\p{Letter}]{2}" ||
+  pattern == "\\p{L}{3}" ||
+  pattern == "\\p{Letter}{3}" ||
+  pattern == "[\\p{L}]{3}" ||
+  pattern == "[\\p{Letter}]{3}" ||
+  pattern == "\\p{L}{4}" ||
+  pattern == "\\p{Letter}{4}" ||
+  pattern == "[\\p{L}]{4}" ||
+  pattern == "[\\p{Letter}]{4}" ||
   pattern == "^\\p{L}+" ||
   pattern == "^\\p{Letter}+" ||
   pattern == "^[\\p{L}]+" ||
@@ -526,6 +610,38 @@ fn run_matches_min(
       }
       if i - start >= min_run {
         out.push({ start, stop: i })
+      }
+    } else {
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
+fn run_matches_exact(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  exact_run~ : Int,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  if exact_run <= 0 {
+    return out
+  }
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let start = i
+      while i < n && pred(chars[i]) {
+        i = i + 1
+      }
+      let run = i - start
+      let full_stop = start + run / exact_run * exact_run
+      let mut j = start
+      while j < full_stop {
+        out.push({ start: j, stop: j + exact_run })
+        j = j + exact_run
       }
     } else {
       i = i + 1

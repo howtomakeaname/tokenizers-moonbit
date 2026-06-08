@@ -566,10 +566,74 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       !@common.is_word_char(c)
     })
   }
+  if pattern == "\\w{2,}" || pattern == "[A-Za-z0-9_]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_word_char(c) },
+      min_run=2,
+    )
+  }
+  if pattern == "\\w{2}" || pattern == "[A-Za-z0-9_]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_word_char(c) },
+      exact_run=2,
+    )
+  }
+  if pattern == "\\w{3}" || pattern == "[A-Za-z0-9_]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_word_char(c) },
+      exact_run=3,
+    )
+  }
+  if pattern == "\\w{4}" || pattern == "[A-Za-z0-9_]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_word_char(c) },
+      exact_run=4,
+    )
+  }
   if pattern == "[A-Za-z0-9]+" || pattern == "[a-zA-Z0-9]+" {
     return @common.replace_char_runs(s, content, fn(c) {
       @common.is_ascii_alnum(c)
     })
+  }
+  if pattern == "[A-Za-z0-9]{2,}" || pattern == "[a-zA-Z0-9]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_ascii_alnum(c) },
+      min_run=2,
+    )
+  }
+  if pattern == "[A-Za-z0-9]{2}" || pattern == "[a-zA-Z0-9]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_ascii_alnum(c) },
+      exact_run=2,
+    )
+  }
+  if pattern == "[A-Za-z0-9]{3}" || pattern == "[a-zA-Z0-9]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_ascii_alnum(c) },
+      exact_run=3,
+    )
+  }
+  if pattern == "[A-Za-z0-9]{4}" || pattern == "[a-zA-Z0-9]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_ascii_alnum(c) },
+      exact_run=4,
+    )
   }
   if pattern == "^[A-Za-z0-9]+" || pattern == "^[a-zA-Z0-9]+" {
     return @common.replace_leading_runs(s, content, fn(c) {
@@ -590,6 +654,38 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     return @common.replace_char_runs(s, content, fn(c) {
       @common.is_ascii_letter(c)
     })
+  }
+  if pattern == "[A-Za-z]{2,}" || pattern == "[a-zA-Z]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_ascii_letter(c) },
+      min_run=2,
+    )
+  }
+  if pattern == "[A-Za-z]{2}" || pattern == "[a-zA-Z]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_ascii_letter(c) },
+      exact_run=2,
+    )
+  }
+  if pattern == "[A-Za-z]{3}" || pattern == "[a-zA-Z]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_ascii_letter(c) },
+      exact_run=3,
+    )
+  }
+  if pattern == "[A-Za-z]{4}" || pattern == "[a-zA-Z]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_ascii_letter(c) },
+      exact_run=4,
+    )
   }
   if pattern == "^[A-Za-z]+" || pattern == "^[a-zA-Z]+" {
     return @common.replace_leading_runs(s, content, fn(c) {
@@ -613,6 +709,50 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     return @common.replace_char_runs(s, content, fn(c) {
       @common.is_unicode_letter(c)
     })
+  }
+  if pattern == "\\p{L}{2,}" ||
+    pattern == "\\p{Letter}{2,}" ||
+    pattern == "[\\p{L}]{2,}" ||
+    pattern == "[\\p{Letter}]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_letter(c) },
+      min_run=2,
+    )
+  }
+  if pattern == "\\p{L}{2}" ||
+    pattern == "\\p{Letter}{2}" ||
+    pattern == "[\\p{L}]{2}" ||
+    pattern == "[\\p{Letter}]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_letter(c) },
+      exact_run=2,
+    )
+  }
+  if pattern == "\\p{L}{3}" ||
+    pattern == "\\p{Letter}{3}" ||
+    pattern == "[\\p{L}]{3}" ||
+    pattern == "[\\p{Letter}]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_letter(c) },
+      exact_run=3,
+    )
+  }
+  if pattern == "\\p{L}{4}" ||
+    pattern == "\\p{Letter}{4}" ||
+    pattern == "[\\p{L}]{4}" ||
+    pattern == "[\\p{Letter}]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_letter(c) },
+      exact_run=4,
+    )
   }
   if pattern == "^\\p{L}+" ||
     pattern == "^\\p{Letter}+" ||
