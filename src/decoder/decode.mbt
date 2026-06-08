@@ -375,6 +375,14 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern == " {2,}" {
     return @common.replace_space_runs(s, content, min_run=2)
   }
+  if pattern == "\\s{2,}" || pattern == "[\\s]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_whitespace(c.to_int()) },
+      min_run=2,
+    )
+  }
   if pattern == "^\\s+" {
     return @common.replace_leading_runs(s, content, fn(c) {
       @common.is_unicode_whitespace(c.to_int())
@@ -459,6 +467,14 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   }
   if pattern == "[ \\t]+" {
     return @common.replace_char_runs(s, content, fn(c) { c == ' ' || c == '\t' })
+  }
+  if pattern == "[ \\t]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { c == ' ' || c == '\t' },
+      min_run=2,
+    )
   }
   if pattern == "\\w+" ||
     pattern == "[A-Za-z0-9_]+" ||
@@ -624,6 +640,16 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     return @common.replace_char_runs(s, content, fn(c) {
       @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
     })
+  }
+  if pattern == "[^\\S\\r\\n]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) {
+        @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
+      },
+      min_run=2,
+    )
   }
   @common.replace_literal(s, pattern, content)
 }

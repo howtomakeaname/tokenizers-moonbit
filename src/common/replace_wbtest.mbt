@@ -24,6 +24,15 @@ test "replace helpers cover regex run semantics" {
     "a#b#",
   )
   @test.assert_eq(
+    replace_min_char_runs(
+      "a b  c\t\td",
+      "_",
+      fn(c) { is_unicode_whitespace(c.to_int()) },
+      min_run=2,
+    ),
+    "a b_c_d",
+  )
+  @test.assert_eq(
     replace_bounded_char_runs(
       "a12345b",
       "#",
@@ -136,6 +145,33 @@ test "split regex helpers cover simple patterns" {
     abort("expected whitespace matches")
   }
   @test.assert_eq(spaces.length(), 2)
+  guard simple_split_regex_matches("a b  c\t\td".to_array(), "\\s{2,}")
+    is Some(wide_spaces) else {
+    abort("expected min whitespace matches")
+  }
+  @test.assert_eq(wide_spaces.length(), 2)
+  @test.assert_eq(wide_spaces[0].start, 3)
+  @test.assert_eq(wide_spaces[0].stop, 5)
+  @test.assert_eq(wide_spaces[1].start, 6)
+  @test.assert_eq(wide_spaces[1].stop, 8)
+  guard simple_split_regex_matches("a\t b \n\rc".to_array(), "[^\\S\\r\\n]+")
+    is Some(horizontal_spaces) else {
+    abort("expected horizontal whitespace matches")
+  }
+  @test.assert_eq(horizontal_spaces.length(), 2)
+  @test.assert_eq(horizontal_spaces[0].start, 1)
+  @test.assert_eq(horizontal_spaces[0].stop, 3)
+  @test.assert_eq(horizontal_spaces[1].start, 4)
+  @test.assert_eq(horizontal_spaces[1].stop, 5)
+  guard simple_split_regex_matches("a\r\nb\n\nc".to_array(), "[\\r\\n]+")
+    is Some(newlines) else {
+    abort("expected newline run matches")
+  }
+  @test.assert_eq(newlines.length(), 2)
+  @test.assert_eq(newlines[0].start, 1)
+  @test.assert_eq(newlines[0].stop, 3)
+  @test.assert_eq(newlines[1].start, 4)
+  @test.assert_eq(newlines[1].stop, 6)
   guard simple_split_regex_matches("\t abc ".to_array(), "^\\s+")
     is Some(leading_spaces) else {
     abort("expected leading whitespace match")
@@ -170,5 +206,8 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Symbol}]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{P}\\p{S}]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^\\s\\p{L}\\p{N}]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\s{2,}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[^\\S\\r\\n]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\r\\n]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{N}{1,3}"), true)
 }

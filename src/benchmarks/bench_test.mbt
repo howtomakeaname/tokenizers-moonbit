@@ -487,6 +487,20 @@ fn bench_decoder_replace_regex_case(b : @bench.T, case_name : String) -> Unit {
 }
 
 ///|
+fn bench_decoder_replace_min_ws_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("\\s{2,}", " ")
+  let tokens = [
+    "The quick", "  brown\t\tfox", " jumps", "\u{3000}\u{3000}over the lazy dog.",
+  ]
+  b.bench(name="decoder-replace-min-ws-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_decoder_replace_trailing_regex_case(
   b : @bench.T,
   case_name : String,
@@ -535,6 +549,23 @@ fn bench_split_trailing_ws_regex_case(b : @bench.T, case_name : String) -> Unit 
   )
   let text = corpus_mixed() + "\t \n"
   b.bench(name="pretokenizer-split-trailing-ws-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_horizontal_ws_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "[^\\S\\r\\n]+",
+    @pretokenizer.SplitBehavior::removed(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + "\t  more horizontal whitespace\n next line"
+  b.bench(name="pretokenizer-split-horizontal-ws-regex-\{case_name}", fn() {
     b.keep(pt.pre_tokenize(text, base_offset=0))
   })
 }
@@ -819,6 +850,11 @@ test "bench decoder replace regex" (b : @bench.T) {
 }
 
 ///|
+test "bench decoder replace min whitespace regex" (b : @bench.T) {
+  bench_decoder_replace_min_ws_regex_case(b, "mixed")
+}
+
+///|
 test "bench decoder replace trailing regex" (b : @bench.T) {
   bench_decoder_replace_trailing_regex_case(b, "mixed")
 }
@@ -836,6 +872,11 @@ test "bench decoder replace punct-symbol regex" (b : @bench.T) {
 ///|
 test "bench split trailing whitespace regex" (b : @bench.T) {
   bench_split_trailing_ws_regex_case(b, "mixed")
+}
+
+///|
+test "bench split horizontal whitespace regex" (b : @bench.T) {
+  bench_split_horizontal_ws_regex_case(b, "mixed")
 }
 
 ///|

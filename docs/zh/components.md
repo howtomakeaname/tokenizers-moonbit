@@ -63,12 +63,12 @@ GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E
 - **Precompiled charsmap：** 仅覆盖常见 SentencePiece 空白折叠；完整二进制
   charsmap 解码仍待实现。
 - **任意 Split 正则：** 当前识别主流 tokenizer 的常见正则族，并覆盖 `\s+`、
-  `\S+`、`\s+$`、`[\r\n]`、`\d+`、`\D+`、anchored digit/word/letter run、
+  `\S+`、`\s+$`、`\s{2,}`、`[\r\n]+`、`[^\S\r\n]+`、`\d+`、`\D+`、anchored digit/word/letter run、
   `\w+` / `\W+`、`\p{L}+` / `\P{L}+`、`\p{P}+` / `\P{P}+`、
   `\p{S}+` / `\P{S}+`、`[\p{P}\p{S}]+`、`[^\s\p{L}\p{N}]+` 等简单 span；复杂未知 pattern 会在加载时抛出
   `UnsupportedComponent`，避免静默产生不对齐切分。通用 Unicode regex 引擎不在现阶段范围内。
 - **Regex Replace：** `Replace` normalizer/decoder 已支持 `\s+`、`^\s+`、`\s+$`、
-  `[\r\n]+`、`[^\S\r\n]+`、` {2,}`、anchored digit/word/letter/punctuation/symbol run，
+  `[\r\n]+`、`[^\S\r\n]+`、` {2,}`、`\s{2,}` / 水平空白最小重复、anchored digit/word/letter/punctuation/symbol run，
   以及 `\d+` / `\D+`、`\w+` / `\W+`、`\p{L}+` / `\P{L}+`、
   `\p{P}+` / `\P{P}+`、`\p{S}+` / `\P{S}+`、`[\p{P}\p{S}]+`、
   `[^\s\p{L}\p{N}]+` 替换；更复杂正则替换待补。

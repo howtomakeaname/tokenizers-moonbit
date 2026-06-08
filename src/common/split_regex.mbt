@@ -14,13 +14,38 @@ pub fn simple_split_regex_matches(
 ) -> Array[Span]? {
   if pattern == "\\s+" {
     Some(run_matches(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
+  } else if pattern == "\\s{2,}" || pattern == "[\\s]{2,}" {
+    Some(
+      run_matches_min(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) },
+        min_run=2,
+      ),
+    )
   } else if pattern == "^\\s+" {
     Some(leading_run_match(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
   } else if pattern == "\\S+" || pattern == "[^\\s]+" {
     Some(run_matches(chars, fn(c) { !is_unicode_whitespace(c.to_int()) }))
   } else if pattern == "\\s+$" {
     Some(trailing_run_match(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
-  } else if pattern == "[\\r\\n]" || pattern == "[\r\n]" {
+  } else if pattern == "[ \\t]+" || pattern == "[^\\S\\r\\n]+" {
+    Some(
+      run_matches(chars, fn(c) {
+        is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
+      }),
+    )
+  } else if pattern == "[ \\t]{2,}" || pattern == "[^\\S\\r\\n]{2,}" {
+    Some(
+      run_matches_min(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n' },
+        min_run=2,
+      ),
+    )
+  } else if pattern == "[\\r\\n]" ||
+    pattern == "[\r\n]" ||
+    pattern == "[\\r\\n]+" ||
+    pattern == "[\r\n]+" {
     Some(run_matches(chars, fn(c) { c == '\r' || c == '\n' }))
   } else if pattern == "\\w+" ||
     pattern == "[A-Za-z0-9_]+" ||
@@ -164,12 +189,20 @@ pub fn simple_split_regex_matches(
 ///|
 pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\s+" ||
+  pattern == "\\s{2,}" ||
+  pattern == "[\\s]{2,}" ||
   pattern == "^\\s+" ||
   pattern == "\\S+" ||
   pattern == "[^\\s]+" ||
   pattern == "\\s+$" ||
+  pattern == "[ \\t]+" ||
+  pattern == "[^\\S\\r\\n]+" ||
+  pattern == "[ \\t]{2,}" ||
+  pattern == "[^\\S\\r\\n]{2,}" ||
   pattern == "[\\r\\n]" ||
   pattern == "[\r\n]" ||
+  pattern == "[\\r\\n]+" ||
+  pattern == "[\r\n]+" ||
   pattern == "\\w+" ||
   pattern == "[A-Za-z0-9_]+" ||
   pattern == "\\b\\w+\\b" ||
@@ -322,6 +355,31 @@ fn run_matches(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] {
         i = i + 1
       }
       out.push({ start, stop: i })
+    } else {
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
+fn run_matches_min(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  min_run~ : Int,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let start = i
+      while i < n && pred(chars[i]) {
+        i = i + 1
+      }
+      if i - start >= min_run {
+        out.push({ start, stop: i })
+      }
     } else {
       i = i + 1
     }

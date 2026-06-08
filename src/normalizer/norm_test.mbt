@@ -77,6 +77,10 @@ test "Replace normalizer supports common regex whitespace patterns" {
     "a b c",
   )
   @test.assert_eq(
+    Normalizer::Replace(pattern="\\s{2,}", content="_").normalize("a b  c\t\td"),
+    "a b_c_d",
+  )
+  @test.assert_eq(
     Normalizer::Replace(pattern="^\\s+", content="").normalize(
       "\t \u{3000}abc ",
     ),
@@ -95,6 +99,12 @@ test "Replace normalizer supports common regex whitespace patterns" {
       "a\t  b\n c",
     ),
     "a_b\n_c",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="[^\\S\\r\\n]{2,}", content="_").normalize(
+      "a\t b c  d",
+    ),
+    "a_b c_d",
   )
   @test.assert_eq(
     Normalizer::Replace(pattern="\\d+", content="#").normalize("a12b003"),

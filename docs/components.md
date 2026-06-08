@@ -65,8 +65,9 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   full binary charsmap decoding is still TODO.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
   CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\S+`,
-  `^\s+`, `\s+$`, `[\r\n]`, `\d+`, `\D+`, `\d{1,3}`, `\p{N}{1,3}`, anchored
-  digit/word/letter runs, `\w+`, `\W+`, `\p{L}+`, `\P{L}+`, punctuation
+  `^\s+`, `\s+$`, `\s{2,}`, `[\r\n]+`, `[^\S\r\n]+`, `\d+`, `\D+`,
+  `\d{1,3}`, `\p{N}{1,3}`, anchored digit/word/letter runs, `\w+`, `\W+`,
+  `\p{L}+`, `\P{L}+`, punctuation
   classes (`\p{P}+` / `\P{P}+`) and symbol classes (`\p{S}+` / `\P{S}+`)
   are recognized, including common union/inverse classes such as
   `[\p{P}\p{S}]+` and `[^\s\p{L}\p{N}]+`.
@@ -75,7 +76,8 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   future work.
 - **Regex `Replace`:** `Replace` normalizer/decoder supports common whitespace
   regex replacements such as `\s+`, `^\s+`, `\s+$`, `[\r\n]+`, `[^\S\r\n]+`,
-  ` {2,}`, digit runs `\d+` / `\D+`, common bounded digit runs such as
+  ` {2,}`, `\s{2,}` and horizontal whitespace min-run forms, digit runs
+  `\d+` / `\D+`, common bounded digit runs such as
   `\d{1,3}`, anchored digit/word/letter runs, word runs `\w+` / `\W+`, and
   letter/punctuation/symbol runs (`\p{L}+`, `\p{P}+`, `\p{S}+` and inverse
   forms), plus common union/inverse classes like `[\p{P}\p{S}]+` and

@@ -119,6 +119,42 @@ pub fn replace_char_runs(
 }
 
 ///|
+pub fn replace_min_char_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  min_run~ : Int,
+) -> String {
+  if min_run <= 1 {
+    return replace_char_runs(s, content, pred)
+  }
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder::new()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let start = i
+      while i < n && pred(chars[i]) {
+        i = i + 1
+      }
+      let run = i - start
+      if run >= min_run {
+        sb.write_string(content)
+      } else {
+        for k in start..<i {
+          sb.write_char(chars[k])
+        }
+      }
+    } else {
+      sb.write_char(chars[i])
+      i = i + 1
+    }
+  }
+  sb.to_string()
+}
+
+///|
 pub fn replace_bounded_char_runs(
   s : String,
   content : String,

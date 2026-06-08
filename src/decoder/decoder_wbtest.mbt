@@ -13,6 +13,10 @@ test "Replace decoder supports common regex whitespace patterns" {
     "a  b  c",
   )
   @test.assert_eq(
+    Decoder::Replace(pattern="\\s{2,}", content="_").decode(["a b", "  c\t\td"]),
+    "a b_c_d",
+  )
+  @test.assert_eq(
     Decoder::Replace(pattern="^\\s+", content="").decode(["\t ", "abc "]),
     "abc ",
   )
@@ -29,6 +33,12 @@ test "Replace decoder supports common regex whitespace patterns" {
       "a\t  b\n", " c",
     ]),
     "a_b\n_c",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="[^\\S\\r\\n]{2,}", content="_").decode([
+      "a\t b", " c  d",
+    ]),
+    "a_b c_d",
   )
   @test.assert_eq(
     Decoder::Replace(pattern="\\d+", content="#").decode(["a12", "b003"]),
