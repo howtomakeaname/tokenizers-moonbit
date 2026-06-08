@@ -501,6 +501,32 @@ fn bench_decoder_replace_min_ws_regex_case(
 }
 
 ///|
+fn bench_decoder_replace_exact_ws_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("[\\s]{3}", " ")
+  let tokens = [
+    "The \t\u{a0}quick", "\n\n\nbrown", " fox    jumps", " over\t\t\tthe lazy dog.",
+  ]
+  b.bench(name="decoder-replace-exact-ws-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
+fn bench_decoder_replace_newline_quantifier_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("[\\r\\n]{2,}", "\n")
+  let tokens = ["line1\r\n", "line2\n\n", "line3\n", "line4\r\n\n"]
+  b.bench(name="decoder-replace-newline-quantifier-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_decoder_replace_trailing_regex_case(
   b : @bench.T,
   case_name : String,
@@ -626,6 +652,37 @@ fn bench_split_horizontal_ws_regex_case(
   )
   let text = corpus_mixed() + "\t  more horizontal whitespace\n next line"
   b.bench(name="pretokenizer-split-horizontal-ws-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_exact_ws_regex_case(b : @bench.T, case_name : String) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "[\\s]{3}",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " \t\u{a0} exact\n\n\n runs    end"
+  b.bench(name="pretokenizer-split-exact-ws-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_newline_quantifier_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "[\\r\\n]{2,}",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + "\r\nparagraph\n\nnext\r\n\nend"
+  b.bench(name="pretokenizer-split-newline-quantifier-regex-\{case_name}", fn() {
     b.keep(pt.pre_tokenize(text, base_offset=0))
   })
 }
@@ -1042,6 +1099,16 @@ test "bench decoder replace min whitespace regex" (b : @bench.T) {
 }
 
 ///|
+test "bench decoder replace exact whitespace regex" (b : @bench.T) {
+  bench_decoder_replace_exact_ws_regex_case(b, "mixed")
+}
+
+///|
+test "bench decoder replace newline quantifier regex" (b : @bench.T) {
+  bench_decoder_replace_newline_quantifier_regex_case(b, "mixed")
+}
+
+///|
 test "bench decoder replace trailing regex" (b : @bench.T) {
   bench_decoder_replace_trailing_regex_case(b, "mixed")
 }
@@ -1089,6 +1156,16 @@ test "bench split trailing whitespace regex" (b : @bench.T) {
 ///|
 test "bench split horizontal whitespace regex" (b : @bench.T) {
   bench_split_horizontal_ws_regex_case(b, "mixed")
+}
+
+///|
+test "bench split exact whitespace regex" (b : @bench.T) {
+  bench_split_exact_ws_regex_case(b, "mixed")
+}
+
+///|
+test "bench split newline quantifier regex" (b : @bench.T) {
+  bench_split_newline_quantifier_regex_case(b, "mixed")
 }
 
 ///|

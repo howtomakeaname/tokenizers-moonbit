@@ -65,7 +65,11 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   full binary charsmap decoding is still TODO.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
   CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\S+`,
-  `^\s+`, `\s+$`, `\s{2,}`, `[\r\n]+`, `[^\S\r\n]+`, `\d+`, `\D+`,
+  `^\s+`, `\s+$`, `\s{2,}` / `\s{3,}` / `\s{4,}` and exact
+  `\s{2}` / `\s{3}` / `\s{4}`, `[\r\n]+` with `{2,}` / `{3,}` /
+  `{4,}` and exact `{2}` / `{3}` / `{4}` forms, `[^\S\r\n]+`-style
+  horizontal whitespace (`[^\S\r\n]+` plus `{2,}` / `{3,}` / `{4,}` and
+  exact `{2}` / `{3}` / `{4}` aliases), `\d+`, `\D+`,
   bracketed digit aliases (`[\d]+`, `[^\d]+`, `\P{N}+`), min digit runs
   (`\d{2,}` / `[\d]{2,}`), exact digit runs (`\d{2}` / `\d{3}` / `\d{4}`),
   bounded digit runs (`\d{1,2}` / `\d{1,3}` /
@@ -82,8 +86,10 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   silently producing mismatched splits. A full Unicode regex engine remains
   future work.
 - **Regex `Replace`:** `Replace` normalizer/decoder supports common whitespace
-  regex replacements such as `\s+`, `^\s+`, `\s+$`, `[\r\n]+`, `[^\S\r\n]+`,
-  ` {2,}`, `\s{2,}` and horizontal whitespace min-run forms, digit runs
+  regex replacements such as `\s+`, `^\s+`, `\s+$`, `\s{2,}` / `\s{3,}` /
+  `\s{4,}` and exact `\s{2}` / `\s{3}` / `\s{4}`, `[\r\n]+` with min/exact
+  `{2..4}` quantifiers, `[^\S\r\n]+` and `[ \t]+` horizontal whitespace
+  min/exact `{2..4}` forms, ` {2,}`, digit runs
   `\d+` / `[\d]+` / `\D+` / `\P{N}+`, min digit runs such as `\d{2,}` /
   `[\d]{2,}`, exact digit runs (`\d{2}` / `\d{3}` / `\d{4}`), word/letter
   quantifier runs (`\w{2,}` / `\w{2}` / `[A-Za-z]{2,}` / `\p{L}{3}`),

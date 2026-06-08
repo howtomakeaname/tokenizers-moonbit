@@ -317,6 +317,46 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       min_run=2,
     )
   }
+  if pattern == "\\s{3,}" || pattern == "[\\s]{3,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_whitespace(c.to_int()) },
+      min_run=3,
+    )
+  }
+  if pattern == "\\s{4,}" || pattern == "[\\s]{4,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_whitespace(c.to_int()) },
+      min_run=4,
+    )
+  }
+  if pattern == "\\s{2}" || pattern == "[\\s]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_whitespace(c.to_int()) },
+      exact_run=2,
+    )
+  }
+  if pattern == "\\s{3}" || pattern == "[\\s]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_whitespace(c.to_int()) },
+      exact_run=3,
+    )
+  }
+  if pattern == "\\s{4}" || pattern == "[\\s]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_whitespace(c.to_int()) },
+      exact_run=4,
+    )
+  }
   if pattern == "^\\s+" {
     return @common.replace_leading_runs(s, content, fn(c) {
       @common.is_unicode_whitespace(c.to_int())
@@ -334,6 +374,54 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     return @common.replace_char_runs(s, content, fn(c) {
       c == '\r' || c == '\n'
     })
+  }
+  if pattern == "[\\r\\n]{2,}" || pattern == "[\r\n]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { c == '\r' || c == '\n' },
+      min_run=2,
+    )
+  }
+  if pattern == "[\\r\\n]{3,}" || pattern == "[\r\n]{3,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { c == '\r' || c == '\n' },
+      min_run=3,
+    )
+  }
+  if pattern == "[\\r\\n]{4,}" || pattern == "[\r\n]{4,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { c == '\r' || c == '\n' },
+      min_run=4,
+    )
+  }
+  if pattern == "[\\r\\n]{2}" || pattern == "[\r\n]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { c == '\r' || c == '\n' },
+      exact_run=2,
+    )
+  }
+  if pattern == "[\\r\\n]{3}" || pattern == "[\r\n]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { c == '\r' || c == '\n' },
+      exact_run=3,
+    )
+  }
+  if pattern == "[\\r\\n]{4}" || pattern == "[\r\n]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { c == '\r' || c == '\n' },
+      exact_run=4,
+    )
   }
   if pattern == "\\d+" ||
     pattern == "[\\d]+" ||
@@ -475,6 +563,46 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       content,
       fn(c) { c == ' ' || c == '\t' },
       min_run=2,
+    )
+  }
+  if pattern == "[ \\t]{3,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { c == ' ' || c == '\t' },
+      min_run=3,
+    )
+  }
+  if pattern == "[ \\t]{4,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { c == ' ' || c == '\t' },
+      min_run=4,
+    )
+  }
+  if pattern == "[ \\t]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { c == ' ' || c == '\t' },
+      exact_run=2,
+    )
+  }
+  if pattern == "[ \\t]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { c == ' ' || c == '\t' },
+      exact_run=3,
+    )
+  }
+  if pattern == "[ \\t]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { c == ' ' || c == '\t' },
+      exact_run=4,
     )
   }
   if pattern == "\\w+" ||
@@ -962,6 +1090,56 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
         @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
       },
       min_run=2,
+    )
+  }
+  if pattern == "[^\\S\\r\\n]{3,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) {
+        @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
+      },
+      min_run=3,
+    )
+  }
+  if pattern == "[^\\S\\r\\n]{4,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) {
+        @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
+      },
+      min_run=4,
+    )
+  }
+  if pattern == "[^\\S\\r\\n]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) {
+        @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
+      },
+      exact_run=2,
+    )
+  }
+  if pattern == "[^\\S\\r\\n]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) {
+        @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
+      },
+      exact_run=3,
+    )
+  }
+  if pattern == "[^\\S\\r\\n]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) {
+        @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
+      },
+      exact_run=4,
     )
   }
   @common.replace_literal(s, pattern, content)

@@ -17,6 +17,18 @@ test "Replace decoder supports common regex whitespace patterns" {
     "a b_c_d",
   )
   @test.assert_eq(
+    Decoder::Replace(pattern="[\\s]{3,}", content="_").decode([
+      "a \tb", "\n\n\nc    d",
+    ]),
+    "a \tb_c_d",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="\\s{3}", content="_").decode([
+      "a \t\u{a0}b", "\n\n\nc    d",
+    ]),
+    "a_b_c_ d",
+  )
+  @test.assert_eq(
     Decoder::Replace(pattern="^\\s+", content="").decode(["\t ", "abc "]),
     "abc ",
   )
@@ -29,6 +41,18 @@ test "Replace decoder supports common regex whitespace patterns" {
     "a|b|c",
   )
   @test.assert_eq(
+    Decoder::Replace(pattern="[\\r\\n]{2,}", content="|").decode([
+      "a\r\n", "b\n\nc",
+    ]),
+    "a|b|c",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="[\\r\\n]{3}", content="|").decode([
+      "a\r\n\nb\n\nc",
+    ]),
+    "a|b\n\nc",
+  )
+  @test.assert_eq(
     Decoder::Replace(pattern="[^\\S\\r\\n]+", content="_").decode([
       "a\t  b\n", " c",
     ]),
@@ -39,6 +63,18 @@ test "Replace decoder supports common regex whitespace patterns" {
       "a\t b", " c  d",
     ]),
     "a_b c_d",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="[^\\S\\r\\n]{3,}", content="_").decode([
+      "a\t\u{a0} b\n", "  c    d",
+    ]),
+    "a_b\n  c_d",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="[ \\t]{3}", content="_").decode([
+      "a \t b", "\t\t\tc    d",
+    ]),
+    "a_b_c_ d",
   )
   @test.assert_eq(
     Decoder::Replace(pattern="\\d+", content="#").decode(["a12", "b003"]),

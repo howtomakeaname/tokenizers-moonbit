@@ -33,6 +33,15 @@ test "replace helpers cover regex run semantics" {
     "a b_c_d",
   )
   @test.assert_eq(
+    replace_min_char_runs(
+      "a \tbc\n\n\nd    e",
+      "_",
+      fn(c) { is_unicode_whitespace(c.to_int()) },
+      min_run=3,
+    ),
+    "a \tbc_d_e",
+  )
+  @test.assert_eq(
     replace_bounded_char_runs(
       "a12345b",
       "#",
@@ -50,6 +59,15 @@ test "replace helpers cover regex run semantics" {
     ),
     "a##5b",
   )
+  @test.assert_eq(
+    replace_exact_char_runs(
+      "a \t\u{a0}b\n\n\nc    d",
+      "_",
+      fn(c) { is_unicode_whitespace(c.to_int()) },
+      exact_run=3,
+    ),
+    "a_b_c_ d",
+  )
   @test.assert_eq(replace_space_runs("a  b   c", "_", min_run=2), "a_b_c")
   @test.assert_eq(replace_whitespace_runs("a\t\u{3000}b\n", " "), "a b ")
 }
@@ -65,6 +83,41 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(digits[0].stop, 3)
   @test.assert_eq(digits[1].start, 6)
   @test.assert_eq(digits[1].stop, 9)
+  guard simple_split_regex_matches(
+      "a \t\u{a0}b\n\n\nc    d".to_array(),
+      "[\\s]{3}",
+    )
+    is Some(exact_ws) else {
+    abort("expected exact whitespace matches")
+  }
+  @test.assert_eq(exact_ws.length(), 3)
+  @test.assert_eq(exact_ws[0].start, 1)
+  @test.assert_eq(exact_ws[0].stop, 4)
+  @test.assert_eq(exact_ws[1].start, 5)
+  @test.assert_eq(exact_ws[1].stop, 8)
+  @test.assert_eq(exact_ws[2].start, 9)
+  @test.assert_eq(exact_ws[2].stop, 12)
+  guard simple_split_regex_matches(
+      "a \t\u{a0}b\n  c    d".to_array(),
+      "[^\\S\\r\\n]{3,}",
+    )
+    is Some(min_horizontal_ws) else {
+    abort("expected horizontal whitespace min-run matches")
+  }
+  @test.assert_eq(min_horizontal_ws.length(), 2)
+  @test.assert_eq(min_horizontal_ws[0].start, 1)
+  @test.assert_eq(min_horizontal_ws[0].stop, 4)
+  @test.assert_eq(min_horizontal_ws[1].start, 9)
+  @test.assert_eq(min_horizontal_ws[1].stop, 13)
+  guard simple_split_regex_matches("a\r\n\nb\n\nc".to_array(), "[\\r\\n]{2,}")
+    is Some(min_newlines) else {
+    abort("expected newline min-run matches")
+  }
+  @test.assert_eq(min_newlines.length(), 2)
+  @test.assert_eq(min_newlines[0].start, 1)
+  @test.assert_eq(min_newlines[0].stop, 4)
+  @test.assert_eq(min_newlines[1].start, 5)
+  @test.assert_eq(min_newlines[1].stop, 7)
   guard simple_split_regex_matches(chars, "[\\d]+") is Some(class_digits) else {
     abort("expected digit class matches")
   }

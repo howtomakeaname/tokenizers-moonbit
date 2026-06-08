@@ -22,6 +22,46 @@ pub fn simple_split_regex_matches(
         min_run=2,
       ),
     )
+  } else if pattern == "\\s{3,}" || pattern == "[\\s]{3,}" {
+    Some(
+      run_matches_min(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) },
+        min_run=3,
+      ),
+    )
+  } else if pattern == "\\s{4,}" || pattern == "[\\s]{4,}" {
+    Some(
+      run_matches_min(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) },
+        min_run=4,
+      ),
+    )
+  } else if pattern == "\\s{2}" || pattern == "[\\s]{2}" {
+    Some(
+      run_matches_exact(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) },
+        exact_run=2,
+      ),
+    )
+  } else if pattern == "\\s{3}" || pattern == "[\\s]{3}" {
+    Some(
+      run_matches_exact(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) },
+        exact_run=3,
+      ),
+    )
+  } else if pattern == "\\s{4}" || pattern == "[\\s]{4}" {
+    Some(
+      run_matches_exact(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) },
+        exact_run=4,
+      ),
+    )
   } else if pattern == "^\\s+" {
     Some(leading_run_match(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
   } else if pattern == "\\S+" || pattern == "[^\\s]+" {
@@ -42,11 +82,69 @@ pub fn simple_split_regex_matches(
         min_run=2,
       ),
     )
+  } else if pattern == "[ \\t]{3,}" || pattern == "[^\\S\\r\\n]{3,}" {
+    Some(
+      run_matches_min(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n' },
+        min_run=3,
+      ),
+    )
+  } else if pattern == "[ \\t]{4,}" || pattern == "[^\\S\\r\\n]{4,}" {
+    Some(
+      run_matches_min(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n' },
+        min_run=4,
+      ),
+    )
+  } else if pattern == "[ \\t]{2}" || pattern == "[^\\S\\r\\n]{2}" {
+    Some(
+      run_matches_exact(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n' },
+        exact_run=2,
+      ),
+    )
+  } else if pattern == "[ \\t]{3}" || pattern == "[^\\S\\r\\n]{3}" {
+    Some(
+      run_matches_exact(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n' },
+        exact_run=3,
+      ),
+    )
+  } else if pattern == "[ \\t]{4}" || pattern == "[^\\S\\r\\n]{4}" {
+    Some(
+      run_matches_exact(
+        chars,
+        fn(c) { is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n' },
+        exact_run=4,
+      ),
+    )
   } else if pattern == "[\\r\\n]" ||
     pattern == "[\r\n]" ||
     pattern == "[\\r\\n]+" ||
     pattern == "[\r\n]+" {
     Some(run_matches(chars, fn(c) { c == '\r' || c == '\n' }))
+  } else if pattern == "[\\r\\n]{2,}" || pattern == "[\r\n]{2,}" {
+    Some(run_matches_min(chars, fn(c) { c == '\r' || c == '\n' }, min_run=2))
+  } else if pattern == "[\\r\\n]{3,}" || pattern == "[\r\n]{3,}" {
+    Some(run_matches_min(chars, fn(c) { c == '\r' || c == '\n' }, min_run=3))
+  } else if pattern == "[\\r\\n]{4,}" || pattern == "[\r\n]{4,}" {
+    Some(run_matches_min(chars, fn(c) { c == '\r' || c == '\n' }, min_run=4))
+  } else if pattern == "[\\r\\n]{2}" || pattern == "[\r\n]{2}" {
+    Some(
+      run_matches_exact(chars, fn(c) { c == '\r' || c == '\n' }, exact_run=2),
+    )
+  } else if pattern == "[\\r\\n]{3}" || pattern == "[\r\n]{3}" {
+    Some(
+      run_matches_exact(chars, fn(c) { c == '\r' || c == '\n' }, exact_run=3),
+    )
+  } else if pattern == "[\\r\\n]{4}" || pattern == "[\r\n]{4}" {
+    Some(
+      run_matches_exact(chars, fn(c) { c == '\r' || c == '\n' }, exact_run=4),
+    )
   } else if pattern == "\\w+" ||
     pattern == "[A-Za-z0-9_]+" ||
     pattern == "\\b\\w+\\b" ||
@@ -399,21 +497,7 @@ pub fn simple_split_regex_matches(
 
 ///|
 pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
-  pattern == "\\s+" ||
-  pattern == "\\s{2,}" ||
-  pattern == "[\\s]{2,}" ||
-  pattern == "^\\s+" ||
-  pattern == "\\S+" ||
-  pattern == "[^\\s]+" ||
-  pattern == "\\s+$" ||
-  pattern == "[ \\t]+" ||
-  pattern == "[^\\S\\r\\n]+" ||
-  pattern == "[ \\t]{2,}" ||
-  pattern == "[^\\S\\r\\n]{2,}" ||
-  pattern == "[\\r\\n]" ||
-  pattern == "[\r\n]" ||
-  pattern == "[\\r\\n]+" ||
-  pattern == "[\r\n]+" ||
+  is_simple_space_regex_pattern(pattern) ||
   pattern == "\\w+" ||
   pattern == "[A-Za-z0-9_]+" ||
   pattern == "\\b\\w+\\b" ||
@@ -499,6 +583,57 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "[^\\p{Letter}]+" ||
   is_simple_punctuation_symbol_regex_pattern(pattern) ||
   is_simple_number_regex_pattern(pattern)
+}
+
+///|
+fn is_simple_space_regex_pattern(pattern : String) -> Bool {
+  pattern == "\\s+" ||
+  pattern == "\\s{2,}" ||
+  pattern == "[\\s]{2,}" ||
+  pattern == "\\s{3,}" ||
+  pattern == "[\\s]{3,}" ||
+  pattern == "\\s{4,}" ||
+  pattern == "[\\s]{4,}" ||
+  pattern == "\\s{2}" ||
+  pattern == "[\\s]{2}" ||
+  pattern == "\\s{3}" ||
+  pattern == "[\\s]{3}" ||
+  pattern == "\\s{4}" ||
+  pattern == "[\\s]{4}" ||
+  pattern == "^\\s+" ||
+  pattern == "\\S+" ||
+  pattern == "[^\\s]+" ||
+  pattern == "\\s+$" ||
+  pattern == "[ \\t]+" ||
+  pattern == "[^\\S\\r\\n]+" ||
+  pattern == "[ \\t]{2,}" ||
+  pattern == "[^\\S\\r\\n]{2,}" ||
+  pattern == "[ \\t]{3,}" ||
+  pattern == "[^\\S\\r\\n]{3,}" ||
+  pattern == "[ \\t]{4,}" ||
+  pattern == "[^\\S\\r\\n]{4,}" ||
+  pattern == "[ \\t]{2}" ||
+  pattern == "[^\\S\\r\\n]{2}" ||
+  pattern == "[ \\t]{3}" ||
+  pattern == "[^\\S\\r\\n]{3}" ||
+  pattern == "[ \\t]{4}" ||
+  pattern == "[^\\S\\r\\n]{4}" ||
+  pattern == "[\\r\\n]" ||
+  pattern == "[\r\n]" ||
+  pattern == "[\\r\\n]+" ||
+  pattern == "[\r\n]+" ||
+  pattern == "[\\r\\n]{2,}" ||
+  pattern == "[\r\n]{2,}" ||
+  pattern == "[\\r\\n]{3,}" ||
+  pattern == "[\r\n]{3,}" ||
+  pattern == "[\\r\\n]{4,}" ||
+  pattern == "[\r\n]{4,}" ||
+  pattern == "[\\r\\n]{2}" ||
+  pattern == "[\r\n]{2}" ||
+  pattern == "[\\r\\n]{3}" ||
+  pattern == "[\r\n]{3}" ||
+  pattern == "[\\r\\n]{4}" ||
+  pattern == "[\r\n]{4}"
 }
 
 ///|

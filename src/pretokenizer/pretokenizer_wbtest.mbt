@@ -94,6 +94,25 @@ test "split pretokenizer supports common regex spans" {
     (10, 11),
   ])
 
+  let exact_spaces = PreTokenizer::Split(
+    pattern="[\\s]{3}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a \t\u{a0}b\n\n\nc    d", base_offset=1)
+  @test.assert_eq(exact_spaces.map(x => x.value), [
+    "a", " \t\u{a0}", "b", "\n\n\n", "c", "   ", " d",
+  ])
+  @test.assert_eq(exact_spaces.map(x => x.offsets), [
+    (1, 2),
+    (2, 5),
+    (5, 6),
+    (6, 9),
+    (9, 10),
+    (10, 13),
+    (13, 15),
+  ])
+
   let horizontal_spaces = PreTokenizer::Split(
     pattern="[^\\S\\r\\n]+",
     behavior=Removed,
@@ -102,6 +121,14 @@ test "split pretokenizer supports common regex spans" {
   ).pre_tokenize("a\t b\n c", base_offset=0)
   @test.assert_eq(horizontal_spaces.map(x => x.value), ["a", "b\n", "c"])
 
+  let min_horizontal_spaces = PreTokenizer::Split(
+    pattern="[^\\S\\r\\n]{3,}",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a\t\u{a0} b\n  c    d", base_offset=0)
+  @test.assert_eq(min_horizontal_spaces.map(x => x.value), ["a", "b\n  c", "d"])
+
   let newlines = PreTokenizer::Split(
     pattern="[\\r\\n]+",
     behavior=Isolated,
@@ -109,6 +136,16 @@ test "split pretokenizer supports common regex spans" {
     regex=true,
   ).pre_tokenize("a\r\nb\n\nc", base_offset=1)
   @test.assert_eq(newlines.map(x => x.value), ["a", "\r\n", "b", "\n\n", "c"])
+
+  let min_newlines = PreTokenizer::Split(
+    pattern="[\\r\\n]{2,}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a\r\nb\n\nc", base_offset=1)
+  @test.assert_eq(min_newlines.map(x => x.value), [
+    "a", "\r\n", "b", "\n\n", "c",
+  ])
 
   let digits = PreTokenizer::Split(
     pattern="\\p{N}{1,3}",
