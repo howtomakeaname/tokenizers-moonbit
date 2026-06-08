@@ -372,6 +372,10 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern.is_empty() {
     return s
   }
+  match @common.replace_bounded_simple_regex(s, pattern, content) {
+    Some(out) => return out
+    None => ()
+  }
   if pattern == " {2,}" {
     return @common.replace_space_runs(s, content, min_run=2)
   }

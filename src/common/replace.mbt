@@ -222,6 +222,26 @@ pub fn replace_exact_char_runs(
 }
 
 ///|
+pub fn replace_bounded_simple_regex(
+  s : String,
+  pattern : String,
+  content : String,
+) -> String? {
+  match bounded_regex_kind(pattern) {
+    Some((kind, max_run)) =>
+      Some(
+        replace_bounded_char_runs(
+          s,
+          content,
+          fn(c) { bounded_regex_kind_pred(kind, c) },
+          max_run~,
+        ),
+      )
+    None => None
+  }
+}
+
+///|
 pub fn replace_space_runs(
   s : String,
   content : String,

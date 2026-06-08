@@ -12,6 +12,10 @@ pub fn simple_split_regex_matches(
   chars : Array[Char],
   pattern : String,
 ) -> Array[Span]? {
+  match simple_bounded_regex_matches(chars, pattern) {
+    Some(spans) => return Some(spans)
+    None => ()
+  }
   if pattern == "\\s+" {
     Some(run_matches(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
   } else if pattern == "\\s{2,}" || pattern == "[\\s]{2,}" {
@@ -498,6 +502,7 @@ pub fn simple_split_regex_matches(
 ///|
 pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   is_simple_space_regex_pattern(pattern) ||
+  is_bounded_regex_pattern(pattern) ||
   pattern == "\\w+" ||
   pattern == "[A-Za-z0-9_]+" ||
   pattern == "\\b\\w+\\b" ||
@@ -931,6 +936,52 @@ fn run_matches_exact(
     }
   }
   out
+}
+
+///|
+fn run_matches_bounded(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  max_run~ : Int,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  if max_run <= 0 {
+    return out
+  }
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let start = i
+      let mut count = 0
+      while i < n && pred(chars[i]) && count < max_run {
+        i = i + 1
+        count = count + 1
+      }
+      out.push({ start, stop: i })
+    } else {
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
+fn simple_bounded_regex_matches(
+  chars : Array[Char],
+  pattern : String,
+) -> Array[Span]? {
+  match bounded_regex_kind(pattern) {
+    Some((kind, max_run)) =>
+      Some(
+        run_matches_bounded(
+          chars,
+          fn(c) { bounded_regex_kind_pred(kind, c) },
+          max_run~,
+        ),
+      )
+    None => None
+  }
 }
 
 ///|

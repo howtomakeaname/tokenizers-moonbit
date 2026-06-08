@@ -327,6 +327,20 @@ test "split pretokenizer supports common regex spans" {
     "ab", "_1", "2,", "cd", "e",
   ])
 
+  let bounded_word_runs = PreTokenizer::Split(
+    pattern="\\w{1,3}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab_12,cde", base_offset=2)
+  @test.assert_eq(bounded_word_runs.map(x => x.value), ["ab_", "12", ",", "cde"])
+  @test.assert_eq(bounded_word_runs.map(x => x.offsets), [
+    (2, 5),
+    (5, 7),
+    (7, 8),
+    (8, 11),
+  ])
+
   let ascii_alnum = PreTokenizer::Split(
     pattern="[A-Za-z0-9]+",
     behavior=Isolated,
@@ -490,6 +504,24 @@ test "split pretokenizer supports common regex spans" {
   @test.assert_eq(punct_symbols.map(x => x.offsets), [
     (1, 3),
     (3, 7),
+    (7, 10),
+    (10, 11),
+    (11, 13),
+  ])
+
+  let bounded_punct_symbols = PreTokenizer::Split(
+    pattern="[\\p{P}\\p{S}]{1,3}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab,$+🙂 cd。42", base_offset=1)
+  @test.assert_eq(bounded_punct_symbols.map(x => x.value), [
+    "ab", ",$+", "🙂", " cd", "。", "42",
+  ])
+  @test.assert_eq(bounded_punct_symbols.map(x => x.offsets), [
+    (1, 3),
+    (3, 6),
+    (6, 7),
     (7, 10),
     (10, 11),
     (11, 13),

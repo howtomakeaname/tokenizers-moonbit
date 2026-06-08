@@ -590,6 +590,18 @@ fn bench_decoder_replace_word_quantifier_regex_case(
 }
 
 ///|
+fn bench_decoder_replace_bounded_quantifier_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("[\\p{P}\\p{S}]{1,3}", "_")
+  let tokens = ["hi,$+🙂", " code(a+b);", " path/to/file.rs", " done!!!"]
+  b.bench(name="decoder-replace-bounded-quantifier-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_decoder_replace_punctuation_regex_case(
   b : @bench.T,
   case_name : String,
@@ -761,6 +773,23 @@ fn bench_split_word_quantifier_regex_case(
 }
 
 ///|
+fn bench_split_bounded_word_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "\\w{1,3}",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " snake_case x cde MoonBit2026"
+  b.bench(name="pretokenizer-split-bounded-word-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
 fn bench_split_ascii_letter_regex_case(
   b : @bench.T,
   case_name : String,
@@ -852,6 +881,23 @@ fn bench_split_union_quantifier_regex_case(
   )
   let text = corpus_mixed() + " $+🙂 wait!!! ok?! path/to/file.rs"
   b.bench(name="pretokenizer-split-union-quantifier-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_bounded_union_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "[\\p{P}\\p{S}]{1,3}",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " $+🙂 wait!!! ok?! path/to/file.rs"
+  b.bench(name="pretokenizer-split-bounded-union-regex-\{case_name}", fn() {
     b.keep(pt.pre_tokenize(text, base_offset=0))
   })
 }
@@ -1134,6 +1180,11 @@ test "bench decoder replace word quantifier regex" (b : @bench.T) {
 }
 
 ///|
+test "bench decoder replace bounded quantifier regex" (b : @bench.T) {
+  bench_decoder_replace_bounded_quantifier_regex_case(b, "mixed")
+}
+
+///|
 test "bench decoder replace punct-symbol regex" (b : @bench.T) {
   bench_decoder_replace_punctuation_regex_case(b, "mixed")
 }
@@ -1194,6 +1245,11 @@ test "bench split word quantifier regex" (b : @bench.T) {
 }
 
 ///|
+test "bench split bounded word regex" (b : @bench.T) {
+  bench_split_bounded_word_regex_case(b, "mixed")
+}
+
+///|
 test "bench split ascii letter regex" (b : @bench.T) {
   bench_split_ascii_letter_regex_case(b, "mixed")
 }
@@ -1221,4 +1277,9 @@ test "bench split punct quantifier regex" (b : @bench.T) {
 ///|
 test "bench split union quantifier regex" (b : @bench.T) {
   bench_split_union_quantifier_regex_case(b, "mixed")
+}
+
+///|
+test "bench split bounded union regex" (b : @bench.T) {
+  bench_split_bounded_union_regex_case(b, "mixed")
 }
