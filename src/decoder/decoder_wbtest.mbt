@@ -73,3 +73,17 @@ test "Replace decoder keeps literal fallback" {
     "a-b-c",
   )
 }
+
+///|
+test "SentencePiece decoder sequence handles replace byte fallback fuse strip" {
+  let decoder = Decoder::Sequence([
+    Decoder::Replace(pattern="▁", content=" "),
+    Decoder::ByteFallback,
+    Decoder::Fuse,
+    Decoder::Strip(content=' ', start=1, stop=0),
+  ])
+  @test.assert_eq(
+    decoder.decode(["▁Hello", "▁", "<0xF0>", "<0x9F>", "<0x99>", "<0x82>"]),
+    "Hello 🙂",
+  )
+}

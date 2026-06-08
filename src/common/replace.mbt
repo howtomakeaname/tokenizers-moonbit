@@ -15,6 +15,9 @@ pub fn replace_literal(
   let src = s.to_array()
   let n = src.length()
   let m = pat.length()
+  if m == 1 {
+    return replace_char_literal(src, pat[0], content)
+  }
   let sb = StringBuilder::new()
   let mut i = 0
   while i < n {
@@ -24,6 +27,23 @@ pub fn replace_literal(
     } else {
       sb.write_char(src[i])
       i = i + 1
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn replace_char_literal(
+  src : Array[Char],
+  pattern : Char,
+  content : String,
+) -> String {
+  let sb = StringBuilder::new()
+  for c in src {
+    if c == pattern {
+      sb.write_string(content)
+    } else {
+      sb.write_char(c)
     }
   }
   sb.to_string()

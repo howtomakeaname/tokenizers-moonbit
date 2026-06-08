@@ -4,6 +4,10 @@
 test "replace helpers cover regex run semantics" {
   @test.assert_eq(replace_literal("a@@b@@", "@@", "-"), "a-b-")
   @test.assert_eq(
+    replace_literal("▁hello▁world", "▁", " "),
+    " hello world",
+  )
+  @test.assert_eq(
     replace_leading_runs("\t  abc", "", fn(c) {
       is_unicode_whitespace(c.to_int())
     }),
@@ -90,12 +94,35 @@ test "split regex helpers cover simple patterns" {
     abort("expected whitespace matches")
   }
   @test.assert_eq(spaces.length(), 2)
+  guard simple_split_regex_matches("\t abc ".to_array(), "^\\s+")
+    is Some(leading_spaces) else {
+    abort("expected leading whitespace match")
+  }
+  @test.assert_eq(leading_spaces.length(), 1)
+  @test.assert_eq(leading_spaces[0].start, 0)
+  @test.assert_eq(leading_spaces[0].stop, 2)
+  guard simple_split_regex_matches("abc123".to_array(), "\\d+$")
+    is Some(trailing_digits) else {
+    abort("expected trailing digit match")
+  }
+  @test.assert_eq(trailing_digits.length(), 1)
+  @test.assert_eq(trailing_digits[0].start, 3)
+  @test.assert_eq(trailing_digits[0].stop, 6)
+  guard simple_split_regex_matches("Жabc12!".to_array(), "^\\p{L}+")
+    is Some(leading_letters) else {
+    abort("expected leading letter match")
+  }
+  @test.assert_eq(leading_letters.length(), 1)
+  @test.assert_eq(leading_letters[0].start, 0)
+  @test.assert_eq(leading_letters[0].stop, 4)
   guard literal_matches(chars, "12") is Some(lit) else {
     abort("expected literal matches")
   }
   @test.assert_eq(lit.length(), 1)
   @test.assert_eq(lit[0].start, 1)
   @test.assert_eq(is_simple_split_regex_pattern("\\b\\w+\\b"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("^\\p{L}+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\d+$"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Letter}]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{N}{1,3}"), true)
 }

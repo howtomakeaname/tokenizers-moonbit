@@ -38,6 +38,10 @@ pub fn Decoder::decode_chain(
     CTC(pad_token~, word_delimiter_token~, cleanup~) =>
       decode_ctc(tokens, pad_token, word_delimiter_token, cleanup)
     Sequence(decoders) => {
+      match decode_sentencepiece_sequence_fast(decoders, tokens) {
+        Some(out) => return out
+        None => ()
+      }
       let mut toks = tokens
       for d in decoders {
         toks = d.decode_chain(toks)
@@ -88,6 +92,80 @@ fn decode_byte_fallback(tokens : Array[String]) -> Array[String] {
   out
 }
 
+// Fast path for the common Llama/SentencePiece decoder chain:
+// Replace("▁", " ") -> ByteFallback -> Fuse -> Strip(" ", 1, 0).
+// This avoids materializing three intermediate token arrays and performs the
+// single-character replacement while joining tokens.
+
+///|
+fn decode_sentencepiece_sequence_fast(
+  decoders : Array[Decoder],
+  tokens : Array[String],
+) -> Array[String]? {
+  if decoders.length() != 4 {
+    return None
+  }
+  let (pattern, content) = match decoders[0] {
+    Replace(pattern~, content~) => (pattern, content)
+    _ => return None
+  }
+  match decoders[1] {
+    ByteFallback => ()
+    _ => return None
+  }
+  match decoders[2] {
+    Fuse => ()
+    _ => return None
+  }
+  let (strip_content, start, stop) = match decoders[3] {
+    Strip(content~, start~, stop~) => (content, start, stop)
+    _ => return None
+  }
+  let pat = pattern.to_array()
+  if pat.length() != 1 {
+    return None
+  }
+  let sb = StringBuilder::new()
+  let pending : Array[Int] = []
+  fn flush_bytes() -> Unit {
+    if pending.length() > 0 {
+      let bytes = @buffer.Buffer::Buffer()
+      for b in pending {
+        bytes.write_byte(b.to_byte())
+      }
+      sb.write_string(@utf8.decode_lossy(bytes.to_bytes()[:]))
+      pending.clear()
+    }
+  }
+  for t in tokens {
+    match parse_byte_token(t) {
+      Some(b) => pending.push(b)
+      None => {
+        flush_bytes()
+        write_replaced_token(sb, t, pat[0], content)
+      }
+    }
+  }
+  flush_bytes()
+  Some([strip_token(sb.to_string(), strip_content, start, stop)])
+}
+
+///|
+fn write_replaced_token(
+  sb : StringBuilder,
+  token : String,
+  pattern : Char,
+  content : String,
+) -> Unit {
+  for c in token {
+    if c == pattern {
+      sb.write_string(content)
+    } else {
+      sb.write_char(c)
+    }
+  }
+}
+
 // CTC decoder: collapse consecutive duplicate tokens, drop pad tokens, and map
 // the word-delimiter token to a space. Optional cleanup of punctuation spacing.
 
@@ -127,15 +205,17 @@ fn decode_ctc(
 
 ///|
 fn parse_byte_token(t : String) -> Int? {
-  let cs = t.to_array()
-  if cs.length() != 6 {
+  if t.length() != 6 {
     return None
   }
-  if cs[0] != '<' || cs[1] != '0' || cs[2] != 'x' || cs[5] != '>' {
+  if t.unsafe_get(0).to_int() != '<'.to_int() ||
+    t.unsafe_get(1).to_int() != '0'.to_int() ||
+    t.unsafe_get(2).to_int() != 'x'.to_int() ||
+    t.unsafe_get(5).to_int() != '>'.to_int() {
     return None
   }
-  let hi = hex_val(cs[3])
-  let lo = hex_val(cs[4])
+  let hi = hex_val_int(t.unsafe_get(3).to_int())
+  let lo = hex_val_int(t.unsafe_get(4).to_int())
   match (hi, lo) {
     (Some(h), Some(l)) => Some(h * 16 + l)
     _ => None
@@ -143,13 +223,13 @@ fn parse_byte_token(t : String) -> Int? {
 }
 
 ///|
-fn hex_val(c : Char) -> Int? {
-  if c >= '0' && c <= '9' {
-    Some(c.to_int() - '0'.to_int())
-  } else if c >= 'A' && c <= 'F' {
-    Some(c.to_int() - 'A'.to_int() + 10)
-  } else if c >= 'a' && c <= 'f' {
-    Some(c.to_int() - 'a'.to_int() + 10)
+fn hex_val_int(u : Int) -> Int? {
+  if u >= '0'.to_int() && u <= '9'.to_int() {
+    Some(u - '0'.to_int())
+  } else if u >= 'A'.to_int() && u <= 'F'.to_int() {
+    Some(u - 'A'.to_int() + 10)
+  } else if u >= 'a'.to_int() && u <= 'f'.to_int() {
+    Some(u - 'a'.to_int() + 10)
   } else {
     None
   }

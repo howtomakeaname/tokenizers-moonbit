@@ -14,6 +14,8 @@ pub fn simple_split_regex_matches(
 ) -> Array[Span]? {
   if pattern == "\\s+" {
     Some(run_matches(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
+  } else if pattern == "^\\s+" {
+    Some(leading_run_match(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
   } else if pattern == "\\S+" || pattern == "[^\\s]+" {
     Some(run_matches(chars, fn(c) { !is_unicode_whitespace(c.to_int()) }))
   } else if pattern == "\\s+$" {
@@ -25,6 +27,10 @@ pub fn simple_split_regex_matches(
     pattern == "\\b\\w+\\b" ||
     pattern == "\\b[A-Za-z0-9_]+\\b" {
     Some(run_matches(chars, fn(c) { is_word_char(c) }))
+  } else if pattern == "^\\w+" || pattern == "^[A-Za-z0-9_]+" {
+    Some(leading_run_match(chars, fn(c) { is_word_char(c) }))
+  } else if pattern == "\\w+$" || pattern == "[A-Za-z0-9_]+$" {
+    Some(trailing_run_match(chars, fn(c) { is_word_char(c) }))
   } else if pattern == "\\W+" ||
     pattern == "[^\\w]+" ||
     pattern == "[^A-Za-z0-9_]+" {
@@ -34,6 +40,16 @@ pub fn simple_split_regex_matches(
     pattern == "[\\p{L}]+" ||
     pattern == "[\\p{Letter}]+" {
     Some(run_matches(chars, fn(c) { is_unicode_letter(c) }))
+  } else if pattern == "^\\p{L}+" ||
+    pattern == "^\\p{Letter}+" ||
+    pattern == "^[\\p{L}]+" ||
+    pattern == "^[\\p{Letter}]+" {
+    Some(leading_run_match(chars, fn(c) { is_unicode_letter(c) }))
+  } else if pattern == "\\p{L}+$" ||
+    pattern == "\\p{Letter}+$" ||
+    pattern == "[\\p{L}]+$" ||
+    pattern == "[\\p{Letter}]+$" {
+    Some(trailing_run_match(chars, fn(c) { is_unicode_letter(c) }))
   } else if pattern == "\\P{L}+" ||
     pattern == "\\P{Letter}+" ||
     pattern == "[^\\p{L}]+" ||
@@ -46,6 +62,20 @@ pub fn simple_split_regex_matches(
     pattern == "[\\p{N}]+" ||
     pattern == "[\\p{Number}]+" {
     Some(run_matches(chars, fn(c) { is_decimal_number(c) }))
+  } else if pattern == "^\\d+" ||
+    pattern == "^[0-9]+" ||
+    pattern == "^\\p{N}+" ||
+    pattern == "^\\p{Number}+" ||
+    pattern == "^[\\p{N}]+" ||
+    pattern == "^[\\p{Number}]+" {
+    Some(leading_run_match(chars, fn(c) { is_decimal_number(c) }))
+  } else if pattern == "\\d+$" ||
+    pattern == "[0-9]+$" ||
+    pattern == "\\p{N}+$" ||
+    pattern == "\\p{Number}+$" ||
+    pattern == "[\\p{N}]+$" ||
+    pattern == "[\\p{Number}]+$" {
+    Some(trailing_run_match(chars, fn(c) { is_decimal_number(c) }))
   } else if pattern == "\\D+" || pattern == "[^0-9]+" {
     Some(run_matches(chars, fn(c) { !is_decimal_number(c) }))
   } else if pattern == "\\p{N}{1,3}" ||
@@ -64,6 +94,7 @@ pub fn simple_split_regex_matches(
 ///|
 pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\s+" ||
+  pattern == "^\\s+" ||
   pattern == "\\S+" ||
   pattern == "[^\\s]+" ||
   pattern == "\\s+$" ||
@@ -73,6 +104,10 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "[A-Za-z0-9_]+" ||
   pattern == "\\b\\w+\\b" ||
   pattern == "\\b[A-Za-z0-9_]+\\b" ||
+  pattern == "^\\w+" ||
+  pattern == "^[A-Za-z0-9_]+" ||
+  pattern == "\\w+$" ||
+  pattern == "[A-Za-z0-9_]+$" ||
   pattern == "\\W+" ||
   pattern == "[^\\w]+" ||
   pattern == "[^A-Za-z0-9_]+" ||
@@ -80,6 +115,14 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\p{Letter}+" ||
   pattern == "[\\p{L}]+" ||
   pattern == "[\\p{Letter}]+" ||
+  pattern == "^\\p{L}+" ||
+  pattern == "^\\p{Letter}+" ||
+  pattern == "^[\\p{L}]+" ||
+  pattern == "^[\\p{Letter}]+" ||
+  pattern == "\\p{L}+$" ||
+  pattern == "\\p{Letter}+$" ||
+  pattern == "[\\p{L}]+$" ||
+  pattern == "[\\p{Letter}]+$" ||
   pattern == "\\P{L}+" ||
   pattern == "\\P{Letter}+" ||
   pattern == "[^\\p{L}]+" ||
@@ -90,6 +133,18 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\p{Number}+" ||
   pattern == "[\\p{N}]+" ||
   pattern == "[\\p{Number}]+" ||
+  pattern == "^\\d+" ||
+  pattern == "^[0-9]+" ||
+  pattern == "^\\p{N}+" ||
+  pattern == "^\\p{Number}+" ||
+  pattern == "^[\\p{N}]+" ||
+  pattern == "^[\\p{Number}]+" ||
+  pattern == "\\d+$" ||
+  pattern == "[0-9]+$" ||
+  pattern == "\\p{N}+$" ||
+  pattern == "\\p{Number}+$" ||
+  pattern == "[\\p{N}]+$" ||
+  pattern == "[\\p{Number}]+$" ||
   pattern == "\\D+" ||
   pattern == "[^0-9]+" ||
   pattern == "\\p{N}{1,3}" ||
@@ -147,6 +202,20 @@ fn run_matches(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] {
     } else {
       i = i + 1
     }
+  }
+  out
+}
+
+///|
+fn leading_run_match(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] {
+  let out : Array[Span] = []
+  let n = chars.length()
+  let mut i = 0
+  while i < n && pred(chars[i]) {
+    i = i + 1
+  }
+  if i > 0 {
+    out.push({ start: 0, stop: i })
   }
   out
 }

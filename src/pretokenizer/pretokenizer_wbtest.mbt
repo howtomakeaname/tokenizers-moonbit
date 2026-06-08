@@ -185,6 +185,15 @@ test "split pretokenizer supports common regex spans" {
 
 ///|
 test "split pretokenizer supports trailing whitespace regex" {
+  let leading = PreTokenizer::Split(
+    pattern="^\\s+",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("\t  abc  ", base_offset=4)
+  @test.assert_eq(leading.map(x => x.value), ["abc  "])
+  @test.assert_eq(leading.map(x => x.offsets), [(7, 12)])
+
   let removed = PreTokenizer::Split(
     pattern="\\s+$",
     behavior=Removed,
@@ -201,6 +210,35 @@ test "split pretokenizer supports trailing whitespace regex" {
     regex=true,
   ).pre_tokenize("abc  ", base_offset=0)
   @test.assert_eq(isolated.map(x => x.value), ["abc", "  "])
+}
+
+///|
+test "split pretokenizer supports anchored digit and letter regex" {
+  let trailing_digits = PreTokenizer::Split(
+    pattern="\\d+$",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("abc123", base_offset=2)
+  @test.assert_eq(trailing_digits.map(x => x.value), ["abc", "123"])
+  @test.assert_eq(trailing_digits.map(x => x.offsets), [(2, 5), (5, 8)])
+
+  let leading_letters = PreTokenizer::Split(
+    pattern="^\\p{L}+",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("Жabc12!", base_offset=0)
+  @test.assert_eq(leading_letters.map(x => x.value), ["12!"])
+
+  let trailing_word = PreTokenizer::Split(
+    pattern="\\w+$",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("hi-abc_12", base_offset=1)
+  @test.assert_eq(trailing_word.map(x => x.value), ["hi-", "abc_12"])
+  @test.assert_eq(trailing_word.map(x => x.offsets), [(1, 4), (4, 10)])
 }
 
 ///|
