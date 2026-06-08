@@ -180,4 +180,28 @@ test "Replace normalizer supports common regex whitespace patterns" {
     Normalizer::Replace(pattern="\\p{S}+$", content="").normalize("ok🙂+"),
     "ok",
   )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="[\\p{P}\\p{S}]+", content="_").normalize(
+      "ab,$+🙂 cd。42",
+    ),
+    "ab_ cd_42",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="[^\\s\\p{L}\\p{N}]+", content="#").normalize(
+      "ab,$+🙂 cd。42",
+    ),
+    "ab# cd#42",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="^[\\p{P}\\p{S}]+", content="").normalize(
+      "?!$ok🙂+",
+    ),
+    "ok🙂+",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="[\\p{P}\\p{S}]+$", content="").normalize(
+      "ok🙂+",
+    ),
+    "ok",
+  )
 }

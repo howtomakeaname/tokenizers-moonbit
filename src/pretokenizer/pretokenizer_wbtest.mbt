@@ -203,6 +203,31 @@ test "split pretokenizer supports common regex spans" {
     regex=true,
   ).pre_tokenize("a$+🙂,b=≤c", base_offset=0)
   @test.assert_eq(symbols.map(x => x.value), ["a", ",b", "c"])
+
+  let punct_symbols = PreTokenizer::Split(
+    pattern="[\\p{P}\\p{S}]+",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab,$+🙂 cd。42", base_offset=1)
+  @test.assert_eq(punct_symbols.map(x => x.value), [
+    "ab", ",$+🙂", " cd", "。", "42",
+  ])
+  @test.assert_eq(punct_symbols.map(x => x.offsets), [
+    (1, 3),
+    (3, 7),
+    (7, 10),
+    (10, 11),
+    (11, 13),
+  ])
+
+  let non_alnum_nonspace = PreTokenizer::Split(
+    pattern="[^\\s\\p{L}\\p{N}]+",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab,$+🙂 cd。42", base_offset=0)
+  @test.assert_eq(non_alnum_nonspace.map(x => x.value), ["ab", " cd", "42"])
 }
 
 ///|

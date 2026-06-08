@@ -129,6 +129,23 @@ pub fn is_unicode_symbol(c : Char) -> Bool {
 }
 
 ///|
+/// Combined Unicode punctuation/symbol predicate for regex classes such as
+/// `[\p{P}\p{S}]+`, which are common in tokenizer Split rules for non-word
+/// runs.
+pub fn is_unicode_punctuation_or_symbol(c : Char) -> Bool {
+  is_unicode_punctuation(c) || is_unicode_symbol(c)
+}
+
+///|
+/// Approximation for `[^\s\p{L}\p{N}]`: match visible non-space separators such
+/// as punctuation, symbols and other non-letter/non-number marks.
+pub fn is_not_whitespace_letter_or_number(c : Char) -> Bool {
+  !is_unicode_whitespace(c.to_int()) &&
+  !is_unicode_letter(c) &&
+  !is_decimal_number(c)
+}
+
+///|
 /// Unicode whitespace coverage used for the common HF Regex `\s` subset.
 pub fn is_unicode_whitespace(u : Int) -> Bool {
   u == 0x09 ||

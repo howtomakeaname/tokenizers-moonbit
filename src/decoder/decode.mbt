@@ -579,6 +579,47 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       !@common.is_unicode_symbol(c)
     })
   }
+  if pattern == "[\\p{P}\\p{S}]+" ||
+    pattern == "[\\p{S}\\p{P}]+" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]+" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_unicode_punctuation_or_symbol(c)
+    })
+  }
+  if pattern == "^[\\p{P}\\p{S}]+" ||
+    pattern == "^[\\p{S}\\p{P}]+" ||
+    pattern == "^[\\p{Punctuation}\\p{Symbol}]+" ||
+    pattern == "^[\\p{Symbol}\\p{Punctuation}]+" {
+    return @common.replace_leading_runs(s, content, fn(c) {
+      @common.is_unicode_punctuation_or_symbol(c)
+    })
+  }
+  if pattern == "[\\p{P}\\p{S}]+$" ||
+    pattern == "[\\p{S}\\p{P}]+$" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]+$" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]+$" {
+    return @common.replace_trailing_runs(s, content, fn(c) {
+      @common.is_unicode_punctuation_or_symbol(c)
+    })
+  }
+  if pattern == "[^\\p{P}\\p{S}]+" ||
+    pattern == "[^\\p{S}\\p{P}]+" ||
+    pattern == "[^\\p{Punctuation}\\p{Symbol}]+" ||
+    pattern == "[^\\p{Symbol}\\p{Punctuation}]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      !@common.is_unicode_punctuation_or_symbol(c)
+    })
+  }
+  if pattern == "[^\\s\\p{L}\\p{N}]+" ||
+    pattern == "[^\\s\\p{N}\\p{L}]+" ||
+    pattern == "[^\\p{L}\\p{N}\\s]+" ||
+    pattern == "[^\\p{N}\\p{L}\\s]+" ||
+    pattern == "[^\\s\\p{Letter}\\p{Number}]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_not_whitespace_letter_or_number(c)
+    })
+  }
   if pattern == "[^\\S\\r\\n]+" {
     return @common.replace_char_runs(s, content, fn(c) {
       @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'

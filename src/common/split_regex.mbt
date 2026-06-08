@@ -95,6 +95,36 @@ pub fn simple_split_regex_matches(
     pattern == "[^\\p{S}]+" ||
     pattern == "[^\\p{Symbol}]+" {
     Some(run_matches(chars, fn(c) { !is_unicode_symbol(c) }))
+  } else if pattern == "[\\p{P}\\p{S}]+" ||
+    pattern == "[\\p{S}\\p{P}]+" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]+" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]+" {
+    Some(run_matches(chars, fn(c) { is_unicode_punctuation_or_symbol(c) }))
+  } else if pattern == "^[\\p{P}\\p{S}]+" ||
+    pattern == "^[\\p{S}\\p{P}]+" ||
+    pattern == "^[\\p{Punctuation}\\p{Symbol}]+" ||
+    pattern == "^[\\p{Symbol}\\p{Punctuation}]+" {
+    Some(
+      leading_run_match(chars, fn(c) { is_unicode_punctuation_or_symbol(c) }),
+    )
+  } else if pattern == "[\\p{P}\\p{S}]+$" ||
+    pattern == "[\\p{S}\\p{P}]+$" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]+$" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]+$" {
+    Some(
+      trailing_run_match(chars, fn(c) { is_unicode_punctuation_or_symbol(c) }),
+    )
+  } else if pattern == "[^\\p{P}\\p{S}]+" ||
+    pattern == "[^\\p{S}\\p{P}]+" ||
+    pattern == "[^\\p{Punctuation}\\p{Symbol}]+" ||
+    pattern == "[^\\p{Symbol}\\p{Punctuation}]+" {
+    Some(run_matches(chars, fn(c) { !is_unicode_punctuation_or_symbol(c) }))
+  } else if pattern == "[^\\s\\p{L}\\p{N}]+" ||
+    pattern == "[^\\s\\p{N}\\p{L}]+" ||
+    pattern == "[^\\p{L}\\p{N}\\s]+" ||
+    pattern == "[^\\p{N}\\p{L}\\s]+" ||
+    pattern == "[^\\s\\p{Letter}\\p{Number}]+" {
+    Some(run_matches(chars, fn(c) { is_not_whitespace_letter_or_number(c) }))
   } else if pattern == "\\d+" ||
     pattern == "[0-9]+" ||
     pattern == "\\p{N}+" ||
@@ -199,6 +229,27 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\P{Symbol}+" ||
   pattern == "[^\\p{S}]+" ||
   pattern == "[^\\p{Symbol}]+" ||
+  pattern == "[\\p{P}\\p{S}]+" ||
+  pattern == "[\\p{S}\\p{P}]+" ||
+  pattern == "[\\p{Punctuation}\\p{Symbol}]+" ||
+  pattern == "[\\p{Symbol}\\p{Punctuation}]+" ||
+  pattern == "^[\\p{P}\\p{S}]+" ||
+  pattern == "^[\\p{S}\\p{P}]+" ||
+  pattern == "^[\\p{Punctuation}\\p{Symbol}]+" ||
+  pattern == "^[\\p{Symbol}\\p{Punctuation}]+" ||
+  pattern == "[\\p{P}\\p{S}]+$" ||
+  pattern == "[\\p{S}\\p{P}]+$" ||
+  pattern == "[\\p{Punctuation}\\p{Symbol}]+$" ||
+  pattern == "[\\p{Symbol}\\p{Punctuation}]+$" ||
+  pattern == "[^\\p{P}\\p{S}]+" ||
+  pattern == "[^\\p{S}\\p{P}]+" ||
+  pattern == "[^\\p{Punctuation}\\p{Symbol}]+" ||
+  pattern == "[^\\p{Symbol}\\p{Punctuation}]+" ||
+  pattern == "[^\\s\\p{L}\\p{N}]+" ||
+  pattern == "[^\\s\\p{N}\\p{L}]+" ||
+  pattern == "[^\\p{L}\\p{N}\\s]+" ||
+  pattern == "[^\\p{N}\\p{L}\\s]+" ||
+  pattern == "[^\\s\\p{Letter}\\p{Number}]+" ||
   pattern == "\\d+" ||
   pattern == "[0-9]+" ||
   pattern == "\\p{N}+" ||

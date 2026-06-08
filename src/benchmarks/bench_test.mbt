@@ -518,9 +518,9 @@ fn bench_decoder_replace_punctuation_regex_case(
   b : @bench.T,
   case_name : String,
 ) -> Unit {
-  let decoder = @decoder.Decoder::replace("\\p{P}+", "_")
+  let decoder = @decoder.Decoder::replace("[\\p{P}\\p{S}]+", "_")
   let tokens = ["hi,!", "$+🙂ok。", " code(a+b);", " path/to/file.rs"]
-  b.bench(name="decoder-replace-punctuation-regex-\{case_name}", fn() {
+  b.bench(name="decoder-replace-punct-symbol-regex-\{case_name}", fn() {
     b.keep(decoder.decode(tokens))
   })
 }
@@ -570,13 +570,13 @@ fn bench_split_digit_regex_case(b : @bench.T, case_name : String) -> Unit {
 ///|
 fn bench_split_punctuation_regex_case(b : @bench.T, case_name : String) -> Unit {
   let pt = @pretokenizer.PreTokenizer::split(
-    "\\p{P}+",
+    "[\\p{P}\\p{S}]+",
     @pretokenizer.SplitBehavior::isolated(),
     false,
     true,
   )
   let text = corpus_mixed() + " $+🙂 ok。 code(a+b); path/to/file.rs"
-  b.bench(name="pretokenizer-split-punctuation-regex-\{case_name}", fn() {
+  b.bench(name="pretokenizer-split-punct-symbol-regex-\{case_name}", fn() {
     b.keep(pt.pre_tokenize(text, base_offset=0))
   })
 }
@@ -829,7 +829,7 @@ test "bench decoder replace digit regex" (b : @bench.T) {
 }
 
 ///|
-test "bench decoder replace punctuation regex" (b : @bench.T) {
+test "bench decoder replace punct-symbol regex" (b : @bench.T) {
   bench_decoder_replace_punctuation_regex_case(b, "mixed")
 }
 
@@ -849,6 +849,6 @@ test "bench split digit regex" (b : @bench.T) {
 }
 
 ///|
-test "bench split punctuation regex" (b : @bench.T) {
+test "bench split punct-symbol regex" (b : @bench.T) {
   bench_split_punctuation_regex_case(b, "mixed")
 }
