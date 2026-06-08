@@ -315,6 +315,26 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(punct_symbols[1].stop, 10)
   guard simple_split_regex_matches(
       "ab,$+🙂 cd。42".to_array(),
+      "[\\p{P}\\p{S}]{2,}",
+    )
+    is Some(min_punct_symbols) else {
+    abort("expected min punctuation-or-symbol matches")
+  }
+  @test.assert_eq(min_punct_symbols.length(), 1)
+  @test.assert_eq(min_punct_symbols[0].start, 2)
+  @test.assert_eq(min_punct_symbols[0].stop, 6)
+  guard simple_split_regex_matches(
+      "ab,$+🙂 cd。42".to_array(),
+      "[\\p{P}\\p{S}]{3}",
+    )
+    is Some(exact_punct_symbols) else {
+    abort("expected exact punctuation-or-symbol matches")
+  }
+  @test.assert_eq(exact_punct_symbols.length(), 1)
+  @test.assert_eq(exact_punct_symbols[0].start, 2)
+  @test.assert_eq(exact_punct_symbols[0].stop, 5)
+  guard simple_split_regex_matches(
+      "ab,$+🙂 cd。42".to_array(),
       "[^\\s\\p{L}\\p{N}]+",
     )
     is Some(non_alnum_nonspace) else {
@@ -406,6 +426,8 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Symbol}]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Symbol}]{2}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{P}\\p{S}]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\p{P}\\p{S}]{2,}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\p{P}\\p{S}]{3}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^\\s\\p{L}\\p{N}]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\s{2,}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^\\S\\r\\n]+"), true)

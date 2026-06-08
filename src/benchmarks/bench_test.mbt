@@ -588,6 +588,18 @@ fn bench_decoder_replace_punct_quantifier_regex_case(
 }
 
 ///|
+fn bench_decoder_replace_union_quantifier_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("[\\p{P}\\p{S}]{2,}", "_")
+  let tokens = ["hi,!", "$+🙂ok。", " code(a+b);", " path/to/file.rs"]
+  b.bench(name="decoder-replace-union-quantifier-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_split_trailing_ws_regex_case(b : @bench.T, case_name : String) -> Unit {
   let pt = @pretokenizer.PreTokenizer::split(
     "\\s+$",
@@ -766,6 +778,23 @@ fn bench_split_punct_quantifier_regex_case(
   )
   let text = corpus_mixed() + " wait!!! ok?! path/to/file.rs"
   b.bench(name="pretokenizer-split-punct-quantifier-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_union_quantifier_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "[\\p{P}\\p{S}]{2,}",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " $+🙂 wait!!! ok?! path/to/file.rs"
+  b.bench(name="pretokenizer-split-union-quantifier-regex-\{case_name}", fn() {
     b.keep(pt.pre_tokenize(text, base_offset=0))
   })
 }
@@ -1048,6 +1077,11 @@ test "bench decoder replace punct quantifier regex" (b : @bench.T) {
 }
 
 ///|
+test "bench decoder replace union quantifier regex" (b : @bench.T) {
+  bench_decoder_replace_union_quantifier_regex_case(b, "mixed")
+}
+
+///|
 test "bench split trailing whitespace regex" (b : @bench.T) {
   bench_split_trailing_ws_regex_case(b, "mixed")
 }
@@ -1105,4 +1139,9 @@ test "bench split punct-symbol regex" (b : @bench.T) {
 ///|
 test "bench split punct quantifier regex" (b : @bench.T) {
   bench_split_punct_quantifier_regex_case(b, "mixed")
+}
+
+///|
+test "bench split union quantifier regex" (b : @bench.T) {
+  bench_split_union_quantifier_regex_case(b, "mixed")
 }

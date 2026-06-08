@@ -458,6 +458,26 @@ test "split pretokenizer supports common regex spans" {
     (11, 13),
   ])
 
+  let min_punct_symbols = PreTokenizer::Split(
+    pattern="[\\p{P}\\p{S}]{2,}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab,$+🙂 cd。42", base_offset=0)
+  @test.assert_eq(min_punct_symbols.map(x => x.value), [
+    "ab", ",$+🙂", " cd。42",
+  ])
+
+  let exact_punct_symbols = PreTokenizer::Split(
+    pattern="[\\p{P}\\p{S}]{3}",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("ab,$+🙂 cd。42", base_offset=0)
+  @test.assert_eq(exact_punct_symbols.map(x => x.value), [
+    "ab", ",$+", "🙂 cd。42",
+  ])
+
   let non_alnum_nonspace = PreTokenizer::Split(
     pattern="[^\\s\\p{L}\\p{N}]+",
     behavior=Removed,

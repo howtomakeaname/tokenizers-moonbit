@@ -231,6 +231,50 @@ pub fn simple_split_regex_matches(
     pattern == "[\\p{Punctuation}\\p{Symbol}]+" ||
     pattern == "[\\p{Symbol}\\p{Punctuation}]+" {
     Some(run_matches(chars, fn(c) { is_unicode_punctuation_or_symbol(c) }))
+  } else if pattern == "[\\p{P}\\p{S}]{2,}" ||
+    pattern == "[\\p{S}\\p{P}]{2,}" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]{2,}" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]{2,}" {
+    Some(
+      run_matches_min(
+        chars,
+        fn(c) { is_unicode_punctuation_or_symbol(c) },
+        min_run=2,
+      ),
+    )
+  } else if pattern == "[\\p{P}\\p{S}]{2}" ||
+    pattern == "[\\p{S}\\p{P}]{2}" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]{2}" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]{2}" {
+    Some(
+      run_matches_exact(
+        chars,
+        fn(c) { is_unicode_punctuation_or_symbol(c) },
+        exact_run=2,
+      ),
+    )
+  } else if pattern == "[\\p{P}\\p{S}]{3}" ||
+    pattern == "[\\p{S}\\p{P}]{3}" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]{3}" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]{3}" {
+    Some(
+      run_matches_exact(
+        chars,
+        fn(c) { is_unicode_punctuation_or_symbol(c) },
+        exact_run=3,
+      ),
+    )
+  } else if pattern == "[\\p{P}\\p{S}]{4}" ||
+    pattern == "[\\p{S}\\p{P}]{4}" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]{4}" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]{4}" {
+    Some(
+      run_matches_exact(
+        chars,
+        fn(c) { is_unicode_punctuation_or_symbol(c) },
+        exact_run=4,
+      ),
+    )
   } else if pattern == "^[\\p{P}\\p{S}]+" ||
     pattern == "^[\\p{S}\\p{P}]+" ||
     pattern == "^[\\p{Punctuation}\\p{Symbol}]+" ||
@@ -527,6 +571,22 @@ fn is_simple_punctuation_symbol_regex_pattern(pattern : String) -> Bool {
   pattern == "[\\p{S}\\p{P}]+" ||
   pattern == "[\\p{Punctuation}\\p{Symbol}]+" ||
   pattern == "[\\p{Symbol}\\p{Punctuation}]+" ||
+  pattern == "[\\p{P}\\p{S}]{2,}" ||
+  pattern == "[\\p{S}\\p{P}]{2,}" ||
+  pattern == "[\\p{Punctuation}\\p{Symbol}]{2,}" ||
+  pattern == "[\\p{Symbol}\\p{Punctuation}]{2,}" ||
+  pattern == "[\\p{P}\\p{S}]{2}" ||
+  pattern == "[\\p{S}\\p{P}]{2}" ||
+  pattern == "[\\p{Punctuation}\\p{Symbol}]{2}" ||
+  pattern == "[\\p{Symbol}\\p{Punctuation}]{2}" ||
+  pattern == "[\\p{P}\\p{S}]{3}" ||
+  pattern == "[\\p{S}\\p{P}]{3}" ||
+  pattern == "[\\p{Punctuation}\\p{Symbol}]{3}" ||
+  pattern == "[\\p{Symbol}\\p{Punctuation}]{3}" ||
+  pattern == "[\\p{P}\\p{S}]{4}" ||
+  pattern == "[\\p{S}\\p{P}]{4}" ||
+  pattern == "[\\p{Punctuation}\\p{Symbol}]{4}" ||
+  pattern == "[\\p{Symbol}\\p{Punctuation}]{4}" ||
   pattern == "^[\\p{P}\\p{S}]+" ||
   pattern == "^[\\p{S}\\p{P}]+" ||
   pattern == "^[\\p{Punctuation}\\p{Symbol}]+" ||
