@@ -1,4 +1,5 @@
 import {
+  "tokenizers-moonbit/common",
   "tokenizers-moonbit/types",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/buffer",

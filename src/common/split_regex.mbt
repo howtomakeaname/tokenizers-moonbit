@@ -1,0 +1,143 @@
+// Shared helpers for the small Split regex subset that can be implemented with
+// deterministic char scanners instead of a general regex engine.
+
+///|
+pub(all) struct Span {
+  start : Int
+  stop : Int
+}
+
+///|
+pub fn simple_split_regex_matches(
+  chars : Array[Char],
+  pattern : String,
+) -> Array[Span]? {
+  if pattern == "\\s+" {
+    Some(run_matches(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
+  } else if pattern == "\\S+" || pattern == "[^\\s]+" {
+    Some(run_matches(chars, fn(c) { !is_unicode_whitespace(c.to_int()) }))
+  } else if pattern == "\\s+$" {
+    Some(trailing_run_match(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
+  } else if pattern == "[\\r\\n]" || pattern == "[\r\n]" {
+    Some(run_matches(chars, fn(c) { c == '\r' || c == '\n' }))
+  } else if pattern == "\\d+" || pattern == "[0-9]+" || pattern == "\\p{N}+" {
+    Some(run_matches(chars, fn(c) { is_decimal_number(c) }))
+  } else if pattern == "\\D+" || pattern == "[^0-9]+" {
+    Some(run_matches(chars, fn(c) { !is_decimal_number(c) }))
+  } else if pattern == "\\p{N}{1,3}" || pattern == "[0-9][0-9][0-9]" {
+    Some(number_run_matches(chars, max_digits=3))
+  } else {
+    None
+  }
+}
+
+///|
+pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
+  pattern == "\\s+" ||
+  pattern == "\\S+" ||
+  pattern == "[^\\s]+" ||
+  pattern == "\\s+$" ||
+  pattern == "[\\r\\n]" ||
+  pattern == "[\r\n]" ||
+  pattern == "\\d+" ||
+  pattern == "[0-9]+" ||
+  pattern == "\\p{N}+" ||
+  pattern == "\\D+" ||
+  pattern == "[^0-9]+" ||
+  pattern == "\\p{N}{1,3}" ||
+  pattern == "[0-9][0-9][0-9]"
+}
+
+///|
+pub fn literal_matches(chars : Array[Char], pattern : String) -> Array[Span]? {
+  if pattern.is_empty() {
+    return None
+  }
+  let pat = pattern.to_array()
+  let out : Array[Span] = []
+  let n = chars.length()
+  let m = pat.length()
+  let mut i = 0
+  while i < n {
+    if i + m <= n && chars_match_at(chars, i, pat) {
+      out.push({ start: i, stop: i + m })
+      i = i + m
+    } else {
+      i = i + 1
+    }
+  }
+  Some(out)
+}
+
+///|
+pub fn is_decimal_number(c : Char) -> Bool {
+  let u = c.to_int()
+  (u >= 0x30 && u <= 0x39) ||
+  (u >= 0x0660 && u <= 0x0669) ||
+  (u >= 0x06F0 && u <= 0x06F9) ||
+  (u >= 0x0966 && u <= 0x096F) ||
+  (u >= 0xFF10 && u <= 0xFF19)
+}
+
+///|
+fn run_matches(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] {
+  let out : Array[Span] = []
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let start = i
+      while i < n && pred(chars[i]) {
+        i = i + 1
+      }
+      out.push({ start, stop: i })
+    } else {
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
+fn trailing_run_match(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] {
+  let out : Array[Span] = []
+  let mut i = chars.length()
+  while i > 0 && pred(chars[i - 1]) {
+    i = i - 1
+  }
+  if i < chars.length() {
+    out.push({ start: i, stop: chars.length() })
+  }
+  out
+}
+
+///|
+fn number_run_matches(chars : Array[Char], max_digits~ : Int) -> Array[Span] {
+  let out : Array[Span] = []
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if is_decimal_number(chars[i]) {
+      let start = i
+      let mut count = 0
+      while i < n && is_decimal_number(chars[i]) && count < max_digits {
+        i = i + 1
+        count = count + 1
+      }
+      out.push({ start, stop: i })
+    } else {
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
+fn chars_match_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
+  for k in 0..<pat.length() {
+    if src[at + k] != pat[k] {
+      return false
+    }
+  }
+  true
+}

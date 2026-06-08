@@ -47,7 +47,7 @@ fn is_supported_split_regex(pattern : String) -> Bool {
   is_qwen_pattern(pattern) ||
   is_gpt2_pattern(pattern) ||
   is_clip_pattern(pattern) ||
-  is_simple_regex_pattern(pattern) ||
+  @common.is_simple_split_regex_pattern(pattern) ||
   is_known_passthrough_split_regex(pattern)
 }
 
@@ -83,12 +83,6 @@ fn split_pre_tokenize(
 }
 
 ///|
-priv struct MatchSpan {
-  start : Int
-  stop : Int
-}
-
-///|
 fn split_with_simple_pattern(
   text : String,
   pattern : String,
@@ -99,9 +93,9 @@ fn split_with_simple_pattern(
 ) -> Array[@types.Split] {
   let chars = text.to_array()
   let matches = if regex {
-    simple_regex_matches(chars, pattern)
+    @common.simple_split_regex_matches(chars, pattern)
   } else {
-    literal_matches(chars, pattern)
+    @common.literal_matches(chars, pattern)
   }
   match matches {
     Some(spans) =>
@@ -116,48 +110,6 @@ fn split_with_simple_pattern(
   }
 }
 
-///|
-fn simple_regex_matches(
-  chars : Array[Char],
-  pattern : String,
-) -> Array[MatchSpan]? {
-  if pattern == "\\s+" {
-    Some(run_matches(chars, fn(c) { is_space(c) }))
-  } else if pattern == "\\S+" || pattern == "[^\\s]+" {
-    Some(run_matches(chars, fn(c) { !is_space(c) }))
-  } else if pattern == "\\s+$" {
-    Some(trailing_run_match(chars, fn(c) { is_space(c) }))
-  } else if pattern == "[\\r\\n]" || pattern == "[\r\n]" {
-    Some(run_matches(chars, fn(c) { c == '\r' || c == '\n' }))
-  } else if pattern == "\\d+" || pattern == "[0-9]+" || pattern == "\\p{N}+" {
-    Some(run_matches(chars, fn(c) { is_number(c) }))
-  } else if pattern == "\\D+" || pattern == "[^0-9]+" {
-    Some(run_matches(chars, fn(c) { !is_number(c) }))
-  } else if pattern == "\\p{N}{1,3}" || pattern == "[0-9][0-9][0-9]" {
-    Some(number_run_matches(chars, max_digits=3))
-  } else {
-    None
-  }
-}
-
-///|
-fn is_simple_regex_pattern(pattern : String) -> Bool {
-  pattern == "\\s+" ||
-  pattern == "\\S+" ||
-  pattern == "[^\\s]+" ||
-  pattern == "\\s+$" ||
-  pattern == "[\\r\\n]" ||
-  pattern == "[\r\n]" ||
-  pattern == "\\d+" ||
-  pattern == "[0-9]+" ||
-  pattern == "\\p{N}+" ||
-  pattern == "\\D+" ||
-  pattern == "[^0-9]+" ||
-  pattern == "\\p{N}{1,3}" ||
-  pattern == "[0-9][0-9][0-9]"
-}
-
-///|
 fn is_known_passthrough_split_regex(pattern : String) -> Bool {
   // Some real-world tokenizers use multi-step Split sequences with very large
   // Unicode range patterns. Existing parity relies on passing these steps
@@ -169,108 +121,17 @@ fn is_known_passthrough_split_regex(pattern : String) -> Bool {
   (pattern.contains("[!\"") && pattern.contains("\\p{P}\\p{S}"))
 }
 
-///|
-fn run_matches(chars : Array[Char], pred : (Char) -> Bool) -> Array[MatchSpan] {
-  let out : Array[MatchSpan] = []
-  let n = chars.length()
-  let mut i = 0
-  while i < n {
-    if pred(chars[i]) {
-      let start = i
-      while i < n && pred(chars[i]) {
-        i = i + 1
-      }
-      out.push({ start, stop: i })
-    } else {
-      i = i + 1
-    }
-  }
-  out
-}
-
-///|
-fn trailing_run_match(
-  chars : Array[Char],
-  pred : (Char) -> Bool,
-) -> Array[MatchSpan] {
-  let out : Array[MatchSpan] = []
-  let mut i = chars.length()
-  while i > 0 && pred(chars[i - 1]) {
-    i = i - 1
-  }
-  if i < chars.length() {
-    out.push({ start: i, stop: chars.length() })
-  }
-  out
-}
-
-///|
-fn number_run_matches(
-  chars : Array[Char],
-  max_digits~ : Int,
-) -> Array[MatchSpan] {
-  let out : Array[MatchSpan] = []
-  let n = chars.length()
-  let mut i = 0
-  while i < n {
-    if is_number(chars[i]) {
-      let start = i
-      let mut count = 0
-      while i < n && is_number(chars[i]) && count < max_digits {
-        i = i + 1
-        count = count + 1
-      }
-      out.push({ start, stop: i })
-    } else {
-      i = i + 1
-    }
-  }
-  out
-}
-
-///|
-fn literal_matches(chars : Array[Char], pattern : String) -> Array[MatchSpan]? {
-  if pattern.is_empty() {
-    return None
-  }
-  let pat = pattern.to_array()
-  let out : Array[MatchSpan] = []
-  let n = chars.length()
-  let m = pat.length()
-  let mut i = 0
-  while i < n {
-    if i + m <= n && chars_match_at(chars, i, pat) {
-      out.push({ start: i, stop: i + m })
-      i = i + m
-    } else {
-      i = i + 1
-    }
-  }
-  Some(out)
-}
-
-///|
-fn chars_match_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
-  for k in 0..<pat.length() {
-    if src[at + k] != pat[k] {
-      return false
-    }
-  }
-  true
-}
-
-///|
 fn apply_split_matches(
   chars : Array[Char],
-  matches : Array[MatchSpan],
+  matches : Array[@common.Span],
   behavior : SplitBehavior,
   invert : Bool,
   base_offset : Int,
 ) -> Array[@types.Split] {
   let out : Array[@types.Split] = []
   let mut cursor = 0
-  let mut pending_next : MatchSpan? = None
-  fn emit_span(span : MatchSpan) -> Unit {
+  let mut pending_next : @common.Span? = None
+  fn emit_span(span : @common.Span) -> Unit {
     if span.stop <= span.start {
       return
     }
@@ -279,7 +140,7 @@ fn apply_split_matches(
       offsets: (base_offset + span.start, base_offset + span.stop),
     })
   }
-  fn emit_non_delim(span : MatchSpan) -> Unit {
+  fn emit_non_delim(span : @common.Span) -> Unit {
     match pending_next {
       Some(p) => {
         out.push({
@@ -292,7 +153,7 @@ fn apply_split_matches(
       None => emit_span(span)
     }
   }
-  fn emit_delim(span : MatchSpan) -> Unit {
+  fn emit_delim(span : @common.Span) -> Unit {
     match behavior {
       Removed => ()
       Isolated | Contiguous => emit_span(span)
@@ -312,7 +173,7 @@ fn apply_split_matches(
   }
   for m in matches {
     if cursor < m.start {
-      let gap = { start: cursor, stop: m.start }
+      let gap = @common.Span::{ start: cursor, stop: m.start }
       if invert {
         emit_delim(gap)
       } else {
@@ -327,7 +188,7 @@ fn apply_split_matches(
     cursor = m.stop
   }
   if cursor < chars.length() {
-    let tail = { start: cursor, stop: chars.length() }
+    let tail = @common.Span::{ start: cursor, stop: chars.length() }
     if invert {
       emit_delim(tail)
     } else {
