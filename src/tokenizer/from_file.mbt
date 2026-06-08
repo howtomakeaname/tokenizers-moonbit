@@ -4,12 +4,15 @@
 // backends (js / native / wasm / wasm-gc).
 
 // `from_pretrained` models are typically stable artifacts resolved by path. Keep
-// a tiny one-entry source cache so repeated loads (common in tests, CLIs and
-// server warmups) avoid paying filesystem + UTF-8 conversion repeatedly. Plain
+// a tiny source cache so repeated loads (common in tests, CLIs and server
+// warmups) avoid paying filesystem + UTF-8 conversion repeatedly. Plain
 // `from_file` intentionally stays uncached for direct file round-trips.
 
 ///|
 let pretrained_source_cache : Map[String, String] = {}
+
+///|
+let pretrained_source_cache_limit : Int = 4
 
 ///|
 /// Load a tokenizer from a `tokenizer.json` file path.
@@ -205,7 +208,9 @@ fn read_pretrained_source(path : String) -> String raise @types.TokenizerError {
       let content = @fs.read_file_to_string(path) catch {
         _ => raise @types.ParseError("cannot read file: \{path}")
       }
-      pretrained_source_cache.clear()
+      if pretrained_source_cache.length() >= pretrained_source_cache_limit {
+        pretrained_source_cache.clear()
+      }
       pretrained_source_cache[path] = content
       content
     }

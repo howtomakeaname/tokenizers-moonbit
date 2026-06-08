@@ -21,7 +21,8 @@ fn from_pretrained_cached(
 - `from_pretrained` accepts a tokenizer JSON file, a local directory containing
   `tokenizer.json`, or an already-populated HuggingFace Hub cache entry. It does
   not perform network downloads; it resolves `$HUGGINGFACE_HUB_CACHE`,
-  `$HF_HOME/hub`, then `$HOME/.cache/huggingface/hub`.
+  `$HF_HOME/hub`, then `$HOME/.cache/huggingface/hub`. Stable pretrained sources
+  are kept in a small in-process cache for repeated loads.
 - `from_pretrained_cached` lets callers provide an explicit local Hub cache root
   and revision, matching offline `local_files_only=True` workflows.
 

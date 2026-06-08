@@ -302,6 +302,34 @@ test "save invalidates from_pretrained source cache" {
 }
 
 ///|
+test "from_pretrained source cache keeps multiple stable paths" {
+  let path1 = "_build/tokenizer_cache_multi_1.json"
+  let path2 = "_build/tokenizer_cache_multi_2.json"
+  let json1 =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"one":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let json2 =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"two":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  Tokenizer::from_str(json1).save(path1)
+  Tokenizer::from_str(json2).save(path2)
+  @test.assert_eq(
+    Tokenizer::from_pretrained(path1).encode("one", add_special_tokens=false).ids,
+    [0],
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained(path2).encode("two", add_special_tokens=false).ids,
+    [0],
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained(path1).encode("two", add_special_tokens=false).ids,
+    [1],
+  )
+}
+
+///|
 test "encode_batch reuses duplicate inputs without aliasing encodings" {
   let json =
     #|{"version":"1.0",

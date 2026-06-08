@@ -411,6 +411,15 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
                 moon[wordpiece_cache_key],
                 hf_encode_us(bert_tok, "tokenization tokenization tokenization tokenization tokenization"),
             ))
+    multi_cache_key = "from_pretrained-multi-cache-hit"
+    if multi_cache_key in moon:
+        _, gpt2_path = load_tokenizer("gpt2")
+        _, bert_path = load_tokenizer("bert")
+        rows.append(Row(
+            multi_cache_key,
+            moon[multi_cache_key],
+            hf_load_us(gpt2_path) + hf_load_us(bert_path),
+        ))
     for model in models:
         tok, path = load_tokenizer(model)
         if tok is None:

@@ -144,7 +144,7 @@
 | P2 | Precompiled SentencePiece charsmap 完整解码 | 🚧 | 已支持主流 SPM NFKC charsmap行为并补兼容字符/空白用例；完整二进制 trie 解码仍待做 |
 | P2 | 通用 Split/Replace 正则覆盖 | 🚧 | Normalizer/Decoder Replace 已支持 `\\s+` / `^\\s+` / `\\s+$` / `[\\r\\n]+` / `[^\\S\\r\\n]+` / ` {2,}` / `\\d+` / `\\D+`；Split 已补 literal / `\\s+` / `\\S+` / `\\s+$` / `[\\r\\n]` / `\\d+` / `\\D+` / digit triplet 的行为与 offset 测试；复杂未知 pattern 加载期显式 Unsupported |
 | P2 | save / to_json / from_file 对称性 | ✅ | `to_json` 保留原始 tokenizer.json；`Tokenizer::from_file` / `save` 可往返；补 serialization 测试与 to_json bench |
-| P3 | `from_pretrained` / Hub 集成 | 🚧 | 已支持本地 HF 目录（`tokenizer.json`）、tokenizer 文件路径、已有 HuggingFace Hub cache snapshot（`$HUGGINGFACE_HUB_CACHE` / `$HF_HOME/hub` / `$HOME/.cache/huggingface/hub`，含 refs/main → snapshots/<rev> 解析），并对稳定 pretrained 路径做单项 source cache；Hub 网络下载仍需外部脚本/应用层集成 |
+| P3 | `from_pretrained` / Hub 集成 | 🚧 | 已支持本地 HF 目录（`tokenizer.json`）、tokenizer 文件路径、已有 HuggingFace Hub cache snapshot（`$HUGGINGFACE_HUB_CACHE` / `$HF_HOME/hub` / `$HOME/.cache/huggingface/hub`，含 refs/main → snapshots/<rev> 解析），并对稳定 pretrained 路径做小型多项 source cache；Hub 网络下载仍需外部脚本/应用层集成 |
 | P3 | batch 并行 / word cache | 🚧 | BPE/WordPiece/Unigram word cache 已完成；encode_batch 对重复输入做单批缓存并补 bench；并行仍待运行时能力评估 |
 | P4 | trainer / training API | ✅ | 已提供确定性 WordLevel trainer（WhitespaceSplit / 自定义 pre-tokenizer / 预切分 token 流 + min_frequency + special tokens + vocab_size + HF 风格频次/词典序排序）；新增确定性 WordPiece / BPE / Unigram trainer MVP（同输入模式 + continuation prefix / end_of_word_suffix / max_input_chars_per_word / byte_fallback + vocab_size），训练结果可 `to_json`/`save` 往返，常见 pre-tokenizer 可序列化，并加入 HF trainer bench；高级训练算法与采样参数后续按需增强 |
 
@@ -178,7 +178,7 @@ local from_pretrained-file 同档或快于 HF（llama 约 1.05x/1.00x，Qwen2.5 
 
 1. **Precompiled charsmap**：当前覆盖主流 SentencePiece NFKC charsmap 与 Unicode 空白映射；完整二进制 trie 解码仍是 TODO。
 2. **正则**：core 正则不支持 `\p{L}`；GPT/Qwen/o200k 主线已手写扫描器。通用 Split 已补 literal、`\\s+`、`\\S+`、`\\s+$`、`[\\r\\n]`、`\\d+`、`\\D+`、digit triplet；复杂未知 pattern 加载期显式 Unsupported，避免静默不对齐。Replace normalizer/decoder 已补 `\\s+` / `^\\s+` / `\\s+$` / `[\\r\\n]+` / `[^\\S\\r\\n]+` / ` {2,}` / `\\d+` / `\\D+`；更复杂 Replace pattern 仍按字面量处理。
-3. **训练 / Hub 集成**：当前定位 inference-first；`to_json`/`save` 已支持原始 JSON 往返，`from_pretrained` 已支持本地目录/文件、已有 HF Hub cache snapshot 与稳定路径 source cache；WordLevel trainer 产物已支持序列化保存，并支持自定义 pre-tokenizer / 预切分 token 流 / vocab_size / HF 风格频次与词典序排序；WordPiece / BPE / Unigram trainer MVP 已支持相同输入模式、continuation prefix / end-of-word suffix、`max_input_chars_per_word`、`byte_fallback` 与 `vocab_size`，常见 pre-tokenizer 可序列化。Hub 网络下载 API 暂未实现，高级训练算法与采样参数后续按需增强。
+3. **训练 / Hub 集成**：当前定位 inference-first；`to_json`/`save` 已支持原始 JSON 往返，`from_pretrained` 已支持本地目录/文件、已有 HF Hub cache snapshot 与稳定路径小型多项 source cache；WordLevel trainer 产物已支持序列化保存，并支持自定义 pre-tokenizer / 预切分 token 流 / vocab_size / HF 风格频次与词典序排序；WordPiece / BPE / Unigram trainer MVP 已支持相同输入模式、continuation prefix / end-of-word suffix、`max_input_chars_per_word`、`byte_fallback` 与 `vocab_size`，常见 pre-tokenizer 可序列化。Hub 网络下载 API 暂未实现，高级训练算法与采样参数后续按需增强。
 4. **性能**：BPE merge 已用优先队列(pairing heap)+惰性失效，llama 提速约 7x、与 Rust 同量级；进一步可加 word→tokens 缓存与多 MB 词表加载优化。
 5. **batch 并行**：MoonBit 单线程，encode_batch 串行；已对重复输入做批内缓存，BPE/WordPiece/Unigram 均带 word cache（场景定位 wasm/js 边缘端）。
 

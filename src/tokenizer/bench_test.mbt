@@ -251,6 +251,20 @@ fn bench_from_pretrained_hub_cache_case(b : @bench.T, model : String) -> Unit {
 }
 
 ///|
+fn bench_from_pretrained_multi_cache_case(b : @bench.T) -> Unit {
+  guard load_text("tests/data/gpt2.full.json") is Some(_) else { return }
+  guard load_text("tests/data/bert.full.json") is Some(_) else { return }
+  ignore(try? Tokenizer::from_pretrained("tests/data/gpt2.full.json"))
+  ignore(try? Tokenizer::from_pretrained("tests/data/bert.full.json"))
+  b.bench(name="from_pretrained-multi-cache-hit", fn() {
+    let a = try? Tokenizer::from_pretrained("tests/data/gpt2.full.json")
+    let b2 = try? Tokenizer::from_pretrained("tests/data/bert.full.json")
+    b.keep(a)
+    b.keep(b2)
+  })
+}
+
+///|
 fn bench_train_wordlevel_case(
   b : @bench.T,
   case_name : String,
@@ -694,6 +708,11 @@ test "bench from_pretrained file matrix" (b : @bench.T) {
 ///|
 test "bench from_pretrained hub cache" (b : @bench.T) {
   bench_from_pretrained_hub_cache_case(b, "gpt2")
+}
+
+///|
+test "bench from_pretrained multi cache hit" (b : @bench.T) {
+  bench_from_pretrained_multi_cache_case(b)
 }
 
 ///|
