@@ -51,7 +51,7 @@ fn round_up(n : Int, multiple : Int) -> Int {
 
 ///|
 /// Pad a single encoding to `target_len` (no-op if already >= target).
-pub fn pad_encoding(
+fn pad_encoding(
   enc : @types.Encoding,
   target_len : Int,
   params : PaddingParams,
@@ -99,7 +99,7 @@ pub fn pad_encoding(
 
 ///|
 /// Pad a batch of encodings according to the strategy.
-pub fn pad_batch(
+fn pad_batch(
   encodings : Array[@types.Encoding],
   params : PaddingParams,
 ) -> Array[@types.Encoding] {

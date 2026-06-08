@@ -52,7 +52,7 @@ fn slice_encoding(
 ///|
 /// Truncate `enc` to `params.max_length`. With `stride > 0`, the trimmed tail
 /// is emitted as overflow windows (each overlapping the previous by `stride`).
-pub fn truncate_encoding(
+fn truncate_encoding(
   enc : @types.Encoding,
   params : TruncationParams,
 ) -> @types.Encoding {
@@ -90,7 +90,7 @@ pub fn truncate_encoding(
 ///|
 /// Truncate a pair *before* post-processing, matching HF's strategy semantics.
 /// Returns the truncated A and optional B encodings.
-pub fn truncate_pair_raw(
+fn truncate_pair_raw(
   a : @types.Encoding,
   b : @types.Encoding?,
   params : TruncationParams,
