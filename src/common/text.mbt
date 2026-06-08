@@ -24,6 +24,49 @@ pub fn is_word_char(c : Char) -> Bool {
 }
 
 ///|
+/// Unicode `\p{L}` approximation used by hand-written GPT/Qwen scanners and
+/// the common simple-regex fallback. It intentionally covers the script ranges
+/// that appear in the fixture matrix and common multilingual tokenizers without
+/// pulling in a full Unicode property table.
+pub fn is_unicode_letter(c : Char) -> Bool {
+  let u = c.to_int()
+  if (u >= 0x41 && u <= 0x5A) || (u >= 0x61 && u <= 0x7A) {
+    return true
+  }
+  if (u >= 0xC0 && u <= 0x24F) && u != 0xD7 && u != 0xF7 {
+    return true
+  }
+  if u >= 0x370 && u <= 0x3FF {
+    return true
+  }
+  if u >= 0x400 && u <= 0x4FF {
+    return true
+  }
+  if u >= 0x590 && u <= 0x5FF {
+    return true
+  }
+  if u >= 0x620 && u <= 0x64A {
+    return true
+  }
+  if u >= 0x0900 && u <= 0x097F {
+    return true
+  }
+  if u >= 0x3040 && u <= 0x30FF {
+    return true
+  }
+  if u >= 0x3400 && u <= 0x4DBF {
+    return true
+  }
+  if u >= 0x4E00 && u <= 0x9FFF {
+    return true
+  }
+  if u >= 0xAC00 && u <= 0xD7A3 {
+    return true
+  }
+  false
+}
+
+///|
 /// Unicode whitespace coverage used for the common HF Regex `\s` subset.
 pub fn is_unicode_whitespace(u : Int) -> Bool {
   u == 0x09 ||

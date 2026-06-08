@@ -52,6 +52,22 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(non_words[0].stop, 4)
   @test.assert_eq(non_words[1].start, 5)
   @test.assert_eq(non_words[1].stop, 6)
+  guard simple_split_regex_matches("abé中12!Ж".to_array(), "\\p{L}+")
+    is Some(letters) else {
+    abort("expected letter matches")
+  }
+  @test.assert_eq(letters.length(), 2)
+  @test.assert_eq(letters[0].start, 0)
+  @test.assert_eq(letters[0].stop, 4)
+  @test.assert_eq(letters[1].start, 7)
+  @test.assert_eq(letters[1].stop, 8)
+  guard simple_split_regex_matches("abé中12!Ж".to_array(), "\\P{L}+")
+    is Some(non_letters) else {
+    abort("expected non-letter matches")
+  }
+  @test.assert_eq(non_letters.length(), 1)
+  @test.assert_eq(non_letters[0].start, 4)
+  @test.assert_eq(non_letters[0].stop, 7)
   guard simple_split_regex_matches(chars, "\\s+") is Some(spaces) else {
     abort("expected whitespace matches")
   }
@@ -62,5 +78,6 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(lit.length(), 1)
   @test.assert_eq(lit[0].start, 1)
   @test.assert_eq(is_simple_split_regex_pattern("\\b\\w+\\b"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\p{Letter}]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{N}{1,3}"), true)
 }

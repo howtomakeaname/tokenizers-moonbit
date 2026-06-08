@@ -29,6 +29,16 @@ pub fn simple_split_regex_matches(
     pattern == "[^\\w]+" ||
     pattern == "[^A-Za-z0-9_]+" {
     Some(run_matches(chars, fn(c) { !is_word_char(c) }))
+  } else if pattern == "\\p{L}+" ||
+    pattern == "\\p{Letter}+" ||
+    pattern == "[\\p{L}]+" ||
+    pattern == "[\\p{Letter}]+" {
+    Some(run_matches(chars, fn(c) { is_unicode_letter(c) }))
+  } else if pattern == "\\P{L}+" ||
+    pattern == "\\P{Letter}+" ||
+    pattern == "[^\\p{L}]+" ||
+    pattern == "[^\\p{Letter}]+" {
+    Some(run_matches(chars, fn(c) { !is_unicode_letter(c) }))
   } else if pattern == "\\d+" || pattern == "[0-9]+" || pattern == "\\p{N}+" {
     Some(run_matches(chars, fn(c) { is_decimal_number(c) }))
   } else if pattern == "\\D+" || pattern == "[^0-9]+" {
@@ -55,6 +65,14 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "\\W+" ||
   pattern == "[^\\w]+" ||
   pattern == "[^A-Za-z0-9_]+" ||
+  pattern == "\\p{L}+" ||
+  pattern == "\\p{Letter}+" ||
+  pattern == "[\\p{L}]+" ||
+  pattern == "[\\p{Letter}]+" ||
+  pattern == "\\P{L}+" ||
+  pattern == "\\P{Letter}+" ||
+  pattern == "[^\\p{L}]+" ||
+  pattern == "[^\\p{Letter}]+" ||
   pattern == "\\d+" ||
   pattern == "[0-9]+" ||
   pattern == "\\p{N}+" ||

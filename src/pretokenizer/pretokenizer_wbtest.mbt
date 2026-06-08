@@ -148,6 +148,23 @@ test "split pretokenizer supports common regex spans" {
     regex=true,
   ).pre_tokenize("hi-there_2", base_offset=0)
   @test.assert_eq(bounded_words.map(x => x.value), ["hi", "-", "there_2"])
+
+  let letters = PreTokenizer::Split(
+    pattern="\\p{L}+",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("abé中12!Ж", base_offset=4)
+  @test.assert_eq(letters.map(x => x.value), ["abé中", "12!", "Ж"])
+  @test.assert_eq(letters.map(x => x.offsets), [(4, 8), (8, 11), (11, 12)])
+
+  let non_letters = PreTokenizer::Split(
+    pattern="\\P{L}+",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("abé中12!Ж", base_offset=0)
+  @test.assert_eq(non_letters.map(x => x.value), ["abé中", "Ж"])
 }
 
 ///|

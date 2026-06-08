@@ -243,59 +243,13 @@ pub fn is_space(c : Char) -> Bool {
 ///|
 /// Decimal-number-ish (Unicode \p{N}, approximated by common ranges).
 pub fn is_number(c : Char) -> Bool {
-  let u = c.to_int()
-  (u >= 0x30 && u <= 0x39) || // ASCII 0-9
-  (u >= 0x0660 && u <= 0x0669) || // Arabic-Indic
-  (u >= 0x06F0 && u <= 0x06F9) || // Extended Arabic-Indic
-  (u >= 0x0966 && u <= 0x096F) || // Devanagari
-  (u >= 0xFF10 && u <= 0xFF19) // Fullwidth
+  @common.is_decimal_number(c)
 }
 
 ///|
 /// Letter (Unicode \p{L}), approximated by common script ranges.
 pub fn is_letter(c : Char) -> Bool {
-  let u = c.to_int()
-  // ASCII letters
-  if (u >= 0x41 && u <= 0x5A) || (u >= 0x61 && u <= 0x7A) {
-    return true
-  }
-  // Latin-1 letters + supplements
-  if (u >= 0xC0 && u <= 0x24F) && u != 0xD7 && u != 0xF7 {
-    return true
-  }
-  // Greek and Coptic
-  if u >= 0x370 && u <= 0x3FF {
-    return true
-  }
-  // Cyrillic
-  if u >= 0x400 && u <= 0x4FF {
-    return true
-  }
-  // Hebrew
-  if u >= 0x590 && u <= 0x5FF {
-    return true
-  }
-  // Arabic letters
-  if u >= 0x620 && u <= 0x64A {
-    return true
-  }
-  // Hiragana + Katakana
-  if u >= 0x3040 && u <= 0x30FF {
-    return true
-  }
-  // CJK Unified Ideographs
-  if u >= 0x4E00 && u <= 0x9FFF {
-    return true
-  }
-  // Hangul syllables
-  if u >= 0xAC00 && u <= 0xD7A3 {
-    return true
-  }
-  // CJK Extension A
-  if u >= 0x3400 && u <= 0x4DBF {
-    return true
-  }
-  false
+  @common.is_unicode_letter(c)
 }
 
 // The Qwen2/Qwen3/Llama-3 family pre-tokenization pattern (also used by

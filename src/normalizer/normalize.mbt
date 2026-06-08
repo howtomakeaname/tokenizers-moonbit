@@ -353,6 +353,22 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       !@common.is_word_char(c)
     })
   }
+  if pattern == "\\p{L}+" ||
+    pattern == "\\p{Letter}+" ||
+    pattern == "[\\p{L}]+" ||
+    pattern == "[\\p{Letter}]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_unicode_letter(c)
+    })
+  }
+  if pattern == "\\P{L}+" ||
+    pattern == "\\P{Letter}+" ||
+    pattern == "[^\\p{L}]+" ||
+    pattern == "[^\\p{Letter}]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      !@common.is_unicode_letter(c)
+    })
+  }
   if pattern == "[^\\S\\r\\n]+" {
     return @common.replace_char_runs(s, content, fn(c) {
       @common.is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
