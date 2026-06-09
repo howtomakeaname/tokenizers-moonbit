@@ -41,6 +41,50 @@ pub fn PaddingParams::new(
 }
 
 ///|
+/// Convenience constructor for fixed-length padding, mirroring HF's
+/// `enable_padding(length=...)` workflow.
+pub fn PaddingParams::fixed(
+  length : Int,
+  pad_id? : Int = 0,
+  pad_token? : String = "[PAD]",
+) -> PaddingParams {
+  PaddingParams::new(Fixed(length), pad_id~, pad_token~)
+}
+
+///|
+/// Convenience constructor for batch-longest padding.
+pub fn PaddingParams::batch_longest(
+  pad_id? : Int = 0,
+  pad_token? : String = "[PAD]",
+) -> PaddingParams {
+  PaddingParams::new(BatchLongest, pad_id~, pad_token~)
+}
+
+///|
+pub fn PaddingParams::with_direction(
+  self : PaddingParams,
+  direction : PaddingDirection,
+) -> PaddingParams {
+  { ..self, direction, }
+}
+
+///|
+pub fn PaddingParams::with_pad_type_id(
+  self : PaddingParams,
+  pad_type_id : Int,
+) -> PaddingParams {
+  { ..self, pad_type_id, }
+}
+
+///|
+pub fn PaddingParams::with_pad_to_multiple_of(
+  self : PaddingParams,
+  pad_to_multiple_of : Int?,
+) -> PaddingParams {
+  { ..self, pad_to_multiple_of, }
+}
+
+///|
 fn round_up(n : Int, multiple : Int) -> Int {
   if multiple <= 0 || n % multiple == 0 {
     n

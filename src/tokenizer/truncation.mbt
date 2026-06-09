@@ -28,6 +28,30 @@ pub fn TruncationParams::new(max_length : Int) -> TruncationParams {
   { max_length, stride: 0, direction: Right, strategy: LongestFirst }
 }
 
+///|
+pub fn TruncationParams::with_stride(
+  self : TruncationParams,
+  stride : Int,
+) -> TruncationParams {
+  { ..self, stride, }
+}
+
+///|
+pub fn TruncationParams::with_direction(
+  self : TruncationParams,
+  direction : TruncationDirection,
+) -> TruncationParams {
+  { ..self, direction, }
+}
+
+///|
+pub fn TruncationParams::with_strategy(
+  self : TruncationParams,
+  strategy : TruncationStrategy,
+) -> TruncationParams {
+  { ..self, strategy, }
+}
+
 // Slice an encoding's parallel arrays to [start, stop).
 
 ///|

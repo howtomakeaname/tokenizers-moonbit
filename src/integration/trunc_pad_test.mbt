@@ -46,6 +46,36 @@ test "batch padding pads to longest in batch" {
 }
 
 ///|
+test "padding builder supports left pad and pad_to_multiple" {
+  guard load_text("tests/data/gpt2.full.json") is Some(mj) else { return }
+  let params = @tokenizer.PaddingParams::batch_longest(pad_id=0, pad_token="!")
+    .with_direction(@tokenizer.Left)
+    .with_pad_to_multiple_of(Some(4))
+  let tok = @tokenizer.Tokenizer::from_str(mj).with_padding(Some(params))
+  let batch = tok.encode_batch(["Hello world", "a"], add_special_tokens=false)
+  @test.assert_eq(batch.length(), 2)
+  @test.assert_eq(batch[0].ids.length(), 4)
+  @test.assert_eq(batch[1].ids.length(), 4)
+  @test.assert_eq(batch[0].attention_mask, [0, 0, 1, 1])
+  @test.assert_eq(batch[1].attention_mask, [0, 0, 0, 1])
+}
+
+///|
+test "truncation builder supports left only-second truncation" {
+  let tok = @tokenizer.Tokenizer::from_str(trunc_strategy_json("LongestFirst")).with_truncation(
+    Some(
+      @tokenizer.TruncationParams::new(8)
+      .with_direction(@tokenizer.Left)
+      .with_strategy(@tokenizer.OnlySecond),
+    ),
+  )
+  let enc = tok.encode_pair("a0 a1 a2", "b0 b1 b2 b3 b4")
+  @test.assert_eq(enc.tokens, [
+    "[CLS]", "a0", "a1", "a2", "[SEP]", "b3", "b4", "[SEP]",
+  ])
+}
+
+///|
 test "encode_pair applies fixed padding" {
   guard load_text("tests/data/bert.full.json") is Some(mj) else { return }
   let tok = @tokenizer.Tokenizer::from_str(mj).with_padding(

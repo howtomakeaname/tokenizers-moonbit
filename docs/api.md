@@ -97,12 +97,17 @@ pub(all) struct Encoding {
 
 ```moonbit
 pub(all) enum TruncationDirection { Left; Right }
+pub(all) enum TruncationStrategy { LongestFirst; OnlyFirst; OnlySecond }
 pub(all) struct TruncationParams {
   max_length : Int
   stride : Int
   direction : TruncationDirection
+  strategy : TruncationStrategy
 }
 fn TruncationParams::new(max_length : Int) -> TruncationParams  // stride 0, Right
+fn TruncationParams::with_stride(self : TruncationParams, stride : Int) -> TruncationParams
+fn TruncationParams::with_direction(self : TruncationParams, direction : TruncationDirection) -> TruncationParams
+fn TruncationParams::with_strategy(self : TruncationParams, strategy : TruncationStrategy) -> TruncationParams
 ```
 
 ### PaddingParams (`@tokenizer`)
@@ -121,6 +126,11 @@ pub(all) struct PaddingParams {
 fn PaddingParams::new(
   strategy : PaddingStrategy, pad_id~ : Int = 0, pad_token~ : String = "[PAD]",
 ) -> PaddingParams
+fn PaddingParams::fixed(length : Int, pad_id~ : Int = 0, pad_token~ : String = "[PAD]") -> PaddingParams
+fn PaddingParams::batch_longest(pad_id~ : Int = 0, pad_token~ : String = "[PAD]") -> PaddingParams
+fn PaddingParams::with_direction(self : PaddingParams, direction : PaddingDirection) -> PaddingParams
+fn PaddingParams::with_pad_type_id(self : PaddingParams, pad_type_id : Int) -> PaddingParams
+fn PaddingParams::with_pad_to_multiple_of(self : PaddingParams, pad_to_multiple_of : Int?) -> PaddingParams
 ```
 
 ### TokenizerError (`@types`)

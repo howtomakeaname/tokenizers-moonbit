@@ -86,7 +86,9 @@ enc.attention_mask // [1, 1]
 - **Offsets:** HuggingFace returns byte offsets by default; this port currently
   returns char offsets.
 - **Configuration style:** HuggingFace mutates via `enable_truncation` /
-  `enable_padding`; MoonBit uses chainable `with_truncation` / `with_padding`.
+  `enable_padding`; MoonBit uses chainable `with_truncation` / `with_padding`
+  plus `TruncationParams::with_*` and `PaddingParams::with_*` builders for
+  strategy, direction, stride, `pad_type_id`, and `pad_to_multiple_of`.
 - **Training:** deterministic WordLevel training is supported, including custom
   pre-tokenizers, pre-tokenized token streams, `min_frequency`, `special_tokens`,
   `vocab_size`, and HF-style frequency/lexical vocab ordering. WordPiece, BPE,

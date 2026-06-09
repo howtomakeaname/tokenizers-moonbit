@@ -149,6 +149,27 @@ fn bench_encode_batch_case(
 }
 
 ///|
+fn bench_encode_batch_padded_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+  text : String,
+) -> Unit raise {
+  guard load_model(model) is Some(base) else { return }
+  let tok = base.with_padding(
+    Some(
+      @tokenizer.PaddingParams::batch_longest(pad_id=0, pad_token="!").with_pad_to_multiple_of(
+        Some(8),
+      ),
+    ),
+  )
+  let batch = [text, "Hello", text + " tail", "a", text, "MoonBit", text, "x"]
+  b.bench(name="\{model}-encode-batch-padded-\{case_name}", fn() {
+    b.keep(tok.encode_batch(batch, add_special_tokens=false))
+  })
+}
+
+///|
 fn bench_encode_pair_batch_case(
   b : @bench.T,
   model : String,
@@ -1229,6 +1250,14 @@ test "bench encode_batch duplicate matrix" (b : @bench.T) {
   let mixed = corpus_mixed()
   for model in ["gpt2", "bert", "t5", "llama", "Qwen2.5", "qwen3_coder"] {
     bench_encode_batch_case(b, model, "mixedx8", mixed)
+  }
+}
+
+///|
+test "bench encode_batch padded matrix" (b : @bench.T) {
+  let mixed = corpus_mixed()
+  for model in ["gpt2", "bert", "llama", "Qwen2.5", "qwen3_coder"] {
+    bench_encode_batch_padded_case(b, model, "mixedx8", mixed)
   }
 }
 
