@@ -34,7 +34,7 @@
 | `Whitespace`、`WhitespaceSplit`、`BertPreTokenizer`、`Punctuation`、`Metaspace`、`Sequence` | ✅ |
 | `Split`：GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet / 尾部空白正则族 | ✅ |
 | `Digits`、`Delimiter`、`FixedLength`、`UnicodeScripts` | ✅ |
-| 任意 `Split` 正则 | 🚧 未识别 pattern 退化为单段 |
+| 任意 `Split` 正则 | 🚧 已支持的 deterministic family 正常加载；JSON 中不支持的 regex pattern 在加载期抛 `UnsupportedComponent`（手写构造的运行时 fallback 仍为单段） |
 
 ## Post-processors
 

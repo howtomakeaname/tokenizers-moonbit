@@ -108,24 +108,24 @@
 |---|---|
 | ByteLevel（手写 GPT-2 扫描）| ✅ |
 | Whitespace / WhitespaceSplit / BertPreTokenizer / Punctuation / Metaspace / Sequence | ✅ |
-| Punctuation SplitBehavior | ✅ | Removed / Isolated / MergedWithPrevious / MergedWithNext / Contiguous |
+| Punctuation / Split SplitBehavior | ✅ | Removed / Isolated / MergedWithPrevious / MergedWithNext / Contiguous；Split 的 Contiguous 会合并相邻 delimiter spans |
 | Split（GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet 家族正则）| ✅ 现代 LLM/CLIP 主线 |
-| Digits / Delimiter / FixedLength / UnicodeScripts | ✅ |
+| Digits / Delimiter / FixedLength / UnicodeScripts | ✅ | 已补直接 runtime offsets 单测 |
 | Split（任意正则）| 🚧 已覆盖主流 GPT/Qwen/o200k/CLIP/CJK/digit regex + 简单 literal / `\\s+` / `\\S+` / `\\s+$` / `[\\r\\n]`；复杂未知 pattern 加载期显式 Unsupported |
 
 ### Decoders
 | 组件 | 状态 |
 |---|---|
 | ByteLevel / WordPiece / BPEDecoder / Metaspace / Fuse / Replace / Strip / Sequence | ✅ |
-| ByteFallback | ✅（R2）|
-| CTC | ✅ |
+| ByteFallback | ✅（R2）| 覆盖连续 / 中断 / 非法 UTF-8 byte runs |
+| CTC | ✅ | 覆盖 duplicate collapse、pad drop、word delimiter 与 cleanup |
 
 ### Post-processors
 | 组件 | 状态 |
 |---|---|
 | TemplateProcessing（预解析 pieces）/ Bert / Roberta / ByteLevel / Sequence | ✅ |
 | RobertaProcessing pair type_ids | ✅ | 与 HF 一致，pair 两段均为 type_id 0 |
-| TemplateProcessing 字符串模板 DSL（$A/$B/$0:1）| ✅ |
+| TemplateProcessing 字符串模板 DSL（$A/$B/$0:1）| ✅ | `$A`/`$B` 与 `$0`/`$1` aliases 均有直接覆盖 |
 
 ### Tokenizer 核心
 | 能力 | 状态 |

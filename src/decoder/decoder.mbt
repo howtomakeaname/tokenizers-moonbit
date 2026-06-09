@@ -25,6 +25,20 @@ pub fn Decoder::replace(pattern : String, content : String) -> Decoder {
 }
 
 ///|
+pub fn Decoder::byte_fallback() -> Decoder {
+  ByteFallback
+}
+
+///|
+pub fn Decoder::ctc(
+  pad_token~ : String = "<pad>",
+  word_delimiter_token~ : String = "|",
+  cleanup~ : Bool = true,
+) -> Decoder {
+  CTC(pad_token~, word_delimiter_token~, cleanup~)
+}
+
+///|
 /// Parse a decoder config object.
 pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
   let obj = @types.as_object(j, "decoder")

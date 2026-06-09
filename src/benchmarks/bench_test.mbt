@@ -741,6 +741,32 @@ fn bench_decoder_replace_regex_case(b : @bench.T, case_name : String) -> Unit {
 }
 
 ///|
+fn bench_decoder_bytefallback_case(b : @bench.T, case_name : String) -> Unit {
+  let decoder = @decoder.Decoder::byte_fallback()
+  let tokens = [
+    "Hello", " ", "<0xF0>", "<0x9F>", "<0x99>", "<0x82>", " ", "<0xE2>", "<0x82>", "<0xAC>", "!",
+  ]
+  b.bench(name="decoder-bytefallback-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
+fn bench_decoder_ctc_case(b : @bench.T, case_name : String) -> Unit {
+  let decoder = @decoder.Decoder::ctc(
+    pad_token="_",
+    word_delimiter_token="|",
+    cleanup=false,
+  )
+  let tokens = [
+    "h", "h", "e", "l", "l", "o", "_", "|", "w", "w", "o", "r", "l", "d",
+  ]
+  b.bench(name="decoder-ctc-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_decoder_replace_min_ws_regex_case(
   b : @bench.T,
   case_name : String,
@@ -1056,6 +1082,37 @@ fn bench_split_exact_ws_regex_case(b : @bench.T, case_name : String) -> Unit {
   )
   let text = corpus_mixed() + " \t\u{a0} exact\n\n\n runs    end"
   b.bench(name="pretokenizer-split-exact-ws-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_literal_contiguous_case(b : @bench.T, case_name : String) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "=",
+    @pretokenizer.SplitBehavior::contiguous(),
+    false,
+    false,
+  )
+  let text = corpus_mixed() + " a===b x====y z==done"
+  b.bench(name="pretokenizer-split-literal-contiguous-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_exact_digit_contiguous_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "\\d{2}",
+    @pretokenizer.SplitBehavior::contiguous(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " ids 20260610 and 12345678"
+  b.bench(name="pretokenizer-split-exact-digit-contiguous-\{case_name}", fn() {
     b.keep(pt.pre_tokenize(text, base_offset=0))
   })
 }
@@ -1613,6 +1670,16 @@ test "bench decoder replace regex" (b : @bench.T) {
 }
 
 ///|
+test "bench decoder bytefallback" (b : @bench.T) {
+  bench_decoder_bytefallback_case(b, "mixed")
+}
+
+///|
+test "bench decoder ctc" (b : @bench.T) {
+  bench_decoder_ctc_case(b, "mixed")
+}
+
+///|
 test "bench decoder replace min whitespace regex" (b : @bench.T) {
   bench_decoder_replace_min_ws_regex_case(b, "mixed")
 }
@@ -1730,6 +1797,16 @@ test "bench split horizontal whitespace regex" (b : @bench.T) {
 ///|
 test "bench split exact whitespace regex" (b : @bench.T) {
   bench_split_exact_ws_regex_case(b, "mixed")
+}
+
+///|
+test "bench split literal contiguous" (b : @bench.T) {
+  bench_split_literal_contiguous_case(b, "mixed")
+}
+
+///|
+test "bench split exact digit contiguous" (b : @bench.T) {
+  bench_split_exact_digit_contiguous_case(b, "mixed")
 }
 
 ///|

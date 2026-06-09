@@ -42,6 +42,38 @@ test "unicode scripts splits on script changes like sentencepiece" {
 }
 
 ///|
+test "digits delimiter and fixed length runtime pretokenizers keep offsets" {
+  let digit_runs = PreTokenizer::Digits(individual_digits=false).pre_tokenize(
+    "a12b٣٤",
+    base_offset=3,
+  )
+  @test.assert_eq(digit_runs.map(x => x.value), ["a", "12", "b", "٣٤"])
+  @test.assert_eq(digit_runs.map(x => x.offsets), [
+    (3, 4), (4, 6), (6, 7), (7, 9),
+  ])
+
+  let individual = PreTokenizer::Digits(individual_digits=true).pre_tokenize(
+    "a12",
+    base_offset=0,
+  )
+  @test.assert_eq(individual.map(x => x.value), ["a", "1", "2"])
+
+  let delimited = PreTokenizer::Delimiter(delimiter=',').pre_tokenize(
+    ",a,,中,b,",
+    base_offset=10,
+  )
+  @test.assert_eq(delimited.map(x => x.value), ["a", "中", "b"])
+  @test.assert_eq(delimited.map(x => x.offsets), [(11, 12), (14, 15), (16, 17)])
+
+  let fixed = PreTokenizer::FixedLength(length=2).pre_tokenize(
+    "ab中🙂d",
+    base_offset=4,
+  )
+  @test.assert_eq(fixed.map(x => x.value), ["ab", "中🙂", "d"])
+  @test.assert_eq(fixed.map(x => x.offsets), [(4, 6), (6, 8), (8, 9)])
+}
+
+///|
 test "split pretokenizer supports literal behavior modes" {
   let removed = PreTokenizer::Split(
     pattern=",",
@@ -60,6 +92,23 @@ test "split pretokenizer supports literal behavior modes" {
   @test.assert_eq(isolated.map(x => x.value), ["a", ",", "b"])
   @test.assert_eq(isolated.map(x => x.offsets), [(0, 1), (1, 2), (2, 3)])
 
+  let contiguous = PreTokenizer::Split(
+    pattern="=",
+    behavior=Contiguous,
+    invert=false,
+    regex=false,
+  ).pre_tokenize("a===b", base_offset=4)
+  @test.assert_eq(contiguous.map(x => x.value), ["a", "===", "b"])
+  @test.assert_eq(contiguous.map(x => x.offsets), [(4, 5), (5, 8), (8, 9)])
+
+  let previous = PreTokenizer::Split(
+    pattern=",",
+    behavior=MergedWithPrevious,
+    invert=false,
+    regex=false,
+  ).pre_tokenize("a,b", base_offset=0)
+  @test.assert_eq(previous.map(x => x.value), ["a,", "b"])
+
   let next = PreTokenizer::Split(
     pattern=",",
     behavior=MergedWithNext,
@@ -67,6 +116,14 @@ test "split pretokenizer supports literal behavior modes" {
     regex=false,
   ).pre_tokenize("a,b", base_offset=0)
   @test.assert_eq(next.map(x => x.value), ["a", ",b"])
+
+  let leading_next = PreTokenizer::Split(
+    pattern=",",
+    behavior=MergedWithNext,
+    invert=false,
+    regex=false,
+  ).pre_tokenize(",a,b", base_offset=0)
+  @test.assert_eq(leading_next.map(x => x.value), [",a", ",b"])
 }
 
 ///|
@@ -112,6 +169,14 @@ test "split pretokenizer supports common regex spans" {
     (10, 13),
     (13, 15),
   ])
+
+  let contiguous_digits = PreTokenizer::Split(
+    pattern="\\d{2}",
+    behavior=Contiguous,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a1234b", base_offset=0)
+  @test.assert_eq(contiguous_digits.map(x => x.value), ["a", "1234", "b"])
 
   let horizontal_spaces = PreTokenizer::Split(
     pattern="[^\\S\\r\\n]+",

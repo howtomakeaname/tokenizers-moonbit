@@ -118,3 +118,20 @@ test "template processing parses HF string DSL" {
   @test.assert_eq(pair.type_ids, [0, 0, 0, 1, 1])
   @test.assert_eq(pair.sequence_ids(), [None, Some(0), None, Some(1), None])
 }
+
+///|
+test "template processing accepts numeric sequence aliases" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"<s>":0,"</s>":1,"hello":2,"world":3,"[UNK]":4},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"TemplateProcessing",
+    #|   "single":"<s>:0 $0 </s>:0",
+    #|   "pair":"<s>:0 $0 </s>:0 $1:1 </s>:1",
+    #|   "special_tokens":{"<s>":{"id":"<s>","ids":[0],"tokens":["<s>"]},"</s>":{"id":"</s>","ids":[1],"tokens":["</s>"]}}}}
+  let tok = @tokenizer.Tokenizer::from_str(json)
+  let pair = tok.encode_pair("hello", "world", add_special_tokens=true)
+  @test.assert_eq(pair.tokens, ["<s>", "hello", "</s>", "world", "</s>"])
+  @test.assert_eq(pair.type_ids, [0, 0, 0, 1, 1])
+  @test.assert_eq(pair.sequence_ids(), [None, Some(0), None, Some(1), None])
+}

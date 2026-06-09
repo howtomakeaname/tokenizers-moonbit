@@ -34,7 +34,7 @@ Chinese version: [`docs/zh/components.md`](./zh/components.md)
 | `Whitespace`, `WhitespaceSplit`, `BertPreTokenizer`, `Punctuation`, `Metaspace`, `Sequence` | ✅ |
 | `Split` with GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet / trailing-whitespace regex families | ✅ |
 | `Digits`, `Delimiter`, `FixedLength`, `UnicodeScripts` | ✅ |
-| `Split` with arbitrary regex | 🚧 unrecognized patterns fall back to one piece |
+| `Split` with arbitrary regex | 🚧 supported deterministic families load normally; unsupported JSON regex patterns raise `UnsupportedComponent` at load time (manually constructed runtime fallback remains one piece) |
 
 ## Post-processors
 

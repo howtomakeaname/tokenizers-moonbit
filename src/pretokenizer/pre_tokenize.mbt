@@ -133,6 +133,7 @@ fn apply_split_matches(
   let out : Array[@types.Split] = []
   let mut cursor = 0
   let mut pending_next : @common.Span? = None
+  let mut pending_contiguous : @common.Span? = None
   fn emit_span(span : @common.Span) -> Unit {
     if span.stop <= span.start {
       return
@@ -142,7 +143,17 @@ fn apply_split_matches(
       offsets: (base_offset + span.start, base_offset + span.stop),
     })
   }
+  fn flush_contiguous() -> Unit {
+    match pending_contiguous {
+      Some(p) => {
+        emit_span(p)
+        pending_contiguous = None
+      }
+      None => ()
+    }
+  }
   fn emit_non_delim(span : @common.Span) -> Unit {
+    flush_contiguous()
     match pending_next {
       Some(p) => {
         out.push({
@@ -158,7 +169,18 @@ fn apply_split_matches(
   fn emit_delim(span : @common.Span) -> Unit {
     match behavior {
       Removed => ()
-      Isolated | Contiguous => emit_span(span)
+      Isolated => emit_span(span)
+      Contiguous =>
+        match pending_contiguous {
+          Some(p) =>
+            if p.stop == span.start {
+              pending_contiguous = Some({ start: p.start, stop: span.stop })
+            } else {
+              emit_span(p)
+              pending_contiguous = Some(span)
+            }
+          None => pending_contiguous = Some(span)
+        }
       MergedWithPrevious =>
         if out.length() > 0 {
           let idx = out.length() - 1
@@ -197,6 +219,7 @@ fn apply_split_matches(
       emit_non_delim(tail)
     }
   }
+  flush_contiguous()
   match pending_next {
     Some(p) => emit_span(p)
     None => ()

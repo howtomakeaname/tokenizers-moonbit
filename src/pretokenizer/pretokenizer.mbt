@@ -63,6 +63,21 @@ pub fn SplitBehavior::isolated() -> SplitBehavior {
 }
 
 ///|
+pub fn SplitBehavior::contiguous() -> SplitBehavior {
+  Contiguous
+}
+
+///|
+pub fn SplitBehavior::merged_with_previous() -> SplitBehavior {
+  MergedWithPrevious
+}
+
+///|
+pub fn SplitBehavior::merged_with_next() -> SplitBehavior {
+  MergedWithNext
+}
+
+///|
 pub fn PreTokenizer::split(
   pattern : String,
   behavior : SplitBehavior,

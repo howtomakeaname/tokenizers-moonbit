@@ -415,3 +415,40 @@ test "SentencePiece decoder sequence handles replace byte fallback fuse strip" {
     "Hello 🙂",
   )
 }
+
+///|
+test "ByteFallback decoder handles valid invalid and interrupted byte runs" {
+  @test.assert_eq(
+    Decoder::ByteFallback.decode(["a", "<0xE2>", "<0x82>", "<0xAC>", "b"]),
+    "a€b",
+  )
+  @test.assert_eq(Decoder::ByteFallback.decode(["<0xFF>"]), "�")
+  @test.assert_eq(
+    Decoder::ByteFallback.decode(["<0xE2>", "x", "<0x82>", "<0xAC>"]),
+    "�x��",
+  )
+}
+
+///|
+test "Strip and CTC decoders have direct coverage" {
+  @test.assert_eq(
+    Decoder::Strip(content=' ', start=1, stop=2).decode(["  hi   ", " ok "]),
+    " hi ok",
+  )
+  @test.assert_eq(
+    Decoder::CTC(
+      pad_token="_",
+      word_delimiter_token="|",
+      cleanup=false,
+    ).decode(["h", "h", "i", "_", "|", "t", "t", "h", "e", "r", "e"]),
+    "hi there",
+  )
+  @test.assert_eq(
+    Decoder::CTC(
+      pad_token="_",
+      word_delimiter_token="|",
+      cleanup=true,
+    ).decode(["hi", " ?"]),
+    "hi?",
+  )
+}
