@@ -27,6 +27,27 @@ test "from_str parse cache returns fresh tokenizer state" {
 }
 
 ///|
+test "from_str parse cache keeps several tokenizer jsons hot" {
+  let json1 =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"one":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let json2 =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"two":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let a1 = Tokenizer::from_str(json1).with_padding(
+    Some(PaddingParams::new(Fixed(2), pad_id=1, pad_token="[UNK]")),
+  )
+  let b = Tokenizer::from_str(json2)
+  let a2 = Tokenizer::from_str(json1)
+  @test.assert_eq(a1.encode("one", add_special_tokens=false).ids, [0, 1])
+  @test.assert_eq(b.encode("two", add_special_tokens=false).ids, [0])
+  @test.assert_eq(a2.encode("one", add_special_tokens=false).ids, [0])
+  @test.assert_eq(a2.encode("two", add_special_tokens=false).ids, [1])
+}
+
+///|
 test "BPE ignore_merges uses whole-token fast path before fallback merges" {
   let json =
     #|{"version":"1.0",

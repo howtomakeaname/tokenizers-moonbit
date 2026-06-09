@@ -130,7 +130,7 @@
 ### Tokenizer 核心
 | 能力 | 状态 |
 |---|---|
-| from_str / from_file（x/fs 全后端）| ✅ |
+| from_str / from_file（x/fs 全后端）| ✅ | `from_str` 使用小型多项 parsed-JSON cache，交替加载多个稳定 tokenizer.json 时避免重复解析 |
 | encode / encode_pair / decode | ✅ |
 | AddedVocabulary（single_word/lstrip/rstrip/normalized）| ✅ |
 | token_to_id / id_to_token / get_vocab / get_vocab_size | ✅ | `get_vocab(with_added_tokens=true)` 默认包含 added tokens |
@@ -187,7 +187,7 @@ Array 增长分配；`from_pretrained` 增加单项 source cache 后，完整 na
 均快于 HF（约 0.25x–0.68x）；decode 同档或快于 HF，decode_batch 增加重复 id
 序列单批缓存后 quick native 抽样进一步改善；SentencePiece decoder sequence 增加融合快路径后
 llama decode quick native 约 0.17x；from_str
-增加单项 parsed-JSON cache 后，quick native 抽样加载路径已明显快于 HF（gpt2
+增加多项 parsed-JSON cache 后，quick native 抽样加载路径已明显快于 HF（gpt2
 0.45x、bert 0.30x、llama 0.61x、Qwen2.5 0.39x、phi4-mini 0.31x、qwen3-coder
 0.37x；local from_pretrained-file 约 0.28x–0.63x）。下一轮性能优化优先级：完整
 `--corpus all` 回归门禁/夜间化 > 大词表 JSON 冷加载解析。

@@ -17,6 +17,8 @@ fn from_pretrained_cached(
 ```
 
 - `from_str` parses `tokenizer.json` text; it does no file IO and works on all backends.
+  A small multi-entry parsed-JSON cache keeps repeated or alternating stable
+  tokenizer payloads hot while still returning fresh tokenizer state.
 - `from_file` reads via `moonbitlang/x/fs` and then calls `from_str`.
 - `from_pretrained` accepts a tokenizer JSON file, a local directory containing
   `tokenizer.json`, or an already-populated HuggingFace Hub cache entry. It does

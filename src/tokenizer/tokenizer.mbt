@@ -22,12 +22,16 @@ pub struct Tokenizer {
 }
 
 // `from_str` is often called repeatedly with the same stable tokenizer.json in
-// benchmarks, REPLs and tests. Cache only the parsed JSON tree (not the
-// Tokenizer), so each call still builds fresh mutable model/added-token caches
-// and builder state while avoiding the largest repeated parse cost.
+// benchmarks, REPLs and tests. Cache only parsed JSON trees (not Tokenizers), so
+// each call still builds fresh mutable model/added-token caches and builder
+// state while avoiding the largest repeated parse cost. Keep a few entries so
+// alternating model loads (e.g. gpt2 + bert in services/tests) stay hot.
 
 ///|
-let from_str_parse_cache : Ref[(String, Json)?] = { val: None }
+let from_str_parse_cache : Map[String, Json] = {}
+
+///|
+let from_str_parse_cache_limit : Int = 4
 
 ///|
 /// Load a tokenizer from the textual contents of a `tokenizer.json`.
@@ -75,17 +79,17 @@ pub fn Tokenizer::from_str(
 
 ///|
 fn parse_tokenizer_json(json : String) -> Json raise @types.TokenizerError {
-  match from_str_parse_cache.val {
-    Some((cached, parsed)) =>
-      if cached.length() == json.length() && cached == json {
-        return parsed
-      }
+  match from_str_parse_cache.get(json) {
+    Some(parsed) => return parsed
     None => ()
   }
   let parsed = @json.parse(json) catch {
     err => raise @types.ParseError("invalid tokenizer.json: \{err}")
   }
-  from_str_parse_cache.val = Some((json, parsed))
+  if from_str_parse_cache.length() >= from_str_parse_cache_limit {
+    from_str_parse_cache.clear()
+  }
+  from_str_parse_cache[json] = parsed
   parsed
 }
 

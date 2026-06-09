@@ -114,7 +114,9 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
 - **Batching:** single-threaded by design for wasm/js targets.
 - **Performance:** BPE merging uses a priority-queue heap with lazy stale
   removal plus word caching; WordPiece and Unigram also cache repeated words;
-  BPE loading fills dense reverse vocab tables directly.
+  BPE loading fills dense reverse vocab tables directly; repeated/alternating
+  `from_str` loads reuse a small parsed-JSON cache while constructing fresh
+  tokenizer state each time.
 - **Training:** deterministic WordLevel training is supported with default
   `WhitespaceSplit`, caller-provided pre-tokenizers, or pre-tokenized token
   streams, including `min_frequency`, `special_tokens`, `vocab_size`, and

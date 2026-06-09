@@ -19,6 +19,8 @@ fn from_pretrained_cached(
   以及已存在的 HuggingFace Hub 本地 cache（按 `$HUGGINGFACE_HUB_CACHE`、
   `$HF_HOME/hub`、`$HOME/.cache/huggingface/hub` 顺序解析）。核心库不做网络下载；
   稳定 pretrained source 会进入小型进程内 cache，优化重复加载。
+- `from_str` 使用小型多项 parsed-JSON cache，重复或交替加载稳定
+  tokenizer payload 时避免重复 JSON 解析，同时每次仍返回全新的 tokenizer 状态。
 - `from_pretrained_cached` 可显式传入本地 Hub cache 根目录和 revision，对齐
   HF `local_files_only=True` 的离线使用方式。
 

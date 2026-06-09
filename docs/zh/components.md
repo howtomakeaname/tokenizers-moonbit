@@ -84,7 +84,8 @@ GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E
 - **Offsets：** 默认返回字符偏移；可通过 byte-offset encode API 对齐 HF byte offsets。
 - **Batch：** `encode_batch` 为串行实现，适配 wasm/js 目标。
 - **性能：** BPE 合并使用优先队列与惰性失效，BPE / WordPiece / Unigram 均带
-  repeated-word cache；加载时直接填充 dense 反向词表。
+  repeated-word cache；加载时直接填充 dense 反向词表。重复或交替 `from_str`
+  加载会复用小型 parsed-JSON cache，但每次仍构建全新的 tokenizer 状态。
 - **训练：** 已支持确定性 WordLevel 训练，可使用默认 `WhitespaceSplit`、调用方传入的
   pre-tokenizer 或已预切分 token 流，并支持 `min_frequency`、`special_tokens`、
   `vocab_size` 以及 HF 风格的频次/词典序词表排序；也已提供确定性 WordPiece、
