@@ -214,6 +214,24 @@ fn bench_precompiled_normalizer_case(b : @bench.T, case_name : String) -> Unit {
 }
 
 ///|
+fn bench_precompiled_binary_charsmap_case(b : @bench.T) -> Unit raise {
+  let charsmap = "DAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQQ0AAAAAAAB4AA=="
+  let json = "{\"type\":\"Precompiled\",\"precompiled_charsmap\":\"" +
+    charsmap +
+    "\"}"
+  let normalizer = @normalizer.Normalizer::from_json(@json.parse(json))
+  let text = "A plain ASCII payload with repeated A markers. "
+  let sb = StringBuilder::new()
+  for _ in 0..<256 {
+    sb.write_string(text)
+  }
+  let input = sb.to_string()
+  b.bench(name="normalizer-precompiled-binary-charsmap", fn() {
+    b.keep(normalizer.normalize(input))
+  })
+}
+
+///|
 fn bench_load_case(b : @bench.T, model : String) -> Unit {
   guard load_text("tests/data/\{model}.full.json") is Some(json) else { return }
   b.bench(name="\{model}-from_str", fn() {
@@ -1085,6 +1103,11 @@ test "bench offset lookup matrix" (b : @bench.T) {
 ///|
 test "bench precompiled normalizer" (b : @bench.T) {
   bench_precompiled_normalizer_case(b, "mixed")
+}
+
+///|
+test "bench precompiled binary charsmap" (b : @bench.T) {
+  bench_precompiled_binary_charsmap_case(b)
 }
 
 ///|

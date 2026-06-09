@@ -5,6 +5,12 @@
 // and Unicode NFC/NFD/NFKC/NFKD are implemented in normalize.mbt.
 
 ///|
+pub(all) struct PrecompiledCharsMap {
+  trie : Array[Int]
+  normalized : Array[Int]
+}
+
+///|
 pub(all) enum Normalizer {
   NFC
   NFD
@@ -20,6 +26,8 @@ pub(all) enum Normalizer {
   Nmt
   // SentencePiece Precompiled charsmap; common SPM NFKC+whitespace map.
   Precompiled
+  // Parsed SentencePiece binary `precompiled_charsmap` double-array trie.
+  PrecompiledMap(data~ : PrecompiledCharsMap)
   BertNormalizer(
     clean_text~ : Bool,
     handle_chinese_chars~ : Bool,
@@ -56,7 +64,16 @@ pub fn Normalizer::from_json(
       )
     "Prepend" => Prepend(prepend=@types.get_str(obj, "prepend", default=""))
     "Nmt" => Nmt
-    "Precompiled" => Precompiled
+    "Precompiled" =>
+      match obj.get("precompiled_charsmap") {
+        Some(String(charsmap)) =>
+          if charsmap.is_empty() {
+            Precompiled
+          } else {
+            PrecompiledMap(data=parse_precompiled_charsmap(charsmap))
+          }
+        _ => Precompiled
+      }
     "BertNormalizer" => {
       let lowercase = @types.get_bool(obj, "lowercase", default=true)
       // strip_accents defaults to the lowercase value when absent/null (HF).
@@ -84,6 +101,92 @@ pub fn Normalizer::from_json(
       Sequence(arr.map(x => Normalizer::from_json(x)))
     }
     other => raise @types.UnsupportedComponent("normalizer type: \{other}")
+  }
+}
+
+///|
+fn parse_precompiled_charsmap(
+  charsmap : String,
+) -> PrecompiledCharsMap raise @types.TokenizerError {
+  let bytes = decode_base64(charsmap)
+  guard read_le_u32(bytes, 0) is Some(trie_size) else {
+    raise @types.ParseError("invalid precompiled_charsmap header")
+  }
+  if trie_size < 0 || trie_size % 4 != 0 || 4 + trie_size > bytes.length() {
+    raise @types.ParseError("invalid precompiled_charsmap trie length")
+  }
+  let trie : Array[Int] = []
+  let units = trie_size / 4
+  for i in 0..<units {
+    guard read_le_u32(bytes, 4 + i * 4) is Some(unit) else {
+      raise @types.ParseError("invalid precompiled_charsmap trie unit")
+    }
+    trie.push(unit)
+  }
+  if trie.length() == 0 {
+    raise @types.ParseError("invalid precompiled_charsmap empty trie")
+  }
+  let normalized : Array[Int] = []
+  for i in (4 + trie_size)..<bytes.length() {
+    normalized.push(bytes[i])
+  }
+  { trie, normalized }
+}
+
+///|
+fn read_le_u32(bytes : Array[Int], offset : Int) -> Int? {
+  if offset < 0 || offset + 4 > bytes.length() {
+    return None
+  }
+  Some(
+    bytes[offset] +
+    bytes[offset + 1] * 256 +
+    bytes[offset + 2] * 65536 +
+    bytes[offset + 3] * 16777216,
+  )
+}
+
+///|
+fn decode_base64(s : String) -> Array[Int] raise @types.TokenizerError {
+  let out : Array[Int] = []
+  let mut acc = 0
+  let mut bits = 0
+  for c in s {
+    if c == '=' {
+      break
+    }
+    let v = base64_value(c)
+    if v < 0 {
+      if c == '\n' || c == '\r' || c == '\t' || c == ' ' {
+        continue
+      }
+      raise @types.ParseError("invalid precompiled_charsmap base64")
+    }
+    acc = (acc << 6) | v
+    bits = bits + 6
+    while bits >= 8 {
+      bits = bits - 8
+      out.push((acc >> bits) & 0xFF)
+    }
+  }
+  out
+}
+
+///|
+fn base64_value(c : Char) -> Int {
+  let u = c.to_int()
+  if u >= 65 && u <= 90 {
+    u - 65
+  } else if u >= 97 && u <= 122 {
+    u - 97 + 26
+  } else if u >= 48 && u <= 57 {
+    u - 48 + 52
+  } else if c == '+' {
+    62
+  } else if c == '/' {
+    63
+  } else {
+    -1
   }
 }
 

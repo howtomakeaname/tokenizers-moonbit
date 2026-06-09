@@ -5,4 +5,5 @@ import {
   "tokenizers-moonbit/normalizer",
   "moonbitlang/x/fs",
   "moonbitlang/core/bench",
+  "moonbitlang/core/json",
 } for "test"

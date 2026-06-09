@@ -73,6 +73,17 @@ test "Precompiled normalizer maps whitespace without collapsing runs" {
 }
 
 ///|
+test "Precompiled normalizer decodes tokenizer.json binary charsmap" {
+  // Minimal SentencePiece double-array charsmap: maps byte key "A" -> "x".
+  let charsmap = "DAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQQ0AAAAAAAB4AA=="
+  let json = "{\"type\":\"Precompiled\",\"precompiled_charsmap\":\"" +
+    charsmap +
+    "\"}"
+  let normalizer = Normalizer::from_json(@json.parse(json))
+  @test.assert_eq(normalizer.normalize("ABC A"), "xBC x")
+}
+
+///|
 test "Replace normalizer supports common regex whitespace patterns" {
   @test.assert_eq(
     Normalizer::Replace(pattern=" {2,}", content=" ").normalize("a   b c"),
