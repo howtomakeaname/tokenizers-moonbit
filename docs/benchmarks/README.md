@@ -29,6 +29,9 @@ python3 scripts/bench_compare.py --target native --corpus mixed
 python3 scripts/bench_compare.py --target native --corpus mixed --quick
 # full model × corpus encode matrix
 python3 scripts/bench_compare.py --target native --corpus all
+# CI/nightly gate: fail if any compared row is >10% slower than HF and persist JSON
+python3 scripts/bench_compare.py --target native --corpus all \
+  --fail-above 1.10 --json-out reports/bench-native-all.json
 ```
 
 Corpora:
@@ -38,7 +41,7 @@ Corpora:
 - `code`: MoonBit-like code, identifiers and comments; targets coder models.
 - `long`: repeated mixed + code text; stresses BPE merge loops and vocab lookup.
 
-The MoonBit corpora live in `src/tokenizer/bench_test.mbt`. The Python baseline
+The MoonBit corpora live in `src/benchmarks/bench_test.mbt`. The Python baseline
 uses the same corpus names in `scripts/bench_python.py`.
 
 ## Required comparison workflow
@@ -50,6 +53,10 @@ the comparison script and use its `Moon/HF` ratio:
 python3 scripts/bench_compare.py --target native --corpus mixed
 python3 scripts/bench_compare.py --target native --corpus code
 python3 scripts/bench_compare.py --target native --corpus all
+# Optional hard gate for CI/nightly jobs:
+python3 scripts/bench_compare.py --target native --corpus all --fail-above 1.10
+# Optional structured output for trend dashboards/artifacts:
+python3 scripts/bench_compare.py --target native --corpus all --json-out reports/bench.json
 ```
 
 Interpretation:
@@ -60,6 +67,10 @@ Interpretation:
   claiming benchmark parity.
 
 The script also prints an `Optimization focus` list sorted by the largest gap.
+`--fail-above <ratio>` turns that same comparison into a regression gate by
+exiting non-zero when any non-skipped row exceeds the threshold; `--json-out`
+writes the full row list, skipped HF baselines, optimization focus and failures
+as machine-readable JSON for CI artifacts or nightly trend collection.
 If an optional Python dependency required by a specific HF baseline is missing
 (notably NumPy for some pre-tokenized inputs in recent `tokenizers` wheels), the
 script prints a `Skipped HF baselines` section and continues reporting all other

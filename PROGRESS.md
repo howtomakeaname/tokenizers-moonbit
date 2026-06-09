@@ -175,7 +175,8 @@ MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的
 
 默认 benchmark 对比覆盖 `scripts/bench_python.py` 中的完整模型 fixture 矩阵；
 `--quick` 仅用于本地冒烟，正式性能结论必须跑 `--corpus all` 或至少全模型
-`mixed` 矩阵。若 Python `tokenizers` wheel 对 pre-tokenized 输入需要 NumPy 而本机未安装，
+`mixed` 矩阵。`bench_compare.py` 已提供 `--fail-above <ratio>` 用于 CI/nightly 性能
+门禁（超过阈值时非 0 退出），并提供 `--json-out <path>` 输出 rows、skipped HF baselines、optimization focus 与 failures 的结构化报告，便于 artifact / 趋势看板收集。若 Python `tokenizers` wheel 对 pre-tokenized 输入需要 NumPy 而本机未安装，
 `bench_compare.py` 会把对应 HF baseline 记入 `Skipped HF baselines` 并继续输出其它比值，避免整轮对比中断。最近一次全模型抽样（native / mixed，BPE word cache 后）：BPE/
 WordPiece/CLIP 主线大多快于 HF（gpt2 0.43x、llama 0.28x、Qwen2.5 0.58x、
 bert 0.53x、clip 0.48x）；decode 多数约 0.5x 或同水平；加载大模型基本同
@@ -191,8 +192,7 @@ Array 增长分配；`from_pretrained` 增加单项 source cache 后，完整 na
 llama decode quick native 约 0.17x；from_str
 增加多项 parsed-JSON cache 后，quick native 抽样加载路径已明显快于 HF（gpt2
 0.45x、bert 0.30x、llama 0.61x、Qwen2.5 0.39x、phi4-mini 0.31x、qwen3-coder
-0.37x；local from_pretrained-file 约 0.28x–0.63x）。下一轮性能优化优先级：完整
-`--corpus all` 回归门禁/夜间化 > 大词表 JSON 冷加载解析。
+0.37x；local from_pretrained-file 约 0.28x–0.63x）。下一轮性能优化优先级：大词表 JSON 冷加载解析与更长期的 nightly 趋势落盘。
 
 ## 已知缺口与取舍（TODO）
 

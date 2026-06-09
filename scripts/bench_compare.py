@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import os
 import re
 import subprocess
@@ -823,7 +824,53 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     return rows
 
 
-def print_rows(rows: list[Row]) -> None:
+def row_to_json(row: Row) -> dict[str, float | str]:
+    return {
+        "name": row.name,
+        "moon_us": row.moon_us,
+        "hf_us": row.hf_us,
+        "ratio": row.ratio,
+        "verdict": row.verdict,
+    }
+
+
+def failing_rows(rows: list[Row], fail_above: float | None) -> list[Row]:
+    if fail_above is None:
+        return []
+    return sorted([r for r in rows if r.ratio > fail_above], key=lambda r: r.ratio, reverse=True)
+
+
+def write_json_report(
+    path: str,
+    *,
+    rows: list[Row],
+    skipped: list[str],
+    target: str,
+    corpora: list[str],
+    models: list[str],
+    fail_above: float | None,
+) -> None:
+    failures = failing_rows(rows, fail_above)
+    report = {
+        "target": target,
+        "corpora": corpora,
+        "models": models,
+        "fail_above": fail_above,
+        "passed": not failures,
+        "rows": [row_to_json(r) for r in rows],
+        "optimization_focus": [row_to_json(r) for r in sorted(rows, key=lambda r: r.ratio, reverse=True) if r.ratio > 1.10],
+        "failures": [row_to_json(r) for r in failures],
+        "skipped_hf_baselines": skipped,
+    }
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+
+def print_rows(rows: list[Row], *, focus_limit: int = 8) -> None:
     print("| case | MoonBit µs/op | HF tokenizers µs/op | Moon/HF | verdict |")
     print("|---|---:|---:|---:|---|")
     for r in rows:
@@ -831,7 +878,7 @@ def print_rows(rows: list[Row]) -> None:
     slower = sorted([r for r in rows if r.ratio > 1.10], key=lambda r: r.ratio, reverse=True)
     if slower:
         print("\nOptimization focus:")
-        for r in slower[:8]:
+        for r in slower[:focus_limit]:
             print(f"- {r.name}: {r.ratio:.2f}x slower than HF")
     if SKIPPED_BASELINES:
         print("\nSkipped HF baselines:")
@@ -845,11 +892,32 @@ def main() -> None:
     parser.add_argument("--corpus", default="mixed", choices=sorted(CORPORA.keys()) + ["all"])
     parser.add_argument("--models", default=",".join(DEFAULT_MODELS), help="comma-separated model names")
     parser.add_argument("--quick", action="store_true", help="compare representative core models only")
+    parser.add_argument("--fail-above", type=float, default=None, metavar="RATIO", help="exit non-zero if any compared row has Moon/HF above this ratio")
+    parser.add_argument("--json-out", default=None, metavar="PATH", help="write a structured JSON report for CI/nightly trend collection")
+    parser.add_argument("--focus-limit", type=int, default=8, help="maximum Optimization focus rows to print")
     args = parser.parse_args()
+    SKIPPED_BASELINES.clear()
     models = QUICK_MODELS if args.quick else [m for m in args.models.split(",") if m]
     corpora = list(CORPORA.keys()) if args.corpus == "all" else [args.corpus]
     print(f"Comparing target={args.target}, corpus={','.join(corpora)}, models={','.join(models)}")
-    print_rows(compare(models, corpora, args.target))
+    rows = compare(models, corpora, args.target)
+    print_rows(rows, focus_limit=args.focus_limit)
+    failures = failing_rows(rows, args.fail_above)
+    if args.json_out:
+        write_json_report(
+            args.json_out,
+            rows=rows,
+            skipped=SKIPPED_BASELINES,
+            target=args.target,
+            corpora=corpora,
+            models=models,
+            fail_above=args.fail_above,
+        )
+    if failures:
+        print(f"\nBenchmark gate failed: {len(failures)} row(s) above {args.fail_above:.2f}x")
+        for r in failures[: args.focus_limit]:
+            print(f"- {r.name}: {r.ratio:.2f}x")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
