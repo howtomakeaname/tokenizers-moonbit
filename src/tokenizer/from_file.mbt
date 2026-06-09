@@ -45,6 +45,26 @@ pub fn Tokenizer::save(
 }
 
 ///|
+/// Save this tokenizer into an HF-style directory as `tokenizer.json`.
+///
+/// This mirrors the common `save_pretrained(dir)` workflow used by HF users and
+/// returns the concrete JSON path so callers can pass it to `from_file` or log
+/// the produced artifact. The directory is created when possible; parent
+/// directory creation remains the caller's responsibility to keep filesystem
+/// behavior deterministic across MoonBit backends.
+pub fn Tokenizer::save_pretrained(
+  self : Tokenizer,
+  dir : String,
+) -> String raise @types.TokenizerError {
+  if !@fs.path_exists(dir) {
+    @fs.create_dir(dir) catch { _ => () }
+  }
+  let path = join_tokenizer_json(dir)
+  self.save(path)
+  path
+}
+
+///|
 /// Load a tokenizer from a local HF-style directory containing `tokenizer.json`,
 /// directly from a tokenizer JSON file path, or from an existing HuggingFace Hub
 /// cache snapshot when `path` is a model id such as `bert-base-uncased` or

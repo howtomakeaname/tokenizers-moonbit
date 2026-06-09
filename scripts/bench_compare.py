@@ -147,6 +147,13 @@ def hf_to_json_us(tok: Tokenizer) -> float:
     return timed_us(lambda: tok.to_str(pretty=False), 30)
 
 
+def hf_save_pretrained_us(tok: Tokenizer, name: str) -> float:
+    out_dir = os.path.join("_build", "bench_hf_save_pretrained", name)
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, "tokenizer.json")
+    return timed_us(lambda: tok.save(out_path), 30)
+
+
 def hf_train_wordlevel_us(text: str) -> float:
     corpus = [text] * 4
 
@@ -551,6 +558,7 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
         pretrained_key = f"{model}-from_pretrained-file"
         pretrained_hub_cache_key = f"{model}-from_pretrained-hub-cache"
         to_json_key = f"{model}-to_json"
+        save_pretrained_key = f"{model}-save_pretrained"
         if decode_key in moon:
             rows.append(Row(decode_key, moon[decode_key], hf_decode_us(tok, CORPORA["mixed"])))
         if decode_batch_key in moon:
@@ -569,6 +577,8 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
             rows.append(Row(pretrained_hub_cache_key, moon[pretrained_hub_cache_key], hf_load_us(path)))
         if to_json_key in moon:
             rows.append(Row(to_json_key, moon[to_json_key], hf_to_json_us(tok)))
+        if save_pretrained_key in moon:
+            rows.append(Row(save_pretrained_key, moon[save_pretrained_key], hf_save_pretrained_us(tok, model)))
     return rows
 
 

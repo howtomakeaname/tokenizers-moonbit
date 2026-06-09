@@ -268,6 +268,19 @@ fn bench_ensure_dir(path : String) -> Unit {
 }
 
 ///|
+fn bench_save_pretrained_case(b : @bench.T, model : String) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  let root = "_build/bench_save_pretrained"
+  let dir = root + "/" + model
+  bench_ensure_dir(root)
+  bench_ensure_dir(dir)
+  b.bench(name="\{model}-save_pretrained", fn() {
+    let path = try? tok.save_pretrained(dir)
+    b.keep(path)
+  })
+}
+
+///|
 fn bench_from_pretrained_hub_cache_case(b : @bench.T, model : String) -> Unit {
   let path = "tests/data/\{model}.full.json"
   guard load_text(path) is Some(content) else { return }
@@ -1260,6 +1273,13 @@ test "bench load from_str matrix" (b : @bench.T) {
 test "bench to_json matrix" (b : @bench.T) {
   for model in ["gpt2", "bert", "t5", "llama", "Qwen2.5", "qwen3_coder"] {
     bench_to_json_case(b, model)
+  }
+}
+
+///|
+test "bench save_pretrained matrix" (b : @bench.T) {
+  for model in ["gpt2", "llama"] {
+    bench_save_pretrained_case(b, model)
   }
 }
 

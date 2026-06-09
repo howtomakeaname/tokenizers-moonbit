@@ -13,6 +13,7 @@ fn from_pretrained(path_or_model_id : String) -> Tokenizer raise TokenizerError
 fn from_pretrained_cached(
   model_id : String, revision? : String = "main", cache_dir? : String? = None,
 ) -> Tokenizer raise TokenizerError
+fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise TokenizerError
 ```
 
 - `from_pretrained` 支持 tokenizer JSON 文件、本地含 `tokenizer.json` 的目录，
@@ -23,6 +24,8 @@ fn from_pretrained_cached(
   tokenizer payload 时避免重复 JSON 解析，同时每次仍返回全新的 tokenizer 状态。
 - `from_pretrained_cached` 可显式传入本地 Hub cache 根目录和 revision，对齐
   HF `local_files_only=True` 的离线使用方式。
+- `save_pretrained(dir)` 创建/复用 HF 风格目录并写出 `dir/tokenizer.json`，返回
+  具体 JSON 路径，便于日志记录或后续 `from_file` 加载。
 
 ## 编码与解码
 

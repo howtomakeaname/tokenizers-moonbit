@@ -14,6 +14,7 @@ fn from_pretrained(path_or_model_id : String) -> Tokenizer raise TokenizerError
 fn from_pretrained_cached(
   model_id : String, revision? : String = "main", cache_dir? : String? = None,
 ) -> Tokenizer raise TokenizerError
+fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise TokenizerError
 ```
 
 - `from_str` parses `tokenizer.json` text; it does no file IO and works on all backends.
@@ -27,6 +28,9 @@ fn from_pretrained_cached(
   are kept in a small in-process cache for repeated loads.
 - `from_pretrained_cached` lets callers provide an explicit local Hub cache root
   and revision, matching offline `local_files_only=True` workflows.
+- `save_pretrained(dir)` creates/uses an HF-style directory and writes
+  `dir/tokenizer.json`, returning the concrete JSON path for logging or later
+  `from_file` calls.
 
 ## Encoding / decoding
 

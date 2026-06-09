@@ -254,6 +254,23 @@ test "save and Tokenizer::from_file preserve tokenizer behavior" {
 }
 
 ///|
+test "save_pretrained writes HF-style directory artifact" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"saved":0,"dir":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let path = tok.save_pretrained("_build/tokenizer_save_pretrained")
+  @test.assert_eq(path, "_build/tokenizer_save_pretrained/tokenizer.json")
+  let loaded = Tokenizer::from_pretrained("_build/tokenizer_save_pretrained")
+  @test.assert_eq(loaded.to_json(), json)
+  @test.assert_eq(
+    loaded.encode("saved dir", add_special_tokens=false).ids,
+    [0, 1],
+  )
+}
+
+///|
 test "from_pretrained loads local directory or tokenizer file" {
   let json =
     #|{"version":"1.0",

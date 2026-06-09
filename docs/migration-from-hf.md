@@ -12,6 +12,7 @@ Chinese version: [`docs/zh/migration-from-hf.md`](./zh/migration-from-hf.md)
 | `Tokenizer.from_file("tokenizer.json")` | `@tokenizer.from_file("tokenizer.json")` |
 | `Tokenizer.from_str(s)` | `@tokenizer.Tokenizer::from_str(s)` |
 | `Tokenizer.from_pretrained(id, local_files_only=True)` | `@tokenizer.from_pretrained(id)` or `@tokenizer.from_pretrained_cached(id, cache_dir=...)` |
+| `tok.save("dir/tokenizer.json")` / directory workflows | `tok.save(path)` or `tok.save_pretrained(dir)` |
 
 ```python
 from tokenizers import Tokenizer
@@ -26,6 +27,8 @@ let tok = @tokenizer.from_file("tokenizer.json")
 `from_file` uses `moonbitlang/x/fs`. `from_pretrained` is offline-only: it can
 load a local directory/file or resolve an existing HF Hub cache snapshot via
 `$HUGGINGFACE_HUB_CACHE`, `$HF_HOME/hub`, or `$HOME/.cache/huggingface/hub`.
+`save_pretrained(dir)` writes `dir/tokenizer.json`, so saved artifacts can be
+loaded back with `from_pretrained(dir)`.
 
 ## Encoding
 
