@@ -90,6 +90,8 @@ pub fn Tokenizer::train_wordpiece(
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
   max_input_chars_per_word? : Int = 100,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
 ) -> Tokenizer {
   Tokenizer::train_wordpiece_with_pretokenizer(
     texts,
@@ -100,6 +102,8 @@ pub fn Tokenizer::train_wordpiece(
     special_tokens~,
     vocab_size~,
     max_input_chars_per_word~,
+    initial_alphabet~,
+    limit_alphabet~,
   )
 }
 
@@ -114,6 +118,8 @@ pub fn Tokenizer::train_wordpiece_with_pretokenizer(
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
   max_input_chars_per_word? : Int = 100,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
 ) -> Tokenizer {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -130,6 +136,8 @@ pub fn Tokenizer::train_wordpiece_with_pretokenizer(
     pre_tokenizer=Some(pre_tokenizer),
     vocab_size~,
     max_input_chars_per_word~,
+    initial_alphabet~,
+    limit_alphabet~,
   )
 }
 
@@ -144,6 +152,8 @@ pub fn Tokenizer::train_wordpiece_from_tokens(
   pre_tokenizer? : @pretokenizer.PreTokenizer? = None,
   vocab_size? : Int? = None,
   max_input_chars_per_word? : Int = 100,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
 ) -> Tokenizer {
   {
     normalizer: None,
@@ -156,6 +166,8 @@ pub fn Tokenizer::train_wordpiece_from_tokens(
       special_tokens~,
       vocab_size~,
       max_input_chars_per_word~,
+      initial_alphabet~,
+      limit_alphabet~,
     ),
     post_processor: None,
     decoder: None,

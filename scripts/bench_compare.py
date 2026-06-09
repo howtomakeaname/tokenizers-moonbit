@@ -224,6 +224,25 @@ def hf_train_wordpiece_us(text: str) -> float:
     return timed_us(train_once, 60)
 
 
+def hf_train_wordpiece_alphabet_us(text: str) -> float:
+    corpus = [text] * 4
+
+    def train_once() -> Tokenizer:
+        tok = Tokenizer(hf_models.WordPiece(unk_token="[UNK]"))
+        tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+        trainer = hf_trainers.WordPieceTrainer(
+            vocab_size=512,
+            min_frequency=1,
+            special_tokens=["[PAD]", "[UNK]"],
+            initial_alphabet=["z", "🙂"],
+            limit_alphabet=128,
+        )
+        tok.train_from_iterator(corpus, trainer=trainer)
+        return tok
+
+    return timed_us(train_once, 60)
+
+
 def hf_trained_wordpiece_to_json_us(text: str) -> float:
     tok = Tokenizer(hf_models.WordPiece(unk_token="[UNK]"))
     tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
@@ -425,6 +444,13 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     wordpiece_train_key = "wordpiece-train-mixedx4"
     if wordpiece_train_key in moon:
         rows.append(Row(wordpiece_train_key, moon[wordpiece_train_key], hf_train_wordpiece_us(CORPORA["mixed"])))
+    wordpiece_train_alphabet_key = "wordpiece-train-alphabet-mixedx4"
+    if wordpiece_train_alphabet_key in moon:
+        rows.append(Row(
+            wordpiece_train_alphabet_key,
+            moon[wordpiece_train_alphabet_key],
+            hf_train_wordpiece_alphabet_us(CORPORA["mixed"]),
+        ))
     wordpiece_to_json_key = "wordpiece-trained-to_json-mixed"
     if wordpiece_to_json_key in moon:
         rows.append(Row(wordpiece_to_json_key, moon[wordpiece_to_json_key], hf_trained_wordpiece_to_json_us(CORPORA["mixed"])))

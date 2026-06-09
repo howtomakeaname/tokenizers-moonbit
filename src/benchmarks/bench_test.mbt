@@ -253,6 +253,7 @@ fn bench_to_json_case(b : @bench.T, model : String) -> Unit raise {
 fn bench_from_pretrained_case(b : @bench.T, model : String) -> Unit {
   let path = "tests/data/\{model}.full.json"
   guard load_text(path) is Some(_) else { return }
+  ignore(try? @tokenizer.Tokenizer::from_pretrained(path))
   b.bench(name="\{model}-from_pretrained-file", fn() {
     let t = try? @tokenizer.Tokenizer::from_pretrained(path)
     b.keep(t)
@@ -433,6 +434,28 @@ fn bench_train_wordpiece_case(
         min_frequency=1,
         special_tokens=["[PAD]"],
         vocab_size=Some(512),
+      ),
+    )
+  })
+}
+
+///|
+fn bench_train_wordpiece_alphabet_case(
+  b : @bench.T,
+  case_name : String,
+  text : String,
+) -> Unit {
+  let corpus = [text, text, text, text]
+  b.bench(name="wordpiece-train-alphabet-\{case_name}", fn() {
+    b.keep(
+      @tokenizer.Tokenizer::train_wordpiece(
+        corpus,
+        unk_token="[UNK]",
+        min_frequency=1,
+        special_tokens=["[PAD]"],
+        vocab_size=Some(512),
+        initial_alphabet=["z", "🙂"],
+        limit_alphabet=Some(128),
       ),
     )
   })
@@ -1288,6 +1311,11 @@ test "bench trained wordlevel to_json" (b : @bench.T) {
 ///|
 test "bench train wordpiece" (b : @bench.T) {
   bench_train_wordpiece_case(b, "mixedx4", corpus_mixed())
+}
+
+///|
+test "bench train wordpiece alphabet" (b : @bench.T) {
+  bench_train_wordpiece_alphabet_case(b, "mixedx4", corpus_mixed())
 }
 
 ///|

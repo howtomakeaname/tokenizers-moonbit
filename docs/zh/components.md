@@ -92,8 +92,8 @@ GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E
   `vocab_size` 以及 HF 风格的频次/词典序词表排序；也已提供确定性 WordPiece、
   BPE 与 Unigram trainer MVP，支持相同输入模式以及 continuation prefix、
   end-of-word suffix、`max_input_chars_per_word`、`byte_fallback` 等常见参数；
-  BPE training 还支持 HF 风格 `initial_alphabet` / `limit_alphabet` /
-  `max_token_length`，并提供 `byte_level_alphabet()` 暴露 256 个 ByteLevel symbols，便于 GPT-2/RoBERTa 风格训练。
+  WordPiece 与 BPE training 还支持 HF 风格 `initial_alphabet` / `limit_alphabet`，
+  BPE 另支持 `max_token_length`，并提供 `byte_level_alphabet()` 暴露 256 个 ByteLevel symbols，便于 GPT-2/RoBERTa 风格训练。
 - **构造型 tokenizer 序列化：** 训练得到的 WordLevel / WordPiece / BPE / Unigram tokenizer 可序列化常见
   pre-tokenizer，如 ByteLevel、Metaspace、Punctuation、Split、Digits、Delimiter、
   FixedLength、UnicodeScripts 和 Sequence。

@@ -12,7 +12,7 @@
 let pretrained_source_cache : Map[String, String] = {}
 
 ///|
-let pretrained_source_cache_limit : Int = 4
+let pretrained_source_cache_limit : Int = 16
 
 ///|
 /// Load a tokenizer from a `tokenizer.json` file path.

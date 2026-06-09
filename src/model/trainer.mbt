@@ -123,6 +123,8 @@ pub fn Model::train_wordpiece(
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
   max_input_chars_per_word? : Int = 100,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
 ) -> Model {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -136,6 +138,8 @@ pub fn Model::train_wordpiece(
     special_tokens~,
     vocab_size~,
     max_input_chars_per_word~,
+    initial_alphabet~,
+    limit_alphabet~,
   )
 }
 
@@ -149,6 +153,8 @@ pub fn Model::train_wordpiece_from_tokens(
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
   max_input_chars_per_word? : Int = 100,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
 ) -> Model {
   let word_counts : Map[String, Int] = {}
   let word_order : Array[String] = []
@@ -179,7 +185,16 @@ pub fn Model::train_wordpiece_from_tokens(
   }
   add_token(unk_token)
 
-  let alphabet = sorted_wordlevel_candidates(piece_order, piece_counts, 1)
+  for tok in initial_alphabet {
+    match initial_alphabet_piece(tok) {
+      Some(piece) => add_token(piece)
+      None => ()
+    }
+  }
+  let alphabet = limit_alphabet_candidates(
+    sorted_wordlevel_candidates(piece_order, piece_counts, 1),
+    limit_alphabet,
+  )
   for item in alphabet {
     add_token(item.0)
   }

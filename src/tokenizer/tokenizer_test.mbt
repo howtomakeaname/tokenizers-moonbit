@@ -561,6 +561,45 @@ test "train_wordpiece respects vocab_size cap" {
 }
 
 ///|
+test "train_wordpiece supports initial and limited alphabet" {
+  let tok = Tokenizer::train_wordpiece(
+    ["cccc bbb aa"],
+    unk_token="[UNK]",
+    special_tokens=["[PAD]"],
+    min_frequency=10,
+    initial_alphabet=["z"],
+    limit_alphabet=Some(2),
+  )
+  @test.assert_eq(tok.token_to_id("z") is Some(_), true)
+  @test.assert_eq(tok.token_to_id("##c") is Some(_), true)
+  @test.assert_eq(tok.token_to_id("##b") is Some(_), true)
+  @test.assert_eq(tok.token_to_id("a"), None)
+}
+
+///|
+test "train_wordpiece alphabet controls survive custom pretokenizer reload" {
+  let pt = @pretokenizer.PreTokenizer::split(
+    ",",
+    @pretokenizer.SplitBehavior::removed(),
+    false,
+    false,
+  )
+  let tok = Tokenizer::train_wordpiece_with_pretokenizer(
+    ["moon,bit"],
+    pt,
+    unk_token="[UNK]",
+    special_tokens=["[PAD]"],
+    min_frequency=10,
+    initial_alphabet=["z"],
+    limit_alphabet=Some(2),
+  )
+  @test.assert_eq(tok.token_to_id("z") is Some(_), true)
+  let loaded = Tokenizer::from_str(tok.to_json())
+  @test.assert_eq(loaded.token_to_id("z") is Some(_), true)
+  @test.assert_eq(loaded.encode("z", add_special_tokens=false).tokens, ["z"])
+}
+
+///|
 test "train_bpe learns frequent merges" {
   let tok = Tokenizer::train_bpe(
     ["lower lower low", "lower"],
