@@ -881,6 +881,21 @@ fn bench_normalizer_replace_punct_symbol_regex_case(
 }
 
 ///|
+fn bench_normalizer_replace_ranged_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let normalizer = @normalizer.Normalizer::Replace(
+    pattern="[\\p{P}\\p{S}]{2,4}",
+    content="_",
+  )
+  let text = corpus_mixed() + " $+🙂 wait!!!!! ok?! path/to/file.rs"
+  b.bench(name="normalizer-replace-ranged-regex-\{case_name}", fn() {
+    b.keep(normalizer.normalize(text))
+  })
+}
+
+///|
 fn bench_decoder_replace_digit_regex_case(
   b : @bench.T,
   case_name : String,
@@ -948,6 +963,18 @@ fn bench_decoder_replace_bounded_inverse_regex_case(
   let decoder = @decoder.Decoder::replace("[^\\s\\p{L}\\p{N}]{1,3}", "#")
   let tokens = ["ab,$+🙂", " cd。42", " path/to/file.rs", " done!!!"]
   b.bench(name="decoder-replace-bounded-inverse-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
+fn bench_decoder_replace_ranged_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("[\\p{P}\\p{S}]{2,4}", "_")
+  let tokens = ["hi,$+🙂", " code(a+b);", " path/to/file.rs", " done!!!!!"]
+  b.bench(name="decoder-replace-ranged-quantifier-regex-\{case_name}", fn() {
     b.keep(decoder.decode(tokens))
   })
 }
@@ -1266,6 +1293,20 @@ fn bench_split_bounded_inverse_regex_case(
   )
   let text = corpus_mixed() + " $+🙂 wait!!! ok?! path/to/file.rs"
   b.bench(name="pretokenizer-split-bounded-inverse-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_ranged_union_regex_case(b : @bench.T, case_name : String) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "[\\p{P}\\p{S}]{2,4}",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " $+🙂 wait!!!!! ok?! path/to/file.rs"
+  b.bench(name="pretokenizer-split-ranged-union-regex-\{case_name}", fn() {
     b.keep(pt.pre_tokenize(text, base_offset=0))
   })
 }
@@ -1622,6 +1663,11 @@ test "bench normalizer replace punct-symbol regex" (b : @bench.T) {
 }
 
 ///|
+test "bench normalizer replace ranged regex" (b : @bench.T) {
+  bench_normalizer_replace_ranged_regex_case(b, "mixed")
+}
+
+///|
 test "bench decoder replace digit regex" (b : @bench.T) {
   bench_decoder_replace_digit_regex_case(b, "mixed")
 }
@@ -1649,6 +1695,11 @@ test "bench decoder replace bounded quantifier regex" (b : @bench.T) {
 ///|
 test "bench decoder replace bounded inverse regex" (b : @bench.T) {
   bench_decoder_replace_bounded_inverse_regex_case(b, "mixed")
+}
+
+///|
+test "bench decoder replace ranged regex" (b : @bench.T) {
+  bench_decoder_replace_ranged_regex_case(b, "mixed")
 }
 
 ///|
@@ -1754,4 +1805,9 @@ test "bench split bounded union regex" (b : @bench.T) {
 ///|
 test "bench split bounded inverse regex" (b : @bench.T) {
   bench_split_bounded_inverse_regex_case(b, "mixed")
+}
+
+///|
+test "bench split ranged union regex" (b : @bench.T) {
+  bench_split_ranged_union_regex_case(b, "mixed")
 }

@@ -159,7 +159,7 @@
 | P1 | Truncation strategy 完整化 | ✅ | 支持 LongestFirst/OnlyFirst/OnlySecond；pair encode 按 HF 顺序：预留 special slots 后先截断 raw pair，再 post-process/pad；公开 `TruncationParams::with_*` builder 覆盖 stride/direction/strategy |
 | P1 | ByteLevel post-processor `trim_offsets` 细节 | ✅ | 空白修剪与 HF offsets 对齐；已补 ByteLevel / RoBERTa offset 用例与 micro bench |
 | P2 | Precompiled SentencePiece charsmap 完整解码 | ✅ | 已支持 base64 `precompiled_charsmap` → SentencePiece double-array trie → normalized blob 规则；保留空/缺失 map 的 NFKC+空白 fast path，并新增二进制 charsmap 单测与 bench |
-| P2 | 通用 Split/Replace 正则覆盖 | 🚧 | Normalizer/Decoder Replace 已统一走 Split 的 deterministic simple-regex span scanner，覆盖 `\\s` / `\\S` / `\\d` / `\\D` / `\\w` / `\\W`、ASCII alnum/letter、Unicode `\\p{L}` / `\\p{N}` / `\\p{P}` / `\\p{S}`、punctuation-or-symbol union、anchored positive/inverse class runs、exact/min/bounded `{1,n}` families；Decoder Replace 对这些 simple regex 直接绕过 decode_chain，Split/Normalizer/Decoder 三套语义由 `common` 同一分发表驱动；复杂未知 Split pattern 加载期显式 Unsupported，未知 Replace pattern 保持字面量 fallback |
+| P2 | 通用 Split/Replace 正则覆盖 | 🚧 | Normalizer/Decoder Replace 已统一走 Split 的 deterministic simple-regex span scanner，覆盖 `\\s` / `\\S` / `\\d` / `\\D` / `\\w` / `\\W`、ASCII alnum/letter、Unicode `\\p{L}` / `\\p{N}` / `\\p{P}` / `\\p{S}`、punctuation-or-symbol union、anchored positive/inverse class runs、exact/min/bounded `{1,n}` 与 ranged `{2,3}`/`{2,4}`/`{3,4}` families；Decoder Replace 对这些 simple regex 直接绕过 decode_chain，Split/Normalizer/Decoder 三套语义由 `common` 同一分发表驱动；复杂未知 Split pattern 加载期显式 Unsupported，未知 Replace pattern 保持字面量 fallback |
 | P2 | save / to_json / from_file 对称性 | ✅ | `to_json` 保留原始 tokenizer.json；`Tokenizer::from_file` / `save` 可往返；新增 HF 风格 `save_pretrained(dir)` 写出 `dir/tokenizer.json` 并可由 `from_pretrained(dir)` 重新加载；补 serialization 测试与 to_json/save_pretrained bench |
 | P3 | `from_pretrained` / Hub 集成 | 🚧 | 已支持本地 HF 目录（`tokenizer.json`）、tokenizer 文件路径、`save_pretrained` 目录、已有 HuggingFace Hub cache snapshot（`$HUGGINGFACE_HUB_CACHE` / `$HF_HOME/hub` / `$HOME/.cache/huggingface/hub`，含 refs/main → snapshots/<rev> 解析），并对稳定 pretrained 路径做小型多项 source cache；Hub 网络下载仍需外部脚本/应用层集成 |
 | P3 | batch 并行 / word cache | 🚧 | BPE/WordPiece/Unigram word cache 已完成；encode_batch / encode_pair_batch / pre-tokenized batch / pre-tokenized pair batch 对重复输入做单批缓存并补 bench，pair batch 支持 BatchLongest padding 与 byte offsets；公开 `PaddingParams::fixed` / `batch_longest` / `with_*` builder 覆盖 left/right、pad_type_id、pad_to_multiple_of；并行仍待运行时能力评估 |
@@ -169,7 +169,7 @@
 
 性能结论必须基于 `scripts/bench_compare.py` 的同机对比结果，而不是单独的
 `moon bench` 输出。脚本会对 encode / explicit byte offsets / decode /
-encode_batch / encode_pair_batch / pre-tokenized encode+batch（含 added-token 抽取合成用例）/ decode_batch / from_str / local from_pretrained / to_json / save_pretrained / common Split-Replace regex fast paths 输出
+encode_batch / encode_pair_batch / pre-tokenized encode+batch（含 added-token 抽取合成用例）/ decode_batch / from_str / local from_pretrained / to_json / save_pretrained / common Split-Replace regex fast paths（含 ranged `{2,4}` 量词）输出
 MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的项目
 应进入优化排期；`< 0.90x` 才能明确宣称本项目在该用例快于 HF。
 
@@ -196,7 +196,7 @@ llama decode quick native 约 0.17x；from_str
 
 ## 已知缺口与取舍（TODO）
 
-1. **正则**：core 正则不提供完整通用 Unicode regex 引擎；GPT/Qwen/o200k 主线已手写扫描器。通用 Split 已补 literal、`^\\s+`、`\\s+`、`\\S+`、`\\s+$`、whitespace/newline/horizontal whitespace 的 `{2,}` / `{3,}` / `{4,}` 与 `{2}` / `{3}` / `{4}`、digit/word/ASCII/Unicode letter/punctuation/symbol/union positive 与 inverse runs、anchored `^...+` / `...+$`、`{1,2}` / `{1,3}` / `{1,4}` bounded families、`[^\\s\\p{L}\\p{N}]+` 与 bounded 反集 runs；复杂未知 pattern 加载期显式 Unsupported，避免静默不对齐。Replace normalizer/decoder 现在复用同一个 `common.simple_split_regex_matches` span scanner，因此上述简单 regex family 在 Split/Normalizer/Decoder 间保持同步；Decoder Replace 对这些 simple regex 走直接 decode fast path，不再落到通用 decode_chain。更复杂 Replace pattern 仍按字面量处理。
+1. **正则**：core 正则不提供完整通用 Unicode regex 引擎；GPT/Qwen/o200k 主线已手写扫描器。通用 Split 已补 literal、`^\\s+`、`\\s+`、`\\S+`、`\\s+$`、whitespace/newline/horizontal whitespace 的 `{2,}` / `{3,}` / `{4,}` 与 `{2}` / `{3}` / `{4}`、digit/word/ASCII/Unicode letter/punctuation/symbol/union positive 与 inverse runs、anchored `^...+` / `...+$`、`{1,2}` / `{1,3}` / `{1,4}` bounded families、`{2,3}` / `{2,4}` / `{3,4}` ranged families、`[^\\s\\p{L}\\p{N}]+` 与 bounded/ranged 反集 runs；复杂未知 pattern 加载期显式 Unsupported，避免静默不对齐。Replace normalizer/decoder 现在复用同一个 `common.simple_split_regex_matches` span scanner，因此上述简单 regex family 在 Split/Normalizer/Decoder 间保持同步；Decoder Replace 对这些 simple regex 走直接 decode fast path，不再落到通用 decode_chain。更复杂 Replace pattern 仍按字面量处理。
 2. **训练 / Hub 集成**：当前定位 inference-first；`to_json`/`save` 已支持原始 JSON 往返，`from_pretrained` 已支持本地目录/文件、已有 HF Hub cache snapshot 与稳定路径小型多项 source cache；WordLevel trainer 产物已支持序列化保存，并支持自定义 pre-tokenizer / 预切分 token 流 / vocab_size / HF 风格频次与词典序排序；WordPiece / BPE / Unigram trainer MVP 已支持相同输入模式、continuation prefix / end-of-word suffix、`max_input_chars_per_word`、`byte_fallback` 与 `vocab_size`，常见 pre-tokenizer 可序列化。Hub 网络下载 API 暂未实现，高级训练算法与采样参数后续按需增强。
 3. **性能**：BPE merge 已用优先队列(pairing heap)+惰性失效，llama 提速约 7x、与 Rust 同量级；进一步可加 word→tokens 缓存与多 MB 词表加载优化。
 4. **batch 并行**：MoonBit 单线程，encode_batch 串行；已对重复输入做批内缓存，BPE/WordPiece/Unigram 均带 word cache（场景定位 wasm/js 边缘端）。

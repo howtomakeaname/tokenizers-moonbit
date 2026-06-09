@@ -63,6 +63,28 @@ fn decode_replace_direct(
       @common.is_unicode_punctuation_or_symbol(c)
     })
   }
+  if pattern == "[\\p{P}\\p{S}]{2,4}" ||
+    pattern == "[\\p{S}\\p{P}]{2,4}" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]{2,4}" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]{2,4}" {
+    return decode_replace_punct_symbol_ranged_direct(
+      tokens,
+      content,
+      min_run=2,
+      max_run=4,
+    )
+  }
+  match @common.ranged_regex_kind(pattern) {
+    Some((kind, min_run, max_run)) =>
+      return decode_replace_ranged_char_runs_direct(
+        tokens,
+        content,
+        fn(c) { @common.bounded_regex_kind_pred(kind, c) },
+        min_run~,
+        max_run~,
+      )
+    None => ()
+  }
   if @common.is_simple_split_regex_pattern(pattern) {
     return decode_replace_simple_regex_direct(tokens, pattern, content)
   }
@@ -111,6 +133,92 @@ fn decode_replace_char_runs_direct(
     }
   }
   sb.to_string()
+}
+
+///|
+fn decode_replace_ranged_char_runs_direct(
+  tokens : Array[String],
+  content : String,
+  pred : (Char) -> Bool,
+  min_run~ : Int,
+  max_run~ : Int,
+) -> String {
+  let sb = StringBuilder::new()
+  let mut run = 0
+  let mut c0 = '\u{0}'
+  let mut c1 = '\u{0}'
+  let mut c2 = '\u{0}'
+  let mut c3 = '\u{0}'
+  for t in tokens {
+    run = 0
+    for c in t {
+      if pred(c) {
+        if run == 0 {
+          c0 = c
+        } else if run == 1 {
+          c1 = c
+        } else if run == 2 {
+          c2 = c
+        } else {
+          c3 = c
+        }
+        run = run + 1
+        if run == max_run {
+          sb.write_string(content)
+          run = 0
+        }
+      } else {
+        if run >= min_run {
+          sb.write_string(content)
+        } else {
+          write_ranged_pending_chars(sb, run, c0, c1, c2, c3)
+        }
+        run = 0
+        sb.write_char(c)
+      }
+    }
+    if run >= min_run {
+      sb.write_string(content)
+    } else {
+      write_ranged_pending_chars(sb, run, c0, c1, c2, c3)
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn decode_replace_punct_symbol_ranged_direct(
+  tokens : Array[String],
+  content : String,
+  min_run~ : Int,
+  max_run~ : Int,
+) -> String {
+  decode_replace_ranged_char_runs_direct(tokens, content, fn(c) {
+    @common.is_unicode_punctuation_or_symbol(c)
+  }, min_run~, max_run~)
+}
+
+///|
+fn write_ranged_pending_chars(
+  sb : StringBuilder,
+  run : Int,
+  c0 : Char,
+  c1 : Char,
+  c2 : Char,
+  c3 : Char,
+) -> Unit {
+  if run > 0 {
+    sb.write_char(c0)
+  }
+  if run > 1 {
+    sb.write_char(c1)
+  }
+  if run > 2 {
+    sb.write_char(c2)
+  }
+  if run > 3 {
+    sb.write_char(c3)
+  }
 }
 
 ///|

@@ -118,7 +118,7 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
   whitespace/newline/水平空白、digit 与反集、word 与反集、ASCII alnum/letter、
   Unicode `\p{L}`/`\p{N}`/`\p{P}`/`\p{S}`、punctuation-or-symbol union、
   anchored `^...+` / `...+$`、精确 `{2..4}`、最小 `{2,}`/`{3,}`/`{4,}` 以及
-  bounded `{1,2}`/`{1,3}`/`{1,4}` 等 HF 常见 tokenizer regex。
+  bounded `{1,2}`/`{1,3}`/`{1,4}` 与 ranged `{2,3}`/`{2,4}`/`{3,4}` 等 HF 常见 tokenizer regex。
 - 未知复杂 Split regex 会在加载期显式报 Unsupported；未知 Replace pattern 保持
   轻量 fallback，按字面量子串替换处理。
 

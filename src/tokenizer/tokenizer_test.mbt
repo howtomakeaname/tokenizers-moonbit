@@ -344,6 +344,18 @@ test "from_str rejects unsupported Split regex" {
 }
 
 ///|
+test "from_str supports ranged Split regex quantifiers" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"Split","pattern":{"Regex":"\\d{2,4}"},"behavior":"Isolated","invert":false},
+    #| "model":{"type":"WordLevel","vocab":{"a":0,"1234":1,"567":2,"b":3,"[UNK]":4},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode("a1234567b", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["a", "1234", "567", "b"])
+  @test.assert_eq(enc.ids, [0, 1, 2, 3])
+}
+
+///|
 test "from_str supports legacy string merges format" {
   let json =
     #|{"model":{"type":"BPE","vocab":{"h":0,"e":1,"he":2},"merges":["h e"]}}

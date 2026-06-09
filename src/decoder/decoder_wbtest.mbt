@@ -305,6 +305,12 @@ test "Replace decoder supports common regex whitespace patterns" {
     "ab__ cd_42",
   )
   @test.assert_eq(
+    Decoder::Replace(pattern="[\\p{P}\\p{S}]{2,4}", content="_").decode([
+      "ab,$+🙂 cd。42",
+    ]),
+    "ab_ cd。42",
+  )
+  @test.assert_eq(
     Decoder::Replace(pattern="[^\\s\\p{L}\\p{N}]+", content="#").decode([
       "ab,$+🙂", " cd。42",
     ]),

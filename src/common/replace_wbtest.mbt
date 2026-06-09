@@ -122,6 +122,8 @@ test "replace helpers cover regex run semantics" {
     replace_simple_regex("no-match", "^\\d+", "#"),
     Some("no-match"),
   )
+  @test.assert_eq(replace_simple_regex("a1234567b", "\\d{2,4}", "#"), Some("a##b"))
+  @test.assert_eq(replace_simple_regex("hi!!!!?ok", "\\p{P}{2,4}", "_"), Some("hi_?ok"))
   @test.assert_eq(replace_space_runs("a  b   c", "_", min_run=2), "a_b_c")
   @test.assert_eq(replace_whitespace_runs("a\t\u{3000}b\n", " "), "a b ")
 }
@@ -246,6 +248,15 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(bounded_digits_4[0].stop, 5)
   @test.assert_eq(bounded_digits_4[1].start, 5)
   @test.assert_eq(bounded_digits_4[1].stop, 6)
+  guard simple_split_regex_matches("a1234567b".to_array(), "\\d{2,4}")
+    is Some(ranged_digits) else {
+    abort("expected ranged digit matches")
+  }
+  @test.assert_eq(ranged_digits.length(), 2)
+  @test.assert_eq(ranged_digits[0].start, 1)
+  @test.assert_eq(ranged_digits[0].stop, 5)
+  @test.assert_eq(ranged_digits[1].start, 5)
+  @test.assert_eq(ranged_digits[1].stop, 8)
   guard simple_split_regex_matches(chars, "\\w+") is Some(words) else {
     abort("expected word matches")
   }
@@ -423,6 +434,13 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(bounded_punctuation[1].stop, 6)
   @test.assert_eq(bounded_punctuation[2].start, 8)
   @test.assert_eq(bounded_punctuation[2].stop, 10)
+  guard simple_split_regex_matches("hi!!!!?ok。".to_array(), "\\p{P}{2,4}")
+    is Some(ranged_punctuation) else {
+    abort("expected ranged punctuation matches")
+  }
+  @test.assert_eq(ranged_punctuation.length(), 1)
+  @test.assert_eq(ranged_punctuation[0].start, 2)
+  @test.assert_eq(ranged_punctuation[0].stop, 6)
   guard simple_split_regex_matches("a$+🙂,b=≤c".to_array(), "\\p{S}+")
     is Some(symbols) else {
     abort("expected symbol matches")
@@ -531,6 +549,16 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(bounded_non_alnum_nonspace[1].stop, 6)
   @test.assert_eq(bounded_non_alnum_nonspace[2].start, 9)
   @test.assert_eq(bounded_non_alnum_nonspace[2].stop, 10)
+  guard simple_split_regex_matches(
+      "ab,$+🙂 cd。42".to_array(),
+      "[^\\s\\p{L}\\p{N}]{2,4}",
+    )
+    is Some(ranged_non_alnum_nonspace) else {
+    abort("expected ranged inverse non-space/letter/number matches")
+  }
+  @test.assert_eq(ranged_non_alnum_nonspace.length(), 1)
+  @test.assert_eq(ranged_non_alnum_nonspace[0].start, 2)
+  @test.assert_eq(ranged_non_alnum_nonspace[0].stop, 6)
   guard simple_split_regex_matches(chars, "\\s+") is Some(spaces) else {
     abort("expected whitespace matches")
   }
@@ -599,13 +627,16 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z0-9]{1,4}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z]{2,}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z]{1,2}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z]{2,4}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{L}{3}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\p{L}{2,4}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Letter}]{1,3}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\d]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^\\d]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\d]{2,}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\d{2}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Number}]{4}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("[\\p{Number}]{2,4}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z0-9]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^a-zA-Z0-9]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[A-Za-z]+"), true)
@@ -614,6 +645,7 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("\\p{P}{2,}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{P}{2}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\p{P}{1,3}"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("\\p{P}{2,4}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Symbol}]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Symbol}]{2}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{Symbol}]{1,4}"), true)

@@ -112,7 +112,7 @@ Lookups consult the added/special vocabulary first, then the model vocabulary.
   and inverse word runs, ASCII alnum/letter classes, Unicode
   `\p{L}`/`\p{N}`/`\p{P}`/`\p{S}` classes, punctuation-or-symbol unions,
   anchored `^...+` / `...+$`, exact `{2..4}`, minimum `{2,}`/`{3,}`/`{4,}` and
-  bounded `{1,2}`/`{1,3}`/`{1,4}` forms.
+  bounded `{1,2}`/`{1,3}`/`{1,4}` forms plus ranged `{2,3}`/`{2,4}`/`{3,4}` runs.
 - Unknown complex Split regexes are rejected during loading; unknown Replace
   patterns keep the existing lightweight fallback and are treated as literal
   substring replacements.

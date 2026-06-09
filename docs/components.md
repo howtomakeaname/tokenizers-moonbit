@@ -74,14 +74,14 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   exact `{2}` / `{3}` / `{4}` aliases), `\d+`, `\D+`,
   bracketed digit aliases (`[\d]+`, `[^\d]+`, `\P{N}+`), min digit runs
   (`\d{2,}` / `[\d]{2,}`), exact digit runs (`\d{2}` / `\d{3}` / `\d{4}`),
-  bounded digit runs (`\d{1,2}` / `\d{1,3}` /
-  `\d{1,4}` and `\p{N}` aliases),
+  bounded/ranged digit runs (`\d{1,2}` / `\d{1,3}` /
+  `\d{1,4}` / `\d{2,4}` and `\p{N}` aliases),
   anchored digit/word/letter runs, word/letter quantifier runs (`\w{2,}` /
-  `\w{2}` / `{1,2}` / `{1,3}` / `{1,4}` bounded word, ASCII letter/alnum and
+  `\w{2}` / `{1,2}` / `{1,3}` / `{1,4}` bounded plus `{2,3}` / `{2,4}` / `{3,4}` ranged word, ASCII letter/alnum and
   Unicode letter forms / `[A-Za-z]{2,}` / `\p{L}{3}`), punctuation/symbol quantifier runs
-  (`\p{P}{2,}` / `\p{P}{2}` / `\p{S}{2}` / `{1,n}` bounded punctuation,
+  (`\p{P}{2,}` / `\p{P}{2}` / `\p{S}{2}` / `{1,n}` bounded and `{2,n}` ranged punctuation,
   symbol and `\p{P}\p{S}` union forms / `[\p{P}\p{S}]{2,}`), inverse
-  bounded runs (`\D{1,n}`, `\S{1,n}`, `\W{1,n}`, `\P{L}{1,n}`,
+  bounded/ranged runs (`\D{1,n}`, `\S{1,n}`, `\W{1,n}`, `\P{L}{1,n}`,
   `\P{P}{1,n}`, `\P{S}{1,n}`, inverse ASCII classes and
   `[^\s\p{L}\p{N}]{1,n}`), `\w+`, `\W+`,
   ASCII alnum/letter classes (`[A-Za-z0-9]+`, `[A-Za-z]+` and inverse forms),
@@ -101,10 +101,10 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   min/exact `{2..4}` forms, ` {2,}`, digit runs
   `\d+` / `[\d]+` / `\D+` / `\P{N}+`, min digit runs such as `\d{2,}` /
   `[\d]{2,}`, exact digit runs (`\d{2}` / `\d{3}` / `\d{4}`), word/letter
-  quantifier runs (`\w{2,}` / `\w{2}` / `{1,2}` / `{1,3}` / `{1,4}` bounded
+  quantifier runs (`\w{2,}` / `\w{2}` / `{1,2}` / `{1,3}` / `{1,4}` bounded / `{2,3}` / `{2,4}` / `{3,4}` ranged
   word, ASCII letter/alnum and Unicode letter forms / `[A-Za-z]{2,}` / `\p{L}{3}`),
   punctuation/symbol quantifier runs (`\p{P}{2,}` / `\p{P}{2}` / `\p{S}{2}` /
-  `{1,n}` bounded punctuation, symbol and `\p{P}\p{S}` union forms /
+  `{1,n}` bounded and `{2,n}` ranged punctuation, symbol and `\p{P}\p{S}` union forms /
   `[\p{P}\p{S}]{2,}`), common bounded positive and inverse runs such as
   `\d{1,3}`, `\D{1,3}`, `\W{1,2}`, `\P{L}{1,4}` and
   `[^\s\p{L}\p{N}]{1,3}`, anchored digit/word/letter/punctuation/symbol

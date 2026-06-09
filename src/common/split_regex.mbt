@@ -20,6 +20,10 @@ pub fn simple_split_regex_matches(
     Some(spans) => return Some(spans)
     None => ()
   }
+  match simple_ranged_regex_matches(chars, pattern) {
+    Some(spans) => return Some(spans)
+    None => ()
+  }
   if pattern == "\\s+" {
     Some(run_matches(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
   } else if pattern == "\\s{2,}" || pattern == "[\\s]{2,}" {
@@ -528,6 +532,7 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   is_simple_space_regex_pattern(pattern) ||
   is_bounded_regex_pattern(pattern) ||
   is_anchored_regex_pattern(pattern) ||
+  is_ranged_regex_pattern(pattern) ||
   pattern == "\\w+" ||
   pattern == "[A-Za-z0-9_]+" ||
   pattern == "\\b\\w+\\b" ||
@@ -992,6 +997,42 @@ fn run_matches_bounded(
 }
 
 ///|
+fn run_matches_ranged(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  min_run~ : Int,
+  max_run~ : Int,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  if min_run <= 0 || max_run < min_run {
+    return out
+  }
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let start = i
+      while i < n && pred(chars[i]) {
+        i = i + 1
+      }
+      let stop = i
+      let mut j = start
+      while stop - j >= min_run {
+        let mut take = max_run
+        if stop - j < take {
+          take = stop - j
+        }
+        out.push({ start: j, stop: j + take })
+        j = j + take
+      }
+    } else {
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
 fn simple_bounded_regex_matches(
   chars : Array[Char],
   pattern : String,
@@ -1002,6 +1043,25 @@ fn simple_bounded_regex_matches(
         run_matches_bounded(
           chars,
           fn(c) { bounded_regex_kind_pred(kind, c) },
+          max_run~,
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn simple_ranged_regex_matches(
+  chars : Array[Char],
+  pattern : String,
+) -> Array[Span]? {
+  match ranged_regex_kind(pattern) {
+    Some((kind, min_run, max_run)) =>
+      Some(
+        run_matches_ranged(
+          chars,
+          fn(c) { bounded_regex_kind_pred(kind, c) },
+          min_run~,
           max_run~,
         ),
       )
