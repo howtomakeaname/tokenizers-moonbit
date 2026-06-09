@@ -432,6 +432,10 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern.is_empty() {
     return s
   }
+  match @common.replace_simple_regex(s, pattern, content) {
+    Some(out) => return out
+    None => ()
+  }
   match @common.replace_bounded_simple_regex(s, pattern, content) {
     Some(out) => return out
     None => ()

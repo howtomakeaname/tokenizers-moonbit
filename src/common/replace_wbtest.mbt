@@ -98,6 +98,30 @@ test "replace helpers cover regex run semantics" {
     ),
     Some("ab## cd#42"),
   )
+  @test.assert_eq(
+    replace_simple_regex("ab_12,中!cd", "\\w+", "W"),
+    Some("W,中!W"),
+  )
+  @test.assert_eq(
+    replace_simple_regex("abé中12!Ж", "\\p{L}+", "L"),
+    Some("L12!L"),
+  )
+  @test.assert_eq(
+    replace_simple_regex("hi,$+🙂ok。", "[\\p{P}\\p{S}]+", "_"),
+    Some("hi_ok_"),
+  )
+  @test.assert_eq(
+    replace_simple_regex("a1b12c１２3", "[\\d]{2,}", "#"),
+    Some("a1b#c#"),
+  )
+  @test.assert_eq(
+    replace_simple_regex("abc123DE", "[A-Za-z]{1,2}", "L"),
+    Some("LL123L"),
+  )
+  @test.assert_eq(
+    replace_simple_regex("no-match", "^\\d+", "#"),
+    Some("no-match"),
+  )
   @test.assert_eq(replace_space_runs("a  b   c", "_", min_run=2), "a_b_c")
   @test.assert_eq(replace_whitespace_runs("a\t\u{3000}b\n", " "), "a b ")
 }

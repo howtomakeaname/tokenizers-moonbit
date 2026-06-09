@@ -242,6 +242,53 @@ pub fn replace_bounded_simple_regex(
 }
 
 ///|
+/// Replace every match of the shared simple Split regex subset. This keeps
+/// Normalizer::Replace, Decoder::Replace and PreTokenizer::Split on the same
+/// deterministic scanner instead of maintaining three separate regex tables.
+pub fn replace_simple_regex(
+  s : String,
+  pattern : String,
+  content : String,
+) -> String? {
+  let chars = s.to_array()
+  match simple_split_regex_matches(chars, pattern) {
+    Some(spans) => Some(replace_spans(chars, spans, content))
+    None => None
+  }
+}
+
+///|
+fn replace_spans(
+  chars : Array[Char],
+  spans : Array[Span],
+  content : String,
+) -> String {
+  if spans.length() == 0 {
+    let sb = StringBuilder::new()
+    for c in chars {
+      sb.write_char(c)
+    }
+    return sb.to_string()
+  }
+  let sb = StringBuilder::new()
+  let mut pos = 0
+  for span in spans {
+    if span.start < pos {
+      continue
+    }
+    for i in pos..<span.start {
+      sb.write_char(chars[i])
+    }
+    sb.write_string(content)
+    pos = span.stop
+  }
+  for i in pos..<chars.length() {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
+}
+
+///|
 pub fn replace_anchored_simple_regex(
   s : String,
   pattern : String,

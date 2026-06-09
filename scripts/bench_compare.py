@@ -27,6 +27,7 @@ try:
     from tokenizers import Regex
     from tokenizers import decoders as hf_decoders
     from tokenizers import models as hf_models
+    from tokenizers import normalizers as hf_normalizers
     from tokenizers import pre_tokenizers as hf_pre_tokenizers
     from tokenizers import trainers as hf_trainers
 except Exception as exc:  # pragma: no cover - environment diagnostic
@@ -430,6 +431,30 @@ def hf_decoder_replace_digit_regex_us() -> float:
     return timed_us(lambda: decoder.decode(tokens), 2_000)
 
 
+def hf_decoder_replace_punct_symbol_regex_us() -> float:
+    decoder = hf_decoders.Replace(Regex(r"[\p{P}\p{S}]+"), "_")
+    tokens = ["hi,!", "$+🙂ok。", " code(a+b);", " path/to/file.rs"]
+    return timed_us(lambda: decoder.decode(tokens), 2_000)
+
+
+def hf_normalizer_replace_word_regex_us() -> float:
+    normalizer = hf_normalizers.Replace(Regex(r"\w+"), "W")
+    text = CORPORA["mixed"] + " snake_case abc123 中 Ж"
+    return timed_us(lambda: normalizer.normalize_str(text), 2_000)
+
+
+def hf_normalizer_replace_unicode_letter_regex_us() -> float:
+    normalizer = hf_normalizers.Replace(Regex(r"\p{L}+"), "L")
+    text = CORPORA["mixed"] + " café 中 Ж MoonBit 123"
+    return timed_us(lambda: normalizer.normalize_str(text), 2_000)
+
+
+def hf_normalizer_replace_punct_symbol_regex_us() -> float:
+    normalizer = hf_normalizers.Replace(Regex(r"[\p{P}\p{S}]+"), "_")
+    text = CORPORA["mixed"] + " $+🙂 wait!!! ok?! path/to/file.rs"
+    return timed_us(lambda: normalizer.normalize_str(text), 2_000)
+
+
 def hf_split_trailing_ws_regex_us() -> float:
     pt = hf_pre_tokenizers.Split(Regex(r"\s+$"), "removed", invert=False)
     text = CORPORA["mixed"] + "\t \n"
@@ -445,6 +470,12 @@ def hf_split_nonspace_regex_us() -> float:
 def hf_split_digit_regex_us() -> float:
     pt = hf_pre_tokenizers.Split(Regex(r"\d+"), "removed", invert=False)
     text = CORPORA["mixed"] + " 12345 2026"
+    return timed_us(lambda: pt.pre_tokenize_str(text), 2_000)
+
+
+def hf_split_punct_symbol_regex_us() -> float:
+    pt = hf_pre_tokenizers.Split(Regex(r"[\p{P}\p{S}]+"), "isolated", invert=False)
+    text = CORPORA["mixed"] + " $+🙂 ok。 code(a+b); path/to/file.rs"
     return timed_us(lambda: pt.pre_tokenize_str(text), 2_000)
 
 
@@ -521,6 +552,34 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     decoder_replace_digit_key = "decoder-replace-digit-regex-mixed"
     if decoder_replace_digit_key in moon:
         rows.append(Row(decoder_replace_digit_key, moon[decoder_replace_digit_key], hf_decoder_replace_digit_regex_us()))
+    decoder_replace_punct_symbol_key = "decoder-replace-punct-symbol-regex-mixed"
+    if decoder_replace_punct_symbol_key in moon:
+        rows.append(Row(
+            decoder_replace_punct_symbol_key,
+            moon[decoder_replace_punct_symbol_key],
+            hf_decoder_replace_punct_symbol_regex_us(),
+        ))
+    normalizer_replace_word_key = "normalizer-replace-word-regex-mixed"
+    if normalizer_replace_word_key in moon:
+        rows.append(Row(
+            normalizer_replace_word_key,
+            moon[normalizer_replace_word_key],
+            hf_normalizer_replace_word_regex_us(),
+        ))
+    normalizer_replace_unicode_letter_key = "normalizer-replace-unicode-letter-regex-mixed"
+    if normalizer_replace_unicode_letter_key in moon:
+        rows.append(Row(
+            normalizer_replace_unicode_letter_key,
+            moon[normalizer_replace_unicode_letter_key],
+            hf_normalizer_replace_unicode_letter_regex_us(),
+        ))
+    normalizer_replace_punct_symbol_key = "normalizer-replace-punct-symbol-regex-mixed"
+    if normalizer_replace_punct_symbol_key in moon:
+        rows.append(Row(
+            normalizer_replace_punct_symbol_key,
+            moon[normalizer_replace_punct_symbol_key],
+            hf_normalizer_replace_punct_symbol_regex_us(),
+        ))
     split_trailing_ws_key = "pretokenizer-split-trailing-ws-regex-mixed"
     if split_trailing_ws_key in moon:
         rows.append(Row(split_trailing_ws_key, moon[split_trailing_ws_key], hf_split_trailing_ws_regex_us()))
@@ -530,6 +589,9 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     split_digit_key = "pretokenizer-split-digit-regex-mixed"
     if split_digit_key in moon:
         rows.append(Row(split_digit_key, moon[split_digit_key], hf_split_digit_regex_us()))
+    split_punct_symbol_key = "pretokenizer-split-punct-symbol-regex-mixed"
+    if split_punct_symbol_key in moon:
+        rows.append(Row(split_punct_symbol_key, moon[split_punct_symbol_key], hf_split_punct_symbol_regex_us()))
     wordpiece_cache_key = "bert-wordpiece-cache-repeat"
     if wordpiece_cache_key in moon:
         bert_tok, _ = load_tokenizer("bert")

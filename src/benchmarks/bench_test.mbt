@@ -751,6 +751,48 @@ fn bench_normalizer_replace_anchored_inverse_regex_case(
 }
 
 ///|
+fn bench_normalizer_replace_word_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let normalizer = @normalizer.Normalizer::Replace(pattern="\\w+", content="W")
+  let text = corpus_mixed() + " snake_case abc123 中 Ж"
+  b.bench(name="normalizer-replace-word-regex-\{case_name}", fn() {
+    b.keep(normalizer.normalize(text))
+  })
+}
+
+///|
+fn bench_normalizer_replace_unicode_letter_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let normalizer = @normalizer.Normalizer::Replace(
+    pattern="\\p{L}+",
+    content="L",
+  )
+  let text = corpus_mixed() + " café 中 Ж MoonBit 123"
+  b.bench(name="normalizer-replace-unicode-letter-regex-\{case_name}", fn() {
+    b.keep(normalizer.normalize(text))
+  })
+}
+
+///|
+fn bench_normalizer_replace_punct_symbol_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let normalizer = @normalizer.Normalizer::Replace(
+    pattern="[\\p{P}\\p{S}]+",
+    content="_",
+  )
+  let text = corpus_mixed() + " $+🙂 wait!!! ok?! path/to/file.rs"
+  b.bench(name="normalizer-replace-punct-symbol-regex-\{case_name}", fn() {
+    b.keep(normalizer.normalize(text))
+  })
+}
+
+///|
 fn bench_decoder_replace_digit_regex_case(
   b : @bench.T,
   case_name : String,
@@ -1463,6 +1505,21 @@ test "bench decoder replace anchored union regex" (b : @bench.T) {
 ///|
 test "bench normalizer replace anchored inverse regex" (b : @bench.T) {
   bench_normalizer_replace_anchored_inverse_regex_case(b, "mixed")
+}
+
+///|
+test "bench normalizer replace word regex" (b : @bench.T) {
+  bench_normalizer_replace_word_regex_case(b, "mixed")
+}
+
+///|
+test "bench normalizer replace unicode letter regex" (b : @bench.T) {
+  bench_normalizer_replace_unicode_letter_regex_case(b, "mixed")
+}
+
+///|
+test "bench normalizer replace punct-symbol regex" (b : @bench.T) {
+  bench_normalizer_replace_punct_symbol_regex_case(b, "mixed")
 }
 
 ///|

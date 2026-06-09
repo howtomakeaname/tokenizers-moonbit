@@ -55,9 +55,36 @@ fn decode_replace_direct(
       @common.is_decimal_number(c)
     })
   }
+  if pattern == "[\\p{P}\\p{S}]+" ||
+    pattern == "[\\p{S}\\p{P}]+" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]+" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]+" {
+    return decode_replace_char_runs_direct(tokens, content, fn(c) {
+      @common.is_unicode_punctuation_or_symbol(c)
+    })
+  }
+  if @common.is_simple_split_regex_pattern(pattern) {
+    return decode_replace_simple_regex_direct(tokens, pattern, content)
+  }
   let sb = StringBuilder::new()
   for t in tokens {
     sb.write_string(replace_all(t, pattern, content))
+  }
+  sb.to_string()
+}
+
+///|
+fn decode_replace_simple_regex_direct(
+  tokens : Array[String],
+  pattern : String,
+  content : String,
+) -> String {
+  let sb = StringBuilder::new()
+  for t in tokens {
+    match @common.replace_simple_regex(t, pattern, content) {
+      Some(out) => sb.write_string(out)
+      None => sb.write_string(t)
+    }
   }
   sb.to_string()
 }
@@ -490,6 +517,10 @@ fn cleanup_text(s : String) -> String {
 fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern.is_empty() {
     return s
+  }
+  match @common.replace_simple_regex(s, pattern, content) {
+    Some(out) => return out
+    None => ()
   }
   match @common.replace_bounded_simple_regex(s, pattern, content) {
     Some(out) => return out

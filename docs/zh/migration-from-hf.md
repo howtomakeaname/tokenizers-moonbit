@@ -69,6 +69,10 @@ enc.attention_mask
   `with_truncation` / `with_padding` 链式配置，并通过 `TruncationParams::with_*`
   与 `PaddingParams::with_*` 设置 strategy、direction、stride、`pad_type_id`、
   `pad_to_multiple_of` 等参数。
+- 常见 HF `Split`/`Replace` 正则族已通过 wasm/js/native 一致的确定性 fast path
+  覆盖，包括 `\s`、`\d`、`\w`、ASCII class、Unicode letter/number/punctuation/
+  symbol class、anchored run、精确/最小量词以及 `{1,n}` bounded run；任意复杂正则
+  暂不作为通用引擎实现，未知 Split 会显式 Unsupported，未知 Replace 按字面量替换。
 - 已支持确定性 WordLevel 训练（含自定义 pre-tokenizer、已预切分 token 流、
   `min_frequency`、`special_tokens`、`vocab_size` 以及 HF 风格的频次/词典序词表排序）；
   也已提供 WordPiece / BPE / Unigram trainer MVP，支持相同输入模式以及

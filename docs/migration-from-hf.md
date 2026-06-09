@@ -98,6 +98,12 @@ enc.attention_mask // [1, 1]
   `initial_alphabet` and `limit_alphabet`, while BPE additionally supports
   `max_token_length` plus a `byte_level_alphabet()` helper matching HF
   `ByteLevel.alphabet()` workflows.
+- **Regex components:** common HF `Split`/`Replace` regex families are handled by
+  shared deterministic fast paths across wasm/js/native: `\s`, `\d`, `\w`,
+  ASCII classes, Unicode letter/number/punctuation/symbol classes, anchored
+  runs, exact/minimum quantifiers, and `{1,n}` bounded runs. Arbitrary complex
+  regexes are still out of scope; Split rejects unknown patterns explicitly,
+  while Replace falls back to literal replacement.
 
 ## Verified models
 
