@@ -37,6 +37,7 @@ loaded back with `from_pretrained(dir)`.
 | `tok.encode(text)` | `tok.encode(text)` |
 | `tok.encode(text, add_special_tokens=False)` | `tok.encode(text, add_special_tokens=false)` |
 | `tok.encode(a, b)` | `tok.encode_pair(a, b)` |
+| `tok.encode_batch([(a, b), ...])` | `tok.encode_pair_batch([(a, b), ...])` |
 
 ```python
 enc = tok.encode("Hello world")

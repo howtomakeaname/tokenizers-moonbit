@@ -36,6 +36,7 @@ snapshot 解析（`$HUGGINGFACE_HUB_CACHE`、`$HF_HOME/hub`、
 | `tok.encode(text)` | `tok.encode(text)` |
 | `tok.encode(text, add_special_tokens=False)` | `tok.encode(text, add_special_tokens=false)` |
 | `tok.encode(a, b)` | `tok.encode_pair(a, b)` |
+| `tok.encode_batch([(a, b), ...])` | `tok.encode_pair_batch([(a, b), ...])` |
 
 ```moonbit
 let enc = tok.encode("Hello world")

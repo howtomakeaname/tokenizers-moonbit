@@ -57,7 +57,9 @@ pub fn Tokenizer::save_pretrained(
   dir : String,
 ) -> String raise @types.TokenizerError {
   if !@fs.path_exists(dir) {
-    @fs.create_dir(dir) catch { _ => () }
+    @fs.create_dir(dir) catch {
+      _ => ()
+    }
   }
   let path = join_tokenizer_json(dir)
   self.save(path)

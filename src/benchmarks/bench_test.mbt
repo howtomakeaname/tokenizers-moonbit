@@ -149,6 +149,21 @@ fn bench_encode_batch_case(
 }
 
 ///|
+fn bench_encode_pair_batch_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+  text : String,
+) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  let pair = (text, "Second sequence: " + text)
+  let batch = [pair, pair, pair, pair, pair, pair, pair, pair]
+  b.bench(name="\{model}-encode-pair-batch-\{case_name}", fn() {
+    b.keep(tok.encode_pair_batch(batch, add_special_tokens=false))
+  })
+}
+
+///|
 fn bench_offset_lookup_case(
   b : @bench.T,
   model : String,
@@ -1214,6 +1229,14 @@ test "bench encode_batch duplicate matrix" (b : @bench.T) {
   let mixed = corpus_mixed()
   for model in ["gpt2", "bert", "t5", "llama", "Qwen2.5", "qwen3_coder"] {
     bench_encode_batch_case(b, model, "mixedx8", mixed)
+  }
+}
+
+///|
+test "bench encode_pair_batch duplicate matrix" (b : @bench.T) {
+  let mixed = corpus_mixed()
+  for model in ["gpt2", "bert", "llama", "Qwen2.5", "qwen3_coder"] {
+    bench_encode_pair_batch_case(b, model, "mixedx8", mixed)
   }
 }
 

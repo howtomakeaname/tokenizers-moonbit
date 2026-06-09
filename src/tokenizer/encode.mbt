@@ -150,12 +150,71 @@ pub fn Tokenizer::encode_batch_with_byte_offsets(
 }
 
 ///|
+/// Encode a batch of text pairs. This is the pair-input counterpart of
+/// `encode_batch`: each tuple is `(sequence_a, sequence_b)`, truncation is
+/// applied per pair, and BatchLongest padding is applied once across the whole
+/// batch. Repeated pairs are copied from a small per-call cache.
+pub fn Tokenizer::encode_pair_batch(
+  self : Tokenizer,
+  pairs : Array[(String, String)],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  if pairs.length() == 0 {
+    return []
+  }
+  let encs : Array[@types.Encoding] = []
+  let cache : Map[(String, String), @types.Encoding] = {}
+  for p in pairs {
+    match cache.get(p) {
+      Some(enc) => encs.push(copy_encoding(enc))
+      None => {
+        let enc = self.encode_pair_unpadded(p.0, p.1, add_special_tokens~)
+        cache[p] = copy_encoding(enc)
+        encs.push(enc)
+      }
+    }
+  }
+  match self.padding {
+    Some(pp) => pad_batch(encs, pp)
+    None => encs
+  }
+}
+
+///|
+/// Encode a batch of text pairs and return UTF-8 byte offsets for each
+/// sequence, matching HF's default offset convention for pair inputs.
+pub fn Tokenizer::encode_pair_batch_with_byte_offsets(
+  self : Tokenizer,
+  pairs : Array[(String, String)],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  let encs = self.encode_pair_batch(pairs, add_special_tokens~)
+  let out : Array[@types.Encoding] = []
+  for i in 0..<encs.length() {
+    out.push(encoding_with_pair_byte_offsets(encs[i], pairs[i].0, pairs[i].1))
+  }
+  out
+}
+
+///|
 /// Encode a pair of texts (sequence A and B) into a single `Encoding`.
 pub fn Tokenizer::encode_pair(
   self : Tokenizer,
   text_a : String,
   text_b : String,
   add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.finalize_padding(
+    self.encode_pair_unpadded(text_a, text_b, add_special_tokens~),
+  )
+}
+
+///|
+fn Tokenizer::encode_pair_unpadded(
+  self : Tokenizer,
+  text_a : String,
+  text_b : String,
+  add_special_tokens~ : Bool,
 ) -> @types.Encoding {
   let a = self.encode_raw(text_a, keep_special=true)
   let b = self.encode_raw(text_b, keep_special=true)
@@ -171,7 +230,7 @@ pub fn Tokenizer::encode_pair(
   } else {
     concat_encodings(a, b.unwrap())
   }
-  self.finalize_padding(processed)
+  processed
 }
 
 ///|

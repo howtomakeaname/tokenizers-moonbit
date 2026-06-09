@@ -126,6 +126,13 @@ def hf_encode_batch_us(tok: Tokenizer, text: str) -> float:
     return timed_us(lambda: tok.encode_batch(batch, add_special_tokens=False), iters)
 
 
+def hf_encode_pair_batch_us(tok: Tokenizer, text: str) -> float:
+    pair = (text, "Second sequence: " + text)
+    batch = [pair] * 8
+    iters = iterations_for(text)
+    return timed_us(lambda: tok.encode_batch(batch, add_special_tokens=False), iters)
+
+
 def hf_decode_us(tok: Tokenizer, text: str) -> float:
     ids = tok.encode(text, add_special_tokens=False).ids
     iters = iterations_for(text)
@@ -554,6 +561,7 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
         decode_key = f"{model}-decode-mixed"
         decode_batch_key = f"{model}-decode-batch-mixedx8"
         encode_batch_key = f"{model}-encode-batch-mixedx8"
+        encode_pair_batch_key = f"{model}-encode-pair-batch-mixedx8"
         load_key = f"{model}-from_str"
         pretrained_key = f"{model}-from_pretrained-file"
         pretrained_hub_cache_key = f"{model}-from_pretrained-hub-cache"
@@ -565,6 +573,8 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
             rows.append(Row(decode_batch_key, moon[decode_batch_key], hf_decode_batch_us(tok, CORPORA["mixed"])))
         if encode_batch_key in moon:
             rows.append(Row(encode_batch_key, moon[encode_batch_key], hf_encode_batch_us(tok, CORPORA["mixed"])))
+        if encode_pair_batch_key in moon:
+            rows.append(Row(encode_pair_batch_key, moon[encode_pair_batch_key], hf_encode_pair_batch_us(tok, CORPORA["mixed"])))
         if load_key in moon:
             rows.append(Row(load_key, moon[load_key], hf_load_us(path)))
         if pretrained_key in moon:

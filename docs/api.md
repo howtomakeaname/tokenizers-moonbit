@@ -48,6 +48,10 @@ fn Tokenizer::encode_batch(
   self : Tokenizer, texts : Array[String], add_special_tokens~ : Bool = true,
 ) -> Array[Encoding]
 
+fn Tokenizer::encode_pair_batch(
+  self : Tokenizer, pairs : Array[(String, String)], add_special_tokens~ : Bool = true,
+) -> Array[Encoding]
+
 fn Tokenizer::decode(
   self : Tokenizer, ids : Array[Int], skip_special_tokens~ : Bool = true,
 ) -> String

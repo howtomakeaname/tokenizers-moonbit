@@ -142,6 +142,53 @@ test "encode_pair tracks sequence ids separate from type ids" {
 }
 
 ///|
+test "encode_pair_batch pads pair inputs and preserves sequence offsets" {
+  let json =
+    #|{"version":"1.0",
+    #| "padding":{"strategy":"BatchLongest","direction":"Right","pad_id":5,"pad_type_id":0,"pad_token":"[PAD]"},
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"[CLS]":0,"[SEP]":1,"hello":2,"world":3,"月":4,"[PAD]":5,"[UNK]":6},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","cls":["[CLS]",0],"sep":["[SEP]",1]}}
+  let tok = Tokenizer::from_str(json)
+  let encs = tok.encode_pair_batch_with_byte_offsets(
+    [("hello", "world"), ("月", "world hello")],
+    add_special_tokens=true,
+  )
+  @test.assert_eq(encs.length(), 2)
+  @test.assert_eq(encs[0].tokens, [
+    "[CLS]", "hello", "[SEP]", "world", "[SEP]", "[PAD]",
+  ])
+  @test.assert_eq(encs[0].sequence_ids(), [
+    None,
+    Some(0),
+    None,
+    Some(1),
+    None,
+    None,
+  ])
+  @test.assert_eq(encs[0].attention_mask, [1, 1, 1, 1, 1, 0])
+  @test.assert_eq(encs[1].tokens, [
+    "[CLS]", "月", "[SEP]", "world", "hello", "[SEP]",
+  ])
+  @test.assert_eq(encs[1].offsets, [
+    (0, 0),
+    (0, 3),
+    (0, 0),
+    (0, 5),
+    (6, 11),
+    (0, 0),
+  ])
+  @test.assert_eq(encs[1].word_ids(), [
+    None,
+    Some(0),
+    None,
+    Some(0),
+    Some(1),
+    None,
+  ])
+}
+
+///|
 test "from_str loads root truncation and padding config" {
   let json =
     #|{"version":"1.0",
@@ -264,10 +311,9 @@ test "save_pretrained writes HF-style directory artifact" {
   @test.assert_eq(path, "_build/tokenizer_save_pretrained/tokenizer.json")
   let loaded = Tokenizer::from_pretrained("_build/tokenizer_save_pretrained")
   @test.assert_eq(loaded.to_json(), json)
-  @test.assert_eq(
-    loaded.encode("saved dir", add_special_tokens=false).ids,
-    [0, 1],
-  )
+  @test.assert_eq(loaded.encode("saved dir", add_special_tokens=false).ids, [
+    0, 1,
+  ])
 }
 
 ///|
