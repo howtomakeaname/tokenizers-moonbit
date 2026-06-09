@@ -198,6 +198,22 @@ fn bench_wordpiece_repeated_case(b : @bench.T) -> Unit raise {
 }
 
 ///|
+fn bench_precompiled_normalizer_case(b : @bench.T, case_name : String) -> Unit {
+  let normalizer = @normalizer.Normalizer::Precompiled
+  let ascii = "The\tquick brown\nfox jumps over MoonBit tokenizers. "
+  let unicode = "ＡＢＣ\u{1680}１２３\u{2028}Ⅳ ① ㍿ ﬁ ﬂ Å ㎏ "
+  let sb = StringBuilder::new()
+  for _ in 0..<64 {
+    sb.write_string(ascii)
+    sb.write_string(unicode)
+  }
+  let text = sb.to_string()
+  b.bench(name="normalizer-precompiled-\{case_name}", fn() {
+    b.keep(normalizer.normalize(text))
+  })
+}
+
+///|
 fn bench_load_case(b : @bench.T, model : String) -> Unit {
   guard load_text("tests/data/\{model}.full.json") is Some(json) else { return }
   b.bench(name="\{model}-from_str", fn() {
@@ -1050,6 +1066,11 @@ test "bench offset lookup matrix" (b : @bench.T) {
   for model in ["gpt2", "bert", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder"] {
     bench_offset_lookup_case(b, model, "mixed", mixed)
   }
+}
+
+///|
+test "bench precompiled normalizer" (b : @bench.T) {
+  bench_precompiled_normalizer_case(b, "mixed")
 }
 
 ///|

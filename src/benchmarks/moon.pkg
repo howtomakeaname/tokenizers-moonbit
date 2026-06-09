@@ -2,6 +2,7 @@ import {
   "tokenizers-moonbit/tokenizer",
   "tokenizers-moonbit/pretokenizer",
   "tokenizers-moonbit/decoder",
+  "tokenizers-moonbit/normalizer",
   "moonbitlang/x/fs",
   "moonbitlang/core/bench",
 } for "test"

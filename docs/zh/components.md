@@ -24,7 +24,7 @@
 | `NFC` / `NFD` / `NFKC` / `NFKD` | ✅ |
 | `Nmt` | ✅ |
 | `ByteLevel` normalizer | ✅ |
-| `Precompiled` | 🚧 已覆盖常见空白折叠，完整 charsmap 待补 |
+| `Precompiled` | 🚧 已覆盖 NFKC + 全 Unicode 空白折叠，并有 ASCII fast path；完整 charsmap 待补 |
 
 ## Pre-tokenizers
 
@@ -60,8 +60,8 @@ GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E
 
 ## 限制
 
-- **Precompiled charsmap：** 仅覆盖常见 SentencePiece 空白折叠；完整二进制
-  charsmap 解码仍待实现。
+- **Precompiled charsmap：** 已覆盖常见 SentencePiece NFKC 映射与全 Unicode
+  空白折叠，并对 ASCII 输入走 fast path；完整二进制 charsmap 解码仍待实现。
 - **任意 Split 正则：** 当前识别主流 tokenizer 的常见正则族，并覆盖 `\s+`、
   `\S+`、`\s+$`、`\s{2,}` / `\s{3,}` / `\s{4,}` 以及 `\s{2}` /
   `\s{3}` / `\s{4}` 精确空白 run、`[\r\n]+` 及 `{2,}` / `{3,}` /

@@ -24,7 +24,7 @@ Chinese version: [`docs/zh/components.md`](./zh/components.md)
 | `NFC` / `NFD` / `NFKC` / `NFKD` | ✅ Unicode table + decomposition/recomposition |
 | `Nmt` | ✅ Moses/NMT cleanup for SentencePiece-era tokenizers |
 | `ByteLevel` normalizer | ✅ UTF-8 bytes mapped to the GPT-2 byte alphabet |
-| `Precompiled` (SentencePiece charsmap) | 🚧 common whitespace folding; full charsmap TODO |
+| `Precompiled` (SentencePiece charsmap) | 🚧 NFKC + full Unicode whitespace folding with ASCII fast path; full binary charsmap TODO |
 
 ## Pre-tokenizers
 
@@ -61,8 +61,9 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
 
 ## Limitations
 
-- **Precompiled charsmap:** common SentencePiece whitespace folding is covered;
-  full binary charsmap decoding is still TODO.
+- **Precompiled charsmap:** common SentencePiece NFKC mapping and full Unicode
+  whitespace folding are covered, with an ASCII fast path for common inputs; full
+  binary charsmap decoding is still TODO.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
   CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\S+`,
   `^\s+`, `\s+$`, `\s{2,}` / `\s{3,}` / `\s{4,}` and exact

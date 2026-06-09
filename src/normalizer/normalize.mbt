@@ -146,16 +146,43 @@ fn is_nmt_space(u : Int) -> Bool {
 
 ///|
 fn precompiled_normalize(s : String) -> String {
+  match precompiled_ascii_fast(s) {
+    Some(out) => return out
+    None => ()
+  }
   let sb = StringBuilder::new()
   let normalized = normalize_unicode(s, compat=true, compose=true)
   for c in normalized {
-    if @common.is_ascii_whitespace(c) {
+    if @common.is_unicode_whitespace(c.to_int()) {
       sb.write_char(' ')
     } else {
       sb.write_char(c)
     }
   }
   sb.to_string()
+}
+
+///|
+fn precompiled_ascii_fast(s : String) -> String? {
+  let sb = StringBuilder::new()
+  let mut changed = false
+  for c in s {
+    let u = c.to_int()
+    if u > 0x7F {
+      return None
+    }
+    if c == '\t' || c == '\n' || c == '\r' {
+      sb.write_char(' ')
+      changed = true
+    } else {
+      sb.write_char(c)
+    }
+  }
+  if changed {
+    Some(sb.to_string())
+  } else {
+    Some(s)
+  }
 }
 
 // strip_accents: remove combining marks via the precomputed NFD-minus-Mn table.

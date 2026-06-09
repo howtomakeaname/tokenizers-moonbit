@@ -62,6 +62,14 @@ test "Precompiled normalizer maps whitespace without collapsing runs" {
     Normalizer::Precompiled.normalize("\u{a0}\t a\n\u{3000}b"),
     "   a  b",
   )
+  @test.assert_eq(
+    Normalizer::Precompiled.normalize("a\u{1680}b\u{2028}c\u{202f}d"),
+    "a b c d",
+  )
+  @test.assert_eq(
+    Normalizer::Precompiled.normalize("ascii\tfast\npath"),
+    "ascii fast path",
+  )
 }
 
 ///|

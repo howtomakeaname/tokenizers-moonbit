@@ -99,7 +99,7 @@
 | BertNormalizer（clean_text/handle_chinese_chars/strip_accents/lowercase）| ✅ |
 | StripAccents（NFD+Mn 最小表，1006 条，lazy 加载）| ✅ |
 | NFC/NFD/NFKC/NFKD | ✅ | 生成表 + UAX #15 分解/排序/重组 |
-| Precompiled（SentencePiece charsmap）| 🚧 | 已覆盖主流 SPM NFKC charsmap + Unicode 空白映射；完整二进制 trie 解码 TODO |
+| Precompiled（SentencePiece charsmap）| 🚧 | 已覆盖主流 SPM NFKC charsmap + 全 Unicode 空白映射，并为 ASCII 输入提供 fast path；完整二进制 trie 解码 TODO |
 | Nmt | ✅ | 控制/格式字符清理 + Unicode 空白归一 |
 | ByteLevel-normalizer | ✅ | UTF-8 bytes → GPT-2 byte alphabet |
 
@@ -194,7 +194,7 @@ llama decode quick native 约 0.17x；from_str
 
 ## 已知缺口与取舍（TODO）
 
-1. **Precompiled charsmap**：当前覆盖主流 SentencePiece NFKC charsmap 与 Unicode 空白映射；完整二进制 trie 解码仍是 TODO。
+1. **Precompiled charsmap**：当前覆盖主流 SentencePiece NFKC charsmap 与全 Unicode 空白映射，并为 ASCII 输入提供 fast path；完整二进制 trie 解码仍是 TODO。
 2. **正则**：core 正则不提供完整通用 Unicode regex 引擎；GPT/Qwen/o200k 主线已手写扫描器。通用 Split 已补 literal、`^\\s+`、`\\s+`、`\\S+`、`\\s+$`、`\\s{2,}` / `\\s{3,}` / `\\s{4,}` 与 `\\s{2}` / `\\s{3}` / `\\s{4}`、`[\\r\\n]+` 及 `{2..4}` 最小/精确换行量词、`[^\\S\\r\\n]+` 及 `{2..4}` 最小/精确水平空白量词、`\\d+`、`[\\d]+`、`\\D+`、`\\P{N}+`、`\\d{2,}`、`[\\d]{2,}`、`\\d{2}`、`\\d{3}`、`\\d{4}`、`\\d{1,2}`、`\\d{1,3}`、`\\d{1,4}`、`[\\d]{1,n}`、`\\p{N}{1,2}`、`\\p{N}{1,3}`、`\\p{N}{1,4}`、anchored digit/word/letter/punctuation/symbol runs、`\\w{2,}`、`\\w{2}`、常见 `{1,2}` / `{1,3}` / `{1,4}` bounded word/ASCII/Unicode letter/punctuation/symbol/union runs 与 `\\D{1,n}` / `\\S{1,n}` / `\\W{1,n}` / `\\P{L}{1,n}` / `\\P{P}{1,n}` / `\\P{S}{1,n}` / inverse ASCII class / `[^\\s\\p{L}\\p{N}]{1,n}` bounded 反集 runs、`[A-Za-z0-9]{3}`、`[A-Za-z]{2,}`、`\\p{L}{3}`、`\\w+`、`\\W+`、`[A-Za-z0-9]+`、`[^A-Za-z0-9]+`、`[A-Za-z]+`、`[^A-Za-z]+`、`\\p{L}+`、`\\P{L}+`、`\\p{P}+`、`\\P{P}+`、`\\p{S}+`、`\\P{S}+`、`[\\p{P}\\p{S}]+`、`[^\\s\\p{L}\\p{N}]+`、常见 ASCII/Unicode word/letter/number/punctuation/symbol class；复杂未知 pattern 加载期显式 Unsupported，避免静默不对齐。Replace normalizer/decoder 已补 `^\\s+` / `\\s+` / `\\s+$` / `\\s{2,}` / `\\s{3,}` / `\\s{4,}` / `\\s{2}` / `\\s{3}` / `\\s{4}` / `[\\r\\n]+` 及 `{2..4}` 最小/精确换行量词 / `[^\\S\\r\\n]+` 及 `{2..4}` 最小/精确水平空白量词 / `[ \\t]+` 及 `{2..4}` 最小/精确量词 / ` {2,}` / anchored digit/word/letter/punctuation/symbol runs / `\\d+` / `[\\d]+` / `\\D+` / `\\P{N}+` / `\\d{2,}` / `[\\d]{2,}` / `\\d{2}` / `\\d{3}` / `\\d{4}` / `\\w{2,}` / `\\w{2}` / 常见 `{1,2}` / `{1,3}` / `{1,4}` bounded word/ASCII/Unicode letter/punctuation/symbol/union runs 与 `\\D{1,n}` / `\\S{1,n}` / `\\W{1,n}` / `\\P{L}{1,n}` / `\\P{P}{1,n}` / `\\P{S}{1,n}` / inverse ASCII class / `[^\\s\\p{L}\\p{N}]{1,n}` bounded 反集 runs / `[A-Za-z0-9]{3}` / `[A-Za-z]{2,}` / `\\p{L}{3}` / 常见 bounded digit / `\\w+` / `\\W+` / `[A-Za-z0-9]+` / `[^A-Za-z0-9]+` / `[A-Za-z]+` / `[^A-Za-z]+` / `\\p{L}+` / `\\P{L}+` / `\\p{P}+` / `\\P{P}+` / `\\p{S}+` / `\\P{S}+` / `[\\p{P}\\p{S}]+` / `[^\\s\\p{L}\\p{N}]+`；更复杂 Replace pattern 仍按字面量处理。
 3. **训练 / Hub 集成**：当前定位 inference-first；`to_json`/`save` 已支持原始 JSON 往返，`from_pretrained` 已支持本地目录/文件、已有 HF Hub cache snapshot 与稳定路径小型多项 source cache；WordLevel trainer 产物已支持序列化保存，并支持自定义 pre-tokenizer / 预切分 token 流 / vocab_size / HF 风格频次与词典序排序；WordPiece / BPE / Unigram trainer MVP 已支持相同输入模式、continuation prefix / end-of-word suffix、`max_input_chars_per_word`、`byte_fallback` 与 `vocab_size`，常见 pre-tokenizer 可序列化。Hub 网络下载 API 暂未实现，高级训练算法与采样参数后续按需增强。
 4. **性能**：BPE merge 已用优先队列(pairing heap)+惰性失效，llama 提速约 7x、与 Rust 同量级；进一步可加 word→tokens 缓存与多 MB 词表加载优化。
