@@ -127,7 +127,10 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   HF-style frequency/lexical vocab ordering. Deterministic WordPiece, BPE, and
   Unigram trainer MVPs are also available with the same input modes and common
   knobs such as continuation-prefix / end-of-word suffix /
-  `max_input_chars_per_word` / `byte_fallback`.
+  `max_input_chars_per_word` / `byte_fallback`; BPE training additionally
+  supports HF-style `initial_alphabet` / `limit_alphabet`, and
+  `byte_level_alphabet()` exposes the 256 ByteLevel symbols for GPT-2/RoBERTa
+  style training.
 - **Constructed tokenizer serialization:** trained WordLevel, WordPiece, BPE, and Unigram tokenizers serialize
   common pre-tokenizers such as ByteLevel, Metaspace, Punctuation, Split, Digits,
   Delimiter, FixedLength, UnicodeScripts, and Sequence.

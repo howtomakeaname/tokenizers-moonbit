@@ -79,6 +79,18 @@ pub fn byte_level_encode_str(s : String) -> String {
 }
 
 ///|
+/// Return the 256-character ByteLevel alphabet used by GPT-2/RoBERTa style BPE
+/// training. Pass this as BPE `initial_alphabet` to guarantee every byte can be
+/// represented even when the training corpus does not contain it.
+pub fn byte_level_alphabet() -> Array[String] {
+  let out : Array[String] = []
+  for b in 0..<256 {
+    out.push(@common.char_string(byte_to_char[b]))
+  }
+  out
+}
+
+///|
 /// Inverse of `byte_level_encode_str`: map each char back to a byte, then
 /// decode the byte sequence as UTF-8 (lossy).
 pub fn byte_level_decode_str(s : String) -> String {

@@ -253,6 +253,24 @@ def hf_train_bpe_us(text: str) -> float:
     return timed_us(train_once, 30)
 
 
+def hf_train_bpe_bytelevel_alphabet_us(text: str) -> float:
+    corpus = [text] * 4
+
+    def train_once() -> Tokenizer:
+        tok = Tokenizer(hf_models.BPE(unk_token="[UNK]"))
+        tok.pre_tokenizer = hf_pre_tokenizers.ByteLevel(add_prefix_space=False, use_regex=True)
+        trainer = hf_trainers.BpeTrainer(
+            vocab_size=512,
+            min_frequency=2,
+            special_tokens=["[PAD]", "[UNK]"],
+            initial_alphabet=hf_pre_tokenizers.ByteLevel.alphabet(),
+        )
+        tok.train_from_iterator(corpus, trainer=trainer)
+        return tok
+
+    return timed_us(train_once, 30)
+
+
 def hf_trained_bpe_to_json_us(text: str) -> float:
     tok = Tokenizer(hf_models.BPE(unk_token="[UNK]"))
     tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
@@ -395,6 +413,13 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     bpe_train_key = "bpe-train-mixedx4"
     if bpe_train_key in moon:
         rows.append(Row(bpe_train_key, moon[bpe_train_key], hf_train_bpe_us(CORPORA["mixed"])))
+    bpe_train_bytelevel_key = "bpe-train-bytelevel-alphabet-mixedx4"
+    if bpe_train_bytelevel_key in moon:
+        rows.append(Row(
+            bpe_train_bytelevel_key,
+            moon[bpe_train_bytelevel_key],
+            hf_train_bpe_bytelevel_alphabet_us(CORPORA["mixed"]),
+        ))
     bpe_to_json_key = "bpe-trained-to_json-mixed"
     if bpe_to_json_key in moon:
         rows.append(Row(bpe_to_json_key, moon[bpe_to_json_key], hf_trained_bpe_to_json_us(CORPORA["mixed"])))

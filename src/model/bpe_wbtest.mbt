@@ -98,3 +98,30 @@ test "legacy merge splitter preserves right side spaces" {
   @test.assert_eq(split_legacy_merge("a b c"), ("a", "b c"))
   @test.assert_eq(split_legacy_merge("abc"), ("abc", ""))
 }
+
+///|
+test "bpe trainer keeps caller initial alphabet" {
+  let model = Model::train_bpe(
+    ["ab ab"],
+    unk_token=Some("[UNK]"),
+    min_frequency=2,
+    initial_alphabet=["z"],
+  )
+  @test.assert_eq(model.token_to_id("z") is Some(_), true)
+  @test.assert_eq(model.token_to_id("ab") is Some(_), true)
+}
+
+///|
+test "bpe trainer limits corpus alphabet after initial alphabet" {
+  let model = Model::train_bpe(
+    ["ccc bb a"],
+    unk_token=Some("[UNK]"),
+    min_frequency=10,
+    initial_alphabet=["z"],
+    limit_alphabet=Some(2),
+  )
+  @test.assert_eq(model.token_to_id("z") is Some(_), true)
+  @test.assert_eq(model.token_to_id("c") is Some(_), true)
+  @test.assert_eq(model.token_to_id("b") is Some(_), true)
+  @test.assert_eq(model.token_to_id("a"), None)
+}

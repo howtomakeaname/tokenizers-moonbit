@@ -177,6 +177,8 @@ pub fn Tokenizer::train_bpe(
   continuing_subword_prefix? : String? = None,
   end_of_word_suffix? : String? = None,
   fuse_unk? : Bool = false,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
 ) -> Tokenizer {
   Tokenizer::train_bpe_with_pretokenizer(
     texts,
@@ -188,6 +190,8 @@ pub fn Tokenizer::train_bpe(
     continuing_subword_prefix~,
     end_of_word_suffix~,
     fuse_unk~,
+    initial_alphabet~,
+    limit_alphabet~,
   )
 }
 
@@ -203,6 +207,8 @@ pub fn Tokenizer::train_bpe_with_pretokenizer(
   continuing_subword_prefix? : String? = None,
   end_of_word_suffix? : String? = None,
   fuse_unk? : Bool = false,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
 ) -> Tokenizer {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -220,6 +226,8 @@ pub fn Tokenizer::train_bpe_with_pretokenizer(
     continuing_subword_prefix~,
     end_of_word_suffix~,
     fuse_unk~,
+    initial_alphabet~,
+    limit_alphabet~,
   )
 }
 
@@ -235,6 +243,8 @@ pub fn Tokenizer::train_bpe_from_tokens(
   continuing_subword_prefix? : String? = None,
   end_of_word_suffix? : String? = None,
   fuse_unk? : Bool = false,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
 ) -> Tokenizer {
   {
     normalizer: None,
@@ -248,6 +258,8 @@ pub fn Tokenizer::train_bpe_from_tokens(
       continuing_subword_prefix~,
       end_of_word_suffix~,
       fuse_unk~,
+      initial_alphabet~,
+      limit_alphabet~,
     ),
     post_processor: None,
     decoder: None,

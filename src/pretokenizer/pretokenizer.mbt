@@ -43,6 +43,16 @@ pub fn PreTokenizer::whitespace_split() -> PreTokenizer {
 }
 
 ///|
+/// Public constructor for GPT-2/RoBERTa style ByteLevel pre-tokenization.
+pub fn PreTokenizer::byte_level(
+  add_prefix_space? : Bool = false,
+  use_regex? : Bool = true,
+  trim_offsets? : Bool = true,
+) -> PreTokenizer {
+  ByteLevel(add_prefix_space~, use_regex~, trim_offsets~)
+}
+
+///|
 pub fn SplitBehavior::removed() -> SplitBehavior {
   Removed
 }

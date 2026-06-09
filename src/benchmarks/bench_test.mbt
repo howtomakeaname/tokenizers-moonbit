@@ -476,6 +476,31 @@ fn bench_train_bpe_case(
 }
 
 ///|
+fn bench_train_bpe_bytelevel_alphabet_case(
+  b : @bench.T,
+  case_name : String,
+  text : String,
+) -> Unit {
+  let corpus = [text, text, text, text]
+  b.bench(name="bpe-train-bytelevel-alphabet-\{case_name}", fn() {
+    b.keep(
+      @tokenizer.Tokenizer::train_bpe_with_pretokenizer(
+        corpus,
+        @pretokenizer.PreTokenizer::byte_level(
+          add_prefix_space=false,
+          use_regex=true,
+        ),
+        unk_token=Some("[UNK]"),
+        min_frequency=2,
+        special_tokens=["[PAD]"],
+        vocab_size=Some(512),
+        initial_alphabet=@pretokenizer.byte_level_alphabet(),
+      ),
+    )
+  })
+}
+
+///|
 fn bench_trained_bpe_to_json_case(b : @bench.T, case_name : String) -> Unit {
   let tok = @tokenizer.Tokenizer::train_bpe(
     [corpus_mixed(), corpus_mixed()],
@@ -1252,6 +1277,11 @@ test "bench trained wordpiece to_json" (b : @bench.T) {
 ///|
 test "bench train bpe" (b : @bench.T) {
   bench_train_bpe_case(b, "mixedx4", corpus_mixed())
+}
+
+///|
+test "bench train bpe bytelevel alphabet" (b : @bench.T) {
+  bench_train_bpe_bytelevel_alphabet_case(b, "mixedx4", corpus_mixed())
 }
 
 ///|

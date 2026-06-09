@@ -612,6 +612,42 @@ test "train_bpe respects vocab_size cap" {
 }
 
 ///|
+test "byte_level_alphabet exposes unique 256 byte symbols" {
+  let alphabet = @pretokenizer.byte_level_alphabet()
+  @test.assert_eq(alphabet.length(), 256)
+  let seen : Map[String, Bool] = {}
+  for piece in alphabet {
+    seen[piece] = true
+  }
+  @test.assert_eq(seen.length(), 256)
+  @test.assert_eq(seen.get("A"), Some(true))
+  @test.assert_eq(seen.get("!"), Some(true))
+  for c in @pretokenizer.byte_level_encode_str("🙂") {
+    @test.assert_eq(seen.get(@common.char_string(c)), Some(true))
+  }
+}
+
+///|
+test "train_bpe bytelevel initial alphabet encodes unseen bytes" {
+  let tok = Tokenizer::train_bpe_with_pretokenizer(
+    ["hello hello"],
+    @pretokenizer.PreTokenizer::byte_level(
+      add_prefix_space=false,
+      use_regex=true,
+    ),
+    unk_token=Some("[UNK]"),
+    min_frequency=2,
+    special_tokens=["[PAD]"],
+    initial_alphabet=@pretokenizer.byte_level_alphabet(),
+  )
+  let enc = tok.encode("🙂", add_special_tokens=false)
+  @test.assert_eq(enc.tokens.length(), 4)
+  for tok in enc.tokens {
+    @test.assert_eq(tok == "[UNK]", false)
+  }
+}
+
+///|
 test "train_unigram prefers learned whole words" {
   let tok = Tokenizer::train_unigram(["hello hello help"], unk_token="<unk>", special_tokens=[
     "<pad>",

@@ -238,11 +238,11 @@ fn char_string(c : Char) -> String {
 ///|
 /// Train a deterministic BPE model from whitespace-delimited text.
 ///
-/// This MVP implements the core HF BPETrainer loop: reserve special/unk tokens,
-/// seed a character alphabet, repeatedly pick the highest-frequency adjacent
-/// pair (frequency desc, lexical tie-break), add the merged token, and rewrite
-/// the corpus. It intentionally omits advanced trainer knobs such as dropout,
-/// initial alphabet limits, and byte-level alphabet generation.
+/// This implements the core HF BPETrainer loop: reserve special/unk tokens, seed
+/// a character alphabet (including optional caller-provided initial alphabet and
+/// corpus alphabet cap), repeatedly pick the highest-frequency adjacent pair
+/// (frequency desc, lexical tie-break), add the merged token, and rewrite the
+/// corpus. It intentionally omits advanced trainer knobs such as dropout.
 pub fn Model::train_bpe(
   texts : Array[String],
   unk_token? : String? = Some("[UNK]"),
@@ -252,6 +252,8 @@ pub fn Model::train_bpe(
   continuing_subword_prefix? : String? = None,
   end_of_word_suffix? : String? = None,
   fuse_unk? : Bool = false,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
 ) -> Model {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -266,6 +268,8 @@ pub fn Model::train_bpe(
     continuing_subword_prefix~,
     end_of_word_suffix~,
     fuse_unk~,
+    initial_alphabet~,
+    limit_alphabet~,
   )
 }
 
@@ -280,6 +284,8 @@ pub fn Model::train_bpe_from_tokens(
   continuing_subword_prefix? : String? = None,
   end_of_word_suffix? : String? = None,
   fuse_unk? : Bool = false,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
 ) -> Model {
   let word_counts : Map[String, Int] = {}
   let word_order : Array[String] = []
@@ -313,7 +319,16 @@ pub fn Model::train_bpe_from_tokens(
     Some(unk) => ignore(add_token(unk))
     None => ()
   }
-  let alphabet = sorted_wordlevel_candidates(alphabet_order, alphabet_counts, 1)
+  for tok in initial_alphabet {
+    match initial_alphabet_piece(tok) {
+      Some(piece) => ignore(add_token(piece))
+      None => ()
+    }
+  }
+  let alphabet = limit_alphabet_candidates(
+    sorted_wordlevel_candidates(alphabet_order, alphabet_counts, 1),
+    limit_alphabet,
+  )
   for item in alphabet {
     ignore(add_token(item.0))
   }
@@ -364,6 +379,38 @@ pub fn Model::train_bpe_from_tokens(
     ignore_merges: false,
     cache: {},
   })
+}
+
+///|
+fn initial_alphabet_piece(s : String) -> String? {
+  for c in s {
+    return Some(char_string(c))
+  }
+  None
+}
+
+///|
+fn limit_alphabet_candidates(
+  candidates : Array[(String, Int)],
+  limit : Int?,
+) -> Array[(String, Int)] {
+  match limit {
+    None => candidates
+    Some(n) =>
+      if n <= 0 || candidates.length() <= n {
+        if n <= 0 {
+          []
+        } else {
+          candidates
+        }
+      } else {
+        let out : Array[(String, Int)] = []
+        for i in 0..<n {
+          out.push(candidates[i])
+        }
+        out
+      }
+  }
 }
 
 ///|
