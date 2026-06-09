@@ -154,6 +154,7 @@
 | P1 | byte offsets 模式 | ✅ | 可选择输出 HF Rust 风格 byte offsets；新增中英/emoji offset 对拍与 bench |
 | P1 | `sequence_ids` | ✅ | Encoding 增加字段和访问 API；覆盖 pair/special tokens |
 | P1 | token-char 映射 | ✅ | 已补 `token_to_sequence` / `token_to_chars` / `char_to_token`；覆盖 pair/special/byte offsets，并新增 lookup bench |
+| P1 | pre-tokenized encode API | ✅ | 已补 `encode_pretokenized` / pair / batch / pair_batch 及 byte-offset variants；跳过 pre-tokenizer 但保留 normalizer/model/post-processor/truncation/padding，offsets 基于 normalized words 单空格连接；新增单测与 HF benchmark 对比 |
 | P1 | `word_ids` / word-char 映射 | ✅ | 已补 `word_ids`、`token_to_word`、`word_to_tokens`、`word_to_chars`、`char_to_word`；覆盖 pair/special/byte offsets，并纳入 lookup bench |
 | P1 | Truncation strategy 完整化 | ✅ | 支持 LongestFirst/OnlyFirst/OnlySecond；pair encode 按 HF 顺序：预留 special slots 后先截断 raw pair，再 post-process/pad；公开 `TruncationParams::with_*` builder 覆盖 stride/direction/strategy |
 | P1 | ByteLevel post-processor `trim_offsets` 细节 | ✅ | 空白修剪与 HF offsets 对齐；已补 ByteLevel / RoBERTa offset 用例与 micro bench |
@@ -161,14 +162,14 @@
 | P2 | 通用 Split/Replace 正则覆盖 | 🚧 | Normalizer/Decoder Replace 已统一走 Split 的 deterministic simple-regex span scanner，覆盖 `\\s` / `\\S` / `\\d` / `\\D` / `\\w` / `\\W`、ASCII alnum/letter、Unicode `\\p{L}` / `\\p{N}` / `\\p{P}` / `\\p{S}`、punctuation-or-symbol union、anchored positive/inverse class runs、exact/min/bounded `{1,n}` families；Decoder Replace 对这些 simple regex 直接绕过 decode_chain，Split/Normalizer/Decoder 三套语义由 `common` 同一分发表驱动；复杂未知 Split pattern 加载期显式 Unsupported，未知 Replace pattern 保持字面量 fallback |
 | P2 | save / to_json / from_file 对称性 | ✅ | `to_json` 保留原始 tokenizer.json；`Tokenizer::from_file` / `save` 可往返；新增 HF 风格 `save_pretrained(dir)` 写出 `dir/tokenizer.json` 并可由 `from_pretrained(dir)` 重新加载；补 serialization 测试与 to_json/save_pretrained bench |
 | P3 | `from_pretrained` / Hub 集成 | 🚧 | 已支持本地 HF 目录（`tokenizer.json`）、tokenizer 文件路径、`save_pretrained` 目录、已有 HuggingFace Hub cache snapshot（`$HUGGINGFACE_HUB_CACHE` / `$HF_HOME/hub` / `$HOME/.cache/huggingface/hub`，含 refs/main → snapshots/<rev> 解析），并对稳定 pretrained 路径做小型多项 source cache；Hub 网络下载仍需外部脚本/应用层集成 |
-| P3 | batch 并行 / word cache | 🚧 | BPE/WordPiece/Unigram word cache 已完成；encode_batch / encode_pair_batch 对重复输入做单批缓存并补 bench，pair batch 支持 BatchLongest padding 与 byte offsets；公开 `PaddingParams::fixed` / `batch_longest` / `with_*` builder 覆盖 left/right、pad_type_id、pad_to_multiple_of；并行仍待运行时能力评估 |
+| P3 | batch 并行 / word cache | 🚧 | BPE/WordPiece/Unigram word cache 已完成；encode_batch / encode_pair_batch / pre-tokenized batch / pre-tokenized pair batch 对重复输入做单批缓存并补 bench，pair batch 支持 BatchLongest padding 与 byte offsets；公开 `PaddingParams::fixed` / `batch_longest` / `with_*` builder 覆盖 left/right、pad_type_id、pad_to_multiple_of；并行仍待运行时能力评估 |
 | P4 | trainer / training API | ✅ | 已提供确定性 WordLevel trainer（WhitespaceSplit / 自定义 pre-tokenizer / 预切分 token 流 + min_frequency + special tokens + vocab_size + HF 风格频次/词典序排序）；新增确定性 WordPiece / BPE / Unigram trainer MVP（同输入模式 + continuation prefix / end_of_word_suffix / max_input_chars_per_word / byte_fallback + vocab_size），其中 WordPiece/BPE trainer 已支持 HF 风格 `initial_alphabet` / `limit_alphabet`，BPE 另支持 `max_token_length`，并通过 `byte_level_alphabet()` 覆盖 ByteLevel 256-byte alphabet；训练结果可 `to_json`/`save` 往返，常见 pre-tokenizer 可序列化，并加入 HF trainer bench；高级训练算法与采样参数后续按需增强 |
 
 ### Benchmark 对比要求
 
 性能结论必须基于 `scripts/bench_compare.py` 的同机对比结果，而不是单独的
 `moon bench` 输出。脚本会对 encode / explicit byte offsets / decode /
-encode_batch / encode_pair_batch / decode_batch / from_str / local from_pretrained / to_json / save_pretrained / common Split-Replace regex fast paths 输出
+encode_batch / encode_pair_batch / pre-tokenized encode+batch / decode_batch / from_str / local from_pretrained / to_json / save_pretrained / common Split-Replace regex fast paths 输出
 MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的项目
 应进入优化排期；`< 0.90x` 才能明确宣称本项目在该用例快于 HF。
 

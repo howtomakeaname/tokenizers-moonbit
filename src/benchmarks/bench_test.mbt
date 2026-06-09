@@ -185,6 +185,72 @@ fn bench_encode_pair_batch_case(
 }
 
 ///|
+fn pretokenized_words() -> Array[String] {
+  [
+    "The", "quick", "brown", "fox", "jumps", "over", "MoonBit", "tokenizers", "我",
+    "🙂", "2026", "path/to/file.rs",
+  ]
+}
+
+///|
+fn bench_encode_pretokenized_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  let words = pretokenized_words()
+  b.bench(name="\{model}-encode-pretokenized-\{case_name}", fn() {
+    b.keep(tok.encode_pretokenized(words, add_special_tokens=false))
+  })
+}
+
+///|
+fn bench_encode_pretokenized_byte_offsets_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  let words = pretokenized_words()
+  b.bench(name="\{model}-encode-pretokenized-byte-offsets-\{case_name}", fn() {
+    b.keep(
+      tok.encode_pretokenized_with_byte_offsets(words, add_special_tokens=false),
+    )
+  })
+}
+
+///|
+fn bench_encode_pretokenized_batch_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  let words = pretokenized_words()
+  let batch = [words, words, words, words, words, words, words, words]
+  b.bench(name="\{model}-encode-pretokenized-batch-\{case_name}", fn() {
+    b.keep(tok.encode_pretokenized_batch(batch, add_special_tokens=false))
+  })
+}
+
+///|
+fn bench_encode_pretokenized_pair_batch_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  let a = pretokenized_words()
+  let bwords = ["Second", "sequence", "MoonBit", "tokenizers", "2026"]
+  let pair = (a, bwords)
+  let batch = [pair, pair, pair, pair, pair, pair, pair, pair]
+  b.bench(name="\{model}-encode-pretokenized-pair-batch-\{case_name}", fn() {
+    b.keep(tok.encode_pretokenized_pair_batch(batch, add_special_tokens=false))
+  })
+}
+
+///|
 fn bench_offset_lookup_case(
   b : @bench.T,
   model : String,
@@ -1308,6 +1374,16 @@ test "bench encode_pair_batch duplicate matrix" (b : @bench.T) {
   let mixed = corpus_mixed()
   for model in ["gpt2", "bert", "llama", "Qwen2.5", "qwen3_coder"] {
     bench_encode_pair_batch_case(b, model, "mixedx8", mixed)
+  }
+}
+
+///|
+test "bench encode pretokenized matrix" (b : @bench.T) {
+  for model in ["gpt2", "bert", "llama", "Qwen2.5", "qwen3_coder"] {
+    bench_encode_pretokenized_case(b, model, "words")
+    bench_encode_pretokenized_byte_offsets_case(b, model, "words")
+    bench_encode_pretokenized_batch_case(b, model, "wordsx8")
+    bench_encode_pretokenized_pair_batch_case(b, model, "wordsx8")
   }
 }
 

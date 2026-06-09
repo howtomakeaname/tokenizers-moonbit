@@ -111,6 +111,96 @@ test "encode_with_byte_offsets converts unicode char offsets" {
 }
 
 ///|
+test "encode_pretokenized skips pretokenizer but keeps normalizer and word ids" {
+  let json =
+    #|{"version":"1.0",
+    #| "normalizer":{"type":"Lowercase"},
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"我":2,"[UNK]":3},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode_pretokenized(
+    ["Hello Moon", "我"],
+    add_special_tokens=false,
+  )
+  @test.assert_eq(enc.tokens, ["[UNK]", "我"])
+  @test.assert_eq(enc.ids, [3, 2])
+  @test.assert_eq(enc.offsets, [(0, 10), (11, 12)])
+  @test.assert_eq(enc.word_ids(), [Some(0), Some(1)])
+  @test.assert_eq(enc.word_to_tokens(1), Some((1, 2)))
+}
+
+///|
+test "encode_pretokenized byte offsets and batch padding" {
+  let json =
+    #|{"version":"1.0",
+    #| "padding":{"strategy":"BatchLongest","direction":"Right","pad_id":4,"pad_type_id":0,"pad_token":"[PAD]"},
+    #| "model":{"type":"WordLevel","vocab":{"我":0,"🙂":1,"a":2,"[UNK]":3,"[PAD]":4},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let one = tok.encode_pretokenized_with_byte_offsets(
+    ["我", "🙂", "a"],
+    add_special_tokens=false,
+  )
+  @test.assert_eq(one.tokens, ["我", "🙂", "a"])
+  @test.assert_eq(one.offsets, [(0, 3), (4, 8), (9, 10)])
+  let encs = tok.encode_pretokenized_batch_with_byte_offsets(
+    [["我", "🙂", "a"], ["🙂"]],
+    add_special_tokens=false,
+  )
+  @test.assert_eq(encs.length(), 2)
+  @test.assert_eq(encs[0].tokens, ["我", "🙂", "a"])
+  @test.assert_eq(encs[1].tokens, ["🙂", "[PAD]", "[PAD]"])
+  @test.assert_eq(encs[1].offsets, [(0, 4), (0, 0), (0, 0)])
+  @test.assert_eq(encs[1].attention_mask, [1, 0, 0])
+  @test.assert_eq(encs[1].word_ids(), [Some(0), None, None])
+}
+
+///|
+test "encode_pretokenized_pair_batch tracks sequence ids and padding" {
+  let json =
+    #|{"version":"1.0",
+    #| "padding":{"strategy":"BatchLongest","direction":"Right","pad_id":5,"pad_type_id":0,"pad_token":"[PAD]"},
+    #| "model":{"type":"WordLevel","vocab":{"[CLS]":0,"[SEP]":1,"hello":2,"world":3,"月":4,"[PAD]":5,"[UNK]":6},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","cls":["[CLS]",0],"sep":["[SEP]",1]}}
+  let tok = Tokenizer::from_str(json)
+  let encs = tok.encode_pretokenized_pair_batch_with_byte_offsets(
+    [(["hello"], ["world"]), (["月"], ["world", "hello"])],
+    add_special_tokens=true,
+  )
+  @test.assert_eq(encs.length(), 2)
+  @test.assert_eq(encs[0].tokens, [
+    "[CLS]", "hello", "[SEP]", "world", "[SEP]", "[PAD]",
+  ])
+  @test.assert_eq(encs[0].sequence_ids(), [
+    None,
+    Some(0),
+    None,
+    Some(1),
+    None,
+    None,
+  ])
+  @test.assert_eq(encs[0].attention_mask, [1, 1, 1, 1, 1, 0])
+  @test.assert_eq(encs[1].tokens, [
+    "[CLS]", "月", "[SEP]", "world", "hello", "[SEP]",
+  ])
+  @test.assert_eq(encs[1].offsets, [
+    (0, 0),
+    (0, 3),
+    (0, 0),
+    (0, 5),
+    (6, 11),
+    (0, 0),
+  ])
+  @test.assert_eq(encs[1].word_ids(), [
+    None,
+    Some(0),
+    None,
+    Some(0),
+    Some(1),
+    None,
+  ])
+}
+
+///|
 test "encode_pair tracks sequence ids separate from type ids" {
   let json =
     #|{"version":"1.0",

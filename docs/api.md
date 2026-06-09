@@ -52,10 +52,34 @@ fn Tokenizer::encode_pair_batch(
   self : Tokenizer, pairs : Array[(String, String)], add_special_tokens~ : Bool = true,
 ) -> Array[Encoding]
 
+fn Tokenizer::encode_pretokenized(
+  self : Tokenizer, words : Array[String], add_special_tokens~ : Bool = true,
+) -> Encoding
+
+fn Tokenizer::encode_pretokenized_pair(
+  self : Tokenizer, words_a : Array[String], words_b : Array[String],
+  add_special_tokens~ : Bool = true,
+) -> Encoding
+
+fn Tokenizer::encode_pretokenized_batch(
+  self : Tokenizer, batch : Array[Array[String]], add_special_tokens~ : Bool = true,
+) -> Array[Encoding]
+
+fn Tokenizer::encode_pretokenized_pair_batch(
+  self : Tokenizer, batch : Array[(Array[String], Array[String])],
+  add_special_tokens~ : Bool = true,
+) -> Array[Encoding]
+
 fn Tokenizer::decode(
   self : Tokenizer, ids : Array[Int], skip_special_tokens~ : Bool = true,
 ) -> String
 ```
+
+All `encode_*_with_byte_offsets` variants return HF-style UTF-8 byte offsets.
+For pre-tokenized inputs, offsets are measured against a synthetic normalized
+text formed by joining normalized words with one ASCII space; the tokenizer's
+pre-tokenizer stage is skipped, while normalizer, model, post-processor,
+truncation and padding still run.
 
 ## Configuration builders
 

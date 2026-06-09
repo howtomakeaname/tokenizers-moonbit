@@ -38,6 +38,9 @@ loaded back with `from_pretrained(dir)`.
 | `tok.encode(text, add_special_tokens=False)` | `tok.encode(text, add_special_tokens=false)` |
 | `tok.encode(a, b)` | `tok.encode_pair(a, b)` |
 | `tok.encode_batch([(a, b), ...])` | `tok.encode_pair_batch([(a, b), ...])` |
+| `tok.encode(words, is_pretokenized=True)` | `tok.encode_pretokenized(words)` |
+| `tok.encode_batch([words, ...], is_pretokenized=True)` | `tok.encode_pretokenized_batch([words, ...])` |
+| `tok.encode_batch([(words_a, words_b), ...], is_pretokenized=True)` | `tok.encode_pretokenized_pair_batch([(words_a, words_b), ...])` |
 
 ```python
 enc = tok.encode("Hello world")
@@ -52,6 +55,10 @@ enc.ids            // [15496, 995]
 enc.tokens         // ["Hello", "Ġworld"]
 enc.attention_mask // [1, 1]
 ```
+
+Pre-tokenized APIs skip the tokenizer's pre-tokenizer but still apply
+normalization, model tokenization, post-processing, truncation and padding.
+Offsets are measured against normalized words joined by one ASCII space.
 
 ### `Encoding` fields
 

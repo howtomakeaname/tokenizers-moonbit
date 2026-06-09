@@ -47,10 +47,33 @@ fn Tokenizer::encode_pair_batch(
   self : Tokenizer, pairs : Array[(String, String)], add_special_tokens~ : Bool = true,
 ) -> Array[Encoding]
 
+fn Tokenizer::encode_pretokenized(
+  self : Tokenizer, words : Array[String], add_special_tokens~ : Bool = true,
+) -> Encoding
+
+fn Tokenizer::encode_pretokenized_pair(
+  self : Tokenizer, words_a : Array[String], words_b : Array[String],
+  add_special_tokens~ : Bool = true,
+) -> Encoding
+
+fn Tokenizer::encode_pretokenized_batch(
+  self : Tokenizer, batch : Array[Array[String]], add_special_tokens~ : Bool = true,
+) -> Array[Encoding]
+
+fn Tokenizer::encode_pretokenized_pair_batch(
+  self : Tokenizer, batch : Array[(Array[String], Array[String])],
+  add_special_tokens~ : Bool = true,
+) -> Array[Encoding]
+
 fn Tokenizer::decode(
   self : Tokenizer, ids : Array[Int], skip_special_tokens~ : Bool = true,
 ) -> String
 ```
+
+所有 `encode_*_with_byte_offsets` 变体返回 HF 风格 UTF-8 byte offsets。
+pre-tokenized 输入会跳过 tokenizer 的 pre-tokenizer 阶段，但 normalizer、model、
+post-processor、truncation 与 padding 仍会执行；offsets 按“归一化后的词用单个 ASCII
+空格连接”得到的合成文本计算。
 
 ## 配置
 

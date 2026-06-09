@@ -142,6 +142,30 @@ def hf_encode_pair_batch_us(tok: Tokenizer, text: str) -> float:
     return timed_us(lambda: tok.encode_batch(batch, add_special_tokens=False), iters)
 
 
+def pretokenized_words() -> list[str]:
+    return [
+        "The", "quick", "brown", "fox", "jumps", "over", "MoonBit", "tokenizers",
+        "我", "🙂", "2026", "path/to/file.rs",
+    ]
+
+
+def hf_encode_pretokenized_us(tok: Tokenizer) -> float:
+    words = pretokenized_words()
+    return timed_us(lambda: tok.encode(words, is_pretokenized=True, add_special_tokens=False), 2_000)
+
+
+def hf_encode_pretokenized_batch_us(tok: Tokenizer) -> float:
+    words = pretokenized_words()
+    batch = [words] * 8
+    return timed_us(lambda: tok.encode_batch(batch, is_pretokenized=True, add_special_tokens=False), 2_000)
+
+
+def hf_encode_pretokenized_pair_batch_us(tok: Tokenizer) -> float:
+    pair = (pretokenized_words(), ["Second", "sequence", "MoonBit", "tokenizers", "2026"])
+    batch = [pair] * 8
+    return timed_us(lambda: tok.encode_batch(batch, is_pretokenized=True, add_special_tokens=False), 2_000)
+
+
 def hf_decode_us(tok: Tokenizer, text: str) -> float:
     ids = tok.encode(text, add_special_tokens=False).ids
     iters = iterations_for(text)
@@ -633,6 +657,10 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
         encode_batch_key = f"{model}-encode-batch-mixedx8"
         encode_batch_padded_key = f"{model}-encode-batch-padded-mixedx8"
         encode_pair_batch_key = f"{model}-encode-pair-batch-mixedx8"
+        pretokenized_key = f"{model}-encode-pretokenized-words"
+        pretokenized_byte_key = f"{model}-encode-pretokenized-byte-offsets-words"
+        pretokenized_batch_key = f"{model}-encode-pretokenized-batch-wordsx8"
+        pretokenized_pair_batch_key = f"{model}-encode-pretokenized-pair-batch-wordsx8"
         load_key = f"{model}-from_str"
         pretrained_key = f"{model}-from_pretrained-file"
         pretrained_hub_cache_key = f"{model}-from_pretrained-hub-cache"
@@ -648,6 +676,18 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
             rows.append(Row(encode_batch_padded_key, moon[encode_batch_padded_key], hf_encode_batch_padded_us(path, CORPORA["mixed"])))
         if encode_pair_batch_key in moon:
             rows.append(Row(encode_pair_batch_key, moon[encode_pair_batch_key], hf_encode_pair_batch_us(tok, CORPORA["mixed"])))
+        if pretokenized_key in moon:
+            rows.append(Row(pretokenized_key, moon[pretokenized_key], hf_encode_pretokenized_us(tok)))
+        if pretokenized_byte_key in moon:
+            rows.append(Row(pretokenized_byte_key, moon[pretokenized_byte_key], hf_encode_pretokenized_us(tok)))
+        if pretokenized_batch_key in moon:
+            rows.append(Row(pretokenized_batch_key, moon[pretokenized_batch_key], hf_encode_pretokenized_batch_us(tok)))
+        if pretokenized_pair_batch_key in moon:
+            rows.append(Row(
+                pretokenized_pair_batch_key,
+                moon[pretokenized_pair_batch_key],
+                hf_encode_pretokenized_pair_batch_us(tok),
+            ))
         if load_key in moon:
             rows.append(Row(load_key, moon[load_key], hf_load_us(path)))
         if pretrained_key in moon:

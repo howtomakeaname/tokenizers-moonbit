@@ -12,17 +12,12 @@ pub fn Tokenizer::encode(
 ) -> @types.Encoding {
   // Special tokens present in the text are always recognized as single tokens;
   // add_special_tokens only controls whether the post-processor template runs.
-  let raw = self.encode_raw(text, keep_special=true)
-  let raw = self.truncate_single_raw(raw, add_special_tokens~)
-  let processed = if add_special_tokens {
-    match self.post_processor {
-      Some(pp) => pp.process(raw, None)
-      None => raw
-    }
-  } else {
-    raw
-  }
-  self.finalize_padding(processed)
+  self.finalize_padding(
+    self.process_single_raw(
+      self.encode_raw(text, keep_special=true),
+      add_special_tokens~,
+    ),
+  )
 }
 
 ///|
@@ -34,6 +29,90 @@ pub fn Tokenizer::encode_with_byte_offsets(
   add_special_tokens? : Bool = true,
 ) -> @types.Encoding {
   encoding_with_byte_offsets(self.encode(text, add_special_tokens~), text)
+}
+
+///|
+/// Encode an already pre-tokenized sequence of words. This mirrors HF's
+/// `is_pretokenized=True` flow: normalizer/model/post-processor/truncation/
+/// padding still run, but the tokenizer's pre-tokenizer is skipped. Offsets are
+/// expressed against a synthetic single-space-joined normalized text.
+pub fn Tokenizer::encode_pretokenized(
+  self : Tokenizer,
+  words : Array[String],
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.finalize_padding(
+    self.process_single_raw(
+      self.encode_pretokenized_raw(words),
+      add_special_tokens~,
+    ),
+  )
+}
+
+///|
+/// Encode pre-tokenized words and return UTF-8 byte offsets against the same
+/// synthetic single-space-joined normalized text used for char offsets.
+pub fn Tokenizer::encode_pretokenized_with_byte_offsets(
+  self : Tokenizer,
+  words : Array[String],
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  encoding_with_byte_offsets(
+    self.encode_pretokenized(words, add_special_tokens~),
+    self.pretokenized_offset_text(words),
+  )
+}
+
+///|
+/// Encode an already pre-tokenized pair of word sequences. Each side skips the
+/// tokenizer's pre-tokenizer and receives its own `sequence_ids` after
+/// post-processing, matching `encode_pair` for ordinary strings.
+pub fn Tokenizer::encode_pretokenized_pair(
+  self : Tokenizer,
+  words_a : Array[String],
+  words_b : Array[String],
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.finalize_padding(
+    self.encode_pretokenized_pair_unpadded(
+      words_a,
+      words_b,
+      add_special_tokens~,
+    ),
+  )
+}
+
+///|
+/// Encode a pre-tokenized pair and return UTF-8 byte offsets for each synthetic
+/// single-space-joined side.
+pub fn Tokenizer::encode_pretokenized_pair_with_byte_offsets(
+  self : Tokenizer,
+  words_a : Array[String],
+  words_b : Array[String],
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  encoding_with_pair_byte_offsets(
+    self.encode_pretokenized_pair(words_a, words_b, add_special_tokens~),
+    self.pretokenized_offset_text(words_a),
+    self.pretokenized_offset_text(words_b),
+  )
+}
+
+///|
+fn Tokenizer::process_single_raw(
+  self : Tokenizer,
+  raw : @types.Encoding,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  let raw = self.truncate_single_raw(raw, add_special_tokens~)
+  if add_special_tokens {
+    match self.post_processor {
+      Some(pp) => pp.process(raw, None)
+      None => raw
+    }
+  } else {
+    raw
+  }
 }
 
 // Apply fixed padding to a single encoding. Truncation is applied before
@@ -112,16 +191,10 @@ pub fn Tokenizer::encode_batch(
     match cache.get(t) {
       Some(enc) => encs.push(copy_encoding(enc))
       None => {
-        let raw = self.encode_raw(t, keep_special=true)
-        let raw = self.truncate_single_raw(raw, add_special_tokens~)
-        let processed = if add_special_tokens {
-          match self.post_processor {
-            Some(pp) => pp.process(raw, None)
-            None => raw
-          }
-        } else {
-          raw
-        }
+        let processed = self.process_single_raw(
+          self.encode_raw(t, keep_special=true),
+          add_special_tokens~,
+        )
         cache[t] = copy_encoding(processed)
         encs.push(processed)
       }
@@ -131,6 +204,115 @@ pub fn Tokenizer::encode_batch(
     Some(pp) => pad_batch(encs, pp)
     None => encs
   }
+}
+
+///|
+/// Encode a batch of pre-tokenized word arrays. Repeated word sequences are
+/// copied from a per-call cache and BatchLongest padding is applied once across
+/// the whole batch.
+pub fn Tokenizer::encode_pretokenized_batch(
+  self : Tokenizer,
+  batch : Array[Array[String]],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  if batch.length() == 0 {
+    return []
+  }
+  let encs : Array[@types.Encoding] = []
+  let cache : Map[String, @types.Encoding] = {}
+  for words in batch {
+    let key = pretokenized_cache_key(words)
+    match cache.get(key) {
+      Some(enc) => encs.push(copy_encoding(enc))
+      None => {
+        let processed = self.process_single_raw(
+          self.encode_pretokenized_raw(words),
+          add_special_tokens~,
+        )
+        cache[key] = copy_encoding(processed)
+        encs.push(processed)
+      }
+    }
+  }
+  match self.padding {
+    Some(pp) => pad_batch(encs, pp)
+    None => encs
+  }
+}
+
+///|
+/// Encode a batch of pre-tokenized word arrays with UTF-8 byte offsets.
+pub fn Tokenizer::encode_pretokenized_batch_with_byte_offsets(
+  self : Tokenizer,
+  batch : Array[Array[String]],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  let encs = self.encode_pretokenized_batch(batch, add_special_tokens~)
+  let out : Array[@types.Encoding] = []
+  for i in 0..<encs.length() {
+    out.push(
+      encoding_with_byte_offsets(
+        encs[i],
+        self.pretokenized_offset_text(batch[i]),
+      ),
+    )
+  }
+  out
+}
+
+///|
+/// Encode a batch of pre-tokenized pairs, with per-call duplicate caching and
+/// batch-level padding.
+pub fn Tokenizer::encode_pretokenized_pair_batch(
+  self : Tokenizer,
+  batch : Array[(Array[String], Array[String])],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  if batch.length() == 0 {
+    return []
+  }
+  let encs : Array[@types.Encoding] = []
+  let cache : Map[(String, String), @types.Encoding] = {}
+  for p in batch {
+    let key = (pretokenized_cache_key(p.0), pretokenized_cache_key(p.1))
+    match cache.get(key) {
+      Some(enc) => encs.push(copy_encoding(enc))
+      None => {
+        let enc = self.encode_pretokenized_pair_unpadded(
+          p.0,
+          p.1,
+          add_special_tokens~,
+        )
+        cache[key] = copy_encoding(enc)
+        encs.push(enc)
+      }
+    }
+  }
+  match self.padding {
+    Some(pp) => pad_batch(encs, pp)
+    None => encs
+  }
+}
+
+///|
+/// Encode a batch of pre-tokenized pairs with UTF-8 byte offsets.
+pub fn Tokenizer::encode_pretokenized_pair_batch_with_byte_offsets(
+  self : Tokenizer,
+  batch : Array[(Array[String], Array[String])],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  let encs = self.encode_pretokenized_pair_batch(batch, add_special_tokens~)
+  let out : Array[@types.Encoding] = []
+  for i in 0..<encs.length() {
+    out.push(
+      encoding_with_pair_byte_offsets(
+        encs[i],
+        self.pretokenized_offset_text(batch[i].0),
+        self.pretokenized_offset_text(batch[i].1),
+      ),
+    )
+  }
+  out
 }
 
 ///|
@@ -231,6 +413,29 @@ fn Tokenizer::encode_pair_unpadded(
     concat_encodings(a, b.unwrap())
   }
   processed
+}
+
+///|
+fn Tokenizer::encode_pretokenized_pair_unpadded(
+  self : Tokenizer,
+  words_a : Array[String],
+  words_b : Array[String],
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  let a = self.encode_pretokenized_raw(words_a)
+  let b = self.encode_pretokenized_raw(words_b)
+  let (a, b) = match self.truncation_for_raw(pair=true, add_special_tokens~) {
+    Some(tp) => truncate_pair_raw(a, Some(b), tp)
+    None => (a, Some(b))
+  }
+  if add_special_tokens {
+    match self.post_processor {
+      Some(pp) => pp.process(a, b)
+      None => concat_encodings(a, b.unwrap())
+    }
+  } else {
+    concat_encodings(a, b.unwrap())
+  }
 }
 
 ///|
@@ -432,6 +637,94 @@ fn Tokenizer::encode_raw(
     word_ids,
     overflowing: [],
   }
+}
+
+///|
+/// Raw encoding for pre-tokenized input. The pre-tokenizer stage is skipped;
+/// each input word receives one word id before the model may split it into
+/// subword tokens.
+fn Tokenizer::encode_pretokenized_raw(
+  self : Tokenizer,
+  words : Array[String],
+) -> @types.Encoding {
+  let ids : Array[Int] = []
+  let tokens : Array[String] = []
+  let type_ids : Array[Int] = []
+  let offsets : Array[(Int, Int)] = []
+  let special_tokens_mask : Array[Int] = []
+  let attention_mask : Array[Int] = []
+  let sequence_ids : Array[Int?] = []
+  let word_ids : Array[Int?] = []
+  let mut base = 0
+  fn emit(t : @types.Token, word_id : Int) -> Unit {
+    ids.push(t.id)
+    tokens.push(t.value)
+    type_ids.push(0)
+    offsets.push(t.offsets)
+    special_tokens_mask.push(0)
+    attention_mask.push(1)
+    sequence_ids.push(Some(0))
+    word_ids.push(Some(word_id))
+  }
+  for word_id, word in words {
+    let normalized = self.normalize_pretokenized_word(word)
+    for t in self.model.tokenize(normalized, offset=base) {
+      emit(t, word_id)
+    }
+    base = base + normalized.char_length()
+    if word_id + 1 < words.length() {
+      base = base + 1
+    }
+  }
+  {
+    ids,
+    type_ids,
+    tokens,
+    offsets,
+    special_tokens_mask,
+    attention_mask,
+    sequence_ids,
+    word_ids,
+    overflowing: [],
+  }
+}
+
+///|
+fn Tokenizer::normalize_pretokenized_word(
+  self : Tokenizer,
+  word : String,
+) -> String {
+  match self.normalizer {
+    Some(nm) => nm.normalize(word)
+    None => word
+  }
+}
+
+///|
+fn Tokenizer::pretokenized_offset_text(
+  self : Tokenizer,
+  words : Array[String],
+) -> String {
+  let sb = StringBuilder::new()
+  for i, w in words {
+    if i > 0 {
+      sb.write_char(' ')
+    }
+    sb.write_string(self.normalize_pretokenized_word(w))
+  }
+  sb.to_string()
+}
+
+///|
+fn pretokenized_cache_key(words : Array[String]) -> String {
+  let sb = StringBuilder::new()
+  for i, w in words {
+    if i > 0 {
+      sb.write_char('\u{0}')
+    }
+    sb.write_string(w)
+  }
+  sb.to_string()
 }
 
 // Concatenate two encodings (B gets type_id 1) without special tokens.

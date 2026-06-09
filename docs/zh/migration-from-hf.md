@@ -37,6 +37,9 @@ snapshot 解析（`$HUGGINGFACE_HUB_CACHE`、`$HF_HOME/hub`、
 | `tok.encode(text, add_special_tokens=False)` | `tok.encode(text, add_special_tokens=false)` |
 | `tok.encode(a, b)` | `tok.encode_pair(a, b)` |
 | `tok.encode_batch([(a, b), ...])` | `tok.encode_pair_batch([(a, b), ...])` |
+| `tok.encode(words, is_pretokenized=True)` | `tok.encode_pretokenized(words)` |
+| `tok.encode_batch([words, ...], is_pretokenized=True)` | `tok.encode_pretokenized_batch([words, ...])` |
+| `tok.encode_batch([(words_a, words_b), ...], is_pretokenized=True)` | `tok.encode_pretokenized_pair_batch([(words_a, words_b), ...])` |
 
 ```moonbit
 let enc = tok.encode("Hello world")
@@ -44,6 +47,10 @@ enc.ids
 enc.tokens
 enc.attention_mask
 ```
+
+pre-tokenized API 会跳过 tokenizer 的 pre-tokenizer，但仍执行 normalizer、model、
+post-processor、truncation 与 padding；offsets 按“归一化后的词用单个 ASCII 空格连接”
+得到的合成文本计算。
 
 ## 解码
 
