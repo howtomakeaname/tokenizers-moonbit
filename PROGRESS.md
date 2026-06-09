@@ -175,7 +175,8 @@ MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的
 
 默认 benchmark 对比覆盖 `scripts/bench_python.py` 中的完整模型 fixture 矩阵；
 `--quick` 仅用于本地冒烟，正式性能结论必须跑 `--corpus all` 或至少全模型
-`mixed` 矩阵。最近一次全模型抽样（native / mixed，BPE word cache 后）：BPE/
+`mixed` 矩阵。若 Python `tokenizers` wheel 对 pre-tokenized 输入需要 NumPy 而本机未安装，
+`bench_compare.py` 会把对应 HF baseline 记入 `Skipped HF baselines` 并继续输出其它比值，避免整轮对比中断。最近一次全模型抽样（native / mixed，BPE word cache 后）：BPE/
 WordPiece/CLIP 主线大多快于 HF（gpt2 0.43x、llama 0.28x、Qwen2.5 0.58x、
 bert 0.53x、clip 0.48x）；decode 多数约 0.5x 或同水平；加载大模型基本同
 水平。Unigram word cache 后，t5 encode 0.39x、bge_m3 0.42x、e5_multilingual

@@ -17,8 +17,10 @@ moon bench --target native
 moon bench --target js
 moon bench --target wasm-gc
 
-# 3) Python baseline (HuggingFace tokenizers, Rust-backed)
-pip install tokenizers
+# 3) Python baseline (HuggingFace tokenizers, Rust-backed). Install numpy too
+# if you want HF pre-tokenized baselines; otherwise those rows are skipped with
+# an explicit "Skipped HF baselines" note instead of aborting the comparison.
+pip install tokenizers numpy
 python3 scripts/bench_python.py
 
 # 4) One-command comparison: MoonBit vs HF tokenizers on the same host
@@ -58,6 +60,10 @@ Interpretation:
   claiming benchmark parity.
 
 The script also prints an `Optimization focus` list sorted by the largest gap.
+If an optional Python dependency required by a specific HF baseline is missing
+(notably NumPy for some pre-tokenized inputs in recent `tokenizers` wheels), the
+script prints a `Skipped HF baselines` section and continues reporting all other
+rows.
 By default the model list is the full fixture matrix from `scripts/bench_python.py`
 (currently GPT-2/RoBERTa byte-level BPE, BERT WordPiece, T5/embedding
 SentencePiece-style models, Llama/Qwen/Phi/Mistral/StarCoder/CLIP and related

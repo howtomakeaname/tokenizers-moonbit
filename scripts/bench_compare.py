@@ -13,6 +13,7 @@ corpus. Use `--corpus all` for the full model × corpus encode matrix.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import os
 import re
 import subprocess
@@ -58,6 +59,44 @@ class Row:
         if self.ratio <= 1.10:
             return "same-range"
         return "slower"
+
+
+SKIPPED_BASELINES: list[str] = []
+HAS_NUMPY = importlib.util.find_spec("numpy") is not None
+
+
+def optional_hf_us(name: str, fn) -> float | None:
+    """Run an HF baseline without letting optional Python deps abort the report.
+
+    Some tokenizers wheels import NumPy lazily for pre-tokenized inputs. In a
+    minimal environment without numpy, PyO3 raises a PanicException (a
+    BaseException subclass), which used to abort the whole comparison after the
+    MoonBit benchmark had already completed. Treat such baseline failures as a
+    skipped row while preserving KeyboardInterrupt/SystemExit semantics.
+    """
+    try:
+        return fn()
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except BaseException as exc:  # pragma: no cover - environment dependent
+        SKIPPED_BASELINES.append(f"{name}: {type(exc).__name__}: {exc}")
+        return None
+
+
+def append_optional_row(
+    rows: list[Row],
+    name: str,
+    moon_us: float,
+    hf_fn,
+    *,
+    requires_numpy: bool = False,
+) -> None:
+    if requires_numpy and not HAS_NUMPY:
+        SKIPPED_BASELINES.append(f"{name}: missing optional Python package 'numpy'")
+        return
+    hf_us = optional_hf_us(name, hf_fn)
+    if hf_us is not None:
+        rows.append(Row(name, moon_us, hf_us))
 
 
 def to_us(value: float, unit: str) -> float:
@@ -669,11 +708,13 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
         ))
     pretokenized_added_key = "synthetic-encode-pretokenized-added"
     if pretokenized_added_key in moon:
-        rows.append(Row(
+        append_optional_row(
+            rows,
             pretokenized_added_key,
             moon[pretokenized_added_key],
-            hf_encode_pretokenized_added_us(),
-        ))
+            hf_encode_pretokenized_added_us,
+            requires_numpy=True,
+        )
     for model in models:
         tok, path = load_tokenizer(model)
         if tok is None:
@@ -717,17 +758,19 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
         if encode_pair_batch_key in moon:
             rows.append(Row(encode_pair_batch_key, moon[encode_pair_batch_key], hf_encode_pair_batch_us(tok, CORPORA["mixed"])))
         if pretokenized_key in moon:
-            rows.append(Row(pretokenized_key, moon[pretokenized_key], hf_encode_pretokenized_us(tok)))
+            append_optional_row(rows, pretokenized_key, moon[pretokenized_key], lambda tok=tok: hf_encode_pretokenized_us(tok), requires_numpy=True)
         if pretokenized_byte_key in moon:
-            rows.append(Row(pretokenized_byte_key, moon[pretokenized_byte_key], hf_encode_pretokenized_us(tok)))
+            append_optional_row(rows, pretokenized_byte_key, moon[pretokenized_byte_key], lambda tok=tok: hf_encode_pretokenized_us(tok), requires_numpy=True)
         if pretokenized_batch_key in moon:
-            rows.append(Row(pretokenized_batch_key, moon[pretokenized_batch_key], hf_encode_pretokenized_batch_us(tok)))
+            append_optional_row(rows, pretokenized_batch_key, moon[pretokenized_batch_key], lambda tok=tok: hf_encode_pretokenized_batch_us(tok), requires_numpy=True)
         if pretokenized_pair_batch_key in moon:
-            rows.append(Row(
+            append_optional_row(
+                rows,
                 pretokenized_pair_batch_key,
                 moon[pretokenized_pair_batch_key],
-                hf_encode_pretokenized_pair_batch_us(tok),
-            ))
+                lambda tok=tok: hf_encode_pretokenized_pair_batch_us(tok),
+                requires_numpy=True,
+            )
         if load_key in moon:
             rows.append(Row(load_key, moon[load_key], hf_load_us(path)))
         if pretrained_key in moon:
@@ -755,6 +798,10 @@ def print_rows(rows: list[Row]) -> None:
         print("\nOptimization focus:")
         for r in slower[:8]:
             print(f"- {r.name}: {r.ratio:.2f}x slower than HF")
+    if SKIPPED_BASELINES:
+        print("\nSkipped HF baselines:")
+        for item in SKIPPED_BASELINES:
+            print(f"- {item}")
 
 
 def main() -> None:

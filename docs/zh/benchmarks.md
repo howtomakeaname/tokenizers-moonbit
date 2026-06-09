@@ -14,7 +14,9 @@ moon bench --target native
 moon bench --target js
 moon bench --target wasm-gc
 
-pip install tokenizers
+# 若需要 HF pre-tokenized 基线，请同时安装 numpy；缺失时脚本会列入
+# "Skipped HF baselines" 并继续输出其它行，而不是中断。
+pip install tokenizers numpy
 python3 scripts/bench_python.py
 
 # 同机对比：MoonBit vs HuggingFace tokenizers
@@ -50,6 +52,9 @@ python3 scripts/bench_compare.py --target native --corpus all
 - `> 1.10x`：落后于 HF，应进入 `PROGRESS.md` 优化项。
 
 脚本末尾的 `Optimization focus` 会按差距排序，作为后续性能迭代依据。
+如果某个 HF 基线依赖的可选 Python 包缺失（近期 `tokenizers` wheel 的
+pre-tokenized 输入常见为 NumPy），脚本会输出 `Skipped HF baselines` 并继续对比
+其它 benchmark 行。
 默认模型列表来自 `scripts/bench_python.py` 的完整 fixture 矩阵，覆盖 GPT-2/
 RoBERTa 字节级 BPE、BERT WordPiece、T5/embedding 类 SentencePiece tokenizer、
 Llama/Qwen/Phi/Mistral/StarCoder/CLIP 等现代 tokenizer。`--quick` 仅用于本地
