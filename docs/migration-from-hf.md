@@ -88,7 +88,9 @@ enc.attention_mask // [1, 1]
   `vocab_size`, and HF-style frequency/lexical vocab ordering. WordPiece, BPE,
   and Unigram trainer MVPs are available for the same input modes with common
   controls such as continuation-prefix, end-of-word suffix,
-  `max_input_chars_per_word`, and `byte_fallback`.
+  `max_input_chars_per_word`, and `byte_fallback`; BPE also supports
+  `initial_alphabet`, `limit_alphabet`, `max_token_length`, and a
+  `byte_level_alphabet()` helper matching HF `ByteLevel.alphabet()` workflows.
 
 ## Verified models
 

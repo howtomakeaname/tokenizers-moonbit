@@ -179,6 +179,7 @@ pub fn Tokenizer::train_bpe(
   fuse_unk? : Bool = false,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
+  max_token_length? : Int? = None,
 ) -> Tokenizer {
   Tokenizer::train_bpe_with_pretokenizer(
     texts,
@@ -192,6 +193,7 @@ pub fn Tokenizer::train_bpe(
     fuse_unk~,
     initial_alphabet~,
     limit_alphabet~,
+    max_token_length~,
   )
 }
 
@@ -209,6 +211,7 @@ pub fn Tokenizer::train_bpe_with_pretokenizer(
   fuse_unk? : Bool = false,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
+  max_token_length? : Int? = None,
 ) -> Tokenizer {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -228,6 +231,7 @@ pub fn Tokenizer::train_bpe_with_pretokenizer(
     fuse_unk~,
     initial_alphabet~,
     limit_alphabet~,
+    max_token_length~,
   )
 }
 
@@ -245,6 +249,7 @@ pub fn Tokenizer::train_bpe_from_tokens(
   fuse_unk? : Bool = false,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
+  max_token_length? : Int? = None,
 ) -> Tokenizer {
   {
     normalizer: None,
@@ -260,6 +265,7 @@ pub fn Tokenizer::train_bpe_from_tokens(
       fuse_unk~,
       initial_alphabet~,
       limit_alphabet~,
+      max_token_length~,
     ),
     post_processor: None,
     decoder: None,

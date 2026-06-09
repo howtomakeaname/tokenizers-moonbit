@@ -67,4 +67,5 @@ enc.attention_mask
   `min_frequency`、`special_tokens`、`vocab_size` 以及 HF 风格的频次/词典序词表排序）；
   也已提供 WordPiece / BPE / Unigram trainer MVP，支持相同输入模式以及
   continuation prefix、end-of-word suffix、`max_input_chars_per_word`、`byte_fallback`
-  等常见参数。
+  等常见参数；BPE 还支持 `initial_alphabet`、`limit_alphabet`、`max_token_length`，
+  并提供对齐 HF `ByteLevel.alphabet()` 工作流的 `byte_level_alphabet()` helper。

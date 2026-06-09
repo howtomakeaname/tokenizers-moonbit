@@ -648,6 +648,37 @@ test "train_bpe bytelevel initial alphabet encodes unseen bytes" {
 }
 
 ///|
+test "train_bpe passes max_token_length through tokenizer API" {
+  let tok = Tokenizer::train_bpe(
+    ["aaaaaaaa aaaaaaaa"],
+    unk_token=Some("[UNK]"),
+    min_frequency=2,
+    vocab_size=Some(32),
+    max_token_length=Some(2),
+  )
+  @test.assert_eq(tok.token_to_id("aa") is Some(_), true)
+  @test.assert_eq(tok.token_to_id("aaaa"), None)
+  let enc = tok.encode("aaaaaaaa", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["aa", "aa", "aa", "aa"])
+}
+
+///|
+test "train_bpe max_token_length survives to_json reload" {
+  let tok = Tokenizer::train_bpe(
+    ["abababab abababab"],
+    unk_token=Some("[UNK]"),
+    min_frequency=2,
+    vocab_size=Some(32),
+    max_token_length=Some(4),
+  )
+  let loaded = Tokenizer::from_str(tok.to_json())
+  @test.assert_eq(
+    loaded.encode("abababab", add_special_tokens=false).tokens,
+    tok.encode("abababab", add_special_tokens=false).tokens,
+  )
+}
+
+///|
 test "train_unigram prefers learned whole words" {
   let tok = Tokenizer::train_unigram(["hello hello help"], unk_token="<unk>", special_tokens=[
     "<pad>",

@@ -271,6 +271,24 @@ def hf_train_bpe_bytelevel_alphabet_us(text: str) -> float:
     return timed_us(train_once, 30)
 
 
+def hf_train_bpe_max_token_length_us(text: str) -> float:
+    corpus = [text] * 4
+
+    def train_once() -> Tokenizer:
+        tok = Tokenizer(hf_models.BPE(unk_token="[UNK]"))
+        tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+        trainer = hf_trainers.BpeTrainer(
+            vocab_size=512,
+            min_frequency=2,
+            special_tokens=["[PAD]", "[UNK]"],
+            max_token_length=32,
+        )
+        tok.train_from_iterator(corpus, trainer=trainer)
+        return tok
+
+    return timed_us(train_once, 30)
+
+
 def hf_trained_bpe_to_json_us(text: str) -> float:
     tok = Tokenizer(hf_models.BPE(unk_token="[UNK]"))
     tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
@@ -419,6 +437,13 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
             bpe_train_bytelevel_key,
             moon[bpe_train_bytelevel_key],
             hf_train_bpe_bytelevel_alphabet_us(CORPORA["mixed"]),
+        ))
+    bpe_train_max_len_key = "bpe-train-max-token-length-mixedx4"
+    if bpe_train_max_len_key in moon:
+        rows.append(Row(
+            bpe_train_max_len_key,
+            moon[bpe_train_max_len_key],
+            hf_train_bpe_max_token_length_us(CORPORA["mixed"]),
         ))
     bpe_to_json_key = "bpe-trained-to_json-mixed"
     if bpe_to_json_key in moon:

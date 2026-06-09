@@ -162,7 +162,7 @@
 | P2 | save / to_json / from_file 对称性 | ✅ | `to_json` 保留原始 tokenizer.json；`Tokenizer::from_file` / `save` 可往返；补 serialization 测试与 to_json bench |
 | P3 | `from_pretrained` / Hub 集成 | 🚧 | 已支持本地 HF 目录（`tokenizer.json`）、tokenizer 文件路径、已有 HuggingFace Hub cache snapshot（`$HUGGINGFACE_HUB_CACHE` / `$HF_HOME/hub` / `$HOME/.cache/huggingface/hub`，含 refs/main → snapshots/<rev> 解析），并对稳定 pretrained 路径做小型多项 source cache；Hub 网络下载仍需外部脚本/应用层集成 |
 | P3 | batch 并行 / word cache | 🚧 | BPE/WordPiece/Unigram word cache 已完成；encode_batch 对重复输入做单批缓存并补 bench；并行仍待运行时能力评估 |
-| P4 | trainer / training API | ✅ | 已提供确定性 WordLevel trainer（WhitespaceSplit / 自定义 pre-tokenizer / 预切分 token 流 + min_frequency + special tokens + vocab_size + HF 风格频次/词典序排序）；新增确定性 WordPiece / BPE / Unigram trainer MVP（同输入模式 + continuation prefix / end_of_word_suffix / max_input_chars_per_word / byte_fallback + vocab_size），其中 BPE trainer 已支持 HF 风格 `initial_alphabet` / `limit_alphabet`，并通过 `byte_level_alphabet()` 覆盖 ByteLevel 256-byte alphabet；训练结果可 `to_json`/`save` 往返，常见 pre-tokenizer 可序列化，并加入 HF trainer bench；高级训练算法与采样参数后续按需增强 |
+| P4 | trainer / training API | ✅ | 已提供确定性 WordLevel trainer（WhitespaceSplit / 自定义 pre-tokenizer / 预切分 token 流 + min_frequency + special tokens + vocab_size + HF 风格频次/词典序排序）；新增确定性 WordPiece / BPE / Unigram trainer MVP（同输入模式 + continuation prefix / end_of_word_suffix / max_input_chars_per_word / byte_fallback + vocab_size），其中 BPE trainer 已支持 HF 风格 `initial_alphabet` / `limit_alphabet` / `max_token_length`，并通过 `byte_level_alphabet()` 覆盖 ByteLevel 256-byte alphabet；训练结果可 `to_json`/`save` 往返，常见 pre-tokenizer 可序列化，并加入 HF trainer bench；高级训练算法与采样参数后续按需增强 |
 
 ### Benchmark 对比要求
 

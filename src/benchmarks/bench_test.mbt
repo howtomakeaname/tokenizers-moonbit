@@ -501,6 +501,27 @@ fn bench_train_bpe_bytelevel_alphabet_case(
 }
 
 ///|
+fn bench_train_bpe_max_token_length_case(
+  b : @bench.T,
+  case_name : String,
+  text : String,
+) -> Unit {
+  let corpus = [text, text, text, text]
+  b.bench(name="bpe-train-max-token-length-\{case_name}", fn() {
+    b.keep(
+      @tokenizer.Tokenizer::train_bpe(
+        corpus,
+        unk_token=Some("[UNK]"),
+        min_frequency=2,
+        special_tokens=["[PAD]"],
+        vocab_size=Some(512),
+        max_token_length=Some(32),
+      ),
+    )
+  })
+}
+
+///|
 fn bench_trained_bpe_to_json_case(b : @bench.T, case_name : String) -> Unit {
   let tok = @tokenizer.Tokenizer::train_bpe(
     [corpus_mixed(), corpus_mixed()],
@@ -1282,6 +1303,11 @@ test "bench train bpe" (b : @bench.T) {
 ///|
 test "bench train bpe bytelevel alphabet" (b : @bench.T) {
   bench_train_bpe_bytelevel_alphabet_case(b, "mixedx4", corpus_mixed())
+}
+
+///|
+test "bench train bpe max token length" (b : @bench.T) {
+  bench_train_bpe_max_token_length_case(b, "mixedx4", corpus_mixed())
 }
 
 ///|

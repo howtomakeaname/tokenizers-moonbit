@@ -125,3 +125,38 @@ test "bpe trainer limits corpus alphabet after initial alphabet" {
   @test.assert_eq(model.token_to_id("b") is Some(_), true)
   @test.assert_eq(model.token_to_id("a"), None)
 }
+
+///|
+test "bpe trainer max_token_length filters long merges" {
+  let capped = Model::train_bpe(
+    ["aaaaaaaa aaaaaaaa"],
+    unk_token=Some("[UNK]"),
+    min_frequency=2,
+    vocab_size=Some(32),
+    max_token_length=Some(2),
+  )
+  @test.assert_eq(capped.token_to_id("aa") is Some(_), true)
+  @test.assert_eq(capped.token_to_id("aaaa"), None)
+  @test.assert_eq(capped.token_to_id("aaaaaaaa"), None)
+
+  let uncapped = Model::train_bpe(
+    ["aaaaaaaa aaaaaaaa"],
+    unk_token=Some("[UNK]"),
+    min_frequency=2,
+    vocab_size=Some(32),
+  )
+  @test.assert_eq(uncapped.token_to_id("aaaaaaaa") is Some(_), true)
+}
+
+///|
+test "bpe trainer max_token_length does not drop initial alphabet" {
+  let model = Model::train_bpe(
+    ["ab ab"],
+    unk_token=Some("[UNK]"),
+    min_frequency=2,
+    initial_alphabet=["zz"],
+    max_token_length=Some(1),
+  )
+  @test.assert_eq(model.token_to_id("z") is Some(_), true)
+  @test.assert_eq(model.token_to_id("ab"), None)
+}

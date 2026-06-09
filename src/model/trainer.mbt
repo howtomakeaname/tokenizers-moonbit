@@ -254,6 +254,7 @@ pub fn Model::train_bpe(
   fuse_unk? : Bool = false,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
+  max_token_length? : Int? = None,
 ) -> Model {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -270,6 +271,7 @@ pub fn Model::train_bpe(
     fuse_unk~,
     initial_alphabet~,
     limit_alphabet~,
+    max_token_length~,
   )
 }
 
@@ -286,6 +288,7 @@ pub fn Model::train_bpe_from_tokens(
   fuse_unk? : Bool = false,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
+  max_token_length? : Int? = None,
 ) -> Model {
   let word_counts : Map[String, Int] = {}
   let word_order : Array[String] = []
@@ -351,7 +354,7 @@ pub fn Model::train_bpe_from_tokens(
 
   let merges : Map[(String, String), Int] = {}
   while under_vocab_limit(vocab.length(), vocab_size) {
-    let pair = best_bpe_pair(words, freqs, min_frequency)
+    let pair = best_bpe_pair(words, freqs, min_frequency, max_token_length)
     match pair {
       None => break
       Some(p) => {
@@ -460,6 +463,7 @@ fn best_bpe_pair(
   words : Array[Array[String]],
   freqs : Array[Int],
   min_frequency : Int,
+  max_token_length : Int?,
 ) -> (String, String)? {
   let counts : Map[(String, String), Int] = {}
   let order : Array[(String, String)] = []
@@ -483,7 +487,8 @@ fn best_bpe_pair(
   for p in order {
     match counts.get(p) {
       Some(n) =>
-        if n > best_count || (n == best_count && bpe_pair_less(p, best)) {
+        if bpe_merged_token_allowed(p, max_token_length) &&
+          (n > best_count || (n == best_count && bpe_pair_less(p, best))) {
           best = Some(p)
           best_count = n
         }
@@ -491,6 +496,17 @@ fn best_bpe_pair(
     }
   }
   best
+}
+
+///|
+fn bpe_merged_token_allowed(
+  pair : (String, String),
+  max_token_length : Int?,
+) -> Bool {
+  match max_token_length {
+    None => true
+    Some(n) => n <= 0 || pair.0.length() + pair.1.length() <= n
+  }
 }
 
 ///|
