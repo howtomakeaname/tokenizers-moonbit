@@ -353,6 +353,42 @@ test "Replace decoder supports common regex whitespace patterns" {
 }
 
 ///|
+test "Replace decoder supports anchored inverse regex families" {
+  @test.assert_eq(
+    Decoder::Replace(pattern="^\\S+", content="X").decode(["abc", "\t tail"]),
+    "X\t tail",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="\\D+$", content="_").decode(["123", "abc中"]),
+    "123_",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="^\\P{Letter}+", content="").decode([
+      "123!?", "abc",
+    ]),
+    "abc",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="\\P{Punctuation}+$", content="N").decode([
+      "?!", "abc🙂",
+    ]),
+    "?!N",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="^[^\\p{P}\\p{S}]+", content="N").decode([
+      "abc12", ",$",
+    ]),
+    "N,$",
+  )
+  @test.assert_eq(
+    Decoder::Replace(pattern="[^\\s\\p{L}\\p{N}]+$", content="").decode([
+      "abc42", "🙂+",
+    ]),
+    "abc42",
+  )
+}
+
+///|
 test "Replace decoder keeps literal fallback" {
   @test.assert_eq(
     Decoder::Replace(pattern="@@", content="-").decode(["a@@b", "@@c"]),

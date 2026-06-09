@@ -468,6 +468,227 @@ pub fn is_bounded_regex_pattern(pattern : String) -> Bool {
 }
 
 ///|
+/// Common anchored `^...+` / `...+$` regex class families shared by Split and
+/// Replace. Return `(kind, leading)` where `kind` uses
+/// `bounded_regex_kind_pred` and `leading=true` means `^...+`.
+pub fn anchored_regex_kind(pattern : String) -> (Int, Bool)? {
+  match
+    anchored_variants(pattern, ["^\\s+", "^[\\s]+"], ["\\s+$", "[\\s]+$"], 1) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(pattern, ["^\\S+", "^[^\\s]+"], ["\\S+$", "[^\\s]+$"], 12) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      [
+        "^\\d+", "^[\\d]+", "^[0-9]+", "^\\p{N}+", "^\\p{Number}+", "^[\\p{N}]+",
+        "^[\\p{Number}]+",
+      ],
+      [
+        "\\d+$", "[\\d]+$", "[0-9]+$", "\\p{N}+$", "\\p{Number}+$", "[\\p{N}]+$",
+        "[\\p{Number}]+$",
+      ],
+      11,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      [
+        "^\\D+", "^[\\D]+", "^[^\\d]+", "^[^0-9]+", "^\\P{N}+", "^\\P{Number}+",
+        "^[^\\p{N}]+", "^[^\\p{Number}]+",
+      ],
+      [
+        "\\D+$", "[\\D]+$", "[^\\d]+$", "[^0-9]+$", "\\P{N}+$", "\\P{Number}+$",
+        "[^\\p{N}]+$", "[^\\p{Number}]+$",
+      ],
+      14,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^\\w+", "^[A-Za-z0-9_]+"],
+      ["\\w+$", "[A-Za-z0-9_]+$"],
+      4,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^\\W+", "^[^\\w]+", "^[^A-Za-z0-9_]+"],
+      ["\\W+$", "[^\\w]+$", "[^A-Za-z0-9_]+$"],
+      13,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^[A-Za-z0-9]+", "^[a-zA-Z0-9]+"],
+      ["[A-Za-z0-9]+$", "[a-zA-Z0-9]+$"],
+      5,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^[^A-Za-z0-9]+", "^[^a-zA-Z0-9]+"],
+      ["[^A-Za-z0-9]+$", "[^a-zA-Z0-9]+$"],
+      15,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^[A-Za-z]+", "^[a-zA-Z]+"],
+      ["[A-Za-z]+$", "[a-zA-Z]+$"],
+      6,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^[^A-Za-z]+", "^[^a-zA-Z]+"],
+      ["[^A-Za-z]+$", "[^a-zA-Z]+$"],
+      16,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^\\p{L}+", "^\\p{Letter}+", "^[\\p{L}]+", "^[\\p{Letter}]+"],
+      ["\\p{L}+$", "\\p{Letter}+$", "[\\p{L}]+$", "[\\p{Letter}]+$"],
+      7,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^\\P{L}+", "^\\P{Letter}+", "^[^\\p{L}]+", "^[^\\p{Letter}]+"],
+      ["\\P{L}+$", "\\P{Letter}+$", "[^\\p{L}]+$", "[^\\p{Letter}]+$"],
+      17,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^\\p{P}+", "^\\p{Punctuation}+", "^[\\p{P}]+", "^[\\p{Punctuation}]+"],
+      ["\\p{P}+$", "\\p{Punctuation}+$", "[\\p{P}]+$", "[\\p{Punctuation}]+$"],
+      8,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^\\P{P}+", "^\\P{Punctuation}+", "^[^\\p{P}]+", "^[^\\p{Punctuation}]+"],
+      ["\\P{P}+$", "\\P{Punctuation}+$", "[^\\p{P}]+$", "[^\\p{Punctuation}]+$"],
+      18,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^\\p{S}+", "^\\p{Symbol}+", "^[\\p{S}]+", "^[\\p{Symbol}]+"],
+      ["\\p{S}+$", "\\p{Symbol}+$", "[\\p{S}]+$", "[\\p{Symbol}]+$"],
+      9,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^\\P{S}+", "^\\P{Symbol}+", "^[^\\p{S}]+", "^[^\\p{Symbol}]+"],
+      ["\\P{S}+$", "\\P{Symbol}+$", "[^\\p{S}]+$", "[^\\p{Symbol}]+$"],
+      19,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      [
+        "^[\\p{P}\\p{S}]+", "^[\\p{S}\\p{P}]+", "^[\\p{Punctuation}\\p{Symbol}]+",
+        "^[\\p{Symbol}\\p{Punctuation}]+",
+      ],
+      [
+        "[\\p{P}\\p{S}]+$", "[\\p{S}\\p{P}]+$", "[\\p{Punctuation}\\p{Symbol}]+$",
+        "[\\p{Symbol}\\p{Punctuation}]+$",
+      ],
+      10,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      [
+        "^[^\\p{P}\\p{S}]+", "^[^\\p{S}\\p{P}]+", "^[^\\p{Punctuation}\\p{Symbol}]+",
+        "^[^\\p{Symbol}\\p{Punctuation}]+",
+      ],
+      [
+        "[^\\p{P}\\p{S}]+$", "[^\\p{S}\\p{P}]+$", "[^\\p{Punctuation}\\p{Symbol}]+$",
+        "[^\\p{Symbol}\\p{Punctuation}]+$",
+      ],
+      20,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  anchored_variants(
+    pattern,
+    [
+      "^[^\\s\\p{L}\\p{N}]+", "^[^\\s\\p{N}\\p{L}]+", "^[^\\p{L}\\p{N}\\s]+", "^[^\\p{N}\\p{L}\\s]+",
+      "^[^\\s\\p{Letter}\\p{Number}]+",
+    ],
+    [
+      "[^\\s\\p{L}\\p{N}]+$", "[^\\s\\p{N}\\p{L}]+$", "[^\\p{L}\\p{N}\\s]+$", "[^\\p{N}\\p{L}\\s]+$",
+      "[^\\s\\p{Letter}\\p{Number}]+$",
+    ],
+    21,
+  )
+}
+
+///|
+pub fn is_anchored_regex_pattern(pattern : String) -> Bool {
+  match anchored_regex_kind(pattern) {
+    Some(_) => true
+    None => false
+  }
+}
+
+///|
 fn bounded_max(pattern : String, p2 : String, p3 : String, p4 : String) -> Int {
   if pattern == p2 {
     2
@@ -503,6 +724,26 @@ fn bounded_max_variants(
     }
   }
   0
+}
+
+///|
+fn anchored_variants(
+  pattern : String,
+  leading : Array[String],
+  trailing : Array[String],
+  kind : Int,
+) -> (Int, Bool)? {
+  for p in leading {
+    if pattern == p {
+      return Some((kind, true))
+    }
+  }
+  for p in trailing {
+    if pattern == p {
+      return Some((kind, false))
+    }
+  }
+  None
 }
 
 ///|

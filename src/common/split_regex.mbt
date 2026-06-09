@@ -16,6 +16,10 @@ pub fn simple_split_regex_matches(
     Some(spans) => return Some(spans)
     None => ()
   }
+  match simple_anchored_regex_matches(chars, pattern) {
+    Some(spans) => return Some(spans)
+    None => ()
+  }
   if pattern == "\\s+" {
     Some(run_matches(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
   } else if pattern == "\\s{2,}" || pattern == "[\\s]{2,}" {
@@ -500,9 +504,30 @@ pub fn simple_split_regex_matches(
 }
 
 ///|
+fn simple_anchored_regex_matches(
+  chars : Array[Char],
+  pattern : String,
+) -> Array[Span]? {
+  match anchored_regex_kind(pattern) {
+    Some((kind, leading)) =>
+      if leading {
+        Some(
+          leading_run_match(chars, fn(c) { bounded_regex_kind_pred(kind, c) }),
+        )
+      } else {
+        Some(
+          trailing_run_match(chars, fn(c) { bounded_regex_kind_pred(kind, c) }),
+        )
+      }
+    None => None
+  }
+}
+
+///|
 pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   is_simple_space_regex_pattern(pattern) ||
   is_bounded_regex_pattern(pattern) ||
+  is_anchored_regex_pattern(pattern) ||
   pattern == "\\w+" ||
   pattern == "[A-Za-z0-9_]+" ||
   pattern == "\\b\\w+\\b" ||

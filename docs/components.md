@@ -93,7 +93,9 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   silently producing mismatched splits. A full Unicode regex engine remains
   future work.
 - **Regex `Replace`:** `Replace` normalizer/decoder supports common whitespace
-  regex replacements such as `\s+`, `^\s+`, `\s+$`, `\s{2,}` / `\s{3,}` /
+  regex replacements such as `\s+`, anchored positive/inverse class runs such as
+  `^\s+`, `\s+$`, `^\S+`, `\D+$`, `^\P{Letter}+`, `\P{Punctuation}+$`,
+  `^[^\p{P}\p{S}]+` and `[^\s\p{L}\p{N}]+$`, `\s{2,}` / `\s{3,}` /
   `\s{4,}` and exact `\s{2}` / `\s{3}` / `\s{4}`, `[\r\n]+` with min/exact
   `{2..4}` quantifiers, `[^\S\r\n]+` and `[ \t]+` horizontal whitespace
   min/exact `{2..4}` forms, ` {2,}`, digit runs
@@ -105,7 +107,8 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   `{1,n}` bounded punctuation, symbol and `\p{P}\p{S}` union forms /
   `[\p{P}\p{S}]{2,}`), common bounded positive and inverse runs such as
   `\d{1,3}`, `\D{1,3}`, `\W{1,2}`, `\P{L}{1,4}` and
-  `[^\s\p{L}\p{N}]{1,3}`, anchored digit/word/letter runs, word runs `\w+` / `\W+`,
+  `[^\s\p{L}\p{N}]{1,3}`, anchored digit/word/letter/punctuation/symbol
+  runs, word runs `\w+` / `\W+`,
   ASCII alnum/letter runs `[A-Za-z0-9]+` / `[A-Za-z]+` and inverse forms, and
   letter/punctuation/symbol runs (`\p{L}+`, `\p{P}+`, `\p{S}+` and inverse
   forms), plus common union/inverse classes like `[\p{P}\p{S}]+` and

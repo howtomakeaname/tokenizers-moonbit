@@ -327,6 +327,26 @@ def hf_decoder_replace_trailing_regex_us() -> float:
     return timed_us(lambda: decoder.decode(tokens), 2_000)
 
 
+def hf_decoder_replace_leading_regex_us() -> float:
+    decoder = hf_decoders.Replace(Regex(r"^\s+"), "")
+    tokens = [
+        "\t \u3000The quick brown fox",
+        " jumps over the lazy dog.",
+        " MoonBit wasm tokenizers.",
+    ]
+    return timed_us(lambda: decoder.decode(tokens), 2_000)
+
+
+def hf_decoder_replace_anchored_union_regex_us() -> float:
+    decoder = hf_decoders.Replace(Regex(r"[\p{P}\p{S}]+$"), "")
+    tokens = [
+        "The quick brown fox",
+        " jumps over MoonBit",
+        " wasm tokenizers🙂+!",
+    ]
+    return timed_us(lambda: decoder.decode(tokens), 2_000)
+
+
 def hf_decoder_replace_digit_regex_us() -> float:
     decoder = hf_decoders.Replace(Regex(r"\d+"), "#")
     tokens = ["abc123", " def4567", " 890xyz", " MoonBit2026"]
@@ -390,6 +410,16 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     decoder_replace_trailing_key = "decoder-replace-trailing-regex-mixed"
     if decoder_replace_trailing_key in moon:
         rows.append(Row(decoder_replace_trailing_key, moon[decoder_replace_trailing_key], hf_decoder_replace_trailing_regex_us()))
+    decoder_replace_leading_key = "decoder-replace-leading-regex-mixed"
+    if decoder_replace_leading_key in moon:
+        rows.append(Row(decoder_replace_leading_key, moon[decoder_replace_leading_key], hf_decoder_replace_leading_regex_us()))
+    decoder_replace_anchored_union_key = "decoder-replace-anchored-union-regex-mixed"
+    if decoder_replace_anchored_union_key in moon:
+        rows.append(Row(
+            decoder_replace_anchored_union_key,
+            moon[decoder_replace_anchored_union_key],
+            hf_decoder_replace_anchored_union_regex_us(),
+        ))
     decoder_replace_digit_key = "decoder-replace-digit-regex-mixed"
     if decoder_replace_digit_key in moon:
         rows.append(Row(decoder_replace_digit_key, moon[decoder_replace_digit_key], hf_decoder_replace_digit_regex_us()))

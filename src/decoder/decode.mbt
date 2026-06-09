@@ -37,6 +37,19 @@ fn decode_replace_direct(
       @common.is_unicode_whitespace(c.to_int())
     })
   }
+  match @common.anchored_regex_kind(pattern) {
+    Some((kind, leading)) =>
+      if leading {
+        return decode_replace_leading_runs_direct(tokens, content, fn(c) {
+          @common.bounded_regex_kind_pred(kind, c)
+        })
+      } else {
+        return decode_replace_trailing_runs_direct(tokens, content, fn(c) {
+          @common.bounded_regex_kind_pred(kind, c)
+        })
+      }
+    None => ()
+  }
   if pattern == "\\d+" || pattern == "[\\d]+" || pattern == "[0-9]+" {
     return decode_replace_char_runs_direct(tokens, content, fn(c) {
       @common.is_decimal_number(c)
@@ -68,6 +81,32 @@ fn decode_replace_char_runs_direct(
         sb.write_char(c)
         in_run = false
       }
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn decode_replace_leading_runs_direct(
+  tokens : Array[String],
+  content : String,
+  pred : (Char) -> Bool,
+) -> String {
+  let sb = StringBuilder::new()
+  for t in tokens {
+    let chars = t.to_array()
+    let n = chars.length()
+    let mut start = 0
+    while start < n && pred(chars[start]) {
+      start = start + 1
+    }
+    if start > 0 {
+      sb.write_string(content)
+      for i in start..<n {
+        sb.write_char(chars[i])
+      }
+    } else {
+      sb.write_string(t)
     }
   }
   sb.to_string()
@@ -453,6 +492,10 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     return s
   }
   match @common.replace_bounded_simple_regex(s, pattern, content) {
+    Some(out) => return out
+    None => ()
+  }
+  match @common.replace_anchored_simple_regex(s, pattern, content) {
     Some(out) => return out
     None => ()
   }

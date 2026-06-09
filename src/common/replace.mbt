@@ -242,6 +242,31 @@ pub fn replace_bounded_simple_regex(
 }
 
 ///|
+pub fn replace_anchored_simple_regex(
+  s : String,
+  pattern : String,
+  content : String,
+) -> String? {
+  match anchored_regex_kind(pattern) {
+    Some((kind, leading)) =>
+      if leading {
+        Some(
+          replace_leading_runs(s, content, fn(c) {
+            bounded_regex_kind_pred(kind, c)
+          }),
+        )
+      } else {
+        Some(
+          replace_trailing_runs(s, content, fn(c) {
+            bounded_regex_kind_pred(kind, c)
+          }),
+        )
+      }
+    None => None
+  }
+}
+
+///|
 pub fn replace_space_runs(
   s : String,
   content : String,

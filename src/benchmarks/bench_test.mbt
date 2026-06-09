@@ -590,6 +590,49 @@ fn bench_decoder_replace_trailing_regex_case(
 }
 
 ///|
+fn bench_decoder_replace_leading_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("^\\s+", "")
+  let tokens = [
+    "\t \u{3000}The quick brown fox", " jumps over the lazy dog.", " MoonBit wasm tokenizers.",
+  ]
+  b.bench(name="decoder-replace-leading-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
+fn bench_decoder_replace_anchored_union_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("[\\p{P}\\p{S}]+$", "")
+  let tokens = [
+    "The quick brown fox", " jumps over MoonBit", " wasm tokenizers🙂+!",
+  ]
+  b.bench(name="decoder-replace-anchored-union-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
+fn bench_normalizer_replace_anchored_inverse_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let normalizer = @normalizer.Normalizer::Replace(
+    pattern="^[^\\p{P}\\p{S}]+",
+    content="N",
+  )
+  let text = corpus_mixed() + ",$+🙂"
+  b.bench(name="normalizer-replace-anchored-inverse-regex-\{case_name}", fn() {
+    b.keep(normalizer.normalize(text))
+  })
+}
+
+///|
 fn bench_decoder_replace_digit_regex_case(
   b : @bench.T,
   case_name : String,
@@ -1249,6 +1292,21 @@ test "bench decoder replace newline quantifier regex" (b : @bench.T) {
 ///|
 test "bench decoder replace trailing regex" (b : @bench.T) {
   bench_decoder_replace_trailing_regex_case(b, "mixed")
+}
+
+///|
+test "bench decoder replace leading regex" (b : @bench.T) {
+  bench_decoder_replace_leading_regex_case(b, "mixed")
+}
+
+///|
+test "bench decoder replace anchored union regex" (b : @bench.T) {
+  bench_decoder_replace_anchored_union_regex_case(b, "mixed")
+}
+
+///|
+test "bench normalizer replace anchored inverse regex" (b : @bench.T) {
+  bench_normalizer_replace_anchored_inverse_regex_case(b, "mixed")
 }
 
 ///|

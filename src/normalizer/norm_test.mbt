@@ -454,3 +454,39 @@ test "Replace normalizer supports common regex whitespace patterns" {
     "ab## cd#42",
   )
 }
+
+///|
+test "Replace normalizer supports anchored inverse regex families" {
+  @test.assert_eq(
+    Normalizer::Replace(pattern="^\\S+", content="X").normalize("abc\t tail"),
+    "X\t tail",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\D+$", content="_").normalize("123abc中"),
+    "123_",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="^\\P{Letter}+", content="").normalize(
+      "123!?abc",
+    ),
+    "abc",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="\\P{Punctuation}+$", content="N").normalize(
+      "?!abc🙂",
+    ),
+    "?!N",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="^[^\\p{P}\\p{S}]+", content="N").normalize(
+      "abc12,$",
+    ),
+    "N,$",
+  )
+  @test.assert_eq(
+    Normalizer::Replace(pattern="[^\\s\\p{L}\\p{N}]+$", content="").normalize(
+      "abc42🙂+",
+    ),
+    "abc42",
+  )
+}
