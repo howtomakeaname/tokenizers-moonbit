@@ -41,6 +41,10 @@ snapshot 解析（`$HUGGINGFACE_HUB_CACHE`、`$HF_HOME/hub`、
 | `tok.encode_batch([words, ...], is_pretokenized=True)` | `tok.encode_pretokenized_batch([words, ...])` |
 | `tok.encode_batch([(words_a, words_b), ...], is_pretokenized=True)` | `tok.encode_pretokenized_pair_batch([(words_a, words_b), ...])` |
 
+pre-tokenized 迁移保留 HF 的 added-token 抽取语义：输入词内部的 special/added
+token 仍会先被切出，普通片段再交给 model；只有 tokenizer 配置里的 pre-tokenizer
+阶段会被跳过。
+
 ```moonbit
 let enc = tok.encode("Hello world")
 enc.ids

@@ -73,7 +73,8 @@ fn Tokenizer::decode(
 所有 `encode_*_with_byte_offsets` 变体返回 HF 风格 UTF-8 byte offsets。
 pre-tokenized 输入会跳过 tokenizer 的 pre-tokenizer 阶段，但 normalizer、model、
 post-processor、truncation 与 padding 仍会执行；offsets 按“归一化后的词用单个 ASCII
-空格连接”得到的合成文本计算。
+空格连接”得到的合成文本计算。传入词内部的 added/special token 仍会按 tokenizer 的
+`single_word`、`lstrip`、`rstrip` 与 `normalized` 规则先切出，再把普通片段交给 model。
 
 ## 配置
 

@@ -79,7 +79,9 @@ All `encode_*_with_byte_offsets` variants return HF-style UTF-8 byte offsets.
 For pre-tokenized inputs, offsets are measured against a synthetic normalized
 text formed by joining normalized words with one ASCII space; the tokenizer's
 pre-tokenizer stage is skipped, while normalizer, model, post-processor,
-truncation and padding still run.
+truncation and padding still run. Added/special tokens embedded in a provided
+word are still extracted with the tokenizer's `single_word`, `lstrip`, `rstrip`
+and `normalized` rules before ordinary spans go to the model.
 
 ## Configuration builders
 

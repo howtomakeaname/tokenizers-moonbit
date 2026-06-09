@@ -249,10 +249,22 @@ fn AddedVocabulary::extract_stage1(
   text : String,
   keep_special~ : Bool,
 ) -> Array[Segment] {
+  self.extract_stage1_at(text, base=0, keep_special~)
+}
+
+///|
+/// Stage 1 with an explicit base offset. Used by pre-tokenized encode, where
+/// each input word is laid out inside a synthetic single-space-joined string.
+fn AddedVocabulary::extract_stage1_at(
+  self : AddedVocabulary,
+  text : String,
+  base~ : Int,
+  keep_special~ : Bool,
+) -> Array[Segment] {
   if !self.has_any {
-    return [Normal(text~, base_offset=0)]
+    return [Normal(text~, base_offset=base)]
   }
-  self.split_with(self.non_normalized, text, 0, keep_special)
+  self.split_with(self.non_normalized, text, base, keep_special)
 }
 
 ///|

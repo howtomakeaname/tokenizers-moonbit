@@ -251,6 +251,28 @@ fn bench_encode_pretokenized_pair_batch_case(
 }
 
 ///|
+fn pretokenized_added_fixture() -> @tokenizer.Tokenizer raise {
+  let json =
+    #|{"version":"1.0",
+    #| "added_tokens":[{"id":8,"content":"[MASK]","special":true,"lstrip":true,"rstrip":true,"normalized":false}],
+    #| "normalizer":{"type":"Lowercase"},
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"the":0,"quick":1,"brown":2,"fox":3,"jumps":4,"over":5,"moonbit":6,"tokenizers":7,"[MASK]":8,"[UNK]":9},"unk_token":"[UNK]"}}
+  @tokenizer.Tokenizer::from_str(json)
+}
+
+///|
+fn bench_encode_pretokenized_added_case(b : @bench.T) -> Unit raise {
+  let tok = pretokenized_added_fixture()
+  let words = [
+    "The", "quick", "brown[MASK]fox", "jumps", "over", "MoonBit", "tokenizers",
+  ]
+  b.bench(name="synthetic-encode-pretokenized-added", fn() {
+    b.keep(tok.encode_pretokenized(words, add_special_tokens=false))
+  })
+}
+
+///|
 fn bench_offset_lookup_case(
   b : @bench.T,
   model : String,
@@ -1385,6 +1407,7 @@ test "bench encode pretokenized matrix" (b : @bench.T) {
     bench_encode_pretokenized_batch_case(b, model, "wordsx8")
     bench_encode_pretokenized_pair_batch_case(b, model, "wordsx8")
   }
+  bench_encode_pretokenized_added_case(b)
 }
 
 ///|

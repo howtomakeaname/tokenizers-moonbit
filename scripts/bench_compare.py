@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from bench_python import CORPORA, DATA, MODELS
 
 try:
+    from tokenizers import AddedToken
     from tokenizers import Tokenizer
     from tokenizers import Regex
     from tokenizers import decoders as hf_decoders
@@ -164,6 +165,38 @@ def hf_encode_pretokenized_pair_batch_us(tok: Tokenizer) -> float:
     pair = (pretokenized_words(), ["Second", "sequence", "MoonBit", "tokenizers", "2026"])
     batch = [pair] * 8
     return timed_us(lambda: tok.encode_batch(batch, is_pretokenized=True, add_special_tokens=False), 2_000)
+
+
+def hf_pretokenized_added_tokenizer() -> Tokenizer:
+    tok = Tokenizer(
+        hf_models.WordLevel(
+            {
+                "the": 0,
+                "quick": 1,
+                "brown": 2,
+                "fox": 3,
+                "jumps": 4,
+                "over": 5,
+                "moonbit": 6,
+                "tokenizers": 7,
+                "[MASK]": 8,
+                "[UNK]": 9,
+            },
+            unk_token="[UNK]",
+        )
+    )
+    tok.normalizer = hf_normalizers.Lowercase()
+    tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+    tok.add_special_tokens([
+        AddedToken("[MASK]", special=True, lstrip=True, rstrip=True, normalized=False)
+    ])
+    return tok
+
+
+def hf_encode_pretokenized_added_us() -> float:
+    tok = hf_pretokenized_added_tokenizer()
+    words = ["The", "quick", "brown[MASK]fox", "jumps", "over", "MoonBit", "tokenizers"]
+    return timed_us(lambda: tok.encode(words, is_pretokenized=True, add_special_tokens=False), 2_000)
 
 
 def hf_decode_us(tok: Tokenizer, text: str) -> float:
@@ -633,6 +666,13 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
             multi_cache_key,
             moon[multi_cache_key],
             hf_load_us(gpt2_path) + hf_load_us(bert_path),
+        ))
+    pretokenized_added_key = "synthetic-encode-pretokenized-added"
+    if pretokenized_added_key in moon:
+        rows.append(Row(
+            pretokenized_added_key,
+            moon[pretokenized_added_key],
+            hf_encode_pretokenized_added_us(),
         ))
     for model in models:
         tok, path = load_tokenizer(model)

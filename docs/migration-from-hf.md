@@ -42,6 +42,11 @@ loaded back with `from_pretrained(dir)`.
 | `tok.encode_batch([words, ...], is_pretokenized=True)` | `tok.encode_pretokenized_batch([words, ...])` |
 | `tok.encode_batch([(words_a, words_b), ...], is_pretokenized=True)` | `tok.encode_pretokenized_pair_batch([(words_a, words_b), ...])` |
 
+Pre-tokenized migration keeps HF's added-token extraction semantics: a special
+or added token embedded inside an input word is still split out before the
+ordinary span is passed to the model, while the configured pre-tokenizer itself
+is skipped.
+
 ```python
 enc = tok.encode("Hello world")
 enc.ids            # [15496, 995]

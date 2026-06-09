@@ -640,9 +640,10 @@ fn Tokenizer::encode_raw(
 }
 
 ///|
-/// Raw encoding for pre-tokenized input. The pre-tokenizer stage is skipped;
-/// each input word receives one word id before the model may split it into
-/// subword tokens.
+/// Raw encoding for pre-tokenized input. Added/special tokens are still
+/// extracted inside each provided word, but the tokenizer's pre-tokenizer stage
+/// is skipped; each input word receives one word id before the model may split
+/// ordinary spans into subword tokens.
 fn Tokenizer::encode_pretokenized_raw(
   self : Tokenizer,
   words : Array[String],
@@ -656,22 +657,56 @@ fn Tokenizer::encode_pretokenized_raw(
   let sequence_ids : Array[Int?] = []
   let word_ids : Array[Int?] = []
   let mut base = 0
-  fn emit(t : @types.Token, word_id : Int) -> Unit {
-    ids.push(t.id)
-    tokens.push(t.value)
+  fn emit(
+    id : Int,
+    value : String,
+    offs : (Int, Int),
+    special : Int,
+    word_id : Int,
+  ) -> Unit {
+    ids.push(id)
+    tokens.push(value)
     type_ids.push(0)
-    offsets.push(t.offsets)
-    special_tokens_mask.push(0)
+    offsets.push(offs)
+    special_tokens_mask.push(special)
     attention_mask.push(1)
     sequence_ids.push(Some(0))
     word_ids.push(Some(word_id))
   }
   for word_id, word in words {
-    let normalized = self.normalize_pretokenized_word(word)
-    for t in self.model.tokenize(normalized, offset=base) {
-      emit(t, word_id)
+    // Stage 1 mirrors normal encode: non-normalized added tokens are matched
+    // before normalization, but offsets are relative to the synthetic joined
+    // pre-tokenized string.
+    for
+      seg1 in self.added_vocabulary.extract_stage1_at(
+        word,
+        base~,
+        keep_special=true,
+      ) {
+      match seg1 {
+        Special(info~, offsets~) => emit(info.id, info.content, offsets, 1, word_id)
+        Normal(text=raw, base_offset~) => {
+          let normalized = self.normalize_pretokenized_word(raw)
+          // Stage 2 mirrors normal encode for `normalized=true` added tokens.
+          for
+            seg2 in self.added_vocabulary.extract_stage2(
+              normalized,
+              base_offset,
+              keep_special=true,
+            ) {
+            match seg2 {
+              Special(info~, offsets~) =>
+                emit(info.id, info.content, offsets, 1, word_id)
+              Normal(text=ntext, base_offset=base2) =>
+                for t in self.model.tokenize(ntext, offset=base2) {
+                  emit(t.id, t.value, t.offsets, 0, word_id)
+                }
+            }
+          }
+        }
+      }
     }
-    base = base + normalized.char_length()
+    base = base + self.normalize_pretokenized_word(word).char_length()
     if word_id + 1 < words.length() {
       base = base + 1
     }
