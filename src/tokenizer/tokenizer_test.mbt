@@ -445,6 +445,19 @@ fn ensure_dir(path : String) -> Unit {
 }
 
 ///|
+fn assert_from_pretrained_parse_error_contains(
+  path : String,
+  needle : String,
+) -> Unit raise {
+  let mut raised = false
+  try Tokenizer::from_pretrained(path) |> ignore catch {
+    @types.ParseError(msg) => raised = msg.contains(needle)
+    _ => raised = false
+  }
+  assert_true(raised)
+}
+
+///|
 test "from_pretrained resolves local HuggingFace hub cache snapshots" {
   let json =
     #|{"version":"1.0",
@@ -482,6 +495,58 @@ test "from_pretrained resolves local HuggingFace hub cache snapshots" {
   @test.assert_eq(
     implicit.encode("cache missing", add_special_tokens=false).ids,
     [1, 2],
+  )
+
+  let explicit_rev = Tokenizer::from_pretrained_cached(
+    "org/toy-tokenizer",
+    revision="abc123",
+    cache_dir=Some(hub),
+  )
+  @test.assert_eq(explicit_rev.encode("hub", add_special_tokens=false).ids, [0])
+}
+
+///|
+test "from_pretrained reports actionable offline resolution errors" {
+  ensure_dir("_build/missing_tokenizer_dir")
+  assert_from_pretrained_parse_error_contains(
+    "_build/not-a-tokenizer.json",
+    "tokenizer file not found",
+  )
+  assert_from_pretrained_parse_error_contains(
+    "_build/missing_tokenizer_dir",
+    "directory missing tokenizer.json",
+  )
+  assert_from_pretrained_parse_error_contains(
+    "missing-org/missing-model",
+    "could not resolve",
+  )
+}
+
+///|
+test "from_pretrained source cache evicts oldest entry instead of clearing all" {
+  let old_path = "_build/tokenizer_cache_fifo_old.json"
+  let old_json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"old":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let new_json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"new":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  @fs.write_string_to_file(old_path, old_json) catch { _ => () }
+  @test.assert_eq(
+    Tokenizer::from_pretrained(old_path).encode("old", add_special_tokens=false).ids,
+    [0],
+  )
+  for i in 0..<17 {
+    let p = "_build/tokenizer_cache_fifo_" + i.to_string() + ".json"
+    @fs.write_string_to_file(p, new_json) catch { _ => () }
+    Tokenizer::from_pretrained(p) |> ignore
+  }
+  @fs.write_string_to_file(old_path, new_json) catch { _ => () }
+  @test.assert_eq(
+    Tokenizer::from_pretrained(old_path).encode("new", add_special_tokens=false).ids,
+    [0],
   )
 }
 

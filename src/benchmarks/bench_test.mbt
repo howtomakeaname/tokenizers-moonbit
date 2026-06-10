@@ -456,6 +456,26 @@ fn bench_from_pretrained_multi_cache_case(b : @bench.T) -> Unit {
 }
 
 ///|
+fn bench_from_pretrained_cache_eviction_case(b : @bench.T) -> Unit {
+  guard load_text("tests/data/bert.full.json") is Some(content) else { return }
+  let root = "_build/bench_pretrained_cache_eviction"
+  bench_ensure_dir(root)
+  for i in 0..<18 {
+    let p = root + "/tok_" + i.to_string() + ".json"
+    @fs.write_string_to_file(p, content) catch { _ => () }
+    ignore(try? @tokenizer.Tokenizer::from_pretrained(p))
+  }
+  let old = root + "/tok_0.json"
+  let hot = root + "/tok_17.json"
+  b.bench(name="from_pretrained-cache-eviction-window", fn() {
+    let a = try? @tokenizer.Tokenizer::from_pretrained(old)
+    let b2 = try? @tokenizer.Tokenizer::from_pretrained(hot)
+    b.keep(a)
+    b.keep(b2)
+  })
+}
+
+///|
 fn bench_from_str_multi_parse_cache_case(b : @bench.T) -> Unit {
   guard load_text("tests/data/gpt2.full.json") is Some(gpt2) else { return }
   guard load_text("tests/data/bert.full.json") is Some(bert) else { return }
@@ -1592,6 +1612,11 @@ test "bench from_pretrained hub cache" (b : @bench.T) {
 ///|
 test "bench from_pretrained multi cache hit" (b : @bench.T) {
   bench_from_pretrained_multi_cache_case(b)
+}
+
+///|
+test "bench from_pretrained cache eviction window" (b : @bench.T) {
+  bench_from_pretrained_cache_eviction_case(b)
 }
 
 ///|

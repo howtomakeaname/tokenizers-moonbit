@@ -19,7 +19,8 @@ fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise To
 - `from_pretrained` 支持 tokenizer JSON 文件、本地含 `tokenizer.json` 的目录，
   以及已存在的 HuggingFace Hub 本地 cache（按 `$HUGGINGFACE_HUB_CACHE`、
   `$HF_HOME/hub`、`$HOME/.cache/huggingface/hub` 顺序解析）。核心库不做网络下载；
-  稳定 pretrained source 会进入小型进程内 cache，优化重复加载。
+  稳定 pretrained source 会进入小型进程内 FIFO cache，优化重复加载。离线解析失败时会区分
+  JSON 文件缺失、本地目录缺少 `tokenizer.json`、以及 model id 未命中本地 Hub cache。
 - `from_str` 使用小型多项 parsed-JSON cache，重复或交替加载稳定
   tokenizer payload 时避免重复 JSON 解析，同时每次仍返回全新的 tokenizer 状态。
 - `from_pretrained_cached` 可显式传入本地 Hub cache 根目录和 revision，对齐

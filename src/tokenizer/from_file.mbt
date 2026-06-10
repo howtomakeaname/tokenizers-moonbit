@@ -15,6 +15,9 @@ let pretrained_source_cache : Map[String, String] = {}
 let pretrained_source_cache_limit : Int = 16
 
 ///|
+let pretrained_source_cache_order : Array[String] = []
+
+///|
 /// Load a tokenizer from a `tokenizer.json` file path.
 pub fn from_file(path : String) -> Tokenizer raise @types.TokenizerError {
   Tokenizer::from_file(path)
@@ -42,6 +45,7 @@ pub fn Tokenizer::save(
     _ => raise @types.ParseError("cannot write file: \{path}")
   }
   pretrained_source_cache.clear()
+  pretrained_source_cache_order.clear()
 }
 
 ///|
@@ -115,17 +119,28 @@ fn resolve_pretrained_path(
   path : String,
   revision~ : String,
   cache_dir~ : String?,
-) -> String {
+) -> String raise @types.TokenizerError {
   if path.has_suffix(".json") {
-    return path
+    if @fs.path_exists(path) {
+      return path
+    }
+    raise @types.ParseError("from_pretrained tokenizer file not found: \{path}")
   }
   let local_path = join_tokenizer_json(path)
   if @fs.path_exists(local_path) {
     return local_path
   }
+  if @fs.path_exists(path) {
+    raise @types.ParseError(
+      "from_pretrained directory missing tokenizer.json: \{path}",
+    )
+  }
   match resolve_hub_cache_path(path, revision~, cache_dir~) {
     Some(p) => p
-    None => local_path
+    None =>
+      raise @types.ParseError(
+        "from_pretrained could not resolve '\{path}' as a tokenizer.json file, HF directory, or local HuggingFace Hub cache snapshot (revision=\{revision})",
+      )
   }
 }
 
@@ -230,12 +245,47 @@ fn read_pretrained_source(path : String) -> String raise @types.TokenizerError {
       let content = @fs.read_file_to_string(path) catch {
         _ => raise @types.ParseError("cannot read file: \{path}")
       }
-      if pretrained_source_cache.length() >= pretrained_source_cache_limit {
-        pretrained_source_cache.clear()
-      }
-      pretrained_source_cache[path] = content
+      insert_pretrained_source_cache(path, content)
       content
     }
+  }
+}
+
+///|
+fn insert_pretrained_source_cache(path : String, content : String) -> Unit {
+  if pretrained_source_cache.length() >= pretrained_source_cache_limit {
+    evict_oldest_pretrained_source_cache_entry()
+  }
+  pretrained_source_cache[path] = content
+  pretrained_source_cache_order.push(path)
+}
+
+///|
+fn evict_oldest_pretrained_source_cache_entry() -> Unit {
+  if pretrained_source_cache_order.length() == 0 {
+    pretrained_source_cache.clear()
+    return
+  }
+  let keep_keys : Array[String] = []
+  let keep_values : Array[String] = []
+  let evict = pretrained_source_cache_order[0]
+  for i in 1..<pretrained_source_cache_order.length() {
+    let key = pretrained_source_cache_order[i]
+    if key != evict {
+      match pretrained_source_cache.get(key) {
+        Some(value) => {
+          keep_keys.push(key)
+          keep_values.push(value)
+        }
+        None => ()
+      }
+    }
+  }
+  pretrained_source_cache.clear()
+  pretrained_source_cache_order.clear()
+  for i in 0..<keep_keys.length() {
+    pretrained_source_cache[keep_keys[i]] = keep_values[i]
+    pretrained_source_cache_order.push(keep_keys[i])
   }
 }
 
