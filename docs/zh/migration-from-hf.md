@@ -71,6 +71,34 @@ post-processor、truncation 与 padding；offsets 按“归一化后的词用单
 | `tok.id_to_token(101)` | `tok.id_to_token(101)` → `String?` |
 | `tok.get_vocab_size()` | `tok.get_vocab_size()` |
 
+## 程序化构造与 AddedToken
+
+| HuggingFace (Python) | MoonBit |
+|---|---|
+| `Tokenizer(model)` | `@tokenizer.Tokenizer::new(model)` |
+| `tok.normalizer = normalizer` | `tok.with_normalizer(Some(normalizer))` |
+| `tok.pre_tokenizer = pre_tokenizer` | `tok.with_pre_tokenizer(Some(pre_tokenizer))` |
+| `tok.model = model` | `tok.with_model(model)` |
+| `tok.post_processor = processor` | `tok.with_post_processor(Some(processor))` |
+| `tok.decoder = decoder` | `tok.with_decoder(Some(decoder))` |
+| `AddedToken("<x>", single_word=True)` | `AddedToken::new("<x>").with_single_word(true)` |
+| `tok.add_tokens([...])` | `tok.add_tokens_with_count([...])` 或 `tok.add_tokens([...])` |
+| `tok.add_special_tokens([...])` | `tok.add_special_tokens_with_count([...])` 或 `tok.add_special_tokens([...])` |
+
+MoonBit builder 返回更新后的 tokenizer，因此需要重新绑定或直接链式调用：
+
+```moonbit
+let (tok, count) = @tokenizer.Tokenizer::new(model)
+  .with_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+  .add_tokens_with_count([
+    @tokenizer.AddedToken::new("<tag>").with_single_word(true),
+  ])
+```
+
+`*_with_count` 返回 HF 风格的“新分配 id 数量”。普通 added token 的
+`special_tokens_mask=0`；`add_special_tokens` 会注册为非归一化 special token，发出时
+mask 为 `1`。
+
 ## 差异
 
 - MoonBit 布尔值为 `true` / `false`，命名参数写作 `name=value`。

@@ -584,7 +584,8 @@ fn Tokenizer::encode_raw(
   // Stage 1: split out non-normalized added tokens against the original text.
   for seg1 in self.added_vocabulary.extract_stage1(text, keep_special~) {
     match seg1 {
-      Special(info~, offsets~) => emit(info.id, info.content, offsets, 1, None)
+      Special(info~, offsets~) =>
+        emit(info.id, info.content, offsets, special_mask(info), None)
       Normal(text=raw, base_offset~) => {
         // Normalize this ordinary piece.
         let normalized = match self.normalizer {
@@ -600,7 +601,7 @@ fn Tokenizer::encode_raw(
           ) {
           match seg2 {
             Special(info~, offsets~) =>
-              emit(info.id, info.content, offsets, 1, None)
+              emit(info.id, info.content, offsets, special_mask(info), None)
             Normal(text=ntext, base_offset=base2) => {
               let pieces : Array[@types.Split] = match self.pre_tokenizer {
                 Some(pt) => pt.pre_tokenize(ntext, base_offset=base2)
@@ -684,7 +685,8 @@ fn Tokenizer::encode_pretokenized_raw(
         keep_special=true,
       ) {
       match seg1 {
-        Special(info~, offsets~) => emit(info.id, info.content, offsets, 1, word_id)
+        Special(info~, offsets~) =>
+          emit(info.id, info.content, offsets, special_mask(info), word_id)
         Normal(text=raw, base_offset~) => {
           let normalized = self.normalize_pretokenized_word(raw)
           // Stage 2 mirrors normal encode for `normalized=true` added tokens.
@@ -696,7 +698,13 @@ fn Tokenizer::encode_pretokenized_raw(
             ) {
             match seg2 {
               Special(info~, offsets~) =>
-                emit(info.id, info.content, offsets, 1, word_id)
+                emit(
+                  info.id,
+                  info.content,
+                  offsets,
+                  special_mask(info),
+                  word_id,
+                )
               Normal(text=ntext, base_offset=base2) =>
                 for t in self.model.tokenize(ntext, offset=base2) {
                   emit(t.id, t.value, t.offsets, 0, word_id)
@@ -732,6 +740,15 @@ fn Tokenizer::normalize_pretokenized_word(
   match self.normalizer {
     Some(nm) => nm.normalize(word)
     None => word
+  }
+}
+
+///|
+fn special_mask(info : AddedTokenInfo) -> Int {
+  if info.special {
+    1
+  } else {
+    0
   }
 }
 

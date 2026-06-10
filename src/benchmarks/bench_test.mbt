@@ -312,7 +312,10 @@ fn bench_offset_lookup_case(
 }
 
 ///|
-fn bench_encoding_accessors_case(b : @bench.T, case_name : String) -> Unit raise {
+fn bench_encoding_accessors_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit raise {
   let json =
     #|{"version":"1.0",
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
@@ -336,6 +339,29 @@ fn bench_encoding_accessors_case(b : @bench.T, case_name : String) -> Unit raise
     acc = acc + enc.sequence_ids().length()
     acc = acc + enc.word_ids().length()
     b.keep(acc)
+  })
+}
+
+///|
+fn bench_tokenizer_builder_add_tokens_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit raise {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"world":2,"[UNK]":3},"unk_token":"[UNK]"}}
+  let base = @tokenizer.Tokenizer::from_str(json)
+  let added = [
+    @tokenizer.AddedToken::new("<tag>").with_single_word(true),
+    @tokenizer.AddedToken::special("[MASK]").with_lstrip(true).with_rstrip(true),
+    @tokenizer.AddedToken::new("hello"),
+  ]
+  b.bench(name="tokenizer-builder-add-tokens-\{case_name}", fn() {
+    let tok = base
+      .add_tokens(added)
+      .with_decoder(Some(@decoder.Decoder::wordpiece(prefix="", cleanup=false)))
+    b.keep(tok.encode("hello <tag> [MASK] moon", add_special_tokens=false))
   })
 }
 
@@ -490,7 +516,9 @@ fn bench_from_pretrained_cache_eviction_case(b : @bench.T) -> Unit {
   bench_ensure_dir(root)
   for i in 0..<18 {
     let p = root + "/tok_" + i.to_string() + ".json"
-    @fs.write_string_to_file(p, content) catch { _ => () }
+    @fs.write_string_to_file(p, content) catch {
+      _ => ()
+    }
     ignore(try? @tokenizer.Tokenizer::from_pretrained(p))
   }
   let old = root + "/tok_0.json"
@@ -792,7 +820,8 @@ fn bench_decoder_replace_regex_case(b : @bench.T, case_name : String) -> Unit {
 fn bench_decoder_bytefallback_case(b : @bench.T, case_name : String) -> Unit {
   let decoder = @decoder.Decoder::byte_fallback()
   let tokens = [
-    "Hello", " ", "<0xF0>", "<0x9F>", "<0x99>", "<0x82>", " ", "<0xE2>", "<0x82>", "<0xAC>", "!",
+    "Hello", " ", "<0xF0>", "<0x9F>", "<0x99>", "<0x82>", " ", "<0xE2>", "<0x82>",
+    "<0xAC>", "!",
   ]
   b.bench(name="decoder-bytefallback-\{case_name}", fn() {
     b.keep(decoder.decode(tokens))
@@ -1174,7 +1203,10 @@ fn bench_split_exact_ws_regex_case(b : @bench.T, case_name : String) -> Unit {
 }
 
 ///|
-fn bench_split_literal_contiguous_case(b : @bench.T, case_name : String) -> Unit {
+fn bench_split_literal_contiguous_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
   let pt = @pretokenizer.PreTokenizer::split(
     "=",
     @pretokenizer.SplitBehavior::contiguous(),
@@ -1473,7 +1505,10 @@ fn bench_split_bounded_inverse_regex_case(
 }
 
 ///|
-fn bench_split_ranged_union_regex_case(b : @bench.T, case_name : String) -> Unit {
+fn bench_split_ranged_union_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
   let pt = @pretokenizer.PreTokenizer::split(
     "[\\p{P}\\p{S}]{2,4}",
     @pretokenizer.SplitBehavior::isolated(),
@@ -1633,6 +1668,7 @@ test "bench offset lookup matrix" (b : @bench.T) {
     bench_offset_lookup_case(b, model, "mixed", mixed)
   }
   bench_encoding_accessors_case(b, "mixed")
+  bench_tokenizer_builder_add_tokens_case(b, "mixed")
 }
 
 ///|

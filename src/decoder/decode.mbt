@@ -63,10 +63,14 @@ fn decode_replace_direct(
       is_punctuation_or_symbol_fast(c)
     })
   }
-  if pattern == "\\D{3,}" || pattern == "[\\D]{3,}" ||
-    pattern == "[^\\d]{3,}" || pattern == "[^0-9]{3,}" ||
-    pattern == "\\P{N}{3,}" || pattern == "\\P{Number}{3,}" ||
-    pattern == "[^\\p{N}]{3,}" || pattern == "[^\\p{Number}]{3,}" {
+  if pattern == "\\D{3,}" ||
+    pattern == "[\\D]{3,}" ||
+    pattern == "[^\\d]{3,}" ||
+    pattern == "[^0-9]{3,}" ||
+    pattern == "\\P{N}{3,}" ||
+    pattern == "\\P{Number}{3,}" ||
+    pattern == "[^\\p{N}]{3,}" ||
+    pattern == "[^\\p{Number}]{3,}" {
     return decode_replace_min_non_digit_direct(tokens, content, min_run=3)
   }
   if pattern == "[^\\s\\p{L}\\p{N}]{4}" ||
@@ -915,11 +919,18 @@ fn cleanup_text(s : String) -> String {
 ///|
 fn should_drop_cleanup_space(chars : Array[Char], i : Int) -> Bool {
   let next = chars[i + 1]
-  if next == '.' || next == ',' || next == '?' || next == '!' || next == ';' ||
-    next == ':' || next == '\'' {
+  if next == '.' ||
+    next == ',' ||
+    next == '?' ||
+    next == '!' ||
+    next == ';' ||
+    next == ':' ||
+    next == '\'' {
     return true
   }
-  i + 3 < chars.length() && next == 'n' && chars[i + 2] == '\'' &&
+  i + 3 < chars.length() &&
+  next == 'n' &&
+  chars[i + 2] == '\'' &&
   chars[i + 3] == 't'
 }
 

@@ -61,7 +61,10 @@ test "pretokenized encode still extracts added tokens inside words" {
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"hello":0,"world":1,"[UNK]":2,"[MASK]":3},"unk_token":"[UNK]"}}
   let tok = Tokenizer::from_str(json)
-  let enc = tok.encode_pretokenized(["Hello[MASK]WORLD"], add_special_tokens=false)
+  let enc = tok.encode_pretokenized(
+    ["Hello[MASK]WORLD"],
+    add_special_tokens=false,
+  )
   @test.assert_eq(enc.tokens, ["hello", "[MASK]", "world"])
   @test.assert_eq(enc.ids, [0, 3, 1])
   @test.assert_eq(enc.offsets, [(0, 5), (5, 11), (11, 16)])

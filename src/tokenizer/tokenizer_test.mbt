@@ -97,6 +97,74 @@ test "Encoding exposes HF-style getter accessors" {
 }
 
 ///|
+test "programmatic builder APIs attach pipeline components" {
+  let model = @model.Model::train_wordlevel_from_tokens(
+    [["hello", "moon"], ["world"]],
+    unk_token="[UNK]",
+  )
+  let tok = Tokenizer::new(model)
+    .with_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+    .with_decoder(Some(@decoder.Decoder::wordpiece(prefix="", cleanup=false)))
+  let enc = tok.encode("hello moon", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["hello", "moon"])
+  @test.assert_eq(tok.decode(enc.ids, skip_special_tokens=false), "hellomoon")
+
+  let replacement = @model.Model::train_wordlevel_from_tokens(
+    [["hello", "world"], ["[UNK]"]],
+    unk_token="[UNK]",
+  )
+  let with_model = tok.with_model(replacement)
+  @test.assert_eq(
+    with_model.encode("hello moon", add_special_tokens=false).tokens,
+    ["hello", "[UNK]"],
+  )
+}
+
+///|
+test "add_tokens and add_special_tokens extend the added vocabulary" {
+  let model = @model.Model::train_wordlevel_from_tokens(
+    [["hello", "moon"], ["[CLS]", "[SEP]"]],
+    unk_token="[UNK]",
+  )
+  let base = Tokenizer::new(model)
+    .with_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+    .with_post_processor(
+      Some(@processor.PostProcessor::bert(("[SEP]", 4), ("[CLS]", 3))),
+    )
+  let (tok, added_count) = base.add_tokens_with_count([
+    AddedToken::new("<tag>").with_single_word(true),
+    AddedToken::new("hello"),
+  ])
+  @test.assert_eq(added_count, 1)
+  @test.assert_eq(tok.token_to_id("<tag>"), Some(5))
+  @test.assert_eq(tok.get_vocab_size(with_added_tokens=true), 6)
+  @test.assert_eq(tok.get_vocab_size(with_added_tokens=false), 5)
+  let enc = tok.encode("hello <tag> moon", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["hello", "<tag>", "moon"])
+  @test.assert_eq(enc.ids, [
+    tok.token_to_id("hello").unwrap(),
+    5,
+    tok.token_to_id("moon").unwrap(),
+  ])
+  let embedded = tok.encode("hello<tag> moon", add_special_tokens=false)
+  @test.assert_eq(embedded.tokens, ["hello", "[UNK]", "moon"])
+
+  let (tok, special_count) = tok.add_special_tokens_with_count([
+    AddedToken::new("[MASK]").with_lstrip(true).with_rstrip(true),
+    AddedToken::new("[CLS]"),
+  ])
+  @test.assert_eq(special_count, 1)
+  @test.assert_eq(tok.token_to_id("[MASK]"), Some(6))
+  @test.assert_eq(tok.token_to_id("[CLS]") is Some(_), true)
+  let special = tok.encode("hello [MASK] moon", add_special_tokens=false)
+  @test.assert_eq(special.tokens, ["hello", "[MASK]", "moon"])
+  @test.assert_eq(special.special_tokens_mask, [0, 1, 0])
+  let processed = tok.encode("hello", add_special_tokens=true)
+  @test.assert_eq(processed.tokens, ["[CLS]", "hello", "[SEP]"])
+  @test.assert_eq(processed.sequence_ids(), [None, Some(0), None])
+}
+
+///|
 test "decode_batch decodes each id sequence" {
   let json =
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0," ":1,"moon":2},"unk_token":"hello"}}
@@ -530,16 +598,13 @@ test "from_pretrained resolves local HuggingFace hub cache snapshots" {
 test "from_pretrained reports actionable offline resolution errors" {
   ensure_dir("_build/missing_tokenizer_dir")
   assert_from_pretrained_parse_error_contains(
-    "_build/not-a-tokenizer.json",
-    "tokenizer file not found",
+    "_build/not-a-tokenizer.json", "tokenizer file not found",
   )
   assert_from_pretrained_parse_error_contains(
-    "_build/missing_tokenizer_dir",
-    "directory missing tokenizer.json",
+    "_build/missing_tokenizer_dir", "directory missing tokenizer.json",
   )
   assert_from_pretrained_parse_error_contains(
-    "missing-org/missing-model",
-    "could not resolve",
+    "missing-org/missing-model", "could not resolve",
   )
 }
 
@@ -554,17 +619,23 @@ test "from_pretrained source cache evicts oldest entry instead of clearing all" 
     #|{"version":"1.0",
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"new":0,"[UNK]":1},"unk_token":"[UNK]"}}
-  @fs.write_string_to_file(old_path, old_json) catch { _ => () }
+  @fs.write_string_to_file(old_path, old_json) catch {
+    _ => ()
+  }
   @test.assert_eq(
     Tokenizer::from_pretrained(old_path).encode("old", add_special_tokens=false).ids,
     [0],
   )
   for i in 0..<17 {
     let p = "_build/tokenizer_cache_fifo_" + i.to_string() + ".json"
-    @fs.write_string_to_file(p, new_json) catch { _ => () }
+    @fs.write_string_to_file(p, new_json) catch {
+      _ => ()
+    }
     Tokenizer::from_pretrained(p) |> ignore
   }
-  @fs.write_string_to_file(old_path, new_json) catch { _ => () }
+  @fs.write_string_to_file(old_path, new_json) catch {
+    _ => ()
+  }
   @test.assert_eq(
     Tokenizer::from_pretrained(old_path).encode("new", add_special_tokens=false).ids,
     [0],

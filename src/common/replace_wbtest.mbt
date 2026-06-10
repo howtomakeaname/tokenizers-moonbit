@@ -99,11 +99,19 @@ test "replace helpers cover regex run semantics" {
     Some("ab## cd#42"),
   )
   @test.assert_eq(
-    replace_ranged_char_runs("a12345b", "#", fn(c) { is_ascii_digit(c) }, min_run=2, max_run=4),
+    replace_ranged_char_runs(
+      "a12345b",
+      "#",
+      fn(c) { is_ascii_digit(c) },
+      min_run=2,
+      max_run=4,
+    ),
     "a#5b",
   )
   @test.assert_eq(
-    replace_ranged_simple_regex("ab,$+🙂 cd。42!!!", "[\\p{P}\\p{S}]{3,4}", "_"),
+    replace_ranged_simple_regex(
+      "ab,$+🙂 cd。42!!!", "[\\p{P}\\p{S}]{3,4}", "_",
+    ),
     Some("ab_ cd。42_"),
   )
   @test.assert_eq(
@@ -150,8 +158,14 @@ test "replace helpers cover regex run semantics" {
     replace_simple_regex("no-match", "^\\d+", "#"),
     Some("no-match"),
   )
-  @test.assert_eq(replace_simple_regex("a1234567b", "\\d{2,4}", "#"), Some("a##b"))
-  @test.assert_eq(replace_simple_regex("hi!!!!?ok", "\\p{P}{2,4}", "_"), Some("hi_?ok"))
+  @test.assert_eq(
+    replace_simple_regex("a1234567b", "\\d{2,4}", "#"),
+    Some("a##b"),
+  )
+  @test.assert_eq(
+    replace_simple_regex("hi!!!!?ok", "\\p{P}{2,4}", "_"),
+    Some("hi_?ok"),
+  )
   @test.assert_eq(replace_space_runs("a  b   c", "_", min_run=2), "a_b_c")
   @test.assert_eq(replace_whitespace_runs("a\t\u{3000}b\n", " "), "a b ")
 }

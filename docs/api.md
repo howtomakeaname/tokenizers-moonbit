@@ -88,19 +88,58 @@ and `normalized` rules before ordinary spans go to the model.
 ## Configuration builders
 
 ```moonbit
+fn Tokenizer::new(model : @model.Model) -> Tokenizer
+fn Tokenizer::with_normalizer(self : Tokenizer, normalizer : @normalizer.Normalizer?) -> Tokenizer
+fn Tokenizer::with_pre_tokenizer(self : Tokenizer, pre_tokenizer : @pretokenizer.PreTokenizer?) -> Tokenizer
+fn Tokenizer::with_model(self : Tokenizer, model : @model.Model) -> Tokenizer
+fn Tokenizer::with_post_processor(self : Tokenizer, post_processor : @processor.PostProcessor?) -> Tokenizer
+fn Tokenizer::with_decoder(self : Tokenizer, decoder : @decoder.Decoder?) -> Tokenizer
 fn Tokenizer::with_truncation(self : Tokenizer, params : TruncationParams?) -> Tokenizer
 fn Tokenizer::with_padding(self : Tokenizer, params : PaddingParams?) -> Tokenizer
 
-fn Decoder::wordpiece(prefix~ : String = "##", cleanup~ : Bool = true) -> Decoder
+fn Decoder::wordpiece(prefix? : String = "##", cleanup? : Bool = true) -> Decoder
 fn Decoder::byte_fallback() -> Decoder
 fn Decoder::ctc(
-  pad_token~ : String = "<pad>", word_delimiter_token~ : String = "|", cleanup~ : Bool = true,
+  pad_token? : String = "<pad>", word_delimiter_token? : String = "|", cleanup? : Bool = true,
 ) -> Decoder
+
+fn PostProcessor::bert(sep : (String, Int), cls : (String, Int)) -> PostProcessor
+fn PostProcessor::roberta(
+  sep : (String, Int), cls : (String, Int),
+  trim_offsets? : Bool = true, add_prefix_space? : Bool = true,
+) -> PostProcessor
 ```
 
-Builders mutate and return `self`, so they can be chained:
-`from_str(j).with_padding(..)`. Decoder builders mirror common HF decoder
-configs for direct component construction in tests or synthetic pipelines.
+Builders return a tokenizer and can be chained:
+`Tokenizer::new(model).with_pre_tokenizer(..).with_decoder(..)`. They invalidate
+the cached source JSON so constructed tokenizers serialize from typed state where
+supported. Decoder and post-processor builders mirror common HF component
+construction in tests or synthetic pipelines.
+
+## Added tokens
+
+```moonbit
+fn AddedToken::new(content : String) -> AddedToken
+fn AddedToken::special(content : String) -> AddedToken
+fn AddedToken::with_single_word(self : AddedToken, single_word : Bool) -> AddedToken
+fn AddedToken::with_lstrip(self : AddedToken, lstrip : Bool) -> AddedToken
+fn AddedToken::with_rstrip(self : AddedToken, rstrip : Bool) -> AddedToken
+fn AddedToken::with_normalized(self : AddedToken, normalized : Bool) -> AddedToken
+fn AddedToken::with_special(self : AddedToken, special : Bool) -> AddedToken
+
+fn Tokenizer::add_tokens(self : Tokenizer, tokens : Array[AddedToken]) -> Tokenizer
+fn Tokenizer::add_tokens_with_count(self : Tokenizer, tokens : Array[AddedToken]) -> (Tokenizer, Int)
+fn Tokenizer::add_token_strings(self : Tokenizer, tokens : Array[String]) -> Tokenizer
+fn Tokenizer::add_special_tokens(self : Tokenizer, tokens : Array[AddedToken]) -> Tokenizer
+fn Tokenizer::add_special_tokens_with_count(self : Tokenizer, tokens : Array[AddedToken]) -> (Tokenizer, Int)
+fn Tokenizer::add_special_token_strings(self : Tokenizer, tokens : Array[String]) -> Tokenizer
+```
+
+`add_tokens_with_count` / `add_special_tokens_with_count` return the number of
+new ids allocated, matching HF's duplicate-aware count semantics. Existing model
+tokens can still be registered as added/special tokens for extraction without
+increasing the vocabulary size. Ordinary added tokens now keep
+`special_tokens_mask=0`; only `special=true` entries set mask `1`.
 
 ## Vocabulary
 

@@ -49,7 +49,10 @@ test "digits delimiter and fixed length runtime pretokenizers keep offsets" {
   )
   @test.assert_eq(digit_runs.map(x => x.value), ["a", "12", "b", "٣٤"])
   @test.assert_eq(digit_runs.map(x => x.offsets), [
-    (3, 4), (4, 6), (6, 7), (7, 9),
+    (3, 4),
+    (4, 6),
+    (6, 7),
+    (7, 9),
   ])
 
   let individual = PreTokenizer::Digits(individual_digits=true).pre_tokenize(

@@ -91,6 +91,34 @@ Offsets are measured against normalized words joined by one ASCII space.
 | `tok.id_to_token(101)` | `tok.id_to_token(101)` → `String?` |
 | `tok.get_vocab_size()` | `tok.get_vocab_size()` |
 
+## Programmatic construction and added tokens
+
+| HuggingFace (Python) | MoonBit |
+|---|---|
+| `Tokenizer(model)` | `@tokenizer.Tokenizer::new(model)` |
+| `tok.normalizer = normalizer` | `tok.with_normalizer(Some(normalizer))` |
+| `tok.pre_tokenizer = pre_tokenizer` | `tok.with_pre_tokenizer(Some(pre_tokenizer))` |
+| `tok.model = model` | `tok.with_model(model)` |
+| `tok.post_processor = processor` | `tok.with_post_processor(Some(processor))` |
+| `tok.decoder = decoder` | `tok.with_decoder(Some(decoder))` |
+| `AddedToken("<x>", single_word=True)` | `AddedToken::new("<x>").with_single_word(true)` |
+| `tok.add_tokens([...])` | `tok.add_tokens_with_count([...])` or `tok.add_tokens([...])` |
+| `tok.add_special_tokens([...])` | `tok.add_special_tokens_with_count([...])` or `tok.add_special_tokens([...])` |
+
+MoonBit builders return updated tokenizer values, so rebind or chain them:
+
+```moonbit
+let (tok, count) = @tokenizer.Tokenizer::new(model)
+  .with_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+  .add_tokens_with_count([
+    @tokenizer.AddedToken::new("<tag>").with_single_word(true),
+  ])
+```
+
+The `*_with_count` variants return HF-style duplicate-aware counts. Ordinary
+added tokens keep `special_tokens_mask=0`; `add_special_tokens` registers tokens
+as non-normalized special entries and sets mask `1` when they are emitted.
+
 ## Differences to be aware of
 
 - **Booleans:** MoonBit uses `true`/`false` and named arguments use `name=value`.

@@ -69,6 +69,77 @@ fn CharTrie::longest_match(
 }
 
 ///|
+/// Public HF-style added token configuration. `Tokenizer::add_tokens` and
+/// `Tokenizer::add_special_tokens` convert these into the internal
+/// `AddedVocabulary` trie entries used by the encode pipeline.
+pub struct AddedToken {
+  content : String
+  single_word : Bool
+  lstrip : Bool
+  rstrip : Bool
+  normalized : Bool
+  special : Bool
+} derive(Debug, Eq)
+
+///|
+pub fn AddedToken::new(content : String) -> AddedToken {
+  {
+    content,
+    single_word: false,
+    lstrip: false,
+    rstrip: false,
+    normalized: true,
+    special: false,
+  }
+}
+
+///|
+pub fn AddedToken::special(content : String) -> AddedToken {
+  {
+    content,
+    single_word: false,
+    lstrip: false,
+    rstrip: false,
+    normalized: false,
+    special: true,
+  }
+}
+
+///|
+pub fn AddedToken::with_single_word(
+  self : AddedToken,
+  single_word : Bool,
+) -> AddedToken {
+  { ..self, single_word, }
+}
+
+///|
+pub fn AddedToken::with_lstrip(self : AddedToken, lstrip : Bool) -> AddedToken {
+  { ..self, lstrip, }
+}
+
+///|
+pub fn AddedToken::with_rstrip(self : AddedToken, rstrip : Bool) -> AddedToken {
+  { ..self, rstrip, }
+}
+
+///|
+pub fn AddedToken::with_normalized(
+  self : AddedToken,
+  normalized : Bool,
+) -> AddedToken {
+  { ..self, normalized, }
+}
+
+///|
+pub fn AddedToken::with_special(
+  self : AddedToken,
+  special : Bool,
+) -> AddedToken {
+  { ..self, special, }
+}
+
+///|
 /// Per-token configuration parsed from tokenizer.json "added_tokens".
 struct AddedTokenInfo {
   id : Int
@@ -141,6 +212,15 @@ fn AddedVocabulary::get_vocab(self : AddedVocabulary) -> Map[String, Int] {
   let out : Map[String, Int] = {}
   for kv in self.by_content.to_array() {
     out[kv.0] = kv.1.id
+  }
+  out
+}
+
+///|
+fn AddedVocabulary::to_infos(self : AddedVocabulary) -> Array[AddedTokenInfo] {
+  let out : Array[AddedTokenInfo] = []
+  for kv in self.by_content.to_array() {
+    out.push(kv.1)
   }
   out
 }

@@ -243,7 +243,9 @@ test "Replace decoder supports common regex whitespace patterns" {
     "abé中-Ж",
   )
   @test.assert_eq(
-    Decoder::Replace(pattern="\\P{L}{3,}", content="-").decode(["abé中12!🙂", "Ж"]),
+    Decoder::Replace(pattern="\\P{L}{3,}", content="-").decode([
+      "abé中12!🙂", "Ж",
+    ]),
     "abé中-Ж",
   )
   @test.assert_eq(
@@ -334,8 +336,9 @@ test "Replace decoder supports common regex whitespace patterns" {
   )
   @test.assert_eq(
     Decoder::Replace(pattern="[\\p{Punctuation}\\p{Symbol}]{3,4}", content="_").decode([
-      "ab,$+🙂 cd。42!!!",
-    ]),
+        "ab,$+🙂 cd。42!!!",
+      ],
+    ),
     "ab_ cd。42_",
   )
   @test.assert_eq(
@@ -476,19 +479,16 @@ test "Strip and CTC decoders have direct coverage" {
     " hi ok",
   )
   @test.assert_eq(
-    Decoder::CTC(
-      pad_token="_",
-      word_delimiter_token="|",
-      cleanup=false,
-    ).decode(["h", "h", "i", "_", "|", "t", "t", "h", "e", "r", "e"]),
+    Decoder::CTC(pad_token="_", word_delimiter_token="|", cleanup=false).decode([
+        "h", "h", "i", "_", "|", "t", "t", "h", "e", "r", "e",
+      ],
+    ),
     "hi there",
   )
   @test.assert_eq(
-    Decoder::CTC(
-      pad_token="_",
-      word_delimiter_token="|",
-      cleanup=true,
-    ).decode(["hi", " ?"]),
+    Decoder::CTC(pad_token="_", word_delimiter_token="|", cleanup=true).decode([
+      "hi", " ?",
+    ]),
     "hi?",
   )
 }
@@ -503,7 +503,9 @@ test "WordPiece decoder cleanup uses BERT punctuation and contraction rules" {
     "they're not going? i'm sure!",
   )
   @test.assert_eq(
-    decoder.decode(["do", "n't", "stop", ";", "test", ":", "ok", ",", "yes", "."]),
+    decoder.decode([
+      "do", "n't", "stop", ";", "test", ":", "ok", ",", "yes", ".",
+    ]),
     "don't stop; test: ok, yes.",
   )
   @test.assert_eq(

@@ -279,6 +279,22 @@ def hf_encoding_accessors_us() -> float:
     return timed_us(read_once, 20_000)
 
 
+def hf_tokenizer_builder_add_tokens_us() -> float:
+    vocab = {"hello": 0, "moon": 1, "world": 2, "[UNK]": 3}
+
+    def build_and_encode():
+        tok = Tokenizer(hf_models.WordLevel(vocab, unk_token="[UNK]"))
+        tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+        tok.add_tokens([AddedToken("<tag>", single_word=True)])
+        tok.add_special_tokens([
+            AddedToken("[MASK]", special=True, lstrip=True, rstrip=True, normalized=False)
+        ])
+        tok.decoder = hf_decoders.WordPiece(prefix="", cleanup=False)
+        return tok.encode("hello <tag> [MASK] moon", add_special_tokens=False).ids
+
+    return timed_us(build_and_encode, 2_000)
+
+
 def hf_decode_us(tok: Tokenizer, text: str) -> float:
     ids = tok.encode(text, add_special_tokens=False).ids
     iters = iterations_for(text)
@@ -730,6 +746,11 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     encoding_accessors_key = "encoding-accessors-mixed"
     if encoding_accessors_key in moon:
         rows.append(Row(encoding_accessors_key, moon[encoding_accessors_key], hf_encoding_accessors_us()))
+    builder_add_tokens_key = "tokenizer-builder-add-tokens-mixed"
+    if builder_add_tokens_key in moon:
+        rows.append(
+            Row(builder_add_tokens_key, moon[builder_add_tokens_key], hf_tokenizer_builder_add_tokens_us())
+        )
     decoder_replace_key = "decoder-replace-regex-mixed"
     if decoder_replace_key in moon:
         rows.append(Row(decoder_replace_key, moon[decoder_replace_key], hf_decoder_replace_regex_us()))

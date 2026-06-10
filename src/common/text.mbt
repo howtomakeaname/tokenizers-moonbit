@@ -474,212 +474,301 @@ pub fn is_bounded_regex_pattern(pattern : String) -> Bool {
 /// practical tokenizer regexes that appear in modern pre-tokenizer cleanups
 /// without embedding a full regex engine.
 pub fn ranged_regex_kind(pattern : String) -> (Int, Int, Int)? {
-  match ranged_kind_variants(
-    pattern,
-    1,
-    ["\\s{2,3}", "[\\s]{2,3}"],
-    ["\\s{2,4}", "[\\s]{2,4}"],
-    ["\\s{3,4}", "[\\s]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      1,
+      ["\\s{2,3}", "[\\s]{2,3}"],
+      ["\\s{2,4}", "[\\s]{2,4}"],
+      ["\\s{3,4}", "[\\s]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    2,
-    ["[ \\t]{2,3}", "[^\\S\\r\\n]{2,3}"],
-    ["[ \\t]{2,4}", "[^\\S\\r\\n]{2,4}"],
-    ["[ \\t]{3,4}", "[^\\S\\r\\n]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      2,
+      ["[ \\t]{2,3}", "[^\\S\\r\\n]{2,3}"],
+      ["[ \\t]{2,4}", "[^\\S\\r\\n]{2,4}"],
+      ["[ \\t]{3,4}", "[^\\S\\r\\n]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    3,
-    ["[\\r\\n]{2,3}", "[\r\n]{2,3}"],
-    ["[\\r\\n]{2,4}", "[\r\n]{2,4}"],
-    ["[\\r\\n]{3,4}", "[\r\n]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      3,
+      ["[\\r\\n]{2,3}", "[\r\n]{2,3}"],
+      ["[\\r\\n]{2,4}", "[\r\n]{2,4}"],
+      ["[\\r\\n]{3,4}", "[\r\n]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    12,
-    ["\\S{2,3}", "[^\\s]{2,3}"],
-    ["\\S{2,4}", "[^\\s]{2,4}"],
-    ["\\S{3,4}", "[^\\s]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      12,
+      ["\\S{2,3}", "[^\\s]{2,3}"],
+      ["\\S{2,4}", "[^\\s]{2,4}"],
+      ["\\S{3,4}", "[^\\s]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    11,
-    ["\\d{2,3}", "[\\d]{2,3}", "[0-9]{2,3}", "\\p{N}{2,3}", "\\p{Number}{2,3}", "[\\p{N}]{2,3}", "[\\p{Number}]{2,3}"],
-    ["\\d{2,4}", "[\\d]{2,4}", "[0-9]{2,4}", "\\p{N}{2,4}", "\\p{Number}{2,4}", "[\\p{N}]{2,4}", "[\\p{Number}]{2,4}"],
-    ["\\d{3,4}", "[\\d]{3,4}", "[0-9]{3,4}", "\\p{N}{3,4}", "\\p{Number}{3,4}", "[\\p{N}]{3,4}", "[\\p{Number}]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      11,
+      [
+        "\\d{2,3}", "[\\d]{2,3}", "[0-9]{2,3}", "\\p{N}{2,3}", "\\p{Number}{2,3}",
+        "[\\p{N}]{2,3}", "[\\p{Number}]{2,3}",
+      ],
+      [
+        "\\d{2,4}", "[\\d]{2,4}", "[0-9]{2,4}", "\\p{N}{2,4}", "\\p{Number}{2,4}",
+        "[\\p{N}]{2,4}", "[\\p{Number}]{2,4}",
+      ],
+      [
+        "\\d{3,4}", "[\\d]{3,4}", "[0-9]{3,4}", "\\p{N}{3,4}", "\\p{Number}{3,4}",
+        "[\\p{N}]{3,4}", "[\\p{Number}]{3,4}",
+      ],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    14,
-    ["\\D{2,3}", "[\\D]{2,3}", "[^\\d]{2,3}", "[^0-9]{2,3}", "\\P{N}{2,3}", "\\P{Number}{2,3}", "[^\\p{N}]{2,3}", "[^\\p{Number}]{2,3}"],
-    ["\\D{2,4}", "[\\D]{2,4}", "[^\\d]{2,4}", "[^0-9]{2,4}", "\\P{N}{2,4}", "\\P{Number}{2,4}", "[^\\p{N}]{2,4}", "[^\\p{Number}]{2,4}"],
-    ["\\D{3,4}", "[\\D]{3,4}", "[^\\d]{3,4}", "[^0-9]{3,4}", "\\P{N}{3,4}", "\\P{Number}{3,4}", "[^\\p{N}]{3,4}", "[^\\p{Number}]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      14,
+      [
+        "\\D{2,3}", "[\\D]{2,3}", "[^\\d]{2,3}", "[^0-9]{2,3}", "\\P{N}{2,3}", "\\P{Number}{2,3}",
+        "[^\\p{N}]{2,3}", "[^\\p{Number}]{2,3}",
+      ],
+      [
+        "\\D{2,4}", "[\\D]{2,4}", "[^\\d]{2,4}", "[^0-9]{2,4}", "\\P{N}{2,4}", "\\P{Number}{2,4}",
+        "[^\\p{N}]{2,4}", "[^\\p{Number}]{2,4}",
+      ],
+      [
+        "\\D{3,4}", "[\\D]{3,4}", "[^\\d]{3,4}", "[^0-9]{3,4}", "\\P{N}{3,4}", "\\P{Number}{3,4}",
+        "[^\\p{N}]{3,4}", "[^\\p{Number}]{3,4}",
+      ],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    4,
-    ["\\w{2,3}", "[A-Za-z0-9_]{2,3}"],
-    ["\\w{2,4}", "[A-Za-z0-9_]{2,4}"],
-    ["\\w{3,4}", "[A-Za-z0-9_]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      4,
+      ["\\w{2,3}", "[A-Za-z0-9_]{2,3}"],
+      ["\\w{2,4}", "[A-Za-z0-9_]{2,4}"],
+      ["\\w{3,4}", "[A-Za-z0-9_]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    13,
-    ["\\W{2,3}", "[^\\w]{2,3}", "[^A-Za-z0-9_]{2,3}"],
-    ["\\W{2,4}", "[^\\w]{2,4}", "[^A-Za-z0-9_]{2,4}"],
-    ["\\W{3,4}", "[^\\w]{3,4}", "[^A-Za-z0-9_]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      13,
+      ["\\W{2,3}", "[^\\w]{2,3}", "[^A-Za-z0-9_]{2,3}"],
+      ["\\W{2,4}", "[^\\w]{2,4}", "[^A-Za-z0-9_]{2,4}"],
+      ["\\W{3,4}", "[^\\w]{3,4}", "[^A-Za-z0-9_]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    5,
-    ["[A-Za-z0-9]{2,3}", "[a-zA-Z0-9]{2,3}"],
-    ["[A-Za-z0-9]{2,4}", "[a-zA-Z0-9]{2,4}"],
-    ["[A-Za-z0-9]{3,4}", "[a-zA-Z0-9]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      5,
+      ["[A-Za-z0-9]{2,3}", "[a-zA-Z0-9]{2,3}"],
+      ["[A-Za-z0-9]{2,4}", "[a-zA-Z0-9]{2,4}"],
+      ["[A-Za-z0-9]{3,4}", "[a-zA-Z0-9]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    15,
-    ["[^A-Za-z0-9]{2,3}", "[^a-zA-Z0-9]{2,3}"],
-    ["[^A-Za-z0-9]{2,4}", "[^a-zA-Z0-9]{2,4}"],
-    ["[^A-Za-z0-9]{3,4}", "[^a-zA-Z0-9]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      15,
+      ["[^A-Za-z0-9]{2,3}", "[^a-zA-Z0-9]{2,3}"],
+      ["[^A-Za-z0-9]{2,4}", "[^a-zA-Z0-9]{2,4}"],
+      ["[^A-Za-z0-9]{3,4}", "[^a-zA-Z0-9]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    6,
-    ["[A-Za-z]{2,3}", "[a-zA-Z]{2,3}"],
-    ["[A-Za-z]{2,4}", "[a-zA-Z]{2,4}"],
-    ["[A-Za-z]{3,4}", "[a-zA-Z]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      6,
+      ["[A-Za-z]{2,3}", "[a-zA-Z]{2,3}"],
+      ["[A-Za-z]{2,4}", "[a-zA-Z]{2,4}"],
+      ["[A-Za-z]{3,4}", "[a-zA-Z]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    16,
-    ["[^A-Za-z]{2,3}", "[^a-zA-Z]{2,3}"],
-    ["[^A-Za-z]{2,4}", "[^a-zA-Z]{2,4}"],
-    ["[^A-Za-z]{3,4}", "[^a-zA-Z]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      16,
+      ["[^A-Za-z]{2,3}", "[^a-zA-Z]{2,3}"],
+      ["[^A-Za-z]{2,4}", "[^a-zA-Z]{2,4}"],
+      ["[^A-Za-z]{3,4}", "[^a-zA-Z]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    7,
-    ["\\p{L}{2,3}", "\\p{Letter}{2,3}", "[\\p{L}]{2,3}", "[\\p{Letter}]{2,3}"],
-    ["\\p{L}{2,4}", "\\p{Letter}{2,4}", "[\\p{L}]{2,4}", "[\\p{Letter}]{2,4}"],
-    ["\\p{L}{3,4}", "\\p{Letter}{3,4}", "[\\p{L}]{3,4}", "[\\p{Letter}]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      7,
+      ["\\p{L}{2,3}", "\\p{Letter}{2,3}", "[\\p{L}]{2,3}", "[\\p{Letter}]{2,3}"],
+      ["\\p{L}{2,4}", "\\p{Letter}{2,4}", "[\\p{L}]{2,4}", "[\\p{Letter}]{2,4}"],
+      ["\\p{L}{3,4}", "\\p{Letter}{3,4}", "[\\p{L}]{3,4}", "[\\p{Letter}]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    17,
-    ["\\P{L}{2,3}", "\\P{Letter}{2,3}", "[^\\p{L}]{2,3}", "[^\\p{Letter}]{2,3}"],
-    ["\\P{L}{2,4}", "\\P{Letter}{2,4}", "[^\\p{L}]{2,4}", "[^\\p{Letter}]{2,4}"],
-    ["\\P{L}{3,4}", "\\P{Letter}{3,4}", "[^\\p{L}]{3,4}", "[^\\p{Letter}]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      17,
+      [
+        "\\P{L}{2,3}", "\\P{Letter}{2,3}", "[^\\p{L}]{2,3}", "[^\\p{Letter}]{2,3}",
+      ],
+      [
+        "\\P{L}{2,4}", "\\P{Letter}{2,4}", "[^\\p{L}]{2,4}", "[^\\p{Letter}]{2,4}",
+      ],
+      [
+        "\\P{L}{3,4}", "\\P{Letter}{3,4}", "[^\\p{L}]{3,4}", "[^\\p{Letter}]{3,4}",
+      ],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    8,
-    ["\\p{P}{2,3}", "\\p{Punctuation}{2,3}", "[\\p{P}]{2,3}", "[\\p{Punctuation}]{2,3}"],
-    ["\\p{P}{2,4}", "\\p{Punctuation}{2,4}", "[\\p{P}]{2,4}", "[\\p{Punctuation}]{2,4}"],
-    ["\\p{P}{3,4}", "\\p{Punctuation}{3,4}", "[\\p{P}]{3,4}", "[\\p{Punctuation}]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      8,
+      [
+        "\\p{P}{2,3}", "\\p{Punctuation}{2,3}", "[\\p{P}]{2,3}", "[\\p{Punctuation}]{2,3}",
+      ],
+      [
+        "\\p{P}{2,4}", "\\p{Punctuation}{2,4}", "[\\p{P}]{2,4}", "[\\p{Punctuation}]{2,4}",
+      ],
+      [
+        "\\p{P}{3,4}", "\\p{Punctuation}{3,4}", "[\\p{P}]{3,4}", "[\\p{Punctuation}]{3,4}",
+      ],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    18,
-    ["\\P{P}{2,3}", "\\P{Punctuation}{2,3}", "[^\\p{P}]{2,3}", "[^\\p{Punctuation}]{2,3}"],
-    ["\\P{P}{2,4}", "\\P{Punctuation}{2,4}", "[^\\p{P}]{2,4}", "[^\\p{Punctuation}]{2,4}"],
-    ["\\P{P}{3,4}", "\\P{Punctuation}{3,4}", "[^\\p{P}]{3,4}", "[^\\p{Punctuation}]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      18,
+      [
+        "\\P{P}{2,3}", "\\P{Punctuation}{2,3}", "[^\\p{P}]{2,3}", "[^\\p{Punctuation}]{2,3}",
+      ],
+      [
+        "\\P{P}{2,4}", "\\P{Punctuation}{2,4}", "[^\\p{P}]{2,4}", "[^\\p{Punctuation}]{2,4}",
+      ],
+      [
+        "\\P{P}{3,4}", "\\P{Punctuation}{3,4}", "[^\\p{P}]{3,4}", "[^\\p{Punctuation}]{3,4}",
+      ],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    9,
-    ["\\p{S}{2,3}", "\\p{Symbol}{2,3}", "[\\p{S}]{2,3}", "[\\p{Symbol}]{2,3}"],
-    ["\\p{S}{2,4}", "\\p{Symbol}{2,4}", "[\\p{S}]{2,4}", "[\\p{Symbol}]{2,4}"],
-    ["\\p{S}{3,4}", "\\p{Symbol}{3,4}", "[\\p{S}]{3,4}", "[\\p{Symbol}]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      9,
+      ["\\p{S}{2,3}", "\\p{Symbol}{2,3}", "[\\p{S}]{2,3}", "[\\p{Symbol}]{2,3}"],
+      ["\\p{S}{2,4}", "\\p{Symbol}{2,4}", "[\\p{S}]{2,4}", "[\\p{Symbol}]{2,4}"],
+      ["\\p{S}{3,4}", "\\p{Symbol}{3,4}", "[\\p{S}]{3,4}", "[\\p{Symbol}]{3,4}"],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    19,
-    ["\\P{S}{2,3}", "\\P{Symbol}{2,3}", "[^\\p{S}]{2,3}", "[^\\p{Symbol}]{2,3}"],
-    ["\\P{S}{2,4}", "\\P{Symbol}{2,4}", "[^\\p{S}]{2,4}", "[^\\p{Symbol}]{2,4}"],
-    ["\\P{S}{3,4}", "\\P{Symbol}{3,4}", "[^\\p{S}]{3,4}", "[^\\p{Symbol}]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      19,
+      [
+        "\\P{S}{2,3}", "\\P{Symbol}{2,3}", "[^\\p{S}]{2,3}", "[^\\p{Symbol}]{2,3}",
+      ],
+      [
+        "\\P{S}{2,4}", "\\P{Symbol}{2,4}", "[^\\p{S}]{2,4}", "[^\\p{Symbol}]{2,4}",
+      ],
+      [
+        "\\P{S}{3,4}", "\\P{Symbol}{3,4}", "[^\\p{S}]{3,4}", "[^\\p{Symbol}]{3,4}",
+      ],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    10,
-    ["[\\p{P}\\p{S}]{2,3}", "[\\p{S}\\p{P}]{2,3}", "[\\p{Punctuation}\\p{Symbol}]{2,3}", "[\\p{Symbol}\\p{Punctuation}]{2,3}"],
-    ["[\\p{P}\\p{S}]{2,4}", "[\\p{S}\\p{P}]{2,4}", "[\\p{Punctuation}\\p{Symbol}]{2,4}", "[\\p{Symbol}\\p{Punctuation}]{2,4}"],
-    ["[\\p{P}\\p{S}]{3,4}", "[\\p{S}\\p{P}]{3,4}", "[\\p{Punctuation}\\p{Symbol}]{3,4}", "[\\p{Symbol}\\p{Punctuation}]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      10,
+      [
+        "[\\p{P}\\p{S}]{2,3}", "[\\p{S}\\p{P}]{2,3}", "[\\p{Punctuation}\\p{Symbol}]{2,3}",
+        "[\\p{Symbol}\\p{Punctuation}]{2,3}",
+      ],
+      [
+        "[\\p{P}\\p{S}]{2,4}", "[\\p{S}\\p{P}]{2,4}", "[\\p{Punctuation}\\p{Symbol}]{2,4}",
+        "[\\p{Symbol}\\p{Punctuation}]{2,4}",
+      ],
+      [
+        "[\\p{P}\\p{S}]{3,4}", "[\\p{S}\\p{P}]{3,4}", "[\\p{Punctuation}\\p{Symbol}]{3,4}",
+        "[\\p{Symbol}\\p{Punctuation}]{3,4}",
+      ],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
-  match ranged_kind_variants(
-    pattern,
-    20,
-    ["[^\\p{P}\\p{S}]{2,3}", "[^\\p{S}\\p{P}]{2,3}", "[^\\p{Punctuation}\\p{Symbol}]{2,3}", "[^\\p{Symbol}\\p{Punctuation}]{2,3}"],
-    ["[^\\p{P}\\p{S}]{2,4}", "[^\\p{S}\\p{P}]{2,4}", "[^\\p{Punctuation}\\p{Symbol}]{2,4}", "[^\\p{Symbol}\\p{Punctuation}]{2,4}"],
-    ["[^\\p{P}\\p{S}]{3,4}", "[^\\p{S}\\p{P}]{3,4}", "[^\\p{Punctuation}\\p{Symbol}]{3,4}", "[^\\p{Symbol}\\p{Punctuation}]{3,4}"],
-  ) {
+  match
+    ranged_kind_variants(
+      pattern,
+      20,
+      [
+        "[^\\p{P}\\p{S}]{2,3}", "[^\\p{S}\\p{P}]{2,3}", "[^\\p{Punctuation}\\p{Symbol}]{2,3}",
+        "[^\\p{Symbol}\\p{Punctuation}]{2,3}",
+      ],
+      [
+        "[^\\p{P}\\p{S}]{2,4}", "[^\\p{S}\\p{P}]{2,4}", "[^\\p{Punctuation}\\p{Symbol}]{2,4}",
+        "[^\\p{Symbol}\\p{Punctuation}]{2,4}",
+      ],
+      [
+        "[^\\p{P}\\p{S}]{3,4}", "[^\\p{S}\\p{P}]{3,4}", "[^\\p{Punctuation}\\p{Symbol}]{3,4}",
+        "[^\\p{Symbol}\\p{Punctuation}]{3,4}",
+      ],
+    ) {
     Some(v) => return Some(v)
     None => ()
   }
   ranged_kind_variants(
     pattern,
     21,
-    ["[^\\s\\p{L}\\p{N}]{2,3}", "[^\\s\\p{N}\\p{L}]{2,3}", "[^\\p{L}\\p{N}\\s]{2,3}", "[^\\p{N}\\p{L}\\s]{2,3}", "[^\\s\\p{Letter}\\p{Number}]{2,3}"],
-    ["[^\\s\\p{L}\\p{N}]{2,4}", "[^\\s\\p{N}\\p{L}]{2,4}", "[^\\p{L}\\p{N}\\s]{2,4}", "[^\\p{N}\\p{L}\\s]{2,4}", "[^\\s\\p{Letter}\\p{Number}]{2,4}"],
-    ["[^\\s\\p{L}\\p{N}]{3,4}", "[^\\s\\p{N}\\p{L}]{3,4}", "[^\\p{L}\\p{N}\\s]{3,4}", "[^\\p{N}\\p{L}\\s]{3,4}", "[^\\s\\p{Letter}\\p{Number}]{3,4}"],
+    [
+      "[^\\s\\p{L}\\p{N}]{2,3}", "[^\\s\\p{N}\\p{L}]{2,3}", "[^\\p{L}\\p{N}\\s]{2,3}",
+      "[^\\p{N}\\p{L}\\s]{2,3}", "[^\\s\\p{Letter}\\p{Number}]{2,3}",
+    ],
+    [
+      "[^\\s\\p{L}\\p{N}]{2,4}", "[^\\s\\p{N}\\p{L}]{2,4}", "[^\\p{L}\\p{N}\\s]{2,4}",
+      "[^\\p{N}\\p{L}\\s]{2,4}", "[^\\s\\p{Letter}\\p{Number}]{2,4}",
+    ],
+    [
+      "[^\\s\\p{L}\\p{N}]{3,4}", "[^\\s\\p{N}\\p{L}]{3,4}", "[^\\p{L}\\p{N}\\s]{3,4}",
+      "[^\\p{N}\\p{L}\\s]{3,4}", "[^\\s\\p{Letter}\\p{Number}]{3,4}",
+    ],
   )
 }
 
@@ -1068,64 +1157,62 @@ fn quantified_class_kind(pattern : String, suffix : String) -> Int? {
     return Some(6)
   }
   if quantified_base_matches(
-    pattern,
-    ["\\p{L}", "\\p{Letter}", "[\\p{L}]", "[\\p{Letter}]"],
-    suffix,
-  ) {
+      pattern,
+      ["\\p{L}", "\\p{Letter}", "[\\p{L}]", "[\\p{Letter}]"],
+      suffix,
+    ) {
     return Some(7)
   }
   if quantified_base_matches(
-    pattern,
-    ["\\p{P}", "\\p{Punctuation}", "[\\p{P}]", "[\\p{Punctuation}]"],
-    suffix,
-  ) {
+      pattern,
+      ["\\p{P}", "\\p{Punctuation}", "[\\p{P}]", "[\\p{Punctuation}]"],
+      suffix,
+    ) {
     return Some(8)
   }
   if quantified_base_matches(
-    pattern,
-    ["\\p{S}", "\\p{Symbol}", "[\\p{S}]", "[\\p{Symbol}]"],
-    suffix,
-  ) {
+      pattern,
+      ["\\p{S}", "\\p{Symbol}", "[\\p{S}]", "[\\p{Symbol}]"],
+      suffix,
+    ) {
     return Some(9)
   }
   if quantified_base_matches(
-    pattern,
-    [
-      "[\\p{P}\\p{S}]", "[\\p{S}\\p{P}]", "[\\p{Punctuation}\\p{Symbol}]",
-      "[\\p{Symbol}\\p{Punctuation}]",
-    ],
-    suffix,
-  ) {
+      pattern,
+      [
+        "[\\p{P}\\p{S}]", "[\\p{S}\\p{P}]", "[\\p{Punctuation}\\p{Symbol}]", "[\\p{Symbol}\\p{Punctuation}]",
+      ],
+      suffix,
+    ) {
     return Some(10)
   }
   if quantified_base_matches(
-    pattern,
-    [
-      "\\d", "[\\d]", "[0-9]", "\\p{N}", "\\p{Number}", "[\\p{N}]",
-      "[\\p{Number}]",
-    ],
-    suffix,
-  ) {
+      pattern,
+      [
+        "\\d", "[\\d]", "[0-9]", "\\p{N}", "\\p{Number}", "[\\p{N}]", "[\\p{Number}]",
+      ],
+      suffix,
+    ) {
     return Some(11)
   }
   if quantified_base_matches(pattern, ["\\S", "[^\\s]"], suffix) {
     return Some(12)
   }
   if quantified_base_matches(
-    pattern,
-    ["\\W", "[^\\w]", "[^A-Za-z0-9_]"],
-    suffix,
-  ) {
+      pattern,
+      ["\\W", "[^\\w]", "[^A-Za-z0-9_]"],
+      suffix,
+    ) {
     return Some(13)
   }
   if quantified_base_matches(
-    pattern,
-    [
-      "\\D", "[\\D]", "[^\\d]", "[^0-9]", "\\P{N}", "\\P{Number}",
-      "[^\\p{N}]", "[^\\p{Number}]",
-    ],
-    suffix,
-  ) {
+      pattern,
+      [
+        "\\D", "[\\D]", "[^\\d]", "[^0-9]", "\\P{N}", "\\P{Number}", "[^\\p{N}]",
+        "[^\\p{Number}]",
+      ],
+      suffix,
+    ) {
     return Some(14)
   }
   if quantified_base_matches(pattern, ["[^A-Za-z0-9]", "[^a-zA-Z0-9]"], suffix) {
@@ -1135,44 +1222,43 @@ fn quantified_class_kind(pattern : String, suffix : String) -> Int? {
     return Some(16)
   }
   if quantified_base_matches(
-    pattern,
-    ["\\P{L}", "\\P{Letter}", "[^\\p{L}]", "[^\\p{Letter}]"],
-    suffix,
-  ) {
+      pattern,
+      ["\\P{L}", "\\P{Letter}", "[^\\p{L}]", "[^\\p{Letter}]"],
+      suffix,
+    ) {
     return Some(17)
   }
   if quantified_base_matches(
-    pattern,
-    ["\\P{P}", "\\P{Punctuation}", "[^\\p{P}]", "[^\\p{Punctuation}]"],
-    suffix,
-  ) {
+      pattern,
+      ["\\P{P}", "\\P{Punctuation}", "[^\\p{P}]", "[^\\p{Punctuation}]"],
+      suffix,
+    ) {
     return Some(18)
   }
   if quantified_base_matches(
-    pattern,
-    ["\\P{S}", "\\P{Symbol}", "[^\\p{S}]", "[^\\p{Symbol}]"],
-    suffix,
-  ) {
+      pattern,
+      ["\\P{S}", "\\P{Symbol}", "[^\\p{S}]", "[^\\p{Symbol}]"],
+      suffix,
+    ) {
     return Some(19)
   }
   if quantified_base_matches(
-    pattern,
-    [
-      "[^\\p{P}\\p{S}]", "[^\\p{S}\\p{P}]", "[^\\p{Punctuation}\\p{Symbol}]",
-      "[^\\p{Symbol}\\p{Punctuation}]",
-    ],
-    suffix,
-  ) {
+      pattern,
+      [
+        "[^\\p{P}\\p{S}]", "[^\\p{S}\\p{P}]", "[^\\p{Punctuation}\\p{Symbol}]", "[^\\p{Symbol}\\p{Punctuation}]",
+      ],
+      suffix,
+    ) {
     return Some(20)
   }
   if quantified_base_matches(
-    pattern,
-    [
-      "[^\\s\\p{L}\\p{N}]", "[^\\s\\p{N}\\p{L}]", "[^\\p{L}\\p{N}\\s]",
-      "[^\\p{N}\\p{L}\\s]", "[^\\s\\p{Letter}\\p{Number}]",
-    ],
-    suffix,
-  ) {
+      pattern,
+      [
+        "[^\\s\\p{L}\\p{N}]", "[^\\s\\p{N}\\p{L}]", "[^\\p{L}\\p{N}\\s]", "[^\\p{N}\\p{L}\\s]",
+        "[^\\s\\p{Letter}\\p{Number}]",
+      ],
+      suffix,
+    ) {
     return Some(21)
   }
   None

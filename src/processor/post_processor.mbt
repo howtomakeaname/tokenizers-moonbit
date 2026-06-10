@@ -38,6 +38,51 @@ pub enum PostProcessor {
 }
 
 ///|
+/// Programmatic constructor for HF-style BERT post-processing:
+/// `[CLS] A [SEP]` and `[CLS] A [SEP] B [SEP]`.
+pub fn PostProcessor::bert(
+  sep : (String, Int),
+  cls : (String, Int),
+) -> PostProcessor {
+  BertProcessing(sep~, cls~)
+}
+
+///|
+/// Programmatic constructor for RoBERTa post-processing.
+pub fn PostProcessor::roberta(
+  sep : (String, Int),
+  cls : (String, Int),
+  trim_offsets? : Bool = true,
+  add_prefix_space? : Bool = true,
+) -> PostProcessor {
+  RobertaProcessing(sep~, cls~, trim_offsets~, add_prefix_space~)
+}
+
+///|
+/// Programmatic constructor for template processing using already-parsed pieces.
+pub fn PostProcessor::template(
+  single : Array[Piece],
+  pair : Array[Piece],
+  special_tokens : Map[String, SpecialToken],
+) -> PostProcessor {
+  TemplateProcessing(single~, pair~, special_tokens~)
+}
+
+///|
+pub fn PostProcessor::byte_level(
+  add_prefix_space? : Bool = true,
+  trim_offsets? : Bool = true,
+  use_regex? : Bool = true,
+) -> PostProcessor {
+  ByteLevel(add_prefix_space~, trim_offsets~, use_regex~)
+}
+
+///|
+pub fn PostProcessor::sequence(steps : Array[PostProcessor]) -> PostProcessor {
+  Sequence(steps)
+}
+
+///|
 /// Number of special tokens this processor inserts for single/pair encoding.
 /// Used to mirror HF truncation order: truncate raw sequences while reserving
 /// room for post-processor specials, then post-process, then pad.
