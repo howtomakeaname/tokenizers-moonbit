@@ -432,15 +432,43 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern.is_empty() {
     return s
   }
+  if pattern.contains("{") {
+    match @common.replace_bounded_simple_regex(s, pattern, content) {
+      Some(out) => return out
+      None => ()
+    }
+    match @common.replace_ranged_simple_regex(s, pattern, content) {
+      Some(out) => return out
+      None => ()
+    }
+    match @common.exact_regex_kind(pattern) {
+      Some((kind, exact_run)) =>
+        return @common.replace_exact_char_runs(
+          s,
+          content,
+          fn(c) { @common.bounded_regex_kind_pred(kind, c) },
+          exact_run~,
+        )
+      None => ()
+    }
+    match @common.min_regex_kind(pattern) {
+      Some((kind, min_run)) =>
+        return @common.replace_min_char_runs(
+          s,
+          content,
+          fn(c) { @common.bounded_regex_kind_pred(kind, c) },
+          min_run~,
+        )
+      None => ()
+    }
+  }
+  if pattern.has_prefix("^") || pattern.has_suffix("$") {
+    match @common.replace_anchored_simple_regex(s, pattern, content) {
+      Some(out) => return out
+      None => ()
+    }
+  }
   match @common.replace_simple_regex(s, pattern, content) {
-    Some(out) => return out
-    None => ()
-  }
-  match @common.replace_bounded_simple_regex(s, pattern, content) {
-    Some(out) => return out
-    None => ()
-  }
-  match @common.replace_anchored_simple_regex(s, pattern, content) {
     Some(out) => return out
     None => ()
   }

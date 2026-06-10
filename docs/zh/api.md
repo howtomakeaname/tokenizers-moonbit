@@ -128,9 +128,9 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
   Unicode `\p{L}`/`\p{N}`/`\p{P}`/`\p{S}`、punctuation-or-symbol union、
   anchored `^...+` / `...+$`、覆盖上述 class family 的精确 `{2..4}` 与最小
   `{2,}`/`{3,}`/`{4,}`，以及 bounded `{1,2}`/`{1,3}`/`{1,4}` 与 ranged
-  `{2,3}`/`{2,4}`/`{3,4}` 等 HF 常见 tokenizer regex。Decoder `Replace`
-  对 punctuation/symbol 的 bounded/ranged 量词保持直接分发路径，使合成 decoder
-  cleanup benchmark 继续快于 HF。
+  `{2,3}`/`{2,4}`/`{3,4}` 等 HF 常见 tokenizer regex。Normalizer 与 Decoder
+  `Replace` 对 bounded/ranged 量词保持直接分发路径，使合成 cleanup benchmark
+  继续快于 HF。
 - 未知复杂 Split regex 会在加载期显式报 Unsupported；未知 Replace pattern 保持
   轻量 fallback，按字面量子串替换处理。
 

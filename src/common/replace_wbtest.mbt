@@ -99,6 +99,14 @@ test "replace helpers cover regex run semantics" {
     Some("ab## cd#42"),
   )
   @test.assert_eq(
+    replace_ranged_char_runs("a12345b", "#", fn(c) { is_ascii_digit(c) }, min_run=2, max_run=4),
+    "a#5b",
+  )
+  @test.assert_eq(
+    replace_ranged_simple_regex("ab,$+🙂 cd。42!!!", "[\\p{P}\\p{S}]{3,4}", "_"),
+    Some("ab_ cd。42_"),
+  )
+  @test.assert_eq(
     replace_simple_regex("ab_12,中!cd", "\\w+", "W"),
     Some("W,中!W"),
   )
