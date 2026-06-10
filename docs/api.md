@@ -33,6 +33,11 @@ fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise To
 - `save_pretrained(dir)` creates/uses an HF-style directory and writes
   `dir/tokenizer.json`, returning the concrete JSON path for logging or later
   `from_file` calls.
+- Programmatically constructed tokenizers serialize typed normalizer,
+  pre-tokenizer, model, post-processor, decoder, truncation, padding and added
+  token state when those components expose a typed serializer; loaded HF
+  tokenizers still preserve their original JSON verbatim until a builder mutates
+  typed state.
 
 ## Encoding / decoding
 

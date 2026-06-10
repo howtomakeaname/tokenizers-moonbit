@@ -295,6 +295,32 @@ def hf_tokenizer_builder_add_tokens_us() -> float:
     return timed_us(build_and_encode, 2_000)
 
 
+def hf_tokenizer_typed_to_json_us() -> float:
+    tok = Tokenizer(
+        hf_models.WordLevel(
+            {
+                "[UNK]": 0,
+                "hello": 1,
+                "moon": 2,
+                "[CLS]": 3,
+                "[SEP]": 4,
+                "[PAD]": 5,
+            },
+            unk_token="[UNK]",
+        )
+    )
+    tok.normalizer = hf_normalizers.Lowercase()
+    tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+    from tokenizers import processors as hf_processors
+
+    tok.post_processor = hf_processors.BertProcessing(("[SEP]", 4), ("[CLS]", 3))
+    tok.decoder = hf_decoders.WordPiece(prefix="", cleanup=False)
+    tok.enable_truncation(max_length=4)
+    tok.enable_padding(length=6, pad_id=5, pad_token="[PAD]")
+    tok.add_special_tokens([AddedToken("[MASK]", special=True, normalized=False)])
+    return timed_us(lambda: tok.to_str(), 5_000)
+
+
 def hf_decode_us(tok: Tokenizer, text: str) -> float:
     ids = tok.encode(text, add_special_tokens=False).ids
     iters = iterations_for(text)
@@ -751,6 +777,9 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
         rows.append(
             Row(builder_add_tokens_key, moon[builder_add_tokens_key], hf_tokenizer_builder_add_tokens_us())
         )
+    typed_to_json_key = "tokenizer-typed-to_json-mixed"
+    if typed_to_json_key in moon:
+        rows.append(Row(typed_to_json_key, moon[typed_to_json_key], hf_tokenizer_typed_to_json_us()))
     decoder_replace_key = "decoder-replace-regex-mixed"
     if decoder_replace_key in moon:
         rows.append(Row(decoder_replace_key, moon[decoder_replace_key], hf_decoder_replace_regex_us()))

@@ -165,6 +165,51 @@ test "add_tokens and add_special_tokens extend the added vocabulary" {
 }
 
 ///|
+test "programmatic tokenizer serializes typed components for roundtrip" {
+  let model = @model.Model::train_wordlevel_from_tokens(
+    [["hello", "moon", "[CLS]", "[SEP]", "[PAD]"]],
+    unk_token="[UNK]",
+  )
+  let normalizer = @normalizer.Normalizer::from_json(
+    @json.parse(
+      (
+        #|{"type":"Lowercase"}
+      ),
+    ),
+  )
+  let tok = Tokenizer::new(model)
+    .with_normalizer(Some(normalizer))
+    .with_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+    .with_post_processor(
+      Some(@processor.PostProcessor::bert(("[SEP]", 4), ("[CLS]", 3))),
+    )
+    .with_decoder(Some(@decoder.Decoder::wordpiece(prefix="", cleanup=false)))
+    .with_truncation(Some(TruncationParams::new(4)))
+    .with_padding(Some(PaddingParams::fixed(6, pad_id=5, pad_token="[PAD]")))
+    .add_special_token_strings(["[MASK]"])
+  let json = tok.to_json()
+  @test.assert_eq(json.contains("\"normalizer\""), true)
+  @test.assert_eq(json.contains("\"post_processor\""), true)
+  @test.assert_eq(json.contains("\"decoder\""), true)
+  @test.assert_eq(json.contains("\"truncation\""), true)
+  @test.assert_eq(json.contains("\"padding\""), true)
+  let roundtrip = Tokenizer::from_str(json)
+  let enc = roundtrip.encode("HELLO moon", add_special_tokens=true)
+  @test.assert_eq(enc.tokens, [
+    "[CLS]", "hello", "moon", "[SEP]", "[PAD]", "[PAD]",
+  ])
+  @test.assert_eq(enc.attention_mask, [1, 1, 1, 1, 0, 0])
+  let raw = [
+    roundtrip.token_to_id("hello").unwrap(),
+    roundtrip.token_to_id("moon").unwrap(),
+  ]
+  @test.assert_eq(
+    roundtrip.decode(raw, skip_special_tokens=false),
+    "hellomoon",
+  )
+}
+
+///|
 test "decode_batch decodes each id sequence" {
   let json =
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0," ":1,"moon":2},"unk_token":"hello"}}

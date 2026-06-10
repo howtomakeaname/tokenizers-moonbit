@@ -27,6 +27,10 @@ fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise To
   HF `local_files_only=True` 的离线使用方式。
 - `save_pretrained(dir)` 创建/复用 HF 风格目录并写出 `dir/tokenizer.json`，返回
   具体 JSON 路径，便于日志记录或后续 `from_file` 加载。
+- 程序化构造的 tokenizer 会序列化已支持 typed serializer 的 normalizer、
+  pre-tokenizer、model、post-processor、decoder、truncation、padding 与 added token
+  状态；从 HF JSON 加载的 tokenizer 在 builder 修改 typed state 前仍保持原始 JSON
+  原样往返。
 
 ## 编码与解码
 

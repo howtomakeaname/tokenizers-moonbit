@@ -366,6 +366,35 @@ fn bench_tokenizer_builder_add_tokens_case(
 }
 
 ///|
+fn bench_tokenizer_typed_to_json_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit raise {
+  let json =
+    #|{"type":"Lowercase"}
+  let normalizer = @normalizer.Normalizer::from_json(@json.parse(json))
+  let model = @model.Model::train_wordlevel_from_tokens(
+    [["hello", "moon", "[CLS]", "[SEP]", "[PAD]"]],
+    unk_token="[UNK]",
+  )
+  let tok = @tokenizer.Tokenizer::new(model)
+    .with_normalizer(Some(normalizer))
+    .with_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+    .with_post_processor(
+      Some(@processor.PostProcessor::bert(("[SEP]", 4), ("[CLS]", 3))),
+    )
+    .with_decoder(Some(@decoder.Decoder::wordpiece(prefix="", cleanup=false)))
+    .with_truncation(Some(@tokenizer.TruncationParams::new(4)))
+    .with_padding(
+      Some(@tokenizer.PaddingParams::fixed(6, pad_id=5, pad_token="[PAD]")),
+    )
+    .add_special_token_strings(["[MASK]"])
+  b.bench(name="tokenizer-typed-to_json-\{case_name}", fn() {
+    b.keep(try? tok.to_json())
+  })
+}
+
+///|
 fn bench_wordpiece_repeated_case(b : @bench.T) -> Unit raise {
   guard load_model("bert") is Some(tok) else { return }
   let text = "tokenization tokenization tokenization tokenization tokenization"
@@ -1669,6 +1698,7 @@ test "bench offset lookup matrix" (b : @bench.T) {
   }
   bench_encoding_accessors_case(b, "mixed")
   bench_tokenizer_builder_add_tokens_case(b, "mixed")
+  bench_tokenizer_typed_to_json_case(b, "mixed")
 }
 
 ///|

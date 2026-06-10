@@ -83,6 +83,213 @@ pub fn PostProcessor::sequence(steps : Array[PostProcessor]) -> PostProcessor {
 }
 
 ///|
+/// Serialize post-processors created through the typed/programmatic API.
+pub fn PostProcessor::to_json(self : PostProcessor) -> String? {
+  match self {
+    TemplateProcessing(single~, pair~, special_tokens~) =>
+      Some(template_to_json(single, pair, special_tokens))
+    BertProcessing(sep~, cls~) => Some(bert_to_json(sep, cls))
+    RobertaProcessing(sep~, cls~, trim_offsets~, add_prefix_space~) =>
+      Some(roberta_to_json(sep, cls, trim_offsets, add_prefix_space))
+    ByteLevel(add_prefix_space~, trim_offsets~, use_regex~) =>
+      Some(bytelevel_to_json(add_prefix_space, trim_offsets, use_regex))
+    Sequence(steps) => processor_sequence_to_json(steps)
+  }
+}
+
+///|
+fn template_to_json(
+  single : Array[Piece],
+  pair : Array[Piece],
+  special_tokens : Map[String, SpecialToken],
+) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"TemplateProcessing\",\"single\":")
+  write_pieces_json(sb, single)
+  sb.write_string(",\"pair\":")
+  write_pieces_json(sb, pair)
+  sb.write_string(",\"special_tokens\":")
+  write_special_tokens_json(sb, special_tokens)
+  sb.write_char('}')
+  sb.to_string()
+}
+
+///|
+fn bert_to_json(sep : (String, Int), cls : (String, Int)) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"BertProcessing\",\"sep\":")
+  write_token_id_pair(sb, sep)
+  sb.write_string(",\"cls\":")
+  write_token_id_pair(sb, cls)
+  sb.write_char('}')
+  sb.to_string()
+}
+
+///|
+fn roberta_to_json(
+  sep : (String, Int),
+  cls : (String, Int),
+  trim_offsets : Bool,
+  add_prefix_space : Bool,
+) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"RobertaProcessing\",\"sep\":")
+  write_token_id_pair(sb, sep)
+  sb.write_string(",\"cls\":")
+  write_token_id_pair(sb, cls)
+  sb.write_string(",\"trim_offsets\":")
+  sb.write_string(bool_json(trim_offsets))
+  sb.write_string(",\"add_prefix_space\":")
+  sb.write_string(bool_json(add_prefix_space))
+  sb.write_char('}')
+  sb.to_string()
+}
+
+///|
+fn bytelevel_to_json(
+  add_prefix_space : Bool,
+  trim_offsets : Bool,
+  use_regex : Bool,
+) -> String {
+  "{\"type\":\"ByteLevel\",\"add_prefix_space\":" +
+  bool_json(add_prefix_space) +
+  ",\"trim_offsets\":" +
+  bool_json(trim_offsets) +
+  ",\"use_regex\":" +
+  bool_json(use_regex) +
+  "}"
+}
+
+///|
+fn processor_sequence_to_json(steps : Array[PostProcessor]) -> String? {
+  let parts : Array[String] = []
+  for step in steps {
+    match step.to_json() {
+      Some(json) => parts.push(json)
+      None => return None
+    }
+  }
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"Sequence\",\"processors\":[")
+  for i, part in parts {
+    if i > 0 {
+      sb.write_char(',')
+    }
+    sb.write_string(part)
+  }
+  sb.write_string("]}")
+  Some(sb.to_string())
+}
+
+///|
+fn write_pieces_json(sb : StringBuilder, pieces : Array[Piece]) -> Unit {
+  sb.write_char('[')
+  for i, piece in pieces {
+    if i > 0 {
+      sb.write_char(',')
+    }
+    match piece {
+      SequenceRef(id~, type_id~) => {
+        sb.write_string("{\"Sequence\":{\"id\":")
+        write_json_string(sb, id)
+        sb.write_string(",\"type_id\":")
+        sb.write_string(type_id.to_string())
+        sb.write_string("}}")
+      }
+      SpecialTokenRef(id~, type_id~) => {
+        sb.write_string("{\"SpecialToken\":{\"id\":")
+        write_json_string(sb, id)
+        sb.write_string(",\"type_id\":")
+        sb.write_string(type_id.to_string())
+        sb.write_string("}}")
+      }
+    }
+  }
+  sb.write_char(']')
+}
+
+///|
+fn write_special_tokens_json(
+  sb : StringBuilder,
+  special_tokens : Map[String, SpecialToken],
+) -> Unit {
+  let entries = special_tokens.to_array()
+  sb.write_char('{')
+  for i, kv in entries {
+    if i > 0 {
+      sb.write_char(',')
+    }
+    write_json_string(sb, kv.0)
+    sb.write_string(":{\"id\":")
+    write_json_string(sb, kv.1.id)
+    sb.write_string(",\"ids\":")
+    write_int_array(sb, kv.1.ids)
+    sb.write_string(",\"tokens\":")
+    write_string_array(sb, kv.1.tokens)
+    sb.write_char('}')
+  }
+  sb.write_char('}')
+}
+
+///|
+fn write_token_id_pair(sb : StringBuilder, pair : (String, Int)) -> Unit {
+  sb.write_char('[')
+  write_json_string(sb, pair.0)
+  sb.write_char(',')
+  sb.write_string(pair.1.to_string())
+  sb.write_char(']')
+}
+
+///|
+fn write_int_array(sb : StringBuilder, xs : Array[Int]) -> Unit {
+  sb.write_char('[')
+  for i, x in xs {
+    if i > 0 {
+      sb.write_char(',')
+    }
+    sb.write_string(x.to_string())
+  }
+  sb.write_char(']')
+}
+
+///|
+fn write_string_array(sb : StringBuilder, xs : Array[String]) -> Unit {
+  sb.write_char('[')
+  for i, x in xs {
+    if i > 0 {
+      sb.write_char(',')
+    }
+    write_json_string(sb, x)
+  }
+  sb.write_char(']')
+}
+
+///|
+fn bool_json(v : Bool) -> String {
+  if v {
+    "true"
+  } else {
+    "false"
+  }
+}
+
+///|
+fn write_json_string(sb : StringBuilder, s : String) -> Unit {
+  sb.write_char('"')
+  for c in s {
+    match c {
+      '"' => sb.write_string("\\\"")
+      '\\' => sb.write_string("\\\\")
+      '\n' => sb.write_string("\\n")
+      '\r' => sb.write_string("\\r")
+      '\t' => sb.write_string("\\t")
+      _ => sb.write_char(c)
+    }
+  }
+  sb.write_char('"')
+}
+
+///|
 /// Number of special tokens this processor inserts for single/pair encoding.
 /// Used to mirror HF truncation order: truncate raw sequences while reserving
 /// room for post-processor specials, then post-process, then pad.

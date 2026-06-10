@@ -3,6 +3,8 @@ import {
   "tokenizers-moonbit/pretokenizer",
   "tokenizers-moonbit/decoder",
   "tokenizers-moonbit/normalizer",
+  "tokenizers-moonbit/model",
+  "tokenizers-moonbit/processor",
   "moonbitlang/x/fs",
   "moonbitlang/core/bench",
   "moonbitlang/core/json",

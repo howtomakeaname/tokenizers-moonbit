@@ -38,6 +38,131 @@ pub(all) enum Normalizer {
 }
 
 ///|
+/// Serialize normalizers created through the typed/programmatic API.
+pub fn Normalizer::to_json(self : Normalizer) -> String? {
+  match self {
+    NFC => Some("{\"type\":\"NFC\"}")
+    NFD => Some("{\"type\":\"NFD\"}")
+    NFKC => Some("{\"type\":\"NFKC\"}")
+    NFKD => Some("{\"type\":\"NFKD\"}")
+    Lowercase => Some("{\"type\":\"Lowercase\"}")
+    Strip(left~, right~) => Some(strip_to_json(left, right))
+    StripAccents => Some("{\"type\":\"StripAccents\"}")
+    ByteLevel => Some("{\"type\":\"ByteLevel\"}")
+    Replace(pattern~, content~) => Some(replace_to_json(pattern, content))
+    Prepend(prepend~) => Some(prepend_to_json(prepend))
+    Nmt => Some("{\"type\":\"Nmt\"}")
+    Precompiled => Some("{\"type\":\"Precompiled\"}")
+    PrecompiledMap(..) => None
+    BertNormalizer(
+      clean_text~,
+      handle_chinese_chars~,
+      strip_accents~,
+      lowercase~
+    ) =>
+      Some(
+        bert_normalizer_to_json(
+          clean_text, handle_chinese_chars, strip_accents, lowercase,
+        ),
+      )
+    Sequence(steps) => normalizer_sequence_to_json(steps)
+  }
+}
+
+///|
+fn strip_to_json(left : Bool, right : Bool) -> String {
+  "{\"type\":\"Strip\",\"strip_left\":" +
+  bool_json(left) +
+  ",\"strip_right\":" +
+  bool_json(right) +
+  "}"
+}
+
+///|
+fn replace_to_json(pattern : String, content : String) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"Replace\",\"pattern\":{\"String\":")
+  write_json_string(sb, pattern)
+  sb.write_string("},\"content\":")
+  write_json_string(sb, content)
+  sb.write_char('}')
+  sb.to_string()
+}
+
+///|
+fn prepend_to_json(prepend : String) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"Prepend\",\"prepend\":")
+  write_json_string(sb, prepend)
+  sb.write_char('}')
+  sb.to_string()
+}
+
+///|
+fn bert_normalizer_to_json(
+  clean_text : Bool,
+  handle_chinese_chars : Bool,
+  strip_accents : Bool,
+  lowercase : Bool,
+) -> String {
+  "{\"type\":\"BertNormalizer\",\"clean_text\":" +
+  bool_json(clean_text) +
+  ",\"handle_chinese_chars\":" +
+  bool_json(handle_chinese_chars) +
+  ",\"strip_accents\":" +
+  bool_json(strip_accents) +
+  ",\"lowercase\":" +
+  bool_json(lowercase) +
+  "}"
+}
+
+///|
+fn normalizer_sequence_to_json(steps : Array[Normalizer]) -> String? {
+  let parts : Array[String] = []
+  for step in steps {
+    match step.to_json() {
+      Some(json) => parts.push(json)
+      None => return None
+    }
+  }
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"Sequence\",\"normalizers\":[")
+  for i, part in parts {
+    if i > 0 {
+      sb.write_char(',')
+    }
+    sb.write_string(part)
+  }
+  sb.write_string("]}")
+  Some(sb.to_string())
+}
+
+///|
+fn bool_json(v : Bool) -> String {
+  if v {
+    "true"
+  } else {
+    "false"
+  }
+}
+
+///|
+fn write_json_string(sb : StringBuilder, s : String) -> Unit {
+  sb.write_char('"')
+  for c in s {
+    match c {
+      '"' => sb.write_string("\\\"")
+      '\\' => sb.write_string("\\\\")
+      '\n' => sb.write_string("\\n")
+      '\r' => sb.write_string("\\r")
+      '\t' => sb.write_string("\\t")
+      _ => sb.write_char(c)
+    }
+  }
+  sb.write_char('"')
+}
+
+///|
 /// Parse a normalizer config object (may be JSON null -> None upstream).
 pub fn Normalizer::from_json(
   j : Json,

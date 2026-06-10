@@ -124,6 +124,15 @@ pub fn Tokenizer::to_json(
     None =>
       match self.model.to_json() {
         Some(model_json) => {
+          let normalizer_json = match self.normalizer {
+            Some(nm) =>
+              match nm.to_json() {
+                Some(json) => json
+                None =>
+                  raise @types.ParseError("normalizer has no serialized form")
+              }
+            None => "null"
+          }
           let pt_json = match self.pre_tokenizer {
             Some(pt) =>
               match pt.to_json() {
@@ -135,12 +144,42 @@ pub fn Tokenizer::to_json(
               }
             None => "null"
           }
+          let pp_json = match self.post_processor {
+            Some(pp) =>
+              match pp.to_json() {
+                Some(json) => json
+                None =>
+                  raise @types.ParseError(
+                    "post_processor has no serialized form",
+                  )
+              }
+            None => "null"
+          }
+          let decoder_json = match self.decoder {
+            Some(dec) =>
+              match dec.to_json() {
+                Some(json) => json
+                None =>
+                  raise @types.ParseError("decoder has no serialized form")
+              }
+            None => "null"
+          }
           let json = "{\"version\":\"1.0\",\"added_tokens\":" +
             added_tokens_to_json(self.added_vocabulary.to_infos()) +
+            ",\"normalizer\":" +
+            normalizer_json +
             ",\"pre_tokenizer\":" +
             pt_json +
             ",\"model\":" +
             model_json +
+            ",\"post_processor\":" +
+            pp_json +
+            ",\"decoder\":" +
+            decoder_json +
+            ",\"truncation\":" +
+            truncation_to_json(self.truncation) +
+            ",\"padding\":" +
+            padding_to_json(self.padding) +
             "}"
           self.source_json = Some(json)
           json
@@ -386,6 +425,87 @@ fn write_json_string(sb : StringBuilder, s : String) -> Unit {
     }
   }
   sb.write_char('"')
+}
+
+///|
+fn truncation_to_json(params : TruncationParams?) -> String {
+  match params {
+    None => "null"
+    Some(tp) => {
+      let sb = StringBuilder::new()
+      sb.write_string("{\"max_length\":")
+      sb.write_string(tp.max_length.to_string())
+      sb.write_string(",\"stride\":")
+      sb.write_string(tp.stride.to_string())
+      sb.write_string(",\"strategy\":")
+      write_json_string(sb, truncation_strategy_json(tp.strategy))
+      sb.write_string(",\"direction\":")
+      write_json_string(sb, truncation_direction_json(tp.direction))
+      sb.write_char('}')
+      sb.to_string()
+    }
+  }
+}
+
+///|
+fn truncation_strategy_json(strategy : TruncationStrategy) -> String {
+  match strategy {
+    LongestFirst => "LongestFirst"
+    OnlyFirst => "OnlyFirst"
+    OnlySecond => "OnlySecond"
+  }
+}
+
+///|
+fn truncation_direction_json(direction : TruncationDirection) -> String {
+  match direction {
+    Left => "Left"
+    Right => "Right"
+  }
+}
+
+///|
+fn padding_to_json(params : PaddingParams?) -> String {
+  match params {
+    None => "null"
+    Some(pp) => {
+      let sb = StringBuilder::new()
+      sb.write_string("{\"strategy\":")
+      match pp.strategy {
+        BatchLongest => write_json_string(sb, "BatchLongest")
+        Fixed(n) => {
+          sb.write_string("{\"Fixed\":")
+          sb.write_string(n.to_string())
+          sb.write_char('}')
+        }
+      }
+      sb.write_string(",\"direction\":")
+      write_json_string(sb, padding_direction_json(pp.direction))
+      sb.write_string(",\"pad_id\":")
+      sb.write_string(pp.pad_id.to_string())
+      sb.write_string(",\"pad_type_id\":")
+      sb.write_string(pp.pad_type_id.to_string())
+      sb.write_string(",\"pad_token\":")
+      write_json_string(sb, pp.pad_token)
+      match pp.pad_to_multiple_of {
+        Some(n) => {
+          sb.write_string(",\"pad_to_multiple_of\":")
+          sb.write_string(n.to_string())
+        }
+        None => ()
+      }
+      sb.write_char('}')
+      sb.to_string()
+    }
+  }
+}
+
+///|
+fn padding_direction_json(direction : PaddingDirection) -> String {
+  match direction {
+    Left => "Left"
+    Right => "Right"
+  }
 }
 
 // Decode an optional component: absent key or JSON null -> None.
