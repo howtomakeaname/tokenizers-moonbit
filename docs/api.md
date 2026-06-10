@@ -90,10 +90,17 @@ and `normalized` rules before ordinary spans go to the model.
 ```moonbit
 fn Tokenizer::with_truncation(self : Tokenizer, params : TruncationParams?) -> Tokenizer
 fn Tokenizer::with_padding(self : Tokenizer, params : PaddingParams?) -> Tokenizer
+
+fn Decoder::wordpiece(prefix~ : String = "##", cleanup~ : Bool = true) -> Decoder
+fn Decoder::byte_fallback() -> Decoder
+fn Decoder::ctc(
+  pad_token~ : String = "<pad>", word_delimiter_token~ : String = "|", cleanup~ : Bool = true,
+) -> Decoder
 ```
 
 Builders mutate and return `self`, so they can be chained:
-`from_str(j).with_padding(..)`.
+`from_str(j).with_padding(..)`. Decoder builders mirror common HF decoder
+configs for direct component construction in tests or synthetic pipelines.
 
 ## Vocabulary
 

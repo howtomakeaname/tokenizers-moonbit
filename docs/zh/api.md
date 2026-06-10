@@ -100,7 +100,15 @@ fn PaddingParams::batch_longest(pad_id~ : Int = 0, pad_token~ : String = "[PAD]"
 fn PaddingParams::with_direction(self : PaddingParams, direction : PaddingDirection) -> PaddingParams
 fn PaddingParams::with_pad_type_id(self : PaddingParams, pad_type_id : Int) -> PaddingParams
 fn PaddingParams::with_pad_to_multiple_of(self : PaddingParams, pad_to_multiple_of : Int?) -> PaddingParams
+
+fn Decoder::wordpiece(prefix~ : String = "##", cleanup~ : Bool = true) -> Decoder
+fn Decoder::byte_fallback() -> Decoder
+fn Decoder::ctc(
+  pad_token~ : String = "<pad>", word_delimiter_token~ : String = "|", cleanup~ : Bool = true,
+) -> Decoder
 ```
+
+Decoder builder 用于在测试或合成 pipeline 中直接构造常见 HF decoder 配置。
 
 ## 词表
 

@@ -528,6 +528,15 @@ def hf_decoder_replace_digit_regex_us() -> float:
     return timed_us(lambda: decoder.decode(tokens), 2_000)
 
 
+def hf_decoder_wordpiece_cleanup_us() -> float:
+    decoder = hf_decoders.WordPiece(prefix="##", cleanup=True)
+    tokens = [
+        "they", "'re", "not", "go", "##ing", "?", "i", "'m", "sure", "!", "do", "n't",
+        "stop", ";", "test", ":", "ok", ",", "yes", ".",
+    ]
+    return timed_us(lambda: decoder.decode(tokens), 2_000)
+
+
 def hf_decoder_replace_punct_symbol_regex_us() -> float:
     decoder = hf_decoders.Replace(Regex(r"[\p{P}\p{S}]+"), "_")
     tokens = ["hi,!", "$+🙂ok。", " code(a+b);", " path/to/file.rs"]
@@ -691,6 +700,9 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     decoder_replace_digit_key = "decoder-replace-digit-regex-mixed"
     if decoder_replace_digit_key in moon:
         rows.append(Row(decoder_replace_digit_key, moon[decoder_replace_digit_key], hf_decoder_replace_digit_regex_us()))
+    decoder_wordpiece_cleanup_key = "decoder-wordpiece-cleanup-mixed"
+    if decoder_wordpiece_cleanup_key in moon:
+        rows.append(Row(decoder_wordpiece_cleanup_key, moon[decoder_wordpiece_cleanup_key], hf_decoder_wordpiece_cleanup_us()))
     decoder_replace_punct_symbol_key = "decoder-replace-punct-symbol-regex-mixed"
     if decoder_replace_punct_symbol_key in moon:
         rows.append(Row(

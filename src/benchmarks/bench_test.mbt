@@ -787,6 +787,21 @@ fn bench_decoder_ctc_case(b : @bench.T, case_name : String) -> Unit {
 }
 
 ///|
+fn bench_decoder_wordpiece_cleanup_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::wordpiece(prefix="##", cleanup=true)
+  let tokens = [
+    "they", "'re", "not", "go", "##ing", "?", "i", "'m", "sure", "!", "do", "n't",
+    "stop", ";", "test", ":", "ok", ",", "yes", ".",
+  ]
+  b.bench(name="decoder-wordpiece-cleanup-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_decoder_replace_min_ws_regex_case(
   b : @bench.T,
   case_name : String,
@@ -1757,6 +1772,11 @@ test "bench decoder bytefallback" (b : @bench.T) {
 ///|
 test "bench decoder ctc" (b : @bench.T) {
   bench_decoder_ctc_case(b, "mixed")
+}
+
+///|
+test "bench decoder wordpiece cleanup" (b : @bench.T) {
+  bench_decoder_wordpiece_cleanup_case(b, "mixed")
 }
 
 ///|

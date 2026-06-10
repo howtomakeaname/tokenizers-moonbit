@@ -30,6 +30,14 @@ pub fn Decoder::byte_fallback() -> Decoder {
 }
 
 ///|
+pub fn Decoder::wordpiece(
+  prefix~ : String = "##",
+  cleanup~ : Bool = true,
+) -> Decoder {
+  WordPiece(prefix~, cleanup~)
+}
+
+///|
 pub fn Decoder::ctc(
   pad_token~ : String = "<pad>",
   word_delimiter_token~ : String = "|",

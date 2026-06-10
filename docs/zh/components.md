@@ -46,7 +46,7 @@
 
 | `type` | 状态 |
 |---|---|
-| `ByteLevel`、`WordPiece`、`BPEDecoder`、`Metaspace`、`Fuse`、`Replace`、`Strip`、`Sequence` | ✅ |
+| `ByteLevel`、`WordPiece`、`BPEDecoder`、`Metaspace`、`Fuse`、`Replace`、`Strip`、`Sequence` | ✅（`WordPiece` cleanup 已改为单遍 BERT 标点/缩写 fast path） |
 | `ByteFallback` | ✅ |
 | `CTC` | ✅ |
 

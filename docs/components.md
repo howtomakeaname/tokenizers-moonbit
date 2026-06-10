@@ -46,7 +46,7 @@ Chinese version: [`docs/zh/components.md`](./zh/components.md)
 
 | `type` | Status |
 |---|---|
-| `ByteLevel`, `WordPiece`, `BPEDecoder`, `Metaspace`, `Fuse`, `Replace`, `Strip`, `Sequence` | ✅ |
+| `ByteLevel`, `WordPiece`, `BPEDecoder`, `Metaspace`, `Fuse`, `Replace`, `Strip`, `Sequence` | ✅ (`WordPiece` cleanup uses a single-pass BERT punctuation/contraction fast path) |
 | `ByteFallback` | ✅ |
 | `CTC` | ✅ |
 

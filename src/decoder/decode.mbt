@@ -828,25 +828,33 @@ fn strip_token(t : String, content : Char, start : Int, stop : Int) -> String {
 
 ///|
 fn cleanup_text(s : String) -> String {
-  let replacements = [
-    (" .", "."),
-    (" ,", ","),
-    (" ?", "?"),
-    (" !", "!"),
-    (" ;", ";"),
-    (" :", ":"),
-    (" '", "'"),
-    (" n't", "n't"),
-    (" 'm", "'m"),
-    (" 's", "'s"),
-    (" 've", "'ve"),
-    (" 're", "'re"),
-  ]
-  let mut out = s
-  for r in replacements {
-    out = replace_all(out, r.0, r.1)
+  // HF's WordPiece/CTC cleanup is a fixed set of ASCII-space contractions and
+  // punctuation rewrites. Implement it as one deterministic pass instead of the
+  // old twelve literal replace passes; this is the hot path for BERT decode.
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder::new()
+  let mut i = 0
+  while i < n {
+    if chars[i] == ' ' && i + 1 < n && should_drop_cleanup_space(chars, i) {
+      i = i + 1
+    } else {
+      sb.write_char(chars[i])
+      i = i + 1
+    }
   }
-  out
+  sb.to_string()
+}
+
+///|
+fn should_drop_cleanup_space(chars : Array[Char], i : Int) -> Bool {
+  let next = chars[i + 1]
+  if next == '.' || next == ',' || next == '?' || next == '!' || next == ';' ||
+    next == ':' || next == '\'' {
+    return true
+  }
+  i + 3 < chars.length() && next == 'n' && chars[i + 2] == '\'' &&
+  chars[i + 3] == 't'
 }
 
 // Replacement for HF decoder Replace. HF distinguishes literal String patterns

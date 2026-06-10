@@ -116,7 +116,7 @@
 ### Decoders
 | 组件 | 状态 |
 |---|---|
-| ByteLevel / WordPiece / BPEDecoder / Metaspace / Fuse / Replace / Strip / Sequence | ✅ |
+| ByteLevel / WordPiece / BPEDecoder / Metaspace / Fuse / Replace / Strip / Sequence | ✅ | WordPiece cleanup 已改为单遍 BERT 标点/缩写 fast path，并公开 `Decoder::wordpiece` builder |
 | ByteFallback | ✅（R2）| 覆盖连续 / 中断 / 非法 UTF-8 byte runs |
 | CTC | ✅ | 覆盖 duplicate collapse、pad drop、word delimiter 与 cleanup |
 
@@ -180,7 +180,8 @@ MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的
 `bench_compare.py` 会把对应 HF baseline 记入 `Skipped HF baselines` 并继续输出其它比值，避免整轮对比中断。最近一次全模型抽样（native / mixed，BPE word cache 后）：BPE/
 WordPiece/CLIP 主线大多快于 HF（gpt2 0.43x、llama 0.28x、Qwen2.5 0.58x、
 bert 0.53x、clip 0.48x）；decode 多数约 0.5x 或同水平；加载大模型基本同
-水平。Unigram word cache 后，t5 encode 0.39x、bge_m3 0.42x、e5_multilingual
+水平。WordPiece decoder cleanup 单遍化后，quick native 抽样 bert decode 从慢于 HF 转为约 0.13x，
+`decoder-wordpiece-cleanup` micro bench 约 0.10x。Unigram word cache 后，t5 encode 0.39x、bge_m3 0.42x、e5_multilingual
 0.43x，已由主要性能短板转为快于 HF。Dense vocab reverse map 后，加载
 抽样改善明显（bert/Qwen2.5/phi4/qwen3_coder from_str 已达到同档或快于 HF，
 llama from_str 仍约 1.14x）。Legacy BPE merges 解析改为 code-unit 扫描、

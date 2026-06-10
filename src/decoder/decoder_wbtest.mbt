@@ -480,3 +480,22 @@ test "Strip and CTC decoders have direct coverage" {
     "hi?",
   )
 }
+
+///|
+test "WordPiece decoder cleanup uses BERT punctuation and contraction rules" {
+  let decoder = Decoder::wordpiece(prefix="##", cleanup=true)
+  @test.assert_eq(
+    decoder.decode([
+      "they", "'re", "not", "go", "##ing", "?", "i", "'m", "sure", "!",
+    ]),
+    "they're not going? i'm sure!",
+  )
+  @test.assert_eq(
+    decoder.decode(["do", "n't", "stop", ";", "test", ":", "ok", ",", "yes", "."]),
+    "don't stop; test: ok, yes.",
+  )
+  @test.assert_eq(
+    Decoder::wordpiece(prefix="##", cleanup=false).decode(["hi", "?", "there"]),
+    "hi ? there",
+  )
+}
