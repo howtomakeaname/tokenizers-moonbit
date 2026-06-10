@@ -288,6 +288,55 @@ test "decode_batch handles duplicate id sequences" {
 }
 
 ///|
+test "decode_stream emits chunks matching full decode" {
+  let json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0," ":1,"moon":2},"unk_token":"hello"}}
+  let tok = Tokenizer::from_str(json)
+  let ids = [0, 1, 2]
+  let mut stream = tok.decode_stream(skip_special_tokens=false)
+  let sb = StringBuilder::new()
+  for id in ids {
+    let (next, chunk) = stream.step(id)
+    stream = next
+    match chunk {
+      Some(text) => sb.write_string(text)
+      None => ()
+    }
+  }
+  @test.assert_eq(sb.to_string(), tok.decode(ids, skip_special_tokens=false))
+}
+
+///|
+test "decode_stream respects special-token skipping" {
+  let json =
+    #|{"version":"1.0",
+    #| "added_tokens":[{"id":1,"content":"[MASK]","special":true,"normalized":false}],
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"[MASK]":1},"unk_token":"hello"}}
+  let tok = Tokenizer::from_str(json)
+  let mut stream = tok.decode_stream(skip_special_tokens=true)
+  let (next, first) = stream.step(1)
+  stream = next
+  @test.assert_eq(first, None)
+  let (_, second) = stream.step(0)
+  @test.assert_eq(second, Some("hello"))
+}
+
+///|
+test "decode_stream buffers incomplete byte fallback sequences" {
+  let json =
+    #|{"version":"1.0",
+    #| "model":{"type":"WordLevel","vocab":{"<0xC3>":0,"<0xA9>":1,"[UNK]":2},"unk_token":"[UNK]"},
+    #| "decoder":{"type":"ByteFallback"}}
+  let tok = Tokenizer::from_str(json)
+  let mut stream = tok.decode_stream(skip_special_tokens=false)
+  let (next, first) = stream.step(0)
+  stream = next
+  @test.assert_eq(first, None)
+  let (_, second) = stream.step(1)
+  @test.assert_eq(second, Some("é"))
+}
+
+///|
 test "encode_with_byte_offsets converts unicode char offsets" {
   let json =
     #|{"version":"1.0",

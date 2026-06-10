@@ -135,14 +135,14 @@
 | AddedVocabulary（single_word/lstrip/rstrip/normalized）| ✅ |
 | token_to_id / id_to_token / get_vocab / get_vocab_size | ✅ | `get_vocab(with_added_tokens=true)` 默认包含 added tokens |
 | truncation / padding / encode_batch | ✅ | with_truncation/with_padding builder；BatchLongest/Fixed；batch 串行；encode_pair 已接入 finalize |
-| decode_batch | ✅ | 串行实现，保证 wasm/js/native 行为一致 |
+| decode_batch / decode_stream | ✅ | `decode_batch` 串行实现并带重复 id 序列缓存；`decode_stream` 对齐 HF token-by-token 增量解码，显式返回更新后的 stream，覆盖 special skip 与 incomplete ByteFallback buffering |
 | tokenizer.json root truncation/padding 自动加载 | ✅ | 已解析 root-level `truncation` / `padding`，覆盖 Fixed/BatchLongest 与方向/倍数/pad 字段 |
 | offsets | ✅ | 默认保留 char offsets；新增 `encode_with_byte_offsets` / `encode_pair_with_byte_offsets` 对齐 HF byte offsets；ByteLevel post-processor `trim_offsets` 已按 HF 空白裁剪语义对齐 |
 | sequence_ids | ✅ | `Encoding::sequence_ids()`；special/padding 为 None，pair 序列为 Some(0)/Some(1) |
 | token-char 映射 | ✅ | `token_to_sequence` / `token_to_chars` / `char_to_token`，半开区间语义对齐 HF |
 | Encoding HF-style getters | ✅ | `get_ids` / `get_type_ids` / `get_tokens` / `get_offsets` / `get_special_tokens_mask` / `get_attention_mask` / `get_overflowing` 返回副本，便于从 HF Encoding 迁移 |
 | Encoding / Tokenizer metadata getters | ✅ | `Encoding::len` / `is_empty` / `n_sequences` / `get_sequence_ids` / `get_word_ids`，以及 Tokenizer component getters（model/normalizer/pre_tokenizer/post_processor/decoder/truncation/padding）|
-| 程序化构造 / AddedToken API | ✅ | `Tokenizer::new`、`with_normalizer` / `with_pre_tokenizer` / `with_model` / `with_post_processor` / `with_decoder`、`AddedToken` builder、`add_tokens(_with_count)` / `add_special_tokens(_with_count)`；普通 added token mask=0，special token mask=1；typed normalizer/post_processor/decoder/truncation/padding 可序列化往返 |
+| 程序化构造 / AddedToken API | ✅ | `Tokenizer::new`、`with_normalizer` / `with_pre_tokenizer` / `with_model` / `with_post_processor` / `with_decoder`、`AddedToken` builder、`add_tokens(_with_count)` / `add_special_tokens(_with_count)`；普通 added token mask=0，special token mask=1，支持 `encode_special_tokens`、added-token introspection、`num_special_tokens_to_add` 与显式 `post_process`；typed normalizer/post_processor/decoder/truncation/padding 可序列化往返 |
 
 ## R9：HF 迁移缺口排期
 
@@ -152,6 +152,7 @@
 |---|---|---|---|
 | P0 | `get_vocab(with_added_tokens=true)` | ✅ | 导出模型词表 + added_tokens；新增单测覆盖 with/without added tokens |
 | P0 | `decode_batch` | ✅ | API 行为与 `decode` 一致；新增单测与 batch decode bench；对重复 id 序列做单批缓存 |
+| P0 | `decode_stream` | ✅ | 增量 decode API 行为与 HF `DecodeStream` 对齐；新增 full-decode 拼接、special skip、ByteFallback incomplete UTF-8 单测与 HF benchmark 对比 |
 | P0 | root-level `truncation` / `padding` 自动加载 | ✅ | `Tokenizer::from_str` 直接应用 tokenizer.json 配置；新增单测覆盖 Fixed padding + truncation |
 | P0 | CI / pre-commit 编译测试门禁 | ✅ | 本地 pre-commit 运行 `moon check` + wasm/wasm-gc/js/native 全后端测试；GitHub Actions 覆盖格式/多 target 测试、Python 脚本编译、parity smoke 与 quick HF benchmark smoke |
 | P1 | byte offsets 模式 | ✅ | 可选择输出 HF Rust 风格 byte offsets；新增中英/emoji offset 对拍与 bench |
@@ -174,7 +175,7 @@
 
 性能结论必须基于 `scripts/bench_compare.py` 的同机对比结果，而不是单独的
 `moon bench` 输出。脚本会对 encode / explicit byte offsets / decode /
-encode_batch / encode_pair_batch / pre-tokenized encode+batch（含 added-token 抽取合成用例）/ tokenizer builder+add_tokens / typed tokenizer to_json / explicit post_process / decode_batch / from_str / local from_pretrained / to_json / save_pretrained / common Split-Replace regex fast paths（含 ranged `{2,4}` 量词）输出
+encode_batch / encode_pair_batch / pre-tokenized encode+batch（含 added-token 抽取合成用例）/ tokenizer builder+add_tokens / typed tokenizer to_json / explicit post_process / decode_batch / decode_stream / from_str / local from_pretrained / to_json / save_pretrained / common Split-Replace regex fast paths（含 ranged `{2,4}` 量词）输出
 MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的项目
 应进入优化排期；`< 0.90x` 才能明确宣称本项目在该用例快于 HF。
 
@@ -204,7 +205,8 @@ llama decode quick native 约 0.17x；from_str
 增加多项 parsed-JSON cache 后，quick native 抽样加载路径已明显快于 HF（gpt2
 0.45x、bert 0.30x、llama 0.61x、Qwen2.5 0.39x、phi4-mini 0.31x、qwen3-coder
 0.37x；local from_pretrained-file 约 0.28x–0.63x）。`post_process` 显式 API 加入
-HF 对比后 quick native 约 0.09x。下一轮性能优化优先级：大词表 JSON 冷加载解析与更长期的 nightly 趋势落盘。
+HF 对比后 quick native 约 0.09x；`decode_stream` 增量解码 quick native 约
+0.44x–0.76x。下一轮性能优化优先级：大词表 JSON 冷加载解析与更长期的 nightly 趋势落盘。
 
 ## 已知缺口与取舍（TODO）
 

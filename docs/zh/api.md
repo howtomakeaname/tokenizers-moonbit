@@ -73,6 +73,16 @@ fn Tokenizer::encode_pretokenized_pair_batch(
 fn Tokenizer::decode(
   self : Tokenizer, ids : Array[Int], skip_special_tokens~ : Bool = true,
 ) -> String
+
+fn Tokenizer::decode_batch(
+  self : Tokenizer, batch : Array[Array[Int]], skip_special_tokens? : Bool = true,
+) -> Array[String]
+
+fn Tokenizer::decode_stream(
+  self : Tokenizer, skip_special_tokens? : Bool = true,
+) -> DecodeStream
+
+fn DecodeStream::step(self : DecodeStream, id : Int) -> (DecodeStream, String?)
 ```
 
 所有 `encode_*_with_byte_offsets` 变体返回 HF 风格 UTF-8 byte offsets。
@@ -80,6 +90,10 @@ pre-tokenized 输入会跳过 tokenizer 的 pre-tokenizer 阶段，但 normalize
 post-processor、truncation 与 padding 仍会执行；offsets 按“归一化后的词用单个 ASCII
 空格连接”得到的合成文本计算。传入词内部的 added/special token 仍会按 tokenizer 的
 `single_word`、`lstrip`、`rstrip` 与 `normalized` 规则先切出，再把普通片段交给 model。
+
+`decode_stream` 对齐 HF 的增量解码器，用于 token-by-token streaming。每次 `step`
+返回新的 stream 和可选输出：当缓冲 ids 已经能解出有效文本增量时返回 `Some(chunk)`，
+遇到未完成的 byte-fallback / decoder 上下文时返回 `None`。
 
 ## 配置
 

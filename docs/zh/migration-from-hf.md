@@ -62,6 +62,11 @@ post-processor、truncation 与 padding；offsets 按“归一化后的词用单
 |---|---|
 | `tok.decode(ids)` | `tok.decode(ids)` |
 | `tok.decode(ids, skip_special_tokens=True)` | `tok.decode(ids, skip_special_tokens=true)` |
+| `tok.decode_batch(batch)` | `tok.decode_batch(batch)` |
+| `s = tok.decode_stream(False); s.step(id)` | `tok.decode_stream(skip_special_tokens=false)` 后使用 `let (s2, chunk) = s.step(id)` |
+
+MoonBit 的 `DecodeStream::step` 不做原地 mutating，而是显式返回更新后的 stream；继续喂
+下一个 id 前需要重新绑定 stream。
 
 ## 词表查询
 

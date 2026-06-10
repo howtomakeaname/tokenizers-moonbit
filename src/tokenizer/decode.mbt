@@ -1,6 +1,20 @@
 // decode: token ids -> reconstructed text.
 
 ///|
+/// Stateful incremental decoder mirroring HuggingFace's `DecodeStream`.
+///
+/// MoonBit keeps the stream immutable from the caller's perspective: each
+/// `step` returns the updated stream together with an optional newly available
+/// text chunk.
+pub struct DecodeStream {
+  tokenizer : Tokenizer
+  skip_special_tokens : Bool
+  ids : Array[Int]
+  prefix : String
+  prefix_index : Int
+}
+
+///|
 /// Decode a list of token ids back into a string.
 pub fn Tokenizer::decode(
   self : Tokenizer,
@@ -59,6 +73,85 @@ pub fn Tokenizer::decode_batch(
 }
 
 ///|
+/// Create a stateful incremental decoder. This is useful for token-by-token LLM
+/// streaming where decoding each id independently would lose decoder context
+/// (for example ByteFallback or Strip/ByteLevel decoder state).
+pub fn Tokenizer::decode_stream(
+  self : Tokenizer,
+  skip_special_tokens? : Bool = true,
+) -> DecodeStream {
+  {
+    tokenizer: self,
+    skip_special_tokens,
+    ids: [],
+    prefix: "",
+    prefix_index: 0,
+  }
+}
+
+///|
+/// Feed one token id into the stream. Returns `(next_stream, chunk)`, where
+/// `chunk` is `None` until the buffered ids decode to a valid text extension.
+pub fn DecodeStream::step(self : DecodeStream, id : Int) -> (DecodeStream, String?) {
+  let ids = self.ids.copy()
+  let mut prefix = self.prefix
+  let mut prefix_index = self.prefix_index
+  if prefix == "" && ids.length() > 0 {
+    let new_prefix = self.tokenizer.decode(
+      ids,
+      skip_special_tokens=self.skip_special_tokens,
+    )
+    if !ends_with_replacement_char(new_prefix) {
+      prefix = new_prefix
+      prefix_index = ids.length()
+    }
+  }
+
+  ids.push(id)
+  let decoded = self.tokenizer.decode(
+    ids,
+    skip_special_tokens=self.skip_special_tokens,
+  )
+  if char_len(decoded) > char_len(prefix) && !ends_with_replacement_char(decoded) {
+    let new_text = if starts_with_string(decoded, prefix) {
+      suffix_after_prefix(decoded, prefix)
+    } else {
+      // HF returns an InvalidPrefix error here. The rest of this package's
+      // decode APIs are non-throwing, so recover by emitting the valid decoded
+      // string and resetting the rolling prefix from the retained ids.
+      decoded
+    }
+    let new_prefix_index = ids.length() - prefix_index
+    let new_ids = slice_ids(ids, prefix_index, ids.length())
+    let new_prefix = self.tokenizer.decode(
+      new_ids,
+      skip_special_tokens=self.skip_special_tokens,
+    )
+    (
+      {
+        tokenizer: self.tokenizer,
+        skip_special_tokens: self.skip_special_tokens,
+        ids: new_ids,
+        prefix: new_prefix,
+        prefix_index: new_prefix_index,
+      },
+      Some(new_text),
+    )
+  } else {
+    (
+      {
+        tokenizer: self.tokenizer,
+        skip_special_tokens: self.skip_special_tokens,
+        ids,
+        prefix,
+        prefix_index,
+      },
+      None,
+    )
+  }
+}
+
+///|
 fn ids_key(ids : Array[Int]) -> String {
   let sb = StringBuilder::new()
   for id in ids {
@@ -66,4 +159,52 @@ fn ids_key(ids : Array[Int]) -> String {
     sb.write_char(',')
   }
   sb.to_string()
+}
+
+///|
+fn char_len(s : String) -> Int {
+  s.to_array().length()
+}
+
+///|
+fn ends_with_replacement_char(s : String) -> Bool {
+  let chars = s.to_array()
+  chars.length() > 0 && chars[chars.length() - 1] == '�'
+}
+
+///|
+fn starts_with_string(s : String, prefix : String) -> Bool {
+  let chars = s.to_array()
+  let pre = prefix.to_array()
+  if pre.length() > chars.length() {
+    return false
+  }
+  for i in 0..<pre.length() {
+    if chars[i] != pre[i] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn suffix_after_prefix(s : String, prefix : String) -> String {
+  let chars = s.to_array()
+  let start = prefix.to_array().length()
+  let sb = StringBuilder::new()
+  for i in start..<chars.length() {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
+}
+
+///|
+fn slice_ids(ids : Array[Int], start : Int, stop : Int) -> Array[Int] {
+  let out : Array[Int] = []
+  let lo = if start < 0 { 0 } else { start }
+  let hi = if stop > ids.length() { ids.length() } else { stop }
+  for i in lo..<hi {
+    out.push(ids[i])
+  }
+  out
 }

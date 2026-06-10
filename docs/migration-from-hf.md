@@ -82,6 +82,11 @@ Offsets are measured against normalized words joined by one ASCII space.
 |---|---|
 | `tok.decode(ids)` | `tok.decode(ids)` |
 | `tok.decode(ids, skip_special_tokens=True)` | `tok.decode(ids, skip_special_tokens=true)` |
+| `tok.decode_batch(batch)` | `tok.decode_batch(batch)` |
+| `s = tok.decode_stream(False); s.step(id)` | `let (s2, chunk) = s.step(id)` after `tok.decode_stream(skip_special_tokens=false)` |
+
+MoonBit `DecodeStream::step` returns the updated stream explicitly instead of
+mutating in place, so rebind the stream before feeding the next id.
 
 ## Vocabulary lookups
 

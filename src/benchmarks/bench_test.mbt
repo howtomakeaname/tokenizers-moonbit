@@ -120,6 +120,30 @@ fn bench_decode_case(
 }
 
 ///|
+fn bench_decode_stream_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+  text : String,
+) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  let ids = tok.encode(text, add_special_tokens=false).ids
+  b.bench(name="\{model}-decode-stream-\{case_name}", fn() {
+    let mut stream = tok.decode_stream(skip_special_tokens=false)
+    let chunks : Array[String] = []
+    for id in ids {
+      let (next, chunk) = stream.step(id)
+      stream = next
+      match chunk {
+        Some(text) => chunks.push(text)
+        None => ()
+      }
+    }
+    b.keep(chunks)
+  })
+}
+
+///|
 fn bench_decode_batch_case(
   b : @bench.T,
   model : String,
@@ -1671,6 +1695,7 @@ test "bench decode matrix" (b : @bench.T) {
       "gpt2", "bert", "t5", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder",
     ] {
     bench_decode_case(b, model, "mixed", mixed)
+    bench_decode_stream_case(b, model, "mixed", mixed)
   }
 }
 

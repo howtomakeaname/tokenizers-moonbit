@@ -355,6 +355,46 @@ def hf_decode_us(tok: Tokenizer, text: str) -> float:
     return timed_us(lambda: tok.decode(ids, skip_special_tokens=False), iters)
 
 
+def hf_decode_stream_us(tok: Tokenizer, text: str) -> float:
+    ids = tok.encode(text, add_special_tokens=False).ids
+    iters = iterations_for(text)
+
+    def decode_stream_once() -> list[str]:
+        chunks: list[str] = []
+        if hasattr(tok, "decode_stream"):
+            stream = tok.decode_stream(skip_special_tokens=False)
+            for id_ in ids:
+                chunk = stream.step(id_)
+                if chunk is not None:
+                    chunks.append(chunk)
+        else:
+            # Some released Python wheels lag the Rust API. Emulate HF's
+            # DecodeStream state machine using the same Tokenizer.decode calls,
+            # so the baseline still measures equivalent work on that wheel.
+            buffered: list[int] = []
+            prefix = ""
+            prefix_index = 0
+            for id_ in ids:
+                if not prefix and buffered:
+                    new_prefix = tok.decode(buffered, skip_special_tokens=False)
+                    if not new_prefix.endswith("�"):
+                        prefix = new_prefix
+                        prefix_index = len(buffered)
+                buffered.append(id_)
+                decoded = tok.decode(buffered, skip_special_tokens=False)
+                if len(decoded) > len(prefix) and not decoded.endswith("�"):
+                    if not decoded.startswith(prefix):
+                        raise RuntimeError("invalid decode_stream prefix")
+                    chunks.append(decoded[len(prefix):])
+                    new_prefix_index = len(buffered) - prefix_index
+                    buffered = buffered[prefix_index:]
+                    prefix = tok.decode(buffered, skip_special_tokens=False)
+                    prefix_index = new_prefix_index
+        return chunks
+
+    return timed_us(decode_stream_once, iters)
+
+
 def hf_decode_batch_us(tok: Tokenizer, text: str) -> float:
     ids = tok.encode(text, add_special_tokens=False).ids
     batch = [ids] * 8
@@ -982,6 +1022,9 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
         save_pretrained_key = f"{model}-save_pretrained"
         if decode_key in moon:
             rows.append(Row(decode_key, moon[decode_key], hf_decode_us(tok, CORPORA["mixed"])))
+        decode_stream_key = f"{model}-decode-stream-mixed"
+        if decode_stream_key in moon:
+            rows.append(Row(decode_stream_key, moon[decode_stream_key], hf_decode_stream_us(tok, CORPORA["mixed"])))
         if decode_batch_key in moon:
             rows.append(Row(decode_batch_key, moon[decode_batch_key], hf_decode_batch_us(tok, CORPORA["mixed"])))
         if encode_batch_key in moon:

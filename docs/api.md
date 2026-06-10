@@ -80,6 +80,16 @@ fn Tokenizer::encode_pretokenized_pair_batch(
 fn Tokenizer::decode(
   self : Tokenizer, ids : Array[Int], skip_special_tokens~ : Bool = true,
 ) -> String
+
+fn Tokenizer::decode_batch(
+  self : Tokenizer, batch : Array[Array[Int]], skip_special_tokens? : Bool = true,
+) -> Array[String]
+
+fn Tokenizer::decode_stream(
+  self : Tokenizer, skip_special_tokens? : Bool = true,
+) -> DecodeStream
+
+fn DecodeStream::step(self : DecodeStream, id : Int) -> (DecodeStream, String?)
 ```
 
 All `encode_*_with_byte_offsets` variants return HF-style UTF-8 byte offsets.
@@ -89,6 +99,11 @@ pre-tokenizer stage is skipped, while normalizer, model, post-processor,
 truncation and padding still run. Added/special tokens embedded in a provided
 word are still extracted with the tokenizer's `single_word`, `lstrip`, `rstrip`
 and `normalized` rules before ordinary spans go to the model.
+
+`decode_stream` mirrors HF's incremental decoder for token-by-token streaming.
+Each `step` returns a new stream plus `Some(chunk)` when the buffered ids decode
+to a valid text extension, or `None` for incomplete byte-fallback / decoder
+context.
 
 ## Configuration builders
 
