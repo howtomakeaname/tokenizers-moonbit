@@ -1014,6 +1014,30 @@ fn bench_decoder_replace_bounded_inverse_regex_case(
 }
 
 ///|
+fn bench_decoder_replace_min_inverse_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("\\D{3,}", "_")
+  let tokens = ["a12", " bc003", " id=2026", " done"]
+  b.bench(name="decoder-replace-min-inverse-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
+fn bench_decoder_replace_exact_inverse_union_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let decoder = @decoder.Decoder::replace("[^\\s\\p{L}\\p{N}]{4}", "#")
+  let tokens = ["ab,$+🙂", " cd。42", " path/to/file.rs", " done!!!!"]
+  b.bench(name="decoder-replace-exact-inverse-union-regex-\{case_name}", fn() {
+    b.keep(decoder.decode(tokens))
+  })
+}
+
+///|
 fn bench_decoder_replace_ranged_regex_case(
   b : @bench.T,
   case_name : String,
@@ -1240,6 +1264,37 @@ fn bench_split_bounded_word_regex_case(
   )
   let text = corpus_mixed() + " snake_case x cde MoonBit2026"
   b.bench(name="pretokenizer-split-bounded-word-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_min_inverse_regex_case(b : @bench.T, case_name : String) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "\\D{3,}",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " a12 bc003 id=2026 done"
+  b.bench(name="pretokenizer-split-min-inverse-regex-\{case_name}", fn() {
+    b.keep(pt.pre_tokenize(text, base_offset=0))
+  })
+}
+
+///|
+fn bench_split_exact_inverse_union_regex_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit {
+  let pt = @pretokenizer.PreTokenizer::split(
+    "[^\\s\\p{L}\\p{N}]{4}",
+    @pretokenizer.SplitBehavior::isolated(),
+    false,
+    true,
+  )
+  let text = corpus_mixed() + " ab,$+🙂 cd。42 path/to/file.rs done!!!!"
+  b.bench(name="pretokenizer-split-exact-inverse-union-regex-\{case_name}", fn() {
     b.keep(pt.pre_tokenize(text, base_offset=0))
   })
 }
@@ -1790,6 +1845,16 @@ test "bench decoder replace bounded inverse regex" (b : @bench.T) {
 }
 
 ///|
+test "bench decoder replace min inverse regex" (b : @bench.T) {
+  bench_decoder_replace_min_inverse_regex_case(b, "mixed")
+}
+
+///|
+test "bench decoder replace exact inverse union regex" (b : @bench.T) {
+  bench_decoder_replace_exact_inverse_union_regex_case(b, "mixed")
+}
+
+///|
 test "bench decoder replace ranged regex" (b : @bench.T) {
   bench_decoder_replace_ranged_regex_case(b, "mixed")
 }
@@ -1867,6 +1932,16 @@ test "bench split word quantifier regex" (b : @bench.T) {
 ///|
 test "bench split bounded word regex" (b : @bench.T) {
   bench_split_bounded_word_regex_case(b, "mixed")
+}
+
+///|
+test "bench split min inverse regex" (b : @bench.T) {
+  bench_split_min_inverse_regex_case(b, "mixed")
+}
+
+///|
+test "bench split exact inverse union regex" (b : @bench.T) {
+  bench_split_exact_inverse_union_regex_case(b, "mixed")
 }
 
 ///|

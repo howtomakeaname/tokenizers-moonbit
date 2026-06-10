@@ -113,8 +113,9 @@ Offsets are measured against normalized words joined by one ASCII space.
 - **Regex components:** common HF `Split`/`Replace` regex families are handled by
   shared deterministic fast paths across wasm/js/native: `\s`, `\d`, `\w`,
   ASCII classes, Unicode letter/number/punctuation/symbol classes, anchored
-  runs, exact/minimum quantifiers, `{1,n}` bounded runs, and `{2,3}` / `{2,4}` /
-  `{3,4}` ranged runs. Arbitrary complex
+  runs, exact `{2..4}` / minimum `{2,}`/`{3,}`/`{4,}` quantifiers across the
+  same positive and inverse class families, `{1,n}` bounded runs, and `{2,3}` /
+  `{2,4}` / `{3,4}` ranged runs. Arbitrary complex
   regexes are still out of scope; Split rejects unknown patterns explicitly,
   while Replace falls back to literal replacement.
 

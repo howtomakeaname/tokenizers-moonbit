@@ -540,6 +540,18 @@ def hf_decoder_replace_ranged_regex_us() -> float:
     return timed_us(lambda: decoder.decode(tokens), 2_000)
 
 
+def hf_decoder_replace_min_inverse_regex_us() -> float:
+    decoder = hf_decoders.Replace(Regex(r"\D{3,}"), "_")
+    tokens = ["a12", " bc003", " id=2026", " done"]
+    return timed_us(lambda: decoder.decode(tokens), 2_000)
+
+
+def hf_decoder_replace_exact_inverse_union_regex_us() -> float:
+    decoder = hf_decoders.Replace(Regex(r"[^\s\p{L}\p{N}]{4}"), "#")
+    tokens = ["ab,$+🙂", " cd。42", " path/to/file.rs", " done!!!!"]
+    return timed_us(lambda: decoder.decode(tokens), 2_000)
+
+
 def hf_normalizer_replace_word_regex_us() -> float:
     normalizer = hf_normalizers.Replace(Regex(r"\w+"), "W")
     text = CORPORA["mixed"] + " snake_case abc123 中 Ж"
@@ -591,6 +603,18 @@ def hf_split_punct_symbol_regex_us() -> float:
 def hf_split_ranged_union_regex_us() -> float:
     pt = hf_pre_tokenizers.Split(Regex(r"[\p{P}\p{S}]{2,4}"), "isolated", invert=False)
     text = CORPORA["mixed"] + " $+🙂 wait!!!!! ok?! path/to/file.rs"
+    return timed_us(lambda: pt.pre_tokenize_str(text), 2_000)
+
+
+def hf_split_min_inverse_regex_us() -> float:
+    pt = hf_pre_tokenizers.Split(Regex(r"\D{3,}"), "isolated", invert=False)
+    text = CORPORA["mixed"] + " a12 bc003 id=2026 done"
+    return timed_us(lambda: pt.pre_tokenize_str(text), 2_000)
+
+
+def hf_split_exact_inverse_union_regex_us() -> float:
+    pt = hf_pre_tokenizers.Split(Regex(r"[^\s\p{L}\p{N}]{4}"), "isolated", invert=False)
+    text = CORPORA["mixed"] + " ab,$+🙂 cd。42 path/to/file.rs done!!!!"
     return timed_us(lambda: pt.pre_tokenize_str(text), 2_000)
 
 
@@ -681,6 +705,20 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
             moon[decoder_replace_ranged_key],
             hf_decoder_replace_ranged_regex_us(),
         ))
+    decoder_replace_min_inverse_key = "decoder-replace-min-inverse-regex-mixed"
+    if decoder_replace_min_inverse_key in moon:
+        rows.append(Row(
+            decoder_replace_min_inverse_key,
+            moon[decoder_replace_min_inverse_key],
+            hf_decoder_replace_min_inverse_regex_us(),
+        ))
+    decoder_replace_exact_inverse_union_key = "decoder-replace-exact-inverse-union-regex-mixed"
+    if decoder_replace_exact_inverse_union_key in moon:
+        rows.append(Row(
+            decoder_replace_exact_inverse_union_key,
+            moon[decoder_replace_exact_inverse_union_key],
+            hf_decoder_replace_exact_inverse_union_regex_us(),
+        ))
     normalizer_replace_word_key = "normalizer-replace-word-regex-mixed"
     if normalizer_replace_word_key in moon:
         rows.append(Row(
@@ -724,6 +762,16 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     split_ranged_key = "pretokenizer-split-ranged-union-regex-mixed"
     if split_ranged_key in moon:
         rows.append(Row(split_ranged_key, moon[split_ranged_key], hf_split_ranged_union_regex_us()))
+    split_min_inverse_key = "pretokenizer-split-min-inverse-regex-mixed"
+    if split_min_inverse_key in moon:
+        rows.append(Row(split_min_inverse_key, moon[split_min_inverse_key], hf_split_min_inverse_regex_us()))
+    split_exact_inverse_union_key = "pretokenizer-split-exact-inverse-union-regex-mixed"
+    if split_exact_inverse_union_key in moon:
+        rows.append(Row(
+            split_exact_inverse_union_key,
+            moon[split_exact_inverse_union_key],
+            hf_split_exact_inverse_union_regex_us(),
+        ))
     wordpiece_cache_key = "bert-wordpiece-cache-repeat"
     if wordpiece_cache_key in moon:
         bert_tok, _ = load_tokenizer("bert")

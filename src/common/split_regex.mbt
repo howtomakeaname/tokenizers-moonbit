@@ -12,6 +12,14 @@ pub fn simple_split_regex_matches(
   chars : Array[Char],
   pattern : String,
 ) -> Array[Span]? {
+  match simple_exact_regex_matches(chars, pattern) {
+    Some(spans) => return Some(spans)
+    None => ()
+  }
+  match simple_min_regex_matches(chars, pattern) {
+    Some(spans) => return Some(spans)
+    None => ()
+  }
   match simple_bounded_regex_matches(chars, pattern) {
     Some(spans) => return Some(spans)
     None => ()
@@ -530,6 +538,8 @@ fn simple_anchored_regex_matches(
 ///|
 pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   is_simple_space_regex_pattern(pattern) ||
+  is_exact_regex_pattern(pattern) ||
+  is_min_regex_pattern(pattern) ||
   is_bounded_regex_pattern(pattern) ||
   is_anchored_regex_pattern(pattern) ||
   is_ranged_regex_pattern(pattern) ||
@@ -1044,6 +1054,42 @@ fn simple_bounded_regex_matches(
           chars,
           fn(c) { bounded_regex_kind_pred(kind, c) },
           max_run~,
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn simple_exact_regex_matches(
+  chars : Array[Char],
+  pattern : String,
+) -> Array[Span]? {
+  match exact_regex_kind(pattern) {
+    Some((kind, exact_run)) =>
+      Some(
+        run_matches_exact(
+          chars,
+          fn(c) { bounded_regex_kind_pred(kind, c) },
+          exact_run~,
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn simple_min_regex_matches(
+  chars : Array[Char],
+  pattern : String,
+) -> Array[Span]? {
+  match min_regex_kind(pattern) {
+    Some((kind, min_run)) =>
+      Some(
+        run_matches_min(
+          chars,
+          fn(c) { bounded_regex_kind_pred(kind, c) },
+          min_run~,
         ),
       )
     None => None

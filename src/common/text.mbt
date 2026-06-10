@@ -692,6 +692,63 @@ pub fn is_ranged_regex_pattern(pattern : String) -> Bool {
 }
 
 ///|
+/// Common exact `{n}` regex class families shared by Split, Normalizer Replace
+/// and Decoder Replace. Return `(kind, exact_run)`. The supported exact run
+/// sizes intentionally stay in the small tokenizer-oriented 2..4 window.
+pub fn exact_regex_kind(pattern : String) -> (Int, Int)? {
+  match quantified_class_kind(pattern, "{2}") {
+    Some(kind) => return Some((kind, 2))
+    None => ()
+  }
+  match quantified_class_kind(pattern, "{3}") {
+    Some(kind) => return Some((kind, 3))
+    None => ()
+  }
+  match quantified_class_kind(pattern, "{4}") {
+    Some(kind) => return Some((kind, 4))
+    None => ()
+  }
+  None
+}
+
+///|
+pub fn is_exact_regex_pattern(pattern : String) -> Bool {
+  match exact_regex_kind(pattern) {
+    Some(_) => true
+    None => false
+  }
+}
+
+///|
+/// Common minimum-run `{n,}` regex class families shared by Split, Normalizer
+/// Replace and Decoder Replace. Return `(kind, min_run)`. This complements the
+/// bounded `{1,n}` and ranged `{m,n}` tables without introducing a full regex
+/// engine.
+pub fn min_regex_kind(pattern : String) -> (Int, Int)? {
+  match quantified_class_kind(pattern, "{2,}") {
+    Some(kind) => return Some((kind, 2))
+    None => ()
+  }
+  match quantified_class_kind(pattern, "{3,}") {
+    Some(kind) => return Some((kind, 3))
+    None => ()
+  }
+  match quantified_class_kind(pattern, "{4,}") {
+    Some(kind) => return Some((kind, 4))
+    None => ()
+  }
+  None
+}
+
+///|
+pub fn is_min_regex_pattern(pattern : String) -> Bool {
+  match min_regex_kind(pattern) {
+    Some(_) => true
+    None => false
+  }
+}
+
+///|
 /// Common anchored `^...+` / `...+$` regex class families shared by Split and
 /// Replace. Return `(kind, leading)` where `kind` uses
 /// `bounded_regex_kind_pred` and `leading=true` means `^...+`.
@@ -972,6 +1029,151 @@ fn ranged_kind_variants(
     if pattern == p {
       return Some((kind, 3, 4))
     }
+  }
+  None
+}
+
+///|
+fn quantified_base_matches(
+  pattern : String,
+  bases : Array[String],
+  suffix : String,
+) -> Bool {
+  for base in bases {
+    if pattern == base + suffix {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn quantified_class_kind(pattern : String, suffix : String) -> Int? {
+  if quantified_base_matches(pattern, ["\\s", "[\\s]"], suffix) {
+    return Some(1)
+  }
+  if quantified_base_matches(pattern, ["[ \\t]", "[^\\S\\r\\n]"], suffix) {
+    return Some(2)
+  }
+  if quantified_base_matches(pattern, ["[\\r\\n]", "[\r\n]"], suffix) {
+    return Some(3)
+  }
+  if quantified_base_matches(pattern, ["\\w", "[A-Za-z0-9_]"], suffix) {
+    return Some(4)
+  }
+  if quantified_base_matches(pattern, ["[A-Za-z0-9]", "[a-zA-Z0-9]"], suffix) {
+    return Some(5)
+  }
+  if quantified_base_matches(pattern, ["[A-Za-z]", "[a-zA-Z]"], suffix) {
+    return Some(6)
+  }
+  if quantified_base_matches(
+    pattern,
+    ["\\p{L}", "\\p{Letter}", "[\\p{L}]", "[\\p{Letter}]"],
+    suffix,
+  ) {
+    return Some(7)
+  }
+  if quantified_base_matches(
+    pattern,
+    ["\\p{P}", "\\p{Punctuation}", "[\\p{P}]", "[\\p{Punctuation}]"],
+    suffix,
+  ) {
+    return Some(8)
+  }
+  if quantified_base_matches(
+    pattern,
+    ["\\p{S}", "\\p{Symbol}", "[\\p{S}]", "[\\p{Symbol}]"],
+    suffix,
+  ) {
+    return Some(9)
+  }
+  if quantified_base_matches(
+    pattern,
+    [
+      "[\\p{P}\\p{S}]", "[\\p{S}\\p{P}]", "[\\p{Punctuation}\\p{Symbol}]",
+      "[\\p{Symbol}\\p{Punctuation}]",
+    ],
+    suffix,
+  ) {
+    return Some(10)
+  }
+  if quantified_base_matches(
+    pattern,
+    [
+      "\\d", "[\\d]", "[0-9]", "\\p{N}", "\\p{Number}", "[\\p{N}]",
+      "[\\p{Number}]",
+    ],
+    suffix,
+  ) {
+    return Some(11)
+  }
+  if quantified_base_matches(pattern, ["\\S", "[^\\s]"], suffix) {
+    return Some(12)
+  }
+  if quantified_base_matches(
+    pattern,
+    ["\\W", "[^\\w]", "[^A-Za-z0-9_]"],
+    suffix,
+  ) {
+    return Some(13)
+  }
+  if quantified_base_matches(
+    pattern,
+    [
+      "\\D", "[\\D]", "[^\\d]", "[^0-9]", "\\P{N}", "\\P{Number}",
+      "[^\\p{N}]", "[^\\p{Number}]",
+    ],
+    suffix,
+  ) {
+    return Some(14)
+  }
+  if quantified_base_matches(pattern, ["[^A-Za-z0-9]", "[^a-zA-Z0-9]"], suffix) {
+    return Some(15)
+  }
+  if quantified_base_matches(pattern, ["[^A-Za-z]", "[^a-zA-Z]"], suffix) {
+    return Some(16)
+  }
+  if quantified_base_matches(
+    pattern,
+    ["\\P{L}", "\\P{Letter}", "[^\\p{L}]", "[^\\p{Letter}]"],
+    suffix,
+  ) {
+    return Some(17)
+  }
+  if quantified_base_matches(
+    pattern,
+    ["\\P{P}", "\\P{Punctuation}", "[^\\p{P}]", "[^\\p{Punctuation}]"],
+    suffix,
+  ) {
+    return Some(18)
+  }
+  if quantified_base_matches(
+    pattern,
+    ["\\P{S}", "\\P{Symbol}", "[^\\p{S}]", "[^\\p{Symbol}]"],
+    suffix,
+  ) {
+    return Some(19)
+  }
+  if quantified_base_matches(
+    pattern,
+    [
+      "[^\\p{P}\\p{S}]", "[^\\p{S}\\p{P}]", "[^\\p{Punctuation}\\p{Symbol}]",
+      "[^\\p{Symbol}\\p{Punctuation}]",
+    ],
+    suffix,
+  ) {
+    return Some(20)
+  }
+  if quantified_base_matches(
+    pattern,
+    [
+      "[^\\s\\p{L}\\p{N}]", "[^\\s\\p{N}\\p{L}]", "[^\\p{L}\\p{N}\\s]",
+      "[^\\p{N}\\p{L}\\s]", "[^\\s\\p{Letter}\\p{Number}]",
+    ],
+    suffix,
+  ) {
+    return Some(21)
   }
   None
 }
