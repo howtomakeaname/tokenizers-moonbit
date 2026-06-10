@@ -92,8 +92,15 @@ test "Encoding exposes HF-style getter accessors" {
   @test.assert_eq(enc.get_special_tokens_mask(), [0, 0, 1, 1])
   @test.assert_eq(enc.get_attention_mask(), [1, 1, 0, 0])
   @test.assert_eq(enc.get_overflowing().length(), 0)
+  @test.assert_eq(enc.get_sequence_ids(), [Some(0), Some(0), None, None])
+  @test.assert_eq(enc.get_word_ids(), [Some(0), Some(1), None, None])
   @test.assert_eq(enc.sequence_ids(), [Some(0), Some(0), None, None])
   @test.assert_eq(enc.word_ids(), [Some(0), Some(1), None, None])
+  @test.assert_eq(enc.len(), 4)
+  @test.assert_eq(enc.is_empty(), false)
+  @test.assert_eq(enc.n_sequences(), 1)
+  @test.assert_eq(@types.Encoding::empty().is_empty(), true)
+  @test.assert_eq(@types.Encoding::empty().n_sequences(), 0)
 }
 
 ///|
@@ -108,6 +115,13 @@ test "programmatic builder APIs attach pipeline components" {
   let enc = tok.encode("hello moon", add_special_tokens=false)
   @test.assert_eq(enc.tokens, ["hello", "moon"])
   @test.assert_eq(tok.decode(enc.ids, skip_special_tokens=false), "hellomoon")
+  @test.assert_eq(tok.get_pre_tokenizer() is Some(_), true)
+  @test.assert_eq(tok.get_decoder() is Some(_), true)
+  @test.assert_eq(tok.get_normalizer() is None, true)
+  @test.assert_eq(tok.get_post_processor() is None, true)
+  @test.assert_eq(tok.get_truncation() is None, true)
+  @test.assert_eq(tok.get_padding() is None, true)
+  @test.assert_eq(tok.get_model().vocab_size(), 4)
 
   let replacement = @model.Model::train_wordlevel_from_tokens(
     [["hello", "world"], ["[UNK]"]],
@@ -203,10 +217,7 @@ test "programmatic tokenizer serializes typed components for roundtrip" {
     roundtrip.token_to_id("hello").unwrap(),
     roundtrip.token_to_id("moon").unwrap(),
   ]
-  @test.assert_eq(
-    roundtrip.decode(raw, skip_special_tokens=false),
-    "hellomoon",
-  )
+  @test.assert_eq(roundtrip.decode(raw, skip_special_tokens=false), "hellomoon")
 }
 
 ///|

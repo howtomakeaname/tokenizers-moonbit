@@ -141,6 +141,7 @@
 | sequence_ids | ✅ | `Encoding::sequence_ids()`；special/padding 为 None，pair 序列为 Some(0)/Some(1) |
 | token-char 映射 | ✅ | `token_to_sequence` / `token_to_chars` / `char_to_token`，半开区间语义对齐 HF |
 | Encoding HF-style getters | ✅ | `get_ids` / `get_type_ids` / `get_tokens` / `get_offsets` / `get_special_tokens_mask` / `get_attention_mask` / `get_overflowing` 返回副本，便于从 HF Encoding 迁移 |
+| Encoding / Tokenizer metadata getters | ✅ | `Encoding::len` / `is_empty` / `n_sequences` / `get_sequence_ids` / `get_word_ids`，以及 Tokenizer component getters（model/normalizer/pre_tokenizer/post_processor/decoder/truncation/padding）|
 | 程序化构造 / AddedToken API | ✅ | `Tokenizer::new`、`with_normalizer` / `with_pre_tokenizer` / `with_model` / `with_post_processor` / `with_decoder`、`AddedToken` builder、`add_tokens(_with_count)` / `add_special_tokens(_with_count)`；普通 added token mask=0，special token mask=1；typed normalizer/post_processor/decoder/truncation/padding 可序列化往返 |
 
 ## R9：HF 迁移缺口排期
@@ -158,6 +159,7 @@
 | P1 | token-char 映射 | ✅ | 已补 `token_to_sequence` / `token_to_chars` / `char_to_token`；覆盖 pair/special/byte offsets，并新增 lookup bench |
 | P1 | pre-tokenized encode API | ✅ | 已补 `encode_pretokenized` / pair / batch / pair_batch 及 byte-offset variants；跳过 pre-tokenizer 但保留 added-token extraction、normalizer/model/post-processor/truncation/padding，输入词内部 special/added token 按 `single_word`/`lstrip`/`rstrip`/`normalized` 规则切出，offsets 基于 normalized words 单空格连接；新增单测与 HF benchmark 对比 |
 | P1 | `word_ids` / word-char 映射 | ✅ | 已补 `word_ids`、`token_to_word`、`word_to_tokens`、`word_to_chars`、`char_to_word` 与 HF-style `Encoding::get_*` accessors；覆盖 pair/special/byte offsets，并纳入 lookup/accessor bench |
+| P1 | Encoding / Tokenizer getter 迁移 API | ✅ | 补齐 HF 常用 `Encoding.len/is_empty/n_sequences/get_word_ids/get_sequence_ids` 与 tokenizer component getters；更新 accessor bench 与 HF baseline |
 | P1 | Truncation strategy 完整化 | ✅ | 支持 LongestFirst/OnlyFirst/OnlySecond；pair encode 按 HF 顺序：预留 special slots 后先截断 raw pair，再 post-process/pad；公开 `TruncationParams::with_*` builder 覆盖 stride/direction/strategy |
 | P1 | ByteLevel post-processor `trim_offsets` 细节 | ✅ | 空白修剪与 HF offsets 对齐；已补 ByteLevel / RoBERTa offset 用例与 micro bench |
 | P1 | 程序化 Tokenizer 构造与 AddedToken API | ✅ | 对齐 HF `Tokenizer(model)`、组件赋值与 `add_tokens` / `add_special_tokens` 主流程；新增 builder、count 返回、重复 token 不增词表、已存在 model token 可注册为 added/special 以参与预切分；补 typed normalizer/post_processor/decoder/truncation/padding 序列化、round-trip 单测、API/迁移文档与 HF builder/add-token/to_json benchmark 行 |

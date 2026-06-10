@@ -102,6 +102,14 @@ fn Tokenizer::with_decoder(self : Tokenizer, decoder : @decoder.Decoder?) -> Tok
 fn Tokenizer::with_truncation(self : Tokenizer, params : TruncationParams?) -> Tokenizer
 fn Tokenizer::with_padding(self : Tokenizer, params : PaddingParams?) -> Tokenizer
 
+fn Tokenizer::get_normalizer(self : Tokenizer) -> @normalizer.Normalizer?
+fn Tokenizer::get_pre_tokenizer(self : Tokenizer) -> @pretokenizer.PreTokenizer?
+fn Tokenizer::get_model(self : Tokenizer) -> @model.Model
+fn Tokenizer::get_post_processor(self : Tokenizer) -> @processor.PostProcessor?
+fn Tokenizer::get_decoder(self : Tokenizer) -> @decoder.Decoder?
+fn Tokenizer::get_truncation(self : Tokenizer) -> TruncationParams?
+fn Tokenizer::get_padding(self : Tokenizer) -> PaddingParams?
+
 fn Decoder::wordpiece(prefix? : String = "##", cleanup? : Bool = true) -> Decoder
 fn Decoder::byte_fallback() -> Decoder
 fn Decoder::ctc(
@@ -195,12 +203,18 @@ fn Encoding::get_offsets(self : Encoding) -> Array[(Int, Int)]
 fn Encoding::get_special_tokens_mask(self : Encoding) -> Array[Int]
 fn Encoding::get_attention_mask(self : Encoding) -> Array[Int]
 fn Encoding::get_overflowing(self : Encoding) -> Array[Encoding]
+fn Encoding::get_sequence_ids(self : Encoding) -> Array[Int?]
+fn Encoding::get_word_ids(self : Encoding) -> Array[Int?]
 fn Encoding::sequence_ids(self : Encoding) -> Array[Int?]
 fn Encoding::word_ids(self : Encoding) -> Array[Int?]
+fn Encoding::len(self : Encoding) -> Int
+fn Encoding::is_empty(self : Encoding) -> Bool
+fn Encoding::n_sequences(self : Encoding) -> Int
 ```
 
 The `get_*` accessors return copied arrays, mirroring HF `Encoding` accessors
-while keeping the encoded result immutable from caller code.
+while keeping the encoded result immutable from caller code. `len`, `is_empty`
+and `n_sequences` cover HF's lightweight encoding metadata helpers.
 
 ### TruncationParams (`@tokenizer`)
 

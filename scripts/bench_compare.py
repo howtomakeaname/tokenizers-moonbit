@@ -262,6 +262,7 @@ def hf_encoding_accessors_us() -> float:
     enc = tok.encode("the quick brown fox jumps over moonbit tokenizers", add_special_tokens=False)
     sequence_ids = enc.sequence_ids() if callable(enc.sequence_ids) else enc.sequence_ids
     word_ids = enc.word_ids() if callable(enc.word_ids) else enc.word_ids
+    n_sequences = enc.n_sequences() if callable(enc.n_sequences) else enc.n_sequences
 
     def read_once() -> int:
         return (
@@ -274,6 +275,8 @@ def hf_encoding_accessors_us() -> float:
             + len(enc.overflowing)
             + len(sequence_ids)
             + len(word_ids)
+            + len(enc)
+            + n_sequences
         )
 
     return timed_us(read_once, 20_000)

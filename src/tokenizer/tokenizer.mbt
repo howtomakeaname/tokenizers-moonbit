@@ -257,6 +257,52 @@ pub fn Tokenizer::with_padding(
 }
 
 ///|
+/// Return the current normalizer component, if any.
+pub fn Tokenizer::get_normalizer(self : Tokenizer) -> @normalizer.Normalizer? {
+  self.normalizer
+}
+
+///|
+/// Return the current pre-tokenizer component, if any.
+pub fn Tokenizer::get_pre_tokenizer(
+  self : Tokenizer,
+) -> @pretokenizer.PreTokenizer? {
+  self.pre_tokenizer
+}
+
+///|
+/// Return the current model component.
+pub fn Tokenizer::get_model(self : Tokenizer) -> @model.Model {
+  self.model
+}
+
+///|
+/// Return the current post-processor component, if any.
+pub fn Tokenizer::get_post_processor(
+  self : Tokenizer,
+) -> @processor.PostProcessor? {
+  self.post_processor
+}
+
+///|
+/// Return the current decoder component, if any.
+pub fn Tokenizer::get_decoder(self : Tokenizer) -> @decoder.Decoder? {
+  self.decoder
+}
+
+///|
+/// Return the current truncation configuration, if any.
+pub fn Tokenizer::get_truncation(self : Tokenizer) -> TruncationParams? {
+  self.truncation
+}
+
+///|
+/// Return the current padding configuration, if any.
+pub fn Tokenizer::get_padding(self : Tokenizer) -> PaddingParams? {
+  self.padding
+}
+
+///|
 /// Add ordinary tokens to the tokenizer's added vocabulary. Existing model or
 /// added-vocabulary tokens are not assigned new ids; new ids are allocated after
 /// the current maximum vocabulary id. Returns the updated tokenizer.

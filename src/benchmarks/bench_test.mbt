@@ -336,8 +336,15 @@ fn bench_encoding_accessors_case(
     acc = acc + enc.get_special_tokens_mask().length()
     acc = acc + enc.get_attention_mask().length()
     acc = acc + enc.get_overflowing().length()
+    acc = acc + enc.get_sequence_ids().length()
+    acc = acc + enc.get_word_ids().length()
     acc = acc + enc.sequence_ids().length()
     acc = acc + enc.word_ids().length()
+    acc = acc + enc.len()
+    acc = acc + enc.n_sequences()
+    if enc.is_empty() {
+      acc = acc + 1
+    }
     b.keep(acc)
   })
 }

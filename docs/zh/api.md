@@ -92,6 +92,14 @@ fn Tokenizer::with_post_processor(self : Tokenizer, post_processor : @processor.
 fn Tokenizer::with_decoder(self : Tokenizer, decoder : @decoder.Decoder?) -> Tokenizer
 fn Tokenizer::with_truncation(self : Tokenizer, params : TruncationParams?) -> Tokenizer
 fn Tokenizer::with_padding(self : Tokenizer, params : PaddingParams?) -> Tokenizer
+
+fn Tokenizer::get_normalizer(self : Tokenizer) -> @normalizer.Normalizer?
+fn Tokenizer::get_pre_tokenizer(self : Tokenizer) -> @pretokenizer.PreTokenizer?
+fn Tokenizer::get_model(self : Tokenizer) -> @model.Model
+fn Tokenizer::get_post_processor(self : Tokenizer) -> @processor.PostProcessor?
+fn Tokenizer::get_decoder(self : Tokenizer) -> @decoder.Decoder?
+fn Tokenizer::get_truncation(self : Tokenizer) -> TruncationParams?
+fn Tokenizer::get_padding(self : Tokenizer) -> PaddingParams?
 ```
 
 builder 返回 tokenizer，可链式调用，例如
@@ -195,9 +203,17 @@ fn Encoding::get_offsets(self : Encoding) -> Array[(Int, Int)]
 fn Encoding::get_special_tokens_mask(self : Encoding) -> Array[Int]
 fn Encoding::get_attention_mask(self : Encoding) -> Array[Int]
 fn Encoding::get_overflowing(self : Encoding) -> Array[Encoding]
+fn Encoding::get_sequence_ids(self : Encoding) -> Array[Int?]
+fn Encoding::get_word_ids(self : Encoding) -> Array[Int?]
 fn Encoding::sequence_ids(self : Encoding) -> Array[Int?]
 fn Encoding::word_ids(self : Encoding) -> Array[Int?]
+fn Encoding::len(self : Encoding) -> Int
+fn Encoding::is_empty(self : Encoding) -> Bool
+fn Encoding::n_sequences(self : Encoding) -> Int
 ```
+
+`get_*` 访问器返回数组副本，便于从 HF `Encoding` 迁移；`len`、`is_empty` 与
+`n_sequences` 对齐 HF 的轻量元数据 helper。
 
 `get_*` accessor 会返回数组副本，便于 HF `Encoding` 迁移，同时避免调用方修改
 encoding 内部结果。

@@ -101,6 +101,7 @@ Offsets are measured against normalized words joined by one ASCII space.
 | `tok.model = model` | `tok.with_model(model)` |
 | `tok.post_processor = processor` | `tok.with_post_processor(Some(processor))` |
 | `tok.decoder = decoder` | `tok.with_decoder(Some(decoder))` |
+| `tok.normalizer` / `tok.model` / ... | `tok.get_normalizer()` / `tok.get_model()` / ... |
 | `AddedToken("<x>", single_word=True)` | `AddedToken::new("<x>").with_single_word(true)` |
 | `tok.add_tokens([...])` | `tok.add_tokens_with_count([...])` or `tok.add_tokens([...])` |
 | `tok.add_special_tokens([...])` | `tok.add_special_tokens_with_count([...])` or `tok.add_special_tokens([...])` |

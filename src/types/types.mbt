@@ -21,6 +21,33 @@ pub(all) struct Encoding {
 } derive(Debug, Eq)
 
 ///|
+/// Number of tokens in this encoding.
+pub fn Encoding::len(self : Encoding) -> Int {
+  self.ids.length()
+}
+
+///|
+/// Whether this encoding contains no tokens.
+pub fn Encoding::is_empty(self : Encoding) -> Bool {
+  self.ids.length() == 0
+}
+
+///|
+/// Number of input sequences represented by this encoding. Pair encodings
+/// return `2`; single encodings return `1`; empty/special-only encodings return
+/// `0` because no token carries a sequence id.
+pub fn Encoding::n_sequences(self : Encoding) -> Int {
+  let mut max_seq = -1
+  for sid in self.sequence_ids {
+    match sid {
+      Some(seq) => if seq > max_seq { max_seq = seq }
+      None => ()
+    }
+  }
+  max_seq + 1
+}
+
+///|
 /// Return token ids. The returned array is a copy, matching HF-style immutable
 /// accessor expectations and preventing callers from mutating the encoding.
 pub fn Encoding::get_ids(self : Encoding) -> Array[Int] {
@@ -63,6 +90,18 @@ pub fn Encoding::get_attention_mask(self : Encoding) -> Array[Int] {
 /// Return truncation overflow windows.
 pub fn Encoding::get_overflowing(self : Encoding) -> Array[Encoding] {
   self.overflowing.copy()
+}
+
+///|
+/// HF-style alias for `sequence_ids()`.
+pub fn Encoding::get_sequence_ids(self : Encoding) -> Array[Int?] {
+  self.sequence_ids.copy()
+}
+
+///|
+/// HF-style alias for `word_ids()`.
+pub fn Encoding::get_word_ids(self : Encoding) -> Array[Int?] {
+  self.word_ids.copy()
 }
 
 ///|
