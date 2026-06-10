@@ -21,6 +21,51 @@ pub(all) struct Encoding {
 } derive(Debug, Eq)
 
 ///|
+/// Return token ids. The returned array is a copy, matching HF-style immutable
+/// accessor expectations and preventing callers from mutating the encoding.
+pub fn Encoding::get_ids(self : Encoding) -> Array[Int] {
+  self.ids.copy()
+}
+
+///|
+/// Return per-token type ids.
+pub fn Encoding::get_type_ids(self : Encoding) -> Array[Int] {
+  self.type_ids.copy()
+}
+
+///|
+/// Return token surface strings.
+pub fn Encoding::get_tokens(self : Encoding) -> Array[String] {
+  self.tokens.copy()
+}
+
+///|
+/// Return per-token offsets. Offsets are char offsets by default and byte
+/// offsets for explicit byte-offset encode APIs.
+pub fn Encoding::get_offsets(self : Encoding) -> Array[(Int, Int)] {
+  self.offsets.copy()
+}
+
+///|
+/// Return the HF-style special tokens mask (`1` for special/padding, `0` for
+/// ordinary tokens).
+pub fn Encoding::get_special_tokens_mask(self : Encoding) -> Array[Int] {
+  self.special_tokens_mask.copy()
+}
+
+///|
+/// Return the HF-style attention mask (`1` for real tokens, `0` for padding).
+pub fn Encoding::get_attention_mask(self : Encoding) -> Array[Int] {
+  self.attention_mask.copy()
+}
+
+///|
+/// Return truncation overflow windows.
+pub fn Encoding::get_overflowing(self : Encoding) -> Array[Encoding] {
+  self.overflowing.copy()
+}
+
+///|
 /// Return per-token sequence ids (`None` for special/padding tokens).
 pub fn Encoding::sequence_ids(self : Encoding) -> Array[Int?] {
   self.sequence_ids.copy()

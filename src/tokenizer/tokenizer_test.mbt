@@ -76,6 +76,27 @@ test "get_vocab can include added tokens" {
 }
 
 ///|
+test "Encoding exposes HF-style getter accessors" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[PAD]":2,"[UNK]":3},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json).with_padding(
+    Some(PaddingParams::fixed(4, pad_id=2, pad_token="[PAD]")),
+  )
+  let enc = tok.encode("hello moon", add_special_tokens=false)
+  @test.assert_eq(enc.get_ids(), [0, 1, 2, 2])
+  @test.assert_eq(enc.get_type_ids(), [0, 0, 0, 0])
+  @test.assert_eq(enc.get_tokens(), ["hello", "moon", "[PAD]", "[PAD]"])
+  @test.assert_eq(enc.get_offsets(), [(0, 5), (6, 10), (0, 0), (0, 0)])
+  @test.assert_eq(enc.get_special_tokens_mask(), [0, 0, 1, 1])
+  @test.assert_eq(enc.get_attention_mask(), [1, 1, 0, 0])
+  @test.assert_eq(enc.get_overflowing().length(), 0)
+  @test.assert_eq(enc.sequence_ids(), [Some(0), Some(0), None, None])
+  @test.assert_eq(enc.word_ids(), [Some(0), Some(1), None, None])
+}
+
+///|
 test "decode_batch decodes each id sequence" {
   let json =
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0," ":1,"moon":2},"unk_token":"hello"}}

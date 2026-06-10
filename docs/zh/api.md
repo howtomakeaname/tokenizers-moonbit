@@ -146,7 +146,20 @@ pub(all) struct Encoding {
   attention_mask : Array[Int]
   overflowing : Array[Encoding]
 }
+
+fn Encoding::get_ids(self : Encoding) -> Array[Int]
+fn Encoding::get_type_ids(self : Encoding) -> Array[Int]
+fn Encoding::get_tokens(self : Encoding) -> Array[String]
+fn Encoding::get_offsets(self : Encoding) -> Array[(Int, Int)]
+fn Encoding::get_special_tokens_mask(self : Encoding) -> Array[Int]
+fn Encoding::get_attention_mask(self : Encoding) -> Array[Int]
+fn Encoding::get_overflowing(self : Encoding) -> Array[Encoding]
+fn Encoding::sequence_ids(self : Encoding) -> Array[Int?]
+fn Encoding::word_ids(self : Encoding) -> Array[Int?]
 ```
+
+`get_*` accessor 会返回数组副本，便于 HF `Encoding` 迁移，同时避免调用方修改
+encoding 内部结果。
 
 ## TokenizerError
 

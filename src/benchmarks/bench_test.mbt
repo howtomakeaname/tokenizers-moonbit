@@ -312,6 +312,34 @@ fn bench_offset_lookup_case(
 }
 
 ///|
+fn bench_encoding_accessors_case(b : @bench.T, case_name : String) -> Unit raise {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"the":0,"quick":1,"brown":2,"fox":3,"jumps":4,"over":5,"moonbit":6,"tokenizers":7,"[PAD]":8,"[UNK]":9},"unk_token":"[UNK]"}}
+  let tok = @tokenizer.Tokenizer::from_str(json).with_padding(
+    Some(@tokenizer.PaddingParams::fixed(16, pad_id=8, pad_token="[PAD]")),
+  )
+  let enc = tok.encode(
+    "the quick brown fox jumps over moonbit tokenizers",
+    add_special_tokens=false,
+  )
+  b.bench(name="encoding-accessors-\{case_name}", fn() {
+    let mut acc = 0
+    acc = acc + enc.get_ids().length()
+    acc = acc + enc.get_type_ids().length()
+    acc = acc + enc.get_tokens().length()
+    acc = acc + enc.get_offsets().length()
+    acc = acc + enc.get_special_tokens_mask().length()
+    acc = acc + enc.get_attention_mask().length()
+    acc = acc + enc.get_overflowing().length()
+    acc = acc + enc.sequence_ids().length()
+    acc = acc + enc.word_ids().length()
+    b.keep(acc)
+  })
+}
+
+///|
 fn bench_wordpiece_repeated_case(b : @bench.T) -> Unit raise {
   guard load_model("bert") is Some(tok) else { return }
   let text = "tokenization tokenization tokenization tokenization tokenization"
@@ -1604,6 +1632,7 @@ test "bench offset lookup matrix" (b : @bench.T) {
   for model in ["gpt2", "bert", "llama", "Qwen2.5", "phi4_mini", "qwen3_coder"] {
     bench_offset_lookup_case(b, model, "mixed", mixed)
   }
+  bench_encoding_accessors_case(b, "mixed")
 }
 
 ///|
