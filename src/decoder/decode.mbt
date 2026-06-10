@@ -81,6 +81,94 @@ fn decode_replace_direct(
       max_run=4,
     )
   }
+  if pattern == "[\\p{P}\\p{S}]{1,2}" ||
+    pattern == "[\\p{S}\\p{P}]{1,2}" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]{1,2}" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]{1,2}" {
+    return decode_replace_punct_symbol_ranged_direct(
+      tokens,
+      content,
+      min_run=1,
+      max_run=2,
+    )
+  }
+  if pattern == "[\\p{P}\\p{S}]{1,3}" ||
+    pattern == "[\\p{S}\\p{P}]{1,3}" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]{1,3}" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]{1,3}" {
+    return decode_replace_punct_symbol_ranged_direct(
+      tokens,
+      content,
+      min_run=1,
+      max_run=3,
+    )
+  }
+  if pattern == "[\\p{P}\\p{S}]{1,4}" ||
+    pattern == "[\\p{S}\\p{P}]{1,4}" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]{1,4}" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]{1,4}" {
+    return decode_replace_punct_symbol_ranged_direct(
+      tokens,
+      content,
+      min_run=1,
+      max_run=4,
+    )
+  }
+  if pattern == "[\\p{P}\\p{S}]{2,3}" ||
+    pattern == "[\\p{S}\\p{P}]{2,3}" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]{2,3}" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]{2,3}" {
+    return decode_replace_punct_symbol_ranged_direct(
+      tokens,
+      content,
+      min_run=2,
+      max_run=3,
+    )
+  }
+  if pattern == "[\\p{P}\\p{S}]{2,4}" ||
+    pattern == "[\\p{S}\\p{P}]{2,4}" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]{2,4}" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]{2,4}" {
+    return decode_replace_punct_symbol_ranged_direct(
+      tokens,
+      content,
+      min_run=2,
+      max_run=4,
+    )
+  }
+  if pattern == "[\\p{P}\\p{S}]{3,4}" ||
+    pattern == "[\\p{S}\\p{P}]{3,4}" ||
+    pattern == "[\\p{Punctuation}\\p{Symbol}]{3,4}" ||
+    pattern == "[\\p{Symbol}\\p{Punctuation}]{3,4}" {
+    return decode_replace_punct_symbol_ranged_direct(
+      tokens,
+      content,
+      min_run=3,
+      max_run=4,
+    )
+  }
+  match @common.bounded_regex_kind(pattern) {
+    Some((kind, max_run)) =>
+      return decode_replace_ranged_char_runs_direct(
+        tokens,
+        content,
+        fn(c) { @common.bounded_regex_kind_pred(kind, c) },
+        min_run=1,
+        max_run~,
+      )
+    None => ()
+  }
+  match @common.ranged_regex_kind(pattern) {
+    Some((kind, min_run, max_run)) =>
+      return decode_replace_ranged_char_runs_direct(
+        tokens,
+        content,
+        fn(c) { @common.bounded_regex_kind_pred(kind, c) },
+        min_run~,
+        max_run~,
+      )
+    None => ()
+  }
   match @common.exact_regex_kind(pattern) {
     Some((kind, exact_run)) =>
       return decode_replace_ranged_char_runs_direct(
@@ -99,28 +187,6 @@ fn decode_replace_direct(
         content,
         fn(c) { @common.bounded_regex_kind_pred(kind, c) },
         min_run~,
-      )
-    None => ()
-  }
-  if pattern == "[\\p{P}\\p{S}]{2,4}" ||
-    pattern == "[\\p{S}\\p{P}]{2,4}" ||
-    pattern == "[\\p{Punctuation}\\p{Symbol}]{2,4}" ||
-    pattern == "[\\p{Symbol}\\p{Punctuation}]{2,4}" {
-    return decode_replace_punct_symbol_ranged_direct(
-      tokens,
-      content,
-      min_run=2,
-      max_run=4,
-    )
-  }
-  match @common.ranged_regex_kind(pattern) {
-    Some((kind, min_run, max_run)) =>
-      return decode_replace_ranged_char_runs_direct(
-        tokens,
-        content,
-        fn(c) { @common.bounded_regex_kind_pred(kind, c) },
-        min_run~,
-        max_run~,
       )
     None => ()
   }

@@ -549,6 +549,12 @@ def hf_decoder_replace_ranged_regex_us() -> float:
     return timed_us(lambda: decoder.decode(tokens), 2_000)
 
 
+def hf_decoder_replace_bounded_regex_us() -> float:
+    decoder = hf_decoders.Replace(Regex(r"[\p{P}\p{S}]{1,3}"), "_")
+    tokens = ["hi,$+🙂", " code(a+b);", " path/to/file.rs", " done!!!"]
+    return timed_us(lambda: decoder.decode(tokens), 2_000)
+
+
 def hf_decoder_replace_min_inverse_regex_us() -> float:
     decoder = hf_decoders.Replace(Regex(r"\D{3,}"), "_")
     tokens = ["a12", " bc003", " id=2026", " done"]
@@ -716,6 +722,13 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
             decoder_replace_ranged_key,
             moon[decoder_replace_ranged_key],
             hf_decoder_replace_ranged_regex_us(),
+        ))
+    decoder_replace_bounded_key = "decoder-replace-bounded-quantifier-regex-mixed"
+    if decoder_replace_bounded_key in moon:
+        rows.append(Row(
+            decoder_replace_bounded_key,
+            moon[decoder_replace_bounded_key],
+            hf_decoder_replace_bounded_regex_us(),
         ))
     decoder_replace_min_inverse_key = "decoder-replace-min-inverse-regex-mixed"
     if decoder_replace_min_inverse_key in moon:

@@ -81,7 +81,9 @@ GPT-OSS、GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E
   `[\r\n]+` 及 `{2..4}` 最小/精确换行量词、`[^\S\r\n]+` / `[ \t]+` 水平空白 `{2..4}` 最小/精确量词、` {2,}`、anchored positive/inverse class run（如 `^\s+` / `\s+$` / `^\S+` / `\D+$` / `^\P{Letter}+` / `\P{Punctuation}+$` / `^[^\p{P}\p{S}]+` / `[^\s\p{L}\p{N}]+$`），
   以及 `\d+` / `[\d]+` / `\D+` / `\P{N}+`、`\d{2,}` / `[\d]{2,}`、`\d{2}` / `\d{3}` / `\d{4}` / `\d{2,4}`、`\w{2,}` / `\w{3,}` / `\w{2}` / `{1,2}` / `{1,3}` / `{1,4}` bounded 与 `{2,3}` / `{2,4}` / `{3,4}` ranged word/ASCII/Unicode letter run / `[A-Za-z]{2,}` / `\p{L}{3}`、`\p{P}{2,}` / `\p{P}{2}` / `\p{S}{2}` / `{1,n}` bounded 与 `{2,n}` ranged punctuation/symbol/`\p{P}\p{S}` union run / `[\p{P}\p{S}]{2,}`、`\D{3,}` / `\D{4}` / `\W{2}` / `\P{L}{3,}` / `\P{P}{4}` / `\P{S}{2,}` / `[^\s\p{L}\p{N}]{4}` 等 exact/min/bounded/ranged 反集 run、`\w+` / `\W+`、`[A-Za-z0-9]+` / `[A-Za-z]+` 及反集、`\p{L}+` / `\P{L}+`、
   `\p{P}+` / `\P{P}+`、`\p{S}+` / `\P{S}+`、`[\p{P}\p{S}]+`、
-  `[^\s\p{L}\p{N}]+` 替换；更复杂正则替换待补。
+  `[^\s\p{L}\p{N}]+` 替换；Decoder `Replace` 会先分发 bounded/ranged
+  punctuation/symbol union 热路径，再进入通用量词表，使对应 micro benchmark
+  保持快于 HF；更复杂正则替换待补。
 - **Offsets：** 默认返回字符偏移；可通过 byte-offset encode API 对齐 HF byte offsets。
 - **Batch：** `encode_batch` 为串行实现，适配 wasm/js 目标。
 - **性能：** BPE 合并使用优先队列与惰性失效，BPE / WordPiece / Unigram 均带

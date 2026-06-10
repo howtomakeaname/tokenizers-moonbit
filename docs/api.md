@@ -122,7 +122,9 @@ Lookups consult the added/special vocabulary first, then the model vocabulary.
   `\p{L}`/`\p{N}`/`\p{P}`/`\p{S}` classes, punctuation-or-symbol unions,
   anchored `^...+` / `...+$`, exact `{2..4}` and minimum `{2,}`/`{3,}`/`{4,}`
   quantifiers across those class families, plus bounded `{1,2}`/`{1,3}`/`{1,4}`
-  forms and ranged `{2,3}`/`{2,4}`/`{3,4}` runs.
+  forms and ranged `{2,3}`/`{2,4}`/`{3,4}` runs. Decoder `Replace` keeps hot
+  punctuation/symbol bounded and ranged quantifier forms on a direct dispatch
+  path so synthetic decoder cleanup benchmarks stay faster than HF.
 - Unknown complex Split regexes are rejected during loading; unknown Replace
   patterns keep the existing lightweight fallback and are treated as literal
   substring replacements.

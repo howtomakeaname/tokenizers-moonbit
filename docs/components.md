@@ -112,7 +112,10 @@ Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
   ASCII alnum/letter runs `[A-Za-z0-9]+` / `[A-Za-z]+` and inverse forms, and
   letter/punctuation/symbol runs (`\p{L}+`, `\p{P}+`, `\p{S}+` and inverse
   forms), plus common union/inverse classes like `[\p{P}\p{S}]+` and
-  `[^\s\p{L}\p{N}]+`; more complex regex replacement remains future work.
+  `[^\s\p{L}\p{N}]+`. Decoder `Replace` dispatches bounded/ranged
+  punctuation/symbol union forms before the generic quantified-regex tables,
+  keeping those micro paths direct and faster than HF; more complex regex
+  replacement remains future work.
 - **Offsets:** char-based by default, relative to the original text. Optional
   byte-offset encode APIs are available for HuggingFace-style byte offsets.
 - **Batching:** single-threaded by design for wasm/js targets.

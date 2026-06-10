@@ -181,7 +181,10 @@ MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的
 WordPiece/CLIP 主线大多快于 HF（gpt2 0.43x、llama 0.28x、Qwen2.5 0.58x、
 bert 0.53x、clip 0.48x）；decode 多数约 0.5x 或同水平；加载大模型基本同
 水平。WordPiece decoder cleanup 单遍化后，quick native 抽样 bert decode 从慢于 HF 转为约 0.13x，
-`decoder-wordpiece-cleanup` micro bench 约 0.10x。Unigram word cache 后，t5 encode 0.39x、bge_m3 0.42x、e5_multilingual
+`decoder-wordpiece-cleanup` micro bench 约 0.10x；Decoder Replace 对 punctuation/symbol
+bounded/ranged 量词先走直接分发后，`decoder-replace-ranged-quantifier-regex` micro bench
+由慢于 HF（约 4.5x）转为快于 HF（约 0.5x），并把 bounded punctuation/symbol 量词纳入 HF 对比行。
+Unigram word cache 后，t5 encode 0.39x、bge_m3 0.42x、e5_multilingual
 0.43x，已由主要性能短板转为快于 HF。Dense vocab reverse map 后，加载
 抽样改善明显（bert/Qwen2.5/phi4/qwen3_coder from_str 已达到同档或快于 HF，
 llama from_str 仍约 1.14x）。Legacy BPE merges 解析改为 code-unit 扫描、
