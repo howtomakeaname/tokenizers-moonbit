@@ -80,7 +80,10 @@ pub fn Tokenizer::from_str(
     @processor.PostProcessor::from_json(j)
   })
   let decoder = decode_opt(root, "decoder", j => @decoder.Decoder::from_json(j))
-  let added_vocabulary = AddedVocabulary::new(parse_added_tokens(root))
+  let added_vocabulary = AddedVocabulary::new_with_encode_special_tokens(
+    parse_added_tokens(root),
+    @types.get_bool(root, "encode_special_tokens", default=false),
+  )
   let truncation = decode_opt(root, "truncation", parse_truncation)
   let padding = decode_opt(root, "padding", parse_padding)
   {
@@ -176,6 +179,8 @@ pub fn Tokenizer::to_json(
             pp_json +
             ",\"decoder\":" +
             decoder_json +
+            ",\"encode_special_tokens\":" +
+            bool_json(self.added_vocabulary.get_encode_special_tokens()) +
             ",\"truncation\":" +
             truncation_to_json(self.truncation) +
             ",\"padding\":" +
@@ -303,6 +308,79 @@ pub fn Tokenizer::get_padding(self : Tokenizer) -> PaddingParams? {
 }
 
 ///|
+/// HF-style switch: when true, special tokens appearing in input text are kept
+/// on the ordinary model path instead of being extracted as special added
+/// tokens. Defaults to false, matching HF tokenizers.
+pub fn Tokenizer::set_encode_special_tokens(
+  self : Tokenizer,
+  value : Bool,
+) -> Tokenizer {
+  {
+    ..self,
+    added_vocabulary: self.added_vocabulary.with_encode_special_tokens(value),
+    source_json: None,
+  }
+}
+
+///|
+pub fn Tokenizer::get_encode_special_tokens(self : Tokenizer) -> Bool {
+  self.added_vocabulary.get_encode_special_tokens()
+}
+
+///|
+/// Return `id -> AddedToken` for all added/special tokens.
+pub fn Tokenizer::get_added_tokens_decoder(
+  self : Tokenizer,
+) -> Map[Int, AddedToken] {
+  self.added_vocabulary.get_added_tokens_decoder()
+}
+
+///|
+/// Check whether a token string is registered as a special added token.
+pub fn Tokenizer::is_special_token(self : Tokenizer, token : String) -> Bool {
+  self.added_vocabulary.is_special_token(token)
+}
+
+///|
+/// Number of special tokens the post-processor would add for a single or pair
+/// input. Mirrors HF's `num_special_tokens_to_add` helper.
+pub fn Tokenizer::num_special_tokens_to_add(
+  self : Tokenizer,
+  is_pair? : Bool = false,
+) -> Int {
+  match self.post_processor {
+    Some(pp) => pp.added_tokens(pair=is_pair)
+    None => 0
+  }
+}
+
+///|
+/// Apply this tokenizer's post-processor to already-built encodings. This is the
+/// explicit counterpart of `encode(..., add_special_tokens=true)`.
+pub fn Tokenizer::post_process(
+  self : Tokenizer,
+  encoding : @types.Encoding,
+  pair? : @types.Encoding? = None,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  if add_special_tokens {
+    match self.post_processor {
+      Some(pp) => pp.process(encoding, pair)
+      None =>
+        match pair {
+          Some(b) => concat_encodings(encoding, b)
+          None => encoding
+        }
+    }
+  } else {
+    match pair {
+      Some(b) => concat_encodings(encoding, b)
+      None => encoding
+    }
+  }
+}
+
+///|
 /// Add ordinary tokens to the tokenizer's added vocabulary. Existing model or
 /// added-vocabulary tokens are not assigned new ids; new ids are allocated after
 /// the current maximum vocabulary id. Returns the updated tokenizer.
@@ -412,7 +490,14 @@ fn Tokenizer::add_tokens_impl(
     seen[tok.content] = true
   }
   (
-    { ..self, added_vocabulary: AddedVocabulary::new(infos), source_json: None },
+    {
+      ..self,
+      added_vocabulary: AddedVocabulary::new_with_encode_special_tokens(
+        infos,
+        self.added_vocabulary.get_encode_special_tokens(),
+      ),
+      source_json: None,
+    },
     new_count,
   )
 }
@@ -471,6 +556,11 @@ fn write_json_string(sb : StringBuilder, s : String) -> Unit {
     }
   }
   sb.write_char('"')
+}
+
+///|
+fn bool_json(v : Bool) -> String {
+  if v { "true" } else { "false" }
 }
 
 ///|

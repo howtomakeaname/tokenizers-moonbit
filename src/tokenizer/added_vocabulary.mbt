@@ -156,10 +156,14 @@ struct AddedTokenInfo {
 struct AddedVocabulary {
   by_content : Map[String, AddedTokenInfo]
   id_to_content : Map[Int, String]
+  id_to_token : Map[Int, AddedTokenInfo]
   // Tokens matched against the *original* text (normalized == false).
   non_normalized : CharTrie
   // Tokens matched against the *normalized* text (normalized == true).
   normalized : CharTrie
+  // HF `encode_special_tokens`: when true, special added tokens are left in the
+  // ordinary text path instead of being extracted as special tokens.
+  encode_special_tokens : Bool
   has_any : Bool
 }
 
@@ -175,13 +179,23 @@ enum Segment {
 ///|
 /// Build an AddedVocabulary from parsed token infos.
 fn AddedVocabulary::new(tokens : Array[AddedTokenInfo]) -> AddedVocabulary {
+  AddedVocabulary::new_with_encode_special_tokens(tokens, false)
+}
+
+///|
+fn AddedVocabulary::new_with_encode_special_tokens(
+  tokens : Array[AddedTokenInfo],
+  encode_special_tokens : Bool,
+) -> AddedVocabulary {
   let by_content : Map[String, AddedTokenInfo] = {}
   let id_to_content : Map[Int, String] = {}
+  let id_to_token : Map[Int, AddedTokenInfo] = {}
   let non_normalized = CharTrie::new()
   let normalized = CharTrie::new()
   for t in tokens {
     by_content[t.content] = t
     id_to_content[t.id] = t.content
+    id_to_token[t.id] = t
     if t.normalized {
       normalized.insert(t.content)
     } else {
@@ -191,10 +205,23 @@ fn AddedVocabulary::new(tokens : Array[AddedTokenInfo]) -> AddedVocabulary {
   {
     by_content,
     id_to_content,
+    id_to_token,
     non_normalized,
     normalized,
+    encode_special_tokens,
     has_any: tokens.length() > 0,
   }
+}
+
+///|
+fn AddedVocabulary::with_encode_special_tokens(
+  self : AddedVocabulary,
+  encode_special_tokens : Bool,
+) -> AddedVocabulary {
+  AddedVocabulary::new_with_encode_special_tokens(
+    self.to_infos(),
+    encode_special_tokens,
+  )
 }
 
 ///|
@@ -223,6 +250,42 @@ fn AddedVocabulary::to_infos(self : AddedVocabulary) -> Array[AddedTokenInfo] {
     out.push(kv.1)
   }
   out
+}
+
+///|
+fn AddedVocabulary::get_added_tokens_decoder(
+  self : AddedVocabulary,
+) -> Map[Int, AddedToken] {
+  let out : Map[Int, AddedToken] = {}
+  for kv in self.id_to_token.to_array() {
+    out[kv.0] = kv.1.to_added_token()
+  }
+  out
+}
+
+///|
+fn AddedVocabulary::is_special_token(self : AddedVocabulary, token : String) -> Bool {
+  match self.by_content.get(token) {
+    Some(info) => info.special
+    None => false
+  }
+}
+
+///|
+fn AddedVocabulary::get_encode_special_tokens(self : AddedVocabulary) -> Bool {
+  self.encode_special_tokens
+}
+
+///|
+fn AddedTokenInfo::to_added_token(self : AddedTokenInfo) -> AddedToken {
+  {
+    content: self.content,
+    single_word: self.single_word,
+    lstrip: self.lstrip,
+    rstrip: self.rstrip,
+    normalized: self.normalized,
+    special: self.special,
+  }
 }
 
 ///|
@@ -273,6 +336,10 @@ fn AddedVocabulary::split_with(
     match trie.longest_match(chars, i) {
       Some((content, end)) => {
         let info = self.by_content.get(content).unwrap()
+        if info.special && self.encode_special_tokens {
+          i = i + 1
+          continue
+        }
         // single_word: require non-word boundaries on both sides.
         let ok = if info.single_word {
           let left_ok = i == 0 || !is_word_char(chars[i - 1])

@@ -110,6 +110,16 @@ fn Tokenizer::get_decoder(self : Tokenizer) -> @decoder.Decoder?
 fn Tokenizer::get_truncation(self : Tokenizer) -> TruncationParams?
 fn Tokenizer::get_padding(self : Tokenizer) -> PaddingParams?
 
+fn Tokenizer::set_encode_special_tokens(self : Tokenizer, value : Bool) -> Tokenizer
+fn Tokenizer::get_encode_special_tokens(self : Tokenizer) -> Bool
+fn Tokenizer::num_special_tokens_to_add(self : Tokenizer, is_pair? : Bool = false) -> Int
+fn Tokenizer::post_process(
+  self : Tokenizer,
+  encoding : Encoding,
+  pair? : Encoding? = None,
+  add_special_tokens? : Bool = true,
+) -> Encoding
+
 fn Decoder::wordpiece(prefix? : String = "##", cleanup? : Bool = true) -> Decoder
 fn Decoder::byte_fallback() -> Decoder
 fn Decoder::ctc(
@@ -129,6 +139,12 @@ the cached source JSON so constructed tokenizers serialize from typed state wher
 supported. Decoder and post-processor builders mirror common HF component
 construction in tests or synthetic pipelines.
 
+`set_encode_special_tokens(true)` mirrors HF's `encode_special_tokens` switch:
+special tokens that appear in input text stay on the ordinary model path instead
+of being extracted as special added tokens. `post_process` exposes the configured
+post-processor for already-built encodings, and `num_special_tokens_to_add`
+reports how many special tokens would be injected for single or pair inputs.
+
 ## Added tokens
 
 ```moonbit
@@ -146,13 +162,18 @@ fn Tokenizer::add_token_strings(self : Tokenizer, tokens : Array[String]) -> Tok
 fn Tokenizer::add_special_tokens(self : Tokenizer, tokens : Array[AddedToken]) -> Tokenizer
 fn Tokenizer::add_special_tokens_with_count(self : Tokenizer, tokens : Array[AddedToken]) -> (Tokenizer, Int)
 fn Tokenizer::add_special_token_strings(self : Tokenizer, tokens : Array[String]) -> Tokenizer
+fn Tokenizer::get_added_tokens_decoder(self : Tokenizer) -> Map[Int, AddedToken]
+fn Tokenizer::is_special_token(self : Tokenizer, token : String) -> Bool
 ```
 
 `add_tokens_with_count` / `add_special_tokens_with_count` return the number of
 new ids allocated, matching HF's duplicate-aware count semantics. Existing model
 tokens can still be registered as added/special tokens for extraction without
 increasing the vocabulary size. Ordinary added tokens now keep
-`special_tokens_mask=0`; only `special=true` entries set mask `1`.
+`special_tokens_mask=0`; only `special=true` entries set mask `1` unless
+`encode_special_tokens` is enabled, in which case special token strings found in
+input text are encoded as ordinary model tokens. `get_added_tokens_decoder`
+returns HF-style `id -> AddedToken` metadata for migration and introspection.
 
 ## Vocabulary
 

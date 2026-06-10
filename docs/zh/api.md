@@ -100,6 +100,16 @@ fn Tokenizer::get_post_processor(self : Tokenizer) -> @processor.PostProcessor?
 fn Tokenizer::get_decoder(self : Tokenizer) -> @decoder.Decoder?
 fn Tokenizer::get_truncation(self : Tokenizer) -> TruncationParams?
 fn Tokenizer::get_padding(self : Tokenizer) -> PaddingParams?
+
+fn Tokenizer::set_encode_special_tokens(self : Tokenizer, value : Bool) -> Tokenizer
+fn Tokenizer::get_encode_special_tokens(self : Tokenizer) -> Bool
+fn Tokenizer::num_special_tokens_to_add(self : Tokenizer, is_pair? : Bool = false) -> Int
+fn Tokenizer::post_process(
+  self : Tokenizer,
+  encoding : Encoding,
+  pair? : Encoding? = None,
+  add_special_tokens? : Bool = true,
+) -> Encoding
 ```
 
 builder 返回 tokenizer，可链式调用，例如
@@ -135,6 +145,10 @@ fn PostProcessor::roberta(
 ```
 
 Decoder / PostProcessor builder 用于在测试或合成 pipeline 中直接构造常见 HF 配置。
+`set_encode_special_tokens(true)` 对齐 HF 的 `encode_special_tokens` 开关：输入文本中出现的
+special token 不再被提前抽取为 special added token，而是留在普通 model 路径上。
+`post_process` 可对已构造的 encoding 显式应用当前 post-processor；
+`num_special_tokens_to_add` 返回单句或句对会额外插入的 special token 数量。
 
 ## Added tokens
 
@@ -153,11 +167,15 @@ fn Tokenizer::add_token_strings(self : Tokenizer, tokens : Array[String]) -> Tok
 fn Tokenizer::add_special_tokens(self : Tokenizer, tokens : Array[AddedToken]) -> Tokenizer
 fn Tokenizer::add_special_tokens_with_count(self : Tokenizer, tokens : Array[AddedToken]) -> (Tokenizer, Int)
 fn Tokenizer::add_special_token_strings(self : Tokenizer, tokens : Array[String]) -> Tokenizer
+fn Tokenizer::get_added_tokens_decoder(self : Tokenizer) -> Map[Int, AddedToken]
+fn Tokenizer::is_special_token(self : Tokenizer, token : String) -> Bool
 ```
 
 `*_with_count` 返回新分配 id 的数量，对齐 HF 对重复 token 的计数语义；已存在于
 model 词表的 token 也可以注册为 added/special token 用于预切分，但不会增加词表大小。
-普通 added token 的 `special_tokens_mask=0`，只有 `special=true` 的条目会标为 `1`。
+普通 added token 的 `special_tokens_mask=0`，只有 `special=true` 的条目会标为 `1`；若启用
+`encode_special_tokens`，输入文本中的 special token 字符串会作为普通 model token 编码。
+`get_added_tokens_decoder` 返回 HF 风格的 `id -> AddedToken` 元数据，便于迁移和调试。
 
 ## 词表
 

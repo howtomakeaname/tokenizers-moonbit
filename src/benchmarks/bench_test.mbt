@@ -402,6 +402,29 @@ fn bench_tokenizer_typed_to_json_case(
 }
 
 ///|
+fn bench_tokenizer_post_process_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit raise {
+  let json =
+    #|{"version":"1.0",
+    #| "added_tokens":[{"id":5,"content":"[MASK]","special":true,"normalized":false}],
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"world":1,"moon":2,"[SEP]":3,"[CLS]":4,"[MASK]":5,"[UNK]":6},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","sep":["[SEP]",3],"cls":["[CLS]",4]}}
+  let tok = @tokenizer.Tokenizer::from_str(json)
+  let a = tok.encode("hello [MASK]", add_special_tokens=false)
+  let benc = tok.encode("world moon", add_special_tokens=false)
+  b.bench(name="tokenizer-post-process-\{case_name}", fn() {
+    b.keep(tok.post_process(a, pair=Some(benc), add_special_tokens=true))
+  })
+  b.bench(name="tokenizer-encode-special-switch-\{case_name}", fn() {
+    let switched = tok.set_encode_special_tokens(true)
+    b.keep(switched.encode("hello [MASK] world", add_special_tokens=false))
+  })
+}
+
+///|
 fn bench_wordpiece_repeated_case(b : @bench.T) -> Unit raise {
   guard load_model("bert") is Some(tok) else { return }
   let text = "tokenization tokenization tokenization tokenization tokenization"
@@ -1706,6 +1729,7 @@ test "bench offset lookup matrix" (b : @bench.T) {
   bench_encoding_accessors_case(b, "mixed")
   bench_tokenizer_builder_add_tokens_case(b, "mixed")
   bench_tokenizer_typed_to_json_case(b, "mixed")
+  bench_tokenizer_post_process_case(b, "mixed")
 }
 
 ///|

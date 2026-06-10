@@ -105,6 +105,11 @@ Offsets are measured against normalized words joined by one ASCII space.
 | `AddedToken("<x>", single_word=True)` | `AddedToken::new("<x>").with_single_word(true)` |
 | `tok.add_tokens([...])` | `tok.add_tokens_with_count([...])` or `tok.add_tokens([...])` |
 | `tok.add_special_tokens([...])` | `tok.add_special_tokens_with_count([...])` or `tok.add_special_tokens([...])` |
+| `tok.encode_special_tokens = True` | `tok.set_encode_special_tokens(true)` |
+| `tok.encode_special_tokens` | `tok.get_encode_special_tokens()` |
+| `tok.get_added_tokens_decoder()` | `tok.get_added_tokens_decoder()` |
+| `tok.num_special_tokens_to_add(is_pair)` | `tok.num_special_tokens_to_add(is_pair=...)` |
+| `tok.post_process(enc, pair, add_special_tokens=True)` | `tok.post_process(enc, pair=Some(pair), add_special_tokens=true)` |
 
 MoonBit builders return updated tokenizer values, so rebind or chain them:
 
@@ -118,7 +123,10 @@ let (tok, count) = @tokenizer.Tokenizer::new(model)
 
 The `*_with_count` variants return HF-style duplicate-aware counts. Ordinary
 added tokens keep `special_tokens_mask=0`; `add_special_tokens` registers tokens
-as non-normalized special entries and sets mask `1` when they are emitted.
+as non-normalized special entries and sets mask `1` when they are emitted. If
+`encode_special_tokens` is enabled, input occurrences of those special token
+strings stay on the ordinary model path and therefore receive mask `0`, matching
+HF's switch for templating/chat use cases.
 
 ## Differences to be aware of
 

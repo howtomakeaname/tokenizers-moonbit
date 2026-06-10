@@ -162,7 +162,7 @@
 | P1 | Encoding / Tokenizer getter 迁移 API | ✅ | 补齐 HF 常用 `Encoding.len/is_empty/n_sequences/get_word_ids/get_sequence_ids` 与 tokenizer component getters；更新 accessor bench 与 HF baseline |
 | P1 | Truncation strategy 完整化 | ✅ | 支持 LongestFirst/OnlyFirst/OnlySecond；pair encode 按 HF 顺序：预留 special slots 后先截断 raw pair，再 post-process/pad；公开 `TruncationParams::with_*` builder 覆盖 stride/direction/strategy |
 | P1 | ByteLevel post-processor `trim_offsets` 细节 | ✅ | 空白修剪与 HF offsets 对齐；已补 ByteLevel / RoBERTa offset 用例与 micro bench |
-| P1 | 程序化 Tokenizer 构造与 AddedToken API | ✅ | 对齐 HF `Tokenizer(model)`、组件赋值与 `add_tokens` / `add_special_tokens` 主流程；新增 builder、count 返回、重复 token 不增词表、已存在 model token 可注册为 added/special 以参与预切分；补 typed normalizer/post_processor/decoder/truncation/padding 序列化、round-trip 单测、API/迁移文档与 HF builder/add-token/to_json benchmark 行 |
+| P1 | 程序化 Tokenizer 构造与 AddedToken API | ✅ | 对齐 HF `Tokenizer(model)`、组件赋值与 `add_tokens` / `add_special_tokens` 主流程；新增 builder、count 返回、重复 token 不增词表、已存在 model token 可注册为 added/special 以参与预切分；补 typed normalizer/post_processor/decoder/truncation/padding 序列化、`encode_special_tokens` 开关、`get_added_tokens_decoder` / `is_special_token` introspection、`num_special_tokens_to_add` 与显式 `post_process`；round-trip 单测、API/迁移文档与 HF builder/add-token/to_json/post_process benchmark 行已覆盖 |
 | P2 | Precompiled SentencePiece charsmap 完整解码 | ✅ | 已支持 base64 `precompiled_charsmap` → SentencePiece double-array trie → normalized blob 规则；保留空/缺失 map 的 NFKC+空白 fast path，并新增二进制 charsmap 单测与 bench |
 | P2 | 通用 Split/Replace 正则覆盖 | 🚧 | Normalizer/Decoder Replace 已统一走 Split 的 deterministic simple-regex span scanner，覆盖 `\\s` / `\\S` / `\\d` / `\\D` / `\\w` / `\\W`、ASCII alnum/letter、Unicode `\\p{L}` / `\\p{N}` / `\\p{P}` / `\\p{S}`、punctuation-or-symbol union、anchored positive/inverse class runs、覆盖同一批正向/反向 class families 的 exact `{2}`/`{3}`/`{4}`、min `{2,}`/`{3,}`/`{4,}`、bounded `{1,n}` 与 ranged `{2,3}`/`{2,4}`/`{3,4}` families；Decoder Replace 对这些 simple regex 直接绕过 decode_chain，Split/Normalizer/Decoder 三套语义由 `common` 同一分发表驱动，并已补 exact/min inverse regex bench 与 HF baseline；复杂未知 Split pattern 加载期显式 Unsupported，未知 Replace pattern 保持字面量 fallback |
 | P2 | save / to_json / from_file 对称性 | ✅ | `to_json` 保留原始 tokenizer.json；`Tokenizer::from_file` / `save` 可往返；新增 HF 风格 `save_pretrained(dir)` 写出 `dir/tokenizer.json` 并可由 `from_pretrained(dir)` 重新加载；补 serialization 测试与 to_json/save_pretrained bench |
@@ -174,7 +174,7 @@
 
 性能结论必须基于 `scripts/bench_compare.py` 的同机对比结果，而不是单独的
 `moon bench` 输出。脚本会对 encode / explicit byte offsets / decode /
-encode_batch / encode_pair_batch / pre-tokenized encode+batch（含 added-token 抽取合成用例）/ tokenizer builder+add_tokens / typed tokenizer to_json / decode_batch / from_str / local from_pretrained / to_json / save_pretrained / common Split-Replace regex fast paths（含 ranged `{2,4}` 量词）输出
+encode_batch / encode_pair_batch / pre-tokenized encode+batch（含 added-token 抽取合成用例）/ tokenizer builder+add_tokens / typed tokenizer to_json / explicit post_process / decode_batch / from_str / local from_pretrained / to_json / save_pretrained / common Split-Replace regex fast paths（含 ranged `{2,4}` 量词）输出
 MoonBit µs/op、HF `tokenizers` µs/op、Moon/HF 比值。`Moon/HF > 1.10x` 的项目
 应进入优化排期；`< 0.90x` 才能明确宣称本项目在该用例快于 HF。
 
@@ -203,7 +203,8 @@ Array 增长分配；`from_pretrained` 增加单项 source cache 后，完整 na
 llama decode quick native 约 0.17x；from_str
 增加多项 parsed-JSON cache 后，quick native 抽样加载路径已明显快于 HF（gpt2
 0.45x、bert 0.30x、llama 0.61x、Qwen2.5 0.39x、phi4-mini 0.31x、qwen3-coder
-0.37x；local from_pretrained-file 约 0.28x–0.63x）。下一轮性能优化优先级：大词表 JSON 冷加载解析与更长期的 nightly 趋势落盘。
+0.37x；local from_pretrained-file 约 0.28x–0.63x）。`post_process` 显式 API 加入
+HF 对比后 quick native 约 0.09x。下一轮性能优化优先级：大词表 JSON 冷加载解析与更长期的 nightly 趋势落盘。
 
 ## 已知缺口与取舍（TODO）
 

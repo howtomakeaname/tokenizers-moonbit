@@ -179,6 +179,55 @@ test "add_tokens and add_special_tokens extend the added vocabulary" {
 }
 
 ///|
+test "special token encode switch and added-token introspection match HF" {
+  let json =
+    #|{"version":"1.0",
+    #| "added_tokens":[{"id":3,"content":"[MASK]","special":true,"normalized":false}],
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"[MASK]":1,"[UNK]":2},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","sep":["[SEP]",4],"cls":["[CLS]",5]}}
+  let tok = Tokenizer::from_str(json)
+  @test.assert_eq(tok.get_encode_special_tokens(), false)
+  @test.assert_eq(tok.is_special_token("[MASK]"), true)
+  @test.assert_eq(tok.is_special_token("hello"), false)
+  @test.assert_eq(tok.get_added_tokens_decoder().get(3).unwrap().content, "[MASK]")
+  @test.assert_eq(tok.num_special_tokens_to_add(), 2)
+  @test.assert_eq(tok.num_special_tokens_to_add(is_pair=true), 3)
+  let extracted = tok.encode("hello [MASK]", add_special_tokens=false)
+  @test.assert_eq(extracted.tokens, ["hello", "[MASK]"])
+  @test.assert_eq(extracted.special_tokens_mask, [0, 1])
+
+  let plain = tok.set_encode_special_tokens(true)
+  @test.assert_eq(plain.get_encode_special_tokens(), true)
+  let encoded_plain = plain.encode("hello [MASK]", add_special_tokens=false)
+  @test.assert_eq(encoded_plain.tokens, ["hello", "[MASK]"])
+  @test.assert_eq(encoded_plain.special_tokens_mask, [0, 0])
+  let roundtrip = Tokenizer::from_str(plain.to_json())
+  @test.assert_eq(roundtrip.get_encode_special_tokens(), true)
+}
+
+///|
+test "post_process applies or skips configured post processor" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"world":1,"[SEP]":2,"[CLS]":3,"[UNK]":4},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","sep":["[SEP]",2],"cls":["[CLS]",3]}}
+  let tok = Tokenizer::from_str(json)
+  let a = tok.encode("hello", add_special_tokens=false)
+  let b = tok.encode("world", add_special_tokens=false)
+  let single = tok.post_process(a, add_special_tokens=true)
+  @test.assert_eq(single.tokens, ["[CLS]", "hello", "[SEP]"])
+  @test.assert_eq(single.sequence_ids(), [None, Some(0), None])
+  let pair = tok.post_process(a, pair=Some(b), add_special_tokens=true)
+  @test.assert_eq(pair.tokens, ["[CLS]", "hello", "[SEP]", "world", "[SEP]"])
+  @test.assert_eq(pair.sequence_ids(), [None, Some(0), None, Some(1), None])
+  let plain = tok.post_process(a, pair=Some(b), add_special_tokens=false)
+  @test.assert_eq(plain.tokens, ["hello", "world"])
+  @test.assert_eq(plain.sequence_ids(), [Some(0), Some(1)])
+}
+
+///|
 test "programmatic tokenizer serializes typed components for roundtrip" {
   let model = @model.Model::train_wordlevel_from_tokens(
     [["hello", "moon", "[CLS]", "[SEP]", "[PAD]"]],

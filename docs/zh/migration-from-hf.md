@@ -85,6 +85,11 @@ post-processor、truncation 与 padding；offsets 按“归一化后的词用单
 | `AddedToken("<x>", single_word=True)` | `AddedToken::new("<x>").with_single_word(true)` |
 | `tok.add_tokens([...])` | `tok.add_tokens_with_count([...])` 或 `tok.add_tokens([...])` |
 | `tok.add_special_tokens([...])` | `tok.add_special_tokens_with_count([...])` 或 `tok.add_special_tokens([...])` |
+| `tok.encode_special_tokens = True` | `tok.set_encode_special_tokens(true)` |
+| `tok.encode_special_tokens` | `tok.get_encode_special_tokens()` |
+| `tok.get_added_tokens_decoder()` | `tok.get_added_tokens_decoder()` |
+| `tok.num_special_tokens_to_add(is_pair)` | `tok.num_special_tokens_to_add(is_pair=...)` |
+| `tok.post_process(enc, pair, add_special_tokens=True)` | `tok.post_process(enc, pair=Some(pair), add_special_tokens=true)` |
 
 MoonBit builder 返回更新后的 tokenizer，因此需要重新绑定或直接链式调用：
 
@@ -98,7 +103,8 @@ let (tok, count) = @tokenizer.Tokenizer::new(model)
 
 `*_with_count` 返回 HF 风格的“新分配 id 数量”。普通 added token 的
 `special_tokens_mask=0`；`add_special_tokens` 会注册为非归一化 special token，发出时
-mask 为 `1`。
+mask 为 `1`。启用 `encode_special_tokens` 后，输入文本中的 special token 字符串会留在
+普通 model 路径上，因此 mask 为 `0`，适合模板/对话场景并对齐 HF 的开关语义。
 
 ## 差异
 
