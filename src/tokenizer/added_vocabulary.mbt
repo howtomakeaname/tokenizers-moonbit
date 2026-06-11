@@ -159,8 +159,13 @@ struct AddedVocabulary {
   id_to_token : Map[Int, AddedTokenInfo]
   // Tokens matched against the *original* text (normalized == false).
   non_normalized : CharTrie
-  // Tokens matched against the *normalized* text (normalized == true).
+  // Tokens matched against the *normalized* text (normalized == true).  HF
+  // stores the post-normalizer surface in this trie, e.g. Llama's "</s>"
+  // becomes "▁</s>" after the Metaspace-style normalizer.
   normalized : CharTrie
+  // Matched trie pattern -> original token info.  Normalized added tokens may be
+  // inserted under a pattern that differs from their original `content`.
+  match_to_token : Map[String, AddedTokenInfo]
   // HF `encode_special_tokens`: when true, special added tokens are left in the
   // ordinary text path instead of being extracted as special tokens.
   encode_special_tokens : Bool
@@ -170,8 +175,10 @@ struct AddedVocabulary {
 ///|
 /// A segment of the input produced by extraction.
 enum Segment {
-  // A matched added/special token; emitted directly, bypassing the model.
-  Special(info~ : AddedTokenInfo, offsets~ : (Int, Int))
+  // A matched added/special token; emitted directly, bypassing the model.  The
+  // value is the matched surface after lstrip/rstrip/normalization, matching HF's
+  // `Token.value` for inline added tokens.
+  Special(info~ : AddedTokenInfo, value~ : String, offsets~ : (Int, Int))
   // Ordinary text to be normalized + pre-tokenized + modeled.
   Normal(text~ : String, base_offset~ : Int)
 } derive(Debug, Eq)
@@ -187,9 +194,19 @@ fn AddedVocabulary::new_with_encode_special_tokens(
   tokens : Array[AddedTokenInfo],
   encode_special_tokens : Bool,
 ) -> AddedVocabulary {
+  AddedVocabulary::new_with_normalizer(tokens, encode_special_tokens, None)
+}
+
+///|
+fn AddedVocabulary::new_with_normalizer(
+  tokens : Array[AddedTokenInfo],
+  encode_special_tokens : Bool,
+  normalizer : @normalizer.Normalizer?,
+) -> AddedVocabulary {
   let by_content : Map[String, AddedTokenInfo] = {}
   let id_to_content : Map[Int, String] = {}
   let id_to_token : Map[Int, AddedTokenInfo] = {}
+  let match_to_token : Map[String, AddedTokenInfo] = {}
   let non_normalized = CharTrie::new()
   let normalized = CharTrie::new()
   for t in tokens {
@@ -197,9 +214,15 @@ fn AddedVocabulary::new_with_encode_special_tokens(
     id_to_content[t.id] = t.content
     id_to_token[t.id] = t
     if t.normalized {
-      normalized.insert(t.content)
+      let pattern = match normalizer {
+        Some(nm) => nm.normalize(t.content)
+        None => t.content
+      }
+      normalized.insert(pattern)
+      match_to_token[pattern] = t
     } else {
       non_normalized.insert(t.content)
+      match_to_token[t.content] = t
     }
   }
   {
@@ -208,6 +231,7 @@ fn AddedVocabulary::new_with_encode_special_tokens(
     id_to_token,
     non_normalized,
     normalized,
+    match_to_token,
     encode_special_tokens,
     has_any: tokens.length() > 0,
   }
@@ -218,9 +242,18 @@ fn AddedVocabulary::with_encode_special_tokens(
   self : AddedVocabulary,
   encode_special_tokens : Bool,
 ) -> AddedVocabulary {
-  AddedVocabulary::new_with_encode_special_tokens(
+  { ..self, encode_special_tokens, }
+}
+
+///|
+fn AddedVocabulary::with_normalizer(
+  self : AddedVocabulary,
+  normalizer : @normalizer.Normalizer?,
+) -> AddedVocabulary {
+  AddedVocabulary::new_with_normalizer(
     self.to_infos(),
-    encode_special_tokens,
+    self.encode_special_tokens,
+    normalizer,
   )
 }
 
@@ -338,7 +371,7 @@ fn AddedVocabulary::split_with(
   while i < n {
     match trie.longest_match(chars, i) {
       Some((content, end)) => {
-        let info = self.by_content.get(content).unwrap()
+        let info = self.match_to_token.get(content).unwrap()
         if info.special && self.encode_special_tokens {
           i = i + 1
           continue
@@ -371,13 +404,14 @@ fn AddedVocabulary::split_with(
         }
         // Normal text before `lo`; resume the normal run at `hi`.
         flush(lo, hi)
+        let value = char_range_string(chars, lo, hi)
         if info.special && !keep_special {
           // Treat the special token as plain text for this segment.
           for k in lo..<hi {
             out.push(Normal(text=char_str(chars[k]), base_offset=base + k))
           }
         } else {
-          out.push(Special(info~, offsets=(base + lo, base + hi)))
+          out.push(Special(info~, value~, offsets=(base + lo, base + hi)))
         }
         i = hi
       }
@@ -444,4 +478,13 @@ fn is_ws(c : Char) -> Bool {
 ///|
 fn char_str(c : Char) -> String {
   @common.char_string(c)
+}
+
+///|
+fn char_range_string(chars : Array[Char], start : Int, stop : Int) -> String {
+  let sb = StringBuilder::new()
+  for k in start..<stop {
+    sb.write_char(chars[k])
+  }
+  sb.to_string()
 }

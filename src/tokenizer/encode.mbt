@@ -547,7 +547,8 @@ fn utf8_len(c : Char) -> Int {
 // Run added-vocabulary extraction -> normalize -> pre_tokenize -> model,
 // producing a raw Encoding (all type_ids = 0). `keep_special` controls whether
 // special added-tokens are emitted as single tokens (true) or folded back into
-// text (false), matching HF's add_special_tokens semantics.
+// text (false). Public encode paths keep inline specials enabled; HF's
+// `add_special_tokens` only controls post-processing.
 
 ///|
 fn Tokenizer::encode_raw(
@@ -584,8 +585,7 @@ fn Tokenizer::encode_raw(
   // Stage 1: split out non-normalized added tokens against the original text.
   for seg1 in self.added_vocabulary.extract_stage1(text, keep_special~) {
     match seg1 {
-      Special(info~, offsets~) =>
-        emit(info.id, info.content, offsets, special_mask(info), None)
+      Special(info~, value~, offsets~) => emit(info.id, value, offsets, 0, None)
       Normal(text=raw, base_offset~) => {
         // Normalize this ordinary piece.
         let normalized = match self.normalizer {
@@ -600,8 +600,8 @@ fn Tokenizer::encode_raw(
             keep_special~,
           ) {
           match seg2 {
-            Special(info~, offsets~) =>
-              emit(info.id, info.content, offsets, special_mask(info), None)
+            Special(info~, value~, offsets~) =>
+              emit(info.id, value, offsets, 0, None)
             Normal(text=ntext, base_offset=base2) => {
               let pieces : Array[@types.Split] = match self.pre_tokenizer {
                 Some(pt) => pt.pre_tokenize(ntext, base_offset=base2)
@@ -685,8 +685,8 @@ fn Tokenizer::encode_pretokenized_raw(
         keep_special=true,
       ) {
       match seg1 {
-        Special(info~, offsets~) =>
-          emit(info.id, info.content, offsets, special_mask(info), word_id)
+        Special(info~, value~, offsets~) =>
+          emit(info.id, value, offsets, 0, word_id)
         Normal(text=raw, base_offset~) => {
           let normalized = self.normalize_pretokenized_word(raw)
           // Stage 2 mirrors normal encode for `normalized=true` added tokens.
@@ -697,14 +697,8 @@ fn Tokenizer::encode_pretokenized_raw(
               keep_special=true,
             ) {
             match seg2 {
-              Special(info~, offsets~) =>
-                emit(
-                  info.id,
-                  info.content,
-                  offsets,
-                  special_mask(info),
-                  word_id,
-                )
+              Special(info~, value~, offsets~) =>
+                emit(info.id, value, offsets, 0, word_id)
               Normal(text=ntext, base_offset=base2) =>
                 for t in self.model.tokenize(ntext, offset=base2) {
                   emit(t.id, t.value, t.offsets, 0, word_id)
@@ -740,15 +734,6 @@ fn Tokenizer::normalize_pretokenized_word(
   match self.normalizer {
     Some(nm) => nm.normalize(word)
     None => word
-  }
-}
-
-///|
-fn special_mask(info : AddedTokenInfo) -> Int {
-  if info.special {
-    1
-  } else {
-    0
   }
 }
 

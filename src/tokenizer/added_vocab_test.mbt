@@ -23,7 +23,9 @@ test "added tokens split out of surrounding text" {
   // <s> | abc(merged) | </s>
   @test.assert_eq(enc.tokens, ["<s>", "abc", "</s>"])
   @test.assert_eq(enc.ids, [5, 4, 6])
-  @test.assert_eq(enc.special_tokens_mask, [1, 0, 1])
+  // HF marks inline added/special tokens as ordinary input tokens; the
+  // special_tokens_mask is reserved for post-processor-inserted tokens.
+  @test.assert_eq(enc.special_tokens_mask, [0, 0, 0])
 }
 
 ///|
@@ -39,7 +41,7 @@ test "lstrip/rstrip eats surrounding whitespace" {
   let tok = Tokenizer::from_str(av_bpe)
   // [MASK] has lstrip+rstrip: the spaces around it are absorbed into the token.
   let enc = tok.encode("ab [MASK] ab", add_special_tokens=false)
-  @test.assert_eq(enc.tokens, ["ab", "[MASK]", "ab"])
+  @test.assert_eq(enc.tokens, ["ab", " [MASK] ", "ab"])
 }
 
 ///|
@@ -68,7 +70,7 @@ test "pretokenized encode still extracts added tokens inside words" {
   @test.assert_eq(enc.tokens, ["hello", "[MASK]", "world"])
   @test.assert_eq(enc.ids, [0, 3, 1])
   @test.assert_eq(enc.offsets, [(0, 5), (5, 11), (11, 16)])
-  @test.assert_eq(enc.special_tokens_mask, [0, 1, 0])
+  @test.assert_eq(enc.special_tokens_mask, [0, 0, 0])
   @test.assert_eq(enc.word_ids(), [Some(0), Some(0), Some(0)])
 }
 
@@ -86,11 +88,11 @@ test "pretokenized added token offsets survive batch and byte conversion" {
     add_special_tokens=false,
   )
   @test.assert_eq(encs.length(), 2)
-  @test.assert_eq(encs[0].tokens, ["我", "[MASK]", "world"])
+  @test.assert_eq(encs[0].tokens, ["我", " [MASK] ", "world"])
   // Synthetic normalized text is "我  [mask]  world"; byte offsets include the
   // spaces consumed by lstrip/rstrip around [MASK].
   @test.assert_eq(encs[0].offsets, [(0, 3), (4, 12), (13, 18)])
-  @test.assert_eq(encs[0].special_tokens_mask, [0, 1, 0])
+  @test.assert_eq(encs[0].special_tokens_mask, [0, 0, 0])
   @test.assert_eq(encs[0].word_ids(), [Some(0), Some(1), Some(2)])
   @test.assert_eq(encs[1].tokens, ["hello", "world", "[PAD]"])
   @test.assert_eq(encs[1].attention_mask, [1, 1, 0])

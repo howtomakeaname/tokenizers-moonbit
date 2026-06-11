@@ -83,7 +83,7 @@ pub fn Tokenizer::from_str(
   let added_vocabulary = AddedVocabulary::new_with_encode_special_tokens(
     parse_added_tokens(root),
     @types.get_bool(root, "encode_special_tokens", default=false),
-  )
+  ).with_normalizer(normalizer)
   let truncation = decode_opt(root, "truncation", parse_truncation)
   let padding = decode_opt(root, "padding", parse_padding)
   {
@@ -200,7 +200,12 @@ pub fn Tokenizer::with_normalizer(
   self : Tokenizer,
   normalizer : @normalizer.Normalizer?,
 ) -> Tokenizer {
-  { ..self, normalizer, source_json: None }
+  {
+    ..self,
+    normalizer,
+    added_vocabulary: self.added_vocabulary.with_normalizer(normalizer),
+    source_json: None,
+  }
 }
 
 ///|
@@ -506,7 +511,7 @@ fn Tokenizer::add_tokens_impl(
       added_vocabulary: AddedVocabulary::new_with_encode_special_tokens(
         infos,
         self.added_vocabulary.get_encode_special_tokens(),
-      ),
+      ).with_normalizer(self.normalizer),
       source_json: None,
     },
     new_count,
