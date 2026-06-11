@@ -22,11 +22,11 @@
 | R3 | 多模型对拍设施 + CI | ✅ |
 | R4 | truncation / padding / encode_batch | ✅ |
 | R5 | Unicode 归一化最小集（NFD+Mn / strip_accents） | ✅ |
-| R6 | pre_tokenizer/decoder/template DSL 补全 | 🚧（ByteFallback 已在 R2 完成）|
+| R6 | pre_tokenizer/decoder/template DSL 补全 | ✅（ByteFallback R2 完成；template DSL 字符串构造已补 `template_from_strings`）|
 | R7 | benchmark 套件 + 与 HF 跑分 | ✅ |
 | R8 | 文档 + 迁移指南 | ✅ |
 | R9 | HF 无缝迁移缺口收敛（API / offsets / charsmap / save / pretrained） | 🚧 |
-| R10 | 架构治理与模块化（公共库 / 测试与基准分层 / HF 风格组件边界） | 🚧 |
+| R10 | 架构治理与模块化（公共库 / 测试与基准分层 / HF 风格组件边界） | ✅（A0–A5 全部完成）|
 
 ## R10：架构治理与模块化计划
 
