@@ -90,7 +90,7 @@ test "replace helpers cover regex run semantics" {
   )
   @test.assert_eq(
     replace_bounded_simple_regex("ab_12,中!cd", "\\W{1,2}", "-"),
-    Some("ab_12--cd"),
+    Some("ab_12-中-cd"),
   )
   @test.assert_eq(
     replace_bounded_simple_regex(
@@ -116,7 +116,7 @@ test "replace helpers cover regex run semantics" {
   )
   @test.assert_eq(
     replace_simple_regex("ab_12,中!cd", "\\w+", "W"),
-    Some("W,中!W"),
+    Some("W,W!W"),
   )
   @test.assert_eq(
     replace_simple_regex("abé中12!Ж", "\\p{L}+", "L"),
@@ -579,16 +579,14 @@ test "split regex helpers cover simple patterns" {
     is Some(exact_non_words) else {
     abort("expected exact non-word matches")
   }
-  @test.assert_eq(exact_non_words.length(), 1)
-  @test.assert_eq(exact_non_words[0].start, 5)
-  @test.assert_eq(exact_non_words[0].stop, 7)
+  @test.assert_eq(exact_non_words.length(), 0)
   guard simple_split_regex_matches("ab_12,中!cd".to_array(), "\\W{1,2}")
     is Some(bounded_non_words) else {
     abort("expected bounded non-word matches")
   }
   @test.assert_eq(bounded_non_words.length(), 2)
   @test.assert_eq(bounded_non_words[0].start, 5)
-  @test.assert_eq(bounded_non_words[0].stop, 7)
+  @test.assert_eq(bounded_non_words[0].stop, 6)
   @test.assert_eq(bounded_non_words[1].start, 7)
   @test.assert_eq(bounded_non_words[1].stop, 8)
   guard simple_split_regex_matches(

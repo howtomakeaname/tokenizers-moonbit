@@ -373,8 +373,14 @@ test "split pretokenizer supports common regex spans" {
     invert=false,
     regex=true,
   ).pre_tokenize("ab_12,中!cd", base_offset=3)
-  @test.assert_eq(word_runs.map(x => x.value), ["ab_12", ",中!", "cd"])
-  @test.assert_eq(word_runs.map(x => x.offsets), [(3, 8), (8, 11), (11, 13)])
+  @test.assert_eq(word_runs.map(x => x.value), ["ab_12", ",", "中", "!", "cd"])
+  @test.assert_eq(word_runs.map(x => x.offsets), [
+    (3, 8),
+    (8, 9),
+    (9, 10),
+    (10, 11),
+    (11, 13),
+  ])
 
   let nonword_runs = PreTokenizer::Split(
     pattern="\\W+",
@@ -382,7 +388,7 @@ test "split pretokenizer supports common regex spans" {
     invert=false,
     regex=true,
   ).pre_tokenize("ab_12,中!cd", base_offset=0)
-  @test.assert_eq(nonword_runs.map(x => x.value), ["ab_12", "cd"])
+  @test.assert_eq(nonword_runs.map(x => x.value), ["ab_12", "中", "cd"])
 
   let min_word_runs = PreTokenizer::Split(
     pattern="\\w{2,}",
@@ -653,7 +659,7 @@ test "split pretokenizer supports common regex spans" {
     regex=true,
   ).pre_tokenize("ab_12,中!cd", base_offset=0)
   @test.assert_eq(bounded_non_words.map(x => x.value), [
-    "ab_12", ",中", "!", "cd",
+    "ab_12", ",", "中", "!", "cd",
   ])
 
   let bounded_inverse_union = PreTokenizer::Split(

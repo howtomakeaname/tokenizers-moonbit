@@ -45,6 +45,34 @@ test "lstrip/rstrip eats surrounding whitespace" {
 }
 
 ///|
+test "single_word added tokens use Unicode word boundaries" {
+  let json =
+    #|{"version":"1.0",
+    #| "added_tokens":[{"id":1,"content":"TAG","single_word":true,"lstrip":false,"rstrip":false,"normalized":false,"special":false}],
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"[UNK]":0,"TAG":1,"αTAGβ":2,"中TAG文":3,"TAGα":4,"αTAG":5,"foo":6},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  @test.assert_eq(tok.encode("αTAGβ", add_special_tokens=false).tokens, [
+    "αTAGβ",
+  ])
+  @test.assert_eq(tok.encode("中TAG文", add_special_tokens=false).tokens, [
+    "中TAG文",
+  ])
+  @test.assert_eq(tok.encode("TAGα", add_special_tokens=false).tokens, [
+    "TAGα",
+  ])
+  @test.assert_eq(tok.encode("αTAG", add_special_tokens=false).tokens, [
+    "αTAG",
+  ])
+  @test.assert_eq(tok.encode("TAG!", add_special_tokens=false).tokens, [
+    "TAG", "[UNK]",
+  ])
+  @test.assert_eq(tok.encode("!TAG", add_special_tokens=false).tokens, [
+    "[UNK]", "TAG",
+  ])
+}
+
+///|
 test "decode skips special added tokens" {
   let tok = Tokenizer::from_str(av_bpe)
   let s = tok.decode([5, 4, 6], skip_special_tokens=true)

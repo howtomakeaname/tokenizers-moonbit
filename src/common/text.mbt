@@ -28,9 +28,13 @@ pub fn is_ascii_alnum(c : Char) -> Bool {
 }
 
 ///|
-/// Word-boundary approximation used by AddedVocabulary single_word matching.
+/// Unicode word predicate used by HF/Rust-regex `\w`-style matching and
+/// AddedVocabulary `single_word` boundaries. Rust regex treats letters and
+/// numbers from Unicode scripts as word characters (plus `_`), so CJK/Greek/etc.
+/// neighbors must block single-word added-token extraction just like ASCII
+/// letters do.
 pub fn is_word_char(c : Char) -> Bool {
-  is_ascii_alnum(c) || c == '_'
+  is_unicode_letter(c) || is_decimal_number(c) || c == '_'
 }
 
 ///|
