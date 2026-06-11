@@ -53,11 +53,13 @@ Chinese version: [`docs/zh/components.md`](./zh/components.md)
 ## Verified models
 
 With optional fixtures present, encode matches Python `tokenizers` token-for-token
-for **31 real models**: gpt2, roberta, llama, bert/bert-cased, distilbert, t5,
+for **40 real models**: gpt2, roberta, llama, bert/bert-cased, distilbert, t5,
 albert, xlm-roberta, Qwen2.5, Qwen3, DeepSeek-V2, Phi-3, Mistral, Falcon,
 StarCoder2, GPT-NeoX, CLIP, DeBERTa, Llama-3.2, Phi-4-mini,
 DeepSeek-R1-Distill-Qwen, DeepSeek-V3.2, GPT-OSS, GLM-4.5, Granite-4,
-Qwen3-Coder, Qwen3-VL, BGE-M3 and multilingual-E5.
+Qwen3-Coder, Qwen3-VL, BGE-M3, multilingual-E5, ModernBERT,
+GTE-ModernBERT, MiniLM, BGE-large-en, Jina embeddings, Nomic Embed,
+E5-small, MixedBread and SmolLM2.
 
 ## Limitations
 

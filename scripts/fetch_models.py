@@ -8,12 +8,19 @@ Usage:
     python3 scripts/fetch_models.py            # fetch all
     python3 scripts/fetch_models.py gpt2 bert  # fetch a subset (by local name)
 
+Set HF_ENDPOINT (for example https://hf-mirror.com) to fetch through a
+HuggingFace-compatible mirror, and HF_TOKEN for private/gated repositories.
+
 Files are written to tests/data/<name>.full.json (git-ignored). Gated models
 (e.g. official Llama) are avoided; public mirrors are used instead.
 """
 import os
 import sys
 import urllib.request
+
+
+HF_UA = "unknown/None; hf_hub/0.34.4; python/3.x; tokenizers/0.21.4"
+HF_ENDPOINT = os.environ.get("HF_ENDPOINT", "https://huggingface.co").rstrip("/")
 
 # local name -> HuggingFace resolve URL of tokenizer.json
 MODELS = {
@@ -61,16 +68,42 @@ MODELS = {
     "qwen3_vl": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct/resolve/main/tokenizer.json",
     "bge_m3": "https://huggingface.co/BAAI/bge-m3/resolve/main/tokenizer.json",
     "e5_multilingual": "https://huggingface.co/intfloat/multilingual-e5-large/resolve/main/tokenizer.json",
+    # Additional migration coverage: modern encoder stacks, popular embedding
+    # tokenizers and small LLM fixtures that are public and ship tokenizer.json.
+    "modernbert": "https://huggingface.co/answerdotai/ModernBERT-base/resolve/main/tokenizer.json",
+    "gte_modernbert": "https://huggingface.co/Alibaba-NLP/gte-modernbert-base/resolve/main/tokenizer.json",
+    "minilm": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer.json",
+    "bge_large_en": "https://huggingface.co/BAAI/bge-large-en-v1.5/resolve/main/tokenizer.json",
+    "jina_v3": "https://huggingface.co/jinaai/jina-embeddings-v3/resolve/main/tokenizer.json",
+    "nomic_embed": "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5/resolve/main/tokenizer.json",
+    "e5_small": "https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/tokenizer.json",
+    "mxbai_embed_large": "https://huggingface.co/mixedbread-ai/mxbai-embed-large-v1/resolve/main/tokenizer.json",
+    "smollm2": "https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/resolve/main/tokenizer.json",
 }
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "tests", "data")
+
+
+def resolve_url(url: str) -> str:
+    prefix = "https://huggingface.co"
+    if HF_ENDPOINT != prefix and url.startswith(prefix):
+        return HF_ENDPOINT + url[len(prefix) :]
+    return url
+
+
+def request_headers() -> dict[str, str]:
+    headers = {"User-Agent": HF_UA, "Accept": "*/*"}
+    token = os.environ.get("HF_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
 
 
 def fetch(name: str, url: str) -> None:
     os.makedirs(DATA_DIR, exist_ok=True)
     dst = os.path.join(DATA_DIR, f"{name}.full.json")
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "curl/8"})
+        req = urllib.request.Request(resolve_url(url), headers=request_headers())
         with urllib.request.urlopen(req, timeout=60) as r:
             data = r.read()
         with open(dst, "wb") as f:

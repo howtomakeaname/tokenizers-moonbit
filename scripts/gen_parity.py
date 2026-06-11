@@ -35,6 +35,14 @@ CASES = [
     "unaffable",
     "café résumé",
     "naïve Zürich",
+    "emoji: 🧪🚀🙂 mixed with text",
+    "code: fn main() { println(\"hi\") }",
+    "snake_case camelCase HTTP/2 JSON.parse",
+    "line1\nline2\tindented",
+    "中文 English 123 混合",
+    "literal brackets [INST] hello [/INST]",
+    "数学 symbols: ∑ α β γ ± ≈",
+    "long-number 12345678901234567890",
 ]
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "tests", "data")

@@ -42,6 +42,13 @@ test "unicode scripts splits on script changes like sentencepiece" {
 }
 
 ///|
+test "o200k split treats Greek letters as letters" {
+  @test.assert_eq(o200k_split("数学 symbols: ∑ α β γ ± ≈"), [
+    "数学", " symbols", ":", " ∑", " α", " β", " γ", " ±", " ≈",
+  ])
+}
+
+///|
 test "digits delimiter and fixed length runtime pretokenizers keep offsets" {
   let digit_runs = PreTokenizer::Digits(individual_digits=false).pre_tokenize(
     "a12b٣٤",

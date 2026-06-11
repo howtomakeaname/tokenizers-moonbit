@@ -544,13 +544,17 @@ fn is_o200k_uncased_or_mark(c : Char) -> Bool {
 ///|
 fn is_uppercase_letter_approx(c : Char) -> Bool {
   let u = c.to_int()
-  (u >= 0x41 && u <= 0x5A) || (u >= 0xC0 && u <= 0xDE && u != 0xD7)
+  (u >= 0x41 && u <= 0x5A) ||
+  (u >= 0xC0 && u <= 0xDE && u != 0xD7) ||
+  (u >= 0x0391 && u <= 0x03AB && u != 0x03A2)
 }
 
 ///|
 fn is_lowercase_letter_approx(c : Char) -> Bool {
   let u = c.to_int()
-  (u >= 0x61 && u <= 0x7A) || (u >= 0xDF && u <= 0xFF && u != 0xF7)
+  (u >= 0x61 && u <= 0x7A) ||
+  (u >= 0xDF && u <= 0xFF && u != 0xF7) ||
+  (u >= 0x03AC && u <= 0x03CE && u != 0x03C2)
 }
 
 ///|

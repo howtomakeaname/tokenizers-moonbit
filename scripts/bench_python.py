@@ -57,6 +57,10 @@ MODELS = [
     "qwen3_coder",
     "bge_m3",
     "e5_multilingual",
+    "modernbert",
+    "minilm",
+    "jina_v3",
+    "smollm2",
 ]
 
 

@@ -45,7 +45,7 @@
 
 ## 已对齐验证的真实模型（与 Python `tokenizers` 逐 token id 一致）
 
-通过表驱动的 `parity_test.mbt`（`scripts/fetch_models.py` + `scripts/gen_parity.py` 生成期望），覆盖 31 个真实/公开 tokenizer.json 模型（fixture 缺失时自动跳过）：
+通过表驱动的 `parity_test.mbt`（`scripts/fetch_models.py` + `scripts/gen_parity.py` 生成期望），覆盖 40 个真实/公开 tokenizer.json 模型（fixture 缺失时自动跳过）：
 
 | 模型 | 类型 | 状态 |
 |---|---|---|
@@ -79,6 +79,15 @@
 | Qwen3-VL | BPE + Qwen Split + multimodal tokenizer | ✅ |
 | BAAI/bge-m3 | embedding tokenizer | ✅ |
 | multilingual-e5-large | multilingual embedding tokenizer | ✅ |
+| ModernBERT-base | BPE + normalizer/pre-tokenizer modern encoder pipeline | ✅ |
+| GTE-ModernBERT-base | BPE + ModernBERT embedding tokenizer | ✅ |
+| all-MiniLM-L6-v2 | WordPiece / sentence-transformers embedding tokenizer | ✅ |
+| bge-large-en-v1.5 | WordPiece embedding tokenizer | ✅ |
+| jina-embeddings-v3 | XLM-R/Unigram-style multilingual embedding tokenizer | ✅ |
+| nomic-embed-text-v1.5 | WordPiece embedding tokenizer | ✅ |
+| multilingual-e5-small | multilingual embedding tokenizer | ✅ |
+| mxbai-embed-large-v1 | WordPiece embedding tokenizer | ✅ |
+| SmolLM2-135M-Instruct | compact LLM BPE tokenizer | ✅ |
 
 ## 组件实现矩阵
 
@@ -109,7 +118,7 @@
 | ByteLevel（手写 GPT-2 扫描）| ✅ |
 | Whitespace / WhitespaceSplit / BertPreTokenizer / Punctuation / Metaspace / Sequence | ✅ |
 | Punctuation / Split SplitBehavior | ✅ | Removed / Isolated / MergedWithPrevious / MergedWithNext / Contiguous；Split 的 Contiguous 会合并相邻 delimiter spans |
-| Split（GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet 家族正则）| ✅ 现代 LLM/CLIP 主线 |
+| Split（GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet 家族正则）| ✅ 现代 LLM/CLIP 主线；o200k case-aware letter scanner 已覆盖希腊字母 |
 | Digits / Delimiter / FixedLength / UnicodeScripts | ✅ | 已补直接 runtime offsets 单测 |
 | Split（任意正则）| 🚧 已覆盖主流 GPT/Qwen/o200k/CLIP/CJK/digit regex + 简单 literal / `\\s+` / `\\S+` / `\\s+$` / `[\\r\\n]`；复杂未知 pattern 加载期显式 Unsupported |
 

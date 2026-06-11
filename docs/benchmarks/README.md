@@ -106,7 +106,7 @@ tokenizers faster than the HF native baseline on the sampled machine. Re-run
 
 ## How to read the results
 
-**Correctness first.** With optional fixtures present, parity tests cover 31 real
+**Correctness first.** With optional fixtures present, parity tests cover 40 real
 models and compare token ids against Python `tokenizers`. A faster tokenizer
 that disagrees with the reference is not useful.
 

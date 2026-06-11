@@ -29,11 +29,10 @@ MoonBit 版 HuggingFace `tokenizers`。直接加载标准 `tokenizer.json`，在
 - **API：** `encode`、`encode_pair`、`encode_batch`、`decode`、truncation、
   padding、`token_to_id`、`id_to_token`、`get_vocab_size`。
 
-在可选 fixture 存在时，对拍覆盖 31 个真实模型：gpt2、roberta、llama、
-bert/bert-cased、distilbert、t5、albert、xlm-roberta、Qwen2.5、Qwen3、
-DeepSeek-V2、Phi-3、Mistral、Falcon、StarCoder2、GPT-NeoX、CLIP、DeBERTa、
-Llama-3.2、Phi-4-mini、DeepSeek-R1-Distill-Qwen、DeepSeek-V3.2、GPT-OSS、
-GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E5。
+在可选 fixture 存在时，对拍覆盖 40 个真实模型：gpt2、roberta、llama、
+bert/bert-cased、distilbert、t5、albert、xlm-roberta、Qwen/DeepSeek/Phi/Mistral/
+Falcon/StarCoder/GPT-NeoX/CLIP/GLM/Granite 家族、ModernBERT/GTE-ModernBERT、
+SmolLM2，以及 BGE、E5、MiniLM、Jina、Nomic、MixedBread 等 embedding tokenizer。
 
 组件状态见 [`docs/zh/components.md`](./docs/zh/components.md)，路线图见
 [`PROGRESS.md`](./PROGRESS.md)。

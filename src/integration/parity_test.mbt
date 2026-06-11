@@ -6,7 +6,8 @@
 // Covers every model family the port implements: byte-level BPE (gpt2/roberta),
 // byte_fallback BPE (llama), WordPiece cased+uncased (bert/bert_cased/
 // distilbert), Unigram/SentencePiece (t5/albert/xlm_roberta), and modern LLMs
-// using the Qwen/Llama-3 Split pattern (Qwen2.5/Qwen3/DeepSeek/Phi-3).
+// using the Qwen/Llama-3 Split pattern (Qwen2.5/Qwen3/DeepSeek/Phi-3), plus
+// modern encoder/embedding tokenizers (ModernBERT, MiniLM, BGE, Jina, Nomic).
 
 ///|
 let parity_models : Array[String] = [
@@ -14,6 +15,8 @@ let parity_models : Array[String] = [
   "xlm_roberta", "Qwen2.5", "qwen3", "deepseek", "phi3", "mistral", "falcon", "starcoder2",
   "gptneox", "clip", "deberta", "llama3_2", "phi4_mini", "deepseek_r1_qwen", "deepseek_v3_2",
   "gpt_oss", "glm4_5", "granite4", "qwen3_coder", "qwen3_vl", "bge_m3", "e5_multilingual",
+  "modernbert", "gte_modernbert", "minilm", "bge_large_en", "jina_v3", "nomic_embed",
+  "e5_small", "mxbai_embed_large", "smollm2",
 ]
 
 // Run parity for one model; returns (ran, mismatches).

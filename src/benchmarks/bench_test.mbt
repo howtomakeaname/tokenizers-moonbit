@@ -1696,7 +1696,7 @@ test "bench encode matrix (modern models x corpora)" (b : @bench.T) {
     model in [
       "gpt2", "bert", "roberta", "t5", "llama", "Qwen2.5", "qwen3", "phi3", "mistral",
       "starcoder2", "clip", "llama3_2", "phi4_mini", "gpt_oss", "qwen3_coder", "bge_m3",
-      "e5_multilingual",
+      "e5_multilingual", "modernbert", "minilm", "jina_v3", "smollm2",
     ] {
     bench_encode_case(b, model, "short", short, add_special_tokens=false)
     bench_encode_case(b, model, "mixed", mixed, add_special_tokens=false)
