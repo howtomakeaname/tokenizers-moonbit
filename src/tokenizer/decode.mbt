@@ -80,19 +80,16 @@ pub fn Tokenizer::decode_stream(
   self : Tokenizer,
   skip_special_tokens? : Bool = true,
 ) -> DecodeStream {
-  {
-    tokenizer: self,
-    skip_special_tokens,
-    ids: [],
-    prefix: "",
-    prefix_index: 0,
-  }
+  { tokenizer: self, skip_special_tokens, ids: [], prefix: "", prefix_index: 0 }
 }
 
 ///|
 /// Feed one token id into the stream. Returns `(next_stream, chunk)`, where
 /// `chunk` is `None` until the buffered ids decode to a valid text extension.
-pub fn DecodeStream::step(self : DecodeStream, id : Int) -> (DecodeStream, String?) {
+pub fn DecodeStream::step(
+  self : DecodeStream,
+  id : Int,
+) -> (DecodeStream, String?) {
   let ids = self.ids.copy()
   let mut prefix = self.prefix
   let mut prefix_index = self.prefix_index
@@ -112,7 +109,8 @@ pub fn DecodeStream::step(self : DecodeStream, id : Int) -> (DecodeStream, Strin
     ids,
     skip_special_tokens=self.skip_special_tokens,
   )
-  if char_len(decoded) > char_len(prefix) && !ends_with_replacement_char(decoded) {
+  if char_len(decoded) > char_len(prefix) &&
+    !ends_with_replacement_char(decoded) {
     let new_text = if starts_with_string(decoded, prefix) {
       suffix_after_prefix(decoded, prefix)
     } else {

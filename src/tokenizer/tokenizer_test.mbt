@@ -190,7 +190,10 @@ test "special token encode switch and added-token introspection match HF" {
   @test.assert_eq(tok.get_encode_special_tokens(), false)
   @test.assert_eq(tok.is_special_token("[MASK]"), true)
   @test.assert_eq(tok.is_special_token("hello"), false)
-  @test.assert_eq(tok.get_added_tokens_decoder().get(3).unwrap().content, "[MASK]")
+  @test.assert_eq(
+    tok.get_added_tokens_decoder().get(3).unwrap().content,
+    "[MASK]",
+  )
   @test.assert_eq(tok.num_special_tokens_to_add(), 2)
   @test.assert_eq(tok.num_special_tokens_to_add(is_pair=true), 3)
   let extracted = tok.encode("hello [MASK]", add_special_tokens=false)
@@ -261,13 +264,22 @@ test "Encoding public manipulation APIs mirror HF style" {
   @test.assert_eq(truncated.ids, [1, 2])
   @test.assert_eq(truncated.get_overflowing().length(), 1)
   @test.assert_eq(truncated.get_overflowing()[0].ids, [2, 3])
-  let padded = truncated.pad(4, pad_id=0, pad_type_id=9, pad_token="[PAD]", direction=@types.Left)
+  let padded = truncated.pad(
+    4,
+    pad_id=0,
+    pad_type_id=9,
+    pad_token="[PAD]",
+    direction=@types.Left,
+  )
   @test.assert_eq(padded.ids, [0, 0, 1, 2])
   @test.assert_eq(padded.attention_mask, [0, 0, 1, 1])
-  let merged = @types.Encoding::merge([
-    @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2) }]),
-    @types.Encoding::from_tokens([{ id: 11, value: "cd", offsets: (0, 2) }]),
-  ], growing_offsets=true)
+  let merged = @types.Encoding::merge(
+    [
+      @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2) }]),
+      @types.Encoding::from_tokens([{ id: 11, value: "cd", offsets: (0, 2) }]),
+    ],
+    growing_offsets=true,
+  )
   @test.assert_eq(merged.ids, [10, 11])
   @test.assert_eq(merged.offsets, [(0, 2), (2, 4)])
   let (without_overflow, overflow) = truncated.take_overflowing()
@@ -278,15 +290,11 @@ test "Encoding public manipulation APIs mirror HF style" {
 ///|
 test "template string constructor supports multi-id special token counting" {
   let specials : Map[String, @processor.SpecialToken] = {}
-  specials["<pair>"] = @processor.SpecialToken::new(
-    "<pair>",
-    [8, 9],
-    ["<p0>", "<p1>"],
-  )
+  specials["<pair>"] = @processor.SpecialToken::new("<pair>", [8, 9], [
+    "<p0>", "<p1>",
+  ])
   let pp = @processor.PostProcessor::template_from_strings(
-    "$A <pair>",
-    "$A <pair> $B:1",
-    specials,
+    "$A <pair>", "$A <pair> $B:1", specials,
   )
   @test.assert_eq(pp.added_tokens(), 2)
   @test.assert_eq(pp.added_tokens(pair=true), 2)
@@ -811,6 +819,36 @@ test "from_pretrained resolves local HuggingFace hub cache snapshots" {
     cache_dir=Some(hub),
   )
   @test.assert_eq(explicit_rev.encode("hub", add_special_tokens=false).ids, [0])
+}
+
+///|
+test "from_pretrained_downloaded writes HF-style cache and refs" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"downloaded":0,"hub":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let root = "_build/hf_download_cache_test"
+  let hub = root + "/hub"
+  ensure_dir(root)
+  ensure_dir(hub)
+  let tok = Tokenizer::from_pretrained_downloaded(
+    "org/downloaded-tokenizer",
+    json,
+    revision="main",
+    resolved_revision=Some("def456"),
+    cache_dir=Some(hub),
+  )
+  @test.assert_eq(tok.encode("downloaded hub", add_special_tokens=false).ids, [
+    0, 1,
+  ])
+  let cached = Tokenizer::from_pretrained_cached(
+    "org/downloaded-tokenizer",
+    revision="main",
+    cache_dir=Some(hub),
+  )
+  @test.assert_eq(cached.encode("hub missing", add_special_tokens=false).ids, [
+    1, 2,
+  ])
 }
 
 ///|

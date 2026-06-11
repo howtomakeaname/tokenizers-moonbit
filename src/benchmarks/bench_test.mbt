@@ -388,11 +388,20 @@ fn bench_encoding_manipulation_case(
     add_special_tokens=false,
   )
   b.bench(name="encoding-manipulation-\{case_name}", fn() {
-    let left = enc.truncate(6, stride=2, direction=@types.Right)
+    let left = enc
+      .truncate(6, stride=2, direction=@types.Right)
       .with_type_ids(Array::make(6, 1))
       .with_sequence_id(0)
-      .pad(10, pad_id=8, pad_type_id=0, pad_token="[PAD]", direction=@types.Right)
-    let right = enc.truncate(4, stride=1, direction=@types.Left).with_sequence_id(1)
+      .pad(
+        10,
+        pad_id=8,
+        pad_type_id=0,
+        pad_token="[PAD]",
+        direction=@types.Right,
+      )
+    let right = enc
+      .truncate(4, stride=1, direction=@types.Left)
+      .with_sequence_id(1)
     let merged = left.merge_with(right, growing_offsets=true)
     let (plain, overflowing) = merged.take_overflowing()
     b.keep(plain.ids.length() + overflowing.length())

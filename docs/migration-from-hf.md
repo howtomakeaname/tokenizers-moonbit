@@ -12,6 +12,7 @@ Chinese version: [`docs/zh/migration-from-hf.md`](./zh/migration-from-hf.md)
 | `Tokenizer.from_file("tokenizer.json")` | `@tokenizer.from_file("tokenizer.json")` |
 | `Tokenizer.from_str(s)` | `@tokenizer.Tokenizer::from_str(s)` |
 | `Tokenizer.from_pretrained(id, local_files_only=True)` | `@tokenizer.from_pretrained(id)` or `@tokenizer.from_pretrained_cached(id, cache_dir=...)` |
+| `Tokenizer.from_pretrained(id)` | `@hub.from_pretrained(id)` on native/js, or host fetch + `@tokenizer.from_pretrained_downloaded(id, json)` |
 | `tok.save("dir/tokenizer.json")` / directory workflows | `tok.save(path)` or `tok.save_pretrained(dir)` |
 
 ```python
@@ -24,9 +25,16 @@ let tok = @tokenizer.from_file("tokenizer.json")
 ```
 
 `from_str` takes JSON text and does no file IO, so it works on every backend.
-`from_file` uses `moonbitlang/x/fs`. `from_pretrained` is offline-only: it can
-load a local directory/file or resolve an existing HF Hub cache snapshot via
-`$HUGGINGFACE_HUB_CACHE`, `$HF_HOME/hub`, or `$HOME/.cache/huggingface/hub`.
+`from_file` uses `moonbitlang/x/fs`. Core `@tokenizer.from_pretrained` is the
+all-backend offline loader: it can load a local directory/file or resolve an
+existing HF Hub cache snapshot via `$HUGGINGFACE_HUB_CACHE`, `$HF_HOME/hub`, or
+`$HOME/.cache/huggingface/hub`. Online download is provided by the optional
+`@hub` package on native/js: it fetches `tokenizer.json`, writes the same cache
+layout, and then reuses the core loader. It uses HuggingFace/tokenizers-like
+request headers on native and supports mirror endpoints via
+`HubDownloadOptions::new(endpoint="https://hf-mirror.com")`. Wasm/wasm-gc callers
+can fetch JSON in the host environment and call
+`@tokenizer.from_pretrained_downloaded`.
 `save_pretrained(dir)` writes `dir/tokenizer.json`, so saved artifacts can be
 loaded back with `from_pretrained(dir)`.
 

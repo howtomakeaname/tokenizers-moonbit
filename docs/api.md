@@ -14,6 +14,10 @@ fn from_pretrained(path_or_model_id : String) -> Tokenizer raise TokenizerError
 fn from_pretrained_cached(
   model_id : String, revision? : String = "main", cache_dir? : String? = None,
 ) -> Tokenizer raise TokenizerError
+fn from_pretrained_downloaded(
+  model_id : String, tokenizer_json : String, revision? : String = "main",
+  resolved_revision? : String? = None, cache_dir? : String? = None,
+) -> Tokenizer raise TokenizerError
 fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise TokenizerError
 ```
 
@@ -30,6 +34,11 @@ fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise To
   `tokenizer.json`, and model ids that are absent from the local Hub cache.
 - `from_pretrained_cached` lets callers provide an explicit local Hub cache root
   and revision, matching offline `local_files_only=True` workflows.
+- `from_pretrained_downloaded` is the transport bridge used by network-capable
+  callers: pass downloaded `tokenizer.json` text and it writes the standard HF
+  Hub cache layout before parsing. The optional `@hub` package provides native/js
+  async HTTP downloading on top of this API; wasm users can keep host-side fetch
+  logic and call this function with the fetched JSON.
 - `save_pretrained(dir)` creates/uses an HF-style directory and writes
   `dir/tokenizer.json`, returning the concrete JSON path for logging or later
   `from_file` calls.
@@ -38,6 +47,43 @@ fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise To
   token state when those components expose a typed serializer; loaded HF
   tokenizers still preserve their original JSON verbatim until a builder mutates
   typed state.
+
+### Optional Hub downloader (`@hub`, native/js)
+
+```moonbit
+fn HubDownloadOptions::new(
+  endpoint? : String = "https://huggingface.co",
+  revision? : String = "main",
+  cache_dir? : String? = None,
+  token? : String? = None,
+  local_files_only? : Bool = false,
+  max_redirects? : Int = 5,
+  user_agent? : String? = Some("unknown/None; hf_hub/...; python/...; tokenizers/..."),
+) -> HubDownloadOptions
+
+async fn @hub.from_pretrained(
+  model_id : String, options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> Tokenizer raise TokenizerError
+
+async fn @hub.download_tokenizer_json(
+  model_id : String, options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> HubDownloadResult raise TokenizerError
+```
+
+`@hub.from_pretrained` first tries the local file/cache path through the core
+loader, then downloads `/<model>/resolve/<revision>/tokenizer.json` via
+`moonbitlang/async/http`, follows redirects, stores the result in the HF-style
+cache, and parses it. It supports custom endpoints/mirrors, explicit cache roots,
+`HF_TOKEN` or an explicit bearer token, HF-style request headers, and
+`local_files_only=true`. For users in regions where `huggingface.co` is slow,
+pass a mirror endpoint, for example:
+
+```moonbit
+let tok = @hub.from_pretrained(
+  "bert-base-uncased",
+  options=@hub.HubDownloadOptions::new(endpoint="https://hf-mirror.com"),
+)
+```
 
 ## Encoding / decoding
 

@@ -12,6 +12,7 @@
 | `Tokenizer.from_file("tokenizer.json")` | `@tokenizer.from_file("tokenizer.json")` |
 | `Tokenizer.from_str(s)` | `@tokenizer.Tokenizer::from_str(s)` |
 | `Tokenizer.from_pretrained(id, local_files_only=True)` | `@tokenizer.from_pretrained(id)` 或 `@tokenizer.from_pretrained_cached(id, cache_dir=...)` |
+| `Tokenizer.from_pretrained(id)` | native/js 使用 `@hub.from_pretrained(id)`；wasm 可宿主 fetch 后调用 `@tokenizer.from_pretrained_downloaded(id, json)` |
 | `tok.save("dir/tokenizer.json")` / 目录工作流 | `tok.save(path)` 或 `tok.save_pretrained(dir)` |
 
 ```python
@@ -23,9 +24,13 @@ tok = Tokenizer.from_file("tokenizer.json")
 let tok = @tokenizer.from_file("tokenizer.json")
 ```
 
-`from_pretrained` 当前为离线解析：支持本地目录/文件，也可从已有 HF Hub cache
-snapshot 解析（`$HUGGINGFACE_HUB_CACHE`、`$HF_HOME/hub`、
-`$HOME/.cache/huggingface/hub`）。需要网络下载时建议由应用层或脚本先拉取文件。
+核心 `@tokenizer.from_pretrained` 是全后端离线解析：支持本地目录/文件，也可从已有
+HF Hub cache snapshot 解析（`$HUGGINGFACE_HUB_CACHE`、`$HF_HOME/hub`、
+`$HOME/.cache/huggingface/hub`）。在线下载由可选 `@hub` 包在 native/js 后端提供：
+它会下载 `tokenizer.json`、写入相同 cache 布局并复用核心 loader。native 请求使用接近
+HuggingFace/tokenizers 客户端的 headers，并支持通过
+`HubDownloadOptions::new(endpoint="https://hf-mirror.com")` 配置镜像。wasm/wasm-gc 可由
+宿主环境 fetch JSON 后调用 `@tokenizer.from_pretrained_downloaded`。
 `save_pretrained(dir)` 会写出 `dir/tokenizer.json`，保存后的目录可直接通过
 `from_pretrained(dir)` 重新加载。
 

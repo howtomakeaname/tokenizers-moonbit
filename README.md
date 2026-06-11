@@ -22,6 +22,9 @@ The project targets LLM, edge and browser use cases where the Rust
   tokenizers.
 - **Loads `tokenizer.json` directly.** No conversion step; use the same file as
   your Python or Transformers pipeline.
+- **Optional Hub download.** The core loader stays all-backend/offline, while the
+  `hub` package can download `tokenizer.json` on native/js and populate the same
+  HuggingFace-style cache layout.
 
 ## Supported
 
@@ -60,6 +63,15 @@ let tok = @tokenizer.Tokenizer::from_str(json_text)
 
 // Or load from a file (uses moonbitlang/x/fs, available on all backends):
 let tok = @tokenizer.from_file("tokenizer.json")
+
+// Native/js only: download from HuggingFace Hub through the optional hub package:
+let tok = @hub.from_pretrained("bert-base-uncased")
+
+// Use a HuggingFace-compatible mirror when needed:
+let tok = @hub.from_pretrained(
+  "bert-base-uncased",
+  options=@hub.HubDownloadOptions::new(endpoint="https://hf-mirror.com"),
+)
 
 // Encode:
 let enc = tok.encode("Hello world")

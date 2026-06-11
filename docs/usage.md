@@ -19,6 +19,39 @@ Both functions may raise `@types.TokenizerError` on malformed JSON or an
 unsupported component. Handle it with `try`/`catch` or propagate it with
 `raise`.
 
+### HuggingFace Hub
+
+The core `@tokenizer.from_pretrained` stays synchronous and works on all
+backends. It loads local files/directories or an already-populated HF Hub cache:
+
+```moonbit
+let tok = @tokenizer.from_pretrained("bert-base-uncased")
+```
+
+For native/js applications that want online download, use the optional `@hub`
+package. It downloads `tokenizer.json`, writes the standard HF-style cache, then
+delegates parsing back to the core tokenizer package:
+
+```moonbit
+let tok = @hub.from_pretrained("bert-base-uncased")
+
+let opts = @hub.HubDownloadOptions::new(
+  revision="main",
+  cache_dir=Some(".hf-cache"),
+  endpoint="https://hf-mirror.com", // optional mirror URL for mainland China
+  token=None, // or set HF_TOKEN in the environment
+)
+let tok2 = @hub.from_pretrained("org/model", options=opts)
+```
+
+The optional Hub downloader is supported on `native` and `js` via
+`moonbitlang/async/http`. Its native requests use a HuggingFace/tokenizers-like
+User-Agent plus standard `Accept`/`Authorization` headers; browser/JS builds rely
+on the runtime-supplied User-Agent because fetch forbids setting it manually. On
+wasm/wasm-gc, fetch JSON in the host application and call
+`@tokenizer.from_pretrained_downloaded(model_id, json_text, cache_dir=...)` or
+`Tokenizer::from_str` directly.
+
 ## Encoding
 
 ```moonbit

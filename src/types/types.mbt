@@ -55,7 +55,11 @@ pub fn Encoding::new(
     } else {
       Array::make(n, Some(0))
     },
-    word_ids: if word_ids.length() == n { word_ids.copy() } else { Array::make(n, None) },
+    word_ids: if word_ids.length() == n {
+      word_ids.copy()
+    } else {
+      Array::make(n, None)
+    },
     overflowing: overflowing.copy(),
   }
 }
@@ -84,12 +88,24 @@ pub fn Encoding::from_tokens(
     sequence_ids.push(Some(0))
     word_ids.push(Some(i))
   }
-  Encoding::new(ids, type_ids, values, offsets, special, attention, sequence_ids~, word_ids~)
+  Encoding::new(
+    ids,
+    type_ids,
+    values,
+    offsets,
+    special,
+    attention,
+    sequence_ids~,
+    word_ids~,
+  )
 }
 
 ///|
-pub fn Encoding::with_type_ids(self : Encoding, type_ids : Array[Int]) -> Encoding {
-  { ..self, type_ids: type_ids.copy(), }
+pub fn Encoding::with_type_ids(
+  self : Encoding,
+  type_ids : Array[Int],
+) -> Encoding {
+  { ..self, type_ids: type_ids.copy() }
 }
 
 ///|
@@ -97,7 +113,7 @@ pub fn Encoding::with_special_tokens_mask(
   self : Encoding,
   special_tokens_mask : Array[Int],
 ) -> Encoding {
-  { ..self, special_tokens_mask: special_tokens_mask.copy(), }
+  { ..self, special_tokens_mask: special_tokens_mask.copy() }
 }
 
 ///|
@@ -105,17 +121,23 @@ pub fn Encoding::with_attention_mask(
   self : Encoding,
   attention_mask : Array[Int],
 ) -> Encoding {
-  { ..self, attention_mask: attention_mask.copy(), }
+  { ..self, attention_mask: attention_mask.copy() }
 }
 
 ///|
-pub fn Encoding::with_word_ids(self : Encoding, word_ids : Array[Int?]) -> Encoding {
-  { ..self, word_ids: word_ids.copy(), }
+pub fn Encoding::with_word_ids(
+  self : Encoding,
+  word_ids : Array[Int?],
+) -> Encoding {
+  { ..self, word_ids: word_ids.copy() }
 }
 
 ///|
-pub fn Encoding::with_sequence_id(self : Encoding, sequence_id : Int) -> Encoding {
-  { ..self, sequence_ids: Array::make(self.ids.length(), Some(sequence_id)), }
+pub fn Encoding::with_sequence_id(
+  self : Encoding,
+  sequence_id : Int,
+) -> Encoding {
+  { ..self, sequence_ids: Array::make(self.ids.length(), Some(sequence_id)) }
 }
 
 ///|
@@ -123,12 +145,14 @@ pub fn Encoding::with_overflowing(
   self : Encoding,
   overflowing : Array[Encoding],
 ) -> Encoding {
-  { ..self, overflowing: overflowing.copy(), }
+  { ..self, overflowing: overflowing.copy() }
 }
 
 ///|
-pub fn Encoding::take_overflowing(self : Encoding) -> (Encoding, Array[Encoding]) {
-  ({ ..self, overflowing: [], }, self.overflowing.copy())
+pub fn Encoding::take_overflowing(
+  self : Encoding,
+) -> (Encoding, Array[Encoding]) {
+  ({ ..self, overflowing: [] }, self.overflowing.copy())
 }
 
 ///|
@@ -146,7 +170,7 @@ pub fn Encoding::truncate(
     return self
   }
   if max_len <= 0 {
-    return { ..encoding_slice(self, 0, 0), overflowing: [self], }
+    return { ..encoding_slice(self, 0, 0), overflowing: [self] }
   }
   let step = if max_len - stride > 0 { max_len - stride } else { max_len }
   let ranges : Array[(Int, Int)] = []
@@ -182,7 +206,7 @@ pub fn Encoding::truncate(
   for i in 1..<ranges.length() {
     overflow.push(encoding_slice(self, ranges[i].0, ranges[i].1))
   }
-  { ..main, overflowing: overflow, }
+  { ..main, overflowing: overflow }
 }
 
 ///|
@@ -196,14 +220,10 @@ pub fn Encoding::pad(
   pad_token? : String = "[PAD]",
   direction? : EncodingDirection = Right,
 ) -> Encoding {
-  let padded_overflow = self.overflowing.map(e => e.pad(
-    target_length,
-    pad_id~,
-    pad_type_id~,
-    pad_token~,
-    direction~,
-  ))
-  let base = { ..self, overflowing: padded_overflow, }
+  let padded_overflow = self.overflowing.map(e => {
+    e.pad(target_length, pad_id~, pad_type_id~, pad_token~, direction~)
+  })
+  let base = { ..self, overflowing: padded_overflow }
   let n = base.ids.length()
   if n >= target_length {
     return base
@@ -218,28 +238,30 @@ pub fn Encoding::pad(
   let pad_seq : Array[Int?] = Array::make(pad, None)
   let pad_words : Array[Int?] = Array::make(pad, None)
   match direction {
-    Right => {
-      ..base,
-      ids: concat_ints(base.ids, pad_ids),
-      type_ids: concat_ints(base.type_ids, pad_types),
-      tokens: concat_strings(base.tokens, pad_tokens),
-      offsets: concat_offsets(base.offsets, pad_offsets),
-      special_tokens_mask: concat_ints(base.special_tokens_mask, pad_special),
-      attention_mask: concat_ints(base.attention_mask, pad_attention),
-      sequence_ids: concat_opt_ints(base.sequence_ids, pad_seq),
-      word_ids: concat_opt_ints(base.word_ids, pad_words),
-    }
-    Left => {
-      ..base,
-      ids: concat_ints(pad_ids, base.ids),
-      type_ids: concat_ints(pad_types, base.type_ids),
-      tokens: concat_strings(pad_tokens, base.tokens),
-      offsets: concat_offsets(pad_offsets, base.offsets),
-      special_tokens_mask: concat_ints(pad_special, base.special_tokens_mask),
-      attention_mask: concat_ints(pad_attention, base.attention_mask),
-      sequence_ids: concat_opt_ints(pad_seq, base.sequence_ids),
-      word_ids: concat_opt_ints(pad_words, base.word_ids),
-    }
+    Right =>
+      {
+        ..base,
+        ids: concat_ints(base.ids, pad_ids),
+        type_ids: concat_ints(base.type_ids, pad_types),
+        tokens: concat_strings(base.tokens, pad_tokens),
+        offsets: concat_offsets(base.offsets, pad_offsets),
+        special_tokens_mask: concat_ints(base.special_tokens_mask, pad_special),
+        attention_mask: concat_ints(base.attention_mask, pad_attention),
+        sequence_ids: concat_opt_ints(base.sequence_ids, pad_seq),
+        word_ids: concat_opt_ints(base.word_ids, pad_words),
+      }
+    Left =>
+      {
+        ..base,
+        ids: concat_ints(pad_ids, base.ids),
+        type_ids: concat_ints(pad_types, base.type_ids),
+        tokens: concat_strings(pad_tokens, base.tokens),
+        offsets: concat_offsets(pad_offsets, base.offsets),
+        special_tokens_mask: concat_ints(pad_special, base.special_tokens_mask),
+        attention_mask: concat_ints(pad_attention, base.attention_mask),
+        sequence_ids: concat_opt_ints(pad_seq, base.sequence_ids),
+        word_ids: concat_opt_ints(pad_words, base.word_ids),
+      }
   }
 }
 
@@ -262,7 +284,11 @@ pub fn Encoding::merge_with(
   growing_offsets? : Bool = false,
 ) -> Encoding {
   let starting_offset = if growing_offsets {
-    if self.offsets.length() > 0 { self.offsets[self.offsets.length() - 1].1 } else { 0 }
+    if self.offsets.length() > 0 {
+      self.offsets[self.offsets.length() - 1].1
+    } else {
+      0
+    }
   } else {
     0
   }
@@ -285,7 +311,10 @@ pub fn Encoding::merge_with(
     type_ids: concat_ints(self.type_ids, pair.type_ids),
     tokens: concat_strings(self.tokens, pair.tokens),
     offsets: concat_offsets(self.offsets, shifted_offsets),
-    special_tokens_mask: concat_ints(self.special_tokens_mask, pair.special_tokens_mask),
+    special_tokens_mask: concat_ints(
+      self.special_tokens_mask,
+      pair.special_tokens_mask,
+    ),
     attention_mask: concat_ints(self.attention_mask, pair.attention_mask),
     sequence_ids: concat_opt_ints(self.sequence_ids, pair.sequence_ids),
     word_ids: concat_opt_ints(self.word_ids, pair.word_ids),

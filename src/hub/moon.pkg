@@ -1,0 +1,13 @@
+import {
+  "tokenizers-moonbit/tokenizer",
+  "tokenizers-moonbit/types",
+  "moonbitlang/async/http",
+  "moonbitlang/x/sys",
+}
+
+import {
+  "moonbitlang/async",
+  "moonbitlang/core/test",
+} for "test"
+
+supported_targets = "+js+native"

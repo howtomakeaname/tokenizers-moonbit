@@ -364,7 +364,8 @@ pub fn Tokenizer::post_process(
   add_special_tokens? : Bool = true,
 ) -> @types.Encoding {
   let is_pair = pair is Some(_)
-  let (encoding, pair) = match self.truncation_for_raw(pair=is_pair, add_special_tokens~) {
+  let (encoding, pair) = match
+    self.truncation_for_raw(pair=is_pair, add_special_tokens~) {
     Some(tp) => truncate_pair_raw(encoding, pair, tp)
     None => (encoding, pair)
   }
@@ -570,7 +571,11 @@ fn write_json_string(sb : StringBuilder, s : String) -> Unit {
 
 ///|
 fn bool_json(v : Bool) -> String {
-  if v { "true" } else { "false" }
+  if v {
+    "true"
+  } else {
+    "false"
+  }
 }
 
 ///|

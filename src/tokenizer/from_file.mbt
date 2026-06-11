@@ -74,8 +74,9 @@ pub fn Tokenizer::save_pretrained(
 /// Load a tokenizer from a local HF-style directory containing `tokenizer.json`,
 /// directly from a tokenizer JSON file path, or from an existing HuggingFace Hub
 /// cache snapshot when `path` is a model id such as `bert-base-uncased` or
-/// `org/model`. Network/Hub fetching is kept outside the core library so all
-/// MoonBit backends stay deterministic.
+/// `org/model`. Network/Hub fetching lives in the optional `hub` package so the
+/// core tokenizer package remains deterministic and available on all MoonBit
+/// backends.
 pub fn from_pretrained(path : String) -> Tokenizer raise @types.TokenizerError {
   Tokenizer::from_pretrained(path)
 }
@@ -112,6 +113,100 @@ pub fn from_pretrained_cached(
   cache_dir? : String? = None,
 ) -> Tokenizer raise @types.TokenizerError {
   Tokenizer::from_pretrained_cached(model_id, revision~, cache_dir~)
+}
+
+///|
+/// Store downloaded `tokenizer.json` content into an HF-style Hub cache snapshot
+/// and load it immediately. This is the bridge used by network-capable callers
+/// such as the optional `hub` package: the core package only handles cache
+/// layout, serialization and parsing, while the caller owns transport policy.
+///
+/// If `resolved_revision` is provided (for example from HuggingFace's
+/// `x-repo-commit` response header), `refs/<revision>` points to that resolved
+/// snapshot. Otherwise the requested `revision` itself is used as the snapshot
+/// directory, which keeps custom endpoints and tests deterministic.
+pub fn Tokenizer::from_pretrained_downloaded(
+  model_id : String,
+  tokenizer_json : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+) -> Tokenizer raise @types.TokenizerError {
+  let path = cache_pretrained_tokenizer_json(
+    model_id,
+    tokenizer_json,
+    revision~,
+    resolved_revision~,
+    cache_dir~,
+  )
+  insert_pretrained_source_cache(path, tokenizer_json)
+  Tokenizer::from_str(tokenizer_json)
+}
+
+///|
+pub fn from_pretrained_downloaded(
+  model_id : String,
+  tokenizer_json : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+) -> Tokenizer raise @types.TokenizerError {
+  Tokenizer::from_pretrained_downloaded(
+    model_id,
+    tokenizer_json,
+    revision~,
+    resolved_revision~,
+    cache_dir~,
+  )
+}
+
+///|
+/// Write downloaded tokenizer JSON into the same local cache layout used by the
+/// HuggingFace Hub client: `models--org--name/snapshots/<rev>/tokenizer.json`
+/// plus `refs/<revision>` when a symbolic revision is resolved.
+pub fn cache_pretrained_tokenizer_json(
+  model_id : String,
+  tokenizer_json : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+) -> String raise @types.TokenizerError {
+  let root = match cache_dir {
+    Some(c) => c
+    None =>
+      match default_hub_cache_dir() {
+        Some(c) => c
+        None =>
+          raise @types.ParseError(
+            "from_pretrained download needs cache_dir or HOME/HF_HOME/HUGGINGFACE_HUB_CACHE",
+          )
+      }
+  }
+  let snapshot = match resolved_revision {
+    Some(r) => if r.is_empty() { revision } else { r }
+    None => revision
+  }
+  let repo = root + "/" + hub_model_dir(model_id)
+  let snapshot_dir = repo + "/snapshots/" + snapshot
+  ensure_dir(root)
+  ensure_dir(repo)
+  ensure_dir(repo + "/snapshots")
+  ensure_dir(snapshot_dir)
+  let refs_dir = repo + "/refs"
+  ensure_dir(refs_dir)
+  let ref_path = refs_dir + "/" + revision
+  ensure_parent_dir(ref_path)
+  @fs.write_string_to_file(ref_path, snapshot) catch {
+    _ => ()
+  }
+  let tokenizer_path = snapshot_dir + "/tokenizer.json"
+  @fs.write_string_to_file(tokenizer_path, tokenizer_json) catch {
+    _ =>
+      raise @types.ParseError(
+        "cannot write downloaded tokenizer cache: \{tokenizer_path}",
+      )
+  }
+  tokenizer_path
 }
 
 ///|
@@ -230,6 +325,49 @@ fn trim_ascii_ws(s : String) -> String {
     sb.write_char(chars[i])
   }
   sb.to_string()
+}
+
+///|
+fn ensure_dir(path : String) -> Unit raise @types.TokenizerError {
+  if path.is_empty() || @fs.path_exists(path) {
+    return
+  }
+  ensure_parent_dir(path)
+  @fs.create_dir(path) catch {
+    _ =>
+      if !@fs.path_exists(path) {
+        raise @types.ParseError("cannot create directory: \{path}")
+      }
+  }
+}
+
+///|
+fn ensure_parent_dir(path : String) -> Unit raise @types.TokenizerError {
+  match parent_dir(path) {
+    Some(parent) => ensure_dir(parent)
+    None => ()
+  }
+}
+
+///|
+fn parent_dir(path : String) -> String? {
+  let chars = path.to_array()
+  let mut i = chars.length() - 1
+  while i >= 0 {
+    if chars[i] == '/' {
+      if i == 0 {
+        return Some("/")
+      }
+      let sb = StringBuilder::new()
+      for j in 0..<i {
+        sb.write_char(chars[j])
+      }
+      let p = sb.to_string()
+      return if p.is_empty() { None } else { Some(p) }
+    }
+    i = i - 1
+  }
+  None
 }
 
 ///|

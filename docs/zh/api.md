@@ -13,6 +13,10 @@ fn from_pretrained(path_or_model_id : String) -> Tokenizer raise TokenizerError
 fn from_pretrained_cached(
   model_id : String, revision? : String = "main", cache_dir? : String? = None,
 ) -> Tokenizer raise TokenizerError
+fn from_pretrained_downloaded(
+  model_id : String, tokenizer_json : String, revision? : String = "main",
+  resolved_revision? : String? = None, cache_dir? : String? = None,
+) -> Tokenizer raise TokenizerError
 fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise TokenizerError
 ```
 
@@ -25,12 +29,46 @@ fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise To
   tokenizer payload 时避免重复 JSON 解析，同时每次仍返回全新的 tokenizer 状态。
 - `from_pretrained_cached` 可显式传入本地 Hub cache 根目录和 revision，对齐
   HF `local_files_only=True` 的离线使用方式。
+- `from_pretrained_downloaded` 用于网络调用方桥接：传入已下载的 `tokenizer.json`
+  文本后写入标准 HF Hub cache 布局并立即解析。可选 `@hub` 包基于它在 native/js
+  后端提供异步 HTTP 下载；wasm 场景可由宿主 fetch 后调用该函数。
 - `save_pretrained(dir)` 创建/复用 HF 风格目录并写出 `dir/tokenizer.json`，返回
   具体 JSON 路径，便于日志记录或后续 `from_file` 加载。
 - 程序化构造的 tokenizer 会序列化已支持 typed serializer 的 normalizer、
   pre-tokenizer、model、post-processor、decoder、truncation、padding 与 added token
   状态；从 HF JSON 加载的 tokenizer 在 builder 修改 typed state 前仍保持原始 JSON
   原样往返。
+
+### 可选 Hub 下载器（`@hub`，native/js）
+
+```moonbit
+fn HubDownloadOptions::new(
+  endpoint? : String = "https://huggingface.co",
+  revision? : String = "main",
+  cache_dir? : String? = None,
+  token? : String? = None,
+  local_files_only? : Bool = false,
+  max_redirects? : Int = 5,
+  user_agent? : String? = Some("unknown/None; hf_hub/...; python/...; tokenizers/..."),
+) -> HubDownloadOptions
+
+async fn @hub.from_pretrained(
+  model_id : String, options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> Tokenizer raise TokenizerError
+```
+
+`@hub.from_pretrained` 会先尝试本地文件/cache，未命中时通过
+`moonbitlang/async/http` 下载 `/<model>/resolve/<revision>/tokenizer.json`，跟随
+redirect，写入 HF 风格 cache 后复用核心 loader。支持自定义 endpoint/mirror、显式
+cache 根目录、`HF_TOKEN` 或显式 bearer token、HF 风格请求 headers，以及
+`local_files_only=true`。中国大陆用户可显式配置镜像：
+
+```moonbit
+let tok = @hub.from_pretrained(
+  "bert-base-uncased",
+  options=@hub.HubDownloadOptions::new(endpoint="https://hf-mirror.com"),
+)
+```
 
 ## 编码与解码
 

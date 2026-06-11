@@ -264,7 +264,10 @@ fn AddedVocabulary::get_added_tokens_decoder(
 }
 
 ///|
-fn AddedVocabulary::is_special_token(self : AddedVocabulary, token : String) -> Bool {
+fn AddedVocabulary::is_special_token(
+  self : AddedVocabulary,
+  token : String,
+) -> Bool {
   match self.by_content.get(token) {
     Some(info) => info.special
     None => false

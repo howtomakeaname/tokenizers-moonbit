@@ -17,6 +17,8 @@ MoonBit 版 HuggingFace `tokenizers`。直接加载标准 `tokenizer.json`，在
   token id 级对拍。
 - **直接复用 `tokenizer.json`。** 不需要转换格式，可复用 Python/Transformers
   流水线中的 tokenizer 文件。
+- **可选 Hub 下载。** 核心 loader 保持全后端/离线可用；`hub` 包可在 native/js
+  后端在线下载 `tokenizer.json`，并写入 HuggingFace 风格 cache。
 
 ## 支持范围
 
@@ -49,6 +51,8 @@ GLM-4.5、Granite-4、Qwen3-Coder、Qwen3-VL、BGE-M3、multilingual-E5。
 ```moonbit
 let tok = @tokenizer.Tokenizer::from_str(json_text)
 // 或：let tok = @tokenizer.from_file("tokenizer.json")
+// native/js 可选：let tok = @hub.from_pretrained("bert-base-uncased")
+// 镜像：let tok = @hub.from_pretrained("bert-base-uncased", options=@hub.HubDownloadOptions::new(endpoint="https://hf-mirror.com"))
 
 let enc = tok.encode("Hello world")
 println(enc.ids)
