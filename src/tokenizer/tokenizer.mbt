@@ -363,20 +363,30 @@ pub fn Tokenizer::post_process(
   pair? : @types.Encoding? = None,
   add_special_tokens? : Bool = true,
 ) -> @types.Encoding {
-  if add_special_tokens {
+  let is_pair = pair is Some(_)
+  let (encoding, pair) = match self.truncation_for_raw(pair=is_pair, add_special_tokens~) {
+    Some(tp) => truncate_pair_raw(encoding, pair, tp)
+    None => (encoding, pair)
+  }
+  let processed = if add_special_tokens {
     match self.post_processor {
       Some(pp) => pp.process(encoding, pair)
-      None =>
-        match pair {
-          Some(b) => concat_encodings(encoding, b)
-          None => encoding
-        }
+      None => default_post_process(encoding, pair)
     }
   } else {
-    match pair {
-      Some(b) => concat_encodings(encoding, b)
-      None => encoding
-    }
+    default_post_process(encoding, pair)
+  }
+  self.finalize_padding(processed)
+}
+
+///|
+fn default_post_process(
+  encoding : @types.Encoding,
+  pair : @types.Encoding?,
+) -> @types.Encoding {
+  match pair {
+    Some(b) => concat_encodings(encoding, b)
+    None => encoding
   }
 }
 

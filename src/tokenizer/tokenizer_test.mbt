@@ -228,6 +228,71 @@ test "post_process applies or skips configured post processor" {
 }
 
 ///|
+test "post_process applies truncation and fixed padding like HF" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"a":0,"b":1,"c":2,"d":3,"[SEP]":4,"[CLS]":5,"[PAD]":6,"[UNK]":7},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","sep":["[SEP]",4],"cls":["[CLS]",5]},
+    #| "truncation":{"max_length":5,"strategy":"LongestFirst","stride":0,"direction":"Right"},
+    #| "padding":{"strategy":{"Fixed":7},"direction":"Right","pad_id":6,"pad_type_id":0,"pad_token":"[PAD]"}}
+  let tok = Tokenizer::from_str(json)
+  let raw = tok.encode("a b c d", add_special_tokens=false)
+  let processed = tok.post_process(raw, add_special_tokens=true)
+  @test.assert_eq(processed.tokens, [
+    "[CLS]", "a", "b", "c", "[SEP]", "[PAD]", "[PAD]",
+  ])
+  @test.assert_eq(processed.attention_mask, [1, 1, 1, 1, 1, 0, 0])
+}
+
+///|
+test "Encoding public manipulation APIs mirror HF style" {
+  let base = @types.Encoding::from_tokens([
+    { id: 1, value: "he", offsets: (0, 2) },
+    { id: 2, value: "llo", offsets: (2, 5) },
+    { id: 3, value: "!", offsets: (5, 6) },
+  ])
+  @test.assert_eq(base.ids, [1, 2, 3])
+  @test.assert_eq(base.word_ids(), [Some(0), Some(1), Some(2)])
+  let typed = base.with_type_ids([7, 7, 7]).with_sequence_id(2)
+  @test.assert_eq(typed.type_ids, [7, 7, 7])
+  @test.assert_eq(typed.sequence_ids(), [Some(2), Some(2), Some(2)])
+  let truncated = typed.truncate(2, stride=1, direction=@types.Right)
+  @test.assert_eq(truncated.ids, [1, 2])
+  @test.assert_eq(truncated.get_overflowing().length(), 1)
+  @test.assert_eq(truncated.get_overflowing()[0].ids, [2, 3])
+  let padded = truncated.pad(4, pad_id=0, pad_type_id=9, pad_token="[PAD]", direction=@types.Left)
+  @test.assert_eq(padded.ids, [0, 0, 1, 2])
+  @test.assert_eq(padded.attention_mask, [0, 0, 1, 1])
+  let merged = @types.Encoding::merge([
+    @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2) }]),
+    @types.Encoding::from_tokens([{ id: 11, value: "cd", offsets: (0, 2) }]),
+  ], growing_offsets=true)
+  @test.assert_eq(merged.ids, [10, 11])
+  @test.assert_eq(merged.offsets, [(0, 2), (2, 4)])
+  let (without_overflow, overflow) = truncated.take_overflowing()
+  @test.assert_eq(without_overflow.get_overflowing().length(), 0)
+  @test.assert_eq(overflow.length(), 1)
+}
+
+///|
+test "template string constructor supports multi-id special token counting" {
+  let specials : Map[String, @processor.SpecialToken] = {}
+  specials["<pair>"] = @processor.SpecialToken::new(
+    "<pair>",
+    [8, 9],
+    ["<p0>", "<p1>"],
+  )
+  let pp = @processor.PostProcessor::template_from_strings(
+    "$A <pair>",
+    "$A <pair> $B:1",
+    specials,
+  )
+  @test.assert_eq(pp.added_tokens(), 2)
+  @test.assert_eq(pp.added_tokens(pair=true), 2)
+}
+
+///|
 test "programmatic tokenizer serializes typed components for roundtrip" {
   let model = @model.Model::train_wordlevel_from_tokens(
     [["hello", "moon", "[CLS]", "[SEP]", "[PAD]"]],

@@ -282,6 +282,37 @@ def hf_encoding_accessors_us() -> float:
     return timed_us(read_once, 20_000)
 
 
+def hf_encoding_manipulation_us() -> float:
+    vocab = {
+        "the": 0,
+        "quick": 1,
+        "brown": 2,
+        "fox": 3,
+        "jumps": 4,
+        "over": 5,
+        "moonbit": 6,
+        "tokenizers": 7,
+        "[UNK]": 8,
+        "[PAD]": 9,
+    }
+    tok = Tokenizer(hf_models.WordLevel(vocab, unk_token="[UNK]"))
+    tok.pre_tokenizer = hf_pre_tokenizers.WhitespaceSplit()
+    text = "the quick brown fox jumps over moonbit tokenizers"
+
+    def manipulate_once() -> int:
+        left = tok.encode(text, add_special_tokens=False)
+        left.truncate(6, stride=2, direction="right")
+        left.set_sequence_id(0)
+        left.pad(10, pad_id=9, pad_type_id=0, pad_token="[PAD]", direction="right")
+        right = tok.encode(text, add_special_tokens=False)
+        right.truncate(4, stride=1, direction="left")
+        right.set_sequence_id(1)
+        merged = left.merge([left, right], growing_offsets=True)
+        return len(merged.ids) + len(merged.overflowing)
+
+    return timed_us(manipulate_once, 5_000)
+
+
 def hf_tokenizer_builder_add_tokens_us() -> float:
     vocab = {"hello": 0, "moon": 1, "world": 2, "[UNK]": 3}
 
@@ -840,6 +871,9 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
     encoding_accessors_key = "encoding-accessors-mixed"
     if encoding_accessors_key in moon:
         rows.append(Row(encoding_accessors_key, moon[encoding_accessors_key], hf_encoding_accessors_us()))
+    encoding_manipulation_key = "encoding-manipulation-mixed"
+    if encoding_manipulation_key in moon:
+        rows.append(Row(encoding_manipulation_key, moon[encoding_manipulation_key], hf_encoding_manipulation_us()))
     builder_add_tokens_key = "tokenizer-builder-add-tokens-mixed"
     if builder_add_tokens_key in moon:
         rows.append(

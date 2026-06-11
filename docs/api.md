@@ -146,6 +146,10 @@ fn PostProcessor::roberta(
   sep : (String, Int), cls : (String, Int),
   trim_offsets? : Bool = true, add_prefix_space? : Bool = true,
 ) -> PostProcessor
+fn SpecialToken::new(id : String, ids : Array[Int], tokens : Array[String]) -> SpecialToken
+fn PostProcessor::template_from_strings(
+  single : String, pair : String, special_tokens : Map[String, SpecialToken],
+) -> PostProcessor raise TokenizerError
 ```
 
 Builders return a tokenizer and can be chained:
@@ -153,6 +157,9 @@ Builders return a tokenizer and can be chained:
 the cached source JSON so constructed tokenizers serialize from typed state where
 supported. Decoder and post-processor builders mirror common HF component
 construction in tests or synthetic pipelines.
+`template_from_strings` accepts the same `$A` / `$B` / `$0:1` HF template DSL
+used in tokenizer.json files, and `SpecialToken::new` supports multi-id special
+tokens.
 
 `set_encode_special_tokens(true)` mirrors HF's `encode_special_tokens` switch:
 special tokens that appear in input text stay on the ordinary model path instead
@@ -246,11 +253,35 @@ fn Encoding::word_ids(self : Encoding) -> Array[Int?]
 fn Encoding::len(self : Encoding) -> Int
 fn Encoding::is_empty(self : Encoding) -> Bool
 fn Encoding::n_sequences(self : Encoding) -> Int
+
+pub(all) enum EncodingDirection { Left; Right }
+fn Encoding::new(
+  ids : Array[Int], type_ids : Array[Int], tokens : Array[String],
+  offsets : Array[(Int, Int)], special_tokens_mask : Array[Int], attention_mask : Array[Int],
+  sequence_ids? : Array[Int?] = [], word_ids? : Array[Int?] = [], overflowing? : Array[Encoding] = [],
+) -> Encoding
+fn Encoding::from_tokens(tokens : Array[Token], type_id? : Int = 0) -> Encoding
+fn Encoding::with_type_ids(self : Encoding, type_ids : Array[Int]) -> Encoding
+fn Encoding::with_special_tokens_mask(self : Encoding, special_tokens_mask : Array[Int]) -> Encoding
+fn Encoding::with_attention_mask(self : Encoding, attention_mask : Array[Int]) -> Encoding
+fn Encoding::with_word_ids(self : Encoding, word_ids : Array[Int?]) -> Encoding
+fn Encoding::with_sequence_id(self : Encoding, sequence_id : Int) -> Encoding
+fn Encoding::with_overflowing(self : Encoding, overflowing : Array[Encoding]) -> Encoding
+fn Encoding::take_overflowing(self : Encoding) -> (Encoding, Array[Encoding])
+fn Encoding::truncate(self : Encoding, max_len : Int, stride? : Int = 0, direction? : EncodingDirection = Right) -> Encoding
+fn Encoding::pad(
+  self : Encoding, target_length : Int, pad_id? : Int = 0, pad_type_id? : Int = 0,
+  pad_token? : String = "[PAD]", direction? : EncodingDirection = Right,
+) -> Encoding
+fn Encoding::merge(encodings : Array[Encoding], growing_offsets? : Bool = false) -> Encoding
+fn Encoding::merge_with(self : Encoding, pair : Encoding, growing_offsets? : Bool = false) -> Encoding
 ```
 
 The `get_*` accessors return copied arrays, mirroring HF `Encoding` accessors
 while keeping the encoded result immutable from caller code. `len`, `is_empty`
-and `n_sequences` cover HF's lightweight encoding metadata helpers.
+and `n_sequences` cover HF's lightweight encoding metadata helpers. Public
+manipulation helpers mirror HF's `Encoding` API but return updated values instead
+of mutating in place.
 
 ### TruncationParams (`@tokenizer`)
 

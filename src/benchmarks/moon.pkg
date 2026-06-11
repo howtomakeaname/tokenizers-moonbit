@@ -5,6 +5,7 @@ import {
   "tokenizers-moonbit/normalizer",
   "tokenizers-moonbit/model",
   "tokenizers-moonbit/processor",
+  "tokenizers-moonbit/types",
   "moonbitlang/x/fs",
   "moonbitlang/core/bench",
   "moonbitlang/core/json",

@@ -20,6 +20,18 @@ pub struct SpecialToken {
 } derive(Debug, Eq)
 
 ///|
+/// Programmatic constructor for a TemplateProcessing special token. HF supports
+/// special tokens that expand to more than one id/token; keep both arrays and
+/// let processors expand them during post-processing.
+pub fn SpecialToken::new(
+  id : String,
+  ids : Array[Int],
+  tokens : Array[String],
+) -> SpecialToken {
+  { id, ids: ids.copy(), tokens: tokens.copy() }
+}
+
+///|
 pub enum PostProcessor {
   TemplateProcessing(
     single~ : Array[Piece],
@@ -66,6 +78,21 @@ pub fn PostProcessor::template(
   special_tokens : Map[String, SpecialToken],
 ) -> PostProcessor {
   TemplateProcessing(single~, pair~, special_tokens~)
+}
+
+///|
+/// Programmatic constructor that parses HF TemplateProcessing DSL strings such
+/// as `"[CLS] $A [SEP]"` and `"[CLS]:0 $A:0 [SEP]:0 $B:1 [SEP]:1"`.
+pub fn PostProcessor::template_from_strings(
+  single : String,
+  pair : String,
+  special_tokens : Map[String, SpecialToken],
+) -> PostProcessor raise @types.TokenizerError {
+  TemplateProcessing(
+    single=parse_template_string(single),
+    pair=parse_template_string(pair),
+    special_tokens~,
+  )
 }
 
 ///|
@@ -298,8 +325,8 @@ pub fn PostProcessor::added_tokens(
   pair? : Bool = false,
 ) -> Int {
   match self {
-    TemplateProcessing(single~, pair=pair_template, ..) =>
-      count_specials(if pair { pair_template } else { single })
+    TemplateProcessing(single~, pair=pair_template, special_tokens~) =>
+      count_specials(if pair { pair_template } else { single }, special_tokens)
     BertProcessing(..) => if pair { 3 } else { 2 }
     RobertaProcessing(..) => if pair { 4 } else { 2 }
     ByteLevel(..) => 0
@@ -314,11 +341,18 @@ pub fn PostProcessor::added_tokens(
 }
 
 ///|
-fn count_specials(pieces : Array[Piece]) -> Int {
+fn count_specials(
+  pieces : Array[Piece],
+  special_tokens : Map[String, SpecialToken],
+) -> Int {
   let mut n = 0
   for p in pieces {
     match p {
-      SpecialTokenRef(..) => n = n + 1
+      SpecialTokenRef(id~, ..) =>
+        match special_tokens.get(id) {
+          Some(st) => n = n + st.ids.length()
+          None => n = n + 1
+        }
       SequenceRef(..) => ()
     }
   }

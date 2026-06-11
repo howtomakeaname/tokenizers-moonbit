@@ -21,6 +21,279 @@ pub(all) struct Encoding {
 } derive(Debug, Eq)
 
 ///|
+/// Direction used by HF-style public Encoding manipulation helpers.
+pub(all) enum EncodingDirection {
+  Left
+  Right
+} derive(Debug, Eq)
+
+///|
+/// Build an Encoding from its parallel arrays. Optional metadata arrays default
+/// to HF-compatible values (`sequence_ids`/`word_ids` all `Some(0)`/`None`, no
+/// overflowing windows) when omitted.
+pub fn Encoding::new(
+  ids : Array[Int],
+  type_ids : Array[Int],
+  tokens : Array[String],
+  offsets : Array[(Int, Int)],
+  special_tokens_mask : Array[Int],
+  attention_mask : Array[Int],
+  sequence_ids? : Array[Int?] = [],
+  word_ids? : Array[Int?] = [],
+  overflowing? : Array[Encoding] = [],
+) -> Encoding {
+  let n = ids.length()
+  {
+    ids: ids.copy(),
+    type_ids: type_ids.copy(),
+    tokens: tokens.copy(),
+    offsets: offsets.copy(),
+    special_tokens_mask: special_tokens_mask.copy(),
+    attention_mask: attention_mask.copy(),
+    sequence_ids: if sequence_ids.length() == n {
+      sequence_ids.copy()
+    } else {
+      Array::make(n, Some(0))
+    },
+    word_ids: if word_ids.length() == n { word_ids.copy() } else { Array::make(n, None) },
+    overflowing: overflowing.copy(),
+  }
+}
+
+///|
+/// Build an Encoding from model tokens, mirroring HF's `Encoding::from_tokens`.
+pub fn Encoding::from_tokens(
+  tokens : Array[Token],
+  type_id? : Int = 0,
+) -> Encoding {
+  let ids : Array[Int] = []
+  let type_ids : Array[Int] = []
+  let values : Array[String] = []
+  let offsets : Array[(Int, Int)] = []
+  let special : Array[Int] = []
+  let attention : Array[Int] = []
+  let sequence_ids : Array[Int?] = []
+  let word_ids : Array[Int?] = []
+  for i, t in tokens {
+    ids.push(t.id)
+    type_ids.push(type_id)
+    values.push(t.value)
+    offsets.push(t.offsets)
+    special.push(0)
+    attention.push(1)
+    sequence_ids.push(Some(0))
+    word_ids.push(Some(i))
+  }
+  Encoding::new(ids, type_ids, values, offsets, special, attention, sequence_ids~, word_ids~)
+}
+
+///|
+pub fn Encoding::with_type_ids(self : Encoding, type_ids : Array[Int]) -> Encoding {
+  { ..self, type_ids: type_ids.copy(), }
+}
+
+///|
+pub fn Encoding::with_special_tokens_mask(
+  self : Encoding,
+  special_tokens_mask : Array[Int],
+) -> Encoding {
+  { ..self, special_tokens_mask: special_tokens_mask.copy(), }
+}
+
+///|
+pub fn Encoding::with_attention_mask(
+  self : Encoding,
+  attention_mask : Array[Int],
+) -> Encoding {
+  { ..self, attention_mask: attention_mask.copy(), }
+}
+
+///|
+pub fn Encoding::with_word_ids(self : Encoding, word_ids : Array[Int?]) -> Encoding {
+  { ..self, word_ids: word_ids.copy(), }
+}
+
+///|
+pub fn Encoding::with_sequence_id(self : Encoding, sequence_id : Int) -> Encoding {
+  { ..self, sequence_ids: Array::make(self.ids.length(), Some(sequence_id)), }
+}
+
+///|
+pub fn Encoding::with_overflowing(
+  self : Encoding,
+  overflowing : Array[Encoding],
+) -> Encoding {
+  { ..self, overflowing: overflowing.copy(), }
+}
+
+///|
+pub fn Encoding::take_overflowing(self : Encoding) -> (Encoding, Array[Encoding]) {
+  ({ ..self, overflowing: [], }, self.overflowing.copy())
+}
+
+///|
+/// Truncate this encoding and keep overflow windows, matching HF's public
+/// `Encoding.truncate(max_len, stride, direction)` shape. MoonBit returns the
+/// updated value instead of mutating in place.
+pub fn Encoding::truncate(
+  self : Encoding,
+  max_len : Int,
+  stride? : Int = 0,
+  direction? : EncodingDirection = Right,
+) -> Encoding {
+  let n = self.ids.length()
+  if max_len >= n {
+    return self
+  }
+  if max_len <= 0 {
+    return { ..encoding_slice(self, 0, 0), overflowing: [self], }
+  }
+  let step = if max_len - stride > 0 { max_len - stride } else { max_len }
+  let ranges : Array[(Int, Int)] = []
+  match direction {
+    Right => {
+      let mut start = 0
+      while start < n {
+        let stop = if start + max_len < n { start + max_len } else { n }
+        ranges.push((start, stop))
+        if stop == n {
+          break
+        }
+        start = start + step
+      }
+    }
+    Left => {
+      let mut stop = n
+      while stop > 0 {
+        let start = if stop > max_len { stop - max_len } else { 0 }
+        ranges.push((start, stop))
+        if start == 0 {
+          break
+        }
+        stop = if stop > step { stop - step } else { 0 }
+      }
+    }
+  }
+  if ranges.length() == 0 {
+    return encoding_slice(self, 0, 0)
+  }
+  let main = encoding_slice(self, ranges[0].0, ranges[0].1)
+  let overflow : Array[Encoding] = []
+  for i in 1..<ranges.length() {
+    overflow.push(encoding_slice(self, ranges[i].0, ranges[i].1))
+  }
+  { ..main, overflowing: overflow, }
+}
+
+///|
+/// Pad this encoding to `target_length`; overflow windows are padded too. This
+/// mirrors HF's public Encoding padding API but returns a new value.
+pub fn Encoding::pad(
+  self : Encoding,
+  target_length : Int,
+  pad_id? : Int = 0,
+  pad_type_id? : Int = 0,
+  pad_token? : String = "[PAD]",
+  direction? : EncodingDirection = Right,
+) -> Encoding {
+  let padded_overflow = self.overflowing.map(e => e.pad(
+    target_length,
+    pad_id~,
+    pad_type_id~,
+    pad_token~,
+    direction~,
+  ))
+  let base = { ..self, overflowing: padded_overflow, }
+  let n = base.ids.length()
+  if n >= target_length {
+    return base
+  }
+  let pad = target_length - n
+  let pad_ids = Array::make(pad, pad_id)
+  let pad_types = Array::make(pad, pad_type_id)
+  let pad_tokens = Array::make(pad, pad_token)
+  let pad_offsets : Array[(Int, Int)] = Array::make(pad, (0, 0))
+  let pad_special = Array::make(pad, 1)
+  let pad_attention = Array::make(pad, 0)
+  let pad_seq : Array[Int?] = Array::make(pad, None)
+  let pad_words : Array[Int?] = Array::make(pad, None)
+  match direction {
+    Right => {
+      ..base,
+      ids: concat_ints(base.ids, pad_ids),
+      type_ids: concat_ints(base.type_ids, pad_types),
+      tokens: concat_strings(base.tokens, pad_tokens),
+      offsets: concat_offsets(base.offsets, pad_offsets),
+      special_tokens_mask: concat_ints(base.special_tokens_mask, pad_special),
+      attention_mask: concat_ints(base.attention_mask, pad_attention),
+      sequence_ids: concat_opt_ints(base.sequence_ids, pad_seq),
+      word_ids: concat_opt_ints(base.word_ids, pad_words),
+    }
+    Left => {
+      ..base,
+      ids: concat_ints(pad_ids, base.ids),
+      type_ids: concat_ints(pad_types, base.type_ids),
+      tokens: concat_strings(pad_tokens, base.tokens),
+      offsets: concat_offsets(pad_offsets, base.offsets),
+      special_tokens_mask: concat_ints(pad_special, base.special_tokens_mask),
+      attention_mask: concat_ints(pad_attention, base.attention_mask),
+      sequence_ids: concat_opt_ints(pad_seq, base.sequence_ids),
+      word_ids: concat_opt_ints(pad_words, base.word_ids),
+    }
+  }
+}
+
+///|
+pub fn Encoding::merge(
+  encodings : Array[Encoding],
+  growing_offsets? : Bool = false,
+) -> Encoding {
+  let mut out = Encoding::empty()
+  for enc in encodings {
+    out = out.merge_with(enc, growing_offsets~)
+  }
+  out
+}
+
+///|
+pub fn Encoding::merge_with(
+  self : Encoding,
+  pair : Encoding,
+  growing_offsets? : Bool = false,
+) -> Encoding {
+  let starting_offset = if growing_offsets {
+    if self.offsets.length() > 0 { self.offsets[self.offsets.length() - 1].1 } else { 0 }
+  } else {
+    0
+  }
+  let shifted_offsets : Array[(Int, Int)] = []
+  for off in pair.offsets {
+    shifted_offsets.push((off.0 + starting_offset, off.1 + starting_offset))
+  }
+  let overflow : Array[Encoding] = []
+  for left in self.overflowing {
+    overflow.push(left.merge_with(pair, growing_offsets~))
+    for right in pair.overflowing {
+      overflow.push(left.merge_with(right, growing_offsets~))
+    }
+  }
+  for right in pair.overflowing {
+    overflow.push(self.merge_with(right, growing_offsets~))
+  }
+  {
+    ids: concat_ints(self.ids, pair.ids),
+    type_ids: concat_ints(self.type_ids, pair.type_ids),
+    tokens: concat_strings(self.tokens, pair.tokens),
+    offsets: concat_offsets(self.offsets, shifted_offsets),
+    special_tokens_mask: concat_ints(self.special_tokens_mask, pair.special_tokens_mask),
+    attention_mask: concat_ints(self.attention_mask, pair.attention_mask),
+    sequence_ids: concat_opt_ints(self.sequence_ids, pair.sequence_ids),
+    word_ids: concat_opt_ints(self.word_ids, pair.word_ids),
+    overflowing: overflow,
+  }
+}
+
+///|
 /// Number of tokens in this encoding.
 pub fn Encoding::len(self : Encoding) -> Int {
   self.ids.length()
@@ -278,4 +551,58 @@ pub fn Encoding::empty() -> Encoding {
     word_ids: [],
     overflowing: [],
   }
+}
+
+///|
+fn encoding_slice(enc : Encoding, start : Int, stop : Int) -> Encoding {
+  {
+    ids: enc.ids[start:stop].to_owned(),
+    type_ids: enc.type_ids[start:stop].to_owned(),
+    tokens: enc.tokens[start:stop].to_owned(),
+    offsets: enc.offsets[start:stop].to_owned(),
+    special_tokens_mask: enc.special_tokens_mask[start:stop].to_owned(),
+    attention_mask: enc.attention_mask[start:stop].to_owned(),
+    sequence_ids: enc.sequence_ids[start:stop].to_owned(),
+    word_ids: enc.word_ids[start:stop].to_owned(),
+    overflowing: [],
+  }
+}
+
+///|
+fn concat_ints(a : Array[Int], b : Array[Int]) -> Array[Int] {
+  let out = a.copy()
+  for x in b {
+    out.push(x)
+  }
+  out
+}
+
+///|
+fn concat_strings(a : Array[String], b : Array[String]) -> Array[String] {
+  let out = a.copy()
+  for x in b {
+    out.push(x)
+  }
+  out
+}
+
+///|
+fn concat_offsets(
+  a : Array[(Int, Int)],
+  b : Array[(Int, Int)],
+) -> Array[(Int, Int)] {
+  let out = a.copy()
+  for x in b {
+    out.push(x)
+  }
+  out
+}
+
+///|
+fn concat_opt_ints(a : Array[Int?], b : Array[Int?]) -> Array[Int?] {
+  let out = a.copy()
+  for x in b {
+    out.push(x)
+  }
+  out
 }

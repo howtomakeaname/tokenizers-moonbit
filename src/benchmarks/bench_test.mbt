@@ -374,6 +374,32 @@ fn bench_encoding_accessors_case(
 }
 
 ///|
+fn bench_encoding_manipulation_case(
+  b : @bench.T,
+  case_name : String,
+) -> Unit raise {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"the":0,"quick":1,"brown":2,"fox":3,"jumps":4,"over":5,"moonbit":6,"tokenizers":7,"[UNK]":8},"unk_token":"[UNK]"}}
+  let tok = @tokenizer.Tokenizer::from_str(json)
+  let enc = tok.encode(
+    "the quick brown fox jumps over moonbit tokenizers",
+    add_special_tokens=false,
+  )
+  b.bench(name="encoding-manipulation-\{case_name}", fn() {
+    let left = enc.truncate(6, stride=2, direction=@types.Right)
+      .with_type_ids(Array::make(6, 1))
+      .with_sequence_id(0)
+      .pad(10, pad_id=8, pad_type_id=0, pad_token="[PAD]", direction=@types.Right)
+    let right = enc.truncate(4, stride=1, direction=@types.Left).with_sequence_id(1)
+    let merged = left.merge_with(right, growing_offsets=true)
+    let (plain, overflowing) = merged.take_overflowing()
+    b.keep(plain.ids.length() + overflowing.length())
+  })
+}
+
+///|
 fn bench_tokenizer_builder_add_tokens_case(
   b : @bench.T,
   case_name : String,
@@ -1752,6 +1778,7 @@ test "bench offset lookup matrix" (b : @bench.T) {
     bench_offset_lookup_case(b, model, "mixed", mixed)
   }
   bench_encoding_accessors_case(b, "mixed")
+  bench_encoding_manipulation_case(b, "mixed")
   bench_tokenizer_builder_add_tokens_case(b, "mixed")
   bench_tokenizer_typed_to_json_case(b, "mixed")
   bench_tokenizer_post_process_case(b, "mixed")
