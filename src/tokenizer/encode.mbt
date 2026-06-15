@@ -432,6 +432,27 @@ pub fn Tokenizer::encode_fast(
 }
 
 ///|
+/// Python binding alias for `encode`; useful when exposing both raw-text and
+/// unified `EncodeInput` entry points without overloading in the target FFI.
+pub fn Tokenizer::encode_text(
+  self : Tokenizer,
+  text : String,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.encode(text, add_special_tokens~)
+}
+
+///|
+/// Python binding alias for `encode_fast`.
+pub fn Tokenizer::encode_text_fast(
+  self : Tokenizer,
+  text : String,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.encode_fast(text, add_special_tokens~)
+}
+
+///|
 /// Encode a single text and return UTF-8 byte offsets, matching HF's default
 /// Rust/Python offset convention more closely than MoonBit char offsets.
 pub fn Tokenizer::encode_with_byte_offsets(
@@ -680,6 +701,26 @@ pub fn Tokenizer::encode_batch_fast(
     Some(pp) => pad_batch(encs, pp)
     None => encs
   }
+}
+
+///|
+/// Python binding alias for raw-text batch encoding.
+pub fn Tokenizer::encode_text_batch(
+  self : Tokenizer,
+  texts : Array[String],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_batch(texts, add_special_tokens~)
+}
+
+///|
+/// Python binding alias for raw-text batch fast encoding.
+pub fn Tokenizer::encode_text_batch_fast(
+  self : Tokenizer,
+  texts : Array[String],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_batch_fast(texts, add_special_tokens~)
 }
 
 ///|
@@ -1049,6 +1090,34 @@ pub fn Tokenizer::encode_pair_fast(
   self.finalize_padding(
     self.encode_pair_unpadded_fast(text_a, text_b, add_special_tokens~),
   )
+}
+
+///|
+/// Python/FFI-friendly alias that accepts an optional pair in one method name.
+pub fn Tokenizer::encode_plus(
+  self : Tokenizer,
+  text : String,
+  pair? : String? = None,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  match pair {
+    Some(text_b) => self.encode_pair(text, text_b, add_special_tokens~)
+    None => self.encode(text, add_special_tokens~)
+  }
+}
+
+///|
+/// Fast counterpart of `encode_plus`.
+pub fn Tokenizer::encode_plus_fast(
+  self : Tokenizer,
+  text : String,
+  pair? : String? = None,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  match pair {
+    Some(text_b) => self.encode_pair_fast(text, text_b, add_special_tokens~)
+    None => self.encode_fast(text, add_special_tokens~)
+  }
 }
 
 ///|

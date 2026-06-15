@@ -46,6 +46,16 @@ pub fn Tokenizer::decode(
 }
 
 ///|
+/// Python binding alias for `decode` when exposing ids-specific method names.
+pub fn Tokenizer::decode_ids(
+  self : Tokenizer,
+  ids : Array[Int],
+  skip_special_tokens? : Bool = true,
+) -> String {
+  self.decode(ids, skip_special_tokens~)
+}
+
+///|
 /// Decode a batch of token id sequences. This mirrors HF's `decode_batch` API;
 /// execution is intentionally serial so it works on every MoonBit backend. A
 /// small per-call cache avoids repeating decode work for duplicate id sequences,
@@ -70,6 +80,26 @@ pub fn Tokenizer::decode_batch(
     }
   }
   out
+}
+
+///|
+/// Python binding alias for `decode_batch`.
+pub fn Tokenizer::batch_decode(
+  self : Tokenizer,
+  batch : Array[Array[Int]],
+  skip_special_tokens? : Bool = true,
+) -> Array[String] {
+  self.decode_batch(batch, skip_special_tokens~)
+}
+
+///|
+/// Python binding alias for `decode_batch` with explicit ids naming.
+pub fn Tokenizer::decode_ids_batch(
+  self : Tokenizer,
+  batch : Array[Array[Int]],
+  skip_special_tokens? : Bool = true,
+) -> Array[String] {
+  self.decode_batch(batch, skip_special_tokens~)
 }
 
 ///|

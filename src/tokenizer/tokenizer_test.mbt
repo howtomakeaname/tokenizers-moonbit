@@ -469,6 +469,11 @@ test "decode_batch handles duplicate id sequences" {
   @test.assert_eq(tok.decode_batch([[0, 1, 2], [0, 1, 2], [], []]), [
     "hello moon", "hello moon", "", "",
   ])
+  @test.assert_eq(tok.decode_ids([0, 1, 2]), "hello moon")
+  @test.assert_eq(tok.batch_decode([[2], [0, 1, 2]]), ["moon", "hello moon"])
+  @test.assert_eq(tok.decode_ids_batch([[2], [0, 1, 2]]), [
+    "moon", "hello moon",
+  ])
   @test.assert_eq(tok.async_decode([0, 1, 2]), "hello moon")
   @test.assert_eq(tok.async_decode_batch([[2], [0, 1, 2]]), [
     "moon", "hello moon",
@@ -585,6 +590,22 @@ test "encode_fast keeps encoding metadata and zeros offsets" {
     tok.encode_pair("HELLO moon", "world [MASK]", add_special_tokens=true),
     tok.encode_pair_fast("HELLO moon", "world [MASK]", add_special_tokens=true),
   )
+  @test.assert_eq(
+    tok.encode_text("HELLO moon", add_special_tokens=false).ids,
+    tok.encode("HELLO moon", add_special_tokens=false).ids,
+  )
+  assert_fast_encoding_matches(
+    tok.encode("HELLO moon", add_special_tokens=false),
+    tok.encode_text_fast("HELLO moon", add_special_tokens=false),
+  )
+  @test.assert_eq(
+    tok.encode_plus("HELLO", pair=Some("moon"), add_special_tokens=false).ids,
+    tok.encode_pair("HELLO", "moon", add_special_tokens=false).ids,
+  )
+  assert_fast_encoding_matches(
+    tok.encode_pair("HELLO", "moon", add_special_tokens=false),
+    tok.encode_plus_fast("HELLO", pair=Some("moon"), add_special_tokens=false),
+  )
 }
 
 ///|
@@ -608,6 +629,14 @@ test "encode_batch_fast matches cached batch behavior with zero offsets" {
   for i in 0..<regular.length() {
     assert_fast_encoding_matches(regular[i], fast[i])
   }
+  @test.assert_eq(
+    tok.encode_text_batch(["hello world", "hello"], add_special_tokens=true).map(e => e.ids),
+    tok.encode_batch(["hello world", "hello"], add_special_tokens=true).map(e => e.ids),
+  )
+  @test.assert_eq(
+    tok.encode_text_batch_fast(["hello world"], add_special_tokens=true)[0].offsets,
+    Array::make(4, (0, 0)),
+  )
   let pair_regular = tok.encode_pair_batch(
     [("hello", "world moon"), ("hello", "world moon"), ("moon", "hello")],
     add_special_tokens=true,

@@ -53,6 +53,109 @@ pub fn HubDownloadOptions::with_endpoint(
 }
 
 ///|
+/// Deterministic request plan for fetching `tokenizer.json`. It combines the
+/// HuggingFace-compatible URL, auth headers, local cache metadata, conditional
+/// `If-None-Match`, and optional Range resume headers without performing IO.
+pub struct HubRequestPlan {
+  url : String
+  headers : Map[String, String]
+  cache_paths : @tokenizer.PretrainedCachePaths?
+  resume_metadata : @tokenizer.PretrainedDownloadResumeMetadata?
+  range_start : Int?
+  conditional_etag : String?
+} derive(Debug, Eq)
+
+///|
+/// Response metadata extracted from HEAD/GET responses. Network callers can use
+/// it to decide whether to reuse the cache, refresh refs, or continue a partial
+/// download.
+pub struct HubResponseMetadata {
+  status : Int
+  resolved_revision : String?
+  etag : String?
+  content_length : Int?
+  accept_ranges : Bool
+} derive(Debug, Eq)
+
+///|
+pub fn plan_tokenizer_json_request(
+  model_id : String,
+  options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> HubRequestPlan {
+  let url = tokenizer_json_url(options.endpoint, model_id, options.revision)
+  let headers = build_headers(options)
+  let paths = @tokenizer.Tokenizer::from_pretrained_cache_paths(
+    model_id,
+    revision=options.revision,
+    cache_dir=options.cache_dir,
+  )
+  let resume_meta = @tokenizer.Tokenizer::from_pretrained_download_resume_metadata(
+    model_id,
+    revision=options.revision,
+    cache_dir=options.cache_dir,
+  )
+  let cached = @tokenizer.Tokenizer::from_pretrained_cache_metadata(
+    model_id,
+    revision=options.revision,
+    cache_dir=options.cache_dir,
+  )
+  let mut conditional_etag : String? = None
+  match cached {
+    Some(meta) =>
+      match meta.etag {
+        Some(etag) => if !etag.is_empty() {
+          headers["If-None-Match"] = etag
+          conditional_etag = Some(etag)
+        }
+        None => ()
+      }
+    None => ()
+  }
+  let mut range_start : Int? = None
+  match resume_meta {
+    Some(meta) => if meta.downloaded_size > 0 {
+      headers["Range"] = "bytes=" + meta.downloaded_size.to_string() + "-"
+      match meta.etag {
+        Some(etag) => if !etag.is_empty() { headers["If-Range"] = etag }
+        None => ()
+      }
+      range_start = Some(meta.downloaded_size)
+    }
+    None => ()
+  }
+  {
+    url,
+    headers,
+    cache_paths: paths,
+    resume_metadata: resume_meta,
+    range_start,
+    conditional_etag,
+  }
+}
+
+///|
+pub fn HubResponseMetadata::from_headers(
+  status : Int,
+  headers : Map[String, String],
+) -> HubResponseMetadata {
+  let content_length = match header(headers, "content-length") {
+    Some(v) => parse_non_negative_int(v)
+    None => None
+  }
+  let accept_ranges = match header(headers, "accept-ranges") {
+    Some(v) => v.to_lower() == "bytes"
+    None => false
+  }
+  {
+    status,
+    resolved_revision: header(headers, "x-repo-commit"),
+    etag: header(headers, "etag"),
+    content_length,
+    accept_ranges,
+  }
+}
+
+///|
 /// Load a tokenizer from a local path/cache first, otherwise download
 /// `tokenizer.json` from HuggingFace Hub (or a compatible endpoint), persist it
 /// into the HF-style cache layout, and parse it with the core tokenizer loader.
@@ -106,10 +209,10 @@ pub async fn download_tokenizer_json(
   model_id : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
-  let url = tokenizer_json_url(options.endpoint, model_id, options.revision)
+  let plan = plan_tokenizer_json_request(model_id, options~)
   async_download_with_redirects(
-    url,
-    headers=build_headers(options),
+    plan.url,
+    headers=plan.headers,
     max_redirects=options.max_redirects,
   )
 }
@@ -167,10 +270,11 @@ async fn async_download_with_redirects(
           "Hub response body is not valid UTF-8: \{current}",
         )
     }
+    let meta = HubResponseMetadata::from_headers(response.code, response.headers)
     return {
       content,
-      resolved_revision: header(response.headers, "x-repo-commit"),
-      etag: header(response.headers, "etag"),
+      resolved_revision: meta.resolved_revision,
+      etag: meta.etag,
       final_url: current,
       status: response.code,
     }
@@ -223,6 +327,23 @@ fn header(headers : Map[String, String], name : String) -> String? {
     None => ()
   }
   headers.get(name.to_lower())
+}
+
+///|
+fn parse_non_negative_int(s : String) -> Int? {
+  let chars = s.to_array()
+  if chars.length() == 0 {
+    return None
+  }
+  let mut out = 0
+  for c in chars {
+    let u = c.to_int()
+    if u < '0'.to_int() || u > '9'.to_int() {
+      return None
+    }
+    out = out * 10 + (u - '0'.to_int())
+  }
+  Some(out)
 }
 
 ///|
