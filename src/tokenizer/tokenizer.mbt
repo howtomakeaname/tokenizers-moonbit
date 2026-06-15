@@ -1193,6 +1193,15 @@ pub fn Tokenizer::get_vocab_size(
 }
 
 ///|
+/// Python/property-style alias for `get_vocab_size`.
+pub fn Tokenizer::vocab_size(
+  self : Tokenizer,
+  with_added_tokens? : Bool = true,
+) -> Int {
+  self.get_vocab_size(with_added_tokens~)
+}
+
+///|
 /// Export vocabulary as `token -> id`; includes added tokens by default.
 pub fn Tokenizer::get_vocab(
   self : Tokenizer,
@@ -1205,6 +1214,15 @@ pub fn Tokenizer::get_vocab(
     }
   }
   vocab
+}
+
+///|
+/// Python/property-style alias for `get_vocab`.
+pub fn Tokenizer::vocab(
+  self : Tokenizer,
+  with_added_tokens? : Bool = true,
+) -> Map[String, Int] {
+  self.get_vocab(with_added_tokens~)
 }
 
 ///|

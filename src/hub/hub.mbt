@@ -88,6 +88,7 @@ pub async fn from_pretrained(
     revision=options.revision,
     resolved_revision=result.resolved_revision,
     cache_dir=options.cache_dir,
+    etag=result.etag,
   )
 }
 
@@ -95,6 +96,7 @@ pub async fn from_pretrained(
 pub struct HubDownloadResult {
   content : String
   resolved_revision : String?
+  etag : String?
   final_url : String
   status : Int
 } derive(Debug, Eq)
@@ -168,6 +170,7 @@ async fn async_download_with_redirects(
     return {
       content,
       resolved_revision: header(response.headers, "x-repo-commit"),
+      etag: header(response.headers, "etag"),
       final_url: current,
       status: response.code,
     }

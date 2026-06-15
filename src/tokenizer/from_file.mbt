@@ -41,6 +41,34 @@ pub struct PretrainedCacheMetadata {
 } derive(Debug, Eq)
 
 ///|
+/// Concrete paths used by the local HuggingFace Hub cache layout for a tokenizer
+/// artifact. Optional Hub/Python layers can use this to implement HEAD checks,
+/// ref updates or resumable downloads without duplicating path construction.
+pub struct PretrainedCachePaths {
+  repo_cache_dir : String
+  refs_dir : String
+  ref_path : String
+  snapshot_dir : String
+  tokenizer_json_path : String
+  tokenizer_config_path : String
+  special_tokens_map_path : String
+  etag_path : String
+  resume_path : String
+} derive(Debug, Eq)
+
+///|
+/// Sidecar state for an interrupted `tokenizer.json` download. The core package
+/// never performs partial network IO itself, but exposing stable resume metadata
+/// lets network-capable packages coordinate Range/ETag resume policies.
+pub struct PretrainedDownloadResumeMetadata {
+  resume_path : String
+  incomplete_path : String
+  etag : String?
+  expected_size : Int?
+  downloaded_size : Int
+} derive(Debug, Eq)
+
+///|
 /// Diagnostic information for offline `from_pretrained` resolution failures.
 /// It is intentionally string/path based so optional Hub/Python layers can turn
 /// it into actionable private-repo, gated-repo or missing-file exceptions.
@@ -317,6 +345,262 @@ pub fn from_pretrained_cache_metadata(
 }
 
 ///|
+/// Resolve the deterministic HF cache paths for a model/revision. If
+/// `resolved_revision` is `None`, refs are inspected and finally the requested
+/// revision is used as the snapshot name, mirroring `from_pretrained_cached`.
+pub fn Tokenizer::from_pretrained_cache_paths(
+  model_id : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+) -> PretrainedCachePaths? {
+  let root = match cache_dir {
+    Some(c) => c
+    None =>
+      match default_hub_cache_dir() {
+        Some(c) => c
+        None => return None
+      }
+  }
+  Some(build_pretrained_cache_paths(root, model_id, revision, resolved_revision~))
+}
+
+///|
+pub fn from_pretrained_cache_paths(
+  model_id : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+) -> PretrainedCachePaths? {
+  Tokenizer::from_pretrained_cache_paths(
+    model_id,
+    revision~,
+    resolved_revision~,
+    cache_dir~,
+  )
+}
+
+///|
+/// Return the resolved commit/snapshot recorded in `refs/<revision>`, if any.
+pub fn Tokenizer::from_pretrained_ref_revision(
+  model_id : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> String? {
+  match Tokenizer::from_pretrained_cache_paths(model_id, revision~, cache_dir~) {
+    Some(paths) =>
+      match read_optional_file(paths.ref_path) {
+        Some(content) => Some(trim_ascii_ws(content))
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
+pub fn from_pretrained_ref_revision(
+  model_id : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> String? {
+  Tokenizer::from_pretrained_ref_revision(model_id, revision~, cache_dir~)
+}
+
+///|
+/// Update `refs/<revision>` to a resolved commit/snapshot and return the ref
+/// path. This is useful after a successful HEAD request that only refreshed the
+/// revision pointer.
+pub fn Tokenizer::write_pretrained_ref_revision(
+  model_id : String,
+  resolved_revision : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> String raise @types.TokenizerError {
+  let paths = match Tokenizer::from_pretrained_cache_paths(
+    model_id,
+    revision~,
+    resolved_revision=Some(resolved_revision),
+    cache_dir~,
+  ) {
+    Some(p) => p
+    None =>
+      raise @types.ParseError(
+        "write_pretrained_ref_revision needs cache_dir or HOME/HF_HOME/HUGGINGFACE_HUB_CACHE",
+      )
+  }
+  ensure_dir(paths.refs_dir)
+  @fs.write_string_to_file(paths.ref_path, resolved_revision) catch {
+    _ => raise @types.ParseError("cannot write Hub cache ref: \{paths.ref_path}")
+  }
+  paths.ref_path
+}
+
+///|
+pub fn write_pretrained_ref_revision(
+  model_id : String,
+  resolved_revision : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> String raise @types.TokenizerError {
+  Tokenizer::write_pretrained_ref_revision(
+    model_id,
+    resolved_revision,
+    revision~,
+    cache_dir~,
+  )
+}
+
+///|
+/// Write resumable-download sidecar metadata and return the recorded state. The
+/// optional network layer can use `incomplete_path` for partial bytes and this
+/// sidecar for ETag/size validation before issuing a Range request.
+pub fn Tokenizer::write_pretrained_download_resume_metadata(
+  model_id : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+  etag? : String? = None,
+  expected_size? : Int? = None,
+  downloaded_size? : Int = 0,
+) -> PretrainedDownloadResumeMetadata raise @types.TokenizerError {
+  let paths = match Tokenizer::from_pretrained_cache_paths(
+    model_id,
+    revision~,
+    resolved_revision~,
+    cache_dir~,
+  ) {
+    Some(p) => p
+    None =>
+      raise @types.ParseError(
+        "write_pretrained_download_resume_metadata needs cache_dir or HOME/HF_HOME/HUGGINGFACE_HUB_CACHE",
+      )
+  }
+  ensure_dir(paths.snapshot_dir)
+  let downloaded = if downloaded_size < 0 { 0 } else { downloaded_size }
+  let content = resume_metadata_to_string(
+    etag~,
+    expected_size~,
+    downloaded_size=downloaded,
+  )
+  @fs.write_string_to_file(paths.resume_path, content) catch {
+    _ =>
+      raise @types.ParseError(
+        "cannot write Hub download resume metadata: \{paths.resume_path}",
+      )
+  }
+  {
+    resume_path: paths.resume_path,
+    incomplete_path: incomplete_tokenizer_path(paths.tokenizer_json_path),
+    etag,
+    expected_size,
+    downloaded_size: downloaded,
+  }
+}
+
+///|
+pub fn write_pretrained_download_resume_metadata(
+  model_id : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+  etag? : String? = None,
+  expected_size? : Int? = None,
+  downloaded_size? : Int = 0,
+) -> PretrainedDownloadResumeMetadata raise @types.TokenizerError {
+  Tokenizer::write_pretrained_download_resume_metadata(
+    model_id,
+    revision~,
+    resolved_revision~,
+    cache_dir~,
+    etag~,
+    expected_size~,
+    downloaded_size~,
+  )
+}
+
+///|
+/// Read resumable-download metadata for a cached tokenizer snapshot, if present.
+pub fn Tokenizer::from_pretrained_download_resume_metadata(
+  model_id : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+) -> PretrainedDownloadResumeMetadata? {
+  let paths = match Tokenizer::from_pretrained_cache_paths(
+    model_id,
+    revision~,
+    resolved_revision~,
+    cache_dir~,
+  ) {
+    Some(p) => p
+    None => return None
+  }
+  match read_optional_file(paths.resume_path) {
+    Some(content) => parse_resume_metadata(
+      content,
+      paths.resume_path,
+      incomplete_tokenizer_path(paths.tokenizer_json_path),
+    )
+    None => None
+  }
+}
+
+///|
+pub fn from_pretrained_download_resume_metadata(
+  model_id : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+) -> PretrainedDownloadResumeMetadata? {
+  Tokenizer::from_pretrained_download_resume_metadata(
+    model_id,
+    revision~,
+    resolved_revision~,
+    cache_dir~,
+  )
+}
+
+///|
+/// Remove stale resumable-download sidecar metadata. Successful full downloads
+/// call this automatically after writing `tokenizer.json`.
+pub fn Tokenizer::clear_pretrained_download_resume_metadata(
+  model_id : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+) -> Bool {
+  let paths = match Tokenizer::from_pretrained_cache_paths(
+    model_id,
+    revision~,
+    resolved_revision~,
+    cache_dir~,
+  ) {
+    Some(p) => p
+    None => return false
+  }
+  if !@fs.path_exists(paths.resume_path) {
+    return false
+  }
+  @fs.remove_file(paths.resume_path) catch { _ => return false }
+  true
+}
+
+///|
+pub fn clear_pretrained_download_resume_metadata(
+  model_id : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+) -> Bool {
+  Tokenizer::clear_pretrained_download_resume_metadata(
+    model_id,
+    revision~,
+    resolved_revision~,
+    cache_dir~,
+  )
+}
+
+///|
 /// True when the locally-resolved cache metadata still points at an existing
 /// `tokenizer.json`. This lets offline callers distinguish "metadata object was
 /// produced" from "all referenced files are still available".
@@ -580,27 +864,34 @@ pub fn cache_pretrained_tokenizer_json(
     Some(r) => if r.is_empty() { revision } else { r }
     None => revision
   }
-  let repo = root + "/" + hub_model_dir(model_id)
-  let snapshot_dir = repo + "/snapshots/" + snapshot
+  let paths = build_pretrained_cache_paths(
+    root,
+    model_id,
+    revision,
+    resolved_revision=Some(snapshot),
+  )
   ensure_dir(root)
-  ensure_dir(repo)
-  ensure_dir(repo + "/snapshots")
-  ensure_dir(snapshot_dir)
-  let refs_dir = repo + "/refs"
-  ensure_dir(refs_dir)
-  let ref_path = refs_dir + "/" + revision
-  ensure_parent_dir(ref_path)
-  @fs.write_string_to_file(ref_path, snapshot) catch {
+  ensure_dir(paths.repo_cache_dir)
+  ensure_dir(paths.repo_cache_dir + "/snapshots")
+  ensure_dir(paths.snapshot_dir)
+  ensure_dir(paths.refs_dir)
+  ensure_parent_dir(paths.ref_path)
+  @fs.write_string_to_file(paths.ref_path, snapshot) catch {
     _ => ()
   }
-  let tokenizer_path = snapshot_dir + "/tokenizer.json"
-  @fs.write_string_to_file(tokenizer_path, tokenizer_json) catch {
+  @fs.write_string_to_file(paths.tokenizer_json_path, tokenizer_json) catch {
     _ =>
       raise @types.ParseError(
-        "cannot write downloaded tokenizer cache: \{tokenizer_path}",
+        "cannot write downloaded tokenizer cache: \{paths.tokenizer_json_path}",
       )
   }
-  tokenizer_path
+  ignore(Tokenizer::clear_pretrained_download_resume_metadata(
+    model_id,
+    revision~,
+    resolved_revision=Some(snapshot),
+    cache_dir=Some(root),
+  ))
+  paths.tokenizer_json_path
 }
 
 ///|
@@ -753,6 +1044,173 @@ fn read_revision_ref(repo : String, revision : String) -> String? {
 ///|
 fn hub_model_dir(model_id : String) -> String {
   "models--" + replace_char(model_id, '/', "--")
+}
+
+///|
+fn build_pretrained_cache_paths(
+  root : String,
+  model_id : String,
+  revision : String,
+  resolved_revision? : String? = None,
+) -> PretrainedCachePaths {
+  let repo = root + "/" + hub_model_dir(model_id)
+  let snapshot = match resolved_revision {
+    Some(r) => if r.is_empty() { revision } else { r }
+    None => read_revision_ref(repo, revision).unwrap_or(revision)
+  }
+  let refs_dir = repo + "/refs"
+  let ref_path = refs_dir + "/" + revision
+  let snapshot_dir = repo + "/snapshots/" + snapshot
+  let tokenizer_json_path = snapshot_dir + "/tokenizer.json"
+  {
+    repo_cache_dir: repo,
+    refs_dir,
+    ref_path,
+    snapshot_dir,
+    tokenizer_json_path,
+    tokenizer_config_path: snapshot_dir + "/tokenizer_config.json",
+    special_tokens_map_path: snapshot_dir + "/special_tokens_map.json",
+    etag_path: snapshot_dir + "/tokenizer.json.etag",
+    resume_path: snapshot_dir + "/tokenizer.json.resume",
+  }
+}
+
+///|
+fn incomplete_tokenizer_path(tokenizer_json_path : String) -> String {
+  tokenizer_json_path + ".incomplete"
+}
+
+///|
+fn resume_metadata_to_string(
+  etag~ : String?,
+  expected_size~ : Int?,
+  downloaded_size~ : Int,
+) -> String {
+  let sb = StringBuilder::new()
+  match etag {
+    Some(v) => sb.write_string("etag=" + escape_resume_value(v) + "\n")
+    None => ()
+  }
+  match expected_size {
+    Some(n) => if n >= 0 { sb.write_string("expected_size=" + n.to_string() + "\n") }
+    None => ()
+  }
+  sb.write_string("downloaded_size=" + downloaded_size.to_string() + "\n")
+  sb.to_string()
+}
+
+///|
+fn parse_resume_metadata(
+  content : String,
+  resume_path : String,
+  incomplete_path : String,
+) -> PretrainedDownloadResumeMetadata? {
+  let mut etag : String? = None
+  let mut expected_size : Int? = None
+  let mut downloaded_size = 0
+  for line in split_lines(content) {
+    let trimmed = trim_ascii_ws(line)
+    if trimmed.is_empty() {
+      continue
+    }
+    match split_once(trimmed, '=') {
+      Some((key, value)) => {
+        let key = trim_ascii_ws(key)
+        let value = trim_ascii_ws(value)
+        if key == "etag" {
+          etag = Some(unescape_resume_value(value))
+        } else if key == "expected_size" {
+          expected_size = parse_non_negative_int(value)
+        } else if key == "downloaded_size" {
+          downloaded_size = parse_non_negative_int(value).unwrap_or(0)
+        }
+      }
+      None => ()
+    }
+  }
+  Some({ resume_path, incomplete_path, etag, expected_size, downloaded_size })
+}
+
+///|
+fn split_lines(s : String) -> Array[String] {
+  let out : Array[String] = []
+  let chars = s.to_array()
+  let mut start = 0
+  for i, c in chars {
+    if c == '\n' {
+      out.push(string_slice(chars, start, i))
+      start = i + 1
+    }
+  }
+  if start <= chars.length() {
+    out.push(string_slice(chars, start, chars.length()))
+  }
+  out
+}
+
+///|
+fn split_once(s : String, sep : Char) -> (String, String)? {
+  let chars = s.to_array()
+  for i, c in chars {
+    if c == sep {
+      return Some((string_slice(chars, 0, i), string_slice(chars, i + 1, chars.length())))
+    }
+  }
+  None
+}
+
+///|
+fn parse_non_negative_int(s : String) -> Int? {
+  let chars = s.to_array()
+  if chars.length() == 0 {
+    return None
+  }
+  let mut out = 0
+  for c in chars {
+    let u = c.to_int()
+    if u < '0'.to_int() || u > '9'.to_int() {
+      return None
+    }
+    out = out * 10 + (u - '0'.to_int())
+  }
+  Some(out)
+}
+
+///|
+fn escape_resume_value(s : String) -> String {
+  replace_char(replace_char(s, '\n', "\\n"), '\r', "\\r")
+}
+
+///|
+fn unescape_resume_value(s : String) -> String {
+  let sb = StringBuilder::new()
+  let chars = s.to_array()
+  let mut i = 0
+  while i < chars.length() {
+    if chars[i] == '\\' && i + 1 < chars.length() {
+      if chars[i + 1] == 'n' {
+        sb.write_char('\n')
+        i = i + 2
+        continue
+      } else if chars[i + 1] == 'r' {
+        sb.write_char('\r')
+        i = i + 2
+        continue
+      }
+    }
+    sb.write_char(chars[i])
+    i = i + 1
+  }
+  sb.to_string()
+}
+
+///|
+fn string_slice(chars : Array[Char], start : Int, stop : Int) -> String {
+  let sb = StringBuilder::new()
+  for i in start..<stop {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
 }
 
 ///|

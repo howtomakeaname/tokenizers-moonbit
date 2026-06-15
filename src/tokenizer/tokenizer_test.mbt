@@ -90,8 +90,10 @@ test "get_vocab can include added tokens" {
   let tok = Tokenizer::from_str(json)
   @test.assert_eq(tok.get_vocab_size(with_added_tokens=false), 3)
   @test.assert_eq(tok.get_vocab_size(with_added_tokens=true), 4)
+  @test.assert_eq(tok.vocab_size(with_added_tokens=false), 3)
   @test.assert_eq(tok.get_vocab(with_added_tokens=false).get("<extra>"), None)
   @test.assert_eq(tok.get_vocab().get("<extra>"), Some(3))
+  @test.assert_eq(tok.vocab().get("<extra>"), Some(3))
 }
 
 ///|
@@ -1446,6 +1448,73 @@ test "from_pretrained_downloaded writes HF-style cache and refs" {
   @test.assert_eq(ok_hint.cache_exists, true)
   @test.assert_eq(ok_hint.resolved_revision, Some("def456"))
   @test.assert_eq(ok_hint.message.contains("can resolve cached tokenizer"), true)
+  let paths = Tokenizer::from_pretrained_cache_paths(
+    "org/downloaded-tokenizer",
+    revision="main",
+    cache_dir=Some(hub),
+  ).unwrap()
+  @test.assert_eq(paths.ref_path.has_suffix("/refs/main"), true)
+  @test.assert_eq(paths.snapshot_dir.has_suffix("/snapshots/def456"), true)
+  @test.assert_eq(
+    Tokenizer::from_pretrained_ref_revision(
+      "org/downloaded-tokenizer",
+      revision="main",
+      cache_dir=Some(hub),
+    ),
+    Some("def456"),
+  )
+  let ref_path = Tokenizer::write_pretrained_ref_revision(
+    "org/downloaded-tokenizer",
+    "def789",
+    revision="dev",
+    cache_dir=Some(hub),
+  )
+  @test.assert_eq(ref_path.has_suffix("/refs/dev"), true)
+  @test.assert_eq(
+    Tokenizer::from_pretrained_ref_revision(
+      "org/downloaded-tokenizer",
+      revision="dev",
+      cache_dir=Some(hub),
+    ),
+    Some("def789"),
+  )
+  let resume_meta = Tokenizer::write_pretrained_download_resume_metadata(
+    "org/downloaded-tokenizer",
+    revision="dev",
+    resolved_revision=Some("def789"),
+    cache_dir=Some(hub),
+    etag=Some("etag-resume"),
+    expected_size=Some(4096),
+    downloaded_size=1024,
+  )
+  @test.assert_eq(
+    resume_meta.incomplete_path.has_suffix("/tokenizer.json.incomplete"),
+    true,
+  )
+  let loaded_resume = Tokenizer::from_pretrained_download_resume_metadata(
+    "org/downloaded-tokenizer",
+    revision="dev",
+    cache_dir=Some(hub),
+  ).unwrap()
+  @test.assert_eq(loaded_resume.etag, Some("etag-resume"))
+  @test.assert_eq(loaded_resume.expected_size, Some(4096))
+  @test.assert_eq(loaded_resume.downloaded_size, 1024)
+  @test.assert_eq(
+    Tokenizer::clear_pretrained_download_resume_metadata(
+      "org/downloaded-tokenizer",
+      revision="dev",
+      cache_dir=Some(hub),
+    ),
+    true,
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained_download_resume_metadata(
+      "org/downloaded-tokenizer",
+      revision="dev",
+      cache_dir=Some(hub),
+    ),
+    None,
+  )
 }
 
 ///|
