@@ -21,6 +21,35 @@ pub(all) struct Encoding {
 } derive(Debug, Eq)
 
 ///|
+/// Serializable/interoperable snapshot of an `Encoding`. This mirrors the shape
+/// Python binding layers need for pickle/state transfer while keeping the core
+/// MoonBit API strongly typed.
+pub(all) struct EncodingState {
+  ids : Array[Int]
+  type_ids : Array[Int]
+  tokens : Array[String]
+  offsets : Array[(Int, Int)]
+  special_tokens_mask : Array[Int]
+  attention_mask : Array[Int]
+  sequence_ids : Array[Int?]
+  word_ids : Array[Int?]
+  overflowing : Array[Encoding]
+} derive(Debug, Eq)
+
+///|
+/// Compact tuple-oriented interop view of an `Encoding`. Python bindings often
+/// move ids/type ids/tokens/offsets/masks as parallel buffers; this shape keeps
+/// that common path explicit while `EncodingState` remains the full pickle state.
+pub(all) struct EncodingBuffers {
+  ids : Array[Int]
+  type_ids : Array[Int]
+  tokens : Array[String]
+  offsets : Array[(Int, Int)]
+  special_tokens_mask : Array[Int]
+  attention_mask : Array[Int]
+} derive(Debug, Eq)
+
+///|
 /// Direction used by HF-style public Encoding manipulation helpers.
 pub(all) enum EncodingDirection {
   Left
@@ -62,6 +91,99 @@ pub fn Encoding::new(
     },
     overflowing: overflowing.copy(),
   }
+}
+
+///|
+/// Restore an Encoding from an interop state snapshot.
+pub fn Encoding::from_state(state : EncodingState) -> Encoding {
+  Encoding::new(
+    state.ids,
+    state.type_ids,
+    state.tokens,
+    state.offsets,
+    state.special_tokens_mask,
+    state.attention_mask,
+    sequence_ids=state.sequence_ids,
+    word_ids=state.word_ids,
+    overflowing=state.overflowing,
+  )
+}
+
+///|
+/// Build an Encoding from the common parallel-buffer representation. Optional
+/// metadata arrays follow the same defaults as `Encoding::new`.
+pub fn Encoding::from_buffers(
+  buffers : EncodingBuffers,
+  sequence_ids? : Array[Int?] = [],
+  word_ids? : Array[Int?] = [],
+  overflowing? : Array[Encoding] = [],
+) -> Encoding {
+  Encoding::new(
+    buffers.ids,
+    buffers.type_ids,
+    buffers.tokens,
+    buffers.offsets,
+    buffers.special_tokens_mask,
+    buffers.attention_mask,
+    sequence_ids~,
+    word_ids~,
+    overflowing~,
+  )
+}
+
+///|
+/// Return a Python-binding-friendly state snapshot. Arrays are copied so callers
+/// cannot mutate the original encoding through the returned value.
+pub fn Encoding::get_state(self : Encoding) -> EncodingState {
+  {
+    ids: self.ids.copy(),
+    type_ids: self.type_ids.copy(),
+    tokens: self.tokens.copy(),
+    offsets: self.offsets.copy(),
+    special_tokens_mask: self.special_tokens_mask.copy(),
+    attention_mask: self.attention_mask.copy(),
+    sequence_ids: self.sequence_ids.copy(),
+    word_ids: self.word_ids.copy(),
+    overflowing: self.overflowing.copy(),
+  }
+}
+
+///|
+/// Return the compact parallel-buffer view used by many binding layers.
+pub fn Encoding::get_buffers(self : Encoding) -> EncodingBuffers {
+  {
+    ids: self.ids.copy(),
+    type_ids: self.type_ids.copy(),
+    tokens: self.tokens.copy(),
+    offsets: self.offsets.copy(),
+    special_tokens_mask: self.special_tokens_mask.copy(),
+    attention_mask: self.attention_mask.copy(),
+  }
+}
+
+///|
+/// Tuple alias for simple Python/Rust FFI shims that already marshal a single
+/// state object.
+pub fn Encoding::as_buffers(self : Encoding) -> EncodingBuffers {
+  self.get_buffers()
+}
+
+///|
+/// Python pickle compatibility alias for `get_state`.
+pub fn Encoding::__getstate__(self : Encoding) -> EncodingState {
+  self.get_state()
+}
+
+///|
+/// Python pickle compatibility alias for restoring an Encoding state.
+pub fn Encoding::__setstate__(state : EncodingState) -> Encoding {
+  Encoding::from_state(state)
+}
+
+///|
+/// Python binding convenience alias for `len(encoding)` shims.
+pub fn Encoding::__len__(self : Encoding) -> Int {
+  self.len()
 }
 
 ///|
@@ -350,6 +472,12 @@ pub fn Encoding::n_sequences(self : Encoding) -> Int {
 }
 
 ///|
+/// HF/Python binding naming alias for `n_sequences`.
+pub fn Encoding::get_n_sequences(self : Encoding) -> Int {
+  self.n_sequences()
+}
+
+///|
 /// Return token ids. The returned array is a copy, matching HF-style immutable
 /// accessor expectations and preventing callers from mutating the encoding.
 pub fn Encoding::get_ids(self : Encoding) -> Array[Int] {
@@ -548,6 +676,76 @@ pub(all) struct Token {
 } derive(Debug, Eq)
 
 ///|
+/// Serializable/interoperable snapshot of a model token.
+pub(all) struct TokenState {
+  id : Int
+  value : String
+  offsets : (Int, Int)
+} derive(Debug, Eq)
+
+///|
+/// Build a model token from its id, surface value and half-open offsets.
+pub fn Token::new(
+  id : Int,
+  value : String,
+  offsets? : (Int, Int) = (0, 0),
+) -> Token {
+  { id, value, offsets }
+}
+
+///|
+/// Build a token from the common HF-style tuple representation
+/// `(id, value, offsets)`.
+pub fn Token::from_tuple(t : (Int, String, (Int, Int))) -> Token {
+  { id: t.0, value: t.1, offsets: t.2 }
+}
+
+///|
+/// Restore a token from a state snapshot.
+pub fn Token::from_state(state : TokenState) -> Token {
+  { id: state.id, value: state.value, offsets: state.offsets }
+}
+
+///|
+/// Return `(id, value, offsets)`, useful for tests and simple interop layers.
+pub fn Token::as_tuple(self : Token) -> (Int, String, (Int, Int)) {
+  (self.id, self.value, self.offsets)
+}
+
+///|
+/// Return a Python-binding-friendly token state snapshot.
+pub fn Token::get_state(self : Token) -> TokenState {
+  { id: self.id, value: self.value, offsets: self.offsets }
+}
+
+///|
+/// Python pickle compatibility alias for `get_state`.
+pub fn Token::__getstate__(self : Token) -> TokenState {
+  self.get_state()
+}
+
+///|
+/// Python pickle compatibility alias for restoring token state.
+pub fn Token::__setstate__(state : TokenState) -> Token {
+  Token::from_state(state)
+}
+
+///|
+pub fn Token::get_id(self : Token) -> Int {
+  self.id
+}
+
+///|
+pub fn Token::get_value(self : Token) -> String {
+  self.value
+}
+
+///|
+pub fn Token::get_offsets(self : Token) -> (Int, Int) {
+  self.offsets
+}
+
+///|
 /// An intermediate piece produced by pre-tokenization: a substring plus the
 /// char offsets it occupies in the original (normalized) text.
 pub(all) struct Split {
@@ -565,6 +763,35 @@ pub(all) suberror TokenizerError {
   /// vocab / merges data was malformed.
   VocabError(String)
 } derive(Debug)
+
+///|
+/// Stable high-level error category for Python binding exception mapping.
+pub(all) enum TokenizerErrorKind {
+  ParseKind
+  UnsupportedComponentKind
+  VocabKind
+} derive(Debug, Eq)
+
+///|
+/// Classify a tokenizer error into a stable category so bindings can map it to
+/// dedicated Python exception classes without parsing debug strings.
+pub fn TokenizerError::kind(self : TokenizerError) -> TokenizerErrorKind {
+  match self {
+    ParseError(_) => ParseKind
+    UnsupportedComponent(_) => UnsupportedComponentKind
+    VocabError(_) => VocabKind
+  }
+}
+
+///|
+/// Extract the human-readable message from a tokenizer error.
+pub fn TokenizerError::message(self : TokenizerError) -> String {
+  match self {
+    ParseError(msg) => msg
+    UnsupportedComponent(msg) => msg
+    VocabError(msg) => msg
+  }
+}
 
 ///|
 /// Build an empty `Encoding`.

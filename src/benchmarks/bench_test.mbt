@@ -93,6 +93,20 @@ fn bench_encode_case(
 }
 
 ///|
+fn bench_encode_fast_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+  text : String,
+  add_special_tokens? : Bool = false,
+) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  b.bench(name="\{model}-encode-fast-\{case_name}", fn() {
+    b.keep(tok.encode_fast(text, add_special_tokens~))
+  })
+}
+
+///|
 fn bench_encode_byte_offsets_case(
   b : @bench.T,
   model : String,
@@ -173,6 +187,20 @@ fn bench_encode_batch_case(
 }
 
 ///|
+fn bench_encode_batch_fast_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+  text : String,
+) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  let batch = [text, text, text, text, text, text, text, text]
+  b.bench(name="\{model}-encode-batch-fast-\{case_name}", fn() {
+    b.keep(tok.encode_batch_fast(batch, add_special_tokens=false))
+  })
+}
+
+///|
 fn bench_encode_batch_padded_case(
   b : @bench.T,
   model : String,
@@ -205,6 +233,21 @@ fn bench_encode_pair_batch_case(
   let batch = [pair, pair, pair, pair, pair, pair, pair, pair]
   b.bench(name="\{model}-encode-pair-batch-\{case_name}", fn() {
     b.keep(tok.encode_pair_batch(batch, add_special_tokens=false))
+  })
+}
+
+///|
+fn bench_encode_pair_batch_fast_case(
+  b : @bench.T,
+  model : String,
+  case_name : String,
+  text : String,
+) -> Unit raise {
+  guard load_model(model) is Some(tok) else { return }
+  let pair = (text, "Second sequence: " + text)
+  let batch = [pair, pair, pair, pair, pair, pair, pair, pair]
+  b.bench(name="\{model}-encode-pair-batch-fast-\{case_name}", fn() {
+    b.keep(tok.encode_pair_batch_fast(batch, add_special_tokens=false))
   })
 }
 
@@ -1700,6 +1743,7 @@ test "bench encode matrix (modern models x corpora)" (b : @bench.T) {
     ] {
     bench_encode_case(b, model, "short", short, add_special_tokens=false)
     bench_encode_case(b, model, "mixed", mixed, add_special_tokens=false)
+    bench_encode_fast_case(b, model, "mixed", mixed, add_special_tokens=false)
     bench_encode_case(b, model, "code", code, add_special_tokens=false)
     bench_encode_case(b, model, "long", long, add_special_tokens=false)
   }
@@ -1750,6 +1794,7 @@ test "bench encode_batch duplicate matrix" (b : @bench.T) {
   let mixed = corpus_mixed()
   for model in ["gpt2", "bert", "t5", "llama", "Qwen2.5", "qwen3_coder"] {
     bench_encode_batch_case(b, model, "mixedx8", mixed)
+    bench_encode_batch_fast_case(b, model, "mixedx8", mixed)
   }
 }
 
@@ -1766,6 +1811,7 @@ test "bench encode_pair_batch duplicate matrix" (b : @bench.T) {
   let mixed = corpus_mixed()
   for model in ["gpt2", "bert", "llama", "Qwen2.5", "qwen3_coder"] {
     bench_encode_pair_batch_case(b, model, "mixedx8", mixed)
+    bench_encode_pair_batch_fast_case(b, model, "mixedx8", mixed)
   }
 }
 

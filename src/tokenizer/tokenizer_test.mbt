@@ -63,6 +63,25 @@ test "BPE ignore_merges uses whole-token fast path before fallback merges" {
 }
 
 ///|
+test "BPE dropout parses serializes disables cache and skips merges" {
+  let json =
+    #|{"version":"1.0",
+    #| "model":{"type":"BPE","vocab":{"a":0,"b":1,"c":2,"ab":3,"abc":4},"merges":[["a","b"],["ab","c"]],"dropout":1.0}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode("abc", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["a", "b", "c"])
+  @test.assert_eq(enc.ids, [0, 1, 2])
+  @test.assert_eq(tok.cache_size(), 0)
+  @test.assert_eq(tok.to_json().contains("\"dropout\":1"), true)
+  let no_dropout_json =
+    #|{"version":"1.0",
+    #| "model":{"type":"BPE","vocab":{"a":0,"b":1,"c":2,"ab":3,"abc":4},"merges":[["a","b"],["ab","c"]],"dropout":0.0}}
+  let deterministic = Tokenizer::from_str(no_dropout_json)
+  @test.assert_eq(deterministic.encode("abc", add_special_tokens=false).ids, [4])
+  @test.assert_eq(deterministic.cache_size(), 1)
+}
+
+///|
 test "get_vocab can include added tokens" {
   let json =
     #|{"version":"1.0",
@@ -97,10 +116,100 @@ test "Encoding exposes HF-style getter accessors" {
   @test.assert_eq(enc.sequence_ids(), [Some(0), Some(0), None, None])
   @test.assert_eq(enc.word_ids(), [Some(0), Some(1), None, None])
   @test.assert_eq(enc.len(), 4)
+  @test.assert_eq(enc.__len__(), 4)
   @test.assert_eq(enc.is_empty(), false)
   @test.assert_eq(enc.n_sequences(), 1)
+  @test.assert_eq(enc.get_n_sequences(), 1)
   @test.assert_eq(@types.Encoding::empty().is_empty(), true)
   @test.assert_eq(@types.Encoding::empty().n_sequences(), 0)
+  let buffers = enc.as_buffers()
+  @test.assert_eq(buffers.ids, [0, 1, 2, 2])
+  let from_buffers = @types.Encoding::from_buffers(
+    buffers,
+    sequence_ids=enc.get_sequence_ids(),
+    word_ids=enc.get_word_ids(),
+  )
+  @test.assert_eq(from_buffers.get_ids(), enc.get_ids())
+  @test.assert_eq(from_buffers.get_attention_mask(), enc.get_attention_mask())
+  let state = enc.__getstate__()
+  @test.assert_eq(state.ids, [0, 1, 2, 2])
+  @test.assert_eq(state.tokens, ["hello", "moon", "[PAD]", "[PAD]"])
+  let restored = @types.Encoding::__setstate__(state)
+  @test.assert_eq(restored.get_ids(), enc.get_ids())
+  @test.assert_eq(restored.get_tokens(), enc.get_tokens())
+  @test.assert_eq(restored.get_word_ids(), enc.get_word_ids())
+}
+
+///|
+test "Tokenizer exposes Python pickle-style state roundtrip" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let state = tok.__getstate__()
+  @test.assert_eq(state.json, tok.to_str())
+  let restored = Tokenizer::__setstate__(state)
+  @test.assert_eq(restored.to_str(), tok.to_str())
+  @test.assert_eq(restored.encode("hello missing", add_special_tokens=false).ids, [
+    0, 2,
+  ])
+  @test.assert_eq(Tokenizer::from_state(tok.get_state()).to_json(), tok.to_json())
+}
+
+///|
+test "Token exposes tuple interop helpers" {
+  let tok = @types.Token::new(7, "hello", offsets=(2, 7))
+  @test.assert_eq(tok.get_id(), 7)
+  @test.assert_eq(tok.get_value(), "hello")
+  @test.assert_eq(tok.get_offsets(), (2, 7))
+  @test.assert_eq(tok.as_tuple(), (7, "hello", (2, 7)))
+  let state = tok.__getstate__()
+  @test.assert_eq(state.id, 7)
+  @test.assert_eq(@types.Token::__setstate__(state).as_tuple(), tok.as_tuple())
+  @test.assert_eq(
+    @types.Token::from_tuple((8, "moon", (0, 4))).as_tuple(),
+    (8, "moon", (0, 4)),
+  )
+}
+
+///|
+test "TokenizerError exposes stable binding categories" {
+  let parse = @types.ParseError("bad json")
+  let unsupported = @types.UnsupportedComponent("normalizer type: X")
+  let vocab = @types.VocabError("bad vocab")
+  @test.assert_eq(parse.kind(), @types.ParseKind)
+  @test.assert_eq(unsupported.kind(), @types.UnsupportedComponentKind)
+  @test.assert_eq(vocab.kind(), @types.VocabKind)
+  @test.assert_eq(parse.message(), "bad json")
+  @test.assert_eq(unsupported.message(), "normalizer type: X")
+}
+
+///|
+test "NormalizedString and PreTokenizedString expose low level migration API" {
+  let ns = NormalizedString::new(" Hello  Moon ")
+    .normalize(@normalizer.Normalizer::Lowercase)
+    .filter(fn(c) { c != ' ' })
+    .prepend("_")
+  @test.assert_eq(ns.get_original(), " Hello  Moon ")
+  @test.assert_eq(ns.get(), "_hellomoon")
+  @test.assert_eq(ns.slice(1, 6).get(), "hello")
+  let parts = NormalizedString::new("a,b,c").split(",")
+  @test.assert_eq(parts.map(p => p.get()), ["a", "b", "c"])
+  let regex_parts = NormalizedString::new("a12b003").split_regex(
+    @common.Regex::new("\\d+"),
+  )
+  @test.assert_eq(regex_parts.unwrap().map(p => p.get()), ["a", "b"])
+
+  let model = @model.Model::train_wordlevel_from_tokens(
+    [["hello", "moon", "[UNK]"]],
+    unk_token="[UNK]",
+  )
+  let pts = PreTokenizedString::new("Hello Moon")
+    .normalize(@normalizer.Normalizer::Lowercase)
+    .split(@pretokenizer.PreTokenizer::whitespace_split())
+  @test.assert_eq(pts.get_splits().map(s => s.value), ["hello", "moon"])
+  @test.assert_eq(pts.to_encoding(model).tokens, ["hello", "moon"])
 }
 
 ///|
@@ -358,6 +467,10 @@ test "decode_batch handles duplicate id sequences" {
   @test.assert_eq(tok.decode_batch([[0, 1, 2], [0, 1, 2], [], []]), [
     "hello moon", "hello moon", "", "",
   ])
+  @test.assert_eq(tok.async_decode([0, 1, 2]), "hello moon")
+  @test.assert_eq(tok.async_decode_batch([[2], [0, 1, 2]]), [
+    "moon", "hello moon",
+  ])
 }
 
 ///|
@@ -427,6 +540,133 @@ test "encode_with_byte_offsets converts unicode char offsets" {
 }
 
 ///|
+fn assert_fast_encoding_matches(
+  reference : @types.Encoding,
+  fast : @types.Encoding,
+) -> Unit raise {
+  @test.assert_eq(fast.ids, reference.ids)
+  @test.assert_eq(fast.type_ids, reference.type_ids)
+  @test.assert_eq(fast.tokens, reference.tokens)
+  @test.assert_eq(fast.special_tokens_mask, reference.special_tokens_mask)
+  @test.assert_eq(fast.attention_mask, reference.attention_mask)
+  @test.assert_eq(fast.sequence_ids(), reference.sequence_ids())
+  @test.assert_eq(fast.word_ids(), reference.word_ids())
+  @test.assert_eq(fast.offsets, Array::make(reference.offsets.length(), (0, 0)))
+  @test.assert_eq(
+    fast.get_overflowing().length(),
+    reference.get_overflowing().length(),
+  )
+  for i in 0..<reference.get_overflowing().length() {
+    assert_fast_encoding_matches(
+      reference.get_overflowing()[i],
+      fast.get_overflowing()[i],
+    )
+  }
+}
+
+///|
+test "encode_fast keeps encoding metadata and zeros offsets" {
+  let json =
+    #|{"version":"1.0",
+    #| "added_tokens":[{"id":5,"content":"[MASK]","special":true,"normalized":false}],
+    #| "normalizer":{"type":"Lowercase"},
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"[CLS]":0,"[SEP]":1,"hello":2,"moon":3,"world":4,"[MASK]":5,"[PAD]":6,"[UNK]":7},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","cls":["[CLS]",0],"sep":["[SEP]",1]},
+    #| "padding":{"strategy":{"Fixed":8},"direction":"Right","pad_id":6,"pad_type_id":0,"pad_token":"[PAD]"}}
+  let tok = Tokenizer::from_str(json)
+  assert_fast_encoding_matches(
+    tok.encode("HELLO [MASK] moon", add_special_tokens=true),
+    tok.encode_fast("HELLO [MASK] moon", add_special_tokens=true),
+  )
+  assert_fast_encoding_matches(
+    tok.encode_pair("HELLO moon", "world [MASK]", add_special_tokens=true),
+    tok.encode_pair_fast("HELLO moon", "world [MASK]", add_special_tokens=true),
+  )
+}
+
+///|
+test "encode_batch_fast matches cached batch behavior with zero offsets" {
+  let json =
+    #|{"version":"1.0",
+    #| "padding":{"strategy":"BatchLongest","direction":"Right","pad_id":5,"pad_type_id":0,"pad_token":"[PAD]"},
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"[CLS]":0,"[SEP]":1,"hello":2,"world":3,"moon":4,"[PAD]":5,"[UNK]":6},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","cls":["[CLS]",0],"sep":["[SEP]",1]}}
+  let tok = Tokenizer::from_str(json)
+  let regular = tok.encode_batch(
+    ["hello world", "hello", "hello world"],
+    add_special_tokens=true,
+  )
+  let fast = tok.encode_batch_fast(
+    ["hello world", "hello", "hello world"],
+    add_special_tokens=true,
+  )
+  @test.assert_eq(fast.length(), regular.length())
+  for i in 0..<regular.length() {
+    assert_fast_encoding_matches(regular[i], fast[i])
+  }
+  let pair_regular = tok.encode_pair_batch(
+    [("hello", "world moon"), ("hello", "world moon"), ("moon", "hello")],
+    add_special_tokens=true,
+  )
+  let pair_fast = tok.encode_pair_batch_fast(
+    [("hello", "world moon"), ("hello", "world moon"), ("moon", "hello")],
+    add_special_tokens=true,
+  )
+  @test.assert_eq(pair_fast.length(), pair_regular.length())
+  for i in 0..<pair_regular.length() {
+    assert_fast_encoding_matches(pair_regular[i], pair_fast[i])
+  }
+}
+
+///|
+test "EncodeInput unified API dispatches raw pretokenized pair and fast batch" {
+  let json =
+    #|{"version":"1.0",
+    #| "padding":{"strategy":"BatchLongest","direction":"Right","pad_id":5,"pad_type_id":0,"pad_token":"[PAD]"},
+    #| "normalizer":{"type":"Lowercase"},
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"[CLS]":0,"[SEP]":1,"hello":2,"moon":3,"world":4,"[PAD]":5,"[UNK]":6},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","cls":["[CLS]",0],"sep":["[SEP]",1]}}
+  let tok = Tokenizer::from_str(json)
+  @test.assert_eq(
+    tok.encode_input(EncodeInput::single("HELLO moon"), add_special_tokens=true).ids,
+    tok.encode("HELLO moon", add_special_tokens=true).ids,
+  )
+  @test.assert_eq(
+    tok.encode_input(
+      EncodeInput::single_pretokenized(["HELLO", "moon"]),
+      add_special_tokens=true,
+    ).ids,
+    tok.encode_pretokenized(["HELLO", "moon"], add_special_tokens=true).ids,
+  )
+  @test.assert_eq(
+    tok
+    .encode_input(
+      EncodeInput::mixed_pair(
+        TextInputSequence::text("HELLO"),
+        TextInputSequence::pretokenized(["moon", "world"]),
+      ),
+      add_special_tokens=true,
+    )
+    .sequence_ids(),
+    [None, Some(0), None, Some(1), Some(1), None],
+  )
+  let batch = [
+    EncodeInput::single("HELLO moon"),
+    EncodeInput::single_pretokenized(["world"]),
+    EncodeInput::single("HELLO moon"),
+  ]
+  let regular = tok.encode_input_batch(batch, add_special_tokens=true)
+  let fast = tok.encode_input_batch_fast(batch, add_special_tokens=true)
+  @test.assert_eq(regular.length(), 3)
+  for i in 0..<regular.length() {
+    assert_fast_encoding_matches(regular[i], fast[i])
+  }
+}
+
+///|
 test "encode_pretokenized skips pretokenizer but keeps normalizer and word ids" {
   let json =
     #|{"version":"1.0",
@@ -443,6 +683,32 @@ test "encode_pretokenized skips pretokenizer but keeps normalizer and word ids" 
   @test.assert_eq(enc.offsets, [(0, 10), (11, 12)])
   @test.assert_eq(enc.word_ids(), [Some(0), Some(1)])
   @test.assert_eq(enc.word_to_tokens(1), Some((1, 2)))
+}
+
+///|
+test "encode_pretokenized_fast preserves ids masks and word ids" {
+  let json =
+    #|{"version":"1.0",
+    #| "normalizer":{"type":"Lowercase"},
+    #| "model":{"type":"WordLevel","vocab":{"[CLS]":0,"[SEP]":1,"hello":2,"moon":3,"world":4,"[UNK]":5},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","cls":["[CLS]",0],"sep":["[SEP]",1]}}
+  let tok = Tokenizer::from_str(json)
+  assert_fast_encoding_matches(
+    tok.encode_pretokenized(["Hello", "moon"], add_special_tokens=true),
+    tok.encode_pretokenized_fast(["Hello", "moon"], add_special_tokens=true),
+  )
+  assert_fast_encoding_matches(
+    tok.encode_pretokenized_pair(
+      ["Hello"],
+      ["moon", "world"],
+      add_special_tokens=true,
+    ),
+    tok.encode_pretokenized_pair_fast(
+      ["Hello"],
+      ["moon", "world"],
+      add_special_tokens=true,
+    ),
+  )
 }
 
 ///|
@@ -468,6 +734,49 @@ test "encode_pretokenized byte offsets and batch padding" {
   @test.assert_eq(encs[1].offsets, [(0, 4), (0, 0), (0, 0)])
   @test.assert_eq(encs[1].attention_mask, [1, 0, 0])
   @test.assert_eq(encs[1].word_ids(), [Some(0), None, None])
+}
+
+///|
+test "encode_pretokenized_batch_fast matches batch padding behavior" {
+  let json =
+    #|{"version":"1.0",
+    #| "padding":{"strategy":"BatchLongest","direction":"Right","pad_id":5,"pad_type_id":0,"pad_token":"[PAD]"},
+    #| "normalizer":{"type":"Lowercase"},
+    #| "model":{"type":"WordLevel","vocab":{"[CLS]":0,"[SEP]":1,"hello":2,"moon":3,"world":4,"[PAD]":5,"[UNK]":6},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"BertProcessing","cls":["[CLS]",0],"sep":["[SEP]",1]}}
+  let tok = Tokenizer::from_str(json)
+  let regular = tok.encode_pretokenized_batch(
+    [["Hello", "moon"], ["world"], ["Hello", "moon"]],
+    add_special_tokens=true,
+  )
+  let fast = tok.encode_pretokenized_batch_fast(
+    [["Hello", "moon"], ["world"], ["Hello", "moon"]],
+    add_special_tokens=true,
+  )
+  @test.assert_eq(fast.length(), regular.length())
+  for i in 0..<regular.length() {
+    assert_fast_encoding_matches(regular[i], fast[i])
+  }
+  let pair_regular = tok.encode_pretokenized_pair_batch(
+    [
+      (["Hello"], ["moon", "world"]),
+      (["Hello"], ["moon", "world"]),
+      (["moon"], ["Hello"]),
+    ],
+    add_special_tokens=true,
+  )
+  let pair_fast = tok.encode_pretokenized_pair_batch_fast(
+    [
+      (["Hello"], ["moon", "world"]),
+      (["Hello"], ["moon", "world"]),
+      (["moon"], ["Hello"]),
+    ],
+    add_special_tokens=true,
+  )
+  @test.assert_eq(pair_fast.length(), pair_regular.length())
+  for i in 0..<pair_regular.length() {
+    assert_fast_encoding_matches(pair_regular[i], pair_fast[i])
+  }
 }
 
 ///|
@@ -636,6 +945,57 @@ test "WordPiece repeated words keep offsets with word cache" {
 }
 
 ///|
+test "Tokenizer cache control clears resizes and isolates model caches" {
+  let wp_json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"token":1,"##ization":2,"other":3},"unk_token":"[UNK]","continuing_subword_prefix":"##"}}
+  let wp = Tokenizer::from_str(wp_json)
+  @test.assert_eq(wp.cache_size(), 0)
+  @test.assert_eq(
+    wp.encode("tokenization tokenization", add_special_tokens=false).ids,
+    [1, 2, 1, 2],
+  )
+  @test.assert_eq(wp.cache_size(), 1)
+  wp.clear_cache() |> ignore
+  @test.assert_eq(wp.cache_size(), 0)
+  wp.resize_cache(0) |> ignore
+  @test.assert_eq(wp.encode("tokenization", add_special_tokens=false).ids, [
+    1, 2,
+  ])
+  @test.assert_eq(wp.cache_size(), 0)
+  wp.resize_cache(1) |> ignore
+  wp.encode("tokenization other", add_special_tokens=false) |> ignore
+  @test.assert_eq(wp.cache_size(), 1)
+  let fresh = Tokenizer::from_str(wp_json)
+  @test.assert_eq(fresh.cache_size(), 0)
+  @test.assert_eq(fresh.encode("tokenization", add_special_tokens=false).ids, [
+    1, 2,
+  ])
+  @test.assert_eq(fresh.cache_size(), 1)
+
+  let bpe_json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"BPE","vocab":{"a":0,"b":1,"ab":2,"c":3,"abc":4},"merges":[["a","b"],["ab","c"]]}}
+  let bpe = Tokenizer::from_str(bpe_json).resize_cache(0)
+  @test.assert_eq(bpe.encode("abc", add_special_tokens=false).ids, [4])
+  @test.assert_eq(bpe.cache_size(), 0)
+  bpe.resize_cache(2) |> ignore
+  bpe.encode("abc ab", add_special_tokens=false) |> ignore
+  @test.assert_eq(bpe.cache_size(), 2)
+
+  let unigram_json =
+    #|{"version":"1.0",
+    #| "model":{"type":"Unigram","vocab":[["a",0.0],["b",0.0],["ab",1.0],["<unk>",-10.0]],"unk_id":3}}
+  let uni = Tokenizer::from_str(unigram_json)
+  @test.assert_eq(uni.encode("ab", add_special_tokens=false).ids, [2])
+  @test.assert_eq(uni.cache_size(), 1)
+  uni.clear_cache() |> ignore
+  @test.assert_eq(uni.cache_size(), 0)
+}
+
+///|
 test "from_str rejects non-object root" {
   let mut raised = false
   try Tokenizer::from_str("[1, 2, 3]") |> ignore catch {
@@ -702,6 +1062,65 @@ test "to_json round-trips loaded tokenizer behavior" {
 }
 
 ///|
+test "from_buffer and to_str pretty mirror HF migration APIs" {
+  let json =
+    #|{"version":"1.0","pre_tokenizer":{"type":"WhitespaceSplit"},"model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_buffer(@utf8.encode(json))
+  @test.assert_eq(tok.encode("hello moon", add_special_tokens=false).ids, [0, 1])
+  @test.assert_eq(tok.to_str(), json)
+  let pretty = tok.to_str(pretty=true)
+  @test.assert_eq(pretty.contains("\n"), true)
+  @test.assert_eq(pretty.contains("  \"model\""), true)
+  let roundtrip = Tokenizer::from_str(pretty)
+  @test.assert_eq(
+    roundtrip.encode("hello missing", add_special_tokens=false).ids,
+    [0, 2],
+  )
+}
+
+///|
+test "HF mutating config aliases mirror builder APIs" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"extra":2,"[PAD]":3,"[UNK]":4},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+    .enable_truncation(2)
+    .enable_padding(length=Some(4), pad_id=3, pad_token="[PAD]")
+  @test.assert_eq(
+    tok.encode("hello moon extra", add_special_tokens=false).ids,
+    [0, 1, 3, 3],
+  )
+  @test.assert_eq(tok.get_truncation() is Some(_), true)
+  @test.assert_eq(tok.get_padding() is Some(_), true)
+  let cleared = tok.no_truncation().no_padding()
+  @test.assert_eq(cleared.get_truncation() is None, true)
+  @test.assert_eq(cleared.get_padding() is None, true)
+  @test.assert_eq(
+    cleared.encode("hello moon extra", add_special_tokens=false).ids,
+    [0, 1, 2],
+  )
+}
+
+///|
+test "encode special token aliases switch added-token extraction" {
+  let json =
+    #|{"version":"1.0",
+    #| "added_tokens":[{"id":2,"content":"[SPECIAL]","special":true}],
+    #| "model":{"type":"WordLevel","vocab":{"[SPECIAL]":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  @test.assert_eq(tok.encode("[SPECIAL]", add_special_tokens=false).ids, [2])
+  let literal = tok.enable_encode_special_tokens()
+  @test.assert_eq(literal.encode("[SPECIAL]", add_special_tokens=false).ids, [0])
+  @test.assert_eq(
+    literal
+    .disable_encode_special_tokens()
+    .encode("[SPECIAL]", add_special_tokens=false).ids,
+    [2],
+  )
+}
+
+///|
 test "save and Tokenizer::from_file preserve tokenizer behavior" {
   let json =
     #|{"version":"1.0",
@@ -715,6 +1134,17 @@ test "save and Tokenizer::from_file preserve tokenizer behavior" {
   @test.assert_eq(
     loaded.encode("hello moon", add_special_tokens=false).ids,
     tok.encode("hello moon", add_special_tokens=false).ids,
+  )
+  let pretty_path = "_build/tokenizer_save_roundtrip_pretty.json"
+  tok.save(pretty_path, pretty=true)
+  let pretty = @fs.read_file_to_string(pretty_path)
+  @test.assert_eq(pretty.contains("\n"), true)
+  @test.assert_eq(
+    Tokenizer::from_file(pretty_path).encode(
+      "hello moon",
+      add_special_tokens=false,
+    ).ids,
+    [0, 1],
   )
 }
 
@@ -732,6 +1162,73 @@ test "save_pretrained writes HF-style directory artifact" {
   @test.assert_eq(loaded.encode("saved dir", add_special_tokens=false).ids, [
     0, 1,
   ])
+}
+
+///|
+test "model save writes HF-style standalone artifacts" {
+  let bpe_json =
+    #|{"version":"1.0",
+    #| "model":{"type":"BPE","vocab":{"a":0,"b":1,"ab":2},"merges":[["a","b"]]}}
+  let bpe_paths = Tokenizer::from_str(bpe_json)
+    .get_model()
+    .save("_build/model_save_bpe", prefix="toy")
+  @test.assert_eq(bpe_paths, [
+    "_build/model_save_bpe/toy-vocab.json", "_build/model_save_bpe/toy-merges.txt",
+  ])
+  @test.assert_eq(
+    @fs.read_file_to_string("_build/model_save_bpe/toy-vocab.json"),
+    "{\"a\":0,\"b\":1,\"ab\":2}",
+  )
+  @test.assert_eq(
+    @fs.read_file_to_string("_build/model_save_bpe/toy-merges.txt"),
+    "#version: 0.2\na b\n",
+  )
+  let facade_paths = Tokenizer::from_str(bpe_json).save_model(
+    "_build/model_save_bpe_facade",
+    prefix="tok",
+  )
+  @test.assert_eq(facade_paths, [
+    "_build/model_save_bpe_facade/tok-vocab.json", "_build/model_save_bpe_facade/tok-merges.txt",
+  ])
+
+  let wp_json =
+    #|{"version":"1.0",
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"hello":1,"##s":2},"unk_token":"[UNK]"}}
+  let wp_paths = Tokenizer::from_str(wp_json)
+    .get_model()
+    .save("_build/model_save_wordpiece")
+  @test.assert_eq(wp_paths, ["_build/model_save_wordpiece/vocab.txt"])
+  @test.assert_eq(
+    @fs.read_file_to_string("_build/model_save_wordpiece/vocab.txt"),
+    "[UNK]\nhello\n##s\n",
+  )
+
+  let unigram_json =
+    #|{"version":"1.0",
+    #| "model":{"type":"Unigram","vocab":[["a",0.0],["b",1.0]],"unk_id":0}}
+  let uni_paths = Tokenizer::from_str(unigram_json)
+    .get_model()
+    .save("_build/model_save_unigram")
+  @test.assert_eq(uni_paths, ["_build/model_save_unigram/unigram.json"])
+  @test.assert_eq(
+    @fs.read_file_to_string("_build/model_save_unigram/unigram.json"),
+    "{\"type\":\"Unigram\",\"vocab\":[[\"a\",0],[\"b\",1]],\"unk_id\":0}",
+  )
+
+  let saved_json_path = Tokenizer::from_str(bpe_json).save_pretrained(
+    "_build/model_save_with_pretrained_artifacts",
+    save_model=true,
+    model_prefix="aux",
+  )
+  @test.assert_eq(
+    saved_json_path, "_build/model_save_with_pretrained_artifacts/tokenizer.json",
+  )
+  @test.assert_eq(
+    @fs.read_file_to_string(
+      "_build/model_save_with_pretrained_artifacts/aux-merges.txt",
+    ),
+    "#version: 0.2\na b\n",
+  )
 }
 
 ///|
@@ -837,6 +1334,9 @@ test "from_pretrained_downloaded writes HF-style cache and refs" {
     revision="main",
     resolved_revision=Some("def456"),
     cache_dir=Some(hub),
+    tokenizer_config_json=Some("{\"model_max_length\":128}"),
+    special_tokens_map_json=Some("{\"unk_token\":\"[UNK]\"}"),
+    etag=Some("etag-tokenizer-json"),
   )
   @test.assert_eq(tok.encode("downloaded hub", add_special_tokens=false).ids, [
     0, 1,
@@ -849,6 +1349,103 @@ test "from_pretrained_downloaded writes HF-style cache and refs" {
   @test.assert_eq(cached.encode("hub missing", add_special_tokens=false).ids, [
     1, 2,
   ])
+  let aux = Tokenizer::from_pretrained_aux_files(
+    "org/downloaded-tokenizer",
+    revision="main",
+    cache_dir=Some(hub),
+  )
+  @test.assert_eq(aux.tokenizer_config_json, Some("{\"model_max_length\":128}"))
+  @test.assert_eq(
+    aux.special_tokens_map_json,
+    Some("{\"unk_token\":\"[UNK]\"}"),
+  )
+  let meta = Tokenizer::from_pretrained_cache_metadata(
+    "org/downloaded-tokenizer",
+    revision="main",
+    cache_dir=Some(hub),
+  ).unwrap()
+  @test.assert_eq(meta.revision, "main")
+  @test.assert_eq(meta.resolved_revision, "def456")
+  @test.assert_eq(meta.etag, Some("etag-tokenizer-json"))
+  @test.assert_eq(meta.cache_exists(), true)
+  @test.assert_eq(meta.etag_matches(Some("etag-tokenizer-json")), true)
+  @test.assert_eq(meta.etag_matches(Some("stale-etag")), false)
+  @test.assert_eq(
+    meta.is_fresh(
+      resolved_revision=Some("def456"),
+      etag=Some("etag-tokenizer-json"),
+      require_tokenizer_config=true,
+      require_special_tokens_map=true,
+    ),
+    true,
+  )
+  @test.assert_eq(meta.is_fresh(resolved_revision=Some("old")), false)
+  @test.assert_eq(meta.tokenizer_json_path.has_suffix("/tokenizer.json"), true)
+  @test.assert_eq(
+    meta.tokenizer_config_path.unwrap().has_suffix("/tokenizer_config.json"),
+    true,
+  )
+  @test.assert_eq(
+    meta.special_tokens_map_path.unwrap().has_suffix("/special_tokens_map.json"),
+    true,
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained_cache_metadata(
+      "org/not-cached",
+      cache_dir=Some(hub),
+    ),
+    None,
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained_cache_exists(
+      "org/downloaded-tokenizer",
+      revision="main",
+      cache_dir=Some(hub),
+    ),
+    true,
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained_cache_etag_matches(
+      "org/downloaded-tokenizer",
+      Some("etag-tokenizer-json"),
+      revision="main",
+      cache_dir=Some(hub),
+    ),
+    true,
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained_cache_is_fresh(
+      "org/downloaded-tokenizer",
+      revision="main",
+      cache_dir=Some(hub),
+      resolved_revision=Some("def456"),
+      etag=Some("etag-tokenizer-json"),
+      require_tokenizer_config=true,
+      require_special_tokens_map=true,
+    ),
+    true,
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained_cache_is_fresh(
+      "org/downloaded-tokenizer",
+      revision="main",
+      cache_dir=Some(hub),
+      etag=Some("stale-etag"),
+    ),
+    false,
+  )
+  @test.assert_eq(
+    from_pretrained_cache_exists("org/not-cached", cache_dir=Some(hub)),
+    false,
+  )
+  let ok_hint = Tokenizer::from_pretrained_resolution_hint(
+    "org/downloaded-tokenizer",
+    revision="main",
+    cache_dir=Some(hub),
+  )
+  @test.assert_eq(ok_hint.cache_exists, true)
+  @test.assert_eq(ok_hint.resolved_revision, Some("def456"))
+  @test.assert_eq(ok_hint.message.contains("can resolve cached tokenizer"), true)
 }
 
 ///|
@@ -863,6 +1460,16 @@ test "from_pretrained reports actionable offline resolution errors" {
   assert_from_pretrained_parse_error_contains(
     "missing-org/missing-model", "could not resolve",
   )
+  assert_from_pretrained_parse_error_contains(
+    "missing-org/missing-model", "private or gated",
+  )
+  let hint = Tokenizer::from_pretrained_resolution_hint(
+    "private-org/private-model",
+    cache_dir=Some("_build/empty_hub_cache"),
+  )
+  @test.assert_eq(hint.cache_exists, false)
+  @test.assert_eq(hint.repo_cache_dir.unwrap().contains("models--private-org--private-model"), true)
+  @test.assert_eq(hint.message.contains("private or gated"), true)
 }
 
 ///|
@@ -963,6 +1570,17 @@ test "encode_batch reuses duplicate inputs without aliasing encodings" {
   @test.assert_eq(batch[2].ids, [0, 2])
   @test.assert_eq(batch[0].attention_mask, [1, 0])
   @test.assert_eq(batch[2].attention_mask, [1, 0])
+  let parallel = tok.encode_batch_parallel(
+    ["hello", "hello moon", "hello"],
+    add_special_tokens=false,
+  )
+  let parallel_fast = tok.encode_batch_parallel_fast(
+    ["hello", "hello moon", "hello"],
+    add_special_tokens=false,
+  )
+  @test.assert_eq(parallel.map(e => e.ids), batch.map(e => e.ids))
+  @test.assert_eq(parallel_fast.map(e => e.ids), batch.map(e => e.ids))
+  @test.assert_eq(parallel_fast[0].offsets, [(0, 0), (0, 0)])
 }
 
 ///|
@@ -981,6 +1599,81 @@ test "train_wordlevel builds deterministic tokenizer" {
   @test.assert_eq(enc.tokens, ["hello", "[UNK]"])
   @test.assert_eq(enc.ids, [2, 1])
   @test.assert_eq(tok.decode(enc.ids, skip_special_tokens=false), "hello[UNK]")
+}
+
+///|
+test "Tokenizer train_from_iterator applies pipeline and preserves added specials" {
+  let base = Tokenizer::new(@model.Model::train_wordlevel_from_tokens([[]]))
+    .with_normalizer(Some(@normalizer.Normalizer::Lowercase))
+    .with_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+    .add_special_tokens([AddedToken::special("[MASK]")])
+  let trained = base.train_from_iterator(
+    ["HELLO [MASK]", "hello Moon", "MOON"],
+    Trainer::wordlevel(unk_token="[UNK]", min_frequency=1),
+  )
+  @test.assert_eq(trained.token_to_id("[MASK]"), Some(0))
+  @test.assert_eq(trained.token_to_id("[UNK]"), Some(1))
+  @test.assert_eq(trained.token_to_id("hello") is Some(_), true)
+  @test.assert_eq(trained.token_to_id("moon") is Some(_), true)
+  @test.assert_eq(
+    trained.encode("HELLO moon [MASK]", add_special_tokens=false).tokens,
+    ["hello", "moon", "[MASK]"],
+  )
+  @test.assert_eq(trained.get_normalizer() is Some(_), true)
+  @test.assert_eq(trained.get_pre_tokenizer() is Some(_), true)
+}
+
+///|
+test "Trainer preserves AddedToken metadata for special tokens" {
+  let base = Tokenizer::new(@model.Model::train_wordlevel_from_tokens([[]])).with_pre_tokenizer(
+    Some(@pretokenizer.PreTokenizer::whitespace_split()),
+  )
+  let trained = base.train_from_iterator(
+    ["hello <extra>", "world"],
+    Trainer::wordlevel(
+      unk_token="[UNK]",
+      special_added_tokens=[
+        AddedToken::special("<extra>")
+        .with_single_word(true)
+        .with_lstrip(true)
+        .with_rstrip(true),
+      ],
+      show_progress=false,
+    ),
+  )
+  @test.assert_eq(trained.token_to_id("<extra>"), Some(0))
+  let decoder = trained.get_added_tokens_decoder()
+  let extra = decoder.get(0).unwrap()
+  @test.assert_eq(extra.content, "<extra>")
+  @test.assert_eq(extra.special, true)
+  @test.assert_eq(extra.normalized, false)
+  @test.assert_eq(extra.single_word, true)
+  @test.assert_eq(extra.lstrip, true)
+  @test.assert_eq(extra.rstrip, true)
+  @test.assert_eq(
+    trained.encode("hello <extra> world", add_special_tokens=false).tokens,
+    ["hello", " <extra> ", "world"],
+  )
+}
+
+///|
+test "Tokenizer train_from_files trains line oriented corpus" {
+  let path = "_build/tokenizer_train_from_files.txt"
+  @fs.write_string_to_file(path, "Hello moon\nhello tokenizer\n") catch {
+    _ => ()
+  }
+  let base = Tokenizer::new(@model.Model::train_wordlevel_from_tokens([[]]))
+    .with_normalizer(Some(@normalizer.Normalizer::Lowercase))
+    .with_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+  let trained = base.train_from_files(
+    [path],
+    Trainer::wordpiece(unk_token="[UNK]", min_frequency=1),
+  )
+  @test.assert_eq(
+    trained.encode("HELLO", add_special_tokens=false).ids.length(),
+    1,
+  )
+  @test.assert_eq(trained.to_json().contains("WordPiece"), true)
 }
 
 ///|
@@ -1297,6 +1990,34 @@ test "train_bpe max_token_length survives to_json reload" {
 }
 
 ///|
+test "Trainer bpe accepts compatibility knobs and special AddedToken" {
+  let base = Tokenizer::new(@model.Model::train_wordlevel_from_tokens([[]])).with_pre_tokenizer(
+    Some(@pretokenizer.PreTokenizer::whitespace_split()),
+  )
+  let trained = base.train_from_iterator(
+    ["abab abab <s>"],
+    Trainer::bpe(
+      unk_token=Some("[UNK]"),
+      min_frequency=2,
+      special_added_tokens=[AddedToken::special("<s>").with_lstrip(true)],
+      vocab_size=Some(16),
+      continuing_subword_prefix=Some("@@"),
+      end_of_word_suffix=Some("</w>"),
+      max_token_length=Some(4),
+      show_progress=false,
+    ),
+  )
+  @test.assert_eq(trained.token_to_id("<s>"), Some(0))
+  @test.assert_eq(
+    trained.get_added_tokens_decoder().get(0).unwrap().lstrip,
+    true,
+  )
+  @test.assert_eq(trained.encode("abab <s>", add_special_tokens=false).tokens, [
+    "a@@b", "@@a", "@@b</w>", " <s>",
+  ])
+}
+
+///|
 test "train_unigram prefers learned whole words" {
   let tok = Tokenizer::train_unigram(["hello hello help"], unk_token="<unk>", special_tokens=[
     "<pad>",
@@ -1340,4 +2061,56 @@ test "train_unigram respects vocab_size cap" {
   @test.assert_eq(tok.token_to_id("<pad>"), Some(0))
   @test.assert_eq(tok.token_to_id("<unk>"), Some(1))
   @test.assert_eq(tok.token_to_id("ab"), None)
+}
+
+///|
+test "train_unigram supports unk_piece and max_piece_length" {
+  let tok = Tokenizer::train_unigram(
+    ["hello hello"],
+    unk_piece=Some("<UNK>"),
+    special_tokens=["<pad>"],
+    max_piece_length=Some(2),
+    show_progress=false,
+    shrinking_factor=0.5,
+    n_sub_iterations=4,
+  )
+  @test.assert_eq(tok.token_to_id("<pad>"), Some(0))
+  @test.assert_eq(tok.token_to_id("<UNK>"), Some(1))
+  @test.assert_eq(tok.token_to_id("hello"), None)
+  @test.assert_eq(tok.token_to_id("he") is Some(_), true)
+  @test.assert_eq(tok.token_to_id("ll") is Some(_), true)
+  let enc = tok.encode("hello", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["h", "el", "lo"])
+  for token in enc.tokens {
+    @test.assert_eq(token.char_length() <= 2, true)
+  }
+}
+
+///|
+test "Trainer unigram preserves AddedToken metadata and advanced knobs" {
+  let base = Tokenizer::new(@model.Model::train_wordlevel_from_tokens([[]])).with_pre_tokenizer(
+    Some(@pretokenizer.PreTokenizer::whitespace_split()),
+  )
+  let trained = base.train_from_iterator(
+    ["moon moon <extra>"],
+    Trainer::unigram(
+      unk_piece=Some("<UNK>"),
+      special_added_tokens=[AddedToken::special("<extra>").with_rstrip(true)],
+      max_piece_length=Some(2),
+      shrinking_factor=0.5,
+      n_sub_iterations=3,
+      show_progress=false,
+    ),
+  )
+  @test.assert_eq(trained.token_to_id("<extra>"), Some(0))
+  @test.assert_eq(trained.token_to_id("<UNK>"), Some(1))
+  @test.assert_eq(
+    trained.get_added_tokens_decoder().get(0).unwrap().rstrip,
+    true,
+  )
+  @test.assert_eq(trained.token_to_id("moon"), None)
+  @test.assert_eq(
+    trained.encode("moon <extra>", add_special_tokens=false).tokens,
+    ["mo", "on", "<extra>"],
+  )
 }

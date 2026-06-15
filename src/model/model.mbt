@@ -23,10 +23,19 @@ pub struct BPEModel {
   fuse_unk : Bool
   byte_fallback : Bool
   ignore_merges : Bool
+  // HF BPE dropout: probability of skipping an available merge during encode.
+  // None / <=0 keeps the deterministic no-dropout fast path.
+  dropout : Double?
+  // Small deterministic PRNG state used only when dropout is enabled. This keeps
+  // core tokenization self-contained across MoonBit targets without importing a
+  // platform-specific random source.
+  mut dropout_rng_state : Int
   // word -> tokens with offsets relative to 0. HF tokenizers caches BPE words;
   // this keeps repeated prompts/corpora competitive while preserving offsets by
   // shifting a fresh copy per call.
   cache : Map[String, Array[@types.Token]]
+  // None keeps the historical unbounded cache; Some(0) disables caching.
+  mut cache_capacity : Int?
 }
 
 ///|
@@ -46,6 +55,7 @@ pub struct WordPieceModel {
   continuing_subword_prefix : String
   max_input_chars_per_word : Int
   cache : Map[String, Array[@types.Token]]
+  mut cache_capacity : Int?
 }
 
 ///|
@@ -59,6 +69,7 @@ pub struct UnigramModel {
   byte_fallback : Bool
   fuse_unk : Bool
   cache : Map[String, Array[@types.Token]]
+  mut cache_capacity : Int?
 }
 
 ///|
@@ -130,6 +141,93 @@ pub fn Model::get_vocab(self : Model) -> Map[String, Int] {
 }
 
 ///|
+/// Clear model-level tokenization caches. This mirrors HF's cache maintenance
+/// API and is a no-op for models without an internal word cache.
+pub fn Model::clear_cache(self : Model) -> Unit {
+  match self {
+    BPE(m) => m.cache.clear()
+    WordPiece(m) => m.cache.clear()
+    Unigram(m) => m.cache.clear()
+    WordLevel(_) => ()
+  }
+}
+
+///|
+/// Resize model-level tokenization caches. A capacity of `0` disables future
+/// caching; negative values are clamped to zero. The previous unbounded behavior
+/// is preserved until callers opt in to a bounded cache.
+pub fn Model::resize_cache(self : Model, capacity : Int) -> Unit {
+  let capacity = if capacity > 0 { capacity } else { 0 }
+  match self {
+    BPE(m) =>
+      resize_token_cache(m.cache, capacity, cap => m.cache_capacity = cap)
+    WordPiece(m) =>
+      resize_token_cache(m.cache, capacity, cap => m.cache_capacity = cap)
+    Unigram(m) =>
+      resize_token_cache(m.cache, capacity, cap => m.cache_capacity = cap)
+    WordLevel(_) => ()
+  }
+}
+
+///|
+/// Return the current number of cached word tokenizations.
+pub fn Model::cache_size(self : Model) -> Int {
+  match self {
+    BPE(m) => m.cache.length()
+    WordPiece(m) => m.cache.length()
+    Unigram(m) => m.cache.length()
+    WordLevel(_) => 0
+  }
+}
+
+///|
+fn resize_token_cache(
+  cache : Map[String, Array[@types.Token]],
+  capacity : Int,
+  set_capacity : (Int?) -> Unit,
+) -> Unit {
+  set_capacity(Some(capacity))
+  trim_token_cache(cache, capacity)
+}
+
+///|
+fn trim_token_cache(
+  cache : Map[String, Array[@types.Token]],
+  capacity : Int,
+) -> Unit {
+  if capacity <= 0 {
+    cache.clear()
+    return
+  }
+  if cache.length() <= capacity {
+    return
+  }
+  let entries = cache.to_array()
+  cache.clear()
+  let keep_start = entries.length() - capacity
+  for i in keep_start..<entries.length() {
+    cache[entries[i].0] = entries[i].1
+  }
+}
+
+///|
+fn put_token_cache(
+  cache : Map[String, Array[@types.Token]],
+  capacity : Int?,
+  word : String,
+  tokens : Array[@types.Token],
+) -> Unit {
+  match capacity {
+    Some(0) => return
+    Some(n) => {
+      cache[word] = tokens
+      trim_token_cache(cache, n)
+    }
+    None => cache[word] = tokens
+  }
+}
+
+///|
 /// Serialize supported constructed models to a tokenizer.json `model` object.
 /// Loaded HF tokenizers preserve their original JSON at the tokenizer layer;
 /// this fallback is mainly for tokenizers created by the training API.
@@ -139,6 +237,195 @@ pub fn Model::to_json(self : Model) -> String? {
     WordLevel(m) => Some(wordlevel_to_json(m))
     WordPiece(m) => Some(wordpiece_to_json(m))
     Unigram(m) => Some(unigram_to_json(m))
+  }
+}
+
+///|
+/// Save model-level HuggingFace artifacts into `folder`, mirroring
+/// `tokenizers.models.*.save(folder, prefix=None)`. The directory is created
+/// when possible and the concrete artifact paths are returned in write order.
+///
+/// - BPE: `<prefix>-vocab.json` + `<prefix>-merges.txt`
+/// - WordPiece: `<prefix>-vocab.txt`
+/// - WordLevel: `<prefix>-vocab.json`
+/// - Unigram: `<prefix>-unigram.json` (score-preserving tokenizer JSON fragment)
+pub fn Model::save(
+  self : Model,
+  folder : String,
+  prefix? : String = "",
+) -> Array[String] raise @types.TokenizerError {
+  ensure_dir(folder)
+  let p = artifact_prefix(prefix)
+  match self {
+    BPE(m) => save_bpe_artifacts(m, folder, p)
+    WordPiece(m) => save_wordpiece_artifacts(m, folder, p)
+    WordLevel(m) => save_wordlevel_artifact(m, folder, p)
+    Unigram(m) => save_unigram_artifact(m, folder, p)
+  }
+}
+
+///|
+fn save_bpe_artifacts(
+  m : BPEModel,
+  folder : String,
+  prefix : String,
+) -> Array[String] raise @types.TokenizerError {
+  let vocab_path = join_path(folder, prefix + "vocab.json")
+  let merges_path = join_path(folder, prefix + "merges.txt")
+  let sb = StringBuilder::new()
+  sb.write_char('{')
+  write_vocab_json(sb, m.vocab_r)
+  sb.write_char('}')
+  write_artifact(vocab_path, sb.to_string())
+  write_artifact(merges_path, bpe_merges_txt(m.merges))
+  [vocab_path, merges_path]
+}
+
+///|
+fn save_wordpiece_artifacts(
+  m : WordPieceModel,
+  folder : String,
+  prefix : String,
+) -> Array[String] raise @types.TokenizerError {
+  let path = join_path(folder, prefix + "vocab.txt")
+  write_artifact(path, vocab_txt(m.vocab_r))
+  [path]
+}
+
+///|
+fn save_wordlevel_artifact(
+  m : WordLevelModel,
+  folder : String,
+  prefix : String,
+) -> Array[String] raise @types.TokenizerError {
+  let path = join_path(folder, prefix + "vocab.json")
+  let sb = StringBuilder::new()
+  sb.write_char('{')
+  write_vocab_json(sb, m.vocab_r)
+  sb.write_char('}')
+  write_artifact(path, sb.to_string())
+  [path]
+}
+
+///|
+fn save_unigram_artifact(
+  m : UnigramModel,
+  folder : String,
+  prefix : String,
+) -> Array[String] raise @types.TokenizerError {
+  let path = join_path(folder, prefix + "unigram.json")
+  write_artifact(path, unigram_to_json(m))
+  [path]
+}
+
+///|
+fn bpe_merges_txt(merges : Map[(String, String), Int]) -> String {
+  let ordered : Array[(String, String)?] = Array::make(merges.length(), None)
+  for kv in merges {
+    let (pair, rank) = kv
+    if rank >= 0 && rank < ordered.length() {
+      ordered[rank] = Some(pair)
+    }
+  }
+  let sb = StringBuilder::new()
+  sb.write_string("#version: 0.2\n")
+  for item in ordered {
+    match item {
+      Some(pair) => {
+        sb.write_string(pair.0)
+        sb.write_char(' ')
+        sb.write_string(pair.1)
+        sb.write_char('\n')
+      }
+      None => ()
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn vocab_txt(vocab_r : Array[String?]) -> String {
+  let sb = StringBuilder::new()
+  for tok in vocab_r {
+    match tok {
+      Some(t) => {
+        sb.write_string(t)
+        sb.write_char('\n')
+      }
+      None => sb.write_char('\n')
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn write_artifact(
+  path : String,
+  content : String,
+) -> Unit raise @types.TokenizerError {
+  @fs.write_string_to_file(path, content) catch {
+    _ => raise @types.ParseError("cannot write model artifact: \{path}")
+  }
+}
+
+///|
+fn ensure_dir(path : String) -> Unit raise @types.TokenizerError {
+  if path.is_empty() || @fs.path_exists(path) {
+    return
+  }
+  ensure_parent_dir(path)
+  @fs.create_dir(path) catch {
+    _ =>
+      if !@fs.path_exists(path) {
+        raise @types.ParseError("cannot create directory: \{path}")
+      }
+  }
+}
+
+///|
+fn ensure_parent_dir(path : String) -> Unit raise @types.TokenizerError {
+  match parent_dir(path) {
+    Some(parent) => ensure_dir(parent)
+    None => ()
+  }
+}
+
+///|
+fn parent_dir(path : String) -> String? {
+  let chars = path.to_array()
+  let mut i = chars.length() - 1
+  while i >= 0 {
+    if chars[i] == '/' {
+      if i == 0 {
+        return Some("/")
+      }
+      let sb = StringBuilder::new()
+      for j in 0..<i {
+        sb.write_char(chars[j])
+      }
+      let p = sb.to_string()
+      return if p.is_empty() { None } else { Some(p) }
+    }
+    i = i - 1
+  }
+  None
+}
+
+///|
+fn join_path(folder : String, name : String) -> String {
+  if folder.has_suffix("/") {
+    folder + name
+  } else {
+    folder + "/" + name
+  }
+}
+
+///|
+fn artifact_prefix(prefix : String) -> String {
+  if prefix.is_empty() {
+    ""
+  } else {
+    prefix + "-"
   }
 }
 
@@ -178,6 +465,14 @@ fn bpe_to_json(m : BPEModel) -> String {
   }
   if m.ignore_merges {
     sb.write_string(",\"ignore_merges\":true")
+  }
+  match m.dropout {
+    Some(p) =>
+      if p > 0.0 {
+        sb.write_string(",\"dropout\":")
+        sb.write_string(p.to_string())
+      }
+    None => ()
   }
   sb.write_char('}')
   sb.to_string()

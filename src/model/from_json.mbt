@@ -119,6 +119,7 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
   let (vocab, vocab_r) = parse_vocab(obj)
   let ignore_merges = @types.get_bool(obj, "ignore_merges", default=false)
   let merges = parse_merges(obj)
+  let dropout = parse_bpe_dropout(obj)
   {
     vocab,
     vocab_r,
@@ -131,7 +132,18 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
     fuse_unk: @types.get_bool(obj, "fuse_unk", default=false),
     byte_fallback: @types.get_bool(obj, "byte_fallback", default=false),
     ignore_merges,
+    dropout,
+    dropout_rng_state: 1,
     cache: {},
+    cache_capacity: None,
+  }
+}
+
+///|
+fn parse_bpe_dropout(obj : Map[String, Json]) -> Double? {
+  match obj.get("dropout") {
+    Some(Number(n, ..)) => if n > 0.0 { Some(n) } else { None }
+    _ => None
   }
 }
 
@@ -167,6 +179,7 @@ fn parse_wordpiece(
       default=100,
     ),
     cache: {},
+    cache_capacity: None,
   }
 }
 
@@ -197,5 +210,6 @@ fn parse_unigram(
     byte_fallback: @types.get_bool(obj, "byte_fallback", default=false),
     fuse_unk: @types.get_bool(obj, "fuse_unk", default=true),
     cache: {},
+    cache_capacity: None,
   }
 }

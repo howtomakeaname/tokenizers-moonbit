@@ -26,7 +26,7 @@ pub fn WordPieceModel::tokenize(
     let rel = [
       @types.Token::{ id: unk_id, value: self.unk_token, offsets: (0, n) },
     ]
-    self.cache[word] = rel
+    put_token_cache(self.cache, self.cache_capacity, word, rel)
     return shift_wordpiece_tokens(rel, offset)
   }
   let out : Array[@types.Token] = []
@@ -67,10 +67,10 @@ pub fn WordPieceModel::tokenize(
     let rel = [
       @types.Token::{ id: unk_id, value: self.unk_token, offsets: (0, n) },
     ]
-    self.cache[word] = rel
+    put_token_cache(self.cache, self.cache_capacity, word, rel)
     shift_wordpiece_tokens(rel, offset)
   } else {
-    self.cache[word] = out
+    put_token_cache(self.cache, self.cache_capacity, word, out)
     shift_wordpiece_tokens(out, offset)
   }
 }

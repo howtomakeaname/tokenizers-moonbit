@@ -53,9 +53,12 @@ pub fn BPEModel::tokenize(
     return []
   }
 
-  match self.cache.get(word) {
-    Some(cached) => return shift_tokens(cached, offset)
-    None => ()
+  let use_cache = !self.has_dropout()
+  if use_cache {
+    match self.cache.get(word) {
+      Some(cached) => return shift_tokens(cached, offset)
+      None => ()
+    }
   }
 
   // ignore_merges fast path: if the whole word is directly in the vocab, emit
@@ -64,7 +67,9 @@ pub fn BPEModel::tokenize(
     match self.vocab.get(word) {
       Some(id) => {
         let rel = [@types.Token::{ id, value: word, offsets: (0, n) }]
-        self.cache[word] = rel
+        if use_cache {
+          put_token_cache(self.cache, self.cache_capacity, word, rel)
+        }
         return shift_tokens(rel, offset)
       }
       None => ()
@@ -130,6 +135,9 @@ pub fn BPEModel::tokenize(
       Some(r) => if r != m.rank { continue }
       None => continue
     }
+    if !self.should_apply_dropout_merge(word, m.rank, pos) {
+      continue
+    }
     let nx = m.right
     // Merge symbols[nx] into symbols[pos].
     symbols[pos].value = symbols[pos].value + symbols[nx].value
@@ -145,8 +153,60 @@ pub fn BPEModel::tokenize(
 
   // Collect surviving symbols, mapping each to an id (or the unk token).
   let rel = self.collect_tokens(symbols, chars, 0)
-  self.cache[word] = rel
+  if use_cache {
+    put_token_cache(self.cache, self.cache_capacity, word, rel)
+  }
   shift_tokens(rel, offset)
+}
+
+///|
+fn BPEModel::has_dropout(self : BPEModel) -> Bool {
+  match self.dropout {
+    Some(p) => p > 0.0
+    None => false
+  }
+}
+
+///|
+fn BPEModel::should_apply_dropout_merge(
+  self : BPEModel,
+  word : String,
+  rank : Int,
+  pos : Int,
+) -> Bool {
+  match self.dropout {
+    Some(p) => {
+      if p <= 0.0 {
+        return true
+      }
+      if p >= 1.0 {
+        return false
+      }
+      let threshold = (p * 1000.0).to_int()
+      let r = self.next_dropout_sample(word, rank, pos)
+      r >= threshold
+    }
+    None => true
+  }
+}
+
+///|
+fn BPEModel::next_dropout_sample(
+  self : BPEModel,
+  word : String,
+  rank : Int,
+  pos : Int,
+) -> Int {
+  let mut state = self.dropout_rng_state
+  if state <= 0 {
+    state = 1
+  }
+  state = (state * 1103 + rank * 97 + pos * 17 + word.length() + 1) % 1000003
+  if state <= 0 {
+    state = state + 1000003
+  }
+  self.dropout_rng_state = state
+  state % 1000
 }
 
 ///|

@@ -73,6 +73,28 @@ pub fn Tokenizer::decode_batch(
 }
 
 ///|
+/// Async-compatible naming alias for decode. It delegates to the deterministic
+/// synchronous implementation on all MoonBit targets.
+pub fn Tokenizer::async_decode(
+  self : Tokenizer,
+  ids : Array[Int],
+  skip_special_tokens? : Bool = true,
+) -> String {
+  self.decode(ids, skip_special_tokens~)
+}
+
+///|
+/// Async-compatible naming alias for batch decode. Preserves duplicate-sequence
+/// caching and output order from `decode_batch`.
+pub fn Tokenizer::async_decode_batch(
+  self : Tokenizer,
+  batch : Array[Array[Int]],
+  skip_special_tokens? : Bool = true,
+) -> Array[String] {
+  self.decode_batch(batch, skip_special_tokens~)
+}
+
+///|
 /// Create a stateful incremental decoder. This is useful for token-by-token LLM
 /// streaming where decoding each id independently would lose decoder context
 /// (for example ByteFallback or Strip/ByteLevel decoder state).

@@ -213,6 +213,7 @@ pub fn Model::train_wordpiece_from_tokens(
     continuing_subword_prefix,
     max_input_chars_per_word,
     cache: {},
+    cache_capacity: None,
   })
 }
 
@@ -395,7 +396,10 @@ pub fn Model::train_bpe_from_tokens(
     fuse_unk,
     byte_fallback: false,
     ignore_merges: false,
+    dropout: None,
+    dropout_rng_state: 1,
     cache: {},
+    cache_capacity: None,
   })
 }
 
@@ -572,7 +576,14 @@ pub fn Model::train_unigram(
   vocab_size? : Int? = None,
   byte_fallback? : Bool = false,
   fuse_unk? : Bool = true,
+  max_piece_length? : Int? = None,
+  shrinking_factor? : Double = 0.75,
+  n_sub_iterations? : Int = 2,
+  show_progress? : Bool = true,
 ) -> Model {
+  ignore(shrinking_factor)
+  ignore(n_sub_iterations)
+  ignore(show_progress)
   let tokenized : Array[Array[String]] = []
   for text in texts {
     tokenized.push(whitespace_words(text))
@@ -585,6 +596,7 @@ pub fn Model::train_unigram(
     vocab_size~,
     byte_fallback~,
     fuse_unk~,
+    max_piece_length~,
   )
 }
 
@@ -598,17 +610,27 @@ pub fn Model::train_unigram_from_tokens(
   vocab_size? : Int? = None,
   byte_fallback? : Bool = false,
   fuse_unk? : Bool = true,
+  max_piece_length? : Int? = None,
+  shrinking_factor? : Double = 0.75,
+  n_sub_iterations? : Int = 2,
+  show_progress? : Bool = true,
 ) -> Model {
+  ignore(shrinking_factor)
+  ignore(n_sub_iterations)
+  ignore(show_progress)
   let word_counts : Map[String, Int] = {}
   let word_order : Array[String] = []
   let char_counts : Map[String, Int] = {}
   let char_order : Array[String] = []
+  let piece_counts : Map[String, Int] = {}
+  let piece_order : Array[String] = []
   for tokens in tokenized_texts {
     for tok in tokens {
       bump_count(word_counts, word_order, tok)
       for c in tok.to_array() {
         bump_count(char_counts, char_order, char_string(c))
       }
+      add_unigram_subpieces(tok, max_piece_length, piece_counts, piece_order)
     }
   }
 
@@ -640,14 +662,31 @@ pub fn Model::train_unigram_from_tokens(
     ignore(add_token(item.0, -10.0))
   }
 
+  let pieces = sorted_wordlevel_candidates(
+    piece_order, piece_counts, min_frequency,
+  )
+  for item in pieces {
+    ignore(add_token(item.0, unigram_piece_score(item.1)))
+  }
+
   let words = sorted_wordlevel_candidates(
     word_order, word_counts, min_frequency,
   )
   for item in words {
-    ignore(add_token(item.0, unigram_word_score(item.1)))
+    if unigram_piece_within_limit(item.0, max_piece_length) {
+      ignore(add_token(item.0, unigram_word_score(item.1)))
+    }
   }
 
-  Unigram({ vocab, vocab_r, unk_id, byte_fallback, fuse_unk, cache: {} })
+  Unigram({
+    vocab,
+    vocab_r,
+    unk_id,
+    byte_fallback,
+    fuse_unk,
+    cache: {},
+    cache_capacity: None,
+  })
 }
 
 ///|
@@ -655,6 +694,49 @@ fn unigram_word_score(freq : Int) -> Double {
   // Keep scores deterministic and simple: frequent words get slightly better
   // scores, and all whole words beat character-piece paths.
   freq.to_double()
+}
+
+///|
+fn unigram_piece_score(freq : Int) -> Double {
+  -5.0 + freq.to_double() / 1000.0
+}
+
+///|
+fn unigram_piece_within_limit(piece : String, max_piece_length : Int?) -> Bool {
+  match max_piece_length {
+    None => true
+    Some(n) => n <= 0 || piece.char_length() <= n
+  }
+}
+
+///|
+fn add_unigram_subpieces(
+  tok : String,
+  max_piece_length : Int?,
+  counts : Map[String, Int],
+  order : Array[String],
+) -> Unit {
+  let chars = tok.to_array()
+  let n = chars.length()
+  if n <= 2 {
+    return
+  }
+  let max_len = match max_piece_length {
+    Some(limit) => if limit <= 0 { n - 1 } else { limit }
+    None => 16
+  }
+  let hi = if max_len >= n { n - 1 } else { max_len }
+  if hi < 2 {
+    return
+  }
+  for start in 0..<n {
+    for len in 2..<=hi {
+      let stop = start + len
+      if stop <= n {
+        bump_count(counts, order, slice_train(chars, start, stop))
+      }
+    }
+  }
 }
 
 ///|

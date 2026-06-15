@@ -105,7 +105,7 @@ pub fn UnigramModel::tokenize(
   } else {
     expanded
   }
-  self.cache[word] = rel
+  put_token_cache(self.cache, self.cache_capacity, word, rel)
   shift_unigram_tokens(rel, offset)
 }
 

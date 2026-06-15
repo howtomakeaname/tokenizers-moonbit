@@ -8,10 +8,60 @@ pub(all) struct Span {
 }
 
 ///|
+/// Lightweight public Regex wrapper for the deterministic regex subset shared by
+/// Split, Normalizer::Replace and Decoder::Replace. It deliberately exposes a
+/// capability check so callers can avoid assuming a full backtracking regex
+/// engine exists on every MoonBit target.
+pub struct Regex {
+  pattern : String
+} derive(Debug, Eq)
+
+///|
+pub fn Regex::new(pattern : String) -> Regex {
+  { pattern, }
+}
+
+///|
+pub fn Regex::pattern(self : Regex) -> String {
+  self.pattern
+}
+
+///|
+/// Whether this pattern is handled by the built-in deterministic scanner.
+pub fn Regex::is_supported(self : Regex) -> Bool {
+  simple_split_regex_matches([], self.pattern) is Some(_)
+}
+
+///|
+/// Return half-open char spans for all matches, or `None` when the pattern is
+/// outside the supported deterministic subset.
+pub fn Regex::find_matches(self : Regex, text : String) -> Array[(Int, Int)]? {
+  match simple_split_regex_matches(text.to_array(), self.pattern) {
+    Some(spans) => Some(spans.map(s => (s.start, s.stop)))
+    None => None
+  }
+}
+
+///|
+/// Replace all matches of the supported deterministic subset. Unsupported
+/// patterns return `None` instead of silently falling back to literal matching.
+pub fn Regex::replace_all(
+  self : Regex,
+  text : String,
+  content : String,
+) -> String? {
+  replace_simple_regex(text, self.pattern, content)
+}
+
+///|
 pub fn simple_split_regex_matches(
   chars : Array[Char],
   pattern : String,
 ) -> Array[Span]? {
+  match regex_literal_pattern(pattern) {
+    Some(lit) => return literal_matches(chars, lit)
+    None => ()
+  }
   match simple_exact_regex_matches(chars, pattern) {
     Some(spans) => return Some(spans)
     None => ()
@@ -537,6 +587,7 @@ fn simple_anchored_regex_matches(
 
 ///|
 pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
+  regex_literal_pattern(pattern) is Some(_) ||
   is_simple_space_regex_pattern(pattern) ||
   is_exact_regex_pattern(pattern) ||
   is_min_regex_pattern(pattern) ||
@@ -890,6 +941,70 @@ pub fn literal_matches(chars : Array[Char], pattern : String) -> Array[Span]? {
     }
   }
   Some(out)
+}
+
+///|
+/// Interpret the subset of regex patterns that are plain literals. This covers
+/// real tokenizer configs that set `regex=true` while still using exact text
+/// delimiters, and escaped regex metacharacters such as `\\.`. Patterns with
+/// active regex operators intentionally return `None` so callers keep using the
+/// explicit deterministic scanners above instead of silently changing meaning.
+fn regex_literal_pattern(pattern : String) -> String? {
+  if pattern.is_empty() {
+    return None
+  }
+  let chars = pattern.to_array()
+  let sb = StringBuilder::new()
+  let mut i = 0
+  while i < chars.length() {
+    let c = chars[i]
+    if c == '\\' {
+      if i + 1 >= chars.length() {
+        return None
+      }
+      let next = chars[i + 1]
+      if is_regex_escaped_literal(next) {
+        sb.write_char(next)
+      } else if next == 'n' {
+        sb.write_char('\n')
+      } else if next == 'r' {
+        sb.write_char('\r')
+      } else if next == 't' {
+        sb.write_char('\t')
+      } else {
+        return None
+      }
+      i = i + 2
+    } else if is_regex_operator(c) {
+      return None
+    } else {
+      sb.write_char(c)
+      i = i + 1
+    }
+  }
+  Some(sb.to_string())
+}
+
+///|
+fn is_regex_operator(c : Char) -> Bool {
+  c == '.' ||
+  c == '^' ||
+  c == '$' ||
+  c == '*' ||
+  c == '+' ||
+  c == '?' ||
+  c == '{' ||
+  c == '}' ||
+  c == '[' ||
+  c == ']' ||
+  c == '(' ||
+  c == ')' ||
+  c == '|'
+}
+
+///|
+fn is_regex_escaped_literal(c : Char) -> Bool {
+  is_regex_operator(c) || c == '\\'
 }
 
 ///|

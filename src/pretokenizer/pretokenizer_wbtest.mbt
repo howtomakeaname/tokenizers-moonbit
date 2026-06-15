@@ -146,6 +146,23 @@ test "split pretokenizer supports common regex spans" {
   ).pre_tokenize("a\t b\n\u{3000}c", base_offset=0)
   @test.assert_eq(spaces.map(x => x.value), ["a", "b", "c"])
 
+  let regex_literal = PreTokenizer::Split(
+    pattern="@@",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a@@b@@@@c", base_offset=4)
+  @test.assert_eq(regex_literal.map(x => x.value), ["a", "b", "c"])
+  @test.assert_eq(regex_literal.map(x => x.offsets), [(4, 5), (7, 8), (12, 13)])
+
+  let escaped_literal = PreTokenizer::Split(
+    pattern="a\\.b",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("xa.bya-b", base_offset=0)
+  @test.assert_eq(escaped_literal.map(x => x.value), ["x", "a.b", "ya-b"])
+
   let wide_spaces = PreTokenizer::Split(
     pattern="\\s{2,}",
     behavior=Isolated,

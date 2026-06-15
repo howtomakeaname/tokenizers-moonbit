@@ -4,6 +4,7 @@ import {
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/int",
   "moonbitlang/core/priority_queue" @pq,
+  "moonbitlang/x/fs",
 }
 
 import {

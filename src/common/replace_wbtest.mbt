@@ -171,6 +171,30 @@ test "replace helpers cover regex run semantics" {
 }
 
 ///|
+test "Regex wrapper exposes supported deterministic subset" {
+  let digits = Regex::new("\\d+")
+  @test.assert_eq(digits.pattern(), "\\d+")
+  @test.assert_eq(digits.is_supported(), true)
+  @test.assert_eq(digits.find_matches("a12b003"), Some([(1, 3), (4, 7)]))
+  @test.assert_eq(digits.replace_all("a12b003", "#"), Some("a#b#"))
+  let literal = Regex::new("@@")
+  @test.assert_eq(literal.is_supported(), true)
+  @test.assert_eq(
+    literal.find_matches("a@@b@@@@"),
+    Some([(1, 3), (4, 6), (6, 8)]),
+  )
+  @test.assert_eq(literal.replace_all("a@@b", "-"), Some("a-b"))
+  let escaped = Regex::new("a\\.b")
+  @test.assert_eq(escaped.is_supported(), true)
+  @test.assert_eq(escaped.find_matches("a.b axb"), Some([(0, 3)]))
+  @test.assert_eq(escaped.replace_all("a.b axb", "X"), Some("X axb"))
+  let unsupported = Regex::new("(?<=a)b")
+  @test.assert_eq(unsupported.is_supported(), false)
+  @test.assert_eq(unsupported.find_matches("ab"), None)
+  @test.assert_eq(unsupported.replace_all("ab", "X"), None)
+}
+
+///|
 test "split regex helpers cover simple patterns" {
   let chars = "a12 b\u{3000}003".to_array()
   guard simple_split_regex_matches(chars, "\\d+") is Some(digits) else {

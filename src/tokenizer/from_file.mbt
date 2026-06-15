@@ -18,6 +18,46 @@ let pretrained_source_cache_limit : Int = 16
 let pretrained_source_cache_order : Array[String] = []
 
 ///|
+/// Optional non-tokenizer.json files that commonly live next to HF tokenizer
+/// artifacts. The core tokenizer does not interpret these files yet; exposing
+/// their raw JSON lets migration layers inspect `tokenizer_config.json` and
+/// `special_tokens_map.json` without reimplementing cache resolution.
+pub struct PretrainedAuxFiles {
+  tokenizer_config_json : String?
+  special_tokens_map_json : String?
+} derive(Debug, Eq)
+
+///|
+/// Local Hub-cache metadata for a resolved tokenizer artifact. This is useful for
+/// HF-compatible offline layers that need to validate resolved revisions, ETags
+/// or sidecar presence without duplicating the cache layout logic.
+pub struct PretrainedCacheMetadata {
+  tokenizer_json_path : String
+  tokenizer_config_path : String?
+  special_tokens_map_path : String?
+  revision : String
+  resolved_revision : String
+  etag : String?
+} derive(Debug, Eq)
+
+///|
+/// Diagnostic information for offline `from_pretrained` resolution failures.
+/// It is intentionally string/path based so optional Hub/Python layers can turn
+/// it into actionable private-repo, gated-repo or missing-file exceptions.
+pub struct PretrainedResolutionHint {
+  model_id : String
+  revision : String
+  cache_dir : String?
+  repo_cache_dir : String?
+  ref_path : String?
+  resolved_revision : String?
+  snapshot_dir : String?
+  tokenizer_json_path : String?
+  cache_exists : Bool
+  message : String
+} derive(Debug, Eq)
+
+///|
 /// Load a tokenizer from a `tokenizer.json` file path.
 pub fn from_file(path : String) -> Tokenizer raise @types.TokenizerError {
   Tokenizer::from_file(path)
@@ -39,8 +79,9 @@ pub fn Tokenizer::from_file(
 pub fn Tokenizer::save(
   self : Tokenizer,
   path : String,
+  pretty? : Bool = false,
 ) -> Unit raise @types.TokenizerError {
-  let content = self.to_json()
+  let content = self.to_str(pretty~)
   @fs.write_string_to_file(path, content) catch {
     _ => raise @types.ParseError("cannot write file: \{path}")
   }
@@ -59,6 +100,9 @@ pub fn Tokenizer::save(
 pub fn Tokenizer::save_pretrained(
   self : Tokenizer,
   dir : String,
+  pretty? : Bool = false,
+  save_model? : Bool = false,
+  model_prefix? : String = "",
 ) -> String raise @types.TokenizerError {
   if !@fs.path_exists(dir) {
     @fs.create_dir(dir) catch {
@@ -66,8 +110,23 @@ pub fn Tokenizer::save_pretrained(
     }
   }
   let path = join_tokenizer_json(dir)
-  self.save(path)
+  self.save(path, pretty~)
+  if save_model {
+    ignore(self.model.save(dir, prefix=model_prefix))
+  }
   path
+}
+
+///|
+/// Save just the tokenizer model artifacts into `folder`, mirroring HF's
+/// `tokenizer.model.save(folder, prefix=None)` convenience path while keeping the
+/// model field encapsulated behind the Tokenizer façade.
+pub fn Tokenizer::save_model(
+  self : Tokenizer,
+  folder : String,
+  prefix? : String = "",
+) -> Array[String] raise @types.TokenizerError {
+  self.model.save(folder, prefix~)
 }
 
 ///|
@@ -116,6 +175,39 @@ pub fn from_pretrained_cached(
 }
 
 ///|
+/// Read optional HF tokenizer sidecar files (`tokenizer_config.json` and
+/// `special_tokens_map.json`) from the same local directory / file / Hub cache
+/// resolution rules as `from_pretrained`.
+pub fn Tokenizer::from_pretrained_aux_files(
+  path : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> PretrainedAuxFiles {
+  let base = resolve_pretrained_base_dir(path, revision~, cache_dir~)
+  match base {
+    Some(dir) =>
+      {
+        tokenizer_config_json: read_optional_file(
+          join_path(dir, "tokenizer_config.json"),
+        ),
+        special_tokens_map_json: read_optional_file(
+          join_path(dir, "special_tokens_map.json"),
+        ),
+      }
+    None => { tokenizer_config_json: None, special_tokens_map_json: None }
+  }
+}
+
+///|
+pub fn from_pretrained_aux_files(
+  path : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> PretrainedAuxFiles {
+  Tokenizer::from_pretrained_aux_files(path, revision~, cache_dir~)
+}
+
+///|
 /// Store downloaded `tokenizer.json` content into an HF-style Hub cache snapshot
 /// and load it immediately. This is the bridge used by network-capable callers
 /// such as the optional `hub` package: the core package only handles cache
@@ -131,6 +223,9 @@ pub fn Tokenizer::from_pretrained_downloaded(
   revision? : String = "main",
   resolved_revision? : String? = None,
   cache_dir? : String? = None,
+  tokenizer_config_json? : String? = None,
+  special_tokens_map_json? : String? = None,
+  etag? : String? = None,
 ) -> Tokenizer raise @types.TokenizerError {
   let path = cache_pretrained_tokenizer_json(
     model_id,
@@ -139,6 +234,14 @@ pub fn Tokenizer::from_pretrained_downloaded(
     resolved_revision~,
     cache_dir~,
   )
+  let snapshot_dir = parent_dir(path).unwrap_or("")
+  write_optional_snapshot_file(
+    snapshot_dir, "tokenizer_config.json", tokenizer_config_json,
+  )
+  write_optional_snapshot_file(
+    snapshot_dir, "special_tokens_map.json", special_tokens_map_json,
+  )
+  write_optional_snapshot_file(snapshot_dir, "tokenizer.json.etag", etag)
   insert_pretrained_source_cache(path, tokenizer_json)
   Tokenizer::from_str(tokenizer_json)
 }
@@ -150,6 +253,9 @@ pub fn from_pretrained_downloaded(
   revision? : String = "main",
   resolved_revision? : String? = None,
   cache_dir? : String? = None,
+  tokenizer_config_json? : String? = None,
+  special_tokens_map_json? : String? = None,
+  etag? : String? = None,
 ) -> Tokenizer raise @types.TokenizerError {
   Tokenizer::from_pretrained_downloaded(
     model_id,
@@ -157,7 +263,295 @@ pub fn from_pretrained_downloaded(
     revision~,
     resolved_revision~,
     cache_dir~,
+    tokenizer_config_json~,
+    special_tokens_map_json~,
+    etag~,
   )
+}
+
+///|
+/// Resolve local cache metadata for a model id/revision. Returns `None` when the
+/// tokenizer is not present in local cache, matching the offline-only core API.
+pub fn Tokenizer::from_pretrained_cache_metadata(
+  model_id : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> PretrainedCacheMetadata? {
+  match resolve_hub_cache_path(model_id, revision~, cache_dir~) {
+    Some(tokenizer_path) => {
+      let dir = parent_dir(tokenizer_path).unwrap_or("")
+      let root = match cache_dir {
+        Some(c) => c
+        None => default_hub_cache_dir().unwrap_or("")
+      }
+      let repo = root + "/" + hub_model_dir(model_id)
+      let resolved_revision = read_revision_ref(repo, revision).unwrap_or(
+        revision,
+      )
+      let tokenizer_config_path = optional_existing_path(
+        join_path(dir, "tokenizer_config.json"),
+      )
+      let special_tokens_map_path = optional_existing_path(
+        join_path(dir, "special_tokens_map.json"),
+      )
+      Some({
+        tokenizer_json_path: tokenizer_path,
+        tokenizer_config_path,
+        special_tokens_map_path,
+        revision,
+        resolved_revision,
+        etag: read_optional_file(join_path(dir, "tokenizer.json.etag")),
+      })
+    }
+    None => None
+  }
+}
+
+///|
+pub fn from_pretrained_cache_metadata(
+  model_id : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> PretrainedCacheMetadata? {
+  Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~)
+}
+
+///|
+/// True when the locally-resolved cache metadata still points at an existing
+/// `tokenizer.json`. This lets offline callers distinguish "metadata object was
+/// produced" from "all referenced files are still available".
+pub fn PretrainedCacheMetadata::cache_exists(
+  self : PretrainedCacheMetadata,
+) -> Bool {
+  @fs.path_exists(self.tokenizer_json_path)
+}
+
+///|
+/// Compare a cached tokenizer ETag against an expected value. `None` means the
+/// caller has no ETag to validate, so the check is considered satisfied.
+pub fn PretrainedCacheMetadata::etag_matches(
+  self : PretrainedCacheMetadata,
+  expected_etag : String?,
+) -> Bool {
+  match expected_etag {
+    Some(expected) => self.etag == Some(expected)
+    None => true
+  }
+}
+
+///|
+/// Validate local cache freshness using the pieces available offline: existing
+/// tokenizer file, optional resolved revision, optional ETag, and optional
+/// sidecar requirements.
+pub fn PretrainedCacheMetadata::is_fresh(
+  self : PretrainedCacheMetadata,
+  resolved_revision? : String? = None,
+  etag? : String? = None,
+  require_tokenizer_config? : Bool = false,
+  require_special_tokens_map? : Bool = false,
+) -> Bool {
+  if !self.cache_exists() {
+    return false
+  }
+  match resolved_revision {
+    Some(expected) =>
+      if !expected.is_empty() && self.resolved_revision != expected {
+        return false
+      }
+    None => ()
+  }
+  if !self.etag_matches(etag) {
+    return false
+  }
+  if require_tokenizer_config && self.tokenizer_config_path is None {
+    return false
+  }
+  if require_special_tokens_map && self.special_tokens_map_path is None {
+    return false
+  }
+  true
+}
+
+///|
+/// Offline cache existence check for a model id/revision.
+pub fn Tokenizer::from_pretrained_cache_exists(
+  model_id : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> Bool {
+  match Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
+    Some(meta) => meta.cache_exists()
+    None => false
+  }
+}
+
+///|
+pub fn from_pretrained_cache_exists(
+  model_id : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> Bool {
+  Tokenizer::from_pretrained_cache_exists(model_id, revision~, cache_dir~)
+}
+
+///|
+/// Offline cache freshness check for a model id/revision.
+pub fn Tokenizer::from_pretrained_cache_is_fresh(
+  model_id : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+  resolved_revision? : String? = None,
+  etag? : String? = None,
+  require_tokenizer_config? : Bool = false,
+  require_special_tokens_map? : Bool = false,
+) -> Bool {
+  match Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
+    Some(meta) =>
+      meta.is_fresh(
+        resolved_revision~,
+        etag~,
+        require_tokenizer_config~,
+        require_special_tokens_map~,
+      )
+    None => false
+  }
+}
+
+///|
+pub fn from_pretrained_cache_is_fresh(
+  model_id : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+  resolved_revision? : String? = None,
+  etag? : String? = None,
+  require_tokenizer_config? : Bool = false,
+  require_special_tokens_map? : Bool = false,
+) -> Bool {
+  Tokenizer::from_pretrained_cache_is_fresh(
+    model_id,
+    revision~,
+    cache_dir~,
+    resolved_revision~,
+    etag~,
+    require_tokenizer_config~,
+    require_special_tokens_map~,
+  )
+}
+
+///|
+/// Convenience ETag-only check for offline Hub cache validation.
+pub fn Tokenizer::from_pretrained_cache_etag_matches(
+  model_id : String,
+  expected_etag : String?,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> Bool {
+  match Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
+    Some(meta) => meta.cache_exists() && meta.etag_matches(expected_etag)
+    None => false
+  }
+}
+
+///|
+pub fn from_pretrained_cache_etag_matches(
+  model_id : String,
+  expected_etag : String?,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> Bool {
+  Tokenizer::from_pretrained_cache_etag_matches(
+    model_id,
+    expected_etag,
+    revision~,
+    cache_dir~,
+  )
+}
+
+///|
+/// Return an actionable offline-resolution diagnostic for `from_pretrained`.
+/// This does not perform network IO; it explains which local cache locations were
+/// inspected and includes guidance for private/gated repositories.
+pub fn Tokenizer::from_pretrained_resolution_hint(
+  model_id : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> PretrainedResolutionHint {
+  let root = match cache_dir {
+    Some(c) => Some(c)
+    None => default_hub_cache_dir()
+  }
+  match root {
+    None =>
+      {
+        model_id,
+        revision,
+        cache_dir: None,
+        repo_cache_dir: None,
+        ref_path: None,
+        resolved_revision: None,
+        snapshot_dir: None,
+        tokenizer_json_path: None,
+        cache_exists: false,
+        message: "from_pretrained cannot inspect local HuggingFace Hub cache for '" +
+          model_id +
+          "' because no cache_dir/HUGGINGFACE_HUB_CACHE/HF_HOME/HOME is configured. For private or gated repositories, download with an authenticated Hub client first and pass cache_dir or tokenizer.json explicitly.",
+      }
+    Some(root_dir) => {
+      let repo = root_dir + "/" + hub_model_dir(model_id)
+      let ref_path = repo + "/refs/" + revision
+      let resolved = read_revision_ref(repo, revision).unwrap_or(revision)
+      let snapshot_dir = repo + "/snapshots/" + resolved
+      let tok = snapshot_dir + "/tokenizer.json"
+      let repo_exists = @fs.path_exists(repo)
+      let snapshot_exists = @fs.path_exists(snapshot_dir)
+      let tokenizer_exists = @fs.path_exists(tok)
+      let message = if tokenizer_exists {
+        "from_pretrained can resolve cached tokenizer for '" +
+        model_id + "' at " + tok
+      } else if !repo_exists {
+        "from_pretrained could not find a local cache entry for '" +
+        model_id +
+        "' under " +
+        repo +
+        ". If this is a private or gated repository, download it with an authenticated Hub client/token first, or pass a local tokenizer.json path."
+      } else if !snapshot_exists {
+        "from_pretrained found repository cache for '" +
+        model_id +
+        "' but revision '" +
+        revision +
+        "' resolves to missing snapshot " +
+        snapshot_dir +
+        ". Refresh the cache for this revision or pass resolved_revision/tokenizer.json explicitly."
+      } else {
+        "from_pretrained found snapshot " +
+        snapshot_dir +
+        " for '" +
+        model_id +
+        "' but tokenizer.json is missing. The repository may not contain a fast tokenizer artifact, or the cache is incomplete; download tokenizer.json or use a local file path."
+      }
+      {
+        model_id,
+        revision,
+        cache_dir: Some(root_dir),
+        repo_cache_dir: Some(repo),
+        ref_path: Some(ref_path),
+        resolved_revision: Some(resolved),
+        snapshot_dir: Some(snapshot_dir),
+        tokenizer_json_path: Some(tok),
+        cache_exists: tokenizer_exists,
+        message,
+      }
+    }
+  }
+}
+
+///|
+pub fn from_pretrained_resolution_hint(
+  model_id : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> PretrainedResolutionHint {
+  Tokenizer::from_pretrained_resolution_hint(model_id, revision~, cache_dir~)
 }
 
 ///|
@@ -232,10 +626,17 @@ fn resolve_pretrained_path(
   }
   match resolve_hub_cache_path(path, revision~, cache_dir~) {
     Some(p) => p
-    None =>
-      raise @types.ParseError(
-        "from_pretrained could not resolve '\{path}' as a tokenizer.json file, HF directory, or local HuggingFace Hub cache snapshot (revision=\{revision})",
+    None => {
+      let hint = Tokenizer::from_pretrained_resolution_hint(
+        path,
+        revision~,
+        cache_dir~,
       )
+      raise @types.ParseError(
+        "from_pretrained could not resolve '\{path}' as a tokenizer.json file, HF directory, or local HuggingFace Hub cache snapshot (revision=\{revision}). " +
+        hint.message,
+      )
+    }
   }
 }
 
@@ -260,6 +661,64 @@ fn resolve_hub_cache_path(
     Some(tok)
   } else {
     None
+  }
+}
+
+///|
+fn resolve_pretrained_base_dir(
+  path : String,
+  revision~ : String,
+  cache_dir~ : String?,
+) -> String? {
+  if path.has_suffix(".json") {
+    return parent_dir(path)
+  }
+  let local_path = join_tokenizer_json(path)
+  if @fs.path_exists(local_path) {
+    return Some(path)
+  }
+  match resolve_hub_cache_path(path, revision~, cache_dir~) {
+    Some(tok) => parent_dir(tok)
+    None => None
+  }
+}
+
+///|
+fn read_optional_file(path : String) -> String? {
+  if !@fs.path_exists(path) {
+    return None
+  }
+  Some(@fs.read_file_to_string(path)) catch {
+    _ => None
+  }
+}
+
+///|
+fn optional_existing_path(path : String) -> String? {
+  if @fs.path_exists(path) {
+    Some(path)
+  } else {
+    None
+  }
+}
+
+///|
+fn write_optional_snapshot_file(
+  snapshot_dir : String,
+  name : String,
+  content : String?,
+) -> Unit raise @types.TokenizerError {
+  match content {
+    Some(text) => {
+      let path = join_path(snapshot_dir, name)
+      @fs.write_string_to_file(path, text) catch {
+        _ =>
+          raise @types.ParseError(
+            "cannot write downloaded tokenizer sidecar: \{path}",
+          )
+      }
+    }
+    None => ()
   }
 }
 
@@ -429,9 +888,14 @@ fn evict_oldest_pretrained_source_cache_entry() -> Unit {
 
 ///|
 fn join_tokenizer_json(path : String) -> String {
+  join_path(path, "tokenizer.json")
+}
+
+///|
+fn join_path(path : String, name : String) -> String {
   if path.has_suffix("/") {
-    path + "tokenizer.json"
+    path + name
   } else {
-    path + "/tokenizer.json"
+    path + "/" + name
   }
 }

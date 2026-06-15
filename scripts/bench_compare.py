@@ -1030,9 +1030,12 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
         for corpus in corpora:
             text = CORPORA[corpus]
             encode_key = f"{model}-encode-{corpus}"
+            encode_fast_key = f"{model}-encode-fast-{corpus}"
             encode_byte_offsets_key = f"{model}-encode-byte-offsets-{corpus}"
             if encode_key in moon:
                 rows.append(Row(encode_key, moon[encode_key], hf_encode_us(tok, text)))
+            if encode_fast_key in moon:
+                rows.append(Row(encode_fast_key, moon[encode_fast_key], hf_encode_us(tok, text)))
             if encode_byte_offsets_key in moon:
                 # HF encodings carry byte offsets by default, so plain encode is
                 # the closest same-work baseline for MoonBit's explicit byte
@@ -1043,8 +1046,10 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
         decode_key = f"{model}-decode-mixed"
         decode_batch_key = f"{model}-decode-batch-mixedx8"
         encode_batch_key = f"{model}-encode-batch-mixedx8"
+        encode_batch_fast_key = f"{model}-encode-batch-fast-mixedx8"
         encode_batch_padded_key = f"{model}-encode-batch-padded-mixedx8"
         encode_pair_batch_key = f"{model}-encode-pair-batch-mixedx8"
+        encode_pair_batch_fast_key = f"{model}-encode-pair-batch-fast-mixedx8"
         pretokenized_key = f"{model}-encode-pretokenized-words"
         pretokenized_byte_key = f"{model}-encode-pretokenized-byte-offsets-words"
         pretokenized_batch_key = f"{model}-encode-pretokenized-batch-wordsx8"
@@ -1063,10 +1068,14 @@ def compare(models: list[str], corpora: list[str], target: str) -> list[Row]:
             rows.append(Row(decode_batch_key, moon[decode_batch_key], hf_decode_batch_us(tok, CORPORA["mixed"])))
         if encode_batch_key in moon:
             rows.append(Row(encode_batch_key, moon[encode_batch_key], hf_encode_batch_us(tok, CORPORA["mixed"])))
+        if encode_batch_fast_key in moon:
+            rows.append(Row(encode_batch_fast_key, moon[encode_batch_fast_key], hf_encode_batch_us(tok, CORPORA["mixed"])))
         if encode_batch_padded_key in moon:
             rows.append(Row(encode_batch_padded_key, moon[encode_batch_padded_key], hf_encode_batch_padded_us(path, CORPORA["mixed"])))
         if encode_pair_batch_key in moon:
             rows.append(Row(encode_pair_batch_key, moon[encode_pair_batch_key], hf_encode_pair_batch_us(tok, CORPORA["mixed"])))
+        if encode_pair_batch_fast_key in moon:
+            rows.append(Row(encode_pair_batch_fast_key, moon[encode_pair_batch_fast_key], hf_encode_pair_batch_us(tok, CORPORA["mixed"])))
         if pretokenized_key in moon:
             append_optional_row(rows, pretokenized_key, moon[pretokenized_key], lambda tok=tok: hf_encode_pretokenized_us(tok), requires_numpy=True)
         if pretokenized_byte_key in moon:

@@ -4,6 +4,398 @@
 // a raw Encoding -> (optional) post-process to add special tokens / type_ids.
 
 ///|
+/// HF-style text input sequence: either a raw string or an already
+/// pre-tokenized word array. This lets callers use one `encode_input` API instead
+/// of selecting among raw / pair / pre-tokenized method families manually.
+pub enum TextInputSequence {
+  Text(String)
+  PreTokenized(Array[String])
+} derive(Debug, Eq)
+
+///|
+/// HF-style unified encode input. `SingleInput` maps to `Tokenizer.encode` or
+/// `encode_pretokenized`; `PairInput` maps to the corresponding pair variants.
+pub enum EncodeInput {
+  SingleInput(TextInputSequence)
+  PairInput(TextInputSequence, TextInputSequence)
+} derive(Debug, Eq)
+
+///|
+pub fn TextInputSequence::text(text : String) -> TextInputSequence {
+  Text(text)
+}
+
+///|
+pub fn TextInputSequence::pretokenized(
+  words : Array[String],
+) -> TextInputSequence {
+  PreTokenized(words.copy())
+}
+
+///|
+pub fn EncodeInput::single(text : String) -> EncodeInput {
+  SingleInput(Text(text))
+}
+
+///|
+pub fn EncodeInput::single_pretokenized(words : Array[String]) -> EncodeInput {
+  SingleInput(PreTokenized(words.copy()))
+}
+
+///|
+pub fn EncodeInput::pair(text_a : String, text_b : String) -> EncodeInput {
+  PairInput(Text(text_a), Text(text_b))
+}
+
+///|
+pub fn EncodeInput::pair_pretokenized(
+  words_a : Array[String],
+  words_b : Array[String],
+) -> EncodeInput {
+  PairInput(PreTokenized(words_a.copy()), PreTokenized(words_b.copy()))
+}
+
+///|
+pub fn EncodeInput::mixed_pair(
+  a : TextInputSequence,
+  b : TextInputSequence,
+) -> EncodeInput {
+  PairInput(a, b)
+}
+
+///|
+/// Encode a unified HF-style input value.
+pub fn Tokenizer::encode_input(
+  self : Tokenizer,
+  input : EncodeInput,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  match input {
+    SingleInput(seq) => self.encode_sequence(seq, add_special_tokens~)
+    PairInput(a, b) => self.encode_sequence_pair(a, b, add_special_tokens~)
+  }
+}
+
+///|
+/// Fast counterpart of `encode_input`: metadata matches normal encode, offsets
+/// are zeroed recursively.
+pub fn Tokenizer::encode_input_fast(
+  self : Tokenizer,
+  input : EncodeInput,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  match input {
+    SingleInput(seq) => self.encode_sequence_fast(seq, add_special_tokens~)
+    PairInput(a, b) => self.encode_sequence_pair_fast(a, b, add_special_tokens~)
+  }
+}
+
+///|
+/// Encode a batch of unified inputs with the same duplicate-cache and padding
+/// semantics as the explicit batch APIs.
+pub fn Tokenizer::encode_input_batch(
+  self : Tokenizer,
+  inputs : Array[EncodeInput],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  if inputs.length() == 0 {
+    return []
+  }
+  let encs : Array[@types.Encoding] = []
+  let cache : Map[String, @types.Encoding] = {}
+  for input in inputs {
+    let key = encode_input_cache_key(input)
+    match cache.get(key) {
+      Some(enc) => encs.push(copy_encoding(enc))
+      None => {
+        let enc = self.encode_input_unpadded(input, add_special_tokens~)
+        cache[key] = copy_encoding(enc)
+        encs.push(enc)
+      }
+    }
+  }
+  match self.padding {
+    Some(pp) => pad_batch(encs, pp)
+    None => encs
+  }
+}
+
+///|
+pub fn Tokenizer::encode_input_batch_fast(
+  self : Tokenizer,
+  inputs : Array[EncodeInput],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  if inputs.length() == 0 {
+    return []
+  }
+  let encs : Array[@types.Encoding] = []
+  let cache : Map[String, @types.Encoding] = {}
+  for input in inputs {
+    let key = encode_input_cache_key(input)
+    match cache.get(key) {
+      Some(enc) => encs.push(copy_encoding(enc))
+      None => {
+        let enc = self.encode_input_unpadded_fast(input, add_special_tokens~)
+        cache[key] = copy_encoding(enc)
+        encs.push(enc)
+      }
+    }
+  }
+  match self.padding {
+    Some(pp) => pad_batch(encs, pp)
+    None => encs
+  }
+}
+
+///|
+/// Async-compatible naming alias. The implementation is intentionally
+/// synchronous today so it remains available on native/js/wasm/wasm-gc; callers
+/// can migrate from HF async call sites without changing semantics.
+pub fn Tokenizer::async_encode(
+  self : Tokenizer,
+  input : EncodeInput,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.encode_input(input, add_special_tokens~)
+}
+
+///|
+pub fn Tokenizer::async_encode_fast(
+  self : Tokenizer,
+  input : EncodeInput,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.encode_input_fast(input, add_special_tokens~)
+}
+
+///|
+pub fn Tokenizer::async_encode_batch(
+  self : Tokenizer,
+  inputs : Array[EncodeInput],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_input_batch(inputs, add_special_tokens~)
+}
+
+///|
+pub fn Tokenizer::async_encode_batch_fast(
+  self : Tokenizer,
+  inputs : Array[EncodeInput],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_input_batch_fast(inputs, add_special_tokens~)
+}
+
+///|
+fn Tokenizer::encode_sequence(
+  self : Tokenizer,
+  seq : TextInputSequence,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  match seq {
+    Text(text) => self.encode(text, add_special_tokens~)
+    PreTokenized(words) => self.encode_pretokenized(words, add_special_tokens~)
+  }
+}
+
+///|
+fn Tokenizer::encode_sequence_fast(
+  self : Tokenizer,
+  seq : TextInputSequence,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  match seq {
+    Text(text) => self.encode_fast(text, add_special_tokens~)
+    PreTokenized(words) =>
+      self.encode_pretokenized_fast(words, add_special_tokens~)
+  }
+}
+
+///|
+fn Tokenizer::encode_sequence_pair(
+  self : Tokenizer,
+  a : TextInputSequence,
+  b : TextInputSequence,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  self.finalize_padding(
+    self.encode_sequence_pair_unpadded(a, b, add_special_tokens~),
+  )
+}
+
+///|
+fn Tokenizer::encode_sequence_pair_fast(
+  self : Tokenizer,
+  a : TextInputSequence,
+  b : TextInputSequence,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  self.finalize_padding(
+    self.encode_sequence_pair_unpadded_fast(a, b, add_special_tokens~),
+  )
+}
+
+///|
+fn Tokenizer::encode_input_unpadded(
+  self : Tokenizer,
+  input : EncodeInput,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  match input {
+    SingleInput(seq) =>
+      self.process_single_input_unpadded(seq, add_special_tokens~)
+    PairInput(a, b) =>
+      self.encode_sequence_pair_unpadded(a, b, add_special_tokens~)
+  }
+}
+
+///|
+fn Tokenizer::encode_input_unpadded_fast(
+  self : Tokenizer,
+  input : EncodeInput,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  match input {
+    SingleInput(seq) =>
+      self.process_single_input_unpadded_fast(seq, add_special_tokens~)
+    PairInput(a, b) =>
+      self.encode_sequence_pair_unpadded_fast(a, b, add_special_tokens~)
+  }
+}
+
+///|
+fn Tokenizer::process_single_input_unpadded(
+  self : Tokenizer,
+  seq : TextInputSequence,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  match seq {
+    Text(text) =>
+      self.process_single_raw(
+        self.encode_raw(text, keep_special=true),
+        add_special_tokens~,
+      )
+    PreTokenized(words) =>
+      self.process_single_raw(
+        self.encode_pretokenized_raw(words),
+        add_special_tokens~,
+      )
+  }
+}
+
+///|
+fn Tokenizer::process_single_input_unpadded_fast(
+  self : Tokenizer,
+  seq : TextInputSequence,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  match seq {
+    Text(text) =>
+      self.process_single_raw(
+        self.encode_raw_fast(text, keep_special=true),
+        add_special_tokens~,
+      )
+    PreTokenized(words) =>
+      self.process_single_raw(
+        self.encode_pretokenized_raw_fast(words),
+        add_special_tokens~,
+      )
+  }
+}
+
+///|
+fn Tokenizer::encode_sequence_pair_unpadded(
+  self : Tokenizer,
+  a : TextInputSequence,
+  b : TextInputSequence,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  match (a, b) {
+    (Text(ta), Text(tb)) =>
+      self.encode_pair_unpadded(ta, tb, add_special_tokens~)
+    (PreTokenized(wa), PreTokenized(wb)) =>
+      self.encode_pretokenized_pair_unpadded(wa, wb, add_special_tokens~)
+    _ => {
+      let raw_a = self.raw_from_sequence(a, track_offsets=true)
+      let raw_b = self.raw_from_sequence(b, track_offsets=true)
+      self.process_pair_raw(raw_a, raw_b, add_special_tokens~)
+    }
+  }
+}
+
+///|
+fn Tokenizer::encode_sequence_pair_unpadded_fast(
+  self : Tokenizer,
+  a : TextInputSequence,
+  b : TextInputSequence,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  match (a, b) {
+    (Text(ta), Text(tb)) =>
+      self.encode_pair_unpadded_fast(ta, tb, add_special_tokens~)
+    (PreTokenized(wa), PreTokenized(wb)) =>
+      self.encode_pretokenized_pair_unpadded_fast(wa, wb, add_special_tokens~)
+    _ => {
+      let raw_a = self.raw_from_sequence(a, track_offsets=false)
+      let raw_b = self.raw_from_sequence(b, track_offsets=false)
+      self.process_pair_raw(raw_a, raw_b, add_special_tokens~)
+    }
+  }
+}
+
+///|
+fn Tokenizer::raw_from_sequence(
+  self : Tokenizer,
+  seq : TextInputSequence,
+  track_offsets~ : Bool,
+) -> @types.Encoding {
+  match seq {
+    Text(text) => self.encode_raw_impl(text, keep_special=true, track_offsets~)
+    PreTokenized(words) =>
+      self.encode_pretokenized_raw_impl(words, track_offsets~)
+  }
+}
+
+///|
+fn Tokenizer::process_pair_raw(
+  self : Tokenizer,
+  a : @types.Encoding,
+  b : @types.Encoding,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  let (a, b) = match self.truncation_for_raw(pair=true, add_special_tokens~) {
+    Some(tp) => truncate_pair_raw(a, Some(b), tp)
+    None => (a, Some(b))
+  }
+  if add_special_tokens {
+    match self.post_processor {
+      Some(pp) => pp.process(a, b)
+      None => concat_encodings(a, b.unwrap())
+    }
+  } else {
+    concat_encodings(a, b.unwrap())
+  }
+}
+
+///|
+fn encode_input_cache_key(input : EncodeInput) -> String {
+  match input {
+    SingleInput(seq) => "S:" + text_sequence_cache_key(seq)
+    PairInput(a, b) =>
+      "P:" + text_sequence_cache_key(a) + "\u{1F}" + text_sequence_cache_key(b)
+  }
+}
+
+///|
+fn text_sequence_cache_key(seq : TextInputSequence) -> String {
+  match seq {
+    Text(text) => "T:" + text
+    PreTokenized(words) => "W:" + pretokenized_cache_key(words)
+  }
+}
+
+///|
 /// Encode a single text into an `Encoding`.
 pub fn Tokenizer::encode(
   self : Tokenizer,
@@ -15,6 +407,25 @@ pub fn Tokenizer::encode(
   self.finalize_padding(
     self.process_single_raw(
       self.encode_raw(text, keep_special=true),
+      add_special_tokens~,
+    ),
+  )
+}
+
+///|
+/// Encode a single text without retaining offset information, mirroring HF's
+/// fast encode path. Token ids, token values, masks, type ids, sequence ids and
+/// word ids are identical to `encode`; offsets are zeroed recursively, including
+/// overflow windows. This avoids model offset shifting on the hot path while
+/// preserving the rest of the pipeline.
+pub fn Tokenizer::encode_fast(
+  self : Tokenizer,
+  text : String,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.finalize_padding(
+    self.process_single_raw(
+      self.encode_raw_fast(text, keep_special=true),
       add_special_tokens~,
     ),
   )
@@ -50,6 +461,22 @@ pub fn Tokenizer::encode_pretokenized(
 }
 
 ///|
+/// Encode pre-tokenized words without retaining offsets. Mirrors
+/// `encode_pretokenized` except every offset is `(0, 0)`.
+pub fn Tokenizer::encode_pretokenized_fast(
+  self : Tokenizer,
+  words : Array[String],
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.finalize_padding(
+    self.process_single_raw(
+      self.encode_pretokenized_raw_fast(words),
+      add_special_tokens~,
+    ),
+  )
+}
+
+///|
 /// Encode pre-tokenized words and return UTF-8 byte offsets against the same
 /// synthetic single-space-joined normalized text used for char offsets.
 pub fn Tokenizer::encode_pretokenized_with_byte_offsets(
@@ -75,6 +502,23 @@ pub fn Tokenizer::encode_pretokenized_pair(
 ) -> @types.Encoding {
   self.finalize_padding(
     self.encode_pretokenized_pair_unpadded(
+      words_a,
+      words_b,
+      add_special_tokens~,
+    ),
+  )
+}
+
+///|
+/// Encode a pre-tokenized pair without retaining offsets.
+pub fn Tokenizer::encode_pretokenized_pair_fast(
+  self : Tokenizer,
+  words_a : Array[String],
+  words_b : Array[String],
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.finalize_padding(
+    self.encode_pretokenized_pair_unpadded_fast(
       words_a,
       words_b,
       add_special_tokens~,
@@ -207,6 +651,62 @@ pub fn Tokenizer::encode_batch(
 }
 
 ///|
+/// Encode a batch of texts without retaining offsets. Repeated inputs are still
+/// cached per call and BatchLongest padding is applied once across the batch.
+pub fn Tokenizer::encode_batch_fast(
+  self : Tokenizer,
+  texts : Array[String],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  if texts.length() == 0 {
+    return []
+  }
+  let encs : Array[@types.Encoding] = []
+  let cache : Map[String, @types.Encoding] = {}
+  for t in texts {
+    match cache.get(t) {
+      Some(enc) => encs.push(copy_encoding(enc))
+      None => {
+        let processed = self.process_single_raw(
+          self.encode_raw_fast(t, keep_special=true),
+          add_special_tokens~,
+        )
+        cache[t] = copy_encoding(processed)
+        encs.push(processed)
+      }
+    }
+  }
+  match self.padding {
+    Some(pp) => pad_batch(encs, pp)
+    None => encs
+  }
+}
+
+///|
+/// Compatibility entry point for callers that want an explicitly parallelizable
+/// batch API. MoonBit targets do not yet expose one stable cross-backend worker
+/// runtime, so this currently delegates to the deterministic serial batch path
+/// with duplicate-input caching and preserves output order exactly.
+pub fn Tokenizer::encode_batch_parallel(
+  self : Tokenizer,
+  texts : Array[String],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_batch(texts, add_special_tokens~)
+}
+
+///|
+/// Stable-order counterpart of `encode_batch_parallel` for the no-offset fast
+/// path.
+pub fn Tokenizer::encode_batch_parallel_fast(
+  self : Tokenizer,
+  texts : Array[String],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_batch_fast(texts, add_special_tokens~)
+}
+
+///|
 /// Encode a batch of pre-tokenized word arrays. Repeated word sequences are
 /// copied from a per-call cache and BatchLongest padding is applied once across
 /// the whole batch.
@@ -238,6 +738,56 @@ pub fn Tokenizer::encode_pretokenized_batch(
     Some(pp) => pad_batch(encs, pp)
     None => encs
   }
+}
+
+///|
+/// Encode a batch of pre-tokenized word arrays without retaining offsets.
+pub fn Tokenizer::encode_pretokenized_batch_fast(
+  self : Tokenizer,
+  batch : Array[Array[String]],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  if batch.length() == 0 {
+    return []
+  }
+  let encs : Array[@types.Encoding] = []
+  let cache : Map[String, @types.Encoding] = {}
+  for words in batch {
+    let key = pretokenized_cache_key(words)
+    match cache.get(key) {
+      Some(enc) => encs.push(copy_encoding(enc))
+      None => {
+        let processed = self.process_single_raw(
+          self.encode_pretokenized_raw_fast(words),
+          add_special_tokens~,
+        )
+        cache[key] = copy_encoding(processed)
+        encs.push(processed)
+      }
+    }
+  }
+  match self.padding {
+    Some(pp) => pad_batch(encs, pp)
+    None => encs
+  }
+}
+
+///|
+pub fn Tokenizer::encode_pretokenized_batch_parallel(
+  self : Tokenizer,
+  batch : Array[Array[String]],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_pretokenized_batch(batch, add_special_tokens~)
+}
+
+///|
+pub fn Tokenizer::encode_pretokenized_batch_parallel_fast(
+  self : Tokenizer,
+  batch : Array[Array[String]],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_pretokenized_batch_fast(batch, add_special_tokens~)
 }
 
 ///|
@@ -292,6 +842,57 @@ pub fn Tokenizer::encode_pretokenized_pair_batch(
     Some(pp) => pad_batch(encs, pp)
     None => encs
   }
+}
+
+///|
+/// Encode a batch of pre-tokenized pairs without retaining offsets.
+pub fn Tokenizer::encode_pretokenized_pair_batch_fast(
+  self : Tokenizer,
+  batch : Array[(Array[String], Array[String])],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  if batch.length() == 0 {
+    return []
+  }
+  let encs : Array[@types.Encoding] = []
+  let cache : Map[(String, String), @types.Encoding] = {}
+  for p in batch {
+    let key = (pretokenized_cache_key(p.0), pretokenized_cache_key(p.1))
+    match cache.get(key) {
+      Some(enc) => encs.push(copy_encoding(enc))
+      None => {
+        let enc = self.encode_pretokenized_pair_unpadded_fast(
+          p.0,
+          p.1,
+          add_special_tokens~,
+        )
+        cache[key] = copy_encoding(enc)
+        encs.push(enc)
+      }
+    }
+  }
+  match self.padding {
+    Some(pp) => pad_batch(encs, pp)
+    None => encs
+  }
+}
+
+///|
+pub fn Tokenizer::encode_pretokenized_pair_batch_parallel(
+  self : Tokenizer,
+  batch : Array[(Array[String], Array[String])],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_pretokenized_pair_batch(batch, add_special_tokens~)
+}
+
+///|
+pub fn Tokenizer::encode_pretokenized_pair_batch_parallel_fast(
+  self : Tokenizer,
+  batch : Array[(Array[String], Array[String])],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_pretokenized_pair_batch_fast(batch, add_special_tokens~)
 }
 
 ///|
@@ -363,6 +964,52 @@ pub fn Tokenizer::encode_pair_batch(
 }
 
 ///|
+/// Encode a batch of text pairs without retaining offsets.
+pub fn Tokenizer::encode_pair_batch_fast(
+  self : Tokenizer,
+  pairs : Array[(String, String)],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  if pairs.length() == 0 {
+    return []
+  }
+  let encs : Array[@types.Encoding] = []
+  let cache : Map[(String, String), @types.Encoding] = {}
+  for p in pairs {
+    match cache.get(p) {
+      Some(enc) => encs.push(copy_encoding(enc))
+      None => {
+        let enc = self.encode_pair_unpadded_fast(p.0, p.1, add_special_tokens~)
+        cache[p] = copy_encoding(enc)
+        encs.push(enc)
+      }
+    }
+  }
+  match self.padding {
+    Some(pp) => pad_batch(encs, pp)
+    None => encs
+  }
+}
+
+///|
+pub fn Tokenizer::encode_pair_batch_parallel(
+  self : Tokenizer,
+  pairs : Array[(String, String)],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_pair_batch(pairs, add_special_tokens~)
+}
+
+///|
+pub fn Tokenizer::encode_pair_batch_parallel_fast(
+  self : Tokenizer,
+  pairs : Array[(String, String)],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_pair_batch_fast(pairs, add_special_tokens~)
+}
+
+///|
 /// Encode a batch of text pairs and return UTF-8 byte offsets for each
 /// sequence, matching HF's default offset convention for pair inputs.
 pub fn Tokenizer::encode_pair_batch_with_byte_offsets(
@@ -392,6 +1039,19 @@ pub fn Tokenizer::encode_pair(
 }
 
 ///|
+/// Encode a pair without retaining offsets.
+pub fn Tokenizer::encode_pair_fast(
+  self : Tokenizer,
+  text_a : String,
+  text_b : String,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.finalize_padding(
+    self.encode_pair_unpadded_fast(text_a, text_b, add_special_tokens~),
+  )
+}
+
+///|
 fn Tokenizer::encode_pair_unpadded(
   self : Tokenizer,
   text_a : String,
@@ -416,6 +1076,29 @@ fn Tokenizer::encode_pair_unpadded(
 }
 
 ///|
+fn Tokenizer::encode_pair_unpadded_fast(
+  self : Tokenizer,
+  text_a : String,
+  text_b : String,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  let a = self.encode_raw_fast(text_a, keep_special=true)
+  let b = self.encode_raw_fast(text_b, keep_special=true)
+  let (a, b) = match self.truncation_for_raw(pair=true, add_special_tokens~) {
+    Some(tp) => truncate_pair_raw(a, Some(b), tp)
+    None => (a, Some(b))
+  }
+  if add_special_tokens {
+    match self.post_processor {
+      Some(pp) => pp.process(a, b)
+      None => concat_encodings(a, b.unwrap())
+    }
+  } else {
+    concat_encodings(a, b.unwrap())
+  }
+}
+
+///|
 fn Tokenizer::encode_pretokenized_pair_unpadded(
   self : Tokenizer,
   words_a : Array[String],
@@ -424,6 +1107,29 @@ fn Tokenizer::encode_pretokenized_pair_unpadded(
 ) -> @types.Encoding {
   let a = self.encode_pretokenized_raw(words_a)
   let b = self.encode_pretokenized_raw(words_b)
+  let (a, b) = match self.truncation_for_raw(pair=true, add_special_tokens~) {
+    Some(tp) => truncate_pair_raw(a, Some(b), tp)
+    None => (a, Some(b))
+  }
+  if add_special_tokens {
+    match self.post_processor {
+      Some(pp) => pp.process(a, b)
+      None => concat_encodings(a, b.unwrap())
+    }
+  } else {
+    concat_encodings(a, b.unwrap())
+  }
+}
+
+///|
+fn Tokenizer::encode_pretokenized_pair_unpadded_fast(
+  self : Tokenizer,
+  words_a : Array[String],
+  words_b : Array[String],
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  let a = self.encode_pretokenized_raw_fast(words_a)
+  let b = self.encode_pretokenized_raw_fast(words_b)
   let (a, b) = match self.truncation_for_raw(pair=true, add_special_tokens~) {
     Some(tp) => truncate_pair_raw(a, Some(b), tp)
     None => (a, Some(b))
@@ -556,6 +1262,25 @@ fn Tokenizer::encode_raw(
   text : String,
   keep_special~ : Bool,
 ) -> @types.Encoding {
+  self.encode_raw_impl(text, keep_special~, track_offsets=true)
+}
+
+///|
+fn Tokenizer::encode_raw_fast(
+  self : Tokenizer,
+  text : String,
+  keep_special~ : Bool,
+) -> @types.Encoding {
+  self.encode_raw_impl(text, keep_special~, track_offsets=false)
+}
+
+///|
+fn Tokenizer::encode_raw_impl(
+  self : Tokenizer,
+  text : String,
+  keep_special~ : Bool,
+  track_offsets~ : Bool,
+) -> @types.Encoding {
   let ids : Array[Int] = []
   let tokens : Array[String] = []
   let type_ids : Array[Int] = []
@@ -575,7 +1300,7 @@ fn Tokenizer::encode_raw(
     ids.push(id)
     tokens.push(value)
     type_ids.push(0)
-    offsets.push(offs)
+    offsets.push(if track_offsets { offs } else { (0, 0) })
     special_tokens_mask.push(special)
     attention_mask.push(1)
     sequence_ids.push(Some(0))
@@ -616,8 +1341,12 @@ fn Tokenizer::encode_raw(
               for piece in pieces {
                 let word_id = next_word_id
                 next_word_id = next_word_id + 1
-                for
-                  t in self.model.tokenize(piece.value, offset=piece.offsets.0) {
+                let model_offset = if track_offsets {
+                  piece.offsets.0
+                } else {
+                  0
+                }
+                for t in self.model.tokenize(piece.value, offset=model_offset) {
                   emit(t.id, t.value, t.offsets, 0, Some(word_id))
                 }
               }
@@ -649,6 +1378,23 @@ fn Tokenizer::encode_pretokenized_raw(
   self : Tokenizer,
   words : Array[String],
 ) -> @types.Encoding {
+  self.encode_pretokenized_raw_impl(words, track_offsets=true)
+}
+
+///|
+fn Tokenizer::encode_pretokenized_raw_fast(
+  self : Tokenizer,
+  words : Array[String],
+) -> @types.Encoding {
+  self.encode_pretokenized_raw_impl(words, track_offsets=false)
+}
+
+///|
+fn Tokenizer::encode_pretokenized_raw_impl(
+  self : Tokenizer,
+  words : Array[String],
+  track_offsets~ : Bool,
+) -> @types.Encoding {
   let ids : Array[Int] = []
   let tokens : Array[String] = []
   let type_ids : Array[Int] = []
@@ -668,7 +1414,7 @@ fn Tokenizer::encode_pretokenized_raw(
     ids.push(id)
     tokens.push(value)
     type_ids.push(0)
-    offsets.push(offs)
+    offsets.push(if track_offsets { offs } else { (0, 0) })
     special_tokens_mask.push(special)
     attention_mask.push(1)
     sequence_ids.push(Some(0))
@@ -699,10 +1445,12 @@ fn Tokenizer::encode_pretokenized_raw(
             match seg2 {
               Special(info~, value~, offsets~) =>
                 emit(info.id, value, offsets, 0, word_id)
-              Normal(text=ntext, base_offset=base2) =>
-                for t in self.model.tokenize(ntext, offset=base2) {
+              Normal(text=ntext, base_offset=base2) => {
+                let model_offset = if track_offsets { base2 } else { 0 }
+                for t in self.model.tokenize(ntext, offset=model_offset) {
                   emit(t.id, t.value, t.offsets, 0, word_id)
                 }
+              }
             }
           }
         }

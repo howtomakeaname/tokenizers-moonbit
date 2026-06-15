@@ -21,6 +21,262 @@ pub struct Tokenizer {
   mut source_json : String?
 }
 
+///|
+/// Serializable/interoperable snapshot of a full `Tokenizer`. Python binding
+/// layers can pickle this stable JSON state and restore through `__setstate__`
+/// without depending on MoonBit-internal component layout.
+pub struct TokenizerState {
+  json : String
+} derive(Debug, Eq)
+
+///|
+/// Minimal HF-style normalized string wrapper. It keeps both the original and
+/// current normalized text and exposes common mutation helpers used by custom
+/// normalizer migrations. Offset tracking is conservative: transforms that
+/// change length reset offsets to the normalized string's char positions.
+pub struct NormalizedString {
+  original : String
+  normalized : String
+}
+
+///|
+pub fn NormalizedString::new(s : String) -> NormalizedString {
+  { original: s, normalized: s }
+}
+
+///|
+pub fn NormalizedString::get_original(self : NormalizedString) -> String {
+  self.original
+}
+
+///|
+pub fn NormalizedString::get(self : NormalizedString) -> String {
+  self.normalized
+}
+
+///|
+pub fn NormalizedString::len(self : NormalizedString) -> Int {
+  self.normalized.char_length()
+}
+
+///|
+pub fn NormalizedString::is_empty(self : NormalizedString) -> Bool {
+  self.normalized.is_empty()
+}
+
+///|
+pub fn NormalizedString::normalize(
+  self : NormalizedString,
+  normalizer : @normalizer.Normalizer,
+) -> NormalizedString {
+  { ..self, normalized: normalizer.normalize(self.normalized) }
+}
+
+///|
+pub fn NormalizedString::replace(
+  self : NormalizedString,
+  pattern : String,
+  content : String,
+) -> NormalizedString {
+  {
+    ..self,
+    normalized: @common.replace_literal(self.normalized, pattern, content),
+  }
+}
+
+///|
+pub fn NormalizedString::prepend(
+  self : NormalizedString,
+  prefix : String,
+) -> NormalizedString {
+  { ..self, normalized: prefix + self.normalized }
+}
+
+///|
+pub fn NormalizedString::slice(
+  self : NormalizedString,
+  start : Int,
+  stop : Int,
+) -> NormalizedString {
+  let chars = self.normalized.to_array()
+  let a = clamp_int(start, 0, chars.length())
+  let b = clamp_int(stop, a, chars.length())
+  let sb = StringBuilder::new()
+  for i in a..<b {
+    sb.write_char(chars[i])
+  }
+  { original: self.original, normalized: sb.to_string() }
+}
+
+///|
+pub fn NormalizedString::filter(
+  self : NormalizedString,
+  keep : (Char) -> Bool,
+) -> NormalizedString {
+  let sb = StringBuilder::new()
+  for c in self.normalized {
+    if keep(c) {
+      sb.write_char(c)
+    }
+  }
+  { ..self, normalized: sb.to_string() }
+}
+
+///|
+pub fn NormalizedString::map(
+  self : NormalizedString,
+  f : (Char) -> String,
+) -> NormalizedString {
+  let sb = StringBuilder::new()
+  for c in self.normalized {
+    sb.write_string(f(c))
+  }
+  { ..self, normalized: sb.to_string() }
+}
+
+///|
+pub fn NormalizedString::split(
+  self : NormalizedString,
+  pattern : String,
+) -> Array[NormalizedString] {
+  let spans = @common.literal_matches(self.normalized.to_array(), pattern)
+  match spans {
+    Some(matches) => split_normalized_by_spans(self, matches)
+    None => [self]
+  }
+}
+
+///|
+pub fn NormalizedString::split_regex(
+  self : NormalizedString,
+  regex : @common.Regex,
+) -> Array[NormalizedString]? {
+  match regex.find_matches(self.normalized) {
+    Some(raw_spans) => {
+      let spans : Array[@common.Span] = raw_spans.map(p => {
+        start: p.0,
+        stop: p.1,
+      })
+      Some(split_normalized_by_spans(self, spans))
+    }
+    None => None
+  }
+}
+
+///|
+fn split_normalized_by_spans(
+  ns : NormalizedString,
+  spans : Array[@common.Span],
+) -> Array[NormalizedString] {
+  let chars = ns.normalized.to_array()
+  let out : Array[NormalizedString] = []
+  let mut cursor = 0
+  for span in spans {
+    if span.start > cursor {
+      out.push(ns.slice(cursor, span.start))
+    }
+    cursor = span.stop
+  }
+  if cursor < chars.length() {
+    out.push(ns.slice(cursor, chars.length()))
+  }
+  out
+}
+
+///|
+/// Minimal HF-style pre-tokenized string wrapper. Splits are ordinary
+/// tokenizer `Split` values and can be normalized, pre-tokenized further, or
+/// converted into an Encoding with a Model.
+pub struct PreTokenizedString {
+  original : String
+  splits : Array[@types.Split]
+}
+
+///|
+pub fn PreTokenizedString::new(text : String) -> PreTokenizedString {
+  {
+    original: text,
+    splits: [{ value: text, offsets: (0, text.char_length()) }],
+  }
+}
+
+///|
+pub fn PreTokenizedString::from_splits(
+  splits : Array[@types.Split],
+) -> PreTokenizedString {
+  let sb = StringBuilder::new()
+  for i, s in splits {
+    if i > 0 {
+      sb.write_char(' ')
+    }
+    sb.write_string(s.value)
+  }
+  { original: sb.to_string(), splits: splits.copy() }
+}
+
+///|
+pub fn PreTokenizedString::get_splits(
+  self : PreTokenizedString,
+) -> Array[@types.Split] {
+  self.splits.copy()
+}
+
+///|
+pub fn PreTokenizedString::normalize(
+  self : PreTokenizedString,
+  normalizer : @normalizer.Normalizer,
+) -> PreTokenizedString {
+  let out : Array[@types.Split] = []
+  for s in self.splits {
+    let value = normalizer.normalize(s.value)
+    out.push({
+      value,
+      offsets: (s.offsets.0, s.offsets.0 + value.char_length()),
+    })
+  }
+  { ..self, splits: out }
+}
+
+///|
+pub fn PreTokenizedString::split(
+  self : PreTokenizedString,
+  pre_tokenizer : @pretokenizer.PreTokenizer,
+) -> PreTokenizedString {
+  let out : Array[@types.Split] = []
+  for s in self.splits {
+    for p in pre_tokenizer.pre_tokenize(s.value, base_offset=s.offsets.0) {
+      out.push(p)
+    }
+  }
+  { ..self, splits: out }
+}
+
+///|
+pub fn PreTokenizedString::to_encoding(
+  self : PreTokenizedString,
+  model : @model.Model,
+  type_id? : Int = 0,
+) -> @types.Encoding {
+  let toks : Array[@types.Token] = []
+  for s in self.splits {
+    for t in model.tokenize(s.value, offset=s.offsets.0) {
+      toks.push(t)
+    }
+  }
+  @types.Encoding::from_tokens(toks, type_id~)
+}
+
+///|
+fn clamp_int(n : Int, lo : Int, hi : Int) -> Int {
+  if n < lo {
+    lo
+  } else if n > hi {
+    hi
+  } else {
+    n
+  }
+}
+
 // `from_str` is often called repeatedly with the same stable tokenizer.json in
 // benchmarks, REPLs and tests. Cache only parsed JSON trees (not Tokenizers), so
 // each call still builds fresh mutable model/added-token caches and builder
@@ -97,6 +353,22 @@ pub fn Tokenizer::from_str(
     padding,
     source_json: Some(json),
   }
+}
+
+///|
+/// Load a tokenizer from a UTF-8 `tokenizer.json` byte buffer. This is the
+/// byte-oriented counterpart of `from_str`, matching HF's `from_buffer` style
+/// migration path while remaining backend-agnostic.
+pub fn Tokenizer::from_buffer(
+  buffer : Bytes,
+) -> Tokenizer raise @types.TokenizerError {
+  Tokenizer::from_str(@utf8.decode_lossy(buffer[:]))
+}
+
+///|
+/// Load a tokenizer from a UTF-8 `tokenizer.json` byte buffer.
+pub fn from_buffer(buffer : Bytes) -> Tokenizer raise @types.TokenizerError {
+  Tokenizer::from_buffer(buffer)
 }
 
 ///|
@@ -195,6 +467,64 @@ pub fn Tokenizer::to_json(
 }
 
 ///|
+/// HF-style alias for exporting tokenizer JSON. `pretty=false` preserves the
+/// exact minified/verbatim behavior of `to_json`; `pretty=true` parses the same
+/// JSON and re-emits it with two-space indentation for human-readable saves.
+pub fn Tokenizer::to_str(
+  self : Tokenizer,
+  pretty? : Bool = false,
+) -> String raise @types.TokenizerError {
+  format_tokenizer_json(self.to_json(), pretty~)
+}
+
+///|
+/// Return a Python-binding-friendly tokenizer state snapshot.
+pub fn Tokenizer::get_state(
+  self : Tokenizer,
+) -> TokenizerState raise @types.TokenizerError {
+  { json: self.to_json() }
+}
+
+///|
+/// Restore a tokenizer from a state snapshot produced by `get_state` or
+/// `__getstate__`.
+pub fn Tokenizer::from_state(
+  state : TokenizerState,
+) -> Tokenizer raise @types.TokenizerError {
+  Tokenizer::from_str(state.json)
+}
+
+///|
+/// Python pickle compatibility alias for `get_state`.
+pub fn Tokenizer::__getstate__(
+  self : Tokenizer,
+) -> TokenizerState raise @types.TokenizerError {
+  self.get_state()
+}
+
+///|
+/// Python pickle compatibility alias for restoring tokenizer state.
+pub fn Tokenizer::__setstate__(
+  state : TokenizerState,
+) -> Tokenizer raise @types.TokenizerError {
+  Tokenizer::from_state(state)
+}
+
+///|
+fn format_tokenizer_json(
+  json : String,
+  pretty~ : Bool,
+) -> String raise @types.TokenizerError {
+  if !pretty {
+    return json
+  }
+  let parsed = @json.parse(json) catch {
+    err => raise @types.ParseError("cannot pretty-print tokenizer.json: \{err}")
+  }
+  parsed.stringify(indent=2)
+}
+
+///|
 /// Attach/clear a normalizer (builder; returns a fresh tokenizer value).
 pub fn Tokenizer::with_normalizer(
   self : Tokenizer,
@@ -256,6 +586,34 @@ pub fn Tokenizer::with_truncation(
 }
 
 ///|
+/// HF-style mutating alias for truncation configuration. Keeps the current
+/// builder ergonomics by mutating and returning `self`, while accepting the
+/// common `enable_truncation(max_length, stride=..., strategy=..., direction=...)`
+/// shape used by HuggingFace tokenizers users.
+pub fn Tokenizer::enable_truncation(
+  self : Tokenizer,
+  max_length : Int,
+  stride? : Int = 0,
+  strategy? : TruncationStrategy = LongestFirst,
+  direction? : TruncationDirection = Right,
+) -> Tokenizer {
+  self.with_truncation(
+    Some(
+      TruncationParams::new(max_length)
+      .with_stride(stride)
+      .with_strategy(strategy)
+      .with_direction(direction),
+    ),
+  )
+}
+
+///|
+/// HF-style mutating alias for clearing truncation configuration.
+pub fn Tokenizer::no_truncation(self : Tokenizer) -> Tokenizer {
+  self.with_truncation(None)
+}
+
+///|
 /// Enable/disable padding (builder; mutates and returns self).
 pub fn Tokenizer::with_padding(
   self : Tokenizer,
@@ -264,6 +622,38 @@ pub fn Tokenizer::with_padding(
   self.padding = params
   self.source_json = None
   self
+}
+
+///|
+/// HF-style mutating alias for padding configuration. `length=None` selects
+/// batch-longest padding; `Some(length)` selects fixed-length padding.
+pub fn Tokenizer::enable_padding(
+  self : Tokenizer,
+  length? : Int? = None,
+  direction? : PaddingDirection = Right,
+  pad_id? : Int = 0,
+  pad_type_id? : Int = 0,
+  pad_token? : String = "[PAD]",
+  pad_to_multiple_of? : Int? = None,
+) -> Tokenizer {
+  let strategy = match length {
+    Some(n) => Fixed(n)
+    None => BatchLongest
+  }
+  self.with_padding(
+    Some(
+      PaddingParams::new(strategy, pad_id~, pad_token~)
+      .with_direction(direction)
+      .with_pad_type_id(pad_type_id)
+      .with_pad_to_multiple_of(pad_to_multiple_of),
+    ),
+  )
+}
+
+///|
+/// HF-style mutating alias for clearing padding configuration.
+pub fn Tokenizer::no_padding(self : Tokenizer) -> Tokenizer {
+  self.with_padding(None)
 }
 
 ///|
@@ -284,6 +674,30 @@ pub fn Tokenizer::get_pre_tokenizer(
 /// Return the current model component.
 pub fn Tokenizer::get_model(self : Tokenizer) -> @model.Model {
   self.model
+}
+
+///|
+/// Clear model-level tokenization caches while keeping tokenizer configuration
+/// unchanged. Returns `self` for builder-style chaining, matching HF-style cache
+/// maintenance ergonomics.
+pub fn Tokenizer::clear_cache(self : Tokenizer) -> Tokenizer {
+  self.model.clear_cache()
+  self
+}
+
+///|
+/// Resize model-level tokenization caches. `capacity=0` disables future model
+/// cache inserts; negative values are clamped to zero. Returns `self` for
+/// chaining and leaves tokenization semantics unchanged.
+pub fn Tokenizer::resize_cache(self : Tokenizer, capacity : Int) -> Tokenizer {
+  self.model.resize_cache(capacity)
+  self
+}
+
+///|
+/// Return the number of currently cached model word tokenizations.
+pub fn Tokenizer::cache_size(self : Tokenizer) -> Int {
+  self.model.cache_size()
 }
 
 ///|
@@ -325,6 +739,18 @@ pub fn Tokenizer::set_encode_special_tokens(
     added_vocabulary: self.added_vocabulary.with_encode_special_tokens(value),
     source_json: None,
   }
+}
+
+///|
+/// HF-style convenience alias for enabling literal special-token encoding.
+pub fn Tokenizer::enable_encode_special_tokens(self : Tokenizer) -> Tokenizer {
+  self.set_encode_special_tokens(true)
+}
+
+///|
+/// HF-style convenience alias for restoring special-token extraction.
+pub fn Tokenizer::disable_encode_special_tokens(self : Tokenizer) -> Tokenizer {
+  self.set_encode_special_tokens(false)
 }
 
 ///|

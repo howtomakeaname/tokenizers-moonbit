@@ -20,6 +20,7 @@ fn mk_unigram(
     byte_fallback,
     fuse_unk,
     cache: {},
+    cache_capacity: None,
   })
 }
 
