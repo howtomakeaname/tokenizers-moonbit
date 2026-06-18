@@ -459,16 +459,82 @@ pub struct HubDownloadResult {
 } derive(Debug, Eq)
 
 ///|
+/// Convert a Hub response into a download result using the same 304/200/206 cache
+/// policy as the async downloader. This pure-ish helper lets tests and alternate
+/// transports share the cache/resume application logic without depending on the
+/// async HTTP runtime.
+pub fn apply_tokenizer_json_download_result(
+  plan : HubRequestPlan,
+  response_body : String?,
+  metadata : HubResponseMetadata,
+  final_url : String,
+) -> HubDownloadResult raise @types.TokenizerError {
+  let decision = decide_tokenizer_json_response(plan, metadata)
+  match decision.action {
+    UseCachedTokenizer => {
+      let paths = match plan.cache_paths {
+        Some(p) => p
+        None =>
+          raise @types.ParseError(
+            "Hub response 304 cannot be applied without cache paths",
+          )
+      }
+      let content = @fs.read_file_to_string(paths.tokenizer_json_path) catch {
+        _ =>
+          raise @types.ParseError(
+            "cannot read cached Hub tokenizer: \{paths.tokenizer_json_path}",
+          )
+      }
+      {
+        content,
+        resolved_revision: decision.resolved_revision,
+        etag: decision.etag,
+        final_url,
+        status: metadata.status,
+      }
+    }
+    ReplaceCachedTokenizer =>
+      {
+        content: require_response_body(response_body, decision),
+        resolved_revision: decision.resolved_revision,
+        etag: decision.etag,
+        final_url,
+        status: metadata.status,
+      }
+    AppendRangeToCachedTokenizer => {
+      let resume_meta = match plan.resume_metadata {
+        Some(r) => r
+        None =>
+          raise @types.ParseError(
+            "Hub response 206 cannot be applied without resume metadata",
+          )
+      }
+      let prefix = @fs.read_file_to_string(resume_meta.incomplete_path) catch {
+        _ =>
+          raise @types.ParseError(
+            "cannot read incomplete Hub tokenizer cache: \{resume_meta.incomplete_path}",
+          )
+      }
+      {
+        content: prefix + require_response_body(response_body, decision),
+        resolved_revision: decision.resolved_revision,
+        etag: decision.etag,
+        final_url,
+        status: metadata.status,
+      }
+    }
+    RetryWithoutRange | RejectResponse =>
+      raise @types.ParseError(decision.message)
+  }
+}
+
+///|
 pub async fn download_tokenizer_json(
   model_id : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
   let plan = plan_tokenizer_json_request(model_id, options~)
-  async_download_with_redirects(
-    plan.url,
-    headers=plan.headers,
-    max_redirects=options.max_redirects,
-  )
+  async_download_with_redirects(plan, max_redirects=options.max_redirects)
 }
 
 ///|
@@ -487,19 +553,22 @@ pub fn tokenizer_json_url(
 
 ///|
 async fn async_download_with_redirects(
-  url : String,
-  headers~ : Map[String, String],
+  plan : HubRequestPlan,
   max_redirects~ : Int,
 ) -> HubDownloadResult raise @types.TokenizerError {
-  let mut current = url
+  let mut current = plan.url
   let mut remaining = max_redirects
+  let mut headers = plan.headers
+  let mut retried_without_range = false
   while true {
     let (response, body) = @http.get(current, headers~) catch {
       _ => raise @types.ParseError("Hub download failed: \{current}")
     }
     if is_redirect(response.code) {
       if remaining <= 0 {
-        raise @types.ParseError("Hub download exceeded redirect limit: \{url}")
+        raise @types.ParseError(
+          "Hub download exceeded redirect limit: \{plan.url}",
+        )
       }
       match header(response.headers, "location") {
         Some(next) => {
@@ -513,30 +582,59 @@ async fn async_download_with_redirects(
           )
       }
     }
-    if response.code < 200 || response.code >= 300 {
-      raise @types.ParseError(
-        "Hub download failed with HTTP \{response.code}: \{current}",
-      )
-    }
-    let content = body.text() catch {
-      _ =>
-        raise @types.ParseError(
-          "Hub response body is not valid UTF-8: \{current}",
-        )
-    }
     let meta = HubResponseMetadata::from_headers(
       response.code,
       response.headers,
     )
-    return {
-      content,
-      resolved_revision: meta.resolved_revision,
-      etag: meta.etag,
-      final_url: current,
-      status: response.code,
+    let decision = decide_tokenizer_json_response(plan, meta)
+    if decision.should_retry_without_range() && !retried_without_range {
+      headers = headers_without_range(headers)
+      current = plan.url
+      remaining = max_redirects
+      retried_without_range = true
+      continue
     }
+    let content = if decision.can_use_cache() {
+      None
+    } else {
+      Some(
+        body.text() catch {
+          _ =>
+            raise @types.ParseError(
+              "Hub response body is not valid UTF-8: \{current}",
+            )
+        },
+      )
+    }
+    return apply_tokenizer_json_download_result(plan, content, meta, current)
   }
   raise @types.ParseError("unreachable Hub download loop")
+}
+
+///|
+fn require_response_body(
+  response_body : String?,
+  decision : HubResponseDecision,
+) -> String raise @types.TokenizerError {
+  match response_body {
+    Some(body) => body
+    None =>
+      raise @types.ParseError(
+        "Hub response body is required for cache action: " + decision.message,
+      )
+  }
+}
+
+///|
+fn headers_without_range(headers : Map[String, String]) -> Map[String, String] {
+  let out : Map[String, String] = {}
+  for kv in headers.to_array() {
+    let key_lower = kv.0.to_lower()
+    if key_lower != "range" && key_lower != "if-range" {
+      out[kv.0] = kv.1
+    }
+  }
+  out
 }
 
 ///|

@@ -229,6 +229,85 @@ test "apply Hub response reuses cache replaces cache and appends ranges" {
 }
 
 ///|
+test "Hub download result helper reuses cache and combines ranges" {
+  let cached_json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"cached":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let range_json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"range":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let cache = "_build/hub_download_result_cache"
+  let model = "org/download-result-tokenizer"
+  @tokenizer.Tokenizer::from_pretrained_downloaded(
+    model,
+    cached_json,
+    revision="main",
+    resolved_revision=Some("cachedrev"),
+    cache_dir=Some(cache),
+    etag=Some("etag-cached"),
+  )
+  |> ignore
+  let plan = plan_tokenizer_json_request(
+    model,
+    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+  )
+  let not_modified = apply_tokenizer_json_download_result(
+    plan,
+    None,
+    HubResponseMetadata::new(
+      304,
+      resolved_revision=Some("cachedrev"),
+      etag=Some("etag-cached"),
+    ),
+    "https://hf.example/cached",
+  )
+  @test.assert_eq(not_modified.status, 304)
+  @test.assert_eq(not_modified.content, cached_json)
+  let full = apply_tokenizer_json_download_result(
+    plan,
+    Some(range_json),
+    HubResponseMetadata::new(
+      200,
+      resolved_revision=Some("fullrev"),
+      etag=Some("etag-full"),
+      content_length=Some(range_json.length()),
+    ),
+    "https://hf.example/full",
+  )
+  @test.assert_eq(full.status, 200)
+  @test.assert_eq(full.content, range_json)
+  let split = 40
+  let prefix = string_prefix(range_json, split)
+  let suffix = string_suffix(range_json, split)
+  let resume_meta = @tokenizer.Tokenizer::write_pretrained_download_resume_metadata(
+    model,
+    revision="main",
+    cache_dir=Some(cache),
+    etag=Some("etag-range"),
+    expected_size=Some(range_json.length()),
+    downloaded_size=prefix.length(),
+  )
+  @fs.write_string_to_file(resume_meta.incomplete_path, prefix) catch {
+    _ => abort("cannot write incomplete tokenizer cache")
+  }
+  let range_plan = plan_tokenizer_json_request(
+    model,
+    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+  )
+  let partial = apply_tokenizer_json_download_result(
+    range_plan,
+    Some(suffix),
+    HubResponseMetadata::new(
+      206,
+      resolved_revision=Some("rangerev"),
+      etag=Some("etag-range"),
+      content_length=Some(suffix.length()),
+    ),
+    "https://hf.example/range",
+  )
+  @test.assert_eq(partial.status, 206)
+  @test.assert_eq(partial.content, range_json)
+}
+
+///|
 fn string_prefix(s : String, stop : Int) -> String {
   let chars = s.to_array()
   let end = if stop < 0 {
