@@ -166,6 +166,86 @@ test "Tokenizer exposes Python property-style component and config aliases" {
 }
 
 ///|
+test "Tokenizer component hooks override normalize pretokenize and decode" {
+  let json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  @test.assert_eq(tok.encode("HELLO,MOON", add_special_tokens=false).ids, [2])
+  let hooks = TokenizerComponentHooks::new(
+    normalize=Some(hook_lowercase),
+    pre_tokenize=Some(hook_comma_pre_tokenize),
+    decode=Some(hook_pipe_decode),
+  )
+  let enc = tok.encode_with_hooks("HELLO,MOON", hooks, add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["hello", "moon"])
+  @test.assert_eq(enc.ids, [0, 1])
+  @test.assert_eq(enc.offsets, [(0, 5), (6, 10)])
+  @test.assert_eq(enc.word_ids, [Some(0), Some(1)])
+  let fast = tok.encode_with_hooks_fast(
+    "HELLO,MOON",
+    hooks,
+    add_special_tokens=false,
+  )
+  @test.assert_eq(fast.ids, enc.ids)
+  @test.assert_eq(fast.offsets, [(0, 0), (0, 0)])
+  @test.assert_eq(tok.decode_with_hooks([0, 1], hooks), "hello|moon")
+}
+
+///|
+fn hook_lowercase(text : String) -> String {
+  text.to_lower()
+}
+
+///|
+fn hook_pipe_decode(tokens : Array[String]) -> String {
+  let sb = StringBuilder::new()
+  for i, token in tokens {
+    if i > 0 {
+      sb.write_char('|')
+    }
+    sb.write_string(token)
+  }
+  sb.to_string()
+}
+
+///|
+fn hook_comma_pre_tokenize(
+  text : String,
+  base_offset : Int,
+) -> Array[@types.Split] {
+  let chars = text.to_array()
+  let out : Array[@types.Split] = []
+  let mut start = 0
+  for i, c in chars {
+    if c == ',' {
+      if i > start {
+        out.push({
+          value: hook_string_slice(chars, start, i),
+          offsets: (base_offset + start, base_offset + i),
+        })
+      }
+      start = i + 1
+    }
+  }
+  if start < chars.length() {
+    out.push({
+      value: hook_string_slice(chars, start, chars.length()),
+      offsets: (base_offset + start, base_offset + chars.length()),
+    })
+  }
+  out
+}
+
+///|
+fn hook_string_slice(chars : Array[Char], start : Int, stop : Int) -> String {
+  let sb = StringBuilder::new()
+  for i in start..<stop {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
+}
+
+///|
 test "Encoding exposes HF-style getter accessors" {
   let json =
     #|{"version":"1.0",

@@ -30,6 +30,55 @@ pub struct TokenizerState {
 } derive(Debug, Eq)
 
 ///|
+/// Lightweight custom component hooks for migration layers that cannot yet map a
+/// dynamic HF Python component to a typed MoonBit Normalizer/PreTokenizer/Decoder.
+/// Hooks are applied only by the explicit `*_with_hooks` APIs, keeping the stored
+/// tokenizer JSON and normal deterministic encode/decode paths unchanged.
+pub struct TokenizerComponentHooks {
+  normalize : ((String) -> String)?
+  pre_tokenize : ((String, Int) -> Array[@types.Split])?
+  decode : ((Array[String]) -> String)?
+}
+
+///|
+pub fn TokenizerComponentHooks::new(
+  normalize? : ((String) -> String)? = None,
+  pre_tokenize? : ((String, Int) -> Array[@types.Split])? = None,
+  decode? : ((Array[String]) -> String)? = None,
+) -> TokenizerComponentHooks {
+  { normalize, pre_tokenize, decode }
+}
+
+///|
+pub fn TokenizerComponentHooks::empty() -> TokenizerComponentHooks {
+  TokenizerComponentHooks::new()
+}
+
+///|
+pub fn TokenizerComponentHooks::with_normalize(
+  self : TokenizerComponentHooks,
+  normalize : ((String) -> String)?,
+) -> TokenizerComponentHooks {
+  { ..self, normalize, }
+}
+
+///|
+pub fn TokenizerComponentHooks::with_pre_tokenize(
+  self : TokenizerComponentHooks,
+  pre_tokenize : ((String, Int) -> Array[@types.Split])?,
+) -> TokenizerComponentHooks {
+  { ..self, pre_tokenize, }
+}
+
+///|
+pub fn TokenizerComponentHooks::with_decode(
+  self : TokenizerComponentHooks,
+  decode : ((Array[String]) -> String)?,
+) -> TokenizerComponentHooks {
+  { ..self, decode, }
+}
+
+///|
 /// Minimal HF-style normalized string wrapper. It keeps both the original and
 /// current normalized text and exposes common mutation helpers used by custom
 /// normalizer migrations. Offset tracking is conservative: transforms that

@@ -432,6 +432,52 @@ pub fn Tokenizer::encode_fast(
 }
 
 ///|
+/// Encode with explicit custom component hooks. Supplied hooks override the
+/// tokenizer's typed normalizer/pre-tokenizer for this call only; model,
+/// added-vocabulary extraction, truncation, post-processing and padding remain
+/// the tokenizer's normal pipeline. This gives Python/FFI layers a safe migration
+/// path for dynamic custom components without mutating tokenizer state.
+pub fn Tokenizer::encode_with_hooks(
+  self : Tokenizer,
+  text : String,
+  hooks : TokenizerComponentHooks,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.finalize_padding(
+    self.process_single_raw(
+      self.encode_raw_with_hooks_impl(
+        text,
+        hooks,
+        keep_special=true,
+        track_offsets=true,
+      ),
+      add_special_tokens~,
+    ),
+  )
+}
+
+///|
+/// Fast no-offset counterpart of `encode_with_hooks`.
+pub fn Tokenizer::encode_with_hooks_fast(
+  self : Tokenizer,
+  text : String,
+  hooks : TokenizerComponentHooks,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  self.finalize_padding(
+    self.process_single_raw(
+      self.encode_raw_with_hooks_impl(
+        text,
+        hooks,
+        keep_special=true,
+        track_offsets=false,
+      ),
+      add_special_tokens~,
+    ),
+  )
+}
+
+///|
 /// Python binding alias for `encode`; useful when exposing both raw-text and
 /// unified `EncodeInput` entry points without overloading in the target FFI.
 pub fn Tokenizer::encode_text(
@@ -1350,6 +1396,22 @@ fn Tokenizer::encode_raw_impl(
   keep_special~ : Bool,
   track_offsets~ : Bool,
 ) -> @types.Encoding {
+  self.encode_raw_with_hooks_impl(
+    text,
+    TokenizerComponentHooks::empty(),
+    keep_special~,
+    track_offsets~,
+  )
+}
+
+///|
+fn Tokenizer::encode_raw_with_hooks_impl(
+  self : Tokenizer,
+  text : String,
+  hooks : TokenizerComponentHooks,
+  keep_special~ : Bool,
+  track_offsets~ : Bool,
+) -> @types.Encoding {
   let ids : Array[Int] = []
   let tokens : Array[String] = []
   let type_ids : Array[Int] = []
@@ -1382,10 +1444,7 @@ fn Tokenizer::encode_raw_impl(
       Special(info~, value~, offsets~) => emit(info.id, value, offsets, 0, None)
       Normal(text=raw, base_offset~) => {
         // Normalize this ordinary piece.
-        let normalized = match self.normalizer {
-          Some(nm) => nm.normalize(raw)
-          None => raw
-        }
+        let normalized = self.normalize_with_hook(raw, hooks)
         // Stage 2: split out normalized added tokens within it.
         for
           seg2 in self.added_vocabulary.extract_stage2(
@@ -1397,16 +1456,7 @@ fn Tokenizer::encode_raw_impl(
             Special(info~, value~, offsets~) =>
               emit(info.id, value, offsets, 0, None)
             Normal(text=ntext, base_offset=base2) => {
-              let pieces : Array[@types.Split] = match self.pre_tokenizer {
-                Some(pt) => pt.pre_tokenize(ntext, base_offset=base2)
-                None =>
-                  [
-                    {
-                      value: ntext,
-                      offsets: (base2, base2 + ntext.char_length()),
-                    },
-                  ]
-              }
+              let pieces = self.pre_tokenize_with_hook(ntext, base2, hooks)
               for piece in pieces {
                 let word_id = next_word_id
                 next_word_id = next_word_id + 1
@@ -1435,6 +1485,45 @@ fn Tokenizer::encode_raw_impl(
     sequence_ids,
     word_ids,
     overflowing: [],
+  }
+}
+
+///|
+fn Tokenizer::normalize_with_hook(
+  self : Tokenizer,
+  text : String,
+  hooks : TokenizerComponentHooks,
+) -> String {
+  match hooks.normalize {
+    Some(f) => f(text)
+    None =>
+      match self.normalizer {
+        Some(nm) => nm.normalize(text)
+        None => text
+      }
+  }
+}
+
+///|
+fn Tokenizer::pre_tokenize_with_hook(
+  self : Tokenizer,
+  text : String,
+  base_offset : Int,
+  hooks : TokenizerComponentHooks,
+) -> Array[@types.Split] {
+  match hooks.pre_tokenize {
+    Some(f) => f(text, base_offset)
+    None =>
+      match self.pre_tokenizer {
+        Some(pt) => pt.pre_tokenize(text, base_offset~)
+        None =>
+          [
+            {
+              value: text,
+              offsets: (base_offset, base_offset + text.char_length()),
+            },
+          ]
+      }
   }
 }
 
