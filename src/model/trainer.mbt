@@ -597,6 +597,9 @@ pub fn Model::train_unigram(
     byte_fallback~,
     fuse_unk~,
     max_piece_length~,
+    shrinking_factor~,
+    n_sub_iterations~,
+    show_progress~,
   )
 }
 
@@ -615,8 +618,6 @@ pub fn Model::train_unigram_from_tokens(
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
 ) -> Model {
-  ignore(shrinking_factor)
-  ignore(n_sub_iterations)
   ignore(show_progress)
   let word_counts : Map[String, Int] = {}
   let word_order : Array[String] = []
@@ -662,20 +663,20 @@ pub fn Model::train_unigram_from_tokens(
     ignore(add_token(item.0, -10.0))
   }
 
-  let pieces = sorted_wordlevel_candidates(
-    piece_order, piece_counts, min_frequency,
+  let candidates = select_unigram_candidates(
+    piece_order,
+    piece_counts,
+    word_order,
+    word_counts,
+    min_frequency,
+    max_piece_length,
+    current_size=vocab_r.length(),
+    vocab_size~,
+    shrinking_factor~,
+    n_sub_iterations~,
   )
-  for item in pieces {
-    ignore(add_token(item.0, unigram_piece_score(item.1)))
-  }
-
-  let words = sorted_wordlevel_candidates(
-    word_order, word_counts, min_frequency,
-  )
-  for item in words {
-    if unigram_piece_within_limit(item.0, max_piece_length) {
-      ignore(add_token(item.0, unigram_word_score(item.1)))
-    }
+  for item in candidates {
+    ignore(add_token(item.token, item.score))
   }
 
   Unigram({
@@ -687,6 +688,153 @@ pub fn Model::train_unigram_from_tokens(
     cache: {},
     cache_capacity: None,
   })
+}
+
+///|
+priv struct UnigramTrainCandidate {
+  token : String
+  freq : Int
+  score : Double
+  length : Int
+  kind_rank : Int
+}
+
+///|
+fn select_unigram_candidates(
+  piece_order : Array[String],
+  piece_counts : Map[String, Int],
+  word_order : Array[String],
+  word_counts : Map[String, Int],
+  min_frequency : Int,
+  max_piece_length : Int?,
+  current_size~ : Int,
+  vocab_size~ : Int?,
+  shrinking_factor~ : Double,
+  n_sub_iterations~ : Int,
+) -> Array[UnigramTrainCandidate] {
+  let candidates : Array[UnigramTrainCandidate] = []
+  for
+    item in sorted_wordlevel_candidates(
+      piece_order, piece_counts, min_frequency,
+    ) {
+    candidates.push({
+      token: item.0,
+      freq: item.1,
+      score: unigram_piece_score(item.1),
+      length: item.0.char_length(),
+      kind_rank: 1,
+    })
+  }
+  for
+    item in sorted_wordlevel_candidates(word_order, word_counts, min_frequency) {
+    if unigram_piece_within_limit(item.0, max_piece_length) {
+      candidates.push({
+        token: item.0,
+        freq: item.1,
+        score: unigram_word_score(item.1),
+        length: item.0.char_length(),
+        kind_rank: 0,
+      })
+    }
+  }
+  candidates.sort_by(unigram_candidate_compare)
+  let target = unigram_candidate_target(
+    current_size,
+    vocab_size,
+    candidates.length(),
+  )
+  unigram_shrink_candidates(
+    candidates, target, shrinking_factor, n_sub_iterations,
+  )
+}
+
+///|
+fn unigram_candidate_target(
+  current_size : Int,
+  vocab_size : Int?,
+  available : Int,
+) -> Int {
+  match vocab_size {
+    None => available
+    Some(limit) =>
+      if limit <= 0 {
+        available
+      } else if limit <= current_size {
+        0
+      } else {
+        let remaining = limit - current_size
+        if remaining < available {
+          remaining
+        } else {
+          available
+        }
+      }
+  }
+}
+
+///|
+fn unigram_shrink_candidates(
+  ranked : Array[UnigramTrainCandidate],
+  target : Int,
+  shrinking_factor : Double,
+  n_sub_iterations : Int,
+) -> Array[UnigramTrainCandidate] {
+  if target <= 0 || ranked.length() == 0 {
+    return []
+  }
+  let factor = normalize_shrinking_factor(shrinking_factor)
+  let rounds = if n_sub_iterations < 0 { 0 } else { n_sub_iterations }
+  let mut keep = ranked.length()
+  for _ in 0..<rounds {
+    if keep <= target {
+      break
+    }
+    let next = (keep.to_double() * factor).to_int()
+    keep = if next < target {
+      target
+    } else if next >= keep {
+      keep - 1
+    } else {
+      next
+    }
+  }
+  if keep > target {
+    keep = target
+  }
+  let out : Array[UnigramTrainCandidate] = []
+  for i in 0..<keep {
+    out.push(ranked[i])
+  }
+  out
+}
+
+///|
+fn normalize_shrinking_factor(factor : Double) -> Double {
+  if factor > 0.0 && factor < 1.0 {
+    factor
+  } else {
+    0.75
+  }
+}
+
+///|
+fn unigram_candidate_compare(
+  a : UnigramTrainCandidate,
+  b : UnigramTrainCandidate,
+) -> Int {
+  if a.score > b.score {
+    -1
+  } else if a.score < b.score {
+    1
+  } else if a.freq != b.freq {
+    b.freq.compare(a.freq)
+  } else if a.kind_rank != b.kind_rank {
+    a.kind_rank.compare(b.kind_rank)
+  } else if a.length != b.length {
+    b.length.compare(a.length)
+  } else {
+    a.token.compare(b.token)
+  }
 }
 
 ///|

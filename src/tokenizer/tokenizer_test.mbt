@@ -2323,6 +2323,24 @@ test "train_unigram respects vocab_size cap" {
 }
 
 ///|
+test "train_unigram ranks EM candidates before applying vocab cap" {
+  let tok = Tokenizer::train_unigram(
+    ["alpha alpha alp alp ha ha"],
+    unk_token="<unk>",
+    vocab_size=Some(6),
+    shrinking_factor=0.5,
+    n_sub_iterations=4,
+    show_progress=false,
+  )
+  @test.assert_eq(tok.get_vocab_size(), 6)
+  @test.assert_eq(tok.token_to_id("<unk>"), Some(0))
+  assert_true(tok.token_to_id("alpha") is Some(_))
+  @test.assert_eq(tok.encode("alpha", add_special_tokens=false).tokens, [
+    "alpha",
+  ])
+}
+
+///|
 test "train_unigram supports unk_piece and max_piece_length" {
   let tok = Tokenizer::train_unigram(
     ["hello hello"],

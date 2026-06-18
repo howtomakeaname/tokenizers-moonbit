@@ -258,7 +258,10 @@ pub fn Tokenizer::train_from_iterator(
       vocab_size~,
       byte_fallback~,
       fuse_unk~,
+      shrinking_factor~,
       max_piece_length~,
+      n_sub_iterations~,
+      show_progress~,
       ..
     ) =>
       @model.Model::train_unigram_from_tokens(
@@ -270,6 +273,9 @@ pub fn Tokenizer::train_from_iterator(
         byte_fallback~,
         fuse_unk~,
         max_piece_length~,
+        shrinking_factor~,
+        n_sub_iterations~,
+        show_progress~,
       )
   }
   let trained = {
