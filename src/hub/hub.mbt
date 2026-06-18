@@ -78,6 +78,50 @@ pub struct HubResponseMetadata {
 } derive(Debug, Eq)
 
 ///|
+pub fn HubResponseMetadata::new(
+  status : Int,
+  resolved_revision? : String? = None,
+  etag? : String? = None,
+  content_length? : Int? = None,
+  accept_ranges? : Bool = false,
+) -> HubResponseMetadata {
+  { status, resolved_revision, etag, content_length, accept_ranges }
+}
+
+///|
+/// Cache/write action selected after inspecting a Hub response. It is separated
+/// from actual network IO so native/js/wasm host layers can share the same
+/// HuggingFace-compatible 304/200/206 policy.
+pub enum HubTransferAction {
+  /// The server answered 304 Not Modified; load the existing tokenizer.json from
+  /// cache and optionally refresh refs from response metadata.
+  UseCachedTokenizer
+  /// The server returned a complete body; overwrite tokenizer.json and clear any
+  /// stale resume sidecar.
+  ReplaceCachedTokenizer
+  /// The server honored Range with 206; append the body to the recorded
+  /// `.incomplete` prefix, then atomically promote through the normal cache write
+  /// path.
+  AppendRangeToCachedTokenizer
+  /// The response cannot safely be applied to the current Range plan. Callers
+  /// should retry once without Range/If-Range before surfacing a transport error.
+  RetryWithoutRange
+  /// Non-cacheable/non-success HTTP status.
+  RejectResponse
+} derive(Debug, Eq)
+
+///|
+/// Pure transfer decision derived from a request plan and response headers.
+pub struct HubResponseDecision {
+  action : HubTransferAction
+  resolved_revision : String?
+  etag : String?
+  expected_size : Int?
+  range_start : Int?
+  message : String
+} derive(Debug, Eq)
+
+///|
 pub fn plan_tokenizer_json_request(
   model_id : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
@@ -103,24 +147,26 @@ pub fn plan_tokenizer_json_request(
   match cached {
     Some(meta) =>
       match meta.etag {
-        Some(etag) => if !etag.is_empty() {
-          headers["If-None-Match"] = etag
-          conditional_etag = Some(etag)
-        }
+        Some(etag) =>
+          if !etag.is_empty() {
+            headers["If-None-Match"] = etag
+            conditional_etag = Some(etag)
+          }
         None => ()
       }
     None => ()
   }
   let mut range_start : Int? = None
   match resume_meta {
-    Some(meta) => if meta.downloaded_size > 0 {
-      headers["Range"] = "bytes=" + meta.downloaded_size.to_string() + "-"
-      match meta.etag {
-        Some(etag) => if !etag.is_empty() { headers["If-Range"] = etag }
-        None => ()
+    Some(meta) =>
+      if meta.downloaded_size > 0 {
+        headers["Range"] = "bytes=" + meta.downloaded_size.to_string() + "-"
+        match meta.etag {
+          Some(etag) => if !etag.is_empty() { headers["If-Range"] = etag }
+          None => ()
+        }
+        range_start = Some(meta.downloaded_size)
       }
-      range_start = Some(meta.downloaded_size)
-    }
     None => ()
   }
   {
@@ -152,6 +198,214 @@ pub fn HubResponseMetadata::from_headers(
     etag: header(headers, "etag"),
     content_length,
     accept_ranges,
+  }
+}
+
+///|
+/// Decide how a tokenizer.json Hub response should affect the local cache.
+///
+/// This covers the transfer states used by HuggingFace Hub clients while keeping
+/// the core cache mutation explicit: 304 reuses cache, 200 replaces cache, 206 is
+/// accepted only when it matches a previously recorded resume range, and unsafe
+/// Range outcomes ask the caller to retry without Range.
+pub fn decide_tokenizer_json_response(
+  plan : HubRequestPlan,
+  metadata : HubResponseMetadata,
+) -> HubResponseDecision {
+  let resolved_revision = metadata.resolved_revision
+  let etag = metadata.etag
+  if metadata.status == 304 {
+    return {
+      action: UseCachedTokenizer,
+      resolved_revision,
+      etag,
+      expected_size: None,
+      range_start: None,
+      message: "Hub response 304: cached tokenizer.json is still fresh",
+    }
+  }
+  if metadata.status == 200 {
+    return {
+      action: ReplaceCachedTokenizer,
+      resolved_revision,
+      etag,
+      expected_size: metadata.content_length,
+      range_start: None,
+      message: "Hub response 200: replace cached tokenizer.json",
+    }
+  }
+  if metadata.status == 206 {
+    match plan.range_start {
+      Some(start) =>
+        match plan.resume_metadata {
+          Some(resume_meta) =>
+            if start > 0 && resume_meta.downloaded_size == start {
+              return {
+                action: AppendRangeToCachedTokenizer,
+                resolved_revision,
+                etag,
+                expected_size: combine_range_size(
+                  start,
+                  metadata.content_length,
+                ),
+                range_start: Some(start),
+                message: "Hub response 206: append ranged body to incomplete tokenizer.json",
+              }
+            }
+          None => ()
+        }
+      None => ()
+    }
+    return {
+      action: RetryWithoutRange,
+      resolved_revision,
+      etag,
+      expected_size: metadata.content_length,
+      range_start: None,
+      message: "Hub response 206 did not match local resume metadata; retry without Range",
+    }
+  }
+  if metadata.status == 416 {
+    return {
+      action: RetryWithoutRange,
+      resolved_revision,
+      etag,
+      expected_size: metadata.content_length,
+      range_start: None,
+      message: "Hub response 416: recorded Range is not satisfiable; retry without Range",
+    }
+  }
+  {
+    action: RejectResponse,
+    resolved_revision,
+    etag,
+    expected_size: metadata.content_length,
+    range_start: None,
+    message: "Hub response cannot be applied to tokenizer cache: HTTP " +
+    metadata.status.to_string(),
+  }
+}
+
+///|
+pub fn HubResponseDecision::can_use_cache(self : HubResponseDecision) -> Bool {
+  self.action == UseCachedTokenizer
+}
+
+///|
+pub fn HubResponseDecision::should_write_full_body(
+  self : HubResponseDecision,
+) -> Bool {
+  self.action == ReplaceCachedTokenizer
+}
+
+///|
+pub fn HubResponseDecision::should_append_range(
+  self : HubResponseDecision,
+) -> Bool {
+  self.action == AppendRangeToCachedTokenizer
+}
+
+///|
+pub fn HubResponseDecision::should_retry_without_range(
+  self : HubResponseDecision,
+) -> Bool {
+  self.action == RetryWithoutRange
+}
+
+///|
+/// Apply a GET response body to the tokenizer cache according to
+/// `decide_tokenizer_json_response`, then return a parsed tokenizer. This helper
+/// is intentionally body-as-string based: host/network layers still own HTTP and
+/// byte streaming, while this package owns cache/ref/resume policy.
+pub fn apply_tokenizer_json_response(
+  model_id : String,
+  response_body : String,
+  metadata : HubResponseMetadata,
+  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  tokenizer_config_json? : String? = None,
+  special_tokens_map_json? : String? = None,
+) -> @tokenizer.Tokenizer raise @types.TokenizerError {
+  let plan = plan_tokenizer_json_request(model_id, options~)
+  let decision = decide_tokenizer_json_response(plan, metadata)
+  match decision.action {
+    UseCachedTokenizer => {
+      refresh_ref_from_decision(model_id, options, decision)
+      @tokenizer.Tokenizer::from_pretrained_cached(
+        model_id,
+        revision=options.revision,
+        cache_dir=options.cache_dir,
+      )
+    }
+    ReplaceCachedTokenizer =>
+      @tokenizer.Tokenizer::from_pretrained_downloaded(
+        model_id,
+        response_body,
+        revision=options.revision,
+        resolved_revision=decision.resolved_revision,
+        cache_dir=options.cache_dir,
+        tokenizer_config_json~,
+        special_tokens_map_json~,
+        etag=decision.etag,
+      )
+    AppendRangeToCachedTokenizer => {
+      let resume_meta = match plan.resume_metadata {
+        Some(r) => r
+        None =>
+          raise @types.ParseError(
+            "Hub response decision requested range append without resume metadata",
+          )
+      }
+      let prefix = @fs.read_file_to_string(resume_meta.incomplete_path) catch {
+        _ =>
+          raise @types.ParseError(
+            "cannot read incomplete Hub tokenizer cache: \{resume_meta.incomplete_path}",
+          )
+      }
+      @tokenizer.Tokenizer::from_pretrained_downloaded(
+        model_id,
+        prefix + response_body,
+        revision=options.revision,
+        resolved_revision=decision.resolved_revision,
+        cache_dir=options.cache_dir,
+        tokenizer_config_json~,
+        special_tokens_map_json~,
+        etag=decision.etag,
+      )
+    }
+    RetryWithoutRange | RejectResponse =>
+      raise @types.ParseError(decision.message)
+  }
+}
+
+///|
+fn combine_range_size(start : Int, body_length : Int?) -> Int? {
+  match body_length {
+    Some(n) => if n >= 0 { Some(start + n) } else { None }
+    None => None
+  }
+}
+
+///|
+fn refresh_ref_from_decision(
+  model_id : String,
+  options : HubDownloadOptions,
+  decision : HubResponseDecision,
+) -> Unit {
+  match decision.resolved_revision {
+    Some(rev) =>
+      if !rev.is_empty() {
+        ignore(
+          @tokenizer.Tokenizer::write_pretrained_ref_revision(
+            model_id,
+            rev,
+            revision=options.revision,
+            cache_dir=options.cache_dir,
+          ) catch {
+            _ => ""
+          },
+        )
+      }
+    None => ()
   }
 }
 
@@ -270,7 +524,10 @@ async fn async_download_with_redirects(
           "Hub response body is not valid UTF-8: \{current}",
         )
     }
-    let meta = HubResponseMetadata::from_headers(response.code, response.headers)
+    let meta = HubResponseMetadata::from_headers(
+      response.code,
+      response.headers,
+    )
     return {
       content,
       resolved_revision: meta.resolved_revision,

@@ -153,10 +153,14 @@ test "Tokenizer exposes Python pickle-style state roundtrip" {
   @test.assert_eq(state.json, tok.to_str())
   let restored = Tokenizer::__setstate__(state)
   @test.assert_eq(restored.to_str(), tok.to_str())
-  @test.assert_eq(restored.encode("hello missing", add_special_tokens=false).ids, [
-    0, 2,
-  ])
-  @test.assert_eq(Tokenizer::from_state(tok.get_state()).to_json(), tok.to_json())
+  @test.assert_eq(
+    restored.encode("hello missing", add_special_tokens=false).ids,
+    [0, 2],
+  )
+  @test.assert_eq(
+    Tokenizer::from_state(tok.get_state()).to_json(),
+    tok.to_json(),
+  )
 }
 
 ///|
@@ -471,9 +475,7 @@ test "decode_batch handles duplicate id sequences" {
   ])
   @test.assert_eq(tok.decode_ids([0, 1, 2]), "hello moon")
   @test.assert_eq(tok.batch_decode([[2], [0, 1, 2]]), ["moon", "hello moon"])
-  @test.assert_eq(tok.decode_ids_batch([[2], [0, 1, 2]]), [
-    "moon", "hello moon",
-  ])
+  @test.assert_eq(tok.decode_ids_batch([[2], [0, 1, 2]]), ["moon", "hello moon"])
   @test.assert_eq(tok.async_decode([0, 1, 2]), "hello moon")
   @test.assert_eq(tok.async_decode_batch([[2], [0, 1, 2]]), [
     "moon", "hello moon",
@@ -630,8 +632,12 @@ test "encode_batch_fast matches cached batch behavior with zero offsets" {
     assert_fast_encoding_matches(regular[i], fast[i])
   }
   @test.assert_eq(
-    tok.encode_text_batch(["hello world", "hello"], add_special_tokens=true).map(e => e.ids),
-    tok.encode_batch(["hello world", "hello"], add_special_tokens=true).map(e => e.ids),
+    tok
+    .encode_text_batch(["hello world", "hello"], add_special_tokens=true)
+    .map(e => e.ids),
+    tok
+    .encode_batch(["hello world", "hello"], add_special_tokens=true)
+    .map(e => e.ids),
   )
   @test.assert_eq(
     tok.encode_text_batch_fast(["hello world"], add_special_tokens=true)[0].offsets,
@@ -1476,7 +1482,10 @@ test "from_pretrained_downloaded writes HF-style cache and refs" {
   )
   @test.assert_eq(ok_hint.cache_exists, true)
   @test.assert_eq(ok_hint.resolved_revision, Some("def456"))
-  @test.assert_eq(ok_hint.message.contains("can resolve cached tokenizer"), true)
+  @test.assert_eq(
+    ok_hint.message.contains("can resolve cached tokenizer"),
+    true,
+  )
   let paths = Tokenizer::from_pretrained_cache_paths(
     "org/downloaded-tokenizer",
     revision="main",
@@ -1566,7 +1575,10 @@ test "from_pretrained reports actionable offline resolution errors" {
     cache_dir=Some("_build/empty_hub_cache"),
   )
   @test.assert_eq(hint.cache_exists, false)
-  @test.assert_eq(hint.repo_cache_dir.unwrap().contains("models--private-org--private-model"), true)
+  @test.assert_eq(
+    hint.repo_cache_dir.unwrap().contains("models--private-org--private-model"),
+    true,
+  )
   @test.assert_eq(hint.message.contains("private or gated"), true)
 }
 

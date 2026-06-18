@@ -362,7 +362,9 @@ pub fn Tokenizer::from_pretrained_cache_paths(
         None => return None
       }
   }
-  Some(build_pretrained_cache_paths(root, model_id, revision, resolved_revision~))
+  Some(
+    build_pretrained_cache_paths(root, model_id, revision, resolved_revision~),
+  )
 }
 
 ///|
@@ -387,7 +389,8 @@ pub fn Tokenizer::from_pretrained_ref_revision(
   revision? : String = "main",
   cache_dir? : String? = None,
 ) -> String? {
-  match Tokenizer::from_pretrained_cache_paths(model_id, revision~, cache_dir~) {
+  match
+    Tokenizer::from_pretrained_cache_paths(model_id, revision~, cache_dir~) {
     Some(paths) =>
       match read_optional_file(paths.ref_path) {
         Some(content) => Some(trim_ascii_ws(content))
@@ -416,12 +419,13 @@ pub fn Tokenizer::write_pretrained_ref_revision(
   revision? : String = "main",
   cache_dir? : String? = None,
 ) -> String raise @types.TokenizerError {
-  let paths = match Tokenizer::from_pretrained_cache_paths(
-    model_id,
-    revision~,
-    resolved_revision=Some(resolved_revision),
-    cache_dir~,
-  ) {
+  let paths = match
+    Tokenizer::from_pretrained_cache_paths(
+      model_id,
+      revision~,
+      resolved_revision=Some(resolved_revision),
+      cache_dir~,
+    ) {
     Some(p) => p
     None =>
       raise @types.ParseError(
@@ -430,7 +434,8 @@ pub fn Tokenizer::write_pretrained_ref_revision(
   }
   ensure_dir(paths.refs_dir)
   @fs.write_string_to_file(paths.ref_path, resolved_revision) catch {
-    _ => raise @types.ParseError("cannot write Hub cache ref: \{paths.ref_path}")
+    _ =>
+      raise @types.ParseError("cannot write Hub cache ref: \{paths.ref_path}")
   }
   paths.ref_path
 }
@@ -463,12 +468,13 @@ pub fn Tokenizer::write_pretrained_download_resume_metadata(
   expected_size? : Int? = None,
   downloaded_size? : Int = 0,
 ) -> PretrainedDownloadResumeMetadata raise @types.TokenizerError {
-  let paths = match Tokenizer::from_pretrained_cache_paths(
-    model_id,
-    revision~,
-    resolved_revision~,
-    cache_dir~,
-  ) {
+  let paths = match
+    Tokenizer::from_pretrained_cache_paths(
+      model_id,
+      revision~,
+      resolved_revision~,
+      cache_dir~,
+    ) {
     Some(p) => p
     None =>
       raise @types.ParseError(
@@ -526,21 +532,23 @@ pub fn Tokenizer::from_pretrained_download_resume_metadata(
   resolved_revision? : String? = None,
   cache_dir? : String? = None,
 ) -> PretrainedDownloadResumeMetadata? {
-  let paths = match Tokenizer::from_pretrained_cache_paths(
-    model_id,
-    revision~,
-    resolved_revision~,
-    cache_dir~,
-  ) {
+  let paths = match
+    Tokenizer::from_pretrained_cache_paths(
+      model_id,
+      revision~,
+      resolved_revision~,
+      cache_dir~,
+    ) {
     Some(p) => p
     None => return None
   }
   match read_optional_file(paths.resume_path) {
-    Some(content) => parse_resume_metadata(
-      content,
-      paths.resume_path,
-      incomplete_tokenizer_path(paths.tokenizer_json_path),
-    )
+    Some(content) =>
+      parse_resume_metadata(
+        content,
+        paths.resume_path,
+        incomplete_tokenizer_path(paths.tokenizer_json_path),
+      )
     None => None
   }
 }
@@ -569,19 +577,22 @@ pub fn Tokenizer::clear_pretrained_download_resume_metadata(
   resolved_revision? : String? = None,
   cache_dir? : String? = None,
 ) -> Bool {
-  let paths = match Tokenizer::from_pretrained_cache_paths(
-    model_id,
-    revision~,
-    resolved_revision~,
-    cache_dir~,
-  ) {
+  let paths = match
+    Tokenizer::from_pretrained_cache_paths(
+      model_id,
+      revision~,
+      resolved_revision~,
+      cache_dir~,
+    ) {
     Some(p) => p
     None => return false
   }
   if !@fs.path_exists(paths.resume_path) {
     return false
   }
-  @fs.remove_file(paths.resume_path) catch { _ => return false }
+  @fs.remove_file(paths.resume_path) catch {
+    _ => return false
+  }
   true
 }
 
@@ -663,7 +674,8 @@ pub fn Tokenizer::from_pretrained_cache_exists(
   revision? : String = "main",
   cache_dir? : String? = None,
 ) -> Bool {
-  match Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
+  match
+    Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
     Some(meta) => meta.cache_exists()
     None => false
   }
@@ -689,7 +701,8 @@ pub fn Tokenizer::from_pretrained_cache_is_fresh(
   require_tokenizer_config? : Bool = false,
   require_special_tokens_map? : Bool = false,
 ) -> Bool {
-  match Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
+  match
+    Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
     Some(meta) =>
       meta.is_fresh(
         resolved_revision~,
@@ -730,7 +743,8 @@ pub fn Tokenizer::from_pretrained_cache_etag_matches(
   revision? : String = "main",
   cache_dir? : String? = None,
 ) -> Bool {
-  match Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
+  match
+    Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
     Some(meta) => meta.cache_exists() && meta.etag_matches(expected_etag)
     None => false
   }
@@ -777,8 +791,8 @@ pub fn Tokenizer::from_pretrained_resolution_hint(
         tokenizer_json_path: None,
         cache_exists: false,
         message: "from_pretrained cannot inspect local HuggingFace Hub cache for '" +
-          model_id +
-          "' because no cache_dir/HUGGINGFACE_HUB_CACHE/HF_HOME/HOME is configured. For private or gated repositories, download with an authenticated Hub client first and pass cache_dir or tokenizer.json explicitly.",
+        model_id +
+        "' because no cache_dir/HUGGINGFACE_HUB_CACHE/HF_HOME/HOME is configured. For private or gated repositories, download with an authenticated Hub client first and pass cache_dir or tokenizer.json explicitly.",
       }
     Some(root_dir) => {
       let repo = root_dir + "/" + hub_model_dir(model_id)
@@ -791,7 +805,9 @@ pub fn Tokenizer::from_pretrained_resolution_hint(
       let tokenizer_exists = @fs.path_exists(tok)
       let message = if tokenizer_exists {
         "from_pretrained can resolve cached tokenizer for '" +
-        model_id + "' at " + tok
+        model_id +
+        "' at " +
+        tok
       } else if !repo_exists {
         "from_pretrained could not find a local cache entry for '" +
         model_id +
@@ -885,12 +901,14 @@ pub fn cache_pretrained_tokenizer_json(
         "cannot write downloaded tokenizer cache: \{paths.tokenizer_json_path}",
       )
   }
-  ignore(Tokenizer::clear_pretrained_download_resume_metadata(
-    model_id,
-    revision~,
-    resolved_revision=Some(snapshot),
-    cache_dir=Some(root),
-  ))
+  ignore(
+    Tokenizer::clear_pretrained_download_resume_metadata(
+      model_id,
+      revision~,
+      resolved_revision=Some(snapshot),
+      cache_dir=Some(root),
+    ),
+  )
   paths.tokenizer_json_path
 }
 
@@ -1092,7 +1110,10 @@ fn resume_metadata_to_string(
     None => ()
   }
   match expected_size {
-    Some(n) => if n >= 0 { sb.write_string("expected_size=" + n.to_string() + "\n") }
+    Some(n) =>
+      if n >= 0 {
+        sb.write_string("expected_size=" + n.to_string() + "\n")
+      }
     None => ()
   }
   sb.write_string("downloaded_size=" + downloaded_size.to_string() + "\n")
@@ -1153,7 +1174,9 @@ fn split_once(s : String, sep : Char) -> (String, String)? {
   let chars = s.to_array()
   for i, c in chars {
     if c == sep {
-      return Some((string_slice(chars, 0, i), string_slice(chars, i + 1, chars.length())))
+      return Some(
+        (string_slice(chars, 0, i), string_slice(chars, i + 1, chars.length())),
+      )
     }
   }
   None

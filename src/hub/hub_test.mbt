@@ -30,7 +30,8 @@ test "Hub request plan uses cache etag and resume range" {
     resolved_revision=Some("abc123"),
     cache_dir=Some(cache),
     etag=Some("etag-existing"),
-  ) |> ignore
+  )
+  |> ignore
   @tokenizer.Tokenizer::write_pretrained_download_resume_metadata(
     "org/request-plan-tokenizer",
     revision="main",
@@ -38,7 +39,8 @@ test "Hub request plan uses cache etag and resume range" {
     etag=Some("etag-partial"),
     expected_size=Some(1000),
     downloaded_size=256,
-  ) |> ignore
+  )
+  |> ignore
   let plan = plan_tokenizer_json_request(
     "org/request-plan-tokenizer",
     options=HubDownloadOptions::new(
@@ -58,26 +60,206 @@ test "Hub request plan uses cache etag and resume range" {
   @test.assert_eq(plan.headers.get("Authorization"), Some("Bearer tok"))
   @test.assert_eq(plan.range_start, Some(256))
   @test.assert_eq(plan.conditional_etag, Some("etag-existing"))
-  @test.assert_eq(plan.cache_paths.unwrap().snapshot_dir.has_suffix("/snapshots/abc123"), true)
+  @test.assert_eq(
+    plan.cache_paths.unwrap().snapshot_dir.has_suffix("/snapshots/abc123"),
+    true,
+  )
   @test.assert_eq(plan.resume_metadata.unwrap().downloaded_size, 256)
 }
 
 ///|
 test "Hub response metadata parses cache headers" {
-  let meta = HubResponseMetadata::from_headers(
-    200,
-    {
-      "x-repo-commit": "abc123",
-      "etag": "etag-new",
-      "content-length": "4096",
-      "accept-ranges": "bytes",
-    },
-  )
+  let meta = HubResponseMetadata::from_headers(200, {
+    "x-repo-commit": "abc123",
+    "etag": "etag-new",
+    "content-length": "4096",
+    "accept-ranges": "bytes",
+  })
   @test.assert_eq(meta.status, 200)
   @test.assert_eq(meta.resolved_revision, Some("abc123"))
   @test.assert_eq(meta.etag, Some("etag-new"))
   @test.assert_eq(meta.content_length, Some(4096))
   @test.assert_eq(meta.accept_ranges, true)
+}
+
+///|
+test "Hub response decision handles cache and range statuses" {
+  let json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let cache = "_build/hub_response_decision_cache"
+  @tokenizer.Tokenizer::from_pretrained_downloaded(
+    "org/response-decision-tokenizer",
+    json,
+    revision="main",
+    resolved_revision=Some("abc123"),
+    cache_dir=Some(cache),
+    etag=Some("etag-existing"),
+  )
+  |> ignore
+  @tokenizer.Tokenizer::write_pretrained_download_resume_metadata(
+    "org/response-decision-tokenizer",
+    revision="main",
+    cache_dir=Some(cache),
+    etag=Some("etag-existing"),
+    expected_size=Some(256),
+    downloaded_size=32,
+  )
+  |> ignore
+  let plan = plan_tokenizer_json_request(
+    "org/response-decision-tokenizer",
+    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+  )
+  let not_modified = decide_tokenizer_json_response(
+    plan,
+    HubResponseMetadata::new(
+      304,
+      resolved_revision=Some("abc123"),
+      etag=Some("etag-existing"),
+      accept_ranges=true,
+    ),
+  )
+  @test.assert_eq(not_modified.can_use_cache(), true)
+  let partial = decide_tokenizer_json_response(
+    plan,
+    HubResponseMetadata::new(
+      206,
+      resolved_revision=Some("def456"),
+      etag=Some("etag-new"),
+      content_length=Some(224),
+      accept_ranges=true,
+    ),
+  )
+  @test.assert_eq(partial.should_append_range(), true)
+  @test.assert_eq(partial.range_start, Some(32))
+  @test.assert_eq(partial.expected_size, Some(256))
+  let bad_partial = decide_tokenizer_json_response(
+    plan_tokenizer_json_request(
+      "org/no-resume-tokenizer",
+      options=HubDownloadOptions::new(cache_dir=Some(cache)),
+    ),
+    HubResponseMetadata::new(
+      206,
+      resolved_revision=Some("def456"),
+      etag=Some("etag-new"),
+      content_length=Some(224),
+      accept_ranges=true,
+    ),
+  )
+  @test.assert_eq(bad_partial.should_retry_without_range(), true)
+}
+
+///|
+test "apply Hub response reuses cache replaces cache and appends ranges" {
+  let old_json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"old":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let new_json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"new":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let cache = "_build/hub_apply_response_cache"
+  let opts = HubDownloadOptions::new(cache_dir=Some(cache))
+  @tokenizer.Tokenizer::from_pretrained_downloaded(
+    "org/apply-response-tokenizer",
+    old_json,
+    revision="main",
+    resolved_revision=Some("oldrev"),
+    cache_dir=Some(cache),
+    etag=Some("etag-old"),
+  )
+  |> ignore
+  let cached = apply_tokenizer_json_response(
+    "org/apply-response-tokenizer",
+    "",
+    HubResponseMetadata::new(
+      304,
+      resolved_revision=Some("oldrev"),
+      etag=Some("etag-old"),
+      accept_ranges=true,
+    ),
+    options=opts,
+  )
+  @test.assert_eq(cached.token_to_id("old"), Some(0))
+  let replaced = apply_tokenizer_json_response(
+    "org/apply-response-tokenizer",
+    new_json,
+    HubResponseMetadata::new(
+      200,
+      resolved_revision=Some("newrev"),
+      etag=Some("etag-new"),
+      content_length=Some(new_json.length()),
+      accept_ranges=true,
+    ),
+    options=opts,
+  )
+  @test.assert_eq(replaced.token_to_id("new"), Some(0))
+  let range_model = "org/apply-range-tokenizer"
+  let split = 35
+  let prefix = string_prefix(new_json, split)
+  let suffix = string_suffix(new_json, split)
+  let resume_meta = @tokenizer.Tokenizer::write_pretrained_download_resume_metadata(
+    range_model,
+    revision="main",
+    cache_dir=Some(cache),
+    etag=Some("etag-range"),
+    expected_size=Some(new_json.length()),
+    downloaded_size=prefix.length(),
+  )
+  @fs.write_string_to_file(resume_meta.incomplete_path, prefix) catch {
+    _ => abort("cannot write incomplete tokenizer cache")
+  }
+  let ranged = apply_tokenizer_json_response(
+    range_model,
+    suffix,
+    HubResponseMetadata::new(
+      206,
+      resolved_revision=Some("rangerev"),
+      etag=Some("etag-range"),
+      content_length=Some(suffix.length()),
+      accept_ranges=true,
+    ),
+    options=opts,
+  )
+  @test.assert_eq(ranged.token_to_id("new"), Some(0))
+  @test.assert_eq(
+    @tokenizer.Tokenizer::from_pretrained_download_resume_metadata(
+      range_model,
+      revision="main",
+      cache_dir=Some(cache),
+    ),
+    None,
+  )
+}
+
+///|
+fn string_prefix(s : String, stop : Int) -> String {
+  let chars = s.to_array()
+  let end = if stop < 0 {
+    0
+  } else if stop > chars.length() {
+    chars.length()
+  } else {
+    stop
+  }
+  let sb = StringBuilder::new()
+  for i in 0..<end {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
+}
+
+///|
+fn string_suffix(s : String, start : Int) -> String {
+  let chars = s.to_array()
+  let begin = if start < 0 {
+    0
+  } else if start > chars.length() {
+    chars.length()
+  } else {
+    start
+  }
+  let sb = StringBuilder::new()
+  for i in begin..<chars.length() {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
 }
 
 ///|
