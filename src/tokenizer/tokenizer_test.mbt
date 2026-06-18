@@ -97,6 +97,75 @@ test "get_vocab can include added tokens" {
 }
 
 ///|
+test "Tokenizer exposes Python property-style component and config aliases" {
+  let json =
+    #|{"version":"1.0",
+    #| "normalizer":{"type":"Lowercase"},
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "added_tokens":[{"id":3,"content":"<extra>","special":true}],
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"[PAD]":1,"[UNK]":2,"<extra>":3},"unk_token":"[UNK]"},
+    #| "decoder":{"type":"WordPiece","prefix":"##","cleanup":false}}
+  let tok = Tokenizer::from_str(json)
+    .enable_truncation(5, stride=2, strategy=OnlyFirst, direction=Left)
+    .enable_padding(
+      length=Some(8),
+      direction=Left,
+      pad_id=1,
+      pad_type_id=7,
+      pad_token="[PAD]",
+      pad_to_multiple_of=Some(4),
+    )
+    .enable_encode_special_tokens()
+  guard tok.normalizer() is Some(_) else { abort("missing normalizer alias") }
+  guard tok.get_normalizer() is Some(_) else {
+    abort("missing normalizer getter")
+  }
+  guard tok.pre_tokenizer() is Some(_) else {
+    abort("missing pre-tokenizer alias")
+  }
+  guard tok.get_pre_tokenizer() is Some(_) else {
+    abort("missing pre-tokenizer getter")
+  }
+  @test.assert_eq(tok.model().get_vocab().get("hello"), Some(0))
+  match tok.post_processor() {
+    Some(_) => abort("unexpected post-processor alias")
+    None => ()
+  }
+  match tok.get_post_processor() {
+    Some(_) => abort("unexpected post-processor getter")
+    None => ()
+  }
+  guard tok.decoder() is Some(_) else { abort("missing decoder alias") }
+  guard tok.get_decoder() is Some(_) else { abort("missing decoder getter") }
+  @test.assert_eq(tok.encode_special_tokens(), true)
+  @test.assert_eq(tok.added_tokens_decoder().get(3).unwrap().content, "<extra>")
+  let trunc = tok.truncation().unwrap()
+  @test.assert_eq(trunc.max_length(), 5)
+  @test.assert_eq(trunc.get_max_length(), 5)
+  @test.assert_eq(trunc.stride(), 2)
+  @test.assert_eq(trunc.get_stride(), 2)
+  @test.assert_eq(trunc.strategy(), OnlyFirst)
+  @test.assert_eq(trunc.get_strategy(), OnlyFirst)
+  @test.assert_eq(trunc.direction(), Left)
+  @test.assert_eq(trunc.get_direction(), Left)
+  let padding = tok.padding().unwrap()
+  @test.assert_eq(padding.strategy(), Fixed(8))
+  @test.assert_eq(padding.get_strategy(), Fixed(8))
+  @test.assert_eq(padding.direction(), Left)
+  @test.assert_eq(padding.get_direction(), Left)
+  @test.assert_eq(padding.pad_id(), 1)
+  @test.assert_eq(padding.get_pad_id(), 1)
+  @test.assert_eq(padding.pad_type_id(), 7)
+  @test.assert_eq(padding.get_pad_type_id(), 7)
+  @test.assert_eq(padding.pad_token(), "[PAD]")
+  @test.assert_eq(padding.get_pad_token(), "[PAD]")
+  @test.assert_eq(padding.pad_to_multiple_of(), Some(4))
+  @test.assert_eq(padding.get_pad_to_multiple_of(), Some(4))
+  @test.assert_eq(tok.no_truncation().truncation(), None)
+  @test.assert_eq(tok.no_padding().padding(), None)
+}
+
+///|
 test "Encoding exposes HF-style getter accessors" {
   let json =
     #|{"version":"1.0",

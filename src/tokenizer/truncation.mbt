@@ -52,6 +52,54 @@ pub fn TruncationParams::with_strategy(
   { ..self, strategy, }
 }
 
+///|
+pub fn TruncationParams::get_max_length(self : TruncationParams) -> Int {
+  self.max_length
+}
+
+///|
+pub fn TruncationParams::max_length(self : TruncationParams) -> Int {
+  self.max_length
+}
+
+///|
+pub fn TruncationParams::get_stride(self : TruncationParams) -> Int {
+  self.stride
+}
+
+///|
+pub fn TruncationParams::stride(self : TruncationParams) -> Int {
+  self.stride
+}
+
+///|
+pub fn TruncationParams::get_direction(
+  self : TruncationParams,
+) -> TruncationDirection {
+  self.direction
+}
+
+///|
+pub fn TruncationParams::direction(
+  self : TruncationParams,
+) -> TruncationDirection {
+  self.direction
+}
+
+///|
+pub fn TruncationParams::get_strategy(
+  self : TruncationParams,
+) -> TruncationStrategy {
+  self.strategy
+}
+
+///|
+pub fn TruncationParams::strategy(
+  self : TruncationParams,
+) -> TruncationStrategy {
+  self.strategy
+}
+
 // Slice an encoding's parallel arrays to [start, stop).
 
 ///|

@@ -663,6 +663,12 @@ pub fn Tokenizer::get_normalizer(self : Tokenizer) -> @normalizer.Normalizer? {
 }
 
 ///|
+/// Python/property-style alias for `get_normalizer`.
+pub fn Tokenizer::normalizer(self : Tokenizer) -> @normalizer.Normalizer? {
+  self.get_normalizer()
+}
+
+///|
 /// Return the current pre-tokenizer component, if any.
 pub fn Tokenizer::get_pre_tokenizer(
   self : Tokenizer,
@@ -671,9 +677,23 @@ pub fn Tokenizer::get_pre_tokenizer(
 }
 
 ///|
+/// Python/property-style alias for `get_pre_tokenizer`.
+pub fn Tokenizer::pre_tokenizer(
+  self : Tokenizer,
+) -> @pretokenizer.PreTokenizer? {
+  self.get_pre_tokenizer()
+}
+
+///|
 /// Return the current model component.
 pub fn Tokenizer::get_model(self : Tokenizer) -> @model.Model {
   self.model
+}
+
+///|
+/// Python/property-style alias for `get_model`.
+pub fn Tokenizer::model(self : Tokenizer) -> @model.Model {
+  self.get_model()
 }
 
 ///|
@@ -709,9 +729,21 @@ pub fn Tokenizer::get_post_processor(
 }
 
 ///|
+/// Python/property-style alias for `get_post_processor`.
+pub fn Tokenizer::post_processor(self : Tokenizer) -> @processor.PostProcessor? {
+  self.get_post_processor()
+}
+
+///|
 /// Return the current decoder component, if any.
 pub fn Tokenizer::get_decoder(self : Tokenizer) -> @decoder.Decoder? {
   self.decoder
+}
+
+///|
+/// Python/property-style alias for `get_decoder`.
+pub fn Tokenizer::decoder(self : Tokenizer) -> @decoder.Decoder? {
+  self.get_decoder()
 }
 
 ///|
@@ -721,9 +753,21 @@ pub fn Tokenizer::get_truncation(self : Tokenizer) -> TruncationParams? {
 }
 
 ///|
+/// Python/property-style alias for `get_truncation`.
+pub fn Tokenizer::truncation(self : Tokenizer) -> TruncationParams? {
+  self.get_truncation()
+}
+
+///|
 /// Return the current padding configuration, if any.
 pub fn Tokenizer::get_padding(self : Tokenizer) -> PaddingParams? {
   self.padding
+}
+
+///|
+/// Python/property-style alias for `get_padding`.
+pub fn Tokenizer::padding(self : Tokenizer) -> PaddingParams? {
+  self.get_padding()
 }
 
 ///|
@@ -759,11 +803,25 @@ pub fn Tokenizer::get_encode_special_tokens(self : Tokenizer) -> Bool {
 }
 
 ///|
+/// Python/property-style alias for `get_encode_special_tokens`.
+pub fn Tokenizer::encode_special_tokens(self : Tokenizer) -> Bool {
+  self.get_encode_special_tokens()
+}
+
+///|
 /// Return `id -> AddedToken` for all added/special tokens.
 pub fn Tokenizer::get_added_tokens_decoder(
   self : Tokenizer,
 ) -> Map[Int, AddedToken] {
   self.added_vocabulary.get_added_tokens_decoder()
+}
+
+///|
+/// Python/property-style alias for `get_added_tokens_decoder`.
+pub fn Tokenizer::added_tokens_decoder(
+  self : Tokenizer,
+) -> Map[Int, AddedToken] {
+  self.get_added_tokens_decoder()
 }
 
 ///|

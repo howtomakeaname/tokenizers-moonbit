@@ -85,6 +85,66 @@ pub fn PaddingParams::with_pad_to_multiple_of(
 }
 
 ///|
+pub fn PaddingParams::get_strategy(self : PaddingParams) -> PaddingStrategy {
+  self.strategy
+}
+
+///|
+pub fn PaddingParams::strategy(self : PaddingParams) -> PaddingStrategy {
+  self.strategy
+}
+
+///|
+pub fn PaddingParams::get_direction(self : PaddingParams) -> PaddingDirection {
+  self.direction
+}
+
+///|
+pub fn PaddingParams::direction(self : PaddingParams) -> PaddingDirection {
+  self.direction
+}
+
+///|
+pub fn PaddingParams::get_pad_id(self : PaddingParams) -> Int {
+  self.pad_id
+}
+
+///|
+pub fn PaddingParams::pad_id(self : PaddingParams) -> Int {
+  self.pad_id
+}
+
+///|
+pub fn PaddingParams::get_pad_type_id(self : PaddingParams) -> Int {
+  self.pad_type_id
+}
+
+///|
+pub fn PaddingParams::pad_type_id(self : PaddingParams) -> Int {
+  self.pad_type_id
+}
+
+///|
+pub fn PaddingParams::get_pad_token(self : PaddingParams) -> String {
+  self.pad_token
+}
+
+///|
+pub fn PaddingParams::pad_token(self : PaddingParams) -> String {
+  self.pad_token
+}
+
+///|
+pub fn PaddingParams::get_pad_to_multiple_of(self : PaddingParams) -> Int? {
+  self.pad_to_multiple_of
+}
+
+///|
+pub fn PaddingParams::pad_to_multiple_of(self : PaddingParams) -> Int? {
+  self.pad_to_multiple_of
+}
+
+///|
 fn round_up(n : Int, multiple : Int) -> Int {
   if multiple <= 0 || n % multiple == 0 {
     n
