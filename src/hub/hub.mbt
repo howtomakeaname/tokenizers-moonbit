@@ -60,6 +60,7 @@ pub struct HubRequestPlan {
   url : String
   headers : Map[String, String]
   cache_paths : @tokenizer.PretrainedCachePaths?
+  cache_metadata : @tokenizer.PretrainedCacheMetadata?
   resume_metadata : @tokenizer.PretrainedDownloadResumeMetadata?
   range_start : Int?
   conditional_etag : String?
@@ -122,6 +123,16 @@ pub struct HubResponseDecision {
 } derive(Debug, Eq)
 
 ///|
+/// Result of a real HTTP HEAD preflight. `decision` tells callers whether the
+/// existing cache is fresh enough to reuse or whether a GET body should still be
+/// downloaded and applied through `apply_tokenizer_json_download_result`.
+pub struct HubHeadResult {
+  metadata : HubResponseMetadata
+  decision : HubResponseDecision
+  final_url : String
+} derive(Debug, Eq)
+
+///|
 pub fn plan_tokenizer_json_request(
   model_id : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
@@ -173,9 +184,27 @@ pub fn plan_tokenizer_json_request(
     url,
     headers,
     cache_paths: paths,
+    cache_metadata: cached,
     resume_metadata: resume_meta,
     range_start,
     conditional_etag,
+  }
+}
+
+///|
+/// Build a HEAD preflight request plan. It shares the same URL/auth/conditional
+/// ETag setup as GET, but deliberately strips Range/If-Range because HEAD is
+/// used to validate cache freshness rather than continue a partial body.
+pub fn head_tokenizer_json_request(
+  model_id : String,
+  options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> HubRequestPlan {
+  let plan = plan_tokenizer_json_request(model_id, options~)
+  {
+    ..plan,
+    headers: headers_without_range(plan.headers),
+    resume_metadata: None,
+    range_start: None,
   }
 }
 
@@ -287,6 +316,66 @@ pub fn decide_tokenizer_json_response(
 }
 
 ///|
+/// Decide how a HEAD preflight affects tokenizer cache freshness.
+///
+/// `304` reuses cache directly. A `200` HEAD also reuses cache when the server's
+/// resolved revision or ETag still matches the local metadata; otherwise callers
+/// should follow up with a GET to fetch the new body. Unsupported HEAD statuses
+/// are intentionally not fatal for higher-level callers: they may simply proceed
+/// to the normal GET path.
+pub fn decide_tokenizer_json_head_response(
+  plan : HubRequestPlan,
+  metadata : HubResponseMetadata,
+) -> HubResponseDecision {
+  let resolved_revision = metadata.resolved_revision
+  let etag = metadata.etag
+  if metadata.status == 304 {
+    return {
+      action: UseCachedTokenizer,
+      resolved_revision,
+      etag,
+      expected_size: metadata.content_length,
+      range_start: None,
+      message: "Hub HEAD 304: cached tokenizer.json is still fresh",
+    }
+  }
+  if metadata.status == 200 {
+    match plan.cache_metadata {
+      Some(cache_meta) =>
+        if cache_meta.cache_exists() &&
+          cache_matches_head_metadata(cache_meta, metadata) {
+          return {
+            action: UseCachedTokenizer,
+            resolved_revision,
+            etag,
+            expected_size: metadata.content_length,
+            range_start: None,
+            message: "Hub HEAD 200: cached tokenizer.json matches remote metadata",
+          }
+        }
+      None => ()
+    }
+    return {
+      action: ReplaceCachedTokenizer,
+      resolved_revision,
+      etag,
+      expected_size: metadata.content_length,
+      range_start: None,
+      message: "Hub HEAD 200: tokenizer.json should be downloaded",
+    }
+  }
+  {
+    action: RejectResponse,
+    resolved_revision,
+    etag,
+    expected_size: metadata.content_length,
+    range_start: None,
+    message: "Hub HEAD response cannot validate tokenizer cache: HTTP " +
+    metadata.status.to_string(),
+  }
+}
+
+///|
 pub fn HubResponseDecision::can_use_cache(self : HubResponseDecision) -> Bool {
   self.action == UseCachedTokenizer
 }
@@ -310,6 +399,28 @@ pub fn HubResponseDecision::should_retry_without_range(
   self : HubResponseDecision,
 ) -> Bool {
   self.action == RetryWithoutRange
+}
+
+///|
+fn cache_matches_head_metadata(
+  cache_meta : @tokenizer.PretrainedCacheMetadata,
+  metadata : HubResponseMetadata,
+) -> Bool {
+  match metadata.resolved_revision {
+    Some(rev) =>
+      if !rev.is_empty() && cache_meta.resolved_revision == rev {
+        return true
+      }
+    None => ()
+  }
+  match metadata.etag {
+    Some(etag) =>
+      if !etag.is_empty() && cache_meta.etag == Some(etag) {
+        return true
+      }
+    None => ()
+  }
+  false
 }
 
 ///|
@@ -431,7 +542,20 @@ pub async fn from_pretrained(
   catch {
     _ => ()
   } noraise {
-    tok => return tok
+    tok => {
+      if options.local_files_only {
+        return tok
+      }
+      try head_tokenizer_json(model_id, options~) catch {
+        _ => return tok
+      } noraise {
+        result =>
+          if result.decision.can_use_cache() {
+            refresh_ref_from_decision(model_id, options, result.decision)
+            return tok
+          }
+      }
+    }
   }
   if options.local_files_only {
     raise @types.ParseError(
@@ -538,6 +662,17 @@ pub async fn download_tokenizer_json(
 }
 
 ///|
+/// Perform a real HTTP HEAD preflight for `tokenizer.json`, following redirects
+/// and returning cache-freshness metadata without reading a response body.
+pub async fn head_tokenizer_json(
+  model_id : String,
+  options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> HubHeadResult raise @types.TokenizerError {
+  let plan = head_tokenizer_json_request(model_id, options~)
+  async_head_with_redirects(plan, max_redirects=options.max_redirects)
+}
+
+///|
 pub fn tokenizer_json_url(
   endpoint : String,
   model_id : String,
@@ -609,6 +744,55 @@ async fn async_download_with_redirects(
     return apply_tokenizer_json_download_result(plan, content, meta, current)
   }
   raise @types.ParseError("unreachable Hub download loop")
+}
+
+///|
+async fn async_head_with_redirects(
+  plan : HubRequestPlan,
+  max_redirects~ : Int,
+) -> HubHeadResult raise @types.TokenizerError {
+  let mut current = plan.url
+  let mut remaining = max_redirects
+  let headers = headers_without_range(plan.headers)
+  while true {
+    let (client_origin, path) = split_url_for_client(current)
+    let client = @http.Client(client_origin, headers~) catch {
+      _ => raise @types.ParseError("Hub HEAD failed: \{current}")
+    }
+    let response = client..request(@http.Head, path).end_request() catch {
+        _ => {
+          client.close()
+          raise @types.ParseError("Hub HEAD failed: \{current}")
+        }
+      }
+    client.close()
+    if is_redirect(response.code) {
+      if remaining <= 0 {
+        raise @types.ParseError("Hub HEAD exceeded redirect limit: \{plan.url}")
+      }
+      match header(response.headers, "location") {
+        Some(next) => {
+          current = resolve_redirect(current, next)
+          remaining = remaining - 1
+          continue
+        }
+        None =>
+          raise @types.ParseError(
+            "Hub HEAD redirect missing Location header: \{current}",
+          )
+      }
+    }
+    let metadata = HubResponseMetadata::from_headers(
+      response.code,
+      response.headers,
+    )
+    return {
+      metadata,
+      decision: decide_tokenizer_json_head_response(plan, metadata),
+      final_url: current,
+    }
+  }
+  raise @types.ParseError("unreachable Hub HEAD loop")
 }
 
 ///|
@@ -730,6 +914,31 @@ fn origin(url : String) -> String {
     }
   }
   url
+}
+
+///|
+fn split_url_for_client(
+  url : String,
+) -> (String, String) raise @types.TokenizerError {
+  if !(url.has_prefix("http://") || url.has_prefix("https://")) {
+    raise @types.ParseError(
+      "Hub URL must start with http:// or https://: \{url}",
+    )
+  }
+  let chars = url.to_array()
+  let mut slash_count = 0
+  for i, c in chars {
+    if c == '/' {
+      slash_count = slash_count + 1
+      if slash_count == 3 {
+        return (
+          string_slice(chars, 0, i),
+          string_slice(chars, i, chars.length()),
+        )
+      }
+    }
+  }
+  (url, "/")
 }
 
 ///|

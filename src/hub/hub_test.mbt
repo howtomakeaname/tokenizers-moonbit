@@ -149,6 +149,77 @@ test "Hub response decision handles cache and range statuses" {
 }
 
 ///|
+test "Hub HEAD plan and decision validate cached metadata" {
+  let json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"head":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let cache = "_build/hub_head_decision_cache"
+  @tokenizer.Tokenizer::from_pretrained_downloaded(
+    "org/head-decision-tokenizer",
+    json,
+    revision="main",
+    resolved_revision=Some("headrev"),
+    cache_dir=Some(cache),
+    etag=Some("etag-head"),
+  )
+  |> ignore
+  @tokenizer.Tokenizer::write_pretrained_download_resume_metadata(
+    "org/head-decision-tokenizer",
+    revision="main",
+    cache_dir=Some(cache),
+    etag=Some("etag-partial"),
+    expected_size=Some(1024),
+    downloaded_size=64,
+  )
+  |> ignore
+  let head_plan = head_tokenizer_json_request(
+    "org/head-decision-tokenizer",
+    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+  )
+  @test.assert_eq(head_plan.headers.get("If-None-Match"), Some("etag-head"))
+  @test.assert_eq(head_plan.headers.get("Range"), None)
+  @test.assert_eq(head_plan.headers.get("If-Range"), None)
+  @test.assert_eq(head_plan.range_start, None)
+  @test.assert_eq(head_plan.resume_metadata, None)
+  let not_modified = decide_tokenizer_json_head_response(
+    head_plan,
+    HubResponseMetadata::new(
+      304,
+      resolved_revision=Some("headrev"),
+      etag=Some("etag-head"),
+    ),
+  )
+  @test.assert_eq(not_modified.can_use_cache(), true)
+  let same_etag = decide_tokenizer_json_head_response(
+    head_plan,
+    HubResponseMetadata::new(
+      200,
+      resolved_revision=Some("headrev"),
+      etag=Some("etag-head"),
+      content_length=Some(json.length()),
+      accept_ranges=true,
+    ),
+  )
+  @test.assert_eq(same_etag.can_use_cache(), true)
+  let changed = decide_tokenizer_json_head_response(
+    head_plan,
+    HubResponseMetadata::new(
+      200,
+      resolved_revision=Some("newrev"),
+      etag=Some("etag-new"),
+      content_length=Some(json.length() + 1),
+      accept_ranges=true,
+    ),
+  )
+  @test.assert_eq(changed.should_write_full_body(), true)
+  let unsupported = decide_tokenizer_json_head_response(
+    head_plan,
+    HubResponseMetadata::new(405),
+  )
+  @test.assert_eq(unsupported.can_use_cache(), false)
+  @test.assert_eq(unsupported.should_write_full_body(), false)
+}
+
+///|
 test "apply Hub response reuses cache replaces cache and appends ranges" {
   let old_json =
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"old":0,"[UNK]":1},"unk_token":"[UNK]"}}
