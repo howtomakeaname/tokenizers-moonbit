@@ -102,7 +102,7 @@ test "Tokenizer exposes Python property-style component and config aliases" {
     #|{"version":"1.0",
     #| "normalizer":{"type":"Lowercase"},
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
-    #| "added_tokens":[{"id":3,"content":"<extra>","special":true}],
+    #| "added_tokens":[{"id":3,"content":"<extra>","special":true},{"id":4,"content":"<plain>","special":false}],
     #| "model":{"type":"WordLevel","vocab":{"hello":0,"[PAD]":1,"[UNK]":2,"<extra>":3},"unk_token":"[UNK]"},
     #| "decoder":{"type":"WordPiece","prefix":"##","cleanup":false}}
   let tok = Tokenizer::from_str(json)
@@ -139,6 +139,28 @@ test "Tokenizer exposes Python property-style component and config aliases" {
   guard tok.get_decoder() is Some(_) else { abort("missing decoder getter") }
   @test.assert_eq(tok.encode_special_tokens(), true)
   @test.assert_eq(tok.added_tokens_decoder().get(3).unwrap().content, "<extra>")
+  @test.assert_eq(tok.get_added_tokens().map(t => t.content), [
+    "<extra>", "<plain>",
+  ])
+  @test.assert_eq(tok.added_tokens().map(t => t.content), ["<extra>", "<plain>"])
+  @test.assert_eq(tok.get_added_tokens_count(), 2)
+  @test.assert_eq(tok.added_tokens_count(special_only=true), 1)
+  @test.assert_eq(tok.all_special_tokens(), ["<extra>"])
+  @test.assert_eq(tok.all_special_ids(), [3])
+  @test.assert_eq(tok.is_special_token("<extra>"), true)
+  @test.assert_eq(tok.is_special_token("<plain>"), false)
+  @test.assert_eq(tok.convert_token_to_id("hello"), Some(0))
+  @test.assert_eq(tok.convert_id_to_token(3), Some("<extra>"))
+  @test.assert_eq(tok.convert_tokens_to_ids(["hello", "<extra>", "missing"]), [
+    Some(0),
+    Some(3),
+    None,
+  ])
+  @test.assert_eq(tok.convert_ids_to_tokens([0, 3, 99]), [
+    Some("hello"),
+    Some("<extra>"),
+    None,
+  ])
   let trunc = tok.truncation().unwrap()
   @test.assert_eq(trunc.max_length(), 5)
   @test.assert_eq(trunc.get_max_length(), 5)

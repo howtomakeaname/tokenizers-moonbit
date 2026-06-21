@@ -874,6 +874,74 @@ pub fn Tokenizer::added_tokens_decoder(
 }
 
 ///|
+/// Return added tokens ordered by id. This mirrors Python binding-friendly
+/// access to the added-token table without exposing map iteration order.
+pub fn Tokenizer::get_added_tokens(self : Tokenizer) -> Array[AddedToken] {
+  let pairs = self.get_added_tokens_decoder().to_array()
+  pairs.sort_by(fn(a, b) { a.0.compare(b.0) })
+  pairs.map(p => p.1)
+}
+
+///|
+/// Python/property-style alias for `get_added_tokens`.
+pub fn Tokenizer::added_tokens(self : Tokenizer) -> Array[AddedToken] {
+  self.get_added_tokens()
+}
+
+///|
+/// Number of added tokens currently registered. When `special_only=true`, count
+/// only special added tokens.
+pub fn Tokenizer::get_added_tokens_count(
+  self : Tokenizer,
+  special_only? : Bool = false,
+) -> Int {
+  let mut count = 0
+  for kv in self.get_added_tokens_decoder().to_array() {
+    if !special_only || kv.1.special {
+      count = count + 1
+    }
+  }
+  count
+}
+
+///|
+/// Python/property-style alias for `get_added_tokens_count`.
+pub fn Tokenizer::added_tokens_count(
+  self : Tokenizer,
+  special_only? : Bool = false,
+) -> Int {
+  self.get_added_tokens_count(special_only~)
+}
+
+///|
+/// Return all special added token strings ordered by id.
+pub fn Tokenizer::all_special_tokens(self : Tokenizer) -> Array[String] {
+  let pairs = self.get_added_tokens_decoder().to_array()
+  pairs.sort_by(fn(a, b) { a.0.compare(b.0) })
+  let out : Array[String] = []
+  for kv in pairs {
+    if kv.1.special {
+      out.push(kv.1.content)
+    }
+  }
+  out
+}
+
+///|
+/// Return all special added token ids ordered by id.
+pub fn Tokenizer::all_special_ids(self : Tokenizer) -> Array[Int] {
+  let pairs = self.get_added_tokens_decoder().to_array()
+  pairs.sort_by(fn(a, b) { a.0.compare(b.0) })
+  let out : Array[Int] = []
+  for kv in pairs {
+    if kv.1.special {
+      out.push(kv.0)
+    }
+  }
+  out
+}
+
+///|
 /// Check whether a token string is registered as a special added token.
 pub fn Tokenizer::is_special_token(self : Tokenizer, token : String) -> Bool {
   self.added_vocabulary.is_special_token(token)
@@ -1348,4 +1416,36 @@ pub fn Tokenizer::id_to_token(self : Tokenizer, id : Int) -> String? {
     Some(t) => Some(t)
     None => self.model.id_to_token(id)
   }
+}
+
+///|
+/// Python binding-friendly alias for `token_to_id` on a single token.
+pub fn Tokenizer::convert_token_to_id(self : Tokenizer, token : String) -> Int? {
+  self.token_to_id(token)
+}
+
+///|
+/// Python binding-friendly alias for `id_to_token` on a single id.
+pub fn Tokenizer::convert_id_to_token(self : Tokenizer, id : Int) -> String? {
+  self.id_to_token(id)
+}
+
+///|
+/// Python binding-friendly batch token-to-id conversion. Unknown tokens are kept
+/// as `None`, matching the optional return shape of `token_to_id`.
+pub fn Tokenizer::convert_tokens_to_ids(
+  self : Tokenizer,
+  tokens : Array[String],
+) -> Array[Int?] {
+  tokens.map(tok => self.token_to_id(tok))
+}
+
+///|
+/// Python binding-friendly batch id-to-token conversion. Unknown ids are kept as
+/// `None`, matching the optional return shape of `id_to_token`.
+pub fn Tokenizer::convert_ids_to_tokens(
+  self : Tokenizer,
+  ids : Array[Int],
+) -> Array[String?] {
+  ids.map(id => self.id_to_token(id))
 }
