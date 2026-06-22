@@ -487,22 +487,23 @@ pub fn Tokenizer::encode_fast(
 }
 
 ///|
-/// Encode with explicit custom component hooks. Supplied hooks override the
-/// tokenizer's typed normalizer/pre-tokenizer for this call only; model,
+/// Encode with explicit custom component hooks. Supplied hooks are overlaid on
+/// top of any hooks persisted with `with_component_hooks`; present callbacks
+/// override the tokenizer's typed normalizer/pre-tokenizer for this call. Model,
 /// added-vocabulary extraction, truncation, post-processing and padding remain
-/// the tokenizer's normal pipeline. This gives Python/FFI layers a safe migration
-/// path for dynamic custom components without mutating tokenizer state.
+/// the tokenizer's normal pipeline.
 pub fn Tokenizer::encode_with_hooks(
   self : Tokenizer,
   text : String,
   hooks : TokenizerComponentHooks,
   add_special_tokens? : Bool = true,
 ) -> @types.Encoding {
+  let effective_hooks = self.component_hooks.overlay(hooks)
   self.finalize_padding(
     self.process_single_raw(
       self.encode_raw_with_hooks_impl(
         text,
-        hooks,
+        effective_hooks,
         keep_special=true,
         track_offsets=true,
       ),
@@ -519,11 +520,12 @@ pub fn Tokenizer::encode_with_hooks_fast(
   hooks : TokenizerComponentHooks,
   add_special_tokens? : Bool = true,
 ) -> @types.Encoding {
+  let effective_hooks = self.component_hooks.overlay(hooks)
   self.finalize_padding(
     self.process_single_raw(
       self.encode_raw_with_hooks_impl(
         text,
-        hooks,
+        effective_hooks,
         keep_special=true,
         track_offsets=false,
       ),
@@ -1453,7 +1455,7 @@ fn Tokenizer::encode_raw_impl(
 ) -> @types.Encoding {
   self.encode_raw_with_hooks_impl(
     text,
-    TokenizerComponentHooks::empty(),
+    self.component_hooks,
     keep_special~,
     track_offsets~,
   )

@@ -214,8 +214,49 @@ test "Tokenizer component hooks override normalize pretokenize and decode" {
 }
 
 ///|
+test "Tokenizer persists component hooks on normal encode and decode paths" {
+  let json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let hooks = TokenizerComponentHooks::new(
+    normalize=Some(hook_lowercase),
+    pre_tokenize=Some(hook_comma_pre_tokenize),
+    decode=Some(hook_pipe_decode),
+  )
+  let tok = Tokenizer::from_str(json).with_component_hooks(hooks)
+  let enc = tok.encode("HELLO,MOON", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["hello", "moon"])
+  @test.assert_eq(enc.ids, [0, 1])
+  @test.assert_eq(enc.offsets, [(0, 5), (6, 10)])
+  @test.assert_eq(
+    tok.encode_fast("HELLO,MOON", add_special_tokens=false).offsets,
+    [(0, 0), (0, 0)],
+  )
+  @test.assert_eq(tok.decode([0, 1]), "hello|moon")
+  let override_hooks = TokenizerComponentHooks::new(
+    normalize=Some(hook_force_moon),
+  )
+  @test.assert_eq(
+    tok.encode_with_hooks(
+      "HELLO,MOON",
+      override_hooks,
+      add_special_tokens=false,
+    ).ids,
+    [1],
+  )
+  let cleared = tok.clear_component_hooks()
+  @test.assert_eq(cleared.encode("HELLO,MOON", add_special_tokens=false).ids, [
+    2,
+  ])
+}
+
+///|
 fn hook_lowercase(text : String) -> String {
   text.to_lower()
+}
+
+///|
+fn hook_force_moon(_text : String) -> String {
+  "moon"
 }
 
 ///|

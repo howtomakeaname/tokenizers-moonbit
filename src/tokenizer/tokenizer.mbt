@@ -12,6 +12,7 @@ pub struct Tokenizer {
   model : @model.Model
   post_processor : @processor.PostProcessor?
   decoder : @decoder.Decoder?
+  component_hooks : TokenizerComponentHooks
   added_vocabulary : AddedVocabulary
   mut truncation : TruncationParams?
   mut padding : PaddingParams?
@@ -32,8 +33,10 @@ pub struct TokenizerState {
 ///|
 /// Lightweight custom component hooks for migration layers that cannot yet map a
 /// dynamic HF Python component to a typed MoonBit Normalizer/PreTokenizer/Decoder.
-/// Hooks are applied only by the explicit `*_with_hooks` APIs, keeping the stored
-/// tokenizer JSON and normal deterministic encode/decode paths unchanged.
+/// Hooks can be supplied per call through explicit `*_with_hooks` APIs or
+/// attached to a tokenizer with `with_component_hooks` for migration layers that
+/// need component-like runtime callbacks. Callback hooks are intentionally not
+/// serialized into tokenizer JSON/state.
 pub struct TokenizerComponentHooks {
   normalize : ((String) -> String)?
   pre_tokenize : ((String, Int) -> Array[@types.Split])?
@@ -76,6 +79,29 @@ pub fn TokenizerComponentHooks::with_decode(
   decode : ((Array[String]) -> String)?,
 ) -> TokenizerComponentHooks {
   { ..self, decode, }
+}
+
+///|
+/// Merge two hook sets. Hooks present in `overrides` take precedence while
+/// missing hooks fall back to `self`.
+fn TokenizerComponentHooks::overlay(
+  self : TokenizerComponentHooks,
+  overrides : TokenizerComponentHooks,
+) -> TokenizerComponentHooks {
+  {
+    normalize: match overrides.normalize {
+      Some(f) => Some(f)
+      None => self.normalize
+    },
+    pre_tokenize: match overrides.pre_tokenize {
+      Some(f) => Some(f)
+      None => self.pre_tokenize
+    },
+    decode: match overrides.decode {
+      Some(f) => Some(f)
+      None => self.decode
+    },
+  }
 }
 
 ///|
@@ -421,6 +447,7 @@ pub fn Tokenizer::new(model : @model.Model) -> Tokenizer {
     model,
     post_processor: None,
     decoder: None,
+    component_hooks: TokenizerComponentHooks::empty(),
     added_vocabulary: AddedVocabulary::new([]),
     truncation: None,
     padding: None,
@@ -468,6 +495,7 @@ pub fn Tokenizer::from_str(
     model,
     post_processor,
     decoder,
+    component_hooks: TokenizerComponentHooks::empty(),
     added_vocabulary,
     truncation,
     padding,
@@ -695,6 +723,24 @@ pub fn Tokenizer::with_decoder(
 }
 
 ///|
+/// Attach runtime component hooks to the tokenizer. These hooks are applied by
+/// normal `encode`/`encode_fast`/`decode` paths as if they were lightweight
+/// components, but remain intentionally outside tokenizer JSON/state because
+/// callbacks are host-language values.
+pub fn Tokenizer::with_component_hooks(
+  self : Tokenizer,
+  hooks : TokenizerComponentHooks,
+) -> Tokenizer {
+  { ..self, component_hooks: hooks }
+}
+
+///|
+/// Remove all persisted runtime component hooks.
+pub fn Tokenizer::clear_component_hooks(self : Tokenizer) -> Tokenizer {
+  self.with_component_hooks(TokenizerComponentHooks::empty())
+}
+
+///|
 /// Enable/disable truncation (builder; mutates and returns self).
 pub fn Tokenizer::with_truncation(
   self : Tokenizer,
@@ -864,6 +910,20 @@ pub fn Tokenizer::get_decoder(self : Tokenizer) -> @decoder.Decoder? {
 /// Python/property-style alias for `get_decoder`.
 pub fn Tokenizer::decoder(self : Tokenizer) -> @decoder.Decoder? {
   self.get_decoder()
+}
+
+///|
+/// Return the runtime component hooks currently attached to this tokenizer.
+pub fn Tokenizer::get_component_hooks(
+  self : Tokenizer,
+) -> TokenizerComponentHooks {
+  self.component_hooks
+}
+
+///|
+/// Python/property-style alias for `get_component_hooks`.
+pub fn Tokenizer::component_hooks(self : Tokenizer) -> TokenizerComponentHooks {
+  self.get_component_hooks()
 }
 
 ///|

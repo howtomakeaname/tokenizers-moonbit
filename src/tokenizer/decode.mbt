@@ -21,23 +21,33 @@ pub fn Tokenizer::decode(
   ids : Array[Int],
   skip_special_tokens? : Bool = true,
 ) -> String {
-  self.decode_with_hooks(
-    ids,
-    TokenizerComponentHooks::empty(),
-    skip_special_tokens~,
-  )
+  self.decode_with_hooks_impl(ids, self.component_hooks, skip_special_tokens~)
 }
 
 ///|
-/// Decode with an explicit custom decoder hook. The hook receives token strings
-/// after id lookup and special-token filtering. If no decode hook is supplied,
-/// this delegates to the tokenizer's typed decoder or direct token concatenation,
-/// matching `decode` exactly.
+/// Decode with an explicit custom decoder hook overlaid on top of any persisted
+/// component hooks. The effective hook receives token strings after id lookup and
+/// special-token filtering. If no decode hook is supplied, this delegates to the
+/// tokenizer's typed decoder or direct token concatenation.
 pub fn Tokenizer::decode_with_hooks(
   self : Tokenizer,
   ids : Array[Int],
   hooks : TokenizerComponentHooks,
   skip_special_tokens? : Bool = true,
+) -> String {
+  self.decode_with_hooks_impl(
+    ids,
+    self.component_hooks.overlay(hooks),
+    skip_special_tokens~,
+  )
+}
+
+///|
+fn Tokenizer::decode_with_hooks_impl(
+  self : Tokenizer,
+  ids : Array[Int],
+  hooks : TokenizerComponentHooks,
+  skip_special_tokens~ : Bool,
 ) -> String {
   let tokens : Array[String] = []
   for id in ids {
