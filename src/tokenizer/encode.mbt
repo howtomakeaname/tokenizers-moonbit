@@ -91,6 +91,40 @@ pub fn Tokenizer::encode_input_fast(
 }
 
 ///|
+/// Python binding-friendly unified encode entry: pass one `TextInputSequence`
+/// plus an optional pair instead of constructing `EncodeInput` manually. This
+/// mirrors HF Python's `encode(sequence, pair=..., is_pretokenized=...)` shape in
+/// a typed MoonBit form.
+pub fn Tokenizer::encode_sequence_input(
+  self : Tokenizer,
+  sequence : TextInputSequence,
+  pair? : TextInputSequence? = None,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  match pair {
+    Some(second) =>
+      self.encode_input(PairInput(sequence, second), add_special_tokens~)
+    None => self.encode_input(SingleInput(sequence), add_special_tokens~)
+  }
+}
+
+///|
+/// Fast counterpart of `encode_sequence_input`; all offsets are zeroed while ids,
+/// tokens and other metadata match the non-fast path.
+pub fn Tokenizer::encode_sequence_input_fast(
+  self : Tokenizer,
+  sequence : TextInputSequence,
+  pair? : TextInputSequence? = None,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  match pair {
+    Some(second) =>
+      self.encode_input_fast(PairInput(sequence, second), add_special_tokens~)
+    None => self.encode_input_fast(SingleInput(sequence), add_special_tokens~)
+  }
+}
+
+///|
 /// Encode a batch of unified inputs with the same duplicate-cache and padding
 /// semantics as the explicit batch APIs.
 pub fn Tokenizer::encode_input_batch(
@@ -121,6 +155,17 @@ pub fn Tokenizer::encode_input_batch(
 }
 
 ///|
+/// Python/Transformers-style alias for `encode_input_batch` over typed
+/// `EncodeInput` values.
+pub fn Tokenizer::batch_encode_plus(
+  self : Tokenizer,
+  inputs : Array[EncodeInput],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_input_batch(inputs, add_special_tokens~)
+}
+
+///|
 pub fn Tokenizer::encode_input_batch_fast(
   self : Tokenizer,
   inputs : Array[EncodeInput],
@@ -146,6 +191,16 @@ pub fn Tokenizer::encode_input_batch_fast(
     Some(pp) => pad_batch(encs, pp)
     None => encs
   }
+}
+
+///|
+/// Fast counterpart of `batch_encode_plus`.
+pub fn Tokenizer::batch_encode_plus_fast(
+  self : Tokenizer,
+  inputs : Array[EncodeInput],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  self.encode_input_batch_fast(inputs, add_special_tokens~)
 }
 
 ///|

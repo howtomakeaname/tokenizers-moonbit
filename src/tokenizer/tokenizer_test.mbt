@@ -861,6 +861,28 @@ test "EncodeInput unified API dispatches raw pretokenized pair and fast batch" {
     .sequence_ids(),
     [None, Some(0), None, Some(1), Some(1), None],
   )
+  @test.assert_eq(
+    tok
+    .encode_sequence_input(
+      TextInputSequence::text("HELLO"),
+      pair=Some(TextInputSequence::pretokenized(["moon", "world"])),
+      add_special_tokens=true,
+    )
+    .sequence_ids(),
+    [None, Some(0), None, Some(1), Some(1), None],
+  )
+  assert_fast_encoding_matches(
+    tok.encode_sequence_input(
+      TextInputSequence::text("HELLO"),
+      pair=Some(TextInputSequence::pretokenized(["moon", "world"])),
+      add_special_tokens=true,
+    ),
+    tok.encode_sequence_input_fast(
+      TextInputSequence::text("HELLO"),
+      pair=Some(TextInputSequence::pretokenized(["moon", "world"])),
+      add_special_tokens=true,
+    ),
+  )
   let batch = [
     EncodeInput::single("HELLO moon"),
     EncodeInput::single_pretokenized(["world"]),
@@ -868,9 +890,13 @@ test "EncodeInput unified API dispatches raw pretokenized pair and fast batch" {
   ]
   let regular = tok.encode_input_batch(batch, add_special_tokens=true)
   let fast = tok.encode_input_batch_fast(batch, add_special_tokens=true)
+  let plus = tok.batch_encode_plus(batch, add_special_tokens=true)
+  let plus_fast = tok.batch_encode_plus_fast(batch, add_special_tokens=true)
   @test.assert_eq(regular.length(), 3)
   for i in 0..<regular.length() {
+    @test.assert_eq(plus[i].ids, regular[i].ids)
     assert_fast_encoding_matches(regular[i], fast[i])
+    assert_fast_encoding_matches(plus[i], plus_fast[i])
   }
 }
 
