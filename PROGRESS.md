@@ -27,7 +27,7 @@
 | R8 | 文档 + 迁移指南 | ✅ |
 | R9 | HF 无缝迁移缺口收敛（API / offsets / charsmap / save / pretrained） | ✅（Hub 下载已由可选 native/js `hub` 包承接）|
 | R10 | 架构治理与模块化（公共库 / 测试与基准分层 / HF 风格组件边界） | ✅（A0–A5 全部完成）|
-| R11 | HF tokenizers 全量兼容缺口收敛（低频 API / 高级训练 / 正则与并行） | 🚧 排期中（`encode_fast`、迁移序列化 API、缓存控制 API、BPE dropout、模型文件级保存、HF config alias、EncodeInput、Token/Regex/Encoding/Tokenizer state API、Tokenizer train pipeline MVP、高级 trainer knobs 第一批、Hub sidecar/metadata/离线校验/诊断 hint/ref/resume 元数据/条件请求计划/响应决策/HEAD 预检/流式落盘、batch parallel 兼容入口、NormalizedString/PreTokenizedString、async 兼容入口、regex literal 策略、错误分类 helper、Python binding alias 第六批已完成） |
+| R11 | HF tokenizers 全量兼容缺口收敛（低频 API / 高级训练 / 正则与并行） | 🚧 排期中（`encode_fast`、迁移序列化 API、缓存控制 API、BPE dropout、模型文件级保存、HF config alias、EncodeInput、Token/Regex/Encoding/Tokenizer state API、Tokenizer train pipeline MVP、高级 trainer knobs 第一批、Hub sidecar/metadata/离线校验/诊断 hint/ref/resume 元数据/条件请求计划/响应决策/HEAD 预检/流式落盘、batch parallel 兼容入口、NormalizedString/PreTokenizedString 低层 API 与 binding alias、async 兼容入口、regex literal 策略、错误分类 helper、Python binding alias 第六批已完成） |
 
 ## R11：对齐 HuggingFace tokenizers 的剩余缺口排期（2026-06-12 复评）
 
@@ -37,7 +37,7 @@
 
 | 优先级 | 缺口 | 当前状态 | 验收标准 | 建议排期 |
 |---|---|---|---|---|
-| P0 | `NormalizedString` / `PreTokenizedString` 低层 API 暴露 | ✅ 已完成 | 已提供 HF 同名概念的最小公共类型：原文/归一化文本、`len`/`is_empty`、normalize、replace、prepend、slice、map/filter、literal/Regex split、`get_splits`、pre-tokenizer 二次 split 与 `to_encoding`；先覆盖自定义 normalizer/pre-tokenizer 迁移场景，完整可变 offset hook 后续按需扩展 | 1 周 |
+| P0 | `NormalizedString` / `PreTokenizedString` 低层 API 暴露 | ✅ 已完成 | 已提供 HF 同名概念的最小公共类型：原文/归一化文本、`len`/`__len__`/`is_empty`、`get`/`normalized`/`to_string`、`get_original`/`original`、normalize、replace、prepend、slice、map/filter、literal/Regex split、`get_splits`/`splits`、pre-tokenizer 二次 split 与 `to_encoding`/`into_encoding`；覆盖自定义 normalizer/pre-tokenizer 与 Python binding 低层迁移场景，完整可变 offset hook 后续按需扩展 | 1 周 |
 | P0 | 完整通用 Regex 支持策略 | 🚧 部分完成 | 现有 deterministic regex family 保持 fast path；已补 regex=true 但实际是 literal/escaped-literal 的安全策略，`Regex::is_supported/find_matches/replace_all` 对复杂 pattern 显式返回 `None`，避免静默错配；后续继续评估 native/js 可用正则或生成 DFA，wasm 保持 Unsupported 或可插拔 | 1–2 周 |
 | P0 | BPE `dropout` encode 语义 | ✅ 已完成 | 已解析/序列化 `model.dropout`；`None/0` 继续走确定性 fast path 与 word cache，`>0` 禁用 word cache 并按 dropout 概率跳过可用 merge，`1.0` 覆盖全跳过边界；新增单测覆盖序列化、缓存禁用与确定性路径不退化 | 0.5–1 周 |
 | P1 | 训练 API 完整化：`Tokenizer.train` / `train_from_iterator` / 文件训练 | ✅ pipeline MVP 已完成 | 已新增 `Trainer::{wordlevel,wordpiece,bpe,unigram}` 配置与 `Tokenizer::train` / `train_from_iterator` / `train_from_files`；训练前应用 added-vocab extraction、normalizer、pre-tokenizer，训练完成后写回 model 并将已有 special added tokens 重新映射到新 model ids；已补 iterator 与文件训练单测。后续高级 trainer knobs 继续归入下一项 | 1–2 周 |

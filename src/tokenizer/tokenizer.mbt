@@ -99,13 +99,37 @@ pub fn NormalizedString::get_original(self : NormalizedString) -> String {
 }
 
 ///|
+/// Python/property-style alias for `get_original`.
+pub fn NormalizedString::original(self : NormalizedString) -> String {
+  self.get_original()
+}
+
+///|
 pub fn NormalizedString::get(self : NormalizedString) -> String {
   self.normalized
 }
 
 ///|
+/// Python/property-style alias for `get`.
+pub fn NormalizedString::normalized(self : NormalizedString) -> String {
+  self.get()
+}
+
+///|
+/// String-conversion alias useful for binding layers.
+pub fn NormalizedString::to_string(self : NormalizedString) -> String {
+  self.get()
+}
+
+///|
 pub fn NormalizedString::len(self : NormalizedString) -> Int {
   self.normalized.char_length()
+}
+
+///|
+/// Python `__len__`-style alias for `len`.
+pub fn NormalizedString::__len__(self : NormalizedString) -> Int {
+  self.len()
 }
 
 ///|
@@ -264,10 +288,47 @@ pub fn PreTokenizedString::from_splits(
 }
 
 ///|
+/// Return the original text used to initialize this pre-tokenized string.
+pub fn PreTokenizedString::get_original(self : PreTokenizedString) -> String {
+  self.original
+}
+
+///|
+/// Python/property-style alias for `get_original`.
+pub fn PreTokenizedString::original(self : PreTokenizedString) -> String {
+  self.get_original()
+}
+
+///|
+/// Number of current splits, matching Python `len(pretokenized)` binding needs.
+pub fn PreTokenizedString::len(self : PreTokenizedString) -> Int {
+  self.splits.length()
+}
+
+///|
+/// Python `__len__`-style alias for `len`.
+pub fn PreTokenizedString::__len__(self : PreTokenizedString) -> Int {
+  self.len()
+}
+
+///|
+pub fn PreTokenizedString::is_empty(self : PreTokenizedString) -> Bool {
+  self.splits.length() == 0
+}
+
+///|
 pub fn PreTokenizedString::get_splits(
   self : PreTokenizedString,
 ) -> Array[@types.Split] {
   self.splits.copy()
+}
+
+///|
+/// Python/property-style alias for `get_splits`.
+pub fn PreTokenizedString::splits(
+  self : PreTokenizedString,
+) -> Array[@types.Split] {
+  self.get_splits()
 }
 
 ///|
@@ -313,6 +374,16 @@ pub fn PreTokenizedString::to_encoding(
     }
   }
   @types.Encoding::from_tokens(toks, type_id~)
+}
+
+///|
+/// Python binding-friendly alias for `to_encoding`.
+pub fn PreTokenizedString::into_encoding(
+  self : PreTokenizedString,
+  model : @model.Model,
+  type_id? : Int = 0,
+) -> @types.Encoding {
+  self.to_encoding(model, type_id~)
 }
 
 ///|
