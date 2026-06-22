@@ -653,12 +653,171 @@ pub fn apply_tokenizer_json_download_result(
 }
 
 ///|
+/// Apply a streamed tokenizer.json response represented as ordered text chunks.
+///
+/// Successful 200/206 bodies are persisted through the HF-style
+/// `tokenizer.json.incomplete` sidecar while chunks arrive, updating resume
+/// metadata after each write. On success the combined content is returned and the
+/// temporary resume sidecar is cleared. This keeps the cache decision logic shared
+/// with the regular downloader while giving host transports a chunk-oriented entry
+/// point that does not need to buffer the full body before touching disk.
+pub fn apply_tokenizer_json_download_chunks(
+  model_id : String,
+  chunks : Array[String],
+  metadata : HubResponseMetadata,
+  final_url : String,
+  options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> HubDownloadResult raise @types.TokenizerError {
+  let plan = plan_tokenizer_json_request(model_id, options~)
+  let decision = decide_tokenizer_json_response(plan, metadata)
+  match decision.action {
+    UseCachedTokenizer =>
+      apply_tokenizer_json_download_result(plan, None, metadata, final_url)
+    ReplaceCachedTokenizer | AppendRangeToCachedTokenizer => {
+      let content = write_tokenizer_json_stream_chunks(
+        model_id, options, plan, decision, chunks,
+      )
+      {
+        content,
+        resolved_revision: decision.resolved_revision,
+        etag: decision.etag,
+        final_url,
+        status: metadata.status,
+      }
+    }
+    RetryWithoutRange | RejectResponse =>
+      raise @types.ParseError(decision.message)
+  }
+}
+
+///|
+fn write_tokenizer_json_stream_chunks(
+  model_id : String,
+  options : HubDownloadOptions,
+  plan : HubRequestPlan,
+  decision : HubResponseDecision,
+  chunks : Array[String],
+) -> String raise @types.TokenizerError {
+  if chunks.length() == 0 {
+    raise @types.ParseError(
+      "Hub streamed response body is required for cache action: " +
+      decision.message,
+    )
+  }
+  match decision.action {
+    ReplaceCachedTokenizer => {
+      let resume_meta = create_stream_resume_metadata(
+        model_id, options, decision,
+      )
+      write_stream_chunks_to_incomplete(
+        model_id,
+        options,
+        resume_meta.incomplete_path,
+        "",
+        chunks,
+        decision,
+      )
+    }
+    AppendRangeToCachedTokenizer => {
+      let resume_meta = match plan.resume_metadata {
+        Some(r) => r
+        None =>
+          raise @types.ParseError(
+            "Hub response 206 cannot stream without resume metadata",
+          )
+      }
+      let prefix = @fs.read_file_to_string(resume_meta.incomplete_path) catch {
+        _ =>
+          raise @types.ParseError(
+            "cannot read incomplete Hub tokenizer cache: \{resume_meta.incomplete_path}",
+          )
+      }
+      write_stream_chunks_to_incomplete(
+        model_id,
+        options,
+        resume_meta.incomplete_path,
+        prefix,
+        chunks,
+        decision,
+      )
+    }
+    _ => raise @types.ParseError(decision.message)
+  }
+}
+
+///|
+fn create_stream_resume_metadata(
+  model_id : String,
+  options : HubDownloadOptions,
+  decision : HubResponseDecision,
+) -> @tokenizer.PretrainedDownloadResumeMetadata raise @types.TokenizerError {
+  @tokenizer.Tokenizer::write_pretrained_download_resume_metadata(
+    model_id,
+    revision=options.revision,
+    cache_dir=options.cache_dir,
+    etag=decision.etag,
+    expected_size=decision.expected_size,
+    downloaded_size=0,
+  )
+}
+
+///|
+fn write_stream_chunks_to_incomplete(
+  model_id : String,
+  options : HubDownloadOptions,
+  incomplete_path : String,
+  prefix : String,
+  chunks : Array[String],
+  decision : HubResponseDecision,
+) -> String raise @types.TokenizerError {
+  let mut content = prefix
+  for chunk in chunks {
+    content = content + chunk
+    @fs.write_string_to_file(incomplete_path, content) catch {
+      _ =>
+        raise @types.ParseError(
+          "cannot write incomplete Hub tokenizer cache: \{incomplete_path}",
+        )
+    }
+    ignore(
+      @tokenizer.Tokenizer::write_pretrained_download_resume_metadata(
+        model_id,
+        revision=options.revision,
+        cache_dir=options.cache_dir,
+        etag=decision.etag,
+        expected_size=decision.expected_size,
+        downloaded_size=content.length(),
+      ) catch {
+        _ =>
+          raise @types.ParseError(
+            "cannot update Hub download resume metadata while streaming tokenizer.json",
+          )
+      },
+    )
+  }
+  ignore(
+    @tokenizer.Tokenizer::clear_pretrained_download_resume_metadata(
+      model_id,
+      revision=options.revision,
+      cache_dir=options.cache_dir,
+    ),
+  )
+  ignore(@fs.remove_file(incomplete_path) catch { _ => () })
+  content
+}
+
+///|
 pub async fn download_tokenizer_json(
   model_id : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
   let plan = plan_tokenizer_json_request(model_id, options~)
-  async_download_with_redirects(plan, max_redirects=options.max_redirects)
+  async_download_with_redirects(
+    model_id,
+    options,
+    plan,
+    max_redirects=options.max_redirects,
+  )
 }
 
 ///|
@@ -688,6 +847,8 @@ pub fn tokenizer_json_url(
 
 ///|
 async fn async_download_with_redirects(
+  model_id : String,
+  options : HubDownloadOptions,
   plan : HubRequestPlan,
   max_redirects~ : Int,
 ) -> HubDownloadResult raise @types.TokenizerError {
@@ -730,18 +891,24 @@ async fn async_download_with_redirects(
       continue
     }
     let content = if decision.can_use_cache() {
-      None
+      []
     } else {
-      Some(
+      [
         body.text() catch {
           _ =>
             raise @types.ParseError(
               "Hub response body is not valid UTF-8: \{current}",
             )
         },
-      )
+      ]
     }
-    return apply_tokenizer_json_download_result(plan, content, meta, current)
+    return apply_tokenizer_json_download_chunks(
+      model_id,
+      content,
+      meta,
+      current,
+      options~,
+    )
   }
   raise @types.ParseError("unreachable Hub download loop")
 }

@@ -379,6 +379,89 @@ test "Hub download result helper reuses cache and combines ranges" {
 }
 
 ///|
+test "Hub streamed chunk helper writes incomplete cache and clears resume" {
+  let full_json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"full":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let range_json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"range":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let cache = "_build/hub_stream_chunks_cache"
+  let full_model = "org/stream-full-tokenizer"
+  let opts = HubDownloadOptions::new(cache_dir=Some(cache))
+  let full_result = apply_tokenizer_json_download_chunks(
+    full_model,
+    [string_prefix(full_json, 35), string_suffix(full_json, 35)],
+    HubResponseMetadata::new(
+      200,
+      resolved_revision=Some("fullrev"),
+      etag=Some("etag-full"),
+      content_length=Some(full_json.length()),
+      accept_ranges=true,
+    ),
+    "https://hf.example/full-stream",
+    options=opts,
+  )
+  @test.assert_eq(full_result.content, full_json)
+  @test.assert_eq(full_result.status, 200)
+  @test.assert_eq(
+    @tokenizer.Tokenizer::from_pretrained_download_resume_metadata(
+      full_model,
+      revision="main",
+      cache_dir=Some(cache),
+    ),
+    None,
+  )
+  let full_paths = @tokenizer.Tokenizer::from_pretrained_cache_paths(
+    full_model,
+    revision="main",
+    cache_dir=Some(cache),
+  ).unwrap()
+  @test.assert_eq(
+    @fs.path_exists(full_paths.tokenizer_json_path + ".incomplete"),
+    false,
+  )
+
+  let range_model = "org/stream-range-tokenizer"
+  let split = 42
+  let prefix = string_prefix(range_json, split)
+  let suffix = string_suffix(range_json, split)
+  let resume_meta = @tokenizer.Tokenizer::write_pretrained_download_resume_metadata(
+    range_model,
+    revision="main",
+    cache_dir=Some(cache),
+    etag=Some("etag-range"),
+    expected_size=Some(range_json.length()),
+    downloaded_size=prefix.length(),
+  )
+  @fs.write_string_to_file(resume_meta.incomplete_path, prefix) catch {
+    _ => abort("cannot write incomplete tokenizer cache")
+  }
+  let range_result = apply_tokenizer_json_download_chunks(
+    range_model,
+    [string_prefix(suffix, 17), string_suffix(suffix, 17)],
+    HubResponseMetadata::new(
+      206,
+      resolved_revision=Some("rangerev"),
+      etag=Some("etag-range"),
+      content_length=Some(suffix.length()),
+      accept_ranges=true,
+    ),
+    "https://hf.example/range-stream",
+    options=opts,
+  )
+  @test.assert_eq(range_result.content, range_json)
+  @test.assert_eq(range_result.status, 206)
+  @test.assert_eq(
+    @tokenizer.Tokenizer::from_pretrained_download_resume_metadata(
+      range_model,
+      revision="main",
+      cache_dir=Some(cache),
+    ),
+    None,
+  )
+  @test.assert_eq(@fs.path_exists(resume_meta.incomplete_path), false)
+}
+
+///|
 fn string_prefix(s : String, stop : Int) -> String {
   let chars = s.to_array()
   let end = if stop < 0 {
