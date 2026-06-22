@@ -338,8 +338,11 @@ test "Tokenizer exposes Python pickle-style state roundtrip" {
 test "Token exposes tuple interop helpers" {
   let tok = @types.Token::new(7, "hello", offsets=(2, 7))
   @test.assert_eq(tok.get_id(), 7)
+  @test.assert_eq(tok.id(), 7)
   @test.assert_eq(tok.get_value(), "hello")
+  @test.assert_eq(tok.value(), "hello")
   @test.assert_eq(tok.get_offsets(), (2, 7))
+  @test.assert_eq(tok.offsets(), (2, 7))
   @test.assert_eq(tok.as_tuple(), (7, "hello", (2, 7)))
   let state = tok.__getstate__()
   @test.assert_eq(state.id, 7)
@@ -348,6 +351,32 @@ test "Token exposes tuple interop helpers" {
     @types.Token::from_tuple((8, "moon", (0, 4))).as_tuple(),
     (8, "moon", (0, 4)),
   )
+}
+
+///|
+test "AddedToken exposes binding property aliases" {
+  let tok = AddedToken::new("<tag>")
+    .with_single_word(true)
+    .with_lstrip(true)
+    .with_rstrip(true)
+    .with_normalized(false)
+    .with_special(true)
+  @test.assert_eq(tok.get_content(), "<tag>")
+  @test.assert_eq(tok.content(), "<tag>")
+  @test.assert_eq(tok.get_single_word(), true)
+  @test.assert_eq(tok.single_word(), true)
+  @test.assert_eq(tok.get_lstrip(), true)
+  @test.assert_eq(tok.lstrip(), true)
+  @test.assert_eq(tok.get_rstrip(), true)
+  @test.assert_eq(tok.rstrip(), true)
+  @test.assert_eq(tok.get_normalized(), false)
+  @test.assert_eq(tok.normalized(), false)
+  @test.assert_eq(tok.get_special(), true)
+  @test.assert_eq(tok.is_special(), true)
+  let special = AddedToken::special("[MASK]")
+  @test.assert_eq(special.content(), "[MASK]")
+  @test.assert_eq(special.normalized(), false)
+  @test.assert_eq(special.is_special(), true)
 }
 
 ///|

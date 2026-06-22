@@ -94,6 +94,73 @@ pub fn AddedToken::new(content : String) -> AddedToken {
 }
 
 ///|
+pub fn AddedToken::get_content(self : AddedToken) -> String {
+  self.content
+}
+
+///|
+/// Python/property-style alias for `get_content`.
+pub fn AddedToken::content(self : AddedToken) -> String {
+  self.get_content()
+}
+
+///|
+pub fn AddedToken::get_single_word(self : AddedToken) -> Bool {
+  self.single_word
+}
+
+///|
+/// Python/property-style alias for `get_single_word`.
+pub fn AddedToken::single_word(self : AddedToken) -> Bool {
+  self.get_single_word()
+}
+
+///|
+pub fn AddedToken::get_lstrip(self : AddedToken) -> Bool {
+  self.lstrip
+}
+
+///|
+/// Python/property-style alias for `get_lstrip`.
+pub fn AddedToken::lstrip(self : AddedToken) -> Bool {
+  self.get_lstrip()
+}
+
+///|
+pub fn AddedToken::get_rstrip(self : AddedToken) -> Bool {
+  self.rstrip
+}
+
+///|
+/// Python/property-style alias for `get_rstrip`.
+pub fn AddedToken::rstrip(self : AddedToken) -> Bool {
+  self.get_rstrip()
+}
+
+///|
+pub fn AddedToken::get_normalized(self : AddedToken) -> Bool {
+  self.normalized
+}
+
+///|
+/// Python/property-style alias for `get_normalized`.
+pub fn AddedToken::normalized(self : AddedToken) -> Bool {
+  self.get_normalized()
+}
+
+///|
+pub fn AddedToken::get_special(self : AddedToken) -> Bool {
+  self.special
+}
+
+///|
+/// Predicate alias for `get_special`. `AddedToken::special(String)` remains
+/// the constructor for special tokens, so this avoids overloading that name.
+pub fn AddedToken::is_special(self : AddedToken) -> Bool {
+  self.get_special()
+}
+
+///|
 pub fn AddedToken::special(content : String) -> AddedToken {
   {
     content,

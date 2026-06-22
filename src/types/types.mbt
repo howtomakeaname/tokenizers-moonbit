@@ -736,13 +736,31 @@ pub fn Token::get_id(self : Token) -> Int {
 }
 
 ///|
+/// Python/property-style alias for `get_id`.
+pub fn Token::id(self : Token) -> Int {
+  self.get_id()
+}
+
+///|
 pub fn Token::get_value(self : Token) -> String {
   self.value
 }
 
 ///|
+/// Python/property-style alias for `get_value`.
+pub fn Token::value(self : Token) -> String {
+  self.get_value()
+}
+
+///|
 pub fn Token::get_offsets(self : Token) -> (Int, Int) {
   self.offsets
+}
+
+///|
+/// Python/property-style alias for `get_offsets`.
+pub fn Token::offsets(self : Token) -> (Int, Int) {
+  self.get_offsets()
 }
 
 ///|
