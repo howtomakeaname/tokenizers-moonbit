@@ -263,6 +263,17 @@ pub fn Encoding::with_sequence_id(
 }
 
 ///|
+/// HF/Python migration alias for assigning one sequence id to every token. The
+/// core API stays immutable, so this returns a new Encoding like
+/// `with_sequence_id` instead of mutating in place.
+pub fn Encoding::set_sequence_id(
+  self : Encoding,
+  sequence_id : Int,
+) -> Encoding {
+  self.with_sequence_id(sequence_id)
+}
+
+///|
 pub fn Encoding::with_overflowing(
   self : Encoding,
   overflowing : Array[Encoding],

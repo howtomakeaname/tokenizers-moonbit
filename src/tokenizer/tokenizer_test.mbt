@@ -341,6 +341,12 @@ test "Encoding exposes HF-style getter accessors" {
   @test.assert_eq(enc.is_empty(), false)
   @test.assert_eq(enc.n_sequences(), 1)
   @test.assert_eq(enc.get_n_sequences(), 1)
+  @test.assert_eq(enc.set_sequence_id(3).sequence_ids(), [
+    Some(3),
+    Some(3),
+    Some(3),
+    Some(3),
+  ])
   @test.assert_eq(@types.Encoding::empty().is_empty(), true)
   @test.assert_eq(@types.Encoding::empty().n_sequences(), 0)
   let buffers = enc.as_buffers()
