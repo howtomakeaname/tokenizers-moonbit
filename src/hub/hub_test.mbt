@@ -16,6 +16,9 @@ test "download options default to online main revision" {
   @test.assert_eq(opts.endpoint, "https://huggingface.co")
   @test.assert_eq(opts.revision, "main")
   @test.assert_eq(opts.local_files_only, false)
+  @test.assert_eq(opts.stream_chunk_size, 65536)
+  @test.assert_eq(opts.with_stream_chunk_size(17).stream_chunk_size, 17)
+  @test.assert_eq(opts.with_stream_chunk_size(0).stream_chunk_size, 65536)
 }
 
 ///|

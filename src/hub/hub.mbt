@@ -17,6 +17,10 @@ pub struct HubDownloadOptions {
   /// Native-only explicit User-Agent. JavaScript/browser fetch forbids setting
   /// User-Agent manually, so the browser/runtime supplied UA is used there.
   user_agent : String?
+  /// Maximum bytes requested from the HTTP stream per read. This controls how
+  /// often resume metadata is refreshed while downloading large tokenizer.json
+  /// files. Values <= 0 fall back to the default chunk size.
+  stream_chunk_size : Int
 } derive(Debug, Eq)
 
 ///|
@@ -30,6 +34,7 @@ pub fn HubDownloadOptions::new(
   user_agent? : String? = Some(
     "unknown/None; hf_hub/0.34.4; python/3.x; tokenizers/0.21.4",
   ),
+  stream_chunk_size? : Int = 65536,
 ) -> HubDownloadOptions {
   {
     endpoint,
@@ -39,6 +44,7 @@ pub fn HubDownloadOptions::new(
     local_files_only,
     max_redirects,
     user_agent,
+    stream_chunk_size: positive_stream_chunk_size(stream_chunk_size),
   }
 }
 
@@ -50,6 +56,25 @@ pub fn HubDownloadOptions::with_endpoint(
   endpoint : String,
 ) -> HubDownloadOptions {
   { ..self, endpoint, }
+}
+
+///|
+/// Return a copy using a custom streaming read chunk size. Non-positive values
+/// are normalized to the default so callers cannot accidentally disable reads.
+pub fn HubDownloadOptions::with_stream_chunk_size(
+  self : HubDownloadOptions,
+  stream_chunk_size : Int,
+) -> HubDownloadOptions {
+  { ..self, stream_chunk_size: positive_stream_chunk_size(stream_chunk_size) }
+}
+
+///|
+fn positive_stream_chunk_size(n : Int) -> Int {
+  if n > 0 {
+    n
+  } else {
+    65536
+  }
 }
 
 ///|
@@ -857,10 +882,11 @@ async fn async_download_with_redirects(
   let mut headers = plan.headers
   let mut retried_without_range = false
   while true {
-    let (response, body) = @http.get(current, headers~) catch {
+    let (response, client) = @http.get_stream(current, headers~) catch {
       _ => raise @types.ParseError("Hub download failed: \{current}")
     }
     if is_redirect(response.code) {
+      client.close()
       if remaining <= 0 {
         raise @types.ParseError(
           "Hub download exceeded redirect limit: \{plan.url}",
@@ -884,6 +910,7 @@ async fn async_download_with_redirects(
     )
     let decision = decide_tokenizer_json_response(plan, meta)
     if decision.should_retry_without_range() && !retried_without_range {
+      client.close()
       headers = headers_without_range(headers)
       current = plan.url
       remaining = max_redirects
@@ -891,16 +918,16 @@ async fn async_download_with_redirects(
       continue
     }
     let content = if decision.can_use_cache() {
+      client.close()
       []
     } else {
-      [
-        body.text() catch {
-          _ =>
-            raise @types.ParseError(
-              "Hub response body is not valid UTF-8: \{current}",
-            )
-        },
-      ]
+      let chunks = read_tokenizer_json_stream_chunks(
+        client,
+        current,
+        options.stream_chunk_size,
+      )
+      client.close()
+      chunks
     }
     return apply_tokenizer_json_download_chunks(
       model_id,
@@ -911,6 +938,23 @@ async fn async_download_with_redirects(
     )
   }
   raise @types.ParseError("unreachable Hub download loop")
+}
+
+///|
+async fn read_tokenizer_json_stream_chunks(
+  client : @http.Client,
+  url : String,
+  chunk_size : Int,
+) -> Array[String] raise @types.TokenizerError {
+  let chunks : Array[String] = []
+  let max_len = positive_stream_chunk_size(chunk_size)
+  while client.read_some(max_len~) is Some(bytes) {
+    chunks.push(@utf8.decode_lossy(bytes[:]))
+  }
+  if chunks.length() == 0 {
+    raise @types.ParseError("Hub response body is empty: \{url}")
+  }
+  chunks
 }
 
 ///|
