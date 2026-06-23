@@ -485,15 +485,33 @@ pub fn Encoding::get_ids(self : Encoding) -> Array[Int] {
 }
 
 ///|
+/// Python/property-style alias for `get_ids`.
+pub fn Encoding::ids(self : Encoding) -> Array[Int] {
+  self.get_ids()
+}
+
+///|
 /// Return per-token type ids.
 pub fn Encoding::get_type_ids(self : Encoding) -> Array[Int] {
   self.type_ids.copy()
 }
 
 ///|
+/// Python/property-style alias for `get_type_ids`.
+pub fn Encoding::type_ids(self : Encoding) -> Array[Int] {
+  self.get_type_ids()
+}
+
+///|
 /// Return token surface strings.
 pub fn Encoding::get_tokens(self : Encoding) -> Array[String] {
   self.tokens.copy()
+}
+
+///|
+/// Python/property-style alias for `get_tokens`.
+pub fn Encoding::tokens(self : Encoding) -> Array[String] {
+  self.get_tokens()
 }
 
 ///|
@@ -504,10 +522,22 @@ pub fn Encoding::get_offsets(self : Encoding) -> Array[(Int, Int)] {
 }
 
 ///|
+/// Python/property-style alias for `get_offsets`.
+pub fn Encoding::offsets(self : Encoding) -> Array[(Int, Int)] {
+  self.get_offsets()
+}
+
+///|
 /// Return the HF-style special tokens mask (`1` for special/padding, `0` for
 /// ordinary tokens).
 pub fn Encoding::get_special_tokens_mask(self : Encoding) -> Array[Int] {
   self.special_tokens_mask.copy()
+}
+
+///|
+/// Python/property-style alias for `get_special_tokens_mask`.
+pub fn Encoding::special_tokens_mask(self : Encoding) -> Array[Int] {
+  self.get_special_tokens_mask()
 }
 
 ///|
@@ -517,9 +547,21 @@ pub fn Encoding::get_attention_mask(self : Encoding) -> Array[Int] {
 }
 
 ///|
+/// Python/property-style alias for `get_attention_mask`.
+pub fn Encoding::attention_mask(self : Encoding) -> Array[Int] {
+  self.get_attention_mask()
+}
+
+///|
 /// Return truncation overflow windows.
 pub fn Encoding::get_overflowing(self : Encoding) -> Array[Encoding] {
   self.overflowing.copy()
+}
+
+///|
+/// Python/property-style alias for `get_overflowing`.
+pub fn Encoding::overflowing(self : Encoding) -> Array[Encoding] {
+  self.get_overflowing()
 }
 
 ///|
