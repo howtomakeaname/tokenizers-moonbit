@@ -427,6 +427,15 @@ test "AddedToken exposes binding property aliases" {
   @test.assert_eq(tok.normalized(), false)
   @test.assert_eq(tok.get_special(), true)
   @test.assert_eq(tok.is_special(), true)
+  @test.assert_eq(tok.as_tuple(), ("<tag>", true, true, true, false, true))
+  let state = tok.__getstate__()
+  @test.assert_eq(state.content, "<tag>")
+  @test.assert_eq(state.single_word, true)
+  @test.assert_eq(AddedToken::__setstate__(state).as_tuple(), tok.as_tuple())
+  @test.assert_eq(
+    AddedToken::from_tuple(("<x>", true, false, true, false, true)).as_tuple(),
+    ("<x>", true, false, true, false, true),
+  )
   let special = AddedToken::special("[MASK]")
   @test.assert_eq(special.content(), "[MASK]")
   @test.assert_eq(special.normalized(), false)

@@ -82,6 +82,19 @@ pub struct AddedToken {
 } derive(Debug, Eq)
 
 ///|
+/// Serializable/interoperable snapshot of an added token. This mirrors the
+/// fields used by HuggingFace tokenizers and lets Python binding layers pickle
+/// or tuple-convert an `AddedToken` without depending on MoonBit record layout.
+pub struct AddedTokenState {
+  content : String
+  single_word : Bool
+  lstrip : Bool
+  rstrip : Bool
+  normalized : Bool
+  special : Bool
+} derive(Debug, Eq)
+
+///|
 pub fn AddedToken::new(content : String) -> AddedToken {
   {
     content,
@@ -91,6 +104,75 @@ pub fn AddedToken::new(content : String) -> AddedToken {
     normalized: true,
     special: false,
   }
+}
+
+///|
+/// Build an added token from a state snapshot.
+pub fn AddedToken::from_state(state : AddedTokenState) -> AddedToken {
+  {
+    content: state.content,
+    single_word: state.single_word,
+    lstrip: state.lstrip,
+    rstrip: state.rstrip,
+    normalized: state.normalized,
+    special: state.special,
+  }
+}
+
+///|
+/// Build an added token from the common tuple representation
+/// `(content, single_word, lstrip, rstrip, normalized, special)`.
+pub fn AddedToken::from_tuple(
+  t : (String, Bool, Bool, Bool, Bool, Bool),
+) -> AddedToken {
+  {
+    content: t.0,
+    single_word: t.1,
+    lstrip: t.2,
+    rstrip: t.3,
+    normalized: t.4,
+    special: t.5,
+  }
+}
+
+///|
+/// Return `(content, single_word, lstrip, rstrip, normalized, special)`.
+pub fn AddedToken::as_tuple(
+  self : AddedToken,
+) -> (String, Bool, Bool, Bool, Bool, Bool) {
+  (
+    self.content,
+    self.single_word,
+    self.lstrip,
+    self.rstrip,
+    self.normalized,
+    self.special,
+  )
+}
+
+///|
+/// Return a Python-binding-friendly state snapshot.
+pub fn AddedToken::get_state(self : AddedToken) -> AddedTokenState {
+  {
+    content: self.content,
+    single_word: self.single_word,
+    lstrip: self.lstrip,
+    rstrip: self.rstrip,
+    normalized: self.normalized,
+    special: self.special,
+  }
+}
+
+///|
+/// Python pickle compatibility alias for `get_state`.
+pub fn AddedToken::__getstate__(self : AddedToken) -> AddedTokenState {
+  self.get_state()
+}
+
+///|
+/// Python pickle compatibility alias for restoring added-token state.
+pub fn AddedToken::__setstate__(state : AddedTokenState) -> AddedToken {
+  AddedToken::from_state(state)
 }
 
 ///|
