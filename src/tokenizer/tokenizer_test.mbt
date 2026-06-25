@@ -170,6 +170,14 @@ test "Tokenizer exposes Python property-style component and config aliases" {
   @test.assert_eq(trunc.get_strategy(), OnlyFirst)
   @test.assert_eq(trunc.direction(), Left)
   @test.assert_eq(trunc.get_direction(), Left)
+  @test.assert_eq(trunc.as_tuple(), (5, 2, Left, OnlyFirst))
+  let trunc_state = trunc.__getstate__()
+  @test.assert_eq(trunc_state.max_length, 5)
+  @test.assert_eq(TruncationParams::__setstate__(trunc_state), trunc)
+  @test.assert_eq(
+    TruncationParams::from_tuple((6, 1, Right, LongestFirst)).as_tuple(),
+    (6, 1, Right, LongestFirst),
+  )
   let padding = tok.padding().unwrap()
   @test.assert_eq(padding.strategy(), Fixed(8))
   @test.assert_eq(padding.get_strategy(), Fixed(8))
@@ -183,6 +191,14 @@ test "Tokenizer exposes Python property-style component and config aliases" {
   @test.assert_eq(padding.get_pad_token(), "[PAD]")
   @test.assert_eq(padding.pad_to_multiple_of(), Some(4))
   @test.assert_eq(padding.get_pad_to_multiple_of(), Some(4))
+  @test.assert_eq(padding.as_tuple(), (Fixed(8), Left, 1, 7, "[PAD]", Some(4)))
+  let padding_state = padding.__getstate__()
+  @test.assert_eq(padding_state.pad_id, 1)
+  @test.assert_eq(PaddingParams::__setstate__(padding_state), padding)
+  @test.assert_eq(
+    PaddingParams::from_tuple((BatchLongest, Right, 0, 0, "<pad>", None)).as_tuple(),
+    (BatchLongest, Right, 0, 0, "<pad>", None),
+  )
   @test.assert_eq(tok.no_truncation().truncation(), None)
   @test.assert_eq(tok.no_padding().padding(), None)
 }

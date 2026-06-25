@@ -24,6 +24,18 @@ pub(all) struct PaddingParams {
 } derive(Debug, Eq)
 
 ///|
+/// Serializable/interoperable snapshot of padding parameters for Python binding
+/// and pickle/state migration layers.
+pub(all) struct PaddingParamsState {
+  strategy : PaddingStrategy
+  direction : PaddingDirection
+  pad_id : Int
+  pad_type_id : Int
+  pad_token : String
+  pad_to_multiple_of : Int?
+} derive(Debug, Eq)
+
+///|
 /// Default padding: right direction, pad id/token 0 / "[PAD]".
 pub fn PaddingParams::new(
   strategy : PaddingStrategy,
@@ -38,6 +50,70 @@ pub fn PaddingParams::new(
     pad_token,
     pad_to_multiple_of: None,
   }
+}
+
+///|
+pub fn PaddingParams::from_state(state : PaddingParamsState) -> PaddingParams {
+  {
+    strategy: state.strategy,
+    direction: state.direction,
+    pad_id: state.pad_id,
+    pad_type_id: state.pad_type_id,
+    pad_token: state.pad_token,
+    pad_to_multiple_of: state.pad_to_multiple_of,
+  }
+}
+
+///|
+pub fn PaddingParams::from_tuple(
+  t : (PaddingStrategy, PaddingDirection, Int, Int, String, Int?),
+) -> PaddingParams {
+  {
+    strategy: t.0,
+    direction: t.1,
+    pad_id: t.2,
+    pad_type_id: t.3,
+    pad_token: t.4,
+    pad_to_multiple_of: t.5,
+  }
+}
+
+///|
+pub fn PaddingParams::as_tuple(
+  self : PaddingParams,
+) -> (PaddingStrategy, PaddingDirection, Int, Int, String, Int?) {
+  (
+    self.strategy,
+    self.direction,
+    self.pad_id,
+    self.pad_type_id,
+    self.pad_token,
+    self.pad_to_multiple_of,
+  )
+}
+
+///|
+pub fn PaddingParams::get_state(self : PaddingParams) -> PaddingParamsState {
+  {
+    strategy: self.strategy,
+    direction: self.direction,
+    pad_id: self.pad_id,
+    pad_type_id: self.pad_type_id,
+    pad_token: self.pad_token,
+    pad_to_multiple_of: self.pad_to_multiple_of,
+  }
+}
+
+///|
+/// Python pickle compatibility alias for `get_state`.
+pub fn PaddingParams::__getstate__(self : PaddingParams) -> PaddingParamsState {
+  self.get_state()
+}
+
+///|
+/// Python pickle compatibility alias for restoring padding params state.
+pub fn PaddingParams::__setstate__(state : PaddingParamsState) -> PaddingParams {
+  PaddingParams::from_state(state)
 }
 
 ///|

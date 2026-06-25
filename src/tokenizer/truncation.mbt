@@ -23,9 +23,73 @@ pub(all) struct TruncationParams {
 } derive(Debug, Eq)
 
 ///|
+/// Serializable/interoperable snapshot of truncation parameters for Python
+/// binding and pickle/state migration layers.
+pub(all) struct TruncationParamsState {
+  max_length : Int
+  stride : Int
+  direction : TruncationDirection
+  strategy : TruncationStrategy
+} derive(Debug, Eq)
+
+///|
 /// Default truncation: right direction, no stride.
 pub fn TruncationParams::new(max_length : Int) -> TruncationParams {
   { max_length, stride: 0, direction: Right, strategy: LongestFirst }
+}
+
+///|
+pub fn TruncationParams::from_state(
+  state : TruncationParamsState,
+) -> TruncationParams {
+  {
+    max_length: state.max_length,
+    stride: state.stride,
+    direction: state.direction,
+    strategy: state.strategy,
+  }
+}
+
+///|
+pub fn TruncationParams::from_tuple(
+  t : (Int, Int, TruncationDirection, TruncationStrategy),
+) -> TruncationParams {
+  { max_length: t.0, stride: t.1, direction: t.2, strategy: t.3 }
+}
+
+///|
+pub fn TruncationParams::as_tuple(
+  self : TruncationParams,
+) -> (Int, Int, TruncationDirection, TruncationStrategy) {
+  (self.max_length, self.stride, self.direction, self.strategy)
+}
+
+///|
+pub fn TruncationParams::get_state(
+  self : TruncationParams,
+) -> TruncationParamsState {
+  {
+    max_length: self.max_length,
+    stride: self.stride,
+    direction: self.direction,
+    strategy: self.strategy,
+  }
+}
+
+///|
+/// Python pickle compatibility alias for `get_state`.
+pub fn TruncationParams::__getstate__(
+  self : TruncationParams,
+) -> TruncationParamsState {
+  self.get_state()
+}
+
+///|
+/// Python pickle compatibility alias for restoring truncation params state.
+pub fn TruncationParams::__setstate__(
+  state : TruncationParamsState,
+) -> TruncationParams {
+  TruncationParams::from_state(state)
 }
 
 ///|
