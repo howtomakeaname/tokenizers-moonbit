@@ -965,6 +965,77 @@ pub(all) struct Split {
 } derive(Debug, Eq)
 
 ///|
+/// Serializable/interoperable snapshot of a pre-tokenizer split.
+pub(all) struct SplitState {
+  value : String
+  offsets : (Int, Int)
+} derive(Debug, Eq)
+
+///|
+/// Build a split from its value and half-open offsets.
+pub fn Split::new(value : String, offsets? : (Int, Int) = (0, 0)) -> Split {
+  { value, offsets }
+}
+
+///|
+/// Build a split from the common tuple representation `(value, offsets)`.
+pub fn Split::from_tuple(t : (String, (Int, Int))) -> Split {
+  { value: t.0, offsets: t.1 }
+}
+
+///|
+/// Restore a split from a state snapshot.
+pub fn Split::from_state(state : SplitState) -> Split {
+  { value: state.value, offsets: state.offsets }
+}
+
+///|
+/// Return `(value, offsets)` for simple binding shims.
+pub fn Split::as_tuple(self : Split) -> (String, (Int, Int)) {
+  (self.value, self.offsets)
+}
+
+///|
+/// Return a Python-binding-friendly split state snapshot.
+pub fn Split::get_state(self : Split) -> SplitState {
+  { value: self.value, offsets: self.offsets }
+}
+
+///|
+/// Python pickle compatibility alias for `get_state`.
+pub fn Split::__getstate__(self : Split) -> SplitState {
+  self.get_state()
+}
+
+///|
+/// Python pickle compatibility alias for restoring split state.
+pub fn Split::__setstate__(state : SplitState) -> Split {
+  Split::from_state(state)
+}
+
+///|
+pub fn Split::get_value(self : Split) -> String {
+  self.value
+}
+
+///|
+/// Python/property-style alias for `get_value`.
+pub fn Split::value(self : Split) -> String {
+  self.get_value()
+}
+
+///|
+pub fn Split::get_offsets(self : Split) -> (Int, Int) {
+  self.offsets
+}
+
+///|
+/// Python/property-style alias for `get_offsets`.
+pub fn Split::offsets(self : Split) -> (Int, Int) {
+  self.get_offsets()
+}
+
+///|
 /// Errors raised across the tokenizer pipeline.
 pub(all) suberror TokenizerError {
   /// The tokenizer.json could not be parsed or had an unexpected shape.

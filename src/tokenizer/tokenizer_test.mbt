@@ -483,11 +483,23 @@ test "NormalizedString and PreTokenizedString expose low level migration API" {
   @test.assert_eq(ns.get_original(), " Hello  Moon ")
   @test.assert_eq(ns.original(), " Hello  Moon ")
   @test.assert_eq(ns.get(), "_hellomoon")
+  @test.assert_eq(ns.get_normalized(), "_hellomoon")
   @test.assert_eq(ns.normalized(), "_hellomoon")
   @test.assert_eq(ns.to_string(), "_hellomoon")
   @test.assert_eq(ns.len(), 10)
   @test.assert_eq(ns.__len__(), 10)
   @test.assert_eq(ns.is_empty(), false)
+  @test.assert_eq(ns.as_tuple(), (" Hello  Moon ", "_hellomoon"))
+  let ns_state = ns.__getstate__()
+  @test.assert_eq(ns_state.normalized, "_hellomoon")
+  @test.assert_eq(
+    NormalizedString::__setstate__(ns_state).as_tuple(),
+    ns.as_tuple(),
+  )
+  @test.assert_eq(
+    NormalizedString::from_tuple(("Raw", "raw")).as_tuple(),
+    ("Raw", "raw"),
+  )
   @test.assert_eq(ns.slice(1, 6).get(), "hello")
   let parts = NormalizedString::new("a,b,c").split(",")
   @test.assert_eq(parts.map(p => p.get()), ["a", "b", "c"])
@@ -510,6 +522,36 @@ test "NormalizedString and PreTokenizedString expose low level migration API" {
   @test.assert_eq(pts.is_empty(), false)
   @test.assert_eq(pts.get_splits().map(s => s.value), ["hello", "moon"])
   @test.assert_eq(pts.splits().map(s => s.value), ["hello", "moon"])
+  let first_split = pts.splits()[0]
+  @test.assert_eq(first_split.get_value(), "hello")
+  @test.assert_eq(first_split.value(), "hello")
+  @test.assert_eq(first_split.get_offsets(), (0, 5))
+  @test.assert_eq(first_split.offsets(), (0, 5))
+  @test.assert_eq(first_split.as_tuple(), ("hello", (0, 5)))
+  let split_state = first_split.__getstate__()
+  @test.assert_eq(split_state.value, "hello")
+  @test.assert_eq(
+    @types.Split::__setstate__(split_state).as_tuple(),
+    first_split.as_tuple(),
+  )
+  @test.assert_eq(
+    @types.Split::from_tuple(("x", (2, 3))).as_tuple(),
+    ("x", (2, 3)),
+  )
+  @test.assert_eq(@types.Split::new("y", offsets=(4, 5)).value(), "y")
+  let pts_tuple = pts.as_tuple()
+  @test.assert_eq(pts_tuple.0, "Hello Moon")
+  @test.assert_eq(pts_tuple.1.map(s => s.value), ["hello", "moon"])
+  let pts_state = pts.__getstate__()
+  @test.assert_eq(pts_state.original, "Hello Moon")
+  @test.assert_eq(
+    PreTokenizedString::__setstate__(pts_state).as_tuple(),
+    pts_tuple,
+  )
+  @test.assert_eq(
+    PreTokenizedString::from_tuple(pts_tuple).splits().map(s => s.value),
+    ["hello", "moon"],
+  )
   @test.assert_eq(pts.to_encoding(model).tokens, ["hello", "moon"])
   @test.assert_eq(pts.into_encoding(model, type_id=3).type_ids, [3, 3])
 }

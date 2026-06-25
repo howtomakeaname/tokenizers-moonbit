@@ -115,8 +115,60 @@ pub struct NormalizedString {
 }
 
 ///|
+/// Serializable/interoperable snapshot of a `NormalizedString` for Python
+/// binding pickle/state transfer.
+pub struct NormalizedStringState {
+  original : String
+  normalized : String
+} derive(Debug, Eq)
+
+///|
 pub fn NormalizedString::new(s : String) -> NormalizedString {
   { original: s, normalized: s }
+}
+
+///|
+/// Restore a normalized string from a binding-friendly state snapshot.
+pub fn NormalizedString::from_state(
+  state : NormalizedStringState,
+) -> NormalizedString {
+  { original: state.original, normalized: state.normalized }
+}
+
+///|
+/// Build from the compact tuple representation `(original, normalized)`.
+pub fn NormalizedString::from_tuple(t : (String, String)) -> NormalizedString {
+  { original: t.0, normalized: t.1 }
+}
+
+///|
+/// Return `(original, normalized)` for simple Python/FFI shims.
+pub fn NormalizedString::as_tuple(self : NormalizedString) -> (String, String) {
+  (self.original, self.normalized)
+}
+
+///|
+/// Return a pickle/state snapshot.
+pub fn NormalizedString::get_state(
+  self : NormalizedString,
+) -> NormalizedStringState {
+  { original: self.original, normalized: self.normalized }
+}
+
+///|
+/// Python pickle compatibility alias for `get_state`.
+pub fn NormalizedString::__getstate__(
+  self : NormalizedString,
+) -> NormalizedStringState {
+  self.get_state()
+}
+
+///|
+/// Python pickle compatibility alias for restoring state.
+pub fn NormalizedString::__setstate__(
+  state : NormalizedStringState,
+) -> NormalizedString {
+  NormalizedString::from_state(state)
 }
 
 ///|
@@ -133,6 +185,12 @@ pub fn NormalizedString::original(self : NormalizedString) -> String {
 ///|
 pub fn NormalizedString::get(self : NormalizedString) -> String {
   self.normalized
+}
+
+///|
+/// Python-binding getter alias for the normalized/current string.
+pub fn NormalizedString::get_normalized(self : NormalizedString) -> String {
+  self.get()
 }
 
 ///|
@@ -292,6 +350,13 @@ pub struct PreTokenizedString {
 }
 
 ///|
+/// Serializable/interoperable snapshot of a `PreTokenizedString`.
+pub struct PreTokenizedStringState {
+  original : String
+  splits : Array[@types.Split]
+} derive(Debug, Eq)
+
+///|
 pub fn PreTokenizedString::new(text : String) -> PreTokenizedString {
   {
     original: text,
@@ -311,6 +376,54 @@ pub fn PreTokenizedString::from_splits(
     sb.write_string(s.value)
   }
   { original: sb.to_string(), splits: splits.copy() }
+}
+
+///|
+/// Restore a pre-tokenized string from a binding-friendly state snapshot.
+pub fn PreTokenizedString::from_state(
+  state : PreTokenizedStringState,
+) -> PreTokenizedString {
+  { original: state.original, splits: state.splits.copy() }
+}
+
+///|
+/// Build from the compact tuple representation `(original, splits)`.
+pub fn PreTokenizedString::from_tuple(
+  t : (String, Array[@types.Split]),
+) -> PreTokenizedString {
+  { original: t.0, splits: t.1.copy() }
+}
+
+///|
+/// Return `(original, splits)` for simple Python/FFI shims.
+pub fn PreTokenizedString::as_tuple(
+  self : PreTokenizedString,
+) -> (String, Array[@types.Split]) {
+  (self.original, self.splits.copy())
+}
+
+///|
+/// Return a pickle/state snapshot.
+pub fn PreTokenizedString::get_state(
+  self : PreTokenizedString,
+) -> PreTokenizedStringState {
+  { original: self.original, splits: self.splits.copy() }
+}
+
+///|
+/// Python pickle compatibility alias for `get_state`.
+pub fn PreTokenizedString::__getstate__(
+  self : PreTokenizedString,
+) -> PreTokenizedStringState {
+  self.get_state()
+}
+
+///|
+/// Python pickle compatibility alias for restoring state.
+pub fn PreTokenizedString::__setstate__(
+  state : PreTokenizedStringState,
+) -> PreTokenizedString {
+  PreTokenizedString::from_state(state)
 }
 
 ///|
