@@ -187,6 +187,66 @@ pub fn Encoding::__len__(self : Encoding) -> Int {
 }
 
 ///|
+/// Build an Encoding from the full HF-style tuple representation. This is
+/// intentionally equivalent to `Encoding::from_state` but easier for thin
+/// Python/FFI shims that already marshal positional buffers.
+pub fn Encoding::from_tuple(
+  t : (
+    Array[Int],
+    Array[Int],
+    Array[String],
+    Array[(Int, Int)],
+    Array[Int],
+    Array[Int],
+    Array[Int?],
+    Array[Int?],
+    Array[Encoding],
+  ),
+) -> Encoding {
+  Encoding::new(
+    t.0,
+    t.1,
+    t.2,
+    t.3,
+    t.4,
+    t.5,
+    sequence_ids=t.6,
+    word_ids=t.7,
+    overflowing=t.8,
+  )
+}
+
+///|
+/// Return the full positional buffer tuple used by simple binding layers.
+/// Arrays are copied through `get_state` to avoid exposing mutable internals.
+pub fn Encoding::as_tuple(
+  self : Encoding,
+) -> (
+  Array[Int],
+  Array[Int],
+  Array[String],
+  Array[(Int, Int)],
+  Array[Int],
+  Array[Int],
+  Array[Int?],
+  Array[Int?],
+  Array[Encoding],
+) {
+  let state = self.get_state()
+  (
+    state.ids,
+    state.type_ids,
+    state.tokens,
+    state.offsets,
+    state.special_tokens_mask,
+    state.attention_mask,
+    state.sequence_ids,
+    state.word_ids,
+    state.overflowing,
+  )
+}
+
+///|
 /// Build an Encoding from model tokens, mirroring HF's `Encoding::from_tokens`.
 pub fn Encoding::from_tokens(
   tokens : Array[Token],
@@ -611,6 +671,12 @@ pub fn Encoding::token_to_sequence(self : Encoding, token : Int) -> Int? {
 }
 
 ///|
+/// Python-binding getter alias for `token_to_sequence`.
+pub fn Encoding::get_token_sequence(self : Encoding, token : Int) -> Int? {
+  self.token_to_sequence(token)
+}
+
+///|
 /// Return `(sequence_id, offsets)` for token `token`, mirroring HF's
 /// `Encoding.token_to_chars`. Special/padding tokens return `None`.
 pub fn Encoding::token_to_chars(
@@ -619,6 +685,24 @@ pub fn Encoding::token_to_chars(
 ) -> (Int, (Int, Int))? {
   match self.token_to_sequence(token) {
     Some(seq) => Some((seq, self.offsets[token]))
+    None => None
+  }
+}
+
+///|
+/// Python-binding getter alias for `token_to_chars`.
+pub fn Encoding::get_token_chars(
+  self : Encoding,
+  token : Int,
+) -> (Int, (Int, Int))? {
+  self.token_to_chars(token)
+}
+
+///|
+/// Convenience alias returning only the char/byte offsets for a token.
+pub fn Encoding::token_to_offsets(self : Encoding, token : Int) -> (Int, Int)? {
+  match self.token_to_chars(token) {
+    Some((_, offsets)) => Some(offsets)
     None => None
   }
 }
@@ -638,6 +722,12 @@ pub fn Encoding::token_to_word(self : Encoding, token : Int) -> (Int, Int)? {
       }
     None => None
   }
+}
+
+///|
+/// Python-binding getter alias for `token_to_word`.
+pub fn Encoding::get_token_word(self : Encoding, token : Int) -> (Int, Int)? {
+  self.token_to_word(token)
 }
 
 ///|
@@ -665,6 +755,16 @@ pub fn Encoding::word_to_tokens(
 }
 
 ///|
+/// Python-binding getter alias for `word_to_tokens`.
+pub fn Encoding::get_word_tokens(
+  self : Encoding,
+  word : Int,
+  sequence_id? : Int = 0,
+) -> (Int, Int)? {
+  self.word_to_tokens(word, sequence_id~)
+}
+
+///|
 /// Get character/byte offsets covering `word` in `sequence_id`.
 pub fn Encoding::word_to_chars(
   self : Encoding,
@@ -680,6 +780,26 @@ pub fn Encoding::word_to_chars(
       }
     None => None
   }
+}
+
+///|
+/// Python-binding getter alias for `word_to_chars`.
+pub fn Encoding::get_word_chars(
+  self : Encoding,
+  word : Int,
+  sequence_id? : Int = 0,
+) -> (Int, Int)? {
+  self.word_to_chars(word, sequence_id~)
+}
+
+///|
+/// Naming alias for binding layers that expose offsets instead of chars.
+pub fn Encoding::word_to_offsets(
+  self : Encoding,
+  word : Int,
+  sequence_id? : Int = 0,
+) -> (Int, Int)? {
+  self.word_to_chars(word, sequence_id~)
 }
 
 ///|
@@ -704,6 +824,16 @@ pub fn Encoding::char_to_token(
 }
 
 ///|
+/// Python-binding getter alias for `char_to_token`.
+pub fn Encoding::get_char_token(
+  self : Encoding,
+  pos : Int,
+  sequence_id? : Int = 0,
+) -> Int? {
+  self.char_to_token(pos, sequence_id~)
+}
+
+///|
 /// Get the word id containing position `pos` in `sequence_id`.
 pub fn Encoding::char_to_word(
   self : Encoding,
@@ -718,6 +848,16 @@ pub fn Encoding::char_to_word(
       }
     None => None
   }
+}
+
+///|
+/// Python-binding getter alias for `char_to_word`.
+pub fn Encoding::get_char_word(
+  self : Encoding,
+  pos : Int,
+  sequence_id? : Int = 0,
+) -> Int? {
+  self.char_to_word(pos, sequence_id~)
 }
 
 ///|

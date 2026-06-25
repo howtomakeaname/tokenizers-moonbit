@@ -381,6 +381,10 @@ test "Encoding exposes HF-style getter accessors" {
   @test.assert_eq(restored.get_ids(), enc.get_ids())
   @test.assert_eq(restored.get_tokens(), enc.get_tokens())
   @test.assert_eq(restored.get_word_ids(), enc.get_word_ids())
+  let tuple = enc.as_tuple()
+  @test.assert_eq(tuple.0, [0, 1, 2, 2])
+  @test.assert_eq(tuple.2, ["hello", "moon", "[PAD]", "[PAD]"])
+  @test.assert_eq(@types.Encoding::from_tuple(tuple).as_tuple(), tuple)
 }
 
 ///|
@@ -1198,17 +1202,26 @@ test "encode_pair tracks sequence ids separate from type ids" {
   @test.assert_eq(enc.sequence_ids(), [None, Some(0), None, Some(1), None])
   @test.assert_eq(enc.type_ids, [0, 0, 0, 1, 1])
   @test.assert_eq(enc.token_to_sequence(0), None)
+  @test.assert_eq(enc.get_token_sequence(3), Some(1))
   @test.assert_eq(enc.token_to_chars(1), Some((0, (0, 3))))
   @test.assert_eq(enc.token_to_chars(3), Some((1, (0, 1))))
+  @test.assert_eq(enc.get_token_chars(1), Some((0, (0, 3))))
+  @test.assert_eq(enc.token_to_offsets(3), Some((0, 1)))
   @test.assert_eq(enc.char_to_token(1, sequence_id=0), Some(1))
   @test.assert_eq(enc.char_to_token(0, sequence_id=1), Some(3))
+  @test.assert_eq(enc.get_char_token(0, sequence_id=1), Some(3))
   @test.assert_eq(enc.char_to_token(3, sequence_id=0), None)
   @test.assert_eq(enc.word_ids(), [None, Some(0), None, Some(0), None])
   @test.assert_eq(enc.token_to_word(1), Some((0, 0)))
   @test.assert_eq(enc.token_to_word(3), Some((1, 0)))
+  @test.assert_eq(enc.get_token_word(3), Some((1, 0)))
   @test.assert_eq(enc.word_to_tokens(0, sequence_id=1), Some((3, 4)))
+  @test.assert_eq(enc.get_word_tokens(0, sequence_id=1), Some((3, 4)))
   @test.assert_eq(enc.word_to_chars(0, sequence_id=1), Some((0, 1)))
+  @test.assert_eq(enc.get_word_chars(0, sequence_id=1), Some((0, 1)))
+  @test.assert_eq(enc.word_to_offsets(0, sequence_id=1), Some((0, 1)))
   @test.assert_eq(enc.char_to_word(0, sequence_id=1), Some(0))
+  @test.assert_eq(enc.get_char_word(0, sequence_id=1), Some(0))
 }
 
 ///|
