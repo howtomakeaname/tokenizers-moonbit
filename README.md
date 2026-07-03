@@ -37,7 +37,7 @@ The project targets LLM, edge and browser use cases where the Rust
   padding builders, `token_to_id`, `id_to_token`, `get_vocab_size`.
 
 With optional fixtures present, parity tests compare against Python
-`tokenizers` across **40 real models**: gpt2, roberta, llama, bert/bert-cased,
+`tokenizers` across **39 real models**: gpt2, roberta, llama, bert/bert-cased,
 distilbert, t5, albert, xlm-roberta, Qwen/DeepSeek/Phi/Mistral/Falcon/
 StarCoder/GPT-NeoX/CLIP/GLM/Granite families, ModernBERT/GTE-ModernBERT,
 SmolLM2, and embedding tokenizers such as BGE, E5, MiniLM, Jina, Nomic and

@@ -52,7 +52,7 @@
 
 ## 已验证模型
 
-在可选 fixture 存在时，40 个真实模型与 Python `tokenizers` token id 对齐：
+在可选 fixture 存在时，39 个真实模型与 Python `tokenizers` token id 对齐：
 gpt2、roberta、llama、bert/bert-cased、distilbert、t5、albert、xlm-roberta、
 Qwen2.5、Qwen3、DeepSeek-V2、Phi-3、Mistral、Falcon、StarCoder2、GPT-NeoX、
 CLIP、DeBERTa、Llama-3.2、Phi-4-mini、DeepSeek-R1-Distill-Qwen、DeepSeek-V3.2、

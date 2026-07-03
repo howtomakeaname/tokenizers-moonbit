@@ -31,7 +31,7 @@
 
 ## R11：对齐 HuggingFace tokenizers 的剩余缺口排期（2026-06-12 复评）
 
-目标：在当前 40 个真实 tokenizer.json 逐 id parity 的基础上，继续从「主流推理无缝迁移」推进到「HF tokenizers 公共 API 与低频组件行为尽量完整兼容」。排序原则：先补会影响真实模型加载/推理正确性的 P0/P1，再补迁移便利 API，最后补训练/扩展/并行等高级能力。每项必须包含：HF 行为对拍、MoonBit 全 target 测试、`moon check` 无 warning；涉及热路径的改动必须跑 `scripts/bench_compare.py --quick --target native`，不得让相关项退化到 `Moon/HF > 1.10x`。
+目标：在当前 39 个真实 tokenizer.json 逐 id parity 的基础上，继续从「主流推理无缝迁移」推进到「HF tokenizers 公共 API 与低频组件行为尽量完整兼容」。排序原则：先补会影响真实模型加载/推理正确性的 P0/P1，再补迁移便利 API，最后补训练/扩展/并行等高级能力。每项必须包含：HF 行为对拍、MoonBit 全 target 测试、`moon check` 无 warning；涉及热路径的改动必须跑 `scripts/bench_compare.py --quick --target native`，不得让相关项退化到 `Moon/HF > 1.10x`。
 
 本轮复评结论：主流推理链路（load tokenizer.json / added tokens / normalizer / pre-tokenizer / model / post-processor / decoder / truncation / padding / offsets / pair / batch / pretokenized / save / local+online hub）已经基本可迁移；剩余缺口主要集中在 HF 的低层可扩展对象、任意正则、训练生态高级参数、BPE dropout 随机语义、异步/并行与 Python 绑定兼容层。
 
@@ -71,7 +71,7 @@
 
 ## 已对齐验证的真实模型（与 Python `tokenizers` 逐 token id 一致）
 
-通过表驱动的 `parity_test.mbt`（`scripts/fetch_models.py` + `scripts/gen_parity.py` 生成期望），覆盖 40 个真实/公开 tokenizer.json 模型（fixture 缺失时自动跳过）：
+通过表驱动的 `parity_test.mbt`（`scripts/fetch_models.py` + `scripts/gen_parity.py` 生成期望），覆盖 39 个真实/公开 tokenizer.json 模型（fixture 缺失时自动跳过）：
 
 | 模型 | 类型 | 状态 |
 |---|---|---|
@@ -125,7 +125,7 @@
 | WordPiece | ✅ | 贪心最长前缀 |
 | Unigram | ✅ | Viterbi DP + word cache；`byte_fallback` / `fuse_unk` supported；native mixed 抽样 t5/bge/e5 encode 快于 HF |
 | WordLevel | ✅ | |
-| dropout / word cache | ⏸ | 进一步优化（merge 已用优先队列堆）|
+| dropout / word cache | ✅ | BPE `dropout` 已解析/序列化并在 `>0` 时禁用 word cache；BPE/WordPiece/Unigram word cache 已完成，后续仅保留更细粒度容量/性能优化 |
 
 ### Normalizers
 | 组件 | 状态 |

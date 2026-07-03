@@ -172,7 +172,7 @@ HF's switch for templating/chat use cases.
 ## Verified models
 
 With optional fixtures present, output is checked token-for-token against Python
-`tokenizers` for 40 real models, covering BPE, byte-level BPE, byte_fallback BPE,
+`tokenizers` for 39 real models, covering BPE, byte-level BPE, byte_fallback BPE,
 WordPiece, Unigram, WordLevel, Qwen/Llama-3/o200k Split patterns, coder,
 multimodal, ModernBERT-style encoder and embedding tokenizers. See
 [`PROGRESS.md`](../PROGRESS.md).

@@ -499,7 +499,7 @@ fn bench_tokenizer_typed_to_json_case(
     )
     .add_special_token_strings(["[MASK]"])
   b.bench(name="tokenizer-typed-to_json-\{case_name}", fn() {
-    b.keep(try? tok.to_json())
+    b.keep(tok.to_json() catch { _ => abort("tokenizer typed to_json failed") })
   })
 }
 
@@ -574,7 +574,7 @@ fn bench_precompiled_binary_charsmap_case(b : @bench.T) -> Unit raise {
 fn bench_load_case(b : @bench.T, model : String) -> Unit {
   guard load_text("tests/data/\{model}.full.json") is Some(json) else { return }
   b.bench(name="\{model}-from_str", fn() {
-    let t = try? @tokenizer.Tokenizer::from_str(json)
+    let t = @tokenizer.Tokenizer::from_str(json) catch { _ => abort("from_str failed") }
     b.keep(t)
   })
 }
@@ -583,18 +583,18 @@ fn bench_load_case(b : @bench.T, model : String) -> Unit {
 fn bench_to_json_case(b : @bench.T, model : String) -> Unit raise {
   guard load_model(model) is Some(tok) else { return }
   b.bench(name="\{model}-to_json", fn() {
-    let j = try? tok.to_json()
+    let j = tok.to_json() catch { _ => abort("to_json failed") }
     b.keep(j)
   })
 }
 
 ///|
-fn bench_from_pretrained_case(b : @bench.T, model : String) -> Unit {
+fn bench_from_pretrained_case(b : @bench.T, model : String) -> Unit raise {
   let path = "tests/data/\{model}.full.json"
   guard load_text(path) is Some(_) else { return }
-  ignore(try? @tokenizer.Tokenizer::from_pretrained(path))
+  ignore(@tokenizer.Tokenizer::from_pretrained(path))
   b.bench(name="\{model}-from_pretrained-file", fn() {
-    let t = try? @tokenizer.Tokenizer::from_pretrained(path)
+    let t = @tokenizer.Tokenizer::from_pretrained(path) catch { _ => abort("from_pretrained file failed") }
     b.keep(t)
   })
 }
@@ -614,7 +614,7 @@ fn bench_save_pretrained_case(b : @bench.T, model : String) -> Unit raise {
   bench_ensure_dir(root)
   bench_ensure_dir(dir)
   b.bench(name="\{model}-save_pretrained", fn() {
-    let path = try? tok.save_pretrained(dir)
+    let path = tok.save_pretrained(dir) catch { _ => abort("save_pretrained failed") }
     b.keep(path)
   })
 }
@@ -640,38 +640,38 @@ fn bench_from_pretrained_hub_cache_case(b : @bench.T, model : String) -> Unit {
     _ => ()
   }
   b.bench(name="\{model}-from_pretrained-hub-cache", fn() {
-    let t = try? @tokenizer.Tokenizer::from_pretrained_cached(
+    let t = @tokenizer.Tokenizer::from_pretrained_cached(
       "bench/" + model,
       cache_dir=Some(root),
-    )
+    ) catch { _ => abort("from_pretrained hub cache failed") }
     b.keep(t)
   })
 }
 
 ///|
-fn bench_from_pretrained_multi_cache_case(b : @bench.T) -> Unit {
+fn bench_from_pretrained_multi_cache_case(b : @bench.T) -> Unit raise {
   guard load_text("tests/data/gpt2.full.json") is Some(_) else { return }
   guard load_text("tests/data/bert.full.json") is Some(_) else { return }
   ignore(
-    try? @tokenizer.Tokenizer::from_pretrained("tests/data/gpt2.full.json"),
+    @tokenizer.Tokenizer::from_pretrained("tests/data/gpt2.full.json"),
   )
   ignore(
-    try? @tokenizer.Tokenizer::from_pretrained("tests/data/bert.full.json"),
+    @tokenizer.Tokenizer::from_pretrained("tests/data/bert.full.json"),
   )
   b.bench(name="from_pretrained-multi-cache-hit", fn() {
-    let a = try? @tokenizer.Tokenizer::from_pretrained(
+    let a = @tokenizer.Tokenizer::from_pretrained(
       "tests/data/gpt2.full.json",
-    )
-    let b2 = try? @tokenizer.Tokenizer::from_pretrained(
+    ) catch { _ => abort("from_pretrained gpt2 failed") }
+    let b2 = @tokenizer.Tokenizer::from_pretrained(
       "tests/data/bert.full.json",
-    )
+    ) catch { _ => abort("from_pretrained bert failed") }
     b.keep(a)
     b.keep(b2)
   })
 }
 
 ///|
-fn bench_from_pretrained_cache_eviction_case(b : @bench.T) -> Unit {
+fn bench_from_pretrained_cache_eviction_case(b : @bench.T) -> Unit raise {
   guard load_text("tests/data/bert.full.json") is Some(content) else { return }
   let root = "_build/bench_pretrained_cache_eviction"
   bench_ensure_dir(root)
@@ -680,27 +680,27 @@ fn bench_from_pretrained_cache_eviction_case(b : @bench.T) -> Unit {
     @fs.write_string_to_file(p, content) catch {
       _ => ()
     }
-    ignore(try? @tokenizer.Tokenizer::from_pretrained(p))
+    ignore(@tokenizer.Tokenizer::from_pretrained(p))
   }
   let old = root + "/tok_0.json"
   let hot = root + "/tok_17.json"
   b.bench(name="from_pretrained-cache-eviction-window", fn() {
-    let a = try? @tokenizer.Tokenizer::from_pretrained(old)
-    let b2 = try? @tokenizer.Tokenizer::from_pretrained(hot)
+    let a = @tokenizer.Tokenizer::from_pretrained(old) catch { _ => abort("from_pretrained old cache entry failed") }
+    let b2 = @tokenizer.Tokenizer::from_pretrained(hot) catch { _ => abort("from_pretrained hot cache entry failed") }
     b.keep(a)
     b.keep(b2)
   })
 }
 
 ///|
-fn bench_from_str_multi_parse_cache_case(b : @bench.T) -> Unit {
+fn bench_from_str_multi_parse_cache_case(b : @bench.T) -> Unit raise {
   guard load_text("tests/data/gpt2.full.json") is Some(gpt2) else { return }
   guard load_text("tests/data/bert.full.json") is Some(bert) else { return }
-  ignore(try? @tokenizer.Tokenizer::from_str(gpt2))
-  ignore(try? @tokenizer.Tokenizer::from_str(bert))
+  ignore(@tokenizer.Tokenizer::from_str(gpt2))
+  ignore(@tokenizer.Tokenizer::from_str(bert))
   b.bench(name="from_str-multi-parse-cache-hit", fn() {
-    let a = try? @tokenizer.Tokenizer::from_str(gpt2)
-    let b2 = try? @tokenizer.Tokenizer::from_str(bert)
+    let a = @tokenizer.Tokenizer::from_str(gpt2) catch { _ => abort("from_str gpt2 failed") }
+    let b2 = @tokenizer.Tokenizer::from_str(bert) catch { _ => abort("from_str bert failed") }
     b.keep(a)
     b.keep(b2)
   })
@@ -788,7 +788,7 @@ fn bench_trained_wordlevel_to_json_case(
     special_tokens=["[PAD]"],
   )
   b.bench(name="wordlevel-trained-to_json-\{case_name}", fn() {
-    let json = try? tok.to_json()
+    let json = tok.to_json() catch { _ => abort("wordlevel trained to_json failed") }
     b.keep(json)
   })
 }
@@ -847,7 +847,7 @@ fn bench_trained_wordpiece_to_json_case(
     vocab_size=Some(512),
   )
   b.bench(name="wordpiece-trained-to_json-\{case_name}", fn() {
-    let json = try? tok.to_json()
+    let json = tok.to_json() catch { _ => abort("wordpiece trained to_json failed") }
     b.keep(json)
   })
 }
@@ -927,7 +927,7 @@ fn bench_trained_bpe_to_json_case(b : @bench.T, case_name : String) -> Unit {
     vocab_size=Some(512),
   )
   b.bench(name="bpe-trained-to_json-\{case_name}", fn() {
-    let json = try? tok.to_json()
+    let json = tok.to_json() catch { _ => abort("bpe trained to_json failed") }
     b.keep(json)
   })
 }
@@ -961,7 +961,7 @@ fn bench_trained_unigram_to_json_case(b : @bench.T, case_name : String) -> Unit 
     vocab_size=Some(512),
   )
   b.bench(name="unigram-trained-to_json-\{case_name}", fn() {
-    let json = try? tok.to_json()
+    let json = tok.to_json() catch { _ => abort("unigram trained to_json failed") }
     b.keep(json)
   })
 }
@@ -1867,7 +1867,7 @@ test "bench bytelevel trim offsets" (b : @bench.T) {
 test "bench load from_str (gpt2)" (b : @bench.T) {
   guard load_text("tests/data/gpt2.full.json") is Some(json) else { return }
   b.bench(name="gpt2-from_str", fn() {
-    let t = try? @tokenizer.Tokenizer::from_str(json)
+    let t = @tokenizer.Tokenizer::from_str(json) catch { _ => abort("gpt2 from_str failed") }
     b.keep(t)
   })
 }
