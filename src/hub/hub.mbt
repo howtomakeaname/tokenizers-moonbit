@@ -949,8 +949,10 @@ async fn read_tokenizer_json_stream_chunks(
   let chunks : Array[String] = []
   let max_len = positive_stream_chunk_size(chunk_size)
   while (client.read_some(max_len~) catch {
-    _ => raise @types.ParseError("Hub response stream read failed: \{url}")
-  }) is Some(bytes) {
+          _ =>
+            raise @types.ParseError("Hub response stream read failed: \{url}")
+        })
+        is Some(bytes) {
     chunks.push(@utf8.decode_lossy(bytes[:]))
   }
   if chunks.length() == 0 {
