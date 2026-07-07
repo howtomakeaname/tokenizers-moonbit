@@ -3,6 +3,7 @@ set -euo pipefail
 
 export PATH="$HOME/.moon/bin:$PATH"
 
+moon update
 if moon fmt --help | grep -q -- '--deny-warn'; then
   moon fmt --deny-warn
 else
@@ -14,7 +15,7 @@ if moon info --help | grep -q -- '--deny-warn'; then
 else
   moon info
 fi
-moon test --target wasm
-moon test --target wasm-gc
-moon test --target js
-moon test --target native
+moon test --deny-warn --target wasm
+moon test --deny-warn --target wasm-gc
+moon test --deny-warn --target js
+moon test --deny-warn --target native
