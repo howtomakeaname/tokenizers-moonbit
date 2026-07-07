@@ -1,0 +1,111 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "howtomakeaname/tokenizers-moonbit/common"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn anchored_regex_kind(String) -> (Int, Bool)?
+
+pub fn bounded_regex_kind(String) -> (Int, Int)?
+
+pub fn bounded_regex_kind_pred(Int, Char) -> Bool
+
+pub fn char_string(Char) -> String
+
+pub fn exact_regex_kind(String) -> (Int, Int)?
+
+pub fn is_anchored_regex_pattern(String) -> Bool
+
+pub fn is_ascii_alnum(Char) -> Bool
+
+pub fn is_ascii_digit(Char) -> Bool
+
+pub fn is_ascii_letter(Char) -> Bool
+
+pub fn is_ascii_whitespace(Char) -> Bool
+
+pub fn is_bounded_regex_pattern(String) -> Bool
+
+pub fn is_decimal_number(Char) -> Bool
+
+pub fn is_exact_regex_pattern(String) -> Bool
+
+pub fn is_min_regex_pattern(String) -> Bool
+
+pub fn is_not_whitespace_letter_or_number(Char) -> Bool
+
+pub fn is_ranged_regex_pattern(String) -> Bool
+
+pub fn is_simple_split_regex_pattern(String) -> Bool
+
+pub fn is_unicode_letter(Char) -> Bool
+
+pub fn is_unicode_punctuation(Char) -> Bool
+
+pub fn is_unicode_punctuation_or_symbol(Char) -> Bool
+
+pub fn is_unicode_symbol(Char) -> Bool
+
+pub fn is_unicode_whitespace(Int) -> Bool
+
+pub fn is_word_char(Char) -> Bool
+
+pub fn literal_matches(Array[Char], String) -> Array[Span]?
+
+pub fn min_regex_kind(String) -> (Int, Int)?
+
+pub fn ranged_regex_kind(String) -> (Int, Int, Int)?
+
+pub fn replace_anchored_simple_regex(String, String, String) -> String?
+
+pub fn replace_bounded_char_runs(String, String, (Char) -> Bool, max_run~ : Int) -> String
+
+pub fn replace_bounded_simple_regex(String, String, String) -> String?
+
+pub fn replace_char_runs(String, String, (Char) -> Bool) -> String
+
+pub fn replace_exact_char_runs(String, String, (Char) -> Bool, exact_run~ : Int) -> String
+
+pub fn replace_leading_runs(String, String, (Char) -> Bool) -> String
+
+pub fn replace_literal(String, String, String) -> String
+
+pub fn replace_min_char_runs(String, String, (Char) -> Bool, min_run~ : Int) -> String
+
+pub fn replace_ranged_char_runs(String, String, (Char) -> Bool, min_run~ : Int, max_run~ : Int) -> String
+
+pub fn replace_ranged_simple_regex(String, String, String) -> String?
+
+pub fn replace_simple_regex(String, String, String) -> String?
+
+pub fn replace_space_runs(String, String, min_run~ : Int) -> String
+
+pub fn replace_trailing_runs(String, String, (Char) -> Bool) -> String
+
+pub fn replace_whitespace_runs(String, String) -> String
+
+pub fn simple_split_regex_matches(Array[Char], String) -> Array[Span]?
+
+// Errors
+
+// Types and methods
+pub struct Regex {
+  pattern : String
+} derive(Eq, @debug.Debug)
+pub fn Regex::find_matches(Self, String) -> Array[(Int, Int)]?
+pub fn Regex::is_supported(Self) -> Bool
+pub fn Regex::new(String) -> Self
+pub fn Regex::pattern(Self) -> String
+pub fn Regex::replace_all(Self, String, String) -> String?
+
+pub(all) struct Span {
+  start : Int
+  stop : Int
+}
+
+// Type aliases
+
+// Traits
+

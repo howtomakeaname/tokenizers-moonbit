@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "howtomakeaname/tokenizers-moonbit/processor"
+
+import {
+  "howtomakeaname/tokenizers-moonbit/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub enum Piece {
+  SequenceRef(id~ : String, type_id~ : Int)
+  SpecialTokenRef(id~ : String, type_id~ : Int)
+} derive(Eq, @debug.Debug)
+
+pub enum PostProcessor {
+  TemplateProcessing(single~ : Array[Piece], pair~ : Array[Piece], special_tokens~ : Map[String, SpecialToken])
+  BertProcessing(sep~ : (String, Int), cls~ : (String, Int))
+  RobertaProcessing(sep~ : (String, Int), cls~ : (String, Int), trim_offsets~ : Bool, add_prefix_space~ : Bool)
+  ByteLevel(add_prefix_space~ : Bool, trim_offsets~ : Bool, use_regex~ : Bool)
+  Sequence(Array[PostProcessor])
+}
+pub fn PostProcessor::added_tokens(Self, pair? : Bool) -> Int
+pub fn PostProcessor::bert((String, Int), (String, Int)) -> Self
+pub fn PostProcessor::byte_level(add_prefix_space? : Bool, trim_offsets? : Bool, use_regex? : Bool) -> Self
+pub fn PostProcessor::from_json(Json) -> Self raise @types.TokenizerError
+pub fn PostProcessor::process(Self, @types.Encoding, @types.Encoding?) -> @types.Encoding
+pub fn PostProcessor::roberta((String, Int), (String, Int), trim_offsets? : Bool, add_prefix_space? : Bool) -> Self
+pub fn PostProcessor::sequence(Array[Self]) -> Self
+pub fn PostProcessor::template(Array[Piece], Array[Piece], Map[String, SpecialToken]) -> Self
+pub fn PostProcessor::template_from_strings(String, String, Map[String, SpecialToken]) -> Self raise @types.TokenizerError
+pub fn PostProcessor::to_json(Self) -> String?
+
+pub struct SpecialToken {
+  id : String
+  ids : Array[Int]
+  tokens : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn SpecialToken::new(String, Array[Int], Array[String]) -> Self
+
+// Type aliases
+
+// Traits
+

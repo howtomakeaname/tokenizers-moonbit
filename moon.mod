@@ -1,4 +1,4 @@
-name = "tokenizers-moonbit"
+name = "howtomakeaname/tokenizers-moonbit"
 
 version = "0.1.0"
 
@@ -10,6 +10,8 @@ import {
 readme = "README.md"
 
 license = "Apache-2.0"
+
+repository = "https://github.com/howtomakeaname/tokenizers-moonbit"
 
 keywords = [
   "tokenizer",
@@ -23,6 +25,4 @@ keywords = [
 
 description = "A MoonBit port of HuggingFace tokenizers. Loads tokenizer.json and runs BPE / byte-level BPE / WordPiece / Unigram tokenization across all backends."
 
-options(
-  source: "src",
-)
+source = "src"

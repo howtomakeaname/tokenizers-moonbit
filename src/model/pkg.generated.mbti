@@ -1,0 +1,88 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "howtomakeaname/tokenizers-moonbit/model"
+
+import {
+  "howtomakeaname/tokenizers-moonbit/types",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct BPEModel {
+  vocab : Map[String, Int]
+  vocab_r : Array[String?]
+  merges : Map[(String, String), Int]
+  unk_token : String?
+  continuing_subword_prefix : String?
+  end_of_word_suffix : String?
+  fuse_unk : Bool
+  byte_fallback : Bool
+  ignore_merges : Bool
+  dropout : Double?
+  mut dropout_rng_state : Int
+  cache : Map[String, Array[@types.Token]]
+  mut cache_capacity : Int?
+}
+pub fn BPEModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token]
+
+pub enum Model {
+  BPE(BPEModel)
+  WordPiece(WordPieceModel)
+  Unigram(UnigramModel)
+  WordLevel(WordLevelModel)
+}
+pub fn Model::cache_size(Self) -> Int
+pub fn Model::clear_cache(Self) -> Unit
+pub fn Model::from_json(Json) -> Self raise @types.TokenizerError
+pub fn Model::get_vocab(Self) -> Map[String, Int]
+pub fn Model::id_to_token(Self, Int) -> String?
+pub fn Model::resize_cache(Self, Int) -> Unit
+pub fn Model::save(Self, String, prefix? : String) -> Array[String] raise @types.TokenizerError
+pub fn Model::to_json(Self) -> String?
+pub fn Model::token_to_id(Self, String) -> Int?
+pub fn Model::tokenize(Self, String, offset? : Int) -> Array[@types.Token]
+pub fn Model::train_bpe(Array[String], unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?) -> Self
+pub fn Model::train_bpe_from_tokens(Array[Array[String]], unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?) -> Self
+pub fn Model::train_unigram(Array[String], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, max_piece_length? : Int?, shrinking_factor? : Double, n_sub_iterations? : Int, show_progress? : Bool) -> Self
+pub fn Model::train_unigram_from_tokens(Array[Array[String]], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, max_piece_length? : Int?, shrinking_factor? : Double, n_sub_iterations? : Int, show_progress? : Bool) -> Self
+pub fn Model::train_wordlevel(Array[String], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?) -> Self
+pub fn Model::train_wordlevel_from_tokens(Array[Array[String]], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?) -> Self
+pub fn Model::train_wordpiece(Array[String], unk_token? : String, continuing_subword_prefix? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
+pub fn Model::train_wordpiece_from_tokens(Array[Array[String]], unk_token? : String, continuing_subword_prefix? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
+pub fn Model::vocab_size(Self) -> Int
+
+pub struct UnigramModel {
+  vocab : Map[String, (Int, Double)]
+  vocab_r : Array[String?]
+  unk_id : Int?
+  byte_fallback : Bool
+  fuse_unk : Bool
+  cache : Map[String, Array[@types.Token]]
+  mut cache_capacity : Int?
+}
+pub fn UnigramModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token]
+
+pub struct WordLevelModel {
+  vocab : Map[String, Int]
+  vocab_r : Array[String?]
+  unk_token : String
+}
+pub fn WordLevelModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token]
+
+pub struct WordPieceModel {
+  vocab : Map[String, Int]
+  vocab_r : Array[String?]
+  unk_token : String
+  continuing_subword_prefix : String
+  max_input_chars_per_word : Int
+  cache : Map[String, Array[@types.Token]]
+  mut cache_capacity : Int?
+}
+pub fn WordPieceModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token]
+
+// Type aliases
+
+// Traits
+

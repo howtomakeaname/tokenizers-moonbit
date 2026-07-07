@@ -34,6 +34,11 @@ bert/bert-cased、distilbert、t5、albert、xlm-roberta、Qwen/DeepSeek/Phi/Mis
 Falcon/StarCoder/GPT-NeoX/CLIP/GLM/Granite 家族、ModernBERT/GTE-ModernBERT、
 SmolLM2，以及 BGE、E5、MiniLM、Jina、Nomic、MixedBread 等 embedding tokenizer。
 
+正则兼容边界是显式的：主流 HuggingFace tokenizer 使用的常见 `Split` / `Replace`
+regex family 已用跨后端 deterministic scanner 实现；任意复杂正则，例如
+look-around、backreference、完整通用 Unicode regex 语义，仍不在当前支持范围内。
+迁移自定义 tokenizer 前请先查看 [`docs/components.md`](./docs/components.md#limitations)。
+
 组件状态见 [`docs/zh/components.md`](./docs/zh/components.md)，路线图见
 [`PROGRESS.md`](./PROGRESS.md)。
 
@@ -46,6 +51,12 @@ SmolLM2，以及 BGE、E5、MiniLM、Jina、Nomic、MixedBread 等 embedding tok
 - [Benchmark](./docs/zh/benchmarks.md)
 
 ## 快速开始
+
+Mooncakes 发布/依赖模块名：`howtomakeaname/tokenizers-moonbit`。
+
+```bash
+moon add howtomakeaname/tokenizers-moonbit
+```
 
 ```moonbit
 let tok = @tokenizer.Tokenizer::from_str(json_text)

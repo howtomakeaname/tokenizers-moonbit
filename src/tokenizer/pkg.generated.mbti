@@ -1,0 +1,548 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "howtomakeaname/tokenizers-moonbit/tokenizer"
+
+import {
+  "howtomakeaname/tokenizers-moonbit/common",
+  "howtomakeaname/tokenizers-moonbit/decoder",
+  "howtomakeaname/tokenizers-moonbit/model",
+  "howtomakeaname/tokenizers-moonbit/normalizer",
+  "howtomakeaname/tokenizers-moonbit/pretokenizer",
+  "howtomakeaname/tokenizers-moonbit/processor",
+  "howtomakeaname/tokenizers-moonbit/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn cache_pretrained_tokenizer_json(String, String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> String raise @types.TokenizerError
+
+pub fn clear_pretrained_download_resume_metadata(String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> Bool
+
+pub fn from_buffer(Bytes) -> Tokenizer raise @types.TokenizerError
+
+pub fn from_file(String) -> Tokenizer raise @types.TokenizerError
+
+pub fn from_pretrained(String) -> Tokenizer raise @types.TokenizerError
+
+pub fn from_pretrained_aux_files(String, revision? : String, cache_dir? : String?) -> PretrainedAuxFiles
+
+pub fn from_pretrained_cache_etag_matches(String, String?, revision? : String, cache_dir? : String?) -> Bool
+
+pub fn from_pretrained_cache_exists(String, revision? : String, cache_dir? : String?) -> Bool
+
+pub fn from_pretrained_cache_is_fresh(String, revision? : String, cache_dir? : String?, resolved_revision? : String?, etag? : String?, require_tokenizer_config? : Bool, require_special_tokens_map? : Bool) -> Bool
+
+pub fn from_pretrained_cache_metadata(String, revision? : String, cache_dir? : String?) -> PretrainedCacheMetadata?
+
+pub fn from_pretrained_cache_paths(String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> PretrainedCachePaths?
+
+pub fn from_pretrained_cached(String, revision? : String, cache_dir? : String?) -> Tokenizer raise @types.TokenizerError
+
+pub fn from_pretrained_download_resume_metadata(String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> PretrainedDownloadResumeMetadata?
+
+pub fn from_pretrained_downloaded(String, String, revision? : String, resolved_revision? : String?, cache_dir? : String?, tokenizer_config_json? : String?, special_tokens_map_json? : String?, etag? : String?) -> Tokenizer raise @types.TokenizerError
+
+pub fn from_pretrained_ref_revision(String, revision? : String, cache_dir? : String?) -> String?
+
+pub fn from_pretrained_resolution_hint(String, revision? : String, cache_dir? : String?) -> PretrainedResolutionHint
+
+pub fn write_pretrained_download_resume_metadata(String, revision? : String, resolved_revision? : String?, cache_dir? : String?, etag? : String?, expected_size? : Int?, downloaded_size? : Int) -> PretrainedDownloadResumeMetadata raise @types.TokenizerError
+
+pub fn write_pretrained_ref_revision(String, String, revision? : String, cache_dir? : String?) -> String raise @types.TokenizerError
+
+// Errors
+
+// Types and methods
+pub struct AddedToken {
+  content : String
+  single_word : Bool
+  lstrip : Bool
+  rstrip : Bool
+  normalized : Bool
+  special : Bool
+} derive(Eq, @debug.Debug)
+pub fn AddedToken::__getstate__(Self) -> AddedTokenState
+pub fn AddedToken::__setstate__(AddedTokenState) -> Self
+pub fn AddedToken::as_tuple(Self) -> (String, Bool, Bool, Bool, Bool, Bool)
+pub fn AddedToken::content(Self) -> String
+pub fn AddedToken::from_state(AddedTokenState) -> Self
+pub fn AddedToken::from_tuple((String, Bool, Bool, Bool, Bool, Bool)) -> Self
+pub fn AddedToken::get_content(Self) -> String
+pub fn AddedToken::get_lstrip(Self) -> Bool
+pub fn AddedToken::get_normalized(Self) -> Bool
+pub fn AddedToken::get_rstrip(Self) -> Bool
+pub fn AddedToken::get_single_word(Self) -> Bool
+pub fn AddedToken::get_special(Self) -> Bool
+pub fn AddedToken::get_state(Self) -> AddedTokenState
+pub fn AddedToken::is_special(Self) -> Bool
+pub fn AddedToken::lstrip(Self) -> Bool
+pub fn AddedToken::new(String) -> Self
+pub fn AddedToken::normalized(Self) -> Bool
+pub fn AddedToken::rstrip(Self) -> Bool
+pub fn AddedToken::single_word(Self) -> Bool
+pub fn AddedToken::special(String) -> Self
+pub fn AddedToken::with_lstrip(Self, Bool) -> Self
+pub fn AddedToken::with_normalized(Self, Bool) -> Self
+pub fn AddedToken::with_rstrip(Self, Bool) -> Self
+pub fn AddedToken::with_single_word(Self, Bool) -> Self
+pub fn AddedToken::with_special(Self, Bool) -> Self
+
+type AddedTokenInfo derive(Eq, @debug.Debug)
+
+pub struct AddedTokenState {
+  content : String
+  single_word : Bool
+  lstrip : Bool
+  rstrip : Bool
+  normalized : Bool
+  special : Bool
+} derive(Eq, @debug.Debug)
+
+type AddedVocabulary
+
+pub struct DecodeStream {
+  tokenizer : Tokenizer
+  skip_special_tokens : Bool
+  ids : Array[Int]
+  prefix : String
+  prefix_index : Int
+}
+pub fn DecodeStream::step(Self, Int) -> (Self, String?)
+
+pub enum EncodeInput {
+  SingleInput(TextInputSequence)
+  PairInput(TextInputSequence, TextInputSequence)
+} derive(Eq, @debug.Debug)
+pub fn EncodeInput::mixed_pair(TextInputSequence, TextInputSequence) -> Self
+pub fn EncodeInput::pair(String, String) -> Self
+pub fn EncodeInput::pair_pretokenized(Array[String], Array[String]) -> Self
+pub fn EncodeInput::single(String) -> Self
+pub fn EncodeInput::single_pretokenized(Array[String]) -> Self
+
+pub struct NormalizedString {
+  original : String
+  normalized : String
+}
+pub fn NormalizedString::__getstate__(Self) -> NormalizedStringState
+pub fn NormalizedString::__len__(Self) -> Int
+pub fn NormalizedString::__setstate__(NormalizedStringState) -> Self
+pub fn NormalizedString::as_tuple(Self) -> (String, String)
+pub fn NormalizedString::filter(Self, (Char) -> Bool) -> Self
+pub fn NormalizedString::from_state(NormalizedStringState) -> Self
+pub fn NormalizedString::from_tuple((String, String)) -> Self
+pub fn NormalizedString::get(Self) -> String
+pub fn NormalizedString::get_normalized(Self) -> String
+pub fn NormalizedString::get_original(Self) -> String
+pub fn NormalizedString::get_state(Self) -> NormalizedStringState
+pub fn NormalizedString::is_empty(Self) -> Bool
+pub fn NormalizedString::len(Self) -> Int
+pub fn NormalizedString::map(Self, (Char) -> String) -> Self
+pub fn NormalizedString::new(String) -> Self
+pub fn NormalizedString::normalize(Self, @normalizer.Normalizer) -> Self
+pub fn NormalizedString::normalized(Self) -> String
+pub fn NormalizedString::original(Self) -> String
+pub fn NormalizedString::prepend(Self, String) -> Self
+pub fn NormalizedString::replace(Self, String, String) -> Self
+pub fn NormalizedString::slice(Self, Int, Int) -> Self
+pub fn NormalizedString::split(Self, String) -> Array[Self]
+pub fn NormalizedString::split_regex(Self, @common.Regex) -> Array[Self]?
+pub fn NormalizedString::to_string(Self) -> String
+
+pub struct NormalizedStringState {
+  original : String
+  normalized : String
+} derive(Eq, @debug.Debug)
+
+pub(all) enum PaddingDirection {
+  Left
+  Right
+} derive(Eq, @debug.Debug)
+
+pub(all) struct PaddingParams {
+  strategy : PaddingStrategy
+  direction : PaddingDirection
+  pad_id : Int
+  pad_type_id : Int
+  pad_token : String
+  pad_to_multiple_of : Int?
+} derive(Eq, @debug.Debug)
+pub fn PaddingParams::__getstate__(Self) -> PaddingParamsState
+pub fn PaddingParams::__setstate__(PaddingParamsState) -> Self
+pub fn PaddingParams::as_tuple(Self) -> (PaddingStrategy, PaddingDirection, Int, Int, String, Int?)
+pub fn PaddingParams::batch_longest(pad_id? : Int, pad_token? : String) -> Self
+pub fn PaddingParams::direction(Self) -> PaddingDirection
+pub fn PaddingParams::fixed(Int, pad_id? : Int, pad_token? : String) -> Self
+pub fn PaddingParams::from_state(PaddingParamsState) -> Self
+pub fn PaddingParams::from_tuple((PaddingStrategy, PaddingDirection, Int, Int, String, Int?)) -> Self
+pub fn PaddingParams::get_direction(Self) -> PaddingDirection
+pub fn PaddingParams::get_pad_id(Self) -> Int
+pub fn PaddingParams::get_pad_to_multiple_of(Self) -> Int?
+pub fn PaddingParams::get_pad_token(Self) -> String
+pub fn PaddingParams::get_pad_type_id(Self) -> Int
+pub fn PaddingParams::get_state(Self) -> PaddingParamsState
+pub fn PaddingParams::get_strategy(Self) -> PaddingStrategy
+pub fn PaddingParams::new(PaddingStrategy, pad_id? : Int, pad_token? : String) -> Self
+pub fn PaddingParams::pad_id(Self) -> Int
+pub fn PaddingParams::pad_to_multiple_of(Self) -> Int?
+pub fn PaddingParams::pad_token(Self) -> String
+pub fn PaddingParams::pad_type_id(Self) -> Int
+pub fn PaddingParams::strategy(Self) -> PaddingStrategy
+pub fn PaddingParams::with_direction(Self, PaddingDirection) -> Self
+pub fn PaddingParams::with_pad_to_multiple_of(Self, Int?) -> Self
+pub fn PaddingParams::with_pad_type_id(Self, Int) -> Self
+
+pub(all) struct PaddingParamsState {
+  strategy : PaddingStrategy
+  direction : PaddingDirection
+  pad_id : Int
+  pad_type_id : Int
+  pad_token : String
+  pad_to_multiple_of : Int?
+} derive(Eq, @debug.Debug)
+
+pub(all) enum PaddingStrategy {
+  BatchLongest
+  Fixed(Int)
+} derive(Eq, @debug.Debug)
+
+pub struct PreTokenizedString {
+  original : String
+  splits : Array[@types.Split]
+}
+pub fn PreTokenizedString::__getstate__(Self) -> PreTokenizedStringState
+pub fn PreTokenizedString::__len__(Self) -> Int
+pub fn PreTokenizedString::__setstate__(PreTokenizedStringState) -> Self
+pub fn PreTokenizedString::as_tuple(Self) -> (String, Array[@types.Split])
+pub fn PreTokenizedString::from_splits(Array[@types.Split]) -> Self
+pub fn PreTokenizedString::from_state(PreTokenizedStringState) -> Self
+pub fn PreTokenizedString::from_tuple((String, Array[@types.Split])) -> Self
+pub fn PreTokenizedString::get_original(Self) -> String
+pub fn PreTokenizedString::get_splits(Self) -> Array[@types.Split]
+pub fn PreTokenizedString::get_state(Self) -> PreTokenizedStringState
+pub fn PreTokenizedString::into_encoding(Self, @model.Model, type_id? : Int) -> @types.Encoding
+pub fn PreTokenizedString::is_empty(Self) -> Bool
+pub fn PreTokenizedString::len(Self) -> Int
+pub fn PreTokenizedString::new(String) -> Self
+pub fn PreTokenizedString::normalize(Self, @normalizer.Normalizer) -> Self
+pub fn PreTokenizedString::original(Self) -> String
+pub fn PreTokenizedString::split(Self, @pretokenizer.PreTokenizer) -> Self
+pub fn PreTokenizedString::splits(Self) -> Array[@types.Split]
+pub fn PreTokenizedString::to_encoding(Self, @model.Model, type_id? : Int) -> @types.Encoding
+
+pub struct PreTokenizedStringState {
+  original : String
+  splits : Array[@types.Split]
+} derive(Eq, @debug.Debug)
+
+pub struct PretrainedAuxFiles {
+  tokenizer_config_json : String?
+  special_tokens_map_json : String?
+} derive(Eq, @debug.Debug)
+
+pub struct PretrainedCacheMetadata {
+  tokenizer_json_path : String
+  tokenizer_config_path : String?
+  special_tokens_map_path : String?
+  revision : String
+  resolved_revision : String
+  etag : String?
+} derive(Eq, @debug.Debug)
+pub fn PretrainedCacheMetadata::cache_exists(Self) -> Bool
+pub fn PretrainedCacheMetadata::etag_matches(Self, String?) -> Bool
+pub fn PretrainedCacheMetadata::is_fresh(Self, resolved_revision? : String?, etag? : String?, require_tokenizer_config? : Bool, require_special_tokens_map? : Bool) -> Bool
+
+pub struct PretrainedCachePaths {
+  repo_cache_dir : String
+  refs_dir : String
+  ref_path : String
+  snapshot_dir : String
+  tokenizer_json_path : String
+  tokenizer_config_path : String
+  special_tokens_map_path : String
+  etag_path : String
+  resume_path : String
+} derive(Eq, @debug.Debug)
+
+pub struct PretrainedDownloadResumeMetadata {
+  resume_path : String
+  incomplete_path : String
+  etag : String?
+  expected_size : Int?
+  downloaded_size : Int
+} derive(Eq, @debug.Debug)
+
+pub struct PretrainedResolutionHint {
+  model_id : String
+  revision : String
+  cache_dir : String?
+  repo_cache_dir : String?
+  ref_path : String?
+  resolved_revision : String?
+  snapshot_dir : String?
+  tokenizer_json_path : String?
+  cache_exists : Bool
+  message : String
+} derive(Eq, @debug.Debug)
+
+type Segment derive(Eq, @debug.Debug)
+
+pub enum TextInputSequence {
+  Text(String)
+  PreTokenized(Array[String])
+} derive(Eq, @debug.Debug)
+pub fn TextInputSequence::pretokenized(Array[String]) -> Self
+pub fn TextInputSequence::text(String) -> Self
+
+pub struct Tokenizer {
+  normalizer : @normalizer.Normalizer?
+  pre_tokenizer : @pretokenizer.PreTokenizer?
+  model : @model.Model
+  post_processor : @processor.PostProcessor?
+  decoder : @decoder.Decoder?
+  component_hooks : TokenizerComponentHooks
+  added_vocabulary : AddedVocabulary
+  mut truncation : TruncationParams?
+  mut padding : PaddingParams?
+  mut source_json : String?
+}
+pub fn Tokenizer::__getstate__(Self) -> TokenizerState raise @types.TokenizerError
+pub fn Tokenizer::__setstate__(TokenizerState) -> Self raise @types.TokenizerError
+pub fn Tokenizer::add_special_token_strings(Self, Array[String]) -> Self
+pub fn Tokenizer::add_special_tokens(Self, Array[AddedToken]) -> Self
+pub fn Tokenizer::add_special_tokens_with_count(Self, Array[AddedToken]) -> (Self, Int)
+pub fn Tokenizer::add_token_strings(Self, Array[String]) -> Self
+pub fn Tokenizer::add_tokens(Self, Array[AddedToken]) -> Self
+pub fn Tokenizer::add_tokens_with_count(Self, Array[AddedToken]) -> (Self, Int)
+pub fn Tokenizer::added_tokens(Self) -> Array[AddedToken]
+pub fn Tokenizer::added_tokens_count(Self, special_only? : Bool) -> Int
+pub fn Tokenizer::added_tokens_decoder(Self) -> Map[Int, AddedToken]
+pub fn Tokenizer::all_special_ids(Self) -> Array[Int]
+pub fn Tokenizer::all_special_tokens(Self) -> Array[String]
+pub fn Tokenizer::async_decode(Self, Array[Int], skip_special_tokens? : Bool) -> String
+pub fn Tokenizer::async_decode_batch(Self, Array[Array[Int]], skip_special_tokens? : Bool) -> Array[String]
+pub fn Tokenizer::async_encode(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::async_encode_batch(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::async_encode_batch_fast(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::async_encode_fast(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::batch_decode(Self, Array[Array[Int]], skip_special_tokens? : Bool) -> Array[String]
+pub fn Tokenizer::batch_encode_plus(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::batch_encode_plus_fast(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::cache_size(Self) -> Int
+pub fn Tokenizer::clear_cache(Self) -> Self
+pub fn Tokenizer::clear_component_hooks(Self) -> Self
+pub fn Tokenizer::clear_pretrained_download_resume_metadata(String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> Bool
+pub fn Tokenizer::component_hooks(Self) -> TokenizerComponentHooks
+pub fn Tokenizer::convert_id_to_token(Self, Int) -> String?
+pub fn Tokenizer::convert_ids_to_tokens(Self, Array[Int]) -> Array[String?]
+pub fn Tokenizer::convert_token_to_id(Self, String) -> Int?
+pub fn Tokenizer::convert_tokens_to_ids(Self, Array[String]) -> Array[Int?]
+pub fn Tokenizer::decode(Self, Array[Int], skip_special_tokens? : Bool) -> String
+pub fn Tokenizer::decode_batch(Self, Array[Array[Int]], skip_special_tokens? : Bool) -> Array[String]
+pub fn Tokenizer::decode_ids(Self, Array[Int], skip_special_tokens? : Bool) -> String
+pub fn Tokenizer::decode_ids_batch(Self, Array[Array[Int]], skip_special_tokens? : Bool) -> Array[String]
+pub fn Tokenizer::decode_stream(Self, skip_special_tokens? : Bool) -> DecodeStream
+pub fn Tokenizer::decode_with_hooks(Self, Array[Int], TokenizerComponentHooks, skip_special_tokens? : Bool) -> String
+pub fn Tokenizer::decoder(Self) -> @decoder.Decoder?
+pub fn Tokenizer::disable_encode_special_tokens(Self) -> Self
+pub fn Tokenizer::enable_encode_special_tokens(Self) -> Self
+pub fn Tokenizer::enable_padding(Self, length? : Int?, direction? : PaddingDirection, pad_id? : Int, pad_type_id? : Int, pad_token? : String, pad_to_multiple_of? : Int?) -> Self
+pub fn Tokenizer::enable_truncation(Self, Int, stride? : Int, strategy? : TruncationStrategy, direction? : TruncationDirection) -> Self
+pub fn Tokenizer::encode(Self, String, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_batch(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_batch_fast(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_batch_parallel(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_batch_parallel_fast(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_batch_with_byte_offsets(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_fast(Self, String, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_input(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_input_batch(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_input_batch_fast(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_input_fast(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_pair(Self, String, String, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_pair_batch(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pair_batch_fast(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pair_batch_parallel(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pair_batch_parallel_fast(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pair_batch_with_byte_offsets(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pair_fast(Self, String, String, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_pair_with_byte_offsets(Self, String, String, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_plus(Self, String, pair? : String?, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_plus_fast(Self, String, pair? : String?, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_pretokenized(Self, Array[String], add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_pretokenized_batch(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pretokenized_batch_fast(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pretokenized_batch_parallel(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pretokenized_batch_parallel_fast(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pretokenized_batch_with_byte_offsets(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pretokenized_fast(Self, Array[String], add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_pretokenized_pair(Self, Array[String], Array[String], add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_pretokenized_pair_batch(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pretokenized_pair_batch_fast(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pretokenized_pair_batch_parallel(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pretokenized_pair_batch_parallel_fast(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pretokenized_pair_batch_with_byte_offsets(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_pretokenized_pair_fast(Self, Array[String], Array[String], add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_pretokenized_pair_with_byte_offsets(Self, Array[String], Array[String], add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_pretokenized_with_byte_offsets(Self, Array[String], add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_sequence_input(Self, TextInputSequence, pair? : TextInputSequence?, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_sequence_input_fast(Self, TextInputSequence, pair? : TextInputSequence?, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_special_tokens(Self) -> Bool
+pub fn Tokenizer::encode_text(Self, String, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_text_batch(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_text_batch_fast(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::encode_text_fast(Self, String, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_with_byte_offsets(Self, String, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_with_hooks(Self, String, TokenizerComponentHooks, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_with_hooks_fast(Self, String, TokenizerComponentHooks, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::from_buffer(Bytes) -> Self raise @types.TokenizerError
+pub fn Tokenizer::from_file(String) -> Self raise @types.TokenizerError
+pub fn Tokenizer::from_pretrained(String) -> Self raise @types.TokenizerError
+pub fn Tokenizer::from_pretrained_aux_files(String, revision? : String, cache_dir? : String?) -> PretrainedAuxFiles
+pub fn Tokenizer::from_pretrained_cache_etag_matches(String, String?, revision? : String, cache_dir? : String?) -> Bool
+pub fn Tokenizer::from_pretrained_cache_exists(String, revision? : String, cache_dir? : String?) -> Bool
+pub fn Tokenizer::from_pretrained_cache_is_fresh(String, revision? : String, cache_dir? : String?, resolved_revision? : String?, etag? : String?, require_tokenizer_config? : Bool, require_special_tokens_map? : Bool) -> Bool
+pub fn Tokenizer::from_pretrained_cache_metadata(String, revision? : String, cache_dir? : String?) -> PretrainedCacheMetadata?
+pub fn Tokenizer::from_pretrained_cache_paths(String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> PretrainedCachePaths?
+pub fn Tokenizer::from_pretrained_cached(String, revision? : String, cache_dir? : String?) -> Self raise @types.TokenizerError
+pub fn Tokenizer::from_pretrained_download_resume_metadata(String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> PretrainedDownloadResumeMetadata?
+pub fn Tokenizer::from_pretrained_downloaded(String, String, revision? : String, resolved_revision? : String?, cache_dir? : String?, tokenizer_config_json? : String?, special_tokens_map_json? : String?, etag? : String?) -> Self raise @types.TokenizerError
+pub fn Tokenizer::from_pretrained_ref_revision(String, revision? : String, cache_dir? : String?) -> String?
+pub fn Tokenizer::from_pretrained_resolution_hint(String, revision? : String, cache_dir? : String?) -> PretrainedResolutionHint
+pub fn Tokenizer::from_state(TokenizerState) -> Self raise @types.TokenizerError
+pub fn Tokenizer::from_str(String) -> Self raise @types.TokenizerError
+pub fn Tokenizer::get_added_tokens(Self) -> Array[AddedToken]
+pub fn Tokenizer::get_added_tokens_count(Self, special_only? : Bool) -> Int
+pub fn Tokenizer::get_added_tokens_decoder(Self) -> Map[Int, AddedToken]
+pub fn Tokenizer::get_component_hooks(Self) -> TokenizerComponentHooks
+pub fn Tokenizer::get_decoder(Self) -> @decoder.Decoder?
+pub fn Tokenizer::get_encode_special_tokens(Self) -> Bool
+pub fn Tokenizer::get_model(Self) -> @model.Model
+pub fn Tokenizer::get_normalizer(Self) -> @normalizer.Normalizer?
+pub fn Tokenizer::get_padding(Self) -> PaddingParams?
+pub fn Tokenizer::get_post_processor(Self) -> @processor.PostProcessor?
+pub fn Tokenizer::get_pre_tokenizer(Self) -> @pretokenizer.PreTokenizer?
+pub fn Tokenizer::get_state(Self) -> TokenizerState raise @types.TokenizerError
+pub fn Tokenizer::get_truncation(Self) -> TruncationParams?
+pub fn Tokenizer::get_vocab(Self, with_added_tokens? : Bool) -> Map[String, Int]
+pub fn Tokenizer::get_vocab_size(Self, with_added_tokens? : Bool) -> Int
+pub fn Tokenizer::id_to_token(Self, Int) -> String?
+pub fn Tokenizer::is_special_token(Self, String) -> Bool
+pub fn Tokenizer::model(Self) -> @model.Model
+pub fn Tokenizer::new(@model.Model) -> Self
+pub fn Tokenizer::no_padding(Self) -> Self
+pub fn Tokenizer::no_truncation(Self) -> Self
+pub fn Tokenizer::normalizer(Self) -> @normalizer.Normalizer?
+pub fn Tokenizer::num_special_tokens_to_add(Self, is_pair? : Bool) -> Int
+pub fn Tokenizer::padding(Self) -> PaddingParams?
+pub fn Tokenizer::post_process(Self, @types.Encoding, pair? : @types.Encoding?, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::post_processor(Self) -> @processor.PostProcessor?
+pub fn Tokenizer::pre_tokenizer(Self) -> @pretokenizer.PreTokenizer?
+pub fn Tokenizer::resize_cache(Self, Int) -> Self
+pub fn Tokenizer::save(Self, String, pretty? : Bool) -> Unit raise @types.TokenizerError
+pub fn Tokenizer::save_model(Self, String, prefix? : String) -> Array[String] raise @types.TokenizerError
+pub fn Tokenizer::save_pretrained(Self, String, pretty? : Bool, save_model? : Bool, model_prefix? : String) -> String raise @types.TokenizerError
+pub fn Tokenizer::set_encode_special_tokens(Self, Bool) -> Self
+pub fn Tokenizer::to_json(Self) -> String raise @types.TokenizerError
+pub fn Tokenizer::to_str(Self, pretty? : Bool) -> String raise @types.TokenizerError
+pub fn Tokenizer::token_to_id(Self, String) -> Int?
+pub fn Tokenizer::train(Self, Array[String], Trainer) -> Self
+pub fn Tokenizer::train_bpe(Array[String], unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?) -> Self
+pub fn Tokenizer::train_bpe_from_tokens(Array[Array[String]], unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], pre_tokenizer? : @pretokenizer.PreTokenizer?, vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?) -> Self
+pub fn Tokenizer::train_bpe_with_pretokenizer(Array[String], @pretokenizer.PreTokenizer, unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?) -> Self
+pub fn Tokenizer::train_from_files(Self, Array[String], Trainer) -> Self raise @types.TokenizerError
+pub fn Tokenizer::train_from_iterator(Self, Array[String], Trainer) -> Self
+pub fn Tokenizer::train_unigram(Array[String], unk_token? : String, unk_piece? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, max_piece_length? : Int?, shrinking_factor? : Double, n_sub_iterations? : Int, show_progress? : Bool) -> Self
+pub fn Tokenizer::train_unigram_from_tokens(Array[Array[String]], unk_token? : String, unk_piece? : String?, min_frequency? : Int, special_tokens? : Array[String], pre_tokenizer? : @pretokenizer.PreTokenizer?, vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, max_piece_length? : Int?, shrinking_factor? : Double, n_sub_iterations? : Int, show_progress? : Bool) -> Self
+pub fn Tokenizer::train_unigram_with_pretokenizer(Array[String], @pretokenizer.PreTokenizer, unk_token? : String, unk_piece? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, max_piece_length? : Int?, shrinking_factor? : Double, n_sub_iterations? : Int, show_progress? : Bool) -> Self
+pub fn Tokenizer::train_wordlevel(Array[String], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?) -> Self
+pub fn Tokenizer::train_wordlevel_from_tokens(Array[Array[String]], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], pre_tokenizer? : @pretokenizer.PreTokenizer?, vocab_size? : Int?) -> Self
+pub fn Tokenizer::train_wordlevel_with_pretokenizer(Array[String], @pretokenizer.PreTokenizer, unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?) -> Self
+pub fn Tokenizer::train_wordpiece(Array[String], unk_token? : String, continuing_subword_prefix? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
+pub fn Tokenizer::train_wordpiece_from_tokens(Array[Array[String]], unk_token? : String, continuing_subword_prefix? : String, min_frequency? : Int, special_tokens? : Array[String], pre_tokenizer? : @pretokenizer.PreTokenizer?, vocab_size? : Int?, max_input_chars_per_word? : Int, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
+pub fn Tokenizer::train_wordpiece_with_pretokenizer(Array[String], @pretokenizer.PreTokenizer, unk_token? : String, continuing_subword_prefix? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
+pub fn Tokenizer::truncation(Self) -> TruncationParams?
+pub fn Tokenizer::vocab(Self, with_added_tokens? : Bool) -> Map[String, Int]
+pub fn Tokenizer::vocab_size(Self, with_added_tokens? : Bool) -> Int
+pub fn Tokenizer::with_component_hooks(Self, TokenizerComponentHooks) -> Self
+pub fn Tokenizer::with_decoder(Self, @decoder.Decoder?) -> Self
+pub fn Tokenizer::with_model(Self, @model.Model) -> Self
+pub fn Tokenizer::with_normalizer(Self, @normalizer.Normalizer?) -> Self
+pub fn Tokenizer::with_padding(Self, PaddingParams?) -> Self
+pub fn Tokenizer::with_post_processor(Self, @processor.PostProcessor?) -> Self
+pub fn Tokenizer::with_pre_tokenizer(Self, @pretokenizer.PreTokenizer?) -> Self
+pub fn Tokenizer::with_truncation(Self, TruncationParams?) -> Self
+pub fn Tokenizer::write_pretrained_download_resume_metadata(String, revision? : String, resolved_revision? : String?, cache_dir? : String?, etag? : String?, expected_size? : Int?, downloaded_size? : Int) -> PretrainedDownloadResumeMetadata raise @types.TokenizerError
+pub fn Tokenizer::write_pretrained_ref_revision(String, String, revision? : String, cache_dir? : String?) -> String raise @types.TokenizerError
+
+pub struct TokenizerComponentHooks {
+  normalize : ((String) -> String)?
+  pre_tokenize : ((String, Int) -> Array[@types.Split])?
+  decode : ((Array[String]) -> String)?
+}
+pub fn TokenizerComponentHooks::empty() -> Self
+pub fn TokenizerComponentHooks::new(normalize? : ((String) -> String)?, pre_tokenize? : ((String, Int) -> Array[@types.Split])?, decode? : ((Array[String]) -> String)?) -> Self
+pub fn TokenizerComponentHooks::with_decode(Self, ((Array[String]) -> String)?) -> Self
+pub fn TokenizerComponentHooks::with_normalize(Self, ((String) -> String)?) -> Self
+pub fn TokenizerComponentHooks::with_pre_tokenize(Self, ((String, Int) -> Array[@types.Split])?) -> Self
+
+pub struct TokenizerState {
+  json : String
+} derive(Eq, @debug.Debug)
+
+pub enum Trainer {
+  WordLevelTrainer(unk_token~ : String, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, show_progress~ : Bool)
+  WordPieceTrainer(unk_token~ : String, continuing_subword_prefix~ : String, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, max_input_chars_per_word~ : Int, initial_alphabet~ : Array[String], limit_alphabet~ : Int?, show_progress~ : Bool)
+  BpeTrainer(unk_token~ : String?, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, continuing_subword_prefix~ : String?, end_of_word_suffix~ : String?, fuse_unk~ : Bool, initial_alphabet~ : Array[String], limit_alphabet~ : Int?, max_token_length~ : Int?, show_progress~ : Bool)
+  UnigramTrainer(unk_token~ : String, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, byte_fallback~ : Bool, fuse_unk~ : Bool, shrinking_factor~ : Double, max_piece_length~ : Int?, n_sub_iterations~ : Int, show_progress~ : Bool)
+} derive(Eq, @debug.Debug)
+pub fn Trainer::bpe(unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?, show_progress? : Bool) -> Self
+pub fn Trainer::unigram(unk_token? : String, unk_piece? : String?, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, shrinking_factor? : Double, max_piece_length? : Int?, n_sub_iterations? : Int, show_progress? : Bool) -> Self
+pub fn Trainer::wordlevel(unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, show_progress? : Bool) -> Self
+pub fn Trainer::wordpiece(unk_token? : String, continuing_subword_prefix? : String, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, max_input_chars_per_word? : Int, initial_alphabet? : Array[String], limit_alphabet? : Int?, show_progress? : Bool) -> Self
+
+pub(all) enum TruncationDirection {
+  Left
+  Right
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TruncationParams {
+  max_length : Int
+  stride : Int
+  direction : TruncationDirection
+  strategy : TruncationStrategy
+} derive(Eq, @debug.Debug)
+pub fn TruncationParams::__getstate__(Self) -> TruncationParamsState
+pub fn TruncationParams::__setstate__(TruncationParamsState) -> Self
+pub fn TruncationParams::as_tuple(Self) -> (Int, Int, TruncationDirection, TruncationStrategy)
+pub fn TruncationParams::direction(Self) -> TruncationDirection
+pub fn TruncationParams::from_state(TruncationParamsState) -> Self
+pub fn TruncationParams::from_tuple((Int, Int, TruncationDirection, TruncationStrategy)) -> Self
+pub fn TruncationParams::get_direction(Self) -> TruncationDirection
+pub fn TruncationParams::get_max_length(Self) -> Int
+pub fn TruncationParams::get_state(Self) -> TruncationParamsState
+pub fn TruncationParams::get_strategy(Self) -> TruncationStrategy
+pub fn TruncationParams::get_stride(Self) -> Int
+pub fn TruncationParams::max_length(Self) -> Int
+pub fn TruncationParams::new(Int) -> Self
+pub fn TruncationParams::strategy(Self) -> TruncationStrategy
+pub fn TruncationParams::stride(Self) -> Int
+pub fn TruncationParams::with_direction(Self, TruncationDirection) -> Self
+pub fn TruncationParams::with_strategy(Self, TruncationStrategy) -> Self
+pub fn TruncationParams::with_stride(Self, Int) -> Self
+
+pub(all) struct TruncationParamsState {
+  max_length : Int
+  stride : Int
+  direction : TruncationDirection
+  strategy : TruncationStrategy
+} derive(Eq, @debug.Debug)
+
+pub(all) enum TruncationStrategy {
+  LongestFirst
+  OnlyFirst
+  OnlySecond
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

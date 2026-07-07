@@ -46,6 +46,14 @@ MixedBread.
 See [`docs/components.md`](./docs/components.md) for per-component status and
 known gaps, and [`PROGRESS.md`](./PROGRESS.md) for the roadmap.
 
+Regex compatibility is intentionally explicit: common HuggingFace `Split` and
+`Replace` regex families used by mainstream tokenizers are implemented with
+deterministic scanners across all MoonBit backends, while arbitrary complex
+regex features such as look-around, backreferences, and fully general Unicode
+regex behavior remain outside the current scope. See
+[`docs/components.md`](./docs/components.md#limitations) before migrating
+custom tokenizer definitions.
+
 ## Documentation
 
 - [Usage guide](./docs/usage.md) — loading, encode/decode, truncation, padding, batches
@@ -56,6 +64,12 @@ known gaps, and [`PROGRESS.md`](./PROGRESS.md) for the roadmap.
 - [中文文档](./README.zh.md)
 
 ## Quick start
+
+Module name for Mooncakes publishing/imports: `howtomakeaname/tokenizers-moonbit`.
+
+```bash
+moon add howtomakeaname/tokenizers-moonbit
+```
 
 ```moonbit
 // Load from a tokenizer.json string (backend-agnostic, no file IO):

@@ -63,6 +63,12 @@ E5-small, MixedBread and SmolLM2.
 
 ## Limitations
 
+- **General regex engine:** this project does not embed a full backtracking or
+  fully general Unicode regex engine. The supported `Split` / `Replace` regex
+  families are deterministic scanners chosen from real HuggingFace tokenizer
+  configurations. Regex constructs such as look-ahead/look-behind,
+  backreferences, arbitrary alternation/grouping semantics, and unsupported
+  Unicode property combinations must be validated before migration.
 - **Precompiled charsmap:** tokenizer.json `precompiled_charsmap` payloads are
   base64-decoded into the SentencePiece double-array trie and applied per Unicode
   scalar; empty/null maps retain the common SPM NFKC + Unicode whitespace folding

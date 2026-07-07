@@ -62,6 +62,11 @@ E5-small、MixedBread、SmolLM2。
 
 ## 限制
 
+- **通用正则引擎：** 本项目不内置完整 backtracking 或完整通用 Unicode regex
+  引擎。当前支持的 `Split` / `Replace` regex family 来自真实 HuggingFace
+  tokenizer 配置，并以 deterministic scanner 实现。look-ahead/look-behind、
+  backreference、任意 alternation/grouping 语义以及未覆盖的 Unicode property
+  组合，在迁移前需要单独验证。
 - **Precompiled charsmap：** tokenizer.json 中的 `precompiled_charsmap` 会先做
   base64 解码，再按 SentencePiece double-array trie 应用到 Unicode scalar；空/缺失
   map 继续走常见 SPM NFKC + Unicode 空白折叠路径，并保留 ASCII fast path。

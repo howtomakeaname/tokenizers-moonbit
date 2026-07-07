@@ -1,0 +1,76 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "howtomakeaname/tokenizers-moonbit/pretokenizer"
+
+import {
+  "howtomakeaname/tokenizers-moonbit/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn byte_level_alphabet() -> Array[String]
+
+pub fn byte_level_decode_str(String) -> String
+
+pub fn byte_level_encode_str(String) -> String
+
+pub fn clip_split(String) -> Array[String]
+
+pub fn gpt2_split(String) -> Array[String]
+
+pub fn is_cjk(Char) -> Bool
+
+pub fn is_letter(Char) -> Bool
+
+pub fn is_number(Char) -> Bool
+
+pub fn is_punct(Char) -> Bool
+
+pub fn is_space(Char) -> Bool
+
+pub fn o200k_split(String) -> Array[String]
+
+pub fn qwen_split(String) -> Array[String]
+
+pub fn qwen_split_max_digits(String, max_digits~ : Int) -> Array[String]
+
+// Errors
+
+// Types and methods
+pub enum PreTokenizer {
+  ByteLevel(add_prefix_space~ : Bool, use_regex~ : Bool, trim_offsets~ : Bool)
+  Whitespace
+  WhitespaceSplit
+  Metaspace(replacement~ : Char, prepend_scheme~ : String, split~ : Bool)
+  Punctuation(behavior~ : SplitBehavior)
+  Split(pattern~ : String, behavior~ : SplitBehavior, invert~ : Bool, regex~ : Bool)
+  BertPreTokenizer
+  Digits(individual_digits~ : Bool)
+  Delimiter(delimiter~ : Char)
+  FixedLength(length~ : Int)
+  UnicodeScripts
+  Sequence(Array[PreTokenizer])
+}
+pub fn PreTokenizer::byte_level(add_prefix_space? : Bool, use_regex? : Bool, trim_offsets? : Bool) -> Self
+pub fn PreTokenizer::from_json(Json) -> Self raise @types.TokenizerError
+pub fn PreTokenizer::pre_tokenize(Self, String, base_offset? : Int) -> Array[@types.Split]
+pub fn PreTokenizer::split(String, SplitBehavior, Bool, Bool) -> Self
+pub fn PreTokenizer::to_json(Self) -> String?
+pub fn PreTokenizer::whitespace_split() -> Self
+
+pub enum SplitBehavior {
+  Removed
+  Isolated
+  MergedWithPrevious
+  MergedWithNext
+  Contiguous
+} derive(Eq, @debug.Debug)
+pub fn SplitBehavior::contiguous() -> Self
+pub fn SplitBehavior::isolated() -> Self
+pub fn SplitBehavior::merged_with_next() -> Self
+pub fn SplitBehavior::merged_with_previous() -> Self
+pub fn SplitBehavior::removed() -> Self
+
+// Type aliases
+
+// Traits
+

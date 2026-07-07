@@ -1,0 +1,193 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "howtomakeaname/tokenizers-moonbit/types"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn as_array(Json, String) -> Array[Json] raise TokenizerError
+
+pub fn as_object(Json, String) -> Map[String, Json] raise TokenizerError
+
+pub fn get_bool(Map[String, Json], String, default~ : Bool) -> Bool
+
+pub fn get_char(Map[String, Json], String, default~ : Char) -> Char
+
+pub fn get_int(Map[String, Json], String, default~ : Int) -> Int
+
+pub fn get_int_opt(Map[String, Json], String) -> Int?
+
+pub fn get_str(Map[String, Json], String, default~ : String) -> String
+
+pub fn get_str_opt(Map[String, Json], String) -> String?
+
+pub fn get_type(Map[String, Json], String) -> String raise TokenizerError
+
+// Errors
+pub(all) suberror TokenizerError {
+  ParseError(String)
+  UnsupportedComponent(String)
+  VocabError(String)
+} derive(@debug.Debug)
+pub fn TokenizerError::kind(Self) -> TokenizerErrorKind
+pub fn TokenizerError::message(Self) -> String
+
+// Types and methods
+pub(all) struct Encoding {
+  ids : Array[Int]
+  type_ids : Array[Int]
+  tokens : Array[String]
+  offsets : Array[(Int, Int)]
+  special_tokens_mask : Array[Int]
+  attention_mask : Array[Int]
+  sequence_ids : Array[Int?]
+  word_ids : Array[Int?]
+  overflowing : Array[Encoding]
+} derive(Eq, @debug.Debug)
+pub fn Encoding::__getstate__(Self) -> EncodingState
+pub fn Encoding::__len__(Self) -> Int
+pub fn Encoding::__setstate__(EncodingState) -> Self
+pub fn Encoding::as_buffers(Self) -> EncodingBuffers
+pub fn Encoding::as_tuple(Self) -> (Array[Int], Array[Int], Array[String], Array[(Int, Int)], Array[Int], Array[Int], Array[Int?], Array[Int?], Array[Self])
+pub fn Encoding::attention_mask(Self) -> Array[Int]
+pub fn Encoding::char_to_token(Self, Int, sequence_id? : Int) -> Int?
+pub fn Encoding::char_to_word(Self, Int, sequence_id? : Int) -> Int?
+pub fn Encoding::empty() -> Self
+pub fn Encoding::from_buffers(EncodingBuffers, sequence_ids? : Array[Int?], word_ids? : Array[Int?], overflowing? : Array[Self]) -> Self
+pub fn Encoding::from_state(EncodingState) -> Self
+pub fn Encoding::from_tokens(Array[Token], type_id? : Int) -> Self
+pub fn Encoding::from_tuple((Array[Int], Array[Int], Array[String], Array[(Int, Int)], Array[Int], Array[Int], Array[Int?], Array[Int?], Array[Self])) -> Self
+pub fn Encoding::get_attention_mask(Self) -> Array[Int]
+pub fn Encoding::get_buffers(Self) -> EncodingBuffers
+pub fn Encoding::get_char_token(Self, Int, sequence_id? : Int) -> Int?
+pub fn Encoding::get_char_word(Self, Int, sequence_id? : Int) -> Int?
+pub fn Encoding::get_ids(Self) -> Array[Int]
+pub fn Encoding::get_n_sequences(Self) -> Int
+pub fn Encoding::get_offsets(Self) -> Array[(Int, Int)]
+pub fn Encoding::get_overflowing(Self) -> Array[Self]
+pub fn Encoding::get_sequence_ids(Self) -> Array[Int?]
+pub fn Encoding::get_special_tokens_mask(Self) -> Array[Int]
+pub fn Encoding::get_state(Self) -> EncodingState
+pub fn Encoding::get_token_chars(Self, Int) -> (Int, (Int, Int))?
+pub fn Encoding::get_token_sequence(Self, Int) -> Int?
+pub fn Encoding::get_token_word(Self, Int) -> (Int, Int)?
+pub fn Encoding::get_tokens(Self) -> Array[String]
+pub fn Encoding::get_type_ids(Self) -> Array[Int]
+pub fn Encoding::get_word_chars(Self, Int, sequence_id? : Int) -> (Int, Int)?
+pub fn Encoding::get_word_ids(Self) -> Array[Int?]
+pub fn Encoding::get_word_tokens(Self, Int, sequence_id? : Int) -> (Int, Int)?
+pub fn Encoding::ids(Self) -> Array[Int]
+pub fn Encoding::is_empty(Self) -> Bool
+pub fn Encoding::len(Self) -> Int
+pub fn Encoding::merge(Array[Self], growing_offsets? : Bool) -> Self
+pub fn Encoding::merge_with(Self, Self, growing_offsets? : Bool) -> Self
+pub fn Encoding::n_sequences(Self) -> Int
+pub fn Encoding::new(Array[Int], Array[Int], Array[String], Array[(Int, Int)], Array[Int], Array[Int], sequence_ids? : Array[Int?], word_ids? : Array[Int?], overflowing? : Array[Self]) -> Self
+pub fn Encoding::offsets(Self) -> Array[(Int, Int)]
+pub fn Encoding::overflowing(Self) -> Array[Self]
+pub fn Encoding::pad(Self, Int, pad_id? : Int, pad_type_id? : Int, pad_token? : String, direction? : EncodingDirection) -> Self
+pub fn Encoding::sequence_ids(Self) -> Array[Int?]
+pub fn Encoding::set_sequence_id(Self, Int) -> Self
+pub fn Encoding::special_tokens_mask(Self) -> Array[Int]
+pub fn Encoding::take_overflowing(Self) -> (Self, Array[Self])
+pub fn Encoding::token_to_chars(Self, Int) -> (Int, (Int, Int))?
+pub fn Encoding::token_to_offsets(Self, Int) -> (Int, Int)?
+pub fn Encoding::token_to_sequence(Self, Int) -> Int?
+pub fn Encoding::token_to_word(Self, Int) -> (Int, Int)?
+pub fn Encoding::tokens(Self) -> Array[String]
+pub fn Encoding::truncate(Self, Int, stride? : Int, direction? : EncodingDirection) -> Self
+pub fn Encoding::type_ids(Self) -> Array[Int]
+pub fn Encoding::with_attention_mask(Self, Array[Int]) -> Self
+pub fn Encoding::with_overflowing(Self, Array[Self]) -> Self
+pub fn Encoding::with_sequence_id(Self, Int) -> Self
+pub fn Encoding::with_special_tokens_mask(Self, Array[Int]) -> Self
+pub fn Encoding::with_type_ids(Self, Array[Int]) -> Self
+pub fn Encoding::with_word_ids(Self, Array[Int?]) -> Self
+pub fn Encoding::word_ids(Self) -> Array[Int?]
+pub fn Encoding::word_to_chars(Self, Int, sequence_id? : Int) -> (Int, Int)?
+pub fn Encoding::word_to_offsets(Self, Int, sequence_id? : Int) -> (Int, Int)?
+pub fn Encoding::word_to_tokens(Self, Int, sequence_id? : Int) -> (Int, Int)?
+
+pub(all) struct EncodingBuffers {
+  ids : Array[Int]
+  type_ids : Array[Int]
+  tokens : Array[String]
+  offsets : Array[(Int, Int)]
+  special_tokens_mask : Array[Int]
+  attention_mask : Array[Int]
+} derive(Eq, @debug.Debug)
+
+pub(all) enum EncodingDirection {
+  Left
+  Right
+} derive(Eq, @debug.Debug)
+
+pub(all) struct EncodingState {
+  ids : Array[Int]
+  type_ids : Array[Int]
+  tokens : Array[String]
+  offsets : Array[(Int, Int)]
+  special_tokens_mask : Array[Int]
+  attention_mask : Array[Int]
+  sequence_ids : Array[Int?]
+  word_ids : Array[Int?]
+  overflowing : Array[Encoding]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Split {
+  value : String
+  offsets : (Int, Int)
+} derive(Eq, @debug.Debug)
+pub fn Split::__getstate__(Self) -> SplitState
+pub fn Split::__setstate__(SplitState) -> Self
+pub fn Split::as_tuple(Self) -> (String, (Int, Int))
+pub fn Split::from_state(SplitState) -> Self
+pub fn Split::from_tuple((String, (Int, Int))) -> Self
+pub fn Split::get_offsets(Self) -> (Int, Int)
+pub fn Split::get_state(Self) -> SplitState
+pub fn Split::get_value(Self) -> String
+pub fn Split::new(String, offsets? : (Int, Int)) -> Self
+pub fn Split::offsets(Self) -> (Int, Int)
+pub fn Split::value(Self) -> String
+
+pub(all) struct SplitState {
+  value : String
+  offsets : (Int, Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Token {
+  id : Int
+  value : String
+  offsets : (Int, Int)
+} derive(Eq, @debug.Debug)
+pub fn Token::__getstate__(Self) -> TokenState
+pub fn Token::__setstate__(TokenState) -> Self
+pub fn Token::as_tuple(Self) -> (Int, String, (Int, Int))
+pub fn Token::from_state(TokenState) -> Self
+pub fn Token::from_tuple((Int, String, (Int, Int))) -> Self
+pub fn Token::get_id(Self) -> Int
+pub fn Token::get_offsets(Self) -> (Int, Int)
+pub fn Token::get_state(Self) -> TokenState
+pub fn Token::get_value(Self) -> String
+pub fn Token::id(Self) -> Int
+pub fn Token::new(Int, String, offsets? : (Int, Int)) -> Self
+pub fn Token::offsets(Self) -> (Int, Int)
+pub fn Token::value(Self) -> String
+
+pub(all) struct TokenState {
+  id : Int
+  value : String
+  offsets : (Int, Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum TokenizerErrorKind {
+  ParseKind
+  UnsupportedComponentKind
+  VocabKind
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

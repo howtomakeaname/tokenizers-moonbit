@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "howtomakeaname/tokenizers-moonbit/decoder"
+
+import {
+  "howtomakeaname/tokenizers-moonbit/types",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub enum Decoder {
+  ByteLevel(add_prefix_space~ : Bool, trim_offsets~ : Bool, use_regex~ : Bool)
+  WordPiece(prefix~ : String, cleanup~ : Bool)
+  Metaspace(replacement~ : Char, prepend_scheme~ : String)
+  BPEDecoder(suffix~ : String)
+  Strip(content~ : Char, start~ : Int, stop~ : Int)
+  Fuse
+  Replace(pattern~ : String, content~ : String)
+  ByteFallback
+  CTC(pad_token~ : String, word_delimiter_token~ : String, cleanup~ : Bool)
+  Sequence(Array[Decoder])
+}
+pub fn Decoder::byte_fallback() -> Self
+pub fn Decoder::ctc(pad_token? : String, word_delimiter_token? : String, cleanup? : Bool) -> Self
+pub fn Decoder::decode(Self, Array[String]) -> String
+pub fn Decoder::decode_chain(Self, Array[String]) -> Array[String]
+pub fn Decoder::from_json(Json) -> Self raise @types.TokenizerError
+pub fn Decoder::replace(String, String) -> Self
+pub fn Decoder::to_json(Self) -> String?
+pub fn Decoder::wordpiece(prefix? : String, cleanup? : Bool) -> Self
+
+// Type aliases
+
+// Traits
+

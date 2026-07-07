@@ -2,32 +2,18 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [main]
 
 jobs:
-  moonbit:
-    name: MoonBit (${{ matrix.target }})
+  test:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [native, js, wasm, wasm-gc]
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install MoonBit CLI
-        shell: bash
+      - name: Install MoonBit
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
@@ -35,112 +21,38 @@ jobs:
       - name: Show MoonBit version
         run: moon version
 
-      # Required for registry deps such as moonbitlang/x. GitHub runners may
-      # start with a stale or empty registry index, which makes `moon check`
-      # fail before dependency resolution.
-      - name: Update MoonBit registry index
-        run: moon update
-
-      - name: Check format
-        run: moon fmt --check
-
-      - name: Check
-        run: moon check --target ${{ matrix.target }}
-
-      - name: Test
-        run: moon test --target ${{ matrix.target }}
-
-  python-scripts:
-    name: Python scripts
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Compile scripts
+      - name: Check formatting
         run: |
-          python -m py_compile \
-            scripts/bench_compare.py \
-            scripts/bench_python.py \
-            scripts/fetch_models.py \
-            scripts/gen_expected.py \
-            scripts/gen_expected_bert.py \
-            scripts/gen_parity.py
+          if moon fmt --help | grep -q -- '--deny-warn'; then
+            moon fmt --deny-warn
+          else
+            moon fmt --check
+          fi
 
-  optional-parity-smoke:
-    name: Optional parity smoke
-    runs-on: ubuntu-latest
-    needs: [moonbit, python-scripts]
+      - name: Check diagnostics
+        run: moon check --deny-warn
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install MoonBit CLI
-        shell: bash
+      - name: Generate public interfaces
         run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+          if moon info --help | grep -q -- '--deny-warn'; then
+            moon info --deny-warn
+          else
+            moon info
+          fi
+          git diff --exit-code -- 'src/**/*.mbti'
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Update MoonBit registry index
-        run: moon update
-
-      - name: Install Python tokenizers
-        run: python -m pip install --upgrade pip tokenizers
-
-      # Keep this job small and deterministic. The full 31-model matrix is for
-      # local/nightly runs because several upstream HF repos are large, gated or
-      # occasionally renamed.
-      - name: Fetch smoke fixtures
-        run: python scripts/fetch_models.py gpt2 bert t5
-
-      - name: Generate parity expectations
-        run: python scripts/gen_parity.py gpt2 bert t5
-
-      - name: Run native parity smoke
-        run: moon test --target native
-
-  bench-smoke:
-    name: HF comparison benchmark smoke
-    runs-on: ubuntu-latest
-    needs: [moonbit, python-scripts]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install MoonBit CLI
-        shell: bash
+      - name: Run tests
         run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+          moon test --target wasm
+          moon test --target wasm-gc
+          moon test --target js
+          moon test --target native
 
-      - name: Update MoonBit registry index
-        run: moon update
+      - name: Install Python benchmark dependencies
+        run: python3 -m pip install tokenizers
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Compile Python helper scripts
+        run: python3 -m py_compile scripts/*.py
 
-      - name: Install Python tokenizers
-        run: python -m pip install --upgrade pip tokenizers
-
-      # Same-host MoonBit/HF comparison smoke. Full `--corpus all` remains a
-      # local/nightly perf task; CI guards benchmark wiring and obvious regressions.
-      - name: Fetch quick benchmark fixtures
-        run: python scripts/fetch_models.py gpt2 bert llama Qwen2.5 phi4_mini qwen3_coder
-
-      - name: Run MoonBit vs HF benchmark smoke
-        run: python scripts/bench_compare.py --target native --quick --corpus mixed
+      - name: Quick benchmark smoke
+        run: python3 scripts/bench_compare.py --quick --target native

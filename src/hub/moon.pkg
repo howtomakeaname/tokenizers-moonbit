@@ -1,6 +1,6 @@
 import {
-  "tokenizers-moonbit/tokenizer",
-  "tokenizers-moonbit/types",
+  "howtomakeaname/tokenizers-moonbit/tokenizer",
+  "howtomakeaname/tokenizers-moonbit/types",
   "moonbitlang/async/http",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/x/fs",

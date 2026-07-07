@@ -1,0 +1,53 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "howtomakeaname/tokenizers-moonbit/normalizer"
+
+import {
+  "howtomakeaname/tokenizers-moonbit/types",
+}
+
+// Values
+pub fn accent_entries() -> Array[(Int, String)]
+
+pub fn canonical_decomp_raw() -> String
+
+pub fn ccc_raw() -> String
+
+pub fn compat_decomp_raw() -> String
+
+pub fn composition_raw() -> String
+
+pub fn normalize_unicode(String, compat~ : Bool, compose~ : Bool) -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum Normalizer {
+  NFC
+  NFD
+  NFKC
+  NFKD
+  Lowercase
+  Strip(left~ : Bool, right~ : Bool)
+  StripAccents
+  ByteLevel
+  Replace(pattern~ : String, content~ : String)
+  Prepend(prepend~ : String)
+  Nmt
+  Precompiled
+  PrecompiledMap(data~ : PrecompiledCharsMap)
+  BertNormalizer(clean_text~ : Bool, handle_chinese_chars~ : Bool, strip_accents~ : Bool, lowercase~ : Bool)
+  Sequence(Array[Normalizer])
+}
+pub fn Normalizer::from_json(Json) -> Self raise @types.TokenizerError
+pub fn Normalizer::normalize(Self, String) -> String
+pub fn Normalizer::to_json(Self) -> String?
+
+pub(all) struct PrecompiledCharsMap {
+  trie : Array[Int]
+  normalized : Array[Int]
+}
+
+// Type aliases
+
+// Traits
+
