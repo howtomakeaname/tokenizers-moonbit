@@ -191,15 +191,8 @@ pub fn Model::train_wordpiece_from_tokens(
   }
   add_token(unk_token)
 
-  for tok in initial_alphabet {
-    match initial_alphabet_piece(tok) {
-      Some(piece) => add_token(piece)
-      None => ()
-    }
-  }
-  let alphabet = limit_alphabet_candidates(
-    sorted_wordlevel_candidates(piece_order, piece_counts, 1),
-    limit_alphabet,
+  let alphabet = limited_trainer_alphabet(
+    piece_order, piece_counts, initial_alphabet, limit_alphabet,
   )
   for item in alphabet {
     add_token(item.0)
@@ -373,15 +366,8 @@ pub fn Model::train_bpe_from_tokens(
     Some(unk) => ignore(add_token(unk))
     None => ()
   }
-  for tok in initial_alphabet {
-    match initial_alphabet_piece(tok) {
-      Some(piece) => ignore(add_token(piece))
-      None => ()
-    }
-  }
-  let alphabet = limit_alphabet_candidates(
-    sorted_wordlevel_candidates(alphabet_order, alphabet_counts, 1),
-    limit_alphabet,
+  let alphabet = limited_trainer_alphabet(
+    alphabet_order, alphabet_counts, initial_alphabet, limit_alphabet,
   )
   for item in alphabet {
     ignore(add_token(item.0))
@@ -474,6 +460,42 @@ fn initial_alphabet_piece(s : String) -> String? {
     return Some(char_string(c))
   }
   None
+}
+
+///|
+fn limited_trainer_alphabet(
+  corpus_order : Array[String],
+  corpus_counts : Map[String, Int],
+  initial_alphabet : Array[String],
+  limit : Int?,
+) -> Array[(String, Int)] {
+  let counts : Map[String, Int] = {}
+  let order : Array[String] = []
+  for item in sorted_wordlevel_candidates(corpus_order, corpus_counts, 1) {
+    counts[item.0] = item.1
+    order.push(item.0)
+  }
+  for tok in initial_alphabet {
+    match initial_alphabet_piece(tok) {
+      Some(piece) =>
+        if counts.contains(piece) {
+          counts[piece] = initial_alphabet_priority()
+        } else {
+          counts[piece] = initial_alphabet_priority()
+          order.push(piece)
+        }
+      None => ()
+    }
+  }
+  limit_alphabet_candidates(
+    sorted_wordlevel_candidates(order, counts, 1),
+    limit,
+  )
+}
+
+///|
+fn initial_alphabet_priority() -> Int {
+  2147483647
 }
 
 ///|

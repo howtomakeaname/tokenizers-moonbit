@@ -2723,7 +2723,7 @@ test "train_wordpiece supports initial and limited alphabet" {
   )
   @test.assert_eq(tok.token_to_id("z") is Some(_), true)
   @test.assert_eq(tok.token_to_id("##c") is Some(_), true)
-  @test.assert_eq(tok.token_to_id("##b") is Some(_), true)
+  @test.assert_eq(tok.token_to_id("##b"), None)
   @test.assert_eq(tok.token_to_id("a"), None)
 }
 
@@ -2748,6 +2748,21 @@ test "train_wordpiece alphabet controls survive custom pretokenizer reload" {
   let loaded = Tokenizer::from_str(tok.to_json())
   @test.assert_eq(loaded.token_to_id("z") is Some(_), true)
   @test.assert_eq(loaded.encode("z", add_special_tokens=false).tokens, ["z"])
+}
+
+///|
+test "train_bpe limit_alphabet includes initial alphabet in the cap" {
+  let tok = Tokenizer::train_bpe(
+    ["cccc bbb aa"],
+    unk_token=Some("[UNK]"),
+    min_frequency=10,
+    initial_alphabet=["z"],
+    limit_alphabet=Some(2),
+  )
+  @test.assert_eq(tok.token_to_id("z") is Some(_), true)
+  @test.assert_eq(tok.token_to_id("c") is Some(_), true)
+  @test.assert_eq(tok.token_to_id("b"), None)
+  @test.assert_eq(tok.token_to_id("a"), None)
 }
 
 ///|

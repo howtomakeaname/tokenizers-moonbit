@@ -115,7 +115,7 @@ test "bpe trainer keeps caller initial alphabet" {
 }
 
 ///|
-test "bpe trainer limits corpus alphabet after initial alphabet" {
+test "bpe trainer limit_alphabet includes initial alphabet in the cap" {
   let model = Model::train_bpe(
     ["ccc bb a"],
     unk_token=Some("[UNK]"),
@@ -125,7 +125,7 @@ test "bpe trainer limits corpus alphabet after initial alphabet" {
   )
   @test.assert_eq(model.token_to_id("z") is Some(_), true)
   @test.assert_eq(model.token_to_id("c") is Some(_), true)
-  @test.assert_eq(model.token_to_id("b") is Some(_), true)
+  @test.assert_eq(model.token_to_id("b"), None)
   @test.assert_eq(model.token_to_id("a"), None)
 }
 
