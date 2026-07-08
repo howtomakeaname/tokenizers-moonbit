@@ -8,6 +8,14 @@ test "tokenizer_json_url trims endpoint slash" {
     tokenizer_json_url("https://hf-mirror.example", "org/model", "abc123"),
     "https://hf-mirror.example/org/model/resolve/abc123/tokenizer.json",
   )
+  @test.assert_eq(
+    tokenizer_json_url("https://hf.example", "org/model", "refs/pr/7"),
+    "https://hf.example/org/model/resolve/refs%2Fpr%2F7/tokenizer.json",
+  )
+  @test.assert_eq(
+    tokenizer_json_url("https://hf.example", "org/model", "feature/foo"),
+    "https://hf.example/org/model/resolve/feature%2Ffoo/tokenizer.json",
+  )
 }
 
 ///|
@@ -713,6 +721,29 @@ fn string_suffix(s : String, start : Int) -> String {
     sb.write_char(chars[i])
   }
   sb.to_string()
+}
+
+///|
+async test "direct Hub network APIs reject local_files_only" {
+  let options = HubDownloadOptions::new(
+    endpoint="https://127.0.0.1:9",
+    local_files_only=true,
+  )
+  let mut download_rejected = false
+  try download_tokenizer_json("bert-base-uncased", options~) |> ignore catch {
+    @types.ParseError(msg) =>
+      download_rejected = msg.contains("local_files_only=true")
+    _ => ()
+  }
+  @test.assert_eq(download_rejected, true)
+
+  let mut head_rejected = false
+  try head_tokenizer_json("bert-base-uncased", options~) |> ignore catch {
+    @types.ParseError(msg) =>
+      head_rejected = msg.contains("local_files_only=true")
+    _ => ()
+  }
+  @test.assert_eq(head_rejected, true)
 }
 
 ///|

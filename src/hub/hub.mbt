@@ -1078,6 +1078,7 @@ pub async fn download_tokenizer_json(
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
   validate_hub_request(model_id, options.revision)
+  reject_local_files_only_direct_download(options.local_files_only)
   let plan = plan_tokenizer_json_request(model_id, options~)
   async_download_with_redirects(
     model_id,
@@ -1095,6 +1096,7 @@ pub async fn head_tokenizer_json(
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubHeadResult raise @types.TokenizerError {
   validate_hub_request(model_id, options.revision)
+  reject_local_files_only_direct_download(options.local_files_only)
   let plan = head_tokenizer_json_request(model_id, options~)
   async_head_with_redirects(plan, max_redirects=options.max_redirects)
 }
@@ -1109,8 +1111,31 @@ pub fn tokenizer_json_url(
   "/" +
   model_id +
   "/resolve/" +
-  revision +
+  encode_hub_revision_segment(revision) +
   "/tokenizer.json"
+}
+
+///|
+fn reject_local_files_only_direct_download(
+  local_files_only : Bool,
+) -> Unit raise @types.TokenizerError {
+  if local_files_only {
+    raise @types.ParseError(
+      "Hub network request disabled because local_files_only=true",
+    )
+  }
+}
+
+///|
+fn encode_hub_revision_segment(revision : String) -> String {
+  let sb = StringBuilder::new()
+  for c in revision {
+    match c {
+      '/' => sb.write_string("%2F")
+      _ => sb.write_char(c)
+    }
+  }
+  sb.to_string()
 }
 
 ///|
