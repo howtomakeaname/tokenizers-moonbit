@@ -2195,6 +2195,81 @@ test "Trainer preserves AddedToken metadata for special tokens" {
 }
 
 ///|
+test "Trainer exposes HF-style configuration getters" {
+  let mask = AddedToken::special("[MASK]").with_lstrip(true)
+  let wordlevel = Trainer::wordlevel(
+    unk_token="[UNK]",
+    min_frequency=2,
+    special_tokens=["[PAD]"],
+    special_added_tokens=[mask],
+    vocab_size=Some(8),
+    show_progress=false,
+  )
+  @test.assert_eq(wordlevel.kind(), "WordLevelTrainer")
+  @test.assert_eq(wordlevel.unk_token(), Some("[UNK]"))
+  @test.assert_eq(wordlevel.min_frequency(), 2)
+  @test.assert_eq(wordlevel.special_tokens(), ["[PAD]"])
+  @test.assert_eq(wordlevel.special_added_tokens()[0].content(), "[MASK]")
+  @test.assert_eq(wordlevel.vocab_size(), Some(8))
+  @test.assert_eq(wordlevel.show_progress(), false)
+
+  let specials = wordlevel.special_tokens()
+  specials.push("[CLS]")
+  @test.assert_eq(wordlevel.special_tokens(), ["[PAD]"])
+
+  let wordpiece = Trainer::wordpiece(
+    continuing_subword_prefix="@@",
+    end_of_word_suffix=Some("</w>"),
+    initial_alphabet=["z"],
+    limit_alphabet=Some(16),
+    max_input_chars_per_word=42,
+    max_token_length=Some(6),
+  )
+  @test.assert_eq(wordpiece.kind(), "WordPieceTrainer")
+  @test.assert_eq(wordpiece.continuing_subword_prefix(), Some("@@"))
+  @test.assert_eq(wordpiece.end_of_word_suffix(), Some("</w>"))
+  @test.assert_eq(wordpiece.initial_alphabet(), ["z"])
+  @test.assert_eq(wordpiece.limit_alphabet(), Some(16))
+  @test.assert_eq(wordpiece.max_input_chars_per_word(), Some(42))
+  @test.assert_eq(wordpiece.max_token_length(), Some(6))
+
+  let bpe = Trainer::bpe(
+    unk_token=None,
+    continuing_subword_prefix=Some("@@"),
+    end_of_word_suffix=Some("</w>"),
+    fuse_unk=true,
+    initial_alphabet=["x"],
+    limit_alphabet=Some(9),
+    max_token_length=Some(5),
+  )
+  @test.assert_eq(bpe.kind(), "BpeTrainer")
+  @test.assert_eq(bpe.unk_token(), None)
+  @test.assert_eq(bpe.continuing_subword_prefix(), Some("@@"))
+  @test.assert_eq(bpe.end_of_word_suffix(), Some("</w>"))
+  @test.assert_eq(bpe.fuse_unk(), Some(true))
+  @test.assert_eq(bpe.initial_alphabet(), ["x"])
+  @test.assert_eq(bpe.limit_alphabet(), Some(9))
+  @test.assert_eq(bpe.max_token_length(), Some(5))
+
+  let unigram = Trainer::unigram(
+    unk_piece=Some("<UNK>"),
+    byte_fallback=true,
+    fuse_unk=false,
+    shrinking_factor=0.5,
+    max_piece_length=Some(4),
+    n_sub_iterations=3,
+  )
+  @test.assert_eq(unigram.kind(), "UnigramTrainer")
+  @test.assert_eq(unigram.unk_token(), Some("<UNK>"))
+  @test.assert_eq(unigram.byte_fallback(), Some(true))
+  @test.assert_eq(unigram.fuse_unk(), Some(false))
+  @test.assert_eq(unigram.shrinking_factor(), Some(0.5))
+  @test.assert_eq(unigram.max_piece_length(), Some(4))
+  @test.assert_eq(unigram.n_sub_iterations(), Some(3))
+  @test.assert_eq(unigram.continuing_subword_prefix(), None)
+}
+
+///|
 test "Tokenizer train_from_files trains line oriented corpus" {
   let path = "_build/tokenizer_train_from_files.txt"
   @fs.write_string_to_file(path, "Hello moon\nhello tokenizer\n") catch {

@@ -269,6 +269,12 @@ pre-tokenizer `split`, state/tuple helpers, and `to_encoding` /
 `Encoding::words()` is available as a deprecated HF Python alias for
 `word_ids()`.
 
+`Trainer` exposes copy-returning configuration getters such as `kind`,
+`unk_token`, `min_frequency`, `special_tokens`, `special_added_tokens`,
+`vocab_size`, `show_progress`, and model-specific knobs for WordPiece, BPE and
+Unigram trainers. These helpers are intended for binding/property mapping and do
+not change training behavior.
+
 `TokenizerComponentHooks` provides runtime-only normalize, pre-tokenize, and
 decode callbacks for binding layers that cannot map a dynamic Python component
 to a typed MoonBit component yet. Hooks can be passed per call or attached to a

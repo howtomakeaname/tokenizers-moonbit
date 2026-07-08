@@ -506,7 +506,25 @@ pub enum Trainer {
   UnigramTrainer(unk_token~ : String, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, byte_fallback~ : Bool, fuse_unk~ : Bool, shrinking_factor~ : Double, max_piece_length~ : Int?, n_sub_iterations~ : Int, show_progress~ : Bool)
 } derive(Eq, @debug.Debug)
 pub fn Trainer::bpe(unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?, show_progress? : Bool) -> Self
+pub fn Trainer::byte_fallback(Self) -> Bool?
+pub fn Trainer::continuing_subword_prefix(Self) -> String?
+pub fn Trainer::end_of_word_suffix(Self) -> String?
+pub fn Trainer::fuse_unk(Self) -> Bool?
+pub fn Trainer::initial_alphabet(Self) -> Array[String]
+pub fn Trainer::kind(Self) -> String
+pub fn Trainer::limit_alphabet(Self) -> Int?
+pub fn Trainer::max_input_chars_per_word(Self) -> Int?
+pub fn Trainer::max_piece_length(Self) -> Int?
+pub fn Trainer::max_token_length(Self) -> Int?
+pub fn Trainer::min_frequency(Self) -> Int
+pub fn Trainer::n_sub_iterations(Self) -> Int?
+pub fn Trainer::show_progress(Self) -> Bool
+pub fn Trainer::shrinking_factor(Self) -> Double?
+pub fn Trainer::special_added_tokens(Self) -> Array[AddedToken]
+pub fn Trainer::special_tokens(Self) -> Array[String]
 pub fn Trainer::unigram(unk_token? : String, unk_piece? : String?, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, shrinking_factor? : Double, max_piece_length? : Int?, n_sub_iterations? : Int, show_progress? : Bool) -> Self
+pub fn Trainer::unk_token(Self) -> String?
+pub fn Trainer::vocab_size(Self) -> Int?
 pub fn Trainer::wordlevel(unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, show_progress? : Bool) -> Self
 pub fn Trainer::wordpiece(unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, max_input_chars_per_word? : Int, max_token_length? : Int?, initial_alphabet? : Array[String], limit_alphabet? : Int?, show_progress? : Bool) -> Self
 

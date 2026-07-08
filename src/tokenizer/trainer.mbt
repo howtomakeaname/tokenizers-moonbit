@@ -173,6 +173,163 @@ pub fn Trainer::unigram(
 }
 
 ///|
+/// Return the trainer family name used by thin binding layers.
+pub fn Trainer::kind(self : Trainer) -> String {
+  match self {
+    WordLevelTrainer(..) => "WordLevelTrainer"
+    WordPieceTrainer(..) => "WordPieceTrainer"
+    BpeTrainer(..) => "BpeTrainer"
+    UnigramTrainer(..) => "UnigramTrainer"
+  }
+}
+
+///|
+pub fn Trainer::unk_token(self : Trainer) -> String? {
+  match self {
+    WordLevelTrainer(unk_token~, ..) => Some(unk_token)
+    WordPieceTrainer(unk_token~, ..) => Some(unk_token)
+    BpeTrainer(unk_token~, ..) => unk_token
+    UnigramTrainer(unk_token~, ..) => Some(unk_token)
+  }
+}
+
+///|
+pub fn Trainer::min_frequency(self : Trainer) -> Int {
+  match self {
+    WordLevelTrainer(min_frequency~, ..) => min_frequency
+    WordPieceTrainer(min_frequency~, ..) => min_frequency
+    BpeTrainer(min_frequency~, ..) => min_frequency
+    UnigramTrainer(min_frequency~, ..) => min_frequency
+  }
+}
+
+///|
+pub fn Trainer::special_tokens(self : Trainer) -> Array[String] {
+  trainer_special_tokens(self)
+}
+
+///|
+pub fn Trainer::special_added_tokens(self : Trainer) -> Array[AddedToken] {
+  trainer_special_added_tokens(self)
+}
+
+///|
+pub fn Trainer::vocab_size(self : Trainer) -> Int? {
+  match self {
+    WordLevelTrainer(vocab_size~, ..) => vocab_size
+    WordPieceTrainer(vocab_size~, ..) => vocab_size
+    BpeTrainer(vocab_size~, ..) => vocab_size
+    UnigramTrainer(vocab_size~, ..) => vocab_size
+  }
+}
+
+///|
+pub fn Trainer::show_progress(self : Trainer) -> Bool {
+  match self {
+    WordLevelTrainer(show_progress~, ..) => show_progress
+    WordPieceTrainer(show_progress~, ..) => show_progress
+    BpeTrainer(show_progress~, ..) => show_progress
+    UnigramTrainer(show_progress~, ..) => show_progress
+  }
+}
+
+///|
+pub fn Trainer::continuing_subword_prefix(self : Trainer) -> String? {
+  match self {
+    WordPieceTrainer(continuing_subword_prefix~, ..) =>
+      Some(continuing_subword_prefix)
+    BpeTrainer(continuing_subword_prefix~, ..) => continuing_subword_prefix
+    _ => None
+  }
+}
+
+///|
+pub fn Trainer::end_of_word_suffix(self : Trainer) -> String? {
+  match self {
+    WordPieceTrainer(end_of_word_suffix~, ..) => end_of_word_suffix
+    BpeTrainer(end_of_word_suffix~, ..) => end_of_word_suffix
+    _ => None
+  }
+}
+
+///|
+pub fn Trainer::initial_alphabet(self : Trainer) -> Array[String] {
+  match self {
+    WordPieceTrainer(initial_alphabet~, ..) => initial_alphabet.copy()
+    BpeTrainer(initial_alphabet~, ..) => initial_alphabet.copy()
+    _ => []
+  }
+}
+
+///|
+pub fn Trainer::limit_alphabet(self : Trainer) -> Int? {
+  match self {
+    WordPieceTrainer(limit_alphabet~, ..) => limit_alphabet
+    BpeTrainer(limit_alphabet~, ..) => limit_alphabet
+    _ => None
+  }
+}
+
+///|
+pub fn Trainer::max_token_length(self : Trainer) -> Int? {
+  match self {
+    WordPieceTrainer(max_token_length~, ..) => max_token_length
+    BpeTrainer(max_token_length~, ..) => max_token_length
+    _ => None
+  }
+}
+
+///|
+pub fn Trainer::max_input_chars_per_word(self : Trainer) -> Int? {
+  match self {
+    WordPieceTrainer(max_input_chars_per_word~, ..) =>
+      Some(max_input_chars_per_word)
+    _ => None
+  }
+}
+
+///|
+pub fn Trainer::fuse_unk(self : Trainer) -> Bool? {
+  match self {
+    BpeTrainer(fuse_unk~, ..) => Some(fuse_unk)
+    UnigramTrainer(fuse_unk~, ..) => Some(fuse_unk)
+    _ => None
+  }
+}
+
+///|
+pub fn Trainer::byte_fallback(self : Trainer) -> Bool? {
+  match self {
+    UnigramTrainer(byte_fallback~, ..) => Some(byte_fallback)
+    _ => None
+  }
+}
+
+///|
+pub fn Trainer::shrinking_factor(self : Trainer) -> Double? {
+  match self {
+    UnigramTrainer(shrinking_factor~, ..) => Some(shrinking_factor)
+    _ => None
+  }
+}
+
+///|
+pub fn Trainer::max_piece_length(self : Trainer) -> Int? {
+  match self {
+    UnigramTrainer(max_piece_length~, ..) => max_piece_length
+    _ => None
+  }
+}
+
+///|
+pub fn Trainer::n_sub_iterations(self : Trainer) -> Int? {
+  match self {
+    UnigramTrainer(n_sub_iterations~, ..) => Some(n_sub_iterations)
+    _ => None
+  }
+}
+
+///|
 /// Train this tokenizer's model in-place style while preserving its configured
 /// normalizer, pre-tokenizer, decoder/post-processor/truncation/padding and added
 /// vocabulary. Text is first split by added-vocabulary extraction, then passed
