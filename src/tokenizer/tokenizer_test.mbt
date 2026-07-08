@@ -2838,6 +2838,24 @@ test "train_bpe bytelevel initial alphabet encodes unseen bytes" {
 }
 
 ///|
+test "train_bpe strips continuation prefix from merged token surface" {
+  let tok = Tokenizer::train_bpe(
+    ["abab abab"],
+    unk_token=Some("[UNK]"),
+    min_frequency=2,
+    vocab_size=Some(16),
+    continuing_subword_prefix=Some("@@"),
+    end_of_word_suffix=Some("</w>"),
+  )
+  @test.assert_eq(tok.token_to_id("a@@b"), None)
+  @test.assert_eq(tok.token_to_id("ab") is Some(_), true)
+  @test.assert_eq(tok.token_to_id("aba") is Some(_), true)
+  @test.assert_eq(tok.token_to_id("abab</w>") is Some(_), true)
+  let enc = tok.encode("abab", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["abab</w>"])
+}
+
+///|
 test "train_bpe passes max_token_length through tokenizer API" {
   let tok = Tokenizer::train_bpe(
     ["aaaaaaaa aaaaaaaa"],
@@ -2891,8 +2909,9 @@ test "Trainer bpe accepts compatibility knobs and special AddedToken" {
     trained.get_added_tokens_decoder().get(0).unwrap().lstrip,
     true,
   )
+  @test.assert_eq(trained.token_to_id("a@@b"), None)
   @test.assert_eq(trained.encode("abab <s>", add_special_tokens=false).tokens, [
-    "a@@b", "@@a", "@@b</w>", " <s>",
+    "aba", "@@b</w>", " <s>",
   ])
 }
 

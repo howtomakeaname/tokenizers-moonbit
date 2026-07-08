@@ -140,7 +140,11 @@ pub fn BPEModel::tokenize(
     }
     let nx = m.right
     // Merge symbols[nx] into symbols[pos].
-    symbols[pos].value = symbols[pos].value + symbols[nx].value
+    symbols[pos].value = bpe_merge_surface(
+      symbols[pos].value,
+      symbols[nx].value,
+      self.continuing_subword_prefix,
+    )
     symbols[pos].next = symbols[nx].next
     symbols[nx].alive = false
     if symbols[nx].next >= 0 {
@@ -157,6 +161,35 @@ pub fn BPEModel::tokenize(
     put_token_cache(self.cache, self.cache_capacity, word, rel)
   }
   shift_tokens(rel, offset)
+}
+
+///|
+fn bpe_merge_surface(
+  left : String,
+  right : String,
+  continuing_subword_prefix : String?,
+) -> String {
+  let right = match continuing_subword_prefix {
+    Some(prefix) =>
+      if !prefix.is_empty() && right.has_prefix(prefix) {
+        drop_prefix(right, prefix)
+      } else {
+        right
+      }
+    None => right
+  }
+  left + right
+}
+
+///|
+fn drop_prefix(s : String, prefix : String) -> String {
+  let chars = s.to_array()
+  let start = prefix.char_length()
+  let sb = StringBuilder::new()
+  for i in start..<chars.length() {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
 }
 
 ///|

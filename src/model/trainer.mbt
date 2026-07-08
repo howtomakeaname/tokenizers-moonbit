@@ -405,11 +405,13 @@ pub fn Model::train_bpe_from_tokens(
 
   let merges : Map[(String, String), Int] = {}
   while under_vocab_limit(vocab.length(), vocab_size) {
-    let pair = best_bpe_pair(words, freqs, min_frequency, max_token_length)
+    let pair = best_bpe_pair(
+      words, freqs, min_frequency, max_token_length, continuing_subword_prefix,
+    )
     match pair {
       None => break
       Some(p) => {
-        let merged = p.0 + p.1
+        let merged = bpe_merged_token(p, continuing_subword_prefix)
         if !add_token(merged) {
           break
         }
@@ -436,6 +438,34 @@ pub fn Model::train_bpe_from_tokens(
     cache: {},
     cache_capacity: None,
   })
+}
+
+///|
+fn bpe_merged_token(
+  pair : (String, String),
+  continuing_subword_prefix : String?,
+) -> String {
+  let right = match continuing_subword_prefix {
+    Some(prefix) =>
+      if !prefix.is_empty() && pair.1.has_prefix(prefix) {
+        string_drop_prefix(pair.1, prefix)
+      } else {
+        pair.1
+      }
+    None => pair.1
+  }
+  pair.0 + right
+}
+
+///|
+fn string_drop_prefix(s : String, prefix : String) -> String {
+  let chars = s.to_array()
+  let start = prefix.char_length()
+  let sb = StringBuilder::new()
+  for i in start..<chars.length() {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
 }
 
 ///|
@@ -518,6 +548,7 @@ fn best_bpe_pair(
   freqs : Array[Int],
   min_frequency : Int,
   max_token_length : Int?,
+  continuing_subword_prefix : String?,
 ) -> (String, String)? {
   let counts : Map[(String, String), Int] = {}
   let order : Array[(String, String)] = []
@@ -541,7 +572,9 @@ fn best_bpe_pair(
   for p in order {
     match counts.get(p) {
       Some(n) =>
-        if bpe_merged_token_allowed(p, max_token_length) &&
+        if bpe_merged_token_allowed(
+            p, max_token_length, continuing_subword_prefix,
+          ) &&
           (n > best_count || (n == best_count && bpe_pair_less(p, best))) {
           best = Some(p)
           best_count = n
@@ -556,10 +589,12 @@ fn best_bpe_pair(
 fn bpe_merged_token_allowed(
   pair : (String, String),
   max_token_length : Int?,
+  continuing_subword_prefix : String?,
 ) -> Bool {
   match max_token_length {
     None => true
-    Some(n) => n <= 0 || pair.0.length() + pair.1.length() <= n
+    Some(n) =>
+      n <= 0 || bpe_merged_token(pair, continuing_subword_prefix).length() <= n
   }
 }
 
