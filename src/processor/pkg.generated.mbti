@@ -45,6 +45,7 @@ pub fn PostProcessor::processors(Self) -> Array[Self]
 pub fn PostProcessor::roberta((String, Int), (String, Int), trim_offsets? : Bool, add_prefix_space? : Bool) -> Self
 pub fn PostProcessor::sep(Self) -> (String, Int)?
 pub fn PostProcessor::sequence(Array[Self]) -> Self
+pub fn PostProcessor::single(Self) -> Array[Piece]
 pub fn PostProcessor::single_pieces(Self) -> Array[Piece]
 pub fn PostProcessor::special_tokens(Self) -> Map[String, SpecialToken]
 pub fn PostProcessor::template(Array[Piece], Array[Piece], Map[String, SpecialToken]) -> Self

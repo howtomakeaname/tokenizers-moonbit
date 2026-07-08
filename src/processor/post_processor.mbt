@@ -183,6 +183,12 @@ pub fn PostProcessor::single_pieces(self : PostProcessor) -> Array[Piece] {
 }
 
 ///|
+/// HF-style `TemplateProcessing.single` typed alias.
+pub fn PostProcessor::single(self : PostProcessor) -> Array[Piece] {
+  self.single_pieces()
+}
+
+///|
 pub fn PostProcessor::pair_pieces(self : PostProcessor) -> Array[Piece] {
   match self {
     TemplateProcessing(pair~, ..) => pair.copy()
