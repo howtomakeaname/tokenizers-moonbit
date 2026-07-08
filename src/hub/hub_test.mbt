@@ -107,6 +107,7 @@ test "Hub request plan uses cache etag and resume range" {
   @test.assert_eq(plan.headers.get("Range"), Some("bytes=256-"))
   @test.assert_eq(plan.headers.get("If-Range"), Some("etag-partial"))
   @test.assert_eq(plan.headers.get("Authorization"), Some("Bearer tok"))
+  @test.assert_eq(plan.headers.get("Accept"), Some("*/*"))
   @test.assert_eq(plan.range_start, Some(256))
   @test.assert_eq(plan.conditional_etag, Some("etag-existing"))
   @test.assert_eq(
@@ -114,6 +115,45 @@ test "Hub request plan uses cache etag and resume range" {
     true,
   )
   @test.assert_eq(plan.resume_metadata.unwrap().downloaded_size, 256)
+}
+
+///|
+test "Hub request headers avoid empty auth and optional user agent" {
+  let no_auth = plan_tokenizer_json_request(
+    "bert-base-uncased",
+    options=HubDownloadOptions::new(token=Some(""), user_agent=None),
+  )
+  @test.assert_eq(no_auth.headers.get("Accept"), Some("*/*"))
+  @test.assert_eq(no_auth.headers.get("Authorization"), None)
+  @test.assert_eq(no_auth.headers.get("User-Agent"), None)
+
+  let with_user_agent = plan_tokenizer_json_request(
+    "bert-base-uncased",
+    options=HubDownloadOptions::new(
+      token=Some("tok"),
+      user_agent=Some("custom-agent"),
+    ),
+  )
+  @test.assert_eq(
+    with_user_agent.headers.get("Authorization"),
+    Some("Bearer tok"),
+  )
+  @test.assert_eq(
+    with_user_agent.headers.get("User-Agent"),
+    expected_user_agent_header(Some("custom-agent")),
+  )
+}
+
+///|
+#cfg(target="js")
+fn expected_user_agent_header(_expected : String?) -> String? {
+  None
+}
+
+///|
+#cfg(not(target="js"))
+fn expected_user_agent_header(expected : String?) -> String? {
+  expected
 }
 
 ///|
