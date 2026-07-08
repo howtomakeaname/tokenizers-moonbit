@@ -269,6 +269,12 @@ pre-tokenizer `split`, state/tuple helpers, and `to_encoding` /
 `Encoding::words()` is available as a deprecated HF Python alias for
 `word_ids()`.
 
+`TokenizerComponentHooks` provides runtime-only normalize, pre-tokenize, and
+decode callbacks for binding layers that cannot map a dynamic Python component
+to a typed MoonBit component yet. Hooks can be passed per call or attached to a
+tokenizer. They are intentionally excluded from tokenizer JSON/state; use typed
+components for serialized round-trips.
+
 ## Component compatibility notes
 
 - `Normalizer::Replace`, `Decoder::Replace`, and regex `PreTokenizer::Split`
