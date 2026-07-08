@@ -1328,7 +1328,7 @@ pub fn Tokenizer::post_process(
       None => default_post_process(encoding, pair)
     }
   } else {
-    default_post_process(encoding, pair)
+    post_process_without_special_tokens(self.post_processor, encoding, pair)
   }
   self.finalize_padding(processed)
 }
@@ -1341,6 +1341,53 @@ fn default_post_process(
   match pair {
     Some(b) => concat_encodings(encoding, b)
     None => encoding
+  }
+}
+
+///|
+fn post_process_without_special_tokens(
+  post_processor : @processor.PostProcessor?,
+  encoding : @types.Encoding,
+  pair : @types.Encoding?,
+) -> @types.Encoding {
+  match post_processor {
+    Some(pp) => remove_post_processor_specials(pp.process(encoding, pair))
+    None => default_post_process(encoding, pair)
+  }
+}
+
+///|
+fn remove_post_processor_specials(enc : @types.Encoding) -> @types.Encoding {
+  let ids : Array[Int] = []
+  let type_ids : Array[Int] = []
+  let tokens : Array[String] = []
+  let offsets : Array[(Int, Int)] = []
+  let special_tokens_mask : Array[Int] = []
+  let attention_mask : Array[Int] = []
+  let sequence_ids : Array[Int?] = []
+  let word_ids : Array[Int?] = []
+  for i in 0..<enc.ids.length() {
+    if !(enc.special_tokens_mask[i] == 1 && enc.sequence_ids[i] is None) {
+      ids.push(enc.ids[i])
+      type_ids.push(enc.type_ids[i])
+      tokens.push(enc.tokens[i])
+      offsets.push(enc.offsets[i])
+      special_tokens_mask.push(enc.special_tokens_mask[i])
+      attention_mask.push(enc.attention_mask[i])
+      sequence_ids.push(enc.sequence_ids[i])
+      word_ids.push(enc.word_ids[i])
+    }
+  }
+  {
+    ids,
+    type_ids,
+    tokens,
+    offsets,
+    special_tokens_mask,
+    attention_mask,
+    sequence_ids,
+    word_ids,
+    overflowing: enc.overflowing.map(e => remove_post_processor_specials(e)),
   }
 }
 

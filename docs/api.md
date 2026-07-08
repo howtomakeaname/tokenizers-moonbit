@@ -210,8 +210,13 @@ tokens.
 `set_encode_special_tokens(true)` mirrors HF's `encode_special_tokens` switch:
 special tokens that appear in input text stay on the ordinary model path instead
 of being extracted as special added tokens. `post_process` exposes the configured
-post-processor for already-built encodings, and `num_special_tokens_to_add`
-reports how many special tokens would be injected for single or pair inputs.
+post-processor for already-built encodings. With `add_special_tokens=false`, it
+matches HF by skipping special-token insertion while still applying non-special
+post-processing effects such as ByteLevel/RoBERTa offset trimming. Use this
+tokenizer-level entry for Python binding parity; the low-level
+`PostProcessor::process` method keeps its compact native signature. The
+`num_special_tokens_to_add` helper reports how many special tokens would be
+injected for single or pair inputs.
 The same count is also available on `PostProcessor` as
 `num_special_tokens_to_add(is_pair)` for HF Python binding parity.
 

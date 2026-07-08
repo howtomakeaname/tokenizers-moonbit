@@ -778,6 +778,74 @@ test "post_process applies or skips configured post processor" {
 }
 
 ///|
+test "post_process false keeps HF processor metadata without specials" {
+  let template_json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"world":1,"<s>":2,"</s>":3,"[UNK]":4},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"TemplateProcessing",
+    #|   "single":"<s>:3 $A:2 </s>:3",
+    #|   "pair":"<s>:3 $A:2 </s>:3 $B:4 </s>:4",
+    #|   "special_tokens":{"<s>":{"id":"<s>","ids":[2],"tokens":["<s>"]},"</s>":{"id":"</s>","ids":[3],"tokens":["</s>"]}}}}
+  let template_tok = Tokenizer::from_str(template_json)
+  let template_a = template_tok.encode("hello", add_special_tokens=false)
+  let template_b = template_tok.encode("world", add_special_tokens=false)
+  let template_processed = template_tok.post_process(
+    template_a,
+    pair=Some(template_b),
+    add_special_tokens=false,
+  )
+  @test.assert_eq(template_processed.tokens, ["hello", "world"])
+  @test.assert_eq(template_processed.type_ids, [2, 4])
+  @test.assert_eq(template_processed.special_tokens_mask, [0, 0])
+  @test.assert_eq(template_processed.sequence_ids(), [Some(0), Some(1)])
+
+  let byte_json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":true},
+    #| "model":{"type":"WordLevel","vocab":{"a":0,"\u0120":1,"\u0120b":2,"[UNK]":3},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"ByteLevel","trim_offsets":true}}
+  let byte_tok = Tokenizer::from_str(byte_json)
+  let byte_raw = byte_tok.encode("a  b", add_special_tokens=false)
+  @test.assert_eq(byte_raw.offsets, [(0, 1), (1, 2), (2, 4)])
+  let byte_processed = byte_tok.post_process(byte_raw, add_special_tokens=false)
+  @test.assert_eq(byte_processed.tokens, ["a", "\u{0120}", "\u{0120}b"])
+  @test.assert_eq(byte_processed.offsets, [(0, 1), (2, 2), (3, 4)])
+  @test.assert_eq(byte_processed.special_tokens_mask, [0, 0, 0])
+
+  let roberta_json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":true},
+    #| "model":{"type":"WordLevel","vocab":{"a":0,"\u0120":1,"\u0120b":2,"</s>":4,"<s>":5,"[UNK]":3},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"RobertaProcessing","sep":["</s>",4],"cls":["<s>",5],"trim_offsets":true,"add_prefix_space":false}}
+  let roberta_tok = Tokenizer::from_str(roberta_json)
+  let roberta_raw = roberta_tok.encode("a  b", add_special_tokens=false)
+  let roberta_processed = roberta_tok.post_process(
+    roberta_raw,
+    add_special_tokens=false,
+  )
+  @test.assert_eq(roberta_processed.tokens, ["a", "\u{0120}", "\u{0120}b"])
+  @test.assert_eq(roberta_processed.offsets, [(0, 1), (2, 2), (3, 4)])
+  @test.assert_eq(roberta_processed.special_tokens_mask, [0, 0, 0])
+  @test.assert_eq(roberta_processed.sequence_ids(), [Some(0), Some(0), Some(0)])
+
+  let sequence_json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":true},
+    #| "model":{"type":"WordLevel","vocab":{"a":0,"\u0120":1,"\u0120b":2,"[UNK]":3,"[SEP]":4,"[CLS]":5},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"Sequence","processors":[{"type":"ByteLevel","trim_offsets":true},{"type":"BertProcessing","sep":["[SEP]",4],"cls":["[CLS]",5]}]}}
+  let sequence_tok = Tokenizer::from_str(sequence_json)
+  let sequence_raw = sequence_tok.encode("a  b", add_special_tokens=false)
+  let sequence_processed = sequence_tok.post_process(
+    sequence_raw,
+    add_special_tokens=false,
+  )
+  @test.assert_eq(sequence_processed.tokens, ["a", "\u{0120}", "\u{0120}b"])
+  @test.assert_eq(sequence_processed.offsets, [(0, 1), (2, 2), (3, 4)])
+  @test.assert_eq(sequence_processed.special_tokens_mask, [0, 0, 0])
+}
+
+///|
 test "post_process applies truncation and fixed padding like HF" {
   let json =
     #|{"version":"1.0",

@@ -35,6 +35,12 @@
 
 本轮复评结论：主流推理链路（load tokenizer.json / added tokens / normalizer / pre-tokenizer / model / post-processor / decoder / truncation / padding / offsets / pair / batch / pretokenized / save / local+online hub）已经基本可迁移；剩余缺口主要集中在训练生态完整 EM/大语料对拍、Hub 文件族/错误映射、以及 Python 绑定长尾别名。Regex 当前采用“HF 常见 deterministic subset + 复杂 pattern 显式 unsupported”的完成策略，不把 full backtracking/通用 Unicode regex 引擎作为跨 target 核心目标。
 
+### 2026-07-08 小闭环：`add_special_tokens=false` post-process
+
+- 已对拍 HF 0.22.2：`Tokenizer.post_process(..., add_special_tokens=False)` 与 `PostProcessor.process(..., add_special_tokens=False)` 会跳过 BERT/Template/RoBERTa special token 注入，但 ByteLevel/RoBERTa 的 offset trimming 等非 special-token 后处理仍会执行。
+- MoonBit 本轮只在 tokenizer-level 显式 `Tokenizer::post_process(..., add_special_tokens=false)` 补齐上述 HF 语义：复用现有 post-processor 产物后移除无 sequence 的 injected special tokens，因此 Template type_id、ByteLevel/RoBERTa offset trimming 与 Sequence 组合的非 special-token 效果仍保留；未改 `processor` 包 internals，也未触碰 normalizer/pretokenizer/processor sequence alias。
+- Python binding 建议继续把带 `add_special_tokens` 参数的 post-process 入口映射到 `Tokenizer::post_process`；低层 `PostProcessor::process` 暂保持精简 MoonBit 原生签名，避免扩大 processor API 面。
+
 | 优先级 | 缺口 | 当前状态 | 验收标准 | 建议排期 |
 |---|---|---|---|---|
 | P0 | `NormalizedString` / `PreTokenizedString` 低层 API 暴露 | ✅ 已完成 | 已提供 HF 同名概念的最小公共类型：原文/归一化文本、`len`/`__len__`/`is_empty`、`get`/`normalized`/`to_string`、`get_original`/`original`、state/tuple 往返、normalize、replace、prepend/append、clear、lowercase/uppercase、lstrip/rstrip/strip、nfc/nfd/nfkc/nfkd、slice、map/filter、literal/Regex split、`get_splits`/`splits`、pre-tokenizer 二次 split 与 `to_encoding`/`into_encoding`；覆盖自定义 normalizer/pre-tokenizer 与 Python binding 低层迁移场景，完整可变 offset hook 后续按需扩展 | 1 周 |
