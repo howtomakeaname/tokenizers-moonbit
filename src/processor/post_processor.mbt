@@ -210,6 +210,30 @@ pub fn PostProcessor::processors(self : PostProcessor) -> Array[PostProcessor] {
 }
 
 ///|
+pub fn PostProcessor::get_item(
+  self : PostProcessor,
+  index : Int,
+) -> PostProcessor? {
+  match self {
+    Sequence(steps) =>
+      if index >= 0 && index < steps.length() {
+        Some(steps[index])
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+pub fn PostProcessor::__getitem__(
+  self : PostProcessor,
+  index : Int,
+) -> PostProcessor? {
+  self.get_item(index)
+}
+
+///|
 /// Programmatic constructor for HF-style BERT post-processing:
 /// `[CLS] A [SEP]` and `[CLS] A [SEP] B [SEP]`.
 pub fn PostProcessor::bert(

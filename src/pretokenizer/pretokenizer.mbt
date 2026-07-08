@@ -235,6 +235,30 @@ pub fn PreTokenizer::pre_tokenizers(self : PreTokenizer) -> Array[PreTokenizer] 
 }
 
 ///|
+pub fn PreTokenizer::get_item(
+  self : PreTokenizer,
+  index : Int,
+) -> PreTokenizer? {
+  match self {
+    Sequence(steps) =>
+      if index >= 0 && index < steps.length() {
+        Some(steps[index])
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::__getitem__(
+  self : PreTokenizer,
+  index : Int,
+) -> PreTokenizer? {
+  self.get_item(index)
+}
+
+///|
 /// Public constructor for a WhitespaceSplit pre-tokenizer, used by higher-level
 /// training helpers without exposing cross-package enum construction details.
 pub fn PreTokenizer::whitespace_split() -> PreTokenizer {

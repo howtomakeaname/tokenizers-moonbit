@@ -150,6 +150,32 @@ pub fn Normalizer::normalizers(self : Normalizer) -> Array[Normalizer] {
 }
 
 ///|
+pub fn Normalizer::__len__(self : Normalizer) -> Int {
+  match self {
+    Sequence(steps) => steps.length()
+    _ => 0
+  }
+}
+
+///|
+pub fn Normalizer::get_item(self : Normalizer, index : Int) -> Normalizer? {
+  match self {
+    Sequence(steps) =>
+      if index >= 0 && index < steps.length() {
+        Some(steps[index])
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+pub fn Normalizer::__getitem__(self : Normalizer, index : Int) -> Normalizer? {
+  self.get_item(index)
+}
+
+///|
 pub fn Normalizer::get_state(
   self : Normalizer,
 ) -> NormalizerState raise @types.TokenizerError {

@@ -50,6 +50,7 @@ pub enum PreTokenizer {
   UnicodeScripts
   Sequence(Array[PreTokenizer])
 }
+pub fn PreTokenizer::__getitem__(Self, Int) -> Self?
 pub fn PreTokenizer::__getstate__(Self) -> PreTokenizerState raise @types.TokenizerError
 pub fn PreTokenizer::__repr__(Self) -> String raise @types.TokenizerError
 pub fn PreTokenizer::__setstate__(PreTokenizerState) -> Self raise @types.TokenizerError
@@ -61,6 +62,7 @@ pub fn PreTokenizer::byte_level_alphabet() -> Array[String]
 pub fn PreTokenizer::delimiter(Self) -> Char?
 pub fn PreTokenizer::from_json(Json) -> Self raise @types.TokenizerError
 pub fn PreTokenizer::from_state(PreTokenizerState) -> Self raise @types.TokenizerError
+pub fn PreTokenizer::get_item(Self, Int) -> Self?
 pub fn PreTokenizer::get_state(Self) -> PreTokenizerState raise @types.TokenizerError
 pub fn PreTokenizer::individual_digits(Self) -> Bool?
 pub fn PreTokenizer::invert(Self) -> Bool?

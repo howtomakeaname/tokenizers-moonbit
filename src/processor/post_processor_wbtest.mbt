@@ -59,6 +59,9 @@ test "post-processors expose HF-style configuration getters" {
   @test.assert_eq(seq.processors().map(p => p.kind()), [
     "ByteLevel", "BertProcessing",
   ])
+  @test.assert_eq(seq.get_item(0).unwrap().kind(), "ByteLevel")
+  @test.assert_eq(seq.__getitem__(1).unwrap().kind(), "BertProcessing")
+  @test.assert_eq(seq.__getitem__(2) is None, true)
 }
 
 ///|

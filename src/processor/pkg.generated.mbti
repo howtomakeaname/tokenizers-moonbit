@@ -23,6 +23,7 @@ pub enum PostProcessor {
   ByteLevel(add_prefix_space~ : Bool, trim_offsets~ : Bool, use_regex~ : Bool)
   Sequence(Array[PostProcessor])
 }
+pub fn PostProcessor::__getitem__(Self, Int) -> Self?
 pub fn PostProcessor::__getstate__(Self) -> PostProcessorState raise @types.TokenizerError
 pub fn PostProcessor::__repr__(Self) -> String raise @types.TokenizerError
 pub fn PostProcessor::__setstate__(PostProcessorState) -> Self raise @types.TokenizerError
@@ -34,6 +35,7 @@ pub fn PostProcessor::byte_level(add_prefix_space? : Bool, trim_offsets? : Bool,
 pub fn PostProcessor::cls(Self) -> (String, Int)?
 pub fn PostProcessor::from_json(Json) -> Self raise @types.TokenizerError
 pub fn PostProcessor::from_state(PostProcessorState) -> Self raise @types.TokenizerError
+pub fn PostProcessor::get_item(Self, Int) -> Self?
 pub fn PostProcessor::get_state(Self) -> PostProcessorState raise @types.TokenizerError
 pub fn PostProcessor::kind(Self) -> String
 pub fn PostProcessor::num_special_tokens_to_add(Self, is_pair? : Bool) -> Int
