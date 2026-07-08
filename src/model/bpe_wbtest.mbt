@@ -233,3 +233,98 @@ test "model exposes HF-style cache maintenance aliases" {
   ignore(bpe.tokenize("low"))
   @test.assert_eq(bpe.cache_size(), 1)
 }
+
+///|
+test "standalone model artifact loaders round trip saved artifacts" {
+  let dir = "_build/model-artifact-loaders"
+  let bpe = Model::train_bpe(
+    ["abab abab"],
+    unk_token=Some("[UNK]"),
+    min_frequency=2,
+    vocab_size=Some(16),
+  )
+  let bpe_paths = bpe.save(dir, prefix="bpe") catch {
+    _ => abort("save bpe artifacts failed")
+  }
+  let loaded_bpe = Model::from_bpe_files(bpe_paths[0], bpe_paths[1]) catch {
+    _ => abort("load bpe artifacts failed")
+  }
+  @test.assert_eq(loaded_bpe.kind(), "BPE")
+  @test.assert_eq(loaded_bpe.token_to_id("ab"), bpe.token_to_id("ab"))
+  @test.assert_eq(
+    loaded_bpe.id_to_token(loaded_bpe.token_to_id("ab").unwrap()),
+    Some("ab"),
+  )
+  @test.assert_eq(loaded_bpe.tokenize("abab").map(t => t.value), ["abab"])
+
+  let wordpiece = Model::train_wordpiece(
+    ["hello hello"],
+    unk_token="[UNK]",
+    continuing_subword_prefix="##",
+  )
+  let wordpiece_paths = wordpiece.save(dir, prefix="wp") catch {
+    _ => abort("save wordpiece artifact failed")
+  }
+  let loaded_wordpiece = Model::from_wordpiece_file(wordpiece_paths[0]) catch {
+    _ => abort("load wordpiece artifact failed")
+  }
+  @test.assert_eq(loaded_wordpiece.kind(), "WordPiece")
+  @test.assert_eq(
+    loaded_wordpiece.token_to_id("hello"),
+    wordpiece.token_to_id("hello"),
+  )
+  @test.assert_eq(
+    loaded_wordpiece.id_to_token(loaded_wordpiece.token_to_id("hello").unwrap()),
+    Some("hello"),
+  )
+  @test.assert_eq(loaded_wordpiece.tokenize("hello").map(t => t.value), [
+    "hello",
+  ])
+
+  let wordlevel = Model::train_wordlevel_from_tokens(
+    [["hello", "[UNK]"]],
+    unk_token="[UNK]",
+  )
+  let wordlevel_paths = wordlevel.save(dir, prefix="wl") catch {
+    _ => abort("save wordlevel artifact failed")
+  }
+  let loaded_wordlevel = Model::from_wordlevel_file(wordlevel_paths[0]) catch {
+    _ => abort("load wordlevel artifact failed")
+  }
+  @test.assert_eq(loaded_wordlevel.kind(), "WordLevel")
+  @test.assert_eq(
+    loaded_wordlevel.token_to_id("hello"),
+    wordlevel.token_to_id("hello"),
+  )
+  @test.assert_eq(
+    loaded_wordlevel.id_to_token(loaded_wordlevel.token_to_id("hello").unwrap()),
+    Some("hello"),
+  )
+  @test.assert_eq(loaded_wordlevel.tokenize("missing").map(t => t.value), [
+    "[UNK]",
+  ])
+}
+
+///|
+test "bpe standalone loader skips version comments and reads text merges" {
+  let dir = "_build/model-artifact-loaders"
+  ensure_dir(dir) catch {
+    _ => abort("create loader test dir failed")
+  }
+  let vocab_path = dir + "/manual-bpe-vocab.json"
+  let merges_path = dir + "/manual-bpe-merges.txt"
+  write_artifact(
+    vocab_path, "{\"[UNK]\":0,\"l\":1,\"o\":2,\"w\":3,\"lo\":4,\"low\":5}",
+  ) catch {
+    _ => abort("write manual bpe vocab failed")
+  }
+  write_artifact(merges_path, "#version: 0.2\nl o\nlo w\n") catch {
+    _ => abort("write manual bpe merges failed")
+  }
+  let loaded = Model::from_bpe_files(vocab_path, merges_path) catch {
+    _ => abort("load manual bpe artifacts failed")
+  }
+  @test.assert_eq(loaded.token_to_id("low"), Some(5))
+  @test.assert_eq(loaded.id_to_token(5), Some("low"))
+  @test.assert_eq(loaded.tokenize("low").map(t => t.value), ["low"])
+}
