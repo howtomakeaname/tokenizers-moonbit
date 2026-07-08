@@ -36,6 +36,138 @@ pub enum PreTokenizer {
 }
 
 ///|
+/// Return the pre-tokenizer family name used by thin binding layers.
+pub fn PreTokenizer::kind(self : PreTokenizer) -> String {
+  match self {
+    ByteLevel(..) => "ByteLevel"
+    Whitespace => "Whitespace"
+    WhitespaceSplit => "WhitespaceSplit"
+    Metaspace(..) => "Metaspace"
+    Punctuation(..) => "Punctuation"
+    Split(..) => "Split"
+    BertPreTokenizer => "BertPreTokenizer"
+    Digits(..) => "Digits"
+    Delimiter(..) => "Delimiter"
+    FixedLength(..) => "FixedLength"
+    UnicodeScripts => "UnicodeScripts"
+    Sequence(_) => "Sequence"
+  }
+}
+
+///|
+pub fn PreTokenizer::add_prefix_space(self : PreTokenizer) -> Bool? {
+  match self {
+    ByteLevel(add_prefix_space~, ..) => Some(add_prefix_space)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::use_regex(self : PreTokenizer) -> Bool? {
+  match self {
+    ByteLevel(use_regex~, ..) => Some(use_regex)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::trim_offsets(self : PreTokenizer) -> Bool? {
+  match self {
+    ByteLevel(trim_offsets~, ..) => Some(trim_offsets)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::replacement(self : PreTokenizer) -> Char? {
+  match self {
+    Metaspace(replacement~, ..) => Some(replacement)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::prepend_scheme(self : PreTokenizer) -> String? {
+  match self {
+    Metaspace(prepend_scheme~, ..) => Some(prepend_scheme)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::split_enabled(self : PreTokenizer) -> Bool? {
+  match self {
+    Metaspace(split~, ..) => Some(split)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::behavior(self : PreTokenizer) -> SplitBehavior? {
+  match self {
+    Punctuation(behavior~) => Some(behavior)
+    Split(behavior~, ..) => Some(behavior)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::pattern(self : PreTokenizer) -> String? {
+  match self {
+    Split(pattern~, ..) => Some(pattern)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::invert(self : PreTokenizer) -> Bool? {
+  match self {
+    Split(invert~, ..) => Some(invert)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::regex(self : PreTokenizer) -> Bool? {
+  match self {
+    Split(regex~, ..) => Some(regex)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::individual_digits(self : PreTokenizer) -> Bool? {
+  match self {
+    Digits(individual_digits~) => Some(individual_digits)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::delimiter(self : PreTokenizer) -> Char? {
+  match self {
+    Delimiter(delimiter~) => Some(delimiter)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::length(self : PreTokenizer) -> Int? {
+  match self {
+    FixedLength(length~) => Some(length)
+    _ => None
+  }
+}
+
+///|
+pub fn PreTokenizer::pre_tokenizers(self : PreTokenizer) -> Array[PreTokenizer] {
+  match self {
+    Sequence(steps) => steps.copy()
+    _ => []
+  }
+}
+
+///|
 /// Public constructor for a WhitespaceSplit pre-tokenizer, used by higher-level
 /// training helpers without exposing cross-package enum construction details.
 pub fn PreTokenizer::whitespace_split() -> PreTokenizer {

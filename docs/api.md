@@ -270,6 +270,9 @@ pre-tokenizer `split`, state/tuple helpers, and `to_encoding` /
 for quick component-level checks and binding shims.
 `PreTokenizer::byte_level_alphabet()` mirrors HF ByteLevel.alphabet and returns
 the same 256-symbol table as `@pretokenizer.byte_level_alphabet()`.
+`PreTokenizer` also exposes read-only configuration getters for binding layers,
+including ByteLevel flags, Metaspace settings, Split/Punctuation behavior,
+Digits/Delimiter/FixedLength settings, and Sequence children.
 `Normalizer::normalize_str(input)` is available as an HF-style alias for
 `normalize(input)`.
 `Normalizer` also exposes read-only configuration getters for binding layers,

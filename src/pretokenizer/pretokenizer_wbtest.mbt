@@ -164,6 +164,68 @@ test "bytelevel alphabet alias matches top-level helper" {
 }
 
 ///|
+test "pretokenizer exposes HF-style configuration getters" {
+  let bytelevel = PreTokenizer::byte_level(
+    add_prefix_space=true,
+    use_regex=false,
+    trim_offsets=false,
+  )
+  @test.assert_eq(bytelevel.kind(), "ByteLevel")
+  @test.assert_eq(bytelevel.add_prefix_space(), Some(true))
+  @test.assert_eq(bytelevel.use_regex(), Some(false))
+  @test.assert_eq(bytelevel.trim_offsets(), Some(false))
+
+  let metaspace = PreTokenizer::Metaspace(
+    replacement='▁',
+    prepend_scheme="always",
+    split=false,
+  )
+  @test.assert_eq(metaspace.kind(), "Metaspace")
+  @test.assert_eq(metaspace.replacement(), Some('▁'))
+  @test.assert_eq(metaspace.prepend_scheme(), Some("always"))
+  @test.assert_eq(metaspace.split_enabled(), Some(false))
+
+  let punctuation = PreTokenizer::Punctuation(behavior=Contiguous)
+  @test.assert_eq(punctuation.kind(), "Punctuation")
+  @test.assert_eq(punctuation.behavior(), Some(Contiguous))
+
+  let split = PreTokenizer::Split(
+    pattern="\\s+",
+    behavior=Removed,
+    invert=true,
+    regex=true,
+  )
+  @test.assert_eq(split.kind(), "Split")
+  @test.assert_eq(split.pattern(), Some("\\s+"))
+  @test.assert_eq(split.behavior(), Some(Removed))
+  @test.assert_eq(split.invert(), Some(true))
+  @test.assert_eq(split.regex(), Some(true))
+
+  let digits = PreTokenizer::Digits(individual_digits=true)
+  @test.assert_eq(digits.kind(), "Digits")
+  @test.assert_eq(digits.individual_digits(), Some(true))
+
+  let delimiter = PreTokenizer::Delimiter(delimiter=',')
+  @test.assert_eq(delimiter.kind(), "Delimiter")
+  @test.assert_eq(delimiter.delimiter(), Some(','))
+
+  let fixed = PreTokenizer::FixedLength(length=3)
+  @test.assert_eq(fixed.kind(), "FixedLength")
+  @test.assert_eq(fixed.length(), Some(3))
+
+  let sequence = PreTokenizer::Sequence([PreTokenizer::WhitespaceSplit, digits])
+  @test.assert_eq(sequence.kind(), "Sequence")
+  @test.assert_eq(sequence.pre_tokenizers().map(p => p.kind()), [
+    "WhitespaceSplit", "Digits",
+  ])
+  let steps = sequence.pre_tokenizers()
+  steps.push(PreTokenizer::Whitespace)
+  @test.assert_eq(sequence.pre_tokenizers().length(), 2)
+  @test.assert_eq(PreTokenizer::Whitespace.kind(), "Whitespace")
+  @test.assert_eq(PreTokenizer::Whitespace.pattern(), None)
+}
+
+///|
 test "split pretokenizer supports inverted literal behavior modes" {
   let removed = PreTokenizer::Split(
     pattern="Hello",
