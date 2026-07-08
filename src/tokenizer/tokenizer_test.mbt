@@ -396,6 +396,8 @@ test "Tokenizer exposes Python pickle-style state roundtrip" {
   let tok = Tokenizer::from_str(json)
   let state = tok.__getstate__()
   @test.assert_eq(state.json, tok.to_str())
+  @test.assert_eq(tok.__str__(), tok.to_str())
+  @test.assert_eq(tok.__repr__(), tok.to_str())
   let restored = Tokenizer::__setstate__(state)
   @test.assert_eq(restored.to_str(), tok.to_str())
   @test.assert_eq(

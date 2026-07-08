@@ -258,6 +258,9 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 `show_progress`，以及 WordPiece、BPE、Unigram trainer 的模型特有 knobs。这些
 helper 用于 binding/property 映射，不改变训练行为。
 
+`Tokenizer::__str__()` 与 `Tokenizer::__repr__()` 是面向 Python binding 的薄别名，
+返回紧凑 `to_str()` JSON 形式。
+
 `TokenizerComponentHooks` 提供仅运行时生效的 normalize、pre-tokenize、decode
 回调，供 binding 层临时承接还无法映射成 typed MoonBit 组件的动态 Python 组件。
 这些 hook 可按单次调用传入，也可挂到 tokenizer 上；它们有意不写入 tokenizer

@@ -275,6 +275,9 @@ pre-tokenizer `split`, state/tuple helpers, and `to_encoding` /
 Unigram trainers. These helpers are intended for binding/property mapping and do
 not change training behavior.
 
+`Tokenizer::__str__()` and `Tokenizer::__repr__()` are thin Python binding
+aliases for the compact `to_str()` JSON form.
+
 `TokenizerComponentHooks` provides runtime-only normalize, pre-tokenize, and
 decode callbacks for binding layers that cannot map a dynamic Python component
 to a typed MoonBit component yet. Hooks can be passed per call or attached to a

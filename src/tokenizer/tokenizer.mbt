@@ -808,6 +808,22 @@ pub fn Tokenizer::to_str(
 }
 
 ///|
+/// Python binding alias for `str(tokenizer)`.
+pub fn Tokenizer::__str__(
+  self : Tokenizer,
+) -> String raise @types.TokenizerError {
+  self.to_str()
+}
+
+///|
+/// Python binding alias for `repr(tokenizer)`.
+pub fn Tokenizer::__repr__(
+  self : Tokenizer,
+) -> String raise @types.TokenizerError {
+  self.to_str()
+}
+
+///|
 /// Return a Python-binding-friendly tokenizer state snapshot.
 pub fn Tokenizer::get_state(
   self : Tokenizer,
