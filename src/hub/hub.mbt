@@ -716,6 +716,39 @@ pub fn apply_tokenizer_json_download_chunks(
 }
 
 ///|
+/// Byte-oriented counterpart of `apply_tokenizer_json_download_chunks`. This is
+/// the preferred entry point for real HTTP streams because Range/resume metadata
+/// is byte-based and UTF-8 code points may be split across transport chunks.
+pub fn apply_tokenizer_json_download_bytes(
+  model_id : String,
+  chunks : Array[Bytes],
+  metadata : HubResponseMetadata,
+  final_url : String,
+  options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> HubDownloadResult raise @types.TokenizerError {
+  let plan = plan_tokenizer_json_request(model_id, options~)
+  let decision = decide_tokenizer_json_response(plan, metadata)
+  match decision.action {
+    UseCachedTokenizer =>
+      apply_tokenizer_json_download_result(plan, None, metadata, final_url)
+    ReplaceCachedTokenizer | AppendRangeToCachedTokenizer => {
+      let content = write_tokenizer_json_stream_bytes(
+        model_id, options, plan, decision, chunks,
+      )
+      {
+        content,
+        resolved_revision: decision.resolved_revision,
+        etag: decision.etag,
+        final_url,
+        status: metadata.status,
+      }
+    }
+    RetryWithoutRange | RejectResponse =>
+      raise @types.ParseError(decision.message)
+  }
+}
+
+///|
 fn write_tokenizer_json_stream_chunks(
   model_id : String,
   options : HubDownloadOptions,
@@ -771,6 +804,61 @@ fn write_tokenizer_json_stream_chunks(
 }
 
 ///|
+fn write_tokenizer_json_stream_bytes(
+  model_id : String,
+  options : HubDownloadOptions,
+  plan : HubRequestPlan,
+  decision : HubResponseDecision,
+  chunks : Array[Bytes],
+) -> String raise @types.TokenizerError {
+  if chunks.length() == 0 {
+    raise @types.ParseError(
+      "Hub streamed response body is required for cache action: " +
+      decision.message,
+    )
+  }
+  match decision.action {
+    ReplaceCachedTokenizer => {
+      let resume_meta = create_stream_resume_metadata(
+        model_id, options, decision,
+      )
+      write_stream_bytes_to_incomplete(
+        model_id,
+        options,
+        resume_meta.incomplete_path,
+        b"",
+        chunks,
+        decision,
+      )
+    }
+    AppendRangeToCachedTokenizer => {
+      let resume_meta = match plan.resume_metadata {
+        Some(r) => r
+        None =>
+          raise @types.ParseError(
+            "Hub response 206 cannot stream without resume metadata",
+          )
+      }
+      let prefix = @fs.read_file_to_bytes(resume_meta.incomplete_path) catch {
+        _ =>
+          raise @types.ParseError(
+            "cannot read incomplete Hub tokenizer cache: \{resume_meta.incomplete_path}",
+          )
+      }
+      write_stream_bytes_to_incomplete(
+        model_id,
+        options,
+        resume_meta.incomplete_path,
+        prefix,
+        chunks,
+        decision,
+      )
+    }
+    _ => raise @types.ParseError(decision.message)
+  }
+}
+
+///|
 fn create_stream_resume_metadata(
   model_id : String,
   options : HubDownloadOptions,
@@ -784,6 +872,76 @@ fn create_stream_resume_metadata(
     expected_size=decision.expected_size,
     downloaded_size=0,
   )
+}
+
+///|
+fn concat_bytes(prefix : Bytes, chunks : Array[Bytes]) -> Bytes {
+  let mut total = prefix.length()
+  for chunk in chunks {
+    total = total + chunk.length()
+  }
+  Bytes::makei(total, i => {
+    if i < prefix.length() {
+      prefix[i]
+    } else {
+      let mut pos = i - prefix.length()
+      let mut out = (0 : Byte)
+      for chunk in chunks {
+        if pos < chunk.length() {
+          out = chunk[pos]
+          break
+        }
+        pos = pos - chunk.length()
+      }
+      out
+    }
+  })
+}
+
+///|
+fn write_stream_bytes_to_incomplete(
+  model_id : String,
+  options : HubDownloadOptions,
+  incomplete_path : String,
+  prefix : Bytes,
+  chunks : Array[Bytes],
+  decision : HubResponseDecision,
+) -> String raise @types.TokenizerError {
+  let written : Array[Bytes] = []
+  for chunk in chunks {
+    written.push(chunk)
+    let content = concat_bytes(prefix, written)
+    @fs.write_bytes_to_file(incomplete_path, content) catch {
+      _ =>
+        raise @types.ParseError(
+          "cannot write incomplete Hub tokenizer cache: \{incomplete_path}",
+        )
+    }
+    ignore(
+      @tokenizer.Tokenizer::write_pretrained_download_resume_metadata(
+        model_id,
+        revision=options.revision,
+        cache_dir=options.cache_dir,
+        etag=decision.etag,
+        expected_size=decision.expected_size,
+        downloaded_size=content.length(),
+      ) catch {
+        _ =>
+          raise @types.ParseError(
+            "cannot update Hub download resume metadata while streaming tokenizer.json",
+          )
+      },
+    )
+  }
+  ignore(
+    @tokenizer.Tokenizer::clear_pretrained_download_resume_metadata(
+      model_id,
+      revision=options.revision,
+      cache_dir=options.cache_dir,
+    ),
+  )
+  ignore(@fs.remove_file(incomplete_path) catch { _ => () })
+  @utf8.decode_lossy(concat_bytes(prefix, chunks)[:])
 }
 
 ///|
@@ -921,7 +1079,7 @@ async fn async_download_with_redirects(
       client.close()
       []
     } else {
-      let chunks = read_tokenizer_json_stream_chunks(
+      let chunks = read_tokenizer_json_stream_bytes(
         client,
         current,
         options.stream_chunk_size,
@@ -929,7 +1087,16 @@ async fn async_download_with_redirects(
       client.close()
       chunks
     }
-    return apply_tokenizer_json_download_chunks(
+    if decision.can_use_cache() {
+      return apply_tokenizer_json_download_chunks(
+        model_id,
+        [],
+        meta,
+        current,
+        options~,
+      )
+    }
+    return apply_tokenizer_json_download_bytes(
       model_id,
       content,
       meta,
@@ -941,19 +1108,19 @@ async fn async_download_with_redirects(
 }
 
 ///|
-async fn read_tokenizer_json_stream_chunks(
+async fn read_tokenizer_json_stream_bytes(
   client : @http.Client,
   url : String,
   chunk_size : Int,
-) -> Array[String] raise @types.TokenizerError {
-  let chunks : Array[String] = []
+) -> Array[Bytes] raise @types.TokenizerError {
+  let chunks : Array[Bytes] = []
   let max_len = positive_stream_chunk_size(chunk_size)
   while (client.read_some(max_len~) catch {
           _ =>
             raise @types.ParseError("Hub response stream read failed: \{url}")
         })
         is Some(bytes) {
-    chunks.push(@utf8.decode_lossy(bytes[:]))
+    chunks.push(bytes)
   }
   if chunks.length() == 0 {
     raise @types.ParseError("Hub response body is empty: \{url}")

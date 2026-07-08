@@ -465,6 +465,50 @@ test "Hub streamed chunk helper writes incomplete cache and clears resume" {
 }
 
 ///|
+test "Hub streamed byte helper preserves UTF-8 split across chunks" {
+  let json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"你好🙂":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let bytes = @utf8.encode(json)
+  let cache = "_build/hub_stream_utf8_cache"
+  let model = "org/stream-utf8-tokenizer"
+  let opts = HubDownloadOptions::new(cache_dir=Some(cache))
+  let meta = HubResponseMetadata::new(
+    200,
+    resolved_revision=Some("utf8rev"),
+    etag=Some("etag-utf8"),
+    content_length=Some(bytes.length()),
+    accept_ranges=true,
+  )
+  let result = apply_tokenizer_json_download_bytes(
+    model,
+    [bytes[0:56].to_owned(), bytes[56:57].to_owned(), bytes[57:].to_owned()],
+    meta,
+    "https://hf.example/utf8-stream",
+    options=opts,
+  )
+  @test.assert_eq(result.content, json)
+  @test.assert_eq(result.status, 200)
+  @test.assert_eq(
+    @tokenizer.Tokenizer::from_pretrained_download_resume_metadata(
+      model,
+      revision="main",
+      cache_dir=Some(cache),
+    ),
+    None,
+  )
+  let paths = @tokenizer.Tokenizer::from_pretrained_cache_paths(
+    model,
+    revision="main",
+    resolved_revision=Some("utf8rev"),
+    cache_dir=Some(cache),
+  ).unwrap()
+  @test.assert_eq(
+    @fs.path_exists(paths.tokenizer_json_path + ".incomplete"),
+    false,
+  )
+}
+
+///|
 fn string_prefix(s : String, stop : Int) -> String {
   let chars = s.to_array()
   let end = if stop < 0 {
