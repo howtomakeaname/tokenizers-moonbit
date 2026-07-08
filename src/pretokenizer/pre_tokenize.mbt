@@ -33,6 +33,15 @@ pub fn PreTokenizer::pre_tokenize(
   }
 }
 
+///|
+/// HF Python binding-style helper returning `(value, offsets)` pairs.
+pub fn PreTokenizer::pre_tokenize_str(
+  self : PreTokenizer,
+  text : String,
+) -> Array[(String, (Int, Int))] {
+  self.pre_tokenize(text, base_offset=0).map(s => (s.value, s.offsets))
+}
+
 // Split pre-tokenizer. We recognize the well-known GPT-2 / Qwen-Llama3 family
 // regexes (used verbatim by most modern models) and run a dedicated scanner.
 // Each match becomes one piece (HF's Split + Isolated over a full-coverage

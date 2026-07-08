@@ -137,6 +137,23 @@ test "split pretokenizer supports literal behavior modes" {
 }
 
 ///|
+test "pre_tokenize_str returns HF-style value offset tuples" {
+  @test.assert_eq(PreTokenizer::WhitespaceSplit.pre_tokenize_str("Hi  moon"), [
+    ("Hi", (0, 2)),
+    ("moon", (4, 8)),
+  ])
+  @test.assert_eq(
+    PreTokenizer::Split(
+      pattern=",",
+      behavior=Isolated,
+      invert=false,
+      regex=false,
+    ).pre_tokenize_str("a,b"),
+    [("a", (0, 1)), (",", (1, 2)), ("b", (2, 3))],
+  )
+}
+
+///|
 test "split pretokenizer supports inverted literal behavior modes" {
   let removed = PreTokenizer::Split(
     pattern="Hello",

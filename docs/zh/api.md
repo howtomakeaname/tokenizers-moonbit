@@ -251,6 +251,9 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 `PreTokenizedString` 提供 `get_splits` / `splits`、`normalize`、pre-tokenizer
 `split`、state/tuple helper，以及 `to_encoding` / `into_encoding`。
 
+`PreTokenizer::pre_tokenize_str(text)` 返回 HF 风格 `(value, offsets)` tuple，
+便于组件级检查和 binding shim。
+
 `Encoding::words()` 作为 HF Python 已废弃但仍存在的 `word_ids()` 属性别名提供。
 
 `Trainer` 暴露返回副本的配置 getter，例如 `kind`、`unk_token`、
