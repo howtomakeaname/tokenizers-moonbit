@@ -86,6 +86,14 @@ pub struct TrainerState {
 } derive(Debug, Eq)
 
 ///|
+priv struct BpeTrainingOptions {
+  byte_fallback : Bool
+  ignore_merges : Bool
+  dropout : Double?
+  cache_capacity : Int?
+}
+
+///|
 pub fn TrainerState::with_kind(
   self : TrainerState,
   kind : String,
@@ -707,7 +715,8 @@ pub fn Tokenizer::train_from_iterator(
       limit_alphabet~,
       max_token_length~,
       ..
-    ) =>
+    ) => {
+      let options = self.bpe_training_options()
       @model.Model::train_bpe_from_tokens(
         tokenized,
         unk_token~,
@@ -720,7 +729,12 @@ pub fn Tokenizer::train_from_iterator(
         initial_alphabet~,
         limit_alphabet~,
         max_token_length~,
+        byte_fallback=options.byte_fallback,
+        ignore_merges=options.ignore_merges,
+        dropout=options.dropout,
+        cache_capacity=options.cache_capacity,
       )
+    }
     UnigramTrainer(
       unk_token~,
       min_frequency~,
@@ -940,6 +954,26 @@ fn split_training_lines(content : String) -> Array[String] {
     out.push(tail)
   }
   out
+}
+
+///|
+fn Tokenizer::bpe_training_options(self : Tokenizer) -> BpeTrainingOptions {
+  match self.model {
+    @model.BPE(m) =>
+      {
+        byte_fallback: m.byte_fallback,
+        ignore_merges: m.ignore_merges,
+        dropout: m.dropout,
+        cache_capacity: m.cache_capacity,
+      }
+    _ =>
+      {
+        byte_fallback: false,
+        ignore_merges: false,
+        dropout: None,
+        cache_capacity: None,
+      }
+  }
 }
 
 ///|

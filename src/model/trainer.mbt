@@ -286,7 +286,8 @@ fn char_string(c : Char) -> String {
 /// a character alphabet (including optional caller-provided initial alphabet and
 /// corpus alphabet cap), repeatedly pick the highest-frequency adjacent pair
 /// (frequency desc, lexical tie-break), add the merged token, and rewrite the
-/// corpus. It intentionally omits advanced trainer knobs such as dropout.
+/// corpus. Runtime BPE options such as dropout can be supplied when callers need
+/// to preserve an existing model configuration across retraining.
 pub fn Model::train_bpe(
   texts : Array[String],
   unk_token? : String? = Some("[UNK]"),
@@ -299,6 +300,10 @@ pub fn Model::train_bpe(
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
   max_token_length? : Int? = None,
+  byte_fallback? : Bool = false,
+  ignore_merges? : Bool = false,
+  dropout? : Double? = None,
+  cache_capacity? : Int? = None,
 ) -> Model {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -316,6 +321,10 @@ pub fn Model::train_bpe(
     initial_alphabet~,
     limit_alphabet~,
     max_token_length~,
+    byte_fallback~,
+    ignore_merges~,
+    dropout~,
+    cache_capacity~,
   )
 }
 
@@ -333,6 +342,10 @@ pub fn Model::train_bpe_from_tokens(
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
   max_token_length? : Int? = None,
+  byte_fallback? : Bool = false,
+  ignore_merges? : Bool = false,
+  dropout? : Double? = None,
+  cache_capacity? : Int? = None,
 ) -> Model {
   let word_counts : Map[String, Int] = {}
   let word_order : Array[String] = []
@@ -417,13 +430,29 @@ pub fn Model::train_bpe_from_tokens(
     continuing_subword_prefix,
     end_of_word_suffix,
     fuse_unk,
-    byte_fallback: false,
-    ignore_merges: false,
-    dropout: None,
+    byte_fallback,
+    ignore_merges,
+    dropout: normalize_bpe_dropout(dropout),
     dropout_rng_state: 1,
     cache: {},
-    cache_capacity: None,
+    cache_capacity: normalize_bpe_cache_capacity(cache_capacity),
   })
+}
+
+///|
+fn normalize_bpe_dropout(dropout : Double?) -> Double? {
+  match dropout {
+    Some(p) => if p > 0.0 { Some(p) } else { None }
+    None => None
+  }
+}
+
+///|
+fn normalize_bpe_cache_capacity(capacity : Int?) -> Int? {
+  match capacity {
+    Some(n) => Some(if n > 0 { n } else { 0 })
+    None => None
+  }
 }
 
 ///|

@@ -2465,6 +2465,63 @@ test "Tokenizer train_from_iterator applies pipeline and preserves added special
 }
 
 ///|
+test "BPE train_from_iterator preserves model-only options" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"BPE","vocab":{"[UNK]":0,"a":1,"b":2,"ab":3},"merges":[["a","b"]],"unk_token":"[UNK]","byte_fallback":true,"dropout":0.25,"ignore_merges":true}}
+  let base = Tokenizer::from_str(json).resize_cache(0)
+  let trained = base.train_from_iterator(
+    ["abab abab", "ab"],
+    Trainer::bpe(
+      unk_token=Some("[UNK]"),
+      min_frequency=1,
+      vocab_size=Some(16),
+      show_progress=false,
+    ),
+  )
+  let rendered = trained.to_json()
+  @test.assert_eq(rendered.contains("\"byte_fallback\":true"), true)
+  @test.assert_eq(rendered.contains("\"dropout\":0.25"), true)
+  @test.assert_eq(rendered.contains("\"ignore_merges\":true"), true)
+  @test.assert_eq(trained.get_model().byte_fallback(), Some(true))
+  @test.assert_eq(trained.get_model().dropout(), Some(0.25))
+  @test.assert_eq(trained.get_model().ignore_merges(), Some(true))
+  match trained.get_model() {
+    @model.BPE(m) => @test.assert_eq(m.cache_capacity, Some(0))
+    _ => abort("expected BPE model")
+  }
+}
+
+///|
+test "BPE train_from_iterator lets trainer override prefix and suffix" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"BPE","vocab":{"[UNK]":0,"a":1,"b":2,"ab":3},"merges":[["a","b"]],"unk_token":"[UNK]","continuing_subword_prefix":"OLD","end_of_word_suffix":"OLDEND","byte_fallback":true,"ignore_merges":true}}
+  let trained = Tokenizer::from_str(json).train_from_iterator(
+    ["abab abab", "ab"],
+    Trainer::bpe(
+      unk_token=Some("[UNK]"),
+      min_frequency=1,
+      vocab_size=Some(16),
+      continuing_subword_prefix=Some("@@"),
+      end_of_word_suffix=Some("</w>"),
+      show_progress=false,
+    ),
+  )
+  let rendered = trained.to_json()
+  @test.assert_eq(trained.get_model().continuing_subword_prefix(), Some("@@"))
+  @test.assert_eq(trained.get_model().end_of_word_suffix(), Some("</w>"))
+  @test.assert_eq(
+    rendered.contains("\"continuing_subword_prefix\":\"@@\""),
+    true,
+  )
+  @test.assert_eq(rendered.contains("\"end_of_word_suffix\":\"</w>\""), true)
+  @test.assert_eq(rendered.contains("OLD"), false)
+}
+
+///|
 test "Trainer preserves AddedToken metadata for special tokens" {
   let base = Tokenizer::new(@model.Model::train_wordlevel_from_tokens([[]])).with_pre_tokenizer(
     Some(@pretokenizer.PreTokenizer::whitespace_split()),
