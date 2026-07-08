@@ -2712,9 +2712,14 @@ test "Trainer default min_frequency documents remaining HF delta" {
   @test.assert_eq(Trainer::wordlevel().min_frequency(), 0)
   @test.assert_eq(Trainer::wordpiece().min_frequency(), 0)
   @test.assert_eq(Trainer::bpe().min_frequency(), 0)
+  @test.assert_eq(Trainer::bpe().unk_token(), None)
   @test.assert_eq(Trainer::wordlevel(min_frequency=1).min_frequency(), 1)
   @test.assert_eq(Trainer::wordpiece(min_frequency=1).min_frequency(), 1)
   @test.assert_eq(Trainer::bpe(min_frequency=2).min_frequency(), 2)
+  @test.assert_eq(
+    Trainer::bpe(unk_token=Some("[UNK]")).unk_token(),
+    Some("[UNK]"),
+  )
 }
 
 ///|
@@ -3152,11 +3157,8 @@ test "train_bpe learns frequent merges" {
 
 ///|
 test "train_bpe default learns singleton merges like HF" {
-  let default_tok = Tokenizer::train_bpe(
-    ["ab"],
-    unk_token=Some("[UNK]"),
-    vocab_size=Some(8),
-  )
+  let default_tok = Tokenizer::train_bpe(["ab"], vocab_size=Some(8))
+  @test.assert_eq(default_tok.token_to_id("[UNK]"), None)
   @test.assert_eq(default_tok.token_to_id("ab") is Some(_), true)
   @test.assert_eq(default_tok.encode("ab", add_special_tokens=false).tokens, [
     "ab",
@@ -3164,7 +3166,6 @@ test "train_bpe default learns singleton merges like HF" {
 
   let old_threshold = Tokenizer::train_bpe(
     ["ab"],
-    unk_token=Some("[UNK]"),
     vocab_size=Some(8),
     min_frequency=2,
   )
@@ -3172,6 +3173,13 @@ test "train_bpe default learns singleton merges like HF" {
   @test.assert_eq(old_threshold.encode("ab", add_special_tokens=false).tokens, [
     "a", "b",
   ])
+
+  let explicit_unk = Tokenizer::train_bpe(
+    ["ab"],
+    unk_token=Some("[UNK]"),
+    vocab_size=Some(8),
+  )
+  @test.assert_eq(explicit_unk.token_to_id("[UNK]") is Some(_), true)
 }
 
 ///|

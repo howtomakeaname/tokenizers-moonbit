@@ -66,7 +66,7 @@
 
 训练/模型文件近期增量：`Trainer::{wordlevel,wordpiece,bpe,unigram}` 默认 `vocab_size` 已对齐 HF cap（30000/8000），Unigram trainer 默认 `max_piece_length=Some(16)` 且显式 `None` 保留旧 escape hatch；tokenizer/model-level trainer 入口补充 `show_progress` no-op，model-level Unigram 补充 `unk_piece` alias。`Model::save` 之外已补 `Model::from_bpe_files` / `from_wordpiece_file` / `from_wordlevel_file` / `from_unigram_file` standalone artifact loader，覆盖 BPE `vocab.json`+`merges.txt`、WordPiece `vocab.txt`、WordLevel `vocab.json`、Unigram JSON 的保存后重载。
 
-训练默认值剩余风险：HF 0.22.x 的 WordLevel/WordPiece/BPE `min_frequency` 默认是 `0`，MoonBit 已完成三者默认值对齐，并保留显式旧阈值测试；BPE/Unigram 默认 unk 插入策略仍与 HF 默认存在差异。这类会直接改变训练产物和 unknown encode 行为，后续需独立 parity 步骤与 golden 对拍，不混入普通 API alias 补齐。
+训练默认值剩余风险：HF 0.22.x 的 WordLevel/WordPiece/BPE `min_frequency` 默认是 `0`，MoonBit 已完成三者默认值对齐，并保留显式旧阈值测试；BPE trainer 默认 `unk_token=None` 已对齐 HF，显式 `Some("[UNK]")` 保留旧行为。Unigram 默认 unk 插入策略仍与 HF 默认存在差异，会直接改变训练产物和 unknown encode 行为，后续需独立 parity 步骤与 golden 对拍，不混入普通 API alias 补齐。
 
 ## R10：架构治理与模块化计划
 

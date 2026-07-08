@@ -165,6 +165,22 @@ test "bpe trainer max_token_length does not drop initial alphabet" {
 }
 
 ///|
+test "bpe trainer defaults to no unk token like HF" {
+  let model = Model::train_bpe(["ab"], vocab_size=Some(8))
+  @test.assert_eq(model.unk_token(), None)
+  @test.assert_eq(model.token_to_id("[UNK]"), None)
+  @test.assert_eq(model.token_to_id("ab") is Some(_), true)
+
+  let explicit = Model::train_bpe(
+    ["ab"],
+    unk_token=Some("[UNK]"),
+    vocab_size=Some(8),
+  )
+  @test.assert_eq(explicit.unk_token(), Some("[UNK]"))
+  @test.assert_eq(explicit.token_to_id("[UNK]") is Some(_), true)
+}
+
+///|
 test "model JSON state aliases round-trip serializable models" {
   let bpe = Model::train_bpe(
     ["abab abab"],

@@ -153,7 +153,7 @@ pub fn Trainer::wordpiece(
 
 ///|
 pub fn Trainer::bpe(
-  unk_token? : String? = Some("[UNK]"),
+  unk_token? : String? = None,
   min_frequency? : Int = 0,
   special_tokens? : Array[String] = [],
   special_added_tokens? : Array[AddedToken] = [],
@@ -1183,7 +1183,7 @@ pub fn Tokenizer::train_wordpiece_from_tokens(
 /// Train a deterministic BPE tokenizer from whitespace-delimited text.
 pub fn Tokenizer::train_bpe(
   texts : Array[String],
-  unk_token? : String? = Some("[UNK]"),
+  unk_token? : String? = None,
   min_frequency? : Int = 0,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
@@ -1217,7 +1217,7 @@ pub fn Tokenizer::train_bpe(
 pub fn Tokenizer::train_bpe_with_pretokenizer(
   texts : Array[String],
   pre_tokenizer : @pretokenizer.PreTokenizer,
-  unk_token? : String? = Some("[UNK]"),
+  unk_token? : String? = None,
   min_frequency? : Int = 0,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
@@ -1256,7 +1256,7 @@ pub fn Tokenizer::train_bpe_with_pretokenizer(
 /// Train a BPE tokenizer from pre-tokenized token streams.
 pub fn Tokenizer::train_bpe_from_tokens(
   tokenized_texts : Array[Array[String]],
-  unk_token? : String? = Some("[UNK]"),
+  unk_token? : String? = None,
   min_frequency? : Int = 0,
   special_tokens? : Array[String] = [],
   pre_tokenizer? : @pretokenizer.PreTokenizer? = None,

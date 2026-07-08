@@ -300,7 +300,7 @@ fn char_string(c : Char) -> String {
 /// to preserve an existing model configuration across retraining.
 pub fn Model::train_bpe(
   texts : Array[String],
-  unk_token? : String? = Some("[UNK]"),
+  unk_token? : String? = None,
   min_frequency? : Int = 0,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
@@ -345,7 +345,7 @@ pub fn Model::train_bpe(
 /// Train a deterministic BPE model from pre-tokenized token streams.
 pub fn Model::train_bpe_from_tokens(
   tokenized_texts : Array[Array[String]],
-  unk_token? : String? = Some("[UNK]"),
+  unk_token? : String? = None,
   min_frequency? : Int = 0,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
