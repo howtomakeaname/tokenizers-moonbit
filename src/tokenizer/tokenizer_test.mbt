@@ -2387,6 +2387,84 @@ test "Trainer exposes HF-style configuration getters" {
 }
 
 ///|
+test "Trainer exposes state and string aliases" {
+  let mask = AddedToken::special("[MASK]")
+    .with_lstrip(true)
+    .with_rstrip(true)
+    .with_single_word(true)
+  let trainer = Trainer::bpe(
+    unk_token=Some("[UNK]"),
+    min_frequency=3,
+    special_tokens=["[PAD]"],
+    special_added_tokens=[mask],
+    vocab_size=Some(32),
+    continuing_subword_prefix=Some("@@"),
+    end_of_word_suffix=Some("</w>"),
+    fuse_unk=true,
+    initial_alphabet=["x"],
+    limit_alphabet=Some(7),
+    max_token_length=Some(5),
+    show_progress=false,
+  )
+  let state = trainer.__getstate__()
+  @test.assert_eq(state.kind, "BpeTrainer")
+  @test.assert_eq(state.unk_token, Some("[UNK]"))
+  @test.assert_eq(state.min_frequency, 3)
+  @test.assert_eq(state.special_tokens, ["[PAD]"])
+  @test.assert_eq(state.special_added_tokens[0].content(), "[MASK]")
+  @test.assert_eq(state.special_added_tokens[0].lstrip(), true)
+  @test.assert_eq(state.special_added_tokens[0].rstrip(), true)
+  @test.assert_eq(state.special_added_tokens[0].single_word(), true)
+  @test.assert_eq(state.vocab_size, Some(32))
+  @test.assert_eq(state.show_progress, false)
+  @test.assert_eq(state.continuing_subword_prefix, Some("@@"))
+  @test.assert_eq(state.end_of_word_suffix, Some("</w>"))
+  @test.assert_eq(state.fuse_unk, Some(true))
+  @test.assert_eq(state.initial_alphabet, ["x"])
+  @test.assert_eq(state.limit_alphabet, Some(7))
+  @test.assert_eq(state.max_token_length, Some(5))
+
+  let restored = Trainer::__setstate__(state)
+  @test.assert_eq(restored.kind(), "BpeTrainer")
+  @test.assert_eq(restored.unk_token(), Some("[UNK]"))
+  @test.assert_eq(restored.min_frequency(), 3)
+  @test.assert_eq(restored.special_tokens(), ["[PAD]"])
+  @test.assert_eq(restored.special_added_tokens()[0].content(), "[MASK]")
+  @test.assert_eq(restored.show_progress(), false)
+  @test.assert_eq(restored.continuing_subword_prefix(), Some("@@"))
+  @test.assert_eq(restored.end_of_word_suffix(), Some("</w>"))
+  @test.assert_eq(restored.fuse_unk(), Some(true))
+  @test.assert_eq(restored.initial_alphabet(), ["x"])
+  @test.assert_eq(restored.limit_alphabet(), Some(7))
+  @test.assert_eq(restored.max_token_length(), Some(5))
+
+  let copied_alphabet = state.initial_alphabet
+  copied_alphabet.push("y")
+  @test.assert_eq(trainer.initial_alphabet(), ["x"])
+
+  let rendered = trainer.__str__()
+  @test.assert_eq(trainer.__repr__(), rendered)
+  @test.assert_eq(rendered.contains("\"type\":\"BpeTrainer\""), true)
+  @test.assert_eq(rendered.contains("\"special_added_tokens\""), true)
+  @test.assert_eq(
+    rendered.contains("\"continuing_subword_prefix\":\"@@\""),
+    true,
+  )
+}
+
+///|
+test "Trainer state rejects unknown trainer kind" {
+  let state = Trainer::wordlevel().__getstate__()
+  let bad = state.with_kind("UnknownTrainer")
+  let mut raised = false
+  try Trainer::from_state(bad) |> ignore catch {
+    @types.UnsupportedComponent(_) => raised = true
+    _ => ()
+  }
+  @test.assert_eq(raised, true)
+}
+
+///|
 test "Tokenizer train_from_files trains line oriented corpus" {
   let path = "_build/tokenizer_train_from_files.txt"
   @fs.write_string_to_file(path, "Hello moon\nhello tokenizer\n") catch {

@@ -58,6 +58,37 @@ pub enum Trainer {
 } derive(Debug, Eq)
 
 ///|
+/// Typed, copy-returning trainer configuration snapshot for binding layers.
+pub struct TrainerState {
+  kind : String
+  unk_token : String?
+  min_frequency : Int
+  special_tokens : Array[String]
+  special_added_tokens : Array[AddedToken]
+  vocab_size : Int?
+  show_progress : Bool
+  continuing_subword_prefix : String?
+  end_of_word_suffix : String?
+  max_input_chars_per_word : Int?
+  max_token_length : Int?
+  initial_alphabet : Array[String]
+  limit_alphabet : Int?
+  fuse_unk : Bool?
+  byte_fallback : Bool?
+  shrinking_factor : Double?
+  max_piece_length : Int?
+  n_sub_iterations : Int?
+} derive(Debug, Eq)
+
+///|
+pub fn TrainerState::with_kind(
+  self : TrainerState,
+  kind : String,
+) -> TrainerState {
+  { ..self, kind, }
+}
+
+///|
 pub fn Trainer::wordlevel(
   unk_token? : String = "[UNK]",
   min_frequency? : Int = 1,
@@ -327,6 +358,230 @@ pub fn Trainer::n_sub_iterations(self : Trainer) -> Int? {
     UnigramTrainer(n_sub_iterations~, ..) => Some(n_sub_iterations)
     _ => None
   }
+}
+
+///|
+pub fn Trainer::get_state(self : Trainer) -> TrainerState {
+  {
+    kind: self.kind(),
+    unk_token: self.unk_token(),
+    min_frequency: self.min_frequency(),
+    special_tokens: self.special_tokens(),
+    special_added_tokens: self.special_added_tokens(),
+    vocab_size: self.vocab_size(),
+    show_progress: self.show_progress(),
+    continuing_subword_prefix: self.continuing_subword_prefix(),
+    end_of_word_suffix: self.end_of_word_suffix(),
+    max_input_chars_per_word: self.max_input_chars_per_word(),
+    max_token_length: self.max_token_length(),
+    initial_alphabet: self.initial_alphabet(),
+    limit_alphabet: self.limit_alphabet(),
+    fuse_unk: self.fuse_unk(),
+    byte_fallback: self.byte_fallback(),
+    shrinking_factor: self.shrinking_factor(),
+    max_piece_length: self.max_piece_length(),
+    n_sub_iterations: self.n_sub_iterations(),
+  }
+}
+
+///|
+pub fn Trainer::from_state(
+  state : TrainerState,
+) -> Trainer raise @types.TokenizerError {
+  match state.kind {
+    "WordLevelTrainer" | "WordLevel" =>
+      Trainer::wordlevel(
+        unk_token=state.unk_token.unwrap_or("[UNK]"),
+        min_frequency=state.min_frequency,
+        special_tokens=state.special_tokens,
+        special_added_tokens=state.special_added_tokens,
+        vocab_size=state.vocab_size,
+        show_progress=state.show_progress,
+      )
+    "WordPieceTrainer" | "WordPiece" =>
+      Trainer::wordpiece(
+        unk_token=state.unk_token.unwrap_or("[UNK]"),
+        continuing_subword_prefix=state.continuing_subword_prefix.unwrap_or(
+          "##",
+        ),
+        end_of_word_suffix=state.end_of_word_suffix,
+        min_frequency=state.min_frequency,
+        special_tokens=state.special_tokens,
+        special_added_tokens=state.special_added_tokens,
+        vocab_size=state.vocab_size,
+        max_input_chars_per_word=state.max_input_chars_per_word.unwrap_or(100),
+        max_token_length=state.max_token_length,
+        initial_alphabet=state.initial_alphabet,
+        limit_alphabet=state.limit_alphabet,
+        show_progress=state.show_progress,
+      )
+    "BpeTrainer" | "BPE" | "Bpe" =>
+      Trainer::bpe(
+        unk_token=state.unk_token,
+        min_frequency=state.min_frequency,
+        special_tokens=state.special_tokens,
+        special_added_tokens=state.special_added_tokens,
+        vocab_size=state.vocab_size,
+        continuing_subword_prefix=state.continuing_subword_prefix,
+        end_of_word_suffix=state.end_of_word_suffix,
+        fuse_unk=state.fuse_unk.unwrap_or(false),
+        initial_alphabet=state.initial_alphabet,
+        limit_alphabet=state.limit_alphabet,
+        max_token_length=state.max_token_length,
+        show_progress=state.show_progress,
+      )
+    "UnigramTrainer" | "Unigram" =>
+      Trainer::unigram(
+        unk_token=state.unk_token.unwrap_or("<unk>"),
+        min_frequency=state.min_frequency,
+        special_tokens=state.special_tokens,
+        special_added_tokens=state.special_added_tokens,
+        vocab_size=state.vocab_size,
+        byte_fallback=state.byte_fallback.unwrap_or(false),
+        fuse_unk=state.fuse_unk.unwrap_or(true),
+        shrinking_factor=state.shrinking_factor.unwrap_or(0.75),
+        max_piece_length=state.max_piece_length,
+        n_sub_iterations=state.n_sub_iterations.unwrap_or(2),
+        show_progress=state.show_progress,
+      )
+    other => raise @types.UnsupportedComponent("trainer type: \{other}")
+  }
+}
+
+///|
+pub fn Trainer::__getstate__(self : Trainer) -> TrainerState {
+  self.get_state()
+}
+
+///|
+pub fn Trainer::__setstate__(
+  state : TrainerState,
+) -> Trainer raise @types.TokenizerError {
+  Trainer::from_state(state)
+}
+
+///|
+pub fn Trainer::__str__(self : Trainer) -> String {
+  trainer_state_to_json(self.get_state())
+}
+
+///|
+pub fn Trainer::__repr__(self : Trainer) -> String {
+  self.__str__()
+}
+
+///|
+fn trainer_state_to_json(state : TrainerState) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":")
+  write_json_string(sb, state.kind)
+  sb.write_string(",\"unk_token\":")
+  write_optional_string_json(sb, state.unk_token)
+  sb.write_string(",\"min_frequency\":")
+  sb.write_string(state.min_frequency.to_string())
+  sb.write_string(",\"special_tokens\":")
+  write_string_array_json(sb, state.special_tokens)
+  sb.write_string(",\"special_added_tokens\":")
+  write_added_token_array_json(sb, state.special_added_tokens)
+  sb.write_string(",\"vocab_size\":")
+  write_optional_int_json(sb, state.vocab_size)
+  sb.write_string(",\"show_progress\":")
+  sb.write_string(bool_json(state.show_progress))
+  sb.write_string(",\"continuing_subword_prefix\":")
+  write_optional_string_json(sb, state.continuing_subword_prefix)
+  sb.write_string(",\"end_of_word_suffix\":")
+  write_optional_string_json(sb, state.end_of_word_suffix)
+  sb.write_string(",\"max_input_chars_per_word\":")
+  write_optional_int_json(sb, state.max_input_chars_per_word)
+  sb.write_string(",\"max_token_length\":")
+  write_optional_int_json(sb, state.max_token_length)
+  sb.write_string(",\"initial_alphabet\":")
+  write_string_array_json(sb, state.initial_alphabet)
+  sb.write_string(",\"limit_alphabet\":")
+  write_optional_int_json(sb, state.limit_alphabet)
+  sb.write_string(",\"fuse_unk\":")
+  write_optional_bool_json(sb, state.fuse_unk)
+  sb.write_string(",\"byte_fallback\":")
+  write_optional_bool_json(sb, state.byte_fallback)
+  sb.write_string(",\"shrinking_factor\":")
+  write_optional_double_json(sb, state.shrinking_factor)
+  sb.write_string(",\"max_piece_length\":")
+  write_optional_int_json(sb, state.max_piece_length)
+  sb.write_string(",\"n_sub_iterations\":")
+  write_optional_int_json(sb, state.n_sub_iterations)
+  sb.write_char('}')
+  sb.to_string()
+}
+
+///|
+fn write_optional_string_json(sb : StringBuilder, value : String?) -> Unit {
+  match value {
+    Some(s) => write_json_string(sb, s)
+    None => sb.write_string("null")
+  }
+}
+
+///|
+fn write_optional_int_json(sb : StringBuilder, value : Int?) -> Unit {
+  match value {
+    Some(n) => sb.write_string(n.to_string())
+    None => sb.write_string("null")
+  }
+}
+
+///|
+fn write_optional_bool_json(sb : StringBuilder, value : Bool?) -> Unit {
+  match value {
+    Some(v) => sb.write_string(bool_json(v))
+    None => sb.write_string("null")
+  }
+}
+
+///|
+fn write_optional_double_json(sb : StringBuilder, value : Double?) -> Unit {
+  match value {
+    Some(v) => sb.write_string(v.to_string())
+    None => sb.write_string("null")
+  }
+}
+
+///|
+fn write_string_array_json(sb : StringBuilder, values : Array[String]) -> Unit {
+  sb.write_char('[')
+  for i, value in values {
+    if i > 0 {
+      sb.write_char(',')
+    }
+    write_json_string(sb, value)
+  }
+  sb.write_char(']')
+}
+
+///|
+fn write_added_token_array_json(
+  sb : StringBuilder,
+  values : Array[AddedToken],
+) -> Unit {
+  sb.write_char('[')
+  for i, token in values {
+    if i > 0 {
+      sb.write_char(',')
+    }
+    sb.write_string("{\"content\":")
+    write_json_string(sb, token.content)
+    sb.write_string(",\"single_word\":")
+    sb.write_string(bool_json(token.single_word))
+    sb.write_string(",\"lstrip\":")
+    sb.write_string(bool_json(token.lstrip))
+    sb.write_string(",\"rstrip\":")
+    sb.write_string(bool_json(token.rstrip))
+    sb.write_string(",\"normalized\":")
+    sb.write_string(bool_json(token.normalized))
+    sb.write_string(",\"special\":")
+    sb.write_string(bool_json(token.special))
+    sb.write_char('}')
+  }
+  sb.write_char(']')
 }
 
 ///|
