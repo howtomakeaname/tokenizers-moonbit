@@ -100,6 +100,9 @@ pub struct HubResponseMetadata {
   resolved_revision : String?
   etag : String?
   content_length : Int?
+  content_range_start : Int?
+  content_range_end : Int?
+  content_range_total : Int?
   accept_ranges : Bool
 } derive(Debug, Eq)
 
@@ -109,9 +112,21 @@ pub fn HubResponseMetadata::new(
   resolved_revision? : String? = None,
   etag? : String? = None,
   content_length? : Int? = None,
+  content_range_start? : Int? = None,
+  content_range_end? : Int? = None,
+  content_range_total? : Int? = None,
   accept_ranges? : Bool = false,
 ) -> HubResponseMetadata {
-  { status, resolved_revision, etag, content_length, accept_ranges }
+  {
+    status,
+    resolved_revision,
+    etag,
+    content_length,
+    content_range_start,
+    content_range_end,
+    content_range_total,
+    accept_ranges,
+  }
 }
 
 ///|
@@ -246,11 +261,19 @@ pub fn HubResponseMetadata::from_headers(
     Some(v) => v.to_lower() == "bytes"
     None => false
   }
+  let (content_range_start, content_range_end, content_range_total) = match
+    header(headers, "content-range") {
+    Some(v) => parse_content_range(v)
+    None => (None, None, None)
+  }
   {
     status,
     resolved_revision: header(headers, "x-repo-commit"),
     etag: header(headers, "etag"),
     content_length,
+    content_range_start,
+    content_range_end,
+    content_range_total,
     accept_ranges,
   }
 }
@@ -293,7 +316,9 @@ pub fn decide_tokenizer_json_response(
       Some(start) =>
         match plan.resume_metadata {
           Some(resume_meta) =>
-            if start > 0 && resume_meta.downloaded_size == start {
+            if start > 0 &&
+              resume_meta.downloaded_size == start &&
+              content_range_matches_start(metadata, start) {
               return {
                 action: AppendRangeToCachedTokenizer,
                 resolved_revision,
@@ -518,6 +543,17 @@ fn combine_range_size(start : Int, body_length : Int?) -> Int? {
   match body_length {
     Some(n) => if n >= 0 { Some(start + n) } else { None }
     None => None
+  }
+}
+
+///|
+fn content_range_matches_start(
+  metadata : HubResponseMetadata,
+  start : Int,
+) -> Bool {
+  match metadata.content_range_start {
+    Some(range_start) => range_start == start
+    None => true
   }
 }
 
@@ -1247,7 +1283,17 @@ fn header(headers : Map[String, String], name : String) -> String? {
     Some(v) => return Some(v)
     None => ()
   }
-  headers.get(name.to_lower())
+  let lower = name.to_lower()
+  match headers.get(lower) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  for kv in headers {
+    if kv.0.to_lower() == lower {
+      return Some(kv.1)
+    }
+  }
+  None
 }
 
 ///|
@@ -1265,6 +1311,54 @@ fn parse_non_negative_int(s : String) -> Int? {
     out = out * 10 + (u - '0'.to_int())
   }
   Some(out)
+}
+
+///|
+fn parse_content_range(s : String) -> (Int?, Int?, Int?) {
+  let prefix = "bytes "
+  if !s.has_prefix(prefix) {
+    return (None, None, None)
+  }
+  let chars = s.to_array()
+  let rest = string_slice(chars, prefix.char_length(), chars.length())
+  let rest_chars = rest.to_array()
+  let slash = find_char(rest_chars, '/')
+  if slash < 0 {
+    return (None, None, None)
+  }
+  let range_text = string_slice(rest_chars, 0, slash)
+  let total_text = string_slice(rest_chars, slash + 1, rest_chars.length())
+  let range_chars = range_text.to_array()
+  let dash = find_char(range_chars, '-')
+  if dash < 0 {
+    return (None, None, parse_content_range_total(total_text))
+  }
+  (
+    parse_non_negative_int(string_slice(range_chars, 0, dash)),
+    parse_non_negative_int(
+      string_slice(range_chars, dash + 1, range_chars.length()),
+    ),
+    parse_content_range_total(total_text),
+  )
+}
+
+///|
+fn parse_content_range_total(s : String) -> Int? {
+  if s == "*" {
+    None
+  } else {
+    parse_non_negative_int(s)
+  }
+}
+
+///|
+fn find_char(chars : Array[Char], target : Char) -> Int {
+  for i, c in chars {
+    if c == target {
+      return i
+    }
+  }
+  -1
 }
 
 ///|

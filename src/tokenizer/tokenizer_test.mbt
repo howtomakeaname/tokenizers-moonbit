@@ -2003,6 +2003,36 @@ test "from_pretrained_downloaded writes HF-style cache and refs" {
     ),
     Some("def789"),
   )
+  let nested_ref = Tokenizer::write_pretrained_ref_revision(
+    "org/downloaded-tokenizer",
+    "pr007",
+    revision="refs/pr/7",
+    cache_dir=Some(hub),
+  )
+  @test.assert_eq(nested_ref.has_suffix("/refs/refs/pr/7"), true)
+  @test.assert_eq(
+    Tokenizer::from_pretrained_ref_revision(
+      "org/downloaded-tokenizer",
+      revision="refs/pr/7",
+      cache_dir=Some(hub),
+    ),
+    Some("pr007"),
+  )
+  let feature_ref = Tokenizer::write_pretrained_ref_revision(
+    "org/downloaded-tokenizer",
+    "feature123",
+    revision="feature/foo",
+    cache_dir=Some(hub),
+  )
+  @test.assert_eq(feature_ref.has_suffix("/refs/feature/foo"), true)
+  @test.assert_eq(
+    Tokenizer::from_pretrained_ref_revision(
+      "org/downloaded-tokenizer",
+      revision="feature/foo",
+      cache_dir=Some(hub),
+    ),
+    Some("feature123"),
+  )
   let resume_meta = Tokenizer::write_pretrained_download_resume_metadata(
     "org/downloaded-tokenizer",
     revision="dev",

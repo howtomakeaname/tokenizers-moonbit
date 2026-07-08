@@ -86,6 +86,24 @@ test "Hub response metadata parses cache headers" {
 }
 
 ///|
+test "Hub response metadata parses headers case-insensitively" {
+  let meta = HubResponseMetadata::from_headers(206, {
+    "X-Repo-Commit": "abc123",
+    "ETag": "etag-new",
+    "Content-Length": "224",
+    "Accept-Ranges": "bytes",
+    "Content-Range": "bytes 32-255/256",
+  })
+  @test.assert_eq(meta.resolved_revision, Some("abc123"))
+  @test.assert_eq(meta.etag, Some("etag-new"))
+  @test.assert_eq(meta.content_length, Some(224))
+  @test.assert_eq(meta.accept_ranges, true)
+  @test.assert_eq(meta.content_range_start, Some(32))
+  @test.assert_eq(meta.content_range_end, Some(255))
+  @test.assert_eq(meta.content_range_total, Some(256))
+}
+
+///|
 test "Hub response decision handles cache and range statuses" {
   let json =
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0,"[UNK]":1},"unk_token":"[UNK]"}}
@@ -129,6 +147,9 @@ test "Hub response decision handles cache and range statuses" {
       resolved_revision=Some("def456"),
       etag=Some("etag-new"),
       content_length=Some(224),
+      content_range_start=Some(32),
+      content_range_end=Some(255),
+      content_range_total=Some(256),
       accept_ranges=true,
     ),
   )
@@ -145,10 +166,27 @@ test "Hub response decision handles cache and range statuses" {
       resolved_revision=Some("def456"),
       etag=Some("etag-new"),
       content_length=Some(224),
+      content_range_start=Some(32),
+      content_range_end=Some(255),
+      content_range_total=Some(256),
       accept_ranges=true,
     ),
   )
   @test.assert_eq(bad_partial.should_retry_without_range(), true)
+  let mismatched_range = decide_tokenizer_json_response(
+    plan,
+    HubResponseMetadata::new(
+      206,
+      resolved_revision=Some("def456"),
+      etag=Some("etag-new"),
+      content_length=Some(224),
+      content_range_start=Some(16),
+      content_range_end=Some(239),
+      content_range_total=Some(256),
+      accept_ranges=true,
+    ),
+  )
+  @test.assert_eq(mismatched_range.should_retry_without_range(), true)
 }
 
 ///|

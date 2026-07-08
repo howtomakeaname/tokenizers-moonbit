@@ -432,7 +432,7 @@ pub fn Tokenizer::write_pretrained_ref_revision(
         "write_pretrained_ref_revision needs cache_dir or HOME/HF_HOME/HUGGINGFACE_HUB_CACHE",
       )
   }
-  ensure_dir(paths.refs_dir)
+  ensure_parent_dir(paths.ref_path)
   @fs.write_string_to_file(paths.ref_path, resolved_revision) catch {
     _ =>
       raise @types.ParseError("cannot write Hub cache ref: \{paths.ref_path}")
