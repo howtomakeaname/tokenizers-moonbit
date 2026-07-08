@@ -137,6 +137,50 @@ test "split pretokenizer supports literal behavior modes" {
 }
 
 ///|
+test "split pretokenizer supports inverted literal behavior modes" {
+  let removed = PreTokenizer::Split(
+    pattern="Hello",
+    behavior=Removed,
+    invert=true,
+    regex=false,
+  ).pre_tokenize("Hello Hello Hello", base_offset=3)
+  @test.assert_eq(removed.map(x => x.value), ["Hello", "Hello", "Hello"])
+  @test.assert_eq(removed.map(x => x.offsets), [(3, 8), (9, 14), (15, 20)])
+
+  let isolated = PreTokenizer::Split(
+    pattern="Hello",
+    behavior=Isolated,
+    invert=true,
+    regex=false,
+  ).pre_tokenize("Hello Hello!", base_offset=0)
+  @test.assert_eq(isolated.map(x => x.value), ["Hello", " ", "Hello", "!"])
+  @test.assert_eq(isolated.map(x => x.offsets), [
+    (0, 5),
+    (5, 6),
+    (6, 11),
+    (11, 12),
+  ])
+
+  let previous = PreTokenizer::Split(
+    pattern="Hello",
+    behavior=MergedWithPrevious,
+    invert=true,
+    regex=false,
+  ).pre_tokenize("Hello Hello!", base_offset=0)
+  @test.assert_eq(previous.map(x => x.value), ["Hello ", "Hello!"])
+  @test.assert_eq(previous.map(x => x.offsets), [(0, 6), (6, 12)])
+
+  let next = PreTokenizer::Split(
+    pattern="Hello",
+    behavior=MergedWithNext,
+    invert=true,
+    regex=false,
+  ).pre_tokenize("Hello Hello!", base_offset=0)
+  @test.assert_eq(next.map(x => x.value), ["Hello", " Hello", "!"])
+  @test.assert_eq(next.map(x => x.offsets), [(0, 5), (5, 11), (11, 12)])
+}
+
+///|
 test "split pretokenizer supports common regex spans" {
   let spaces = PreTokenizer::Split(
     pattern="\\s+",
@@ -288,6 +332,31 @@ test "split pretokenizer supports common regex spans" {
     (7, 8),
     (8, 10),
     (10, 11),
+  ])
+
+  let inverted_digits = PreTokenizer::Split(
+    pattern="\\d+",
+    behavior=Removed,
+    invert=true,
+    regex=true,
+  ).pre_tokenize("a12 b003!", base_offset=2)
+  @test.assert_eq(inverted_digits.map(x => x.value), ["12", "003"])
+  @test.assert_eq(inverted_digits.map(x => x.offsets), [(3, 5), (7, 10)])
+
+  let inverted_word_boundaries = PreTokenizer::Split(
+    pattern="\\b(?:foo|bar)\\b",
+    behavior=Isolated,
+    invert=true,
+    regex=true,
+  ).pre_tokenize("foo food bar.", base_offset=0)
+  @test.assert_eq(inverted_word_boundaries.map(x => x.value), [
+    "foo", " food ", "bar", ".",
+  ])
+  @test.assert_eq(inverted_word_boundaries.map(x => x.offsets), [
+    (0, 3),
+    (3, 9),
+    (9, 12),
+    (12, 13),
   ])
 
   let exact_spaces = PreTokenizer::Split(
