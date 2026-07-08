@@ -40,6 +40,7 @@ pub(all) enum Normalizer {
 }
 pub fn Normalizer::from_json(Json) -> Self raise @types.TokenizerError
 pub fn Normalizer::normalize(Self, String) -> String
+pub fn Normalizer::normalize_str(Self, String) -> String
 pub fn Normalizer::to_json(Self) -> String?
 
 pub(all) struct PrecompiledCharsMap {

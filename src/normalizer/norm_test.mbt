@@ -5,6 +5,7 @@ test "NFC composes combining marks" {
   // "cafe" + U+0301 (combining acute) -> "café" (composed)
   let s = "cafe\u{301}"
   @test.assert_eq(Normalizer::NFC.normalize(s), "café")
+  @test.assert_eq(Normalizer::NFC.normalize_str(s), "café")
 }
 
 ///|

@@ -270,6 +270,8 @@ pre-tokenizer `split`, state/tuple helpers, and `to_encoding` /
 for quick component-level checks and binding shims.
 `PreTokenizer::byte_level_alphabet()` mirrors HF ByteLevel.alphabet and returns
 the same 256-symbol table as `@pretokenizer.byte_level_alphabet()`.
+`Normalizer::normalize_str(input)` is available as an HF-style alias for
+`normalize(input)`.
 
 `Encoding::words()` is available as a deprecated HF Python alias for
 `word_ids()`.

@@ -53,6 +53,12 @@ pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
   }
 }
 
+///|
+/// HF Python binding-style alias for normalizing a string.
+pub fn Normalizer::normalize_str(self : Normalizer, input : String) -> String {
+  self.normalize(input)
+}
+
 // HF ByteLevel normalizer maps every UTF-8 byte to the reversible GPT-2
 // byte-level alphabet. This is distinct from the ByteLevel pre-tokenizer: some
 // tokenizer.json files put byte-level mapping in the normalizer stage.
