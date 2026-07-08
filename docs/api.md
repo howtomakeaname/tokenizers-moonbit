@@ -305,7 +305,9 @@ and diagnostics.
 
 `Model` exposes read-only configuration getters for binding layers, including
 `kind`, `unk_token`, `unk_id`, WordPiece/BPE prefix/suffix knobs, BPE dropout and
-merge flags, and BPE/Unigram byte-fallback/fuse-unk flags.
+merge flags, and BPE/Unigram byte-fallback/fuse-unk flags. It also supports
+JSON-backed `get_state` / `from_state` / `__getstate__` / `__setstate__`, plus
+`__str__` / `__repr__` aliases for compact model JSON.
 
 `Tokenizer::__str__()` and `Tokenizer::__repr__()` are thin Python binding
 aliases for the compact `to_str()` JSON form.

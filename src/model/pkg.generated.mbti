@@ -3,6 +3,7 @@ package "howtomakeaname/tokenizers-moonbit/model"
 
 import {
   "howtomakeaname/tokenizers-moonbit/types",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -33,6 +34,10 @@ pub enum Model {
   Unigram(UnigramModel)
   WordLevel(WordLevelModel)
 }
+pub fn Model::__getstate__(Self) -> ModelState raise @types.TokenizerError
+pub fn Model::__repr__(Self) -> String raise @types.TokenizerError
+pub fn Model::__setstate__(ModelState) -> Self raise @types.TokenizerError
+pub fn Model::__str__(Self) -> String raise @types.TokenizerError
 pub fn Model::byte_fallback(Self) -> Bool?
 pub fn Model::cache_size(Self) -> Int
 pub fn Model::clear_cache(Self) -> Unit
@@ -40,7 +45,9 @@ pub fn Model::continuing_subword_prefix(Self) -> String?
 pub fn Model::dropout(Self) -> Double?
 pub fn Model::end_of_word_suffix(Self) -> String?
 pub fn Model::from_json(Json) -> Self raise @types.TokenizerError
+pub fn Model::from_state(ModelState) -> Self raise @types.TokenizerError
 pub fn Model::fuse_unk(Self) -> Bool?
+pub fn Model::get_state(Self) -> ModelState raise @types.TokenizerError
 pub fn Model::get_vocab(Self) -> Map[String, Int]
 pub fn Model::id_to_token(Self, Int) -> String?
 pub fn Model::ignore_merges(Self) -> Bool?
@@ -62,6 +69,11 @@ pub fn Model::train_wordpiece_from_tokens(Array[Array[String]], unk_token? : Str
 pub fn Model::unk_id(Self) -> Int?
 pub fn Model::unk_token(Self) -> String?
 pub fn Model::vocab_size(Self) -> Int
+
+pub struct ModelState {
+  json : String
+} derive(Eq, @debug.Debug)
+pub fn ModelState::new(String) -> Self
 
 pub struct UnigramModel {
   vocab : Map[String, (Int, Double)]

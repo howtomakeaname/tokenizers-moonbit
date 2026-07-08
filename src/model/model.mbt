@@ -83,6 +83,17 @@ pub enum Model {
 }
 
 ///|
+/// JSON-backed model state used by thin binding layers.
+pub struct ModelState {
+  json : String
+} derive(Debug, Eq)
+
+///|
+pub fn ModelState::new(json : String) -> ModelState {
+  { json, }
+}
+
+///|
 /// Return the model family name used by thin binding layers.
 pub fn Model::kind(self : Model) -> String {
   match self {
@@ -90,6 +101,53 @@ pub fn Model::kind(self : Model) -> String {
     WordPiece(_) => "WordPiece"
     Unigram(_) => "Unigram"
     WordLevel(_) => "WordLevel"
+  }
+}
+
+///|
+pub fn Model::get_state(self : Model) -> ModelState raise @types.TokenizerError {
+  { json: self.state_json() }
+}
+
+///|
+pub fn Model::from_state(
+  state : ModelState,
+) -> Model raise @types.TokenizerError {
+  let parsed = @json.parse(state.json) catch {
+    err => raise @types.ParseError("invalid model state: \{err}")
+  }
+  Model::from_json(parsed)
+}
+
+///|
+pub fn Model::__getstate__(
+  self : Model,
+) -> ModelState raise @types.TokenizerError {
+  self.get_state()
+}
+
+///|
+pub fn Model::__setstate__(
+  state : ModelState,
+) -> Model raise @types.TokenizerError {
+  Model::from_state(state)
+}
+
+///|
+pub fn Model::__str__(self : Model) -> String raise @types.TokenizerError {
+  self.state_json()
+}
+
+///|
+pub fn Model::__repr__(self : Model) -> String raise @types.TokenizerError {
+  self.state_json()
+}
+
+///|
+fn Model::state_json(self : Model) -> String raise @types.TokenizerError {
+  match self.to_json() {
+    Some(json) => json
+    None => raise @types.UnsupportedComponent("model has no serialized state")
   }
 }
 

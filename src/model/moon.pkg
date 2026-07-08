@@ -3,6 +3,7 @@ import {
   "howtomakeaname/tokenizers-moonbit/types",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/int",
+  "moonbitlang/core/json",
   "moonbitlang/core/priority_queue" @pq,
   "moonbitlang/x/fs",
 }

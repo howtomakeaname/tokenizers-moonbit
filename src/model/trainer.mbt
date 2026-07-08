@@ -523,6 +523,16 @@ fn limit_alphabet_candidates(
 }
 
 ///|
+fn array_contains_string(values : Array[String], target : String) -> Bool {
+  for value in values {
+    if value == target {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn add_bpe_alphabet(
   tok : String,
   prefix : String?,
@@ -743,14 +753,21 @@ pub fn Model::train_unigram_from_tokens(
   }
 
   let mut unk_id : Int? = None
+  if !array_contains_string(special_tokens, unk_token) {
+    unk_id = add_token(unk_token, 0.0)
+  }
   for tok in special_tokens {
     let id = add_token(tok, 0.0)
     if tok == unk_token {
-      unk_id = id
+      match id {
+        Some(n) => unk_id = Some(n)
+        None =>
+          match vocab.get(tok) {
+            Some(p) => unk_id = Some(p.0)
+            None => ()
+          }
+      }
     }
-  }
-  if unk_id is None {
-    unk_id = add_token(unk_token, 0.0)
   }
 
   for tok in initial_alphabet {

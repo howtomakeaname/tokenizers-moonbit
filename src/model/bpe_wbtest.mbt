@@ -163,3 +163,53 @@ test "bpe trainer max_token_length does not drop initial alphabet" {
   @test.assert_eq(model.token_to_id("z") is Some(_), true)
   @test.assert_eq(model.token_to_id("ab"), None)
 }
+
+///|
+test "model JSON state aliases round-trip serializable models" {
+  let bpe = Model::train_bpe(
+    ["abab abab"],
+    unk_token=Some("[UNK]"),
+    min_frequency=2,
+    continuing_subword_prefix=Some("@@"),
+    end_of_word_suffix=Some("</w>"),
+  )
+  let bpe_state = bpe.__getstate__()
+  @test.assert_eq(bpe.__str__(), bpe_state.json)
+  @test.assert_eq(bpe.__repr__(), bpe_state.json)
+  @test.assert_eq(Model::__setstate__(bpe_state).to_json(), bpe.to_json())
+  @test.assert_eq(
+    Model::from_state(ModelState::new(bpe.__str__()))
+    .tokenize("abab")
+    .map(t => t.value),
+    bpe.tokenize("abab").map(t => t.value),
+  )
+
+  let wordlevel = Model::train_wordlevel_from_tokens(
+    [["hello", "[UNK]"]],
+    unk_token="[UNK]",
+  )
+  @test.assert_eq(
+    Model::__setstate__(wordlevel.__getstate__()).to_json(),
+    wordlevel.to_json(),
+  )
+
+  let wordpiece = Model::train_wordpiece(
+    ["hello hello"],
+    unk_token="[UNK]",
+    continuing_subword_prefix="##",
+  )
+  @test.assert_eq(
+    Model::__setstate__(wordpiece.__getstate__()).to_json(),
+    wordpiece.to_json(),
+  )
+
+  let unigram = Model::train_unigram(
+    ["hello hello"],
+    unk_token="<unk>",
+    show_progress=false,
+  )
+  @test.assert_eq(
+    Model::__setstate__(unigram.__getstate__()).to_json(),
+    unigram.to_json(),
+  )
+}

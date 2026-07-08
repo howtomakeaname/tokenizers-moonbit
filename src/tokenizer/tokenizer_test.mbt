@@ -2935,8 +2935,8 @@ test "train_unigram prefers learned whole words" {
   let tok = Tokenizer::train_unigram(["hello hello help"], unk_token="<unk>", special_tokens=[
     "<pad>",
   ])
-  @test.assert_eq(tok.token_to_id("<pad>"), Some(0))
-  @test.assert_eq(tok.token_to_id("<unk>"), Some(1))
+  @test.assert_eq(tok.token_to_id("<unk>"), Some(0))
+  @test.assert_eq(tok.token_to_id("<pad>"), Some(1))
   assert_true(tok.token_to_id("hello") is Some(_))
   let enc = tok.encode("hello help", add_special_tokens=false)
   @test.assert_eq(enc.tokens, ["hello", "help"])
@@ -2971,8 +2971,8 @@ test "train_unigram respects vocab_size cap" {
     vocab_size=Some(4),
   )
   @test.assert_eq(tok.get_vocab_size(), 4)
-  @test.assert_eq(tok.token_to_id("<pad>"), Some(0))
-  @test.assert_eq(tok.token_to_id("<unk>"), Some(1))
+  @test.assert_eq(tok.token_to_id("<unk>"), Some(0))
+  @test.assert_eq(tok.token_to_id("<pad>"), Some(1))
   @test.assert_eq(tok.token_to_id("ab"), None)
 }
 
@@ -3005,8 +3005,8 @@ test "train_unigram supports unk_piece and max_piece_length" {
     shrinking_factor=0.5,
     n_sub_iterations=4,
   )
-  @test.assert_eq(tok.token_to_id("<pad>"), Some(0))
-  @test.assert_eq(tok.token_to_id("<UNK>"), Some(1))
+  @test.assert_eq(tok.token_to_id("<UNK>"), Some(0))
+  @test.assert_eq(tok.token_to_id("<pad>"), Some(1))
   @test.assert_eq(tok.token_to_id("hello"), None)
   @test.assert_eq(tok.token_to_id("he") is Some(_), true)
   @test.assert_eq(tok.token_to_id("ll") is Some(_), true)
@@ -3043,6 +3043,18 @@ test "train_unigram preserves initial alphabet" {
 }
 
 ///|
+test "train_unigram preserves explicit unk position in special tokens" {
+  let tok = Tokenizer::train_unigram(
+    ["hello hello"],
+    unk_token="<unk>",
+    special_tokens=["<pad>", "<unk>"],
+    show_progress=false,
+  )
+  @test.assert_eq(tok.token_to_id("<pad>"), Some(0))
+  @test.assert_eq(tok.token_to_id("<unk>"), Some(1))
+}
+
+///|
 test "Trainer unigram preserves AddedToken metadata and advanced knobs" {
   let base = Tokenizer::new(@model.Model::train_wordlevel_from_tokens([[]])).with_pre_tokenizer(
     Some(@pretokenizer.PreTokenizer::whitespace_split()),
@@ -3058,10 +3070,10 @@ test "Trainer unigram preserves AddedToken metadata and advanced knobs" {
       show_progress=false,
     ),
   )
-  @test.assert_eq(trained.token_to_id("<extra>"), Some(0))
-  @test.assert_eq(trained.token_to_id("<UNK>"), Some(1))
+  @test.assert_eq(trained.token_to_id("<UNK>"), Some(0))
+  @test.assert_eq(trained.token_to_id("<extra>"), Some(1))
   @test.assert_eq(
-    trained.get_added_tokens_decoder().get(0).unwrap().rstrip,
+    trained.get_added_tokens_decoder().get(1).unwrap().rstrip,
     true,
   )
   @test.assert_eq(trained.token_to_id("moon"), None)
