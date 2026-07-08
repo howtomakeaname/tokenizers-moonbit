@@ -411,6 +411,17 @@ pub fn Encoding::truncate(
 }
 
 ///|
+/// HF Python-style truncate wrapper using string directions.
+pub fn Encoding::truncate_hf(
+  self : Encoding,
+  max_len : Int,
+  stride? : Int = 0,
+  direction? : String = "right",
+) -> Encoding {
+  self.truncate(max_len, stride~, direction=parse_encoding_direction(direction))
+}
+
+///|
 /// Pad this encoding to `target_length`; overflow windows are padded too. This
 /// mirrors HF's public Encoding padding API but returns a new value.
 pub fn Encoding::pad(
@@ -467,6 +478,25 @@ pub fn Encoding::pad(
 }
 
 ///|
+/// HF Python-style pad wrapper using string directions and keyword order.
+pub fn Encoding::pad_hf(
+  self : Encoding,
+  length : Int,
+  direction? : String = "right",
+  pad_id? : Int = 0,
+  pad_type_id? : Int = 0,
+  pad_token? : String = "[PAD]",
+) -> Encoding {
+  self.pad(
+    length,
+    pad_id~,
+    pad_type_id~,
+    pad_token~,
+    direction=parse_encoding_direction(direction),
+  )
+}
+
+///|
 pub fn Encoding::merge(
   encodings : Array[Encoding],
   growing_offsets? : Bool = true,
@@ -476,6 +506,14 @@ pub fn Encoding::merge(
     out = out.merge_with(enc, growing_offsets~)
   }
   out
+}
+
+///|
+fn parse_encoding_direction(direction : String) -> EncodingDirection {
+  match direction.to_lower() {
+    "left" => Left
+    _ => Right
+  }
 }
 
 ///|

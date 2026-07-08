@@ -901,6 +901,14 @@ test "Encoding public manipulation APIs mirror HF style" {
   )
   @test.assert_eq(padded.ids, [0, 0, 1, 2])
   @test.assert_eq(padded.attention_mask, [0, 0, 1, 1])
+  @test.assert_eq(truncated.pad_hf(4, direction="left", pad_type_id=9).ids, [
+    0, 0, 1, 2,
+  ])
+  @test.assert_eq(
+    typed.truncate_hf(2, stride=1, direction="right").ids,
+    truncated.ids,
+  )
+  @test.assert_eq(typed.truncate_hf(2, direction="left").ids, [2, 3])
   let merged = @types.Encoding::merge([
     @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2) }]),
     @types.Encoding::from_tokens([{ id: 11, value: "cd", offsets: (0, 2) }]),
