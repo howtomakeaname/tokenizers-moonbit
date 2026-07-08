@@ -491,3 +491,41 @@ test "Replace normalizer supports anchored inverse regex families" {
     "abc42",
   )
 }
+
+///|
+test "normalizer exposes HF-style configuration getters" {
+  let strip = Normalizer::Strip(left=true, right=false)
+  @test.assert_eq(strip.kind(), "Strip")
+  @test.assert_eq(strip.strip_left(), Some(true))
+  @test.assert_eq(strip.strip_right(), Some(false))
+
+  let replace = Normalizer::Replace(pattern="\\s+", content=" ")
+  @test.assert_eq(replace.kind(), "Replace")
+  @test.assert_eq(replace.pattern(), Some("\\s+"))
+  @test.assert_eq(replace.content(), Some(" "))
+
+  let prepend = Normalizer::Prepend(prepend="▁")
+  @test.assert_eq(prepend.kind(), "Prepend")
+  @test.assert_eq(prepend.prepend(), Some("▁"))
+
+  let bert = Normalizer::BertNormalizer(
+    clean_text=true,
+    handle_chinese_chars=false,
+    strip_accents=true,
+    lowercase=false,
+  )
+  @test.assert_eq(bert.kind(), "BertNormalizer")
+  @test.assert_eq(bert.clean_text(), Some(true))
+  @test.assert_eq(bert.handle_chinese_chars(), Some(false))
+  @test.assert_eq(bert.strip_accents(), Some(true))
+  @test.assert_eq(bert.lowercase(), Some(false))
+
+  let seq = Normalizer::Sequence([Normalizer::Lowercase, replace])
+  @test.assert_eq(seq.kind(), "Sequence")
+  @test.assert_eq(seq.normalizers().map(n => n.kind()), ["Lowercase", "Replace"])
+  let steps = seq.normalizers()
+  steps.push(Normalizer::NFC)
+  @test.assert_eq(seq.normalizers().length(), 2)
+  @test.assert_eq(Normalizer::NFC.kind(), "NFC")
+  @test.assert_eq(Normalizer::Lowercase.pattern(), None)
+}

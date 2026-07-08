@@ -38,6 +38,107 @@ pub(all) enum Normalizer {
 }
 
 ///|
+/// Return the normalizer family name used by thin binding layers.
+pub fn Normalizer::kind(self : Normalizer) -> String {
+  match self {
+    NFC => "NFC"
+    NFD => "NFD"
+    NFKC => "NFKC"
+    NFKD => "NFKD"
+    Lowercase => "Lowercase"
+    Strip(..) => "Strip"
+    StripAccents => "StripAccents"
+    ByteLevel => "ByteLevel"
+    Replace(..) => "Replace"
+    Prepend(..) => "Prepend"
+    Nmt => "Nmt"
+    Precompiled | PrecompiledMap(..) => "Precompiled"
+    BertNormalizer(..) => "BertNormalizer"
+    Sequence(_) => "Sequence"
+  }
+}
+
+///|
+pub fn Normalizer::strip_left(self : Normalizer) -> Bool? {
+  match self {
+    Strip(left~, ..) => Some(left)
+    _ => None
+  }
+}
+
+///|
+pub fn Normalizer::strip_right(self : Normalizer) -> Bool? {
+  match self {
+    Strip(right~, ..) => Some(right)
+    _ => None
+  }
+}
+
+///|
+pub fn Normalizer::pattern(self : Normalizer) -> String? {
+  match self {
+    Replace(pattern~, ..) => Some(pattern)
+    _ => None
+  }
+}
+
+///|
+pub fn Normalizer::content(self : Normalizer) -> String? {
+  match self {
+    Replace(content~, ..) => Some(content)
+    _ => None
+  }
+}
+
+///|
+pub fn Normalizer::prepend(self : Normalizer) -> String? {
+  match self {
+    Prepend(prepend~) => Some(prepend)
+    _ => None
+  }
+}
+
+///|
+pub fn Normalizer::clean_text(self : Normalizer) -> Bool? {
+  match self {
+    BertNormalizer(clean_text~, ..) => Some(clean_text)
+    _ => None
+  }
+}
+
+///|
+pub fn Normalizer::handle_chinese_chars(self : Normalizer) -> Bool? {
+  match self {
+    BertNormalizer(handle_chinese_chars~, ..) => Some(handle_chinese_chars)
+    _ => None
+  }
+}
+
+///|
+pub fn Normalizer::strip_accents(self : Normalizer) -> Bool? {
+  match self {
+    BertNormalizer(strip_accents~, ..) => Some(strip_accents)
+    _ => None
+  }
+}
+
+///|
+pub fn Normalizer::lowercase(self : Normalizer) -> Bool? {
+  match self {
+    BertNormalizer(lowercase~, ..) => Some(lowercase)
+    _ => None
+  }
+}
+
+///|
+pub fn Normalizer::normalizers(self : Normalizer) -> Array[Normalizer] {
+  match self {
+    Sequence(steps) => steps.copy()
+    _ => []
+  }
+}
+
+///|
 /// Serialize normalizers created through the typed/programmatic API.
 pub fn Normalizer::to_json(self : Normalizer) -> String? {
   match self {

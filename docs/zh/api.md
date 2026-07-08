@@ -256,6 +256,8 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 `PreTokenizer::byte_level_alphabet()` 对齐 HF ByteLevel.alphabet，返回与
 `@pretokenizer.byte_level_alphabet()` 相同的 256 个符号表。
 `Normalizer::normalize_str(input)` 作为 HF 风格别名，等价于 `normalize(input)`。
+`Normalizer` 也提供只读配置 getter，覆盖 `kind`、Strip 左右裁剪标记、
+Replace pattern/content、Prepend 内容、BertNormalizer 标记与 Sequence 子 normalizer。
 
 `Encoding::words()` 作为 HF Python 已废弃但仍存在的 `word_ids()` 属性别名提供。
 

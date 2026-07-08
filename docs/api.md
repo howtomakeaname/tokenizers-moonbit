@@ -272,6 +272,9 @@ for quick component-level checks and binding shims.
 the same 256-symbol table as `@pretokenizer.byte_level_alphabet()`.
 `Normalizer::normalize_str(input)` is available as an HF-style alias for
 `normalize(input)`.
+`Normalizer` also exposes read-only configuration getters for binding layers,
+including `kind`, Strip left/right flags, Replace pattern/content, Prepend
+content, BertNormalizer flags, and Sequence child normalizers.
 
 `Encoding::words()` is available as a deprecated HF Python alias for
 `word_ids()`.
