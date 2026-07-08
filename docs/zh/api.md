@@ -354,6 +354,10 @@ fn Encoding::get_sequence_ids(self : Encoding) -> Array[Int?]
 fn Encoding::get_word_ids(self : Encoding) -> Array[Int?]
 fn Encoding::sequence_ids(self : Encoding) -> Array[Int?]
 fn Encoding::word_ids(self : Encoding) -> Array[Int?]
+fn Encoding::char_to_token_by_sequence_index(self : Encoding, pos : Int, sequence_index? : Int = 0) -> Int?
+fn Encoding::char_to_word_by_sequence_index(self : Encoding, pos : Int, sequence_index? : Int = 0) -> Int?
+fn Encoding::word_to_tokens_by_sequence_index(self : Encoding, word : Int, sequence_index? : Int = 0) -> (Int, Int)?
+fn Encoding::word_to_chars_by_sequence_index(self : Encoding, word : Int, sequence_index? : Int = 0) -> (Int, Int)?
 fn Encoding::len(self : Encoding) -> Int
 fn Encoding::is_empty(self : Encoding) -> Bool
 fn Encoding::n_sequences(self : Encoding) -> Int
@@ -365,6 +369,8 @@ fn Encoding::n_sequences(self : Encoding) -> Int
 `get_*` accessor 会返回数组副本，便于 HF `Encoding` 迁移，同时避免调用方修改
 encoding 内部结果。`Encoding::merge` / `merge_with` 默认采用 HF 风格的
 growing offsets；显式传 `growing_offsets=false` 可保留输入 offsets 不变。
+`*_by_sequence_index` helper 是面向 binding 层的命名 alias，用来映射 HF 的
+`sequence_index` 关键字，同时保留现有 MoonBit `sequence_id` API。
 
 ## TokenizerError
 

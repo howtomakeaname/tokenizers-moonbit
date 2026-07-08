@@ -389,6 +389,10 @@ fn Encoding::get_sequence_ids(self : Encoding) -> Array[Int?]
 fn Encoding::get_word_ids(self : Encoding) -> Array[Int?]
 fn Encoding::sequence_ids(self : Encoding) -> Array[Int?]
 fn Encoding::word_ids(self : Encoding) -> Array[Int?]
+fn Encoding::char_to_token_by_sequence_index(self : Encoding, pos : Int, sequence_index? : Int = 0) -> Int?
+fn Encoding::char_to_word_by_sequence_index(self : Encoding, pos : Int, sequence_index? : Int = 0) -> Int?
+fn Encoding::word_to_tokens_by_sequence_index(self : Encoding, word : Int, sequence_index? : Int = 0) -> (Int, Int)?
+fn Encoding::word_to_chars_by_sequence_index(self : Encoding, word : Int, sequence_index? : Int = 0) -> (Int, Int)?
 fn Encoding::len(self : Encoding) -> Int
 fn Encoding::is_empty(self : Encoding) -> Bool
 fn Encoding::n_sequences(self : Encoding) -> Int
@@ -422,6 +426,9 @@ and `n_sequences` cover HF's lightweight encoding metadata helpers. Public
 manipulation helpers mirror HF's `Encoding` API but return updated values instead
 of mutating in place. `Encoding::merge` and `merge_with` default to HF-style
 growing offsets; pass `growing_offsets=false` to keep input offsets unchanged.
+The `*_by_sequence_index` helpers are naming aliases for binding layers that
+map HF's `sequence_index` keyword while preserving the existing MoonBit
+`sequence_id` APIs.
 
 ### TruncationParams (`@tokenizer`)
 

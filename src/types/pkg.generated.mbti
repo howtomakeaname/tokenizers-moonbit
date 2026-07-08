@@ -53,7 +53,9 @@ pub fn Encoding::as_buffers(Self) -> EncodingBuffers
 pub fn Encoding::as_tuple(Self) -> (Array[Int], Array[Int], Array[String], Array[(Int, Int)], Array[Int], Array[Int], Array[Int?], Array[Int?], Array[Self])
 pub fn Encoding::attention_mask(Self) -> Array[Int]
 pub fn Encoding::char_to_token(Self, Int, sequence_id? : Int) -> Int?
+pub fn Encoding::char_to_token_by_sequence_index(Self, Int, sequence_index? : Int) -> Int?
 pub fn Encoding::char_to_word(Self, Int, sequence_id? : Int) -> Int?
+pub fn Encoding::char_to_word_by_sequence_index(Self, Int, sequence_index? : Int) -> Int?
 pub fn Encoding::empty() -> Self
 pub fn Encoding::from_buffers(EncodingBuffers, sequence_ids? : Array[Int?], word_ids? : Array[Int?], overflowing? : Array[Self]) -> Self
 pub fn Encoding::from_state(EncodingState) -> Self
@@ -107,8 +109,10 @@ pub fn Encoding::with_type_ids(Self, Array[Int]) -> Self
 pub fn Encoding::with_word_ids(Self, Array[Int?]) -> Self
 pub fn Encoding::word_ids(Self) -> Array[Int?]
 pub fn Encoding::word_to_chars(Self, Int, sequence_id? : Int) -> (Int, Int)?
+pub fn Encoding::word_to_chars_by_sequence_index(Self, Int, sequence_index? : Int) -> (Int, Int)?
 pub fn Encoding::word_to_offsets(Self, Int, sequence_id? : Int) -> (Int, Int)?
 pub fn Encoding::word_to_tokens(Self, Int, sequence_id? : Int) -> (Int, Int)?
+pub fn Encoding::word_to_tokens_by_sequence_index(Self, Int, sequence_index? : Int) -> (Int, Int)?
 pub fn Encoding::words(Self) -> Array[Int?]
 
 pub(all) struct EncodingBuffers {

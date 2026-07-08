@@ -779,6 +779,16 @@ pub fn Encoding::get_word_tokens(
 }
 
 ///|
+/// HF Python naming alias for `word_to_tokens(..., sequence_index=...)`.
+pub fn Encoding::word_to_tokens_by_sequence_index(
+  self : Encoding,
+  word : Int,
+  sequence_index? : Int = 0,
+) -> (Int, Int)? {
+  self.word_to_tokens(word, sequence_id=sequence_index)
+}
+
+///|
 /// Get character/byte offsets covering `word` in `sequence_id`.
 pub fn Encoding::word_to_chars(
   self : Encoding,
@@ -804,6 +814,16 @@ pub fn Encoding::get_word_chars(
   sequence_id? : Int = 0,
 ) -> (Int, Int)? {
   self.word_to_chars(word, sequence_id~)
+}
+
+///|
+/// HF Python naming alias for `word_to_chars(..., sequence_index=...)`.
+pub fn Encoding::word_to_chars_by_sequence_index(
+  self : Encoding,
+  word : Int,
+  sequence_index? : Int = 0,
+) -> (Int, Int)? {
+  self.word_to_chars(word, sequence_id=sequence_index)
 }
 
 ///|
@@ -848,6 +868,16 @@ pub fn Encoding::get_char_token(
 }
 
 ///|
+/// HF Python naming alias for `char_to_token(..., sequence_index=...)`.
+pub fn Encoding::char_to_token_by_sequence_index(
+  self : Encoding,
+  pos : Int,
+  sequence_index? : Int = 0,
+) -> Int? {
+  self.char_to_token(pos, sequence_id=sequence_index)
+}
+
+///|
 /// Get the word id containing position `pos` in `sequence_id`.
 pub fn Encoding::char_to_word(
   self : Encoding,
@@ -872,6 +902,16 @@ pub fn Encoding::get_char_word(
   sequence_id? : Int = 0,
 ) -> Int? {
   self.char_to_word(pos, sequence_id~)
+}
+
+///|
+/// HF Python naming alias for `char_to_word(..., sequence_index=...)`.
+pub fn Encoding::char_to_word_by_sequence_index(
+  self : Encoding,
+  pos : Int,
+  sequence_index? : Int = 0,
+) -> Int? {
+  self.char_to_word(pos, sequence_id=sequence_index)
 }
 
 ///|
