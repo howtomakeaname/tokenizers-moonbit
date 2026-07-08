@@ -587,6 +587,12 @@ test "decoder HF Python constructor aliases build existing variants" {
   @test.assert_eq(bpe.suffix(), Some("</w>"))
   @test.assert_eq(bpe.decode_chain(["low</w>", "er"]), ["low ", "er"])
 
+  let metaspace = Decoder::metaspace(replacement='-', prepend_scheme="never")
+  @test.assert_eq(metaspace.kind(), "Metaspace")
+  @test.assert_eq(metaspace.replacement(), Some('-'))
+  @test.assert_eq(metaspace.prepend_scheme(), Some("never"))
+  @test.assert_eq(metaspace.decode_chain(["a-b"]), ["a b"])
+
   let strip = Decoder::strip(' ', 1, 1)
   @test.assert_eq(strip.kind(), "Strip")
   @test.assert_eq(strip.content(), Some(" "))

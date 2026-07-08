@@ -42,6 +42,7 @@ pub fn Decoder::from_state(DecoderState) -> Self raise @types.TokenizerError
 pub fn Decoder::fuse() -> Self
 pub fn Decoder::get_state(Self) -> DecoderState raise @types.TokenizerError
 pub fn Decoder::kind(Self) -> String
+pub fn Decoder::metaspace(replacement? : Char, prepend_scheme? : String) -> Self
 pub fn Decoder::pad_token(Self) -> String?
 pub fn Decoder::pattern(Self) -> String?
 pub fn Decoder::prefix(Self) -> String?

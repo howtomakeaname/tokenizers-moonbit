@@ -64,6 +64,8 @@
 
 第三十一批继续收敛 Python binding 长尾：补充 `Encoding` 的 HF 形态 helper（`*_by_sequence_index`、`token_to_char_offsets`、`token_to_word_index`、`truncate_hf`、`pad_hf`），保留现有 MoonBit typed/富返回值 API；同时锁定 Hub request header 合约（`Accept`、空 token 不生成 `Authorization`、JS/native `User-Agent` 差异）、GET/HEAD 的 slash revision URL segment 编码、HEAD plan 去除 Range/If-Range，以及 direct `local_files_only` 网络入口拒绝语义。
 
+第三十二批继续补齐 Python binding 构造器长尾：`Decoder::metaspace(replacement='▁', prepend_scheme="always")` 作为 HF `decoders.Metaspace(...)` lower-snake factory alias，复用现有 `Metaspace` typed variant，不改变 decode 语义。
+
 训练/模型文件近期增量：`Trainer::{wordlevel,wordpiece,bpe,unigram}` 默认 `vocab_size` 已对齐 HF cap（30000/8000），Unigram trainer 默认 `max_piece_length=Some(16)` 且显式 `None` 保留旧 escape hatch；tokenizer/model-level trainer 入口补充 `show_progress` no-op，model-level Unigram 补充 `unk_piece` alias。`Model::save` 之外已补 `Model::from_bpe_files` / `from_wordpiece_file` / `from_wordlevel_file` / `from_unigram_file` standalone artifact loader，覆盖 BPE `vocab.json`+`merges.txt`、WordPiece `vocab.txt`、WordLevel `vocab.json`、Unigram JSON 的保存后重载。
 
 训练默认值近期对齐：HF 0.22.x 的 WordLevel/WordPiece/BPE `min_frequency` 默认是 `0`，MoonBit 已完成三者默认值对齐，并保留显式旧阈值测试；BPE trainer 默认 `unk_token=None` 已对齐 HF，显式 `Some("[UNK]")` 保留旧行为；Unigram trainer/tokenizer/model 默认 `unk_token=None` 已对齐 HF，显式 `unk_token=Some("<unk>")` / `unk_piece=Some(...)` 保留旧行为。后续训练风险主要转为完整 Unigram EM/大语料 golden 对拍和隐式 unk 关闭后的 unknown encode 边界验证。

@@ -238,6 +238,14 @@ pub fn Decoder::bpe_decoder(suffix? : String = "</w>") -> Decoder {
 }
 
 ///|
+pub fn Decoder::metaspace(
+  replacement? : Char = '▁',
+  prepend_scheme? : String = "always",
+) -> Decoder {
+  Metaspace(replacement~, prepend_scheme~)
+}
+
+///|
 pub fn Decoder::strip(content : Char, start : Int, stop : Int) -> Decoder {
   Strip(content~, start~, stop~)
 }
