@@ -10,7 +10,7 @@ Chinese version: [`docs/zh/components.md`](./zh/components.md)
 | `type` | Status | Notes |
 |---|---|---|
 | `BPE` / byte-level BPE | ✅ | `byte_fallback`, `fuse_unk`, `ignore_merges` supported |
-| `WordPiece` | ✅ | greedy longest-match, `##` prefix, `max_input_chars_per_word` |
+| `WordPiece` | ✅ | greedy longest-match, `##` prefix, `end_of_word_suffix`, `max_input_chars_per_word` |
 | `Unigram` | ✅ | Viterbi; `byte_fallback` and `fuse_unk` supported |
 | `WordLevel` | ✅ | whole-token lookup + unk |
 
@@ -74,7 +74,10 @@ E5-small, MixedBread and SmolLM2.
   scalar; empty/null maps retain the common SPM NFKC + Unicode whitespace folding
   path with an ASCII fast path.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
-  CJK / digit-triplet patterns plus common simple spans such as `\s+`, `\S+`,
+  CJK / digit-triplet patterns plus common simple spans such as literal and
+  escaped-literal alternatives (`foo|bar`, `(foo|bar)`, `(?:foo|bar)`,
+  `foo|a\\.b`) including anchored and word-boundary forms like `^foo$` /
+  `\\bfoo\\b` / `^(?:foo|bar)` / `(?:foo|bar)$` / `\\b(?:foo|bar)\\b`, `\s+`, `\S+`,
   `^\s+`, `\s+$`, `\s{2,}` / `\s{3,}` / `\s{4,}` and exact
   `\s{2}` / `\s{3}` / `\s{4}`, `[\r\n]+` with `{2,}` / `{3,}` /
   `{4,}` and exact `{2}` / `{3}` / `{4}` forms, `[^\S\r\n]+`-style
@@ -120,7 +123,10 @@ E5-small, MixedBread and SmolLM2.
   ASCII alnum/letter runs `[A-Za-z0-9]+` / `[A-Za-z]+` and inverse forms, and
   letter/punctuation/symbol runs (`\p{L}+`, `\p{P}+`, `\p{S}+` and inverse
   forms), plus common union/inverse classes like `[\p{P}\p{S}]+` and
-  `[^\s\p{L}\p{N}]+`. Normalizer and Decoder `Replace` dispatch quantified
+  `[^\s\p{L}\p{N}]+`, and simple literal alternatives such as `foo|bar` /
+  `^foo$` / `\\bfoo\\b` / `(?:foo|bar)` / `^(?:foo|bar)` /
+  `(?:foo|bar)$` / `\\b(?:foo|bar)\\b` where every branch is an escaped or plain literal.
+  Normalizer and Decoder `Replace` dispatch quantified
   bounded/ranged forms before the generic span-building fallback, keeping those
   micro paths direct and faster than HF; more complex regex replacement remains
   future work.
@@ -139,8 +145,9 @@ E5-small, MixedBread and SmolLM2.
   Unigram trainer MVPs are also available with the same input modes and common
   knobs such as continuation-prefix / end-of-word suffix /
   `max_input_chars_per_word` / `byte_fallback`; WordPiece and BPE training
-  additionally support HF-style `initial_alphabet` / `limit_alphabet`, BPE also
-  supports `max_token_length`, and `byte_level_alphabet()` exposes the 256
+  additionally support HF-style `initial_alphabet` / `limit_alphabet`, WordPiece
+  also preserves `end_of_word_suffix` through encode and JSON round-trip,
+  WordPiece/BPE support `max_token_length`, and `byte_level_alphabet()` exposes the 256
   ByteLevel symbols for GPT-2/RoBERTa style training.
 - **Constructed tokenizer serialization:** trained WordLevel, WordPiece, BPE, and Unigram tokenizers serialize
   common pre-tokenizers such as ByteLevel, Metaspace, Punctuation, Split, Digits,

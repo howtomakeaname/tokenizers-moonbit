@@ -1355,6 +1355,22 @@ test "WordPiece repeated words keep offsets with word cache" {
 }
 
 ///|
+test "WordPiece supports end_of_word_suffix in model config" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"token":1,"##ization</w>":2,"token</w>":3},"unk_token":"[UNK]","continuing_subword_prefix":"##","end_of_word_suffix":"</w>"}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode("tokenization token", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["token", "##ization</w>", "token</w>"])
+  @test.assert_eq(enc.offsets, [(0, 5), (5, 12), (13, 18)])
+  let round_trip = Tokenizer::from_str(tok.to_json())
+  @test.assert_eq(round_trip.encode("token", add_special_tokens=false).tokens, [
+    "token</w>",
+  ])
+}
+
+///|
 test "Tokenizer cache control clears resizes and isolates model caches" {
   let wp_json =
     #|{"version":"1.0",
@@ -2276,6 +2292,45 @@ test "train_wordpiece builds alphabet and whole-word tokens" {
   @test.assert_eq(enc.tokens[2], "##e")
   @test.assert_eq(enc.tokens[3], "##l")
   @test.assert_eq(enc.tokens[4], "##p")
+}
+
+///|
+test "train_wordpiece supports HF end_of_word_suffix knob" {
+  let tok = Tokenizer::train_wordpiece(
+    ["low lower"],
+    unk_token="[UNK]",
+    continuing_subword_prefix="##",
+    end_of_word_suffix=Some("</w>"),
+    special_tokens=["[PAD]"],
+  )
+  assert_true(tok.token_to_id("low</w>") is Some(_))
+  assert_true(tok.token_to_id("##w</w>") is Some(_))
+  @test.assert_eq(tok.encode("low", add_special_tokens=false).tokens, [
+    "low</w>",
+  ])
+  @test.assert_eq(tok.to_json().contains("\"end_of_word_suffix\""), true)
+  let loaded = Tokenizer::from_str(tok.to_json())
+  @test.assert_eq(loaded.encode("low", add_special_tokens=false).tokens, [
+    "low</w>",
+  ])
+}
+
+///|
+test "train_wordpiece supports HF max_token_length knob" {
+  let tok = Tokenizer::train_wordpiece(
+    ["hello hell"],
+    unk_token="[UNK]",
+    special_tokens=["[PAD]"],
+    max_token_length=Some(3),
+  )
+  @test.assert_eq(tok.token_to_id("hello"), None)
+  @test.assert_eq(tok.token_to_id("hell"), None)
+  assert_true(tok.token_to_id("h") is Some(_))
+  assert_true(tok.token_to_id("##e") is Some(_))
+  assert_true(tok.token_to_id("##o") is Some(_))
+  @test.assert_eq(tok.encode("hello", add_special_tokens=false).tokens, [
+    "h", "##e", "##l", "##l", "##o",
+  ])
 }
 
 ///|

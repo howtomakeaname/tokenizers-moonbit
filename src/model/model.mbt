@@ -53,6 +53,7 @@ pub struct WordPieceModel {
   vocab_r : Array[String?]
   unk_token : String
   continuing_subword_prefix : String
+  end_of_word_suffix : String?
   max_input_chars_per_word : Int
   cache : Map[String, Array[@types.Token]]
   mut cache_capacity : Int?
@@ -496,6 +497,13 @@ fn wordpiece_to_json(m : WordPieceModel) -> String {
   write_json_string(sb, m.unk_token)
   sb.write_string(",\"continuing_subword_prefix\":")
   write_json_string(sb, m.continuing_subword_prefix)
+  match m.end_of_word_suffix {
+    Some(suf) => {
+      sb.write_string(",\"end_of_word_suffix\":")
+      write_json_string(sb, suf)
+    }
+    None => ()
+  }
   sb.write_string(",\"max_input_chars_per_word\":")
   sb.write_string(m.max_input_chars_per_word.to_string())
   sb.write_string(",\"vocab\":{")

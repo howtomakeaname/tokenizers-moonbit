@@ -157,8 +157,8 @@ HF's switch for templating/chat use cases.
   and Unigram trainer MVPs are available for the same input modes with common
   controls such as continuation-prefix, end-of-word suffix,
   `max_input_chars_per_word`, and `byte_fallback`; WordPiece/BPE also support
-  `initial_alphabet` and `limit_alphabet`, while BPE additionally supports
-  `max_token_length` plus a `byte_level_alphabet()` helper matching HF
+  `initial_alphabet`, `limit_alphabet`, and `max_token_length`, plus a
+  `byte_level_alphabet()` helper matching HF
   `ByteLevel.alphabet()` workflows.
 - **Regex components:** common HF `Split`/`Replace` regex families are handled by
   shared deterministic fast paths across wasm/js/native: `\s`, `\d`, `\w`,

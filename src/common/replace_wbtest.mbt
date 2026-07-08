@@ -188,6 +188,71 @@ test "Regex wrapper exposes supported deterministic subset" {
   @test.assert_eq(escaped.is_supported(), true)
   @test.assert_eq(escaped.find_matches("a.b axb"), Some([(0, 3)]))
   @test.assert_eq(escaped.replace_all("a.b axb", "X"), Some("X axb"))
+  let anchored_literal = Regex::new("^foo$")
+  @test.assert_eq(anchored_literal.is_supported(), true)
+  @test.assert_eq(anchored_literal.find_matches("foo"), Some([(0, 3)]))
+  @test.assert_eq(anchored_literal.find_matches("foobar"), Some([]))
+  let word_literal = Regex::new("\\bfoo\\b")
+  @test.assert_eq(word_literal.is_supported(), true)
+  @test.assert_eq(
+    word_literal.find_matches("foo food _foo foo!"),
+    Some([(0, 3), (14, 17)]),
+  )
+  @test.assert_eq(
+    word_literal.replace_all("foo food _foo foo!", "X"),
+    Some("X food _foo X!"),
+  )
+  let alternatives = Regex::new("foo|bar|a\\.b")
+  @test.assert_eq(alternatives.is_supported(), true)
+  @test.assert_eq(
+    alternatives.find_matches("xxfoo bar a.b axb"),
+    Some([(2, 5), (6, 9), (10, 13)]),
+  )
+  @test.assert_eq(
+    alternatives.replace_all("foo,bar,a.b,axb", "X"),
+    Some("X,X,X,axb"),
+  )
+  let grouped = Regex::new("(?:ab|a)")
+  @test.assert_eq(grouped.find_matches("ababa"), Some([(0, 2), (2, 4), (4, 5)]))
+  let leading_alternatives = Regex::new("^(?:foo|bar)")
+  @test.assert_eq(leading_alternatives.is_supported(), true)
+  @test.assert_eq(
+    leading_alternatives.find_matches("foobar foo"),
+    Some([(0, 3)]),
+  )
+  @test.assert_eq(
+    leading_alternatives.replace_all("foobar foo", "X"),
+    Some("Xbar foo"),
+  )
+  let trailing_alternatives = Regex::new("(?:foo|bar)$")
+  @test.assert_eq(trailing_alternatives.is_supported(), true)
+  @test.assert_eq(
+    trailing_alternatives.find_matches("xxfoo yybar"),
+    Some([(8, 11)]),
+  )
+  @test.assert_eq(
+    trailing_alternatives.replace_all("xxfoo yybar", "X"),
+    Some("xxfoo yyX"),
+  )
+  let whole_alternatives = Regex::new("^(?:foo|bar)$")
+  @test.assert_eq(whole_alternatives.find_matches("bar"), Some([(0, 3)]))
+  @test.assert_eq(whole_alternatives.find_matches("bar!"), Some([]))
+  let word_alternatives = Regex::new("\\b(?:foo|bar)\\b")
+  @test.assert_eq(word_alternatives.is_supported(), true)
+  @test.assert_eq(
+    word_alternatives.find_matches("foo food bar_bar bar."),
+    Some([(0, 3), (17, 20)]),
+  )
+  @test.assert_eq(
+    word_alternatives.replace_all("foo food bar_bar bar.", "X"),
+    Some("X food bar_bar X."),
+  )
+  let leading_word_alternatives = Regex::new("^\\b(?:foo|bar)\\b")
+  @test.assert_eq(
+    leading_word_alternatives.find_matches("foo! bar"),
+    Some([(0, 3)]),
+  )
+  @test.assert_eq(leading_word_alternatives.find_matches("food bar"), Some([]))
   let unsupported = Regex::new("(?<=a)b")
   @test.assert_eq(unsupported.is_supported(), false)
   @test.assert_eq(unsupported.find_matches("ab"), None)

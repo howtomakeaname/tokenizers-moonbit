@@ -119,10 +119,12 @@ pub fn Model::train_wordpiece(
   texts : Array[String],
   unk_token? : String = "[UNK]",
   continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None,
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
   max_input_chars_per_word? : Int = 100,
+  max_token_length? : Int? = None,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
 ) -> Model {
@@ -134,10 +136,12 @@ pub fn Model::train_wordpiece(
     tokenized,
     unk_token~,
     continuing_subword_prefix~,
+    end_of_word_suffix~,
     min_frequency~,
     special_tokens~,
     vocab_size~,
     max_input_chars_per_word~,
+    max_token_length~,
     initial_alphabet~,
     limit_alphabet~,
   )
@@ -149,10 +153,12 @@ pub fn Model::train_wordpiece_from_tokens(
   tokenized_texts : Array[Array[String]],
   unk_token? : String = "[UNK]",
   continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None,
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
   max_input_chars_per_word? : Int = 100,
+  max_token_length? : Int? = None,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
 ) -> Model {
@@ -164,7 +170,7 @@ pub fn Model::train_wordpiece_from_tokens(
     for tok in tokens {
       bump_count(word_counts, word_order, tok)
       add_wordpiece_alphabet(
-        tok, continuing_subword_prefix, piece_counts, piece_order,
+        tok, continuing_subword_prefix, end_of_word_suffix, piece_counts, piece_order,
       )
     }
   }
@@ -203,7 +209,10 @@ pub fn Model::train_wordpiece_from_tokens(
     word_order, word_counts, min_frequency,
   )
   for item in words {
-    add_token(item.0)
+    let tok = wordpiece_word_token(item.0, end_of_word_suffix)
+    if wordpiece_train_token_allowed(tok, max_token_length) {
+      add_token(tok)
+    }
   }
 
   WordPiece({
@@ -211,6 +220,7 @@ pub fn Model::train_wordpiece_from_tokens(
     vocab_r,
     unk_token,
     continuing_subword_prefix,
+    end_of_word_suffix,
     max_input_chars_per_word,
     cache: {},
     cache_capacity: None,
@@ -236,13 +246,38 @@ fn bump_count(
 fn add_wordpiece_alphabet(
   tok : String,
   prefix : String,
+  suffix : String?,
   counts : Map[String, Int],
   order : Array[String],
 ) -> Unit {
   let chars = tok.to_array()
   for i, c in chars {
     let piece = if i == 0 { char_string(c) } else { prefix + char_string(c) }
-    bump_count(counts, order, piece)
+    bump_count(
+      counts,
+      order,
+      if i == chars.length() - 1 {
+        wordpiece_word_token(piece, suffix)
+      } else {
+        piece
+      },
+    )
+  }
+}
+
+///|
+fn wordpiece_word_token(tok : String, suffix : String?) -> String {
+  match suffix {
+    Some(suf) => tok + suf
+    None => tok
+  }
+}
+
+///|
+fn wordpiece_train_token_allowed(tok : String, max_token_length : Int?) -> Bool {
+  match max_token_length {
+    None => true
+    Some(n) => n <= 0 || tok.char_length() <= n
   }
 }
 

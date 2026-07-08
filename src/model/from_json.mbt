@@ -173,6 +173,7 @@ fn parse_wordpiece(
       "continuing_subword_prefix",
       default="##",
     ),
+    end_of_word_suffix: @types.get_str_opt(obj, "end_of_word_suffix"),
     max_input_chars_per_word: @types.get_int(
       obj,
       "max_input_chars_per_word",

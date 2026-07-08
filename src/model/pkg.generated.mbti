@@ -49,8 +49,8 @@ pub fn Model::train_unigram(Array[String], unk_token? : String, min_frequency? :
 pub fn Model::train_unigram_from_tokens(Array[Array[String]], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, max_piece_length? : Int?, shrinking_factor? : Double, n_sub_iterations? : Int, show_progress? : Bool) -> Self
 pub fn Model::train_wordlevel(Array[String], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?) -> Self
 pub fn Model::train_wordlevel_from_tokens(Array[Array[String]], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?) -> Self
-pub fn Model::train_wordpiece(Array[String], unk_token? : String, continuing_subword_prefix? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
-pub fn Model::train_wordpiece_from_tokens(Array[Array[String]], unk_token? : String, continuing_subword_prefix? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
+pub fn Model::train_wordpiece(Array[String], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, max_token_length? : Int?, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
+pub fn Model::train_wordpiece_from_tokens(Array[Array[String]], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, max_token_length? : Int?, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
 pub fn Model::vocab_size(Self) -> Int
 
 pub struct UnigramModel {
@@ -76,6 +76,7 @@ pub struct WordPieceModel {
   vocab_r : Array[String?]
   unk_token : String
   continuing_subword_prefix : String
+  end_of_word_suffix : String?
   max_input_chars_per_word : Int
   cache : Map[String, Array[@types.Token]]
   mut cache_capacity : Int?

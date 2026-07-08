@@ -37,10 +37,13 @@ pub fn WordPieceModel::tokenize(
     let mut cur : String? = None
     let mut cur_end = start
     while start < end {
-      let mut sub = make_sub(chars, start, end)
-      if start > 0 {
-        sub = self.continuing_subword_prefix + sub
-      }
+      let sub = make_wordpiece_candidate(
+        chars,
+        start,
+        end,
+        self.continuing_subword_prefix,
+        self.end_of_word_suffix,
+      )
       if self.vocab.contains(sub) {
         cur = Some(sub)
         cur_end = end
@@ -97,4 +100,25 @@ fn make_sub(chars : Array[Char], start : Int, stop : Int) -> String {
     sb.write_char(chars[i])
   }
   sb.to_string()
+}
+
+///|
+fn make_wordpiece_candidate(
+  chars : Array[Char],
+  start : Int,
+  stop : Int,
+  continuing_subword_prefix : String,
+  end_of_word_suffix : String?,
+) -> String {
+  let mut sub = make_sub(chars, start, stop)
+  if start > 0 {
+    sub = continuing_subword_prefix + sub
+  }
+  if stop == chars.length() {
+    match end_of_word_suffix {
+      Some(suf) => sub = sub + suf
+      None => ()
+    }
+  }
+  sub
 }
