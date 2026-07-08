@@ -604,6 +604,62 @@ test "programmatic builder APIs attach pipeline components" {
 }
 
 ///|
+test "Model exposes HF-style configuration getters" {
+  let wordlevel = Tokenizer::from_str(
+    (
+      #|{"version":"1.0",
+      #| "model":{"type":"WordLevel","vocab":{"[UNK]":0,"hello":1},"unk_token":"[UNK]"}}
+    ),
+  ).get_model()
+  @test.assert_eq(wordlevel.kind(), "WordLevel")
+  @test.assert_eq(wordlevel.unk_token(), Some("[UNK]"))
+  @test.assert_eq(wordlevel.unk_id(), Some(0))
+  @test.assert_eq(wordlevel.continuing_subword_prefix(), None)
+
+  let wordpiece = Tokenizer::from_str(
+    (
+      #|{"version":"1.0",
+      #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"token":1,"##s</w>":2},"unk_token":"[UNK]","continuing_subword_prefix":"##","end_of_word_suffix":"</w>","max_input_chars_per_word":42}}
+    ),
+  ).get_model()
+  @test.assert_eq(wordpiece.kind(), "WordPiece")
+  @test.assert_eq(wordpiece.unk_token(), Some("[UNK]"))
+  @test.assert_eq(wordpiece.unk_id(), Some(0))
+  @test.assert_eq(wordpiece.continuing_subword_prefix(), Some("##"))
+  @test.assert_eq(wordpiece.end_of_word_suffix(), Some("</w>"))
+  @test.assert_eq(wordpiece.max_input_chars_per_word(), Some(42))
+
+  let bpe = Tokenizer::from_str(
+    (
+      #|{"version":"1.0",
+      #| "model":{"type":"BPE","vocab":{"[UNK]":0,"a":1,"b":2,"ab</w>":3},"merges":[["a","b"]],"unk_token":"[UNK]","continuing_subword_prefix":"@@","end_of_word_suffix":"</w>","dropout":0.25,"byte_fallback":true,"fuse_unk":true,"ignore_merges":true}}
+    ),
+  ).get_model()
+  @test.assert_eq(bpe.kind(), "BPE")
+  @test.assert_eq(bpe.unk_token(), Some("[UNK]"))
+  @test.assert_eq(bpe.unk_id(), Some(0))
+  @test.assert_eq(bpe.continuing_subword_prefix(), Some("@@"))
+  @test.assert_eq(bpe.end_of_word_suffix(), Some("</w>"))
+  @test.assert_eq(bpe.dropout(), Some(0.25))
+  @test.assert_eq(bpe.byte_fallback(), Some(true))
+  @test.assert_eq(bpe.fuse_unk(), Some(true))
+  @test.assert_eq(bpe.ignore_merges(), Some(true))
+
+  let unigram = Tokenizer::from_str(
+    (
+      #|{"version":"1.0",
+      #| "model":{"type":"Unigram","vocab":[["<unk>",0.0],["hello",-1.0]],"unk_id":0,"byte_fallback":true,"fuse_unk":false}}
+    ),
+  ).get_model()
+  @test.assert_eq(unigram.kind(), "Unigram")
+  @test.assert_eq(unigram.unk_token(), Some("<unk>"))
+  @test.assert_eq(unigram.unk_id(), Some(0))
+  @test.assert_eq(unigram.byte_fallback(), Some(true))
+  @test.assert_eq(unigram.fuse_unk(), Some(false))
+  @test.assert_eq(unigram.dropout(), None)
+}
+
+///|
 test "add_tokens and add_special_tokens extend the added vocabulary" {
   let model = @model.Model::train_wordlevel_from_tokens(
     [["hello", "moon"], ["[CLS]", "[SEP]"]],

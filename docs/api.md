@@ -275,6 +275,10 @@ pre-tokenizer `split`, state/tuple helpers, and `to_encoding` /
 Unigram trainers. These helpers are intended for binding/property mapping and do
 not change training behavior.
 
+`Model` exposes read-only configuration getters for binding layers, including
+`kind`, `unk_token`, `unk_id`, WordPiece/BPE prefix/suffix knobs, BPE dropout and
+merge flags, and BPE/Unigram byte-fallback/fuse-unk flags.
+
 `Tokenizer::__str__()` and `Tokenizer::__repr__()` are thin Python binding
 aliases for the compact `to_str()` JSON form.
 

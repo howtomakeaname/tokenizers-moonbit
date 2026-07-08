@@ -33,11 +33,19 @@ pub enum Model {
   Unigram(UnigramModel)
   WordLevel(WordLevelModel)
 }
+pub fn Model::byte_fallback(Self) -> Bool?
 pub fn Model::cache_size(Self) -> Int
 pub fn Model::clear_cache(Self) -> Unit
+pub fn Model::continuing_subword_prefix(Self) -> String?
+pub fn Model::dropout(Self) -> Double?
+pub fn Model::end_of_word_suffix(Self) -> String?
 pub fn Model::from_json(Json) -> Self raise @types.TokenizerError
+pub fn Model::fuse_unk(Self) -> Bool?
 pub fn Model::get_vocab(Self) -> Map[String, Int]
 pub fn Model::id_to_token(Self, Int) -> String?
+pub fn Model::ignore_merges(Self) -> Bool?
+pub fn Model::kind(Self) -> String
+pub fn Model::max_input_chars_per_word(Self) -> Int?
 pub fn Model::resize_cache(Self, Int) -> Unit
 pub fn Model::save(Self, String, prefix? : String) -> Array[String] raise @types.TokenizerError
 pub fn Model::to_json(Self) -> String?
@@ -51,6 +59,8 @@ pub fn Model::train_wordlevel(Array[String], unk_token? : String, min_frequency?
 pub fn Model::train_wordlevel_from_tokens(Array[Array[String]], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?) -> Self
 pub fn Model::train_wordpiece(Array[String], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, max_token_length? : Int?, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
 pub fn Model::train_wordpiece_from_tokens(Array[Array[String]], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, max_token_length? : Int?, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
+pub fn Model::unk_id(Self) -> Int?
+pub fn Model::unk_token(Self) -> String?
 pub fn Model::vocab_size(Self) -> Int
 
 pub struct UnigramModel {

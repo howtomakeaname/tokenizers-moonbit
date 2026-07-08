@@ -258,6 +258,10 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 `show_progress`，以及 WordPiece、BPE、Unigram trainer 的模型特有 knobs。这些
 helper 用于 binding/property 映射，不改变训练行为。
 
+`Model` 暴露只读配置 getter，便于 binding 层映射属性，包括 `kind`、`unk_token`、
+`unk_id`、WordPiece/BPE 的 prefix/suffix knobs、BPE dropout 与 merge flags，以及
+BPE/Unigram 的 byte-fallback/fuse-unk flags。
+
 `Tokenizer::__str__()` 与 `Tokenizer::__repr__()` 是面向 Python binding 的薄别名，
 返回紧凑 `to_str()` JSON 形式。
 

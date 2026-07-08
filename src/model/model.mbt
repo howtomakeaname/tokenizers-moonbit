@@ -83,6 +83,103 @@ pub enum Model {
 }
 
 ///|
+/// Return the model family name used by thin binding layers.
+pub fn Model::kind(self : Model) -> String {
+  match self {
+    BPE(_) => "BPE"
+    WordPiece(_) => "WordPiece"
+    Unigram(_) => "Unigram"
+    WordLevel(_) => "WordLevel"
+  }
+}
+
+///|
+pub fn Model::unk_token(self : Model) -> String? {
+  match self {
+    BPE(m) => m.unk_token
+    WordPiece(m) => Some(m.unk_token)
+    WordLevel(m) => Some(m.unk_token)
+    Unigram(m) =>
+      match m.unk_id {
+        Some(id) => lookup_id(m.vocab_r, id)
+        None => None
+      }
+  }
+}
+
+///|
+pub fn Model::unk_id(self : Model) -> Int? {
+  match self {
+    Unigram(m) => m.unk_id
+    _ =>
+      match self.unk_token() {
+        Some(token) => self.token_to_id(token)
+        None => None
+      }
+  }
+}
+
+///|
+pub fn Model::continuing_subword_prefix(self : Model) -> String? {
+  match self {
+    BPE(m) => m.continuing_subword_prefix
+    WordPiece(m) => Some(m.continuing_subword_prefix)
+    _ => None
+  }
+}
+
+///|
+pub fn Model::end_of_word_suffix(self : Model) -> String? {
+  match self {
+    BPE(m) => m.end_of_word_suffix
+    WordPiece(m) => m.end_of_word_suffix
+    _ => None
+  }
+}
+
+///|
+pub fn Model::max_input_chars_per_word(self : Model) -> Int? {
+  match self {
+    WordPiece(m) => Some(m.max_input_chars_per_word)
+    _ => None
+  }
+}
+
+///|
+pub fn Model::byte_fallback(self : Model) -> Bool? {
+  match self {
+    BPE(m) => Some(m.byte_fallback)
+    Unigram(m) => Some(m.byte_fallback)
+    _ => None
+  }
+}
+
+///|
+pub fn Model::fuse_unk(self : Model) -> Bool? {
+  match self {
+    BPE(m) => Some(m.fuse_unk)
+    Unigram(m) => Some(m.fuse_unk)
+    _ => None
+  }
+}
+
+///|
+pub fn Model::ignore_merges(self : Model) -> Bool? {
+  match self {
+    BPE(m) => Some(m.ignore_merges)
+    _ => None
+  }
+}
+
+///|
+pub fn Model::dropout(self : Model) -> Double? {
+  match self {
+    BPE(m) => m.dropout
+    _ => None
+  }
+}
+
+///|
 /// Look up a token surface by id (decode direction).
 pub fn Model::id_to_token(self : Model, id : Int) -> String? {
   match self {
