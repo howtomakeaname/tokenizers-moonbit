@@ -49,6 +49,7 @@ pub fn Model::end_of_word_suffix(Self) -> String?
 pub fn Model::from_bpe_files(String, String, unk_token? : String?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?) -> Self raise @types.TokenizerError
 pub fn Model::from_json(Json) -> Self raise @types.TokenizerError
 pub fn Model::from_state(ModelState) -> Self raise @types.TokenizerError
+pub fn Model::from_unigram_file(String) -> Self raise @types.TokenizerError
 pub fn Model::from_wordlevel_file(String, unk_token? : String) -> Self raise @types.TokenizerError
 pub fn Model::from_wordpiece_file(String, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int) -> Self raise @types.TokenizerError
 pub fn Model::fuse_unk(Self) -> Bool?

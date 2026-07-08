@@ -64,6 +64,8 @@
 
 第三十一批继续收敛 Python binding 长尾：补充 `Encoding` 的 HF 形态 helper（`*_by_sequence_index`、`token_to_char_offsets`、`token_to_word_index`、`truncate_hf`、`pad_hf`），保留现有 MoonBit typed/富返回值 API；同时锁定 Hub request header 合约（`Accept`、空 token 不生成 `Authorization`、JS/native `User-Agent` 差异）与 direct `local_files_only` 网络入口拒绝语义。
 
+训练/模型文件近期增量：`Trainer::{wordlevel,wordpiece,bpe,unigram}` 默认 `vocab_size` 已对齐 HF cap（30000/8000），Unigram trainer 默认 `max_piece_length=Some(16)` 且显式 `None` 保留旧 escape hatch；model-level trainer 入口补充 `show_progress` no-op 与 Unigram `unk_piece` alias。`Model::save` 之外已补 `Model::from_bpe_files` / `from_wordpiece_file` / `from_wordlevel_file` / `from_unigram_file` standalone artifact loader，覆盖 BPE `vocab.json`+`merges.txt`、WordPiece `vocab.txt`、WordLevel `vocab.json`、Unigram JSON 的保存后重载。
+
 ## R10：架构治理与模块化计划
 
 目标：在不破坏现有 HF parity、全后端测试与 benchmark 对比的前提下，逐步把项目整理成更接近 HF tokenizers 的组件化结构：公共工具层 → normalizers / pre_tokenizers / models / processors / decoders → tokenizer façade → tests/bench harness。

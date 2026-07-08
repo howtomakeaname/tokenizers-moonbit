@@ -39,6 +39,33 @@ fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise To
   状态；从 HF JSON 加载的 tokenizer 在 builder 修改 typed state 前仍保持原始 JSON
   原样往返。
 
+### 独立模型文件（`@model`）
+
+```moonbit
+fn Model::save(self : Model, folder : String, prefix? : String = "") -> Array[String] raise TokenizerError
+fn Model::from_bpe_files(
+  vocab_path : String, merges_path : String, unk_token? : String? = Some("[UNK]"),
+  continuing_subword_prefix? : String? = None, end_of_word_suffix? : String? = None,
+  fuse_unk? : Bool = false, byte_fallback? : Bool = false,
+  ignore_merges? : Bool = false, dropout? : Double? = None,
+) -> Model raise TokenizerError
+fn Model::from_wordpiece_file(
+  vocab_path : String, unk_token? : String = "[UNK]",
+  continuing_subword_prefix? : String = "##", end_of_word_suffix? : String? = None,
+  max_input_chars_per_word? : Int = 100,
+) -> Model raise TokenizerError
+fn Model::from_wordlevel_file(
+  vocab_path : String, unk_token? : String = "[UNK]",
+) -> Model raise TokenizerError
+fn Model::from_unigram_file(vocab_path : String) -> Model raise TokenizerError
+```
+
+`Model::save` 会写出 HF 风格独立模型文件：BPE 为 `vocab.json` + `merges.txt`，
+WordPiece 为 `vocab.txt`，WordLevel 为 `vocab.json`，Unigram 为紧凑且保留 score
+的 JSON 文件。对应 standalone loader 可把这些常见 HF artifact 重新读回 typed
+model，包括保存出来的 Unigram JSON 片段；BPE merges 会跳过 `#version:` 注释行，
+并沿用 tokenizer JSON 加载路径的 legacy merge 拆分语义。
+
 ### 可选 Hub 下载器（`@hub`，native/js）
 
 ```moonbit

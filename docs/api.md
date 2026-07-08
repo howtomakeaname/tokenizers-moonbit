@@ -48,6 +48,34 @@ fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise To
   tokenizers still preserve their original JSON verbatim until a builder mutates
   typed state.
 
+### Standalone model artifacts (`@model`)
+
+```moonbit
+fn Model::save(self : Model, folder : String, prefix? : String = "") -> Array[String] raise TokenizerError
+fn Model::from_bpe_files(
+  vocab_path : String, merges_path : String, unk_token? : String? = Some("[UNK]"),
+  continuing_subword_prefix? : String? = None, end_of_word_suffix? : String? = None,
+  fuse_unk? : Bool = false, byte_fallback? : Bool = false,
+  ignore_merges? : Bool = false, dropout? : Double? = None,
+) -> Model raise TokenizerError
+fn Model::from_wordpiece_file(
+  vocab_path : String, unk_token? : String = "[UNK]",
+  continuing_subword_prefix? : String = "##", end_of_word_suffix? : String? = None,
+  max_input_chars_per_word? : Int = 100,
+) -> Model raise TokenizerError
+fn Model::from_wordlevel_file(
+  vocab_path : String, unk_token? : String = "[UNK]",
+) -> Model raise TokenizerError
+fn Model::from_unigram_file(vocab_path : String) -> Model raise TokenizerError
+```
+
+`Model::save` writes HF-style standalone artifacts for BPE (`vocab.json` +
+`merges.txt`), WordPiece (`vocab.txt`), WordLevel (`vocab.json`), and a compact
+score-preserving Unigram JSON artifact. The standalone loaders read those common
+HF artifact formats back into typed models, including saved Unigram JSON
+fragments; BPE merge files skip `#version:` comment lines and use the same
+legacy merge splitting semantics as tokenizer JSON loading.
+
 ### Optional Hub downloader (`@hub`, native/js)
 
 ```moonbit

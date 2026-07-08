@@ -67,6 +67,22 @@ pub fn Model::from_wordlevel_file(
 }
 
 ///|
+pub fn Model::from_unigram_file(
+  vocab_path : String,
+) -> Model raise @types.TokenizerError {
+  let content = read_model_artifact(vocab_path)
+  let parsed = @json.parse(content) catch {
+    err => raise @types.ParseError("invalid Unigram model JSON: \{err}")
+  }
+  let obj = @types.as_object(parsed, "Unigram model")
+  let ty = @types.get_type(obj, "Unigram model")
+  if ty != "Unigram" {
+    raise @types.VocabError("Unigram model artifact must have type Unigram")
+  }
+  Unigram(parse_unigram(obj))
+}
+
+///|
 fn read_vocab_json(
   path : String,
   label : String,

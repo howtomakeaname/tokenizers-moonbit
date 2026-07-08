@@ -347,6 +347,28 @@ test "standalone model artifact loaders round trip saved artifacts" {
   @test.assert_eq(loaded_wordlevel.tokenize("missing").map(t => t.value), [
     "[UNK]",
   ])
+
+  let unigram = Model::train_unigram(
+    ["hello hello"],
+    unk_token="<unk>",
+    show_progress=false,
+  )
+  let unigram_paths = unigram.save(dir, prefix="uni") catch {
+    _ => abort("save unigram artifact failed")
+  }
+  let loaded_unigram = Model::from_unigram_file(unigram_paths[0]) catch {
+    _ => abort("load unigram artifact failed")
+  }
+  @test.assert_eq(loaded_unigram.kind(), "Unigram")
+  @test.assert_eq(loaded_unigram.unk_token(), unigram.unk_token())
+  @test.assert_eq(
+    loaded_unigram.token_to_id("hello"),
+    unigram.token_to_id("hello"),
+  )
+  @test.assert_eq(
+    loaded_unigram.tokenize("hello").map(t => t.value),
+    unigram.tokenize("hello").map(t => t.value),
+  )
 }
 
 ///|
