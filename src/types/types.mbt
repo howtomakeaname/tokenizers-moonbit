@@ -469,7 +469,7 @@ pub fn Encoding::pad(
 ///|
 pub fn Encoding::merge(
   encodings : Array[Encoding],
-  growing_offsets? : Bool = false,
+  growing_offsets? : Bool = true,
 ) -> Encoding {
   let mut out = Encoding::empty()
   for enc in encodings {
@@ -482,7 +482,7 @@ pub fn Encoding::merge(
 pub fn Encoding::merge_with(
   self : Encoding,
   pair : Encoding,
-  growing_offsets? : Bool = false,
+  growing_offsets? : Bool = true,
 ) -> Encoding {
   let starting_offset = if growing_offsets {
     if self.offsets.length() > 0 {

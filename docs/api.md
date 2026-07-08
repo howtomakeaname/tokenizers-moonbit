@@ -412,15 +412,16 @@ fn Encoding::pad(
   self : Encoding, target_length : Int, pad_id? : Int = 0, pad_type_id? : Int = 0,
   pad_token? : String = "[PAD]", direction? : EncodingDirection = Right,
 ) -> Encoding
-fn Encoding::merge(encodings : Array[Encoding], growing_offsets? : Bool = false) -> Encoding
-fn Encoding::merge_with(self : Encoding, pair : Encoding, growing_offsets? : Bool = false) -> Encoding
+fn Encoding::merge(encodings : Array[Encoding], growing_offsets? : Bool = true) -> Encoding
+fn Encoding::merge_with(self : Encoding, pair : Encoding, growing_offsets? : Bool = true) -> Encoding
 ```
 
 The `get_*` accessors return copied arrays, mirroring HF `Encoding` accessors
 while keeping the encoded result immutable from caller code. `len`, `is_empty`
 and `n_sequences` cover HF's lightweight encoding metadata helpers. Public
 manipulation helpers mirror HF's `Encoding` API but return updated values instead
-of mutating in place.
+of mutating in place. `Encoding::merge` and `merge_with` default to HF-style
+growing offsets; pass `growing_offsets=false` to keep input offsets unchanged.
 
 ### TruncationParams (`@tokenizer`)
 

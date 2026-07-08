@@ -363,7 +363,8 @@ fn Encoding::n_sequences(self : Encoding) -> Int
 `n_sequences` 对齐 HF 的轻量元数据 helper。
 
 `get_*` accessor 会返回数组副本，便于 HF `Encoding` 迁移，同时避免调用方修改
-encoding 内部结果。
+encoding 内部结果。`Encoding::merge` / `merge_with` 默认采用 HF 风格的
+growing offsets；显式传 `growing_offsets=false` 可保留输入 offsets 不变。
 
 ## TokenizerError
 

@@ -901,15 +901,26 @@ test "Encoding public manipulation APIs mirror HF style" {
   )
   @test.assert_eq(padded.ids, [0, 0, 1, 2])
   @test.assert_eq(padded.attention_mask, [0, 0, 1, 1])
-  let merged = @types.Encoding::merge(
+  let merged = @types.Encoding::merge([
+    @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2) }]),
+    @types.Encoding::from_tokens([{ id: 11, value: "cd", offsets: (0, 2) }]),
+  ])
+  @test.assert_eq(merged.ids, [10, 11])
+  @test.assert_eq(merged.offsets, [(0, 2), (2, 4)])
+  let merged_without_growing = @types.Encoding::merge(
     [
       @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2) }]),
       @types.Encoding::from_tokens([{ id: 11, value: "cd", offsets: (0, 2) }]),
     ],
-    growing_offsets=true,
+    growing_offsets=false,
   )
-  @test.assert_eq(merged.ids, [10, 11])
-  @test.assert_eq(merged.offsets, [(0, 2), (2, 4)])
+  @test.assert_eq(merged_without_growing.offsets, [(0, 2), (0, 2)])
+  @test.assert_eq(
+    @types.Encoding::from_tokens([{ id: 12, value: "xy", offsets: (0, 2) }]).merge_with(
+      @types.Encoding::from_tokens([{ id: 13, value: "zz", offsets: (0, 2) }]),
+    ).offsets,
+    [(0, 2), (2, 4)],
+  )
   let (without_overflow, overflow) = truncated.take_overflowing()
   @test.assert_eq(without_overflow.get_overflowing().length(), 0)
   @test.assert_eq(overflow.length(), 1)
