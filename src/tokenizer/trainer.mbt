@@ -40,7 +40,8 @@ pub enum Trainer {
     initial_alphabet~ : Array[String],
     limit_alphabet~ : Int?,
     max_token_length~ : Int?,
-    show_progress~ : Bool
+    show_progress~ : Bool,
+    progress_format~ : String
   )
   UnigramTrainer(
     unk_token~ : String,
@@ -79,6 +80,7 @@ pub struct TrainerState {
   shrinking_factor : Double?
   max_piece_length : Int?
   n_sub_iterations : Int?
+  progress_format : String?
 } derive(Debug, Eq)
 
 ///|
@@ -153,6 +155,7 @@ pub fn Trainer::bpe(
   limit_alphabet? : Int? = None,
   max_token_length? : Int? = None,
   show_progress? : Bool = true,
+  progress_format? : String = "indicatif",
 ) -> Trainer {
   BpeTrainer(
     unk_token~,
@@ -167,6 +170,7 @@ pub fn Trainer::bpe(
     limit_alphabet~,
     max_token_length~,
     show_progress~,
+    progress_format=normalize_progress_format(progress_format),
   )
 }
 
@@ -365,6 +369,14 @@ pub fn Trainer::n_sub_iterations(self : Trainer) -> Int? {
 }
 
 ///|
+pub fn Trainer::progress_format(self : Trainer) -> String? {
+  match self {
+    BpeTrainer(progress_format~, ..) => Some(progress_format)
+    _ => None
+  }
+}
+
+///|
 pub fn Trainer::get_state(self : Trainer) -> TrainerState {
   {
     kind: self.kind(),
@@ -385,6 +397,7 @@ pub fn Trainer::get_state(self : Trainer) -> TrainerState {
     shrinking_factor: self.shrinking_factor(),
     max_piece_length: self.max_piece_length(),
     n_sub_iterations: self.n_sub_iterations(),
+    progress_format: self.progress_format(),
   }
 }
 
@@ -433,6 +446,7 @@ pub fn Trainer::from_state(
         limit_alphabet=state.limit_alphabet,
         max_token_length=state.max_token_length,
         show_progress=state.show_progress,
+        progress_format=state.progress_format.unwrap_or("indicatif"),
       )
     "UnigramTrainer" | "Unigram" =>
       Trainer::unigram(
@@ -514,8 +528,20 @@ fn trainer_state_to_json(state : TrainerState) -> String {
   write_optional_int_json(sb, state.max_piece_length)
   sb.write_string(",\"n_sub_iterations\":")
   write_optional_int_json(sb, state.n_sub_iterations)
+  sb.write_string(",\"progress_format\":")
+  write_optional_string_json(sb, state.progress_format)
   sb.write_char('}')
   sb.to_string()
+}
+
+///|
+fn normalize_progress_format(format : String) -> String {
+  match format {
+    "json" => "json"
+    "silent" => "silent"
+    "indicatif" => "indicatif"
+    _ => "indicatif"
+  }
 }
 
 ///|

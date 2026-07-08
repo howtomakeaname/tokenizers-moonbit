@@ -299,9 +299,11 @@ summary with token count and exposed attribute names.
 `Trainer` exposes copy-returning configuration getters such as `kind`,
 `unk_token`, `min_frequency`, `special_tokens`, `special_added_tokens`,
 `vocab_size`, `show_progress`, and model-specific knobs for WordPiece, BPE and
-Unigram trainers. Unigram training also accepts `initial_alphabet`, matching HF's
-first-character retention rule for multi-character entries. These helpers are
-intended for binding/property mapping and do not change training behavior.
+Unigram trainers. BPE trainers also preserve `progress_format` as configuration
+state (`"indicatif"`, `"json"`, or `"silent"`) while progress output remains a
+cross-target no-op. Unigram training also accepts `initial_alphabet`, matching
+HF's first-character retention rule for multi-character entries. These helpers
+are intended for binding/property mapping and do not change training behavior.
 `TrainerState` plus `get_state` / `from_state` / `__getstate__` /
 `__setstate__` preserve the same typed configuration, including `AddedToken`
 metadata, and `__str__` / `__repr__` return a compact JSON view for binding logs

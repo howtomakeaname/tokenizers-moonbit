@@ -173,6 +173,25 @@ pub struct HubHeadResult {
 } derive(Debug, Eq)
 
 ///|
+/// Local-only diagnostic for non-success Hub HTTP statuses. This helper performs
+/// no network IO and keeps GET/HEAD rejection messages consistent.
+pub fn hub_http_status_diagnostic(status : Int) -> String {
+  if status == 401 || status == 403 {
+    "HTTP " +
+    status.to_string() +
+    " (private or gated repository; provide a valid Hub token)"
+  } else if status == 404 {
+    "HTTP 404 (missing repository, revision, or tokenizer.json file)"
+  } else if status == 429 {
+    "HTTP 429 (rate limit exceeded; retry later or use a Hub token)"
+  } else if status >= 500 && status < 600 {
+    "HTTP " + status.to_string() + " (Hub service unavailable; retry later)"
+  } else {
+    "HTTP " + status.to_string()
+  }
+}
+
+///|
 pub fn plan_tokenizer_json_request(
   model_id : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
@@ -360,8 +379,8 @@ pub fn decide_tokenizer_json_response(
     etag,
     expected_size: metadata.content_length,
     range_start: None,
-    message: "Hub response cannot be applied to tokenizer cache: HTTP " +
-    metadata.status.to_string(),
+    message: "Hub response cannot be applied to tokenizer cache: " +
+    hub_http_status_diagnostic(metadata.status),
   }
 }
 
@@ -420,8 +439,8 @@ pub fn decide_tokenizer_json_head_response(
     etag,
     expected_size: metadata.content_length,
     range_start: None,
-    message: "Hub HEAD response cannot validate tokenizer cache: HTTP " +
-    metadata.status.to_string(),
+    message: "Hub HEAD response cannot validate tokenizer cache: " +
+    hub_http_status_diagnostic(metadata.status),
   }
 }
 

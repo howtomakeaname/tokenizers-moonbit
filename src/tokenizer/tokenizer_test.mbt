@@ -2476,6 +2476,7 @@ test "Trainer exposes HF-style configuration getters" {
     initial_alphabet=["x"],
     limit_alphabet=Some(9),
     max_token_length=Some(5),
+    progress_format="json",
   )
   @test.assert_eq(bpe.kind(), "BpeTrainer")
   @test.assert_eq(bpe.unk_token(), None)
@@ -2485,6 +2486,7 @@ test "Trainer exposes HF-style configuration getters" {
   @test.assert_eq(bpe.initial_alphabet(), ["x"])
   @test.assert_eq(bpe.limit_alphabet(), Some(9))
   @test.assert_eq(bpe.max_token_length(), Some(5))
+  @test.assert_eq(bpe.progress_format(), Some("json"))
 
   let unigram = Trainer::unigram(
     unk_piece=Some("<UNK>"),
@@ -2504,6 +2506,7 @@ test "Trainer exposes HF-style configuration getters" {
   @test.assert_eq(unigram.initial_alphabet(), ["z", "xy"])
   @test.assert_eq(unigram.n_sub_iterations(), Some(3))
   @test.assert_eq(unigram.continuing_subword_prefix(), None)
+  @test.assert_eq(unigram.progress_format(), None)
 }
 
 ///|
@@ -2525,6 +2528,7 @@ test "Trainer exposes state and string aliases" {
     limit_alphabet=Some(7),
     max_token_length=Some(5),
     show_progress=false,
+    progress_format="silent",
   )
   let state = trainer.__getstate__()
   @test.assert_eq(state.kind, "BpeTrainer")
@@ -2543,6 +2547,7 @@ test "Trainer exposes state and string aliases" {
   @test.assert_eq(state.initial_alphabet, ["x"])
   @test.assert_eq(state.limit_alphabet, Some(7))
   @test.assert_eq(state.max_token_length, Some(5))
+  @test.assert_eq(state.progress_format, Some("silent"))
 
   let restored = Trainer::__setstate__(state)
   @test.assert_eq(restored.kind(), "BpeTrainer")
@@ -2557,6 +2562,7 @@ test "Trainer exposes state and string aliases" {
   @test.assert_eq(restored.initial_alphabet(), ["x"])
   @test.assert_eq(restored.limit_alphabet(), Some(7))
   @test.assert_eq(restored.max_token_length(), Some(5))
+  @test.assert_eq(restored.progress_format(), Some("silent"))
 
   let copied_alphabet = state.initial_alphabet
   copied_alphabet.push("y")
@@ -2569,6 +2575,12 @@ test "Trainer exposes state and string aliases" {
   @test.assert_eq(
     rendered.contains("\"continuing_subword_prefix\":\"@@\""),
     true,
+  )
+  @test.assert_eq(rendered.contains("\"progress_format\":\"silent\""), true)
+
+  @test.assert_eq(
+    Trainer::bpe(progress_format="unknown").progress_format(),
+    Some("indicatif"),
   )
 }
 

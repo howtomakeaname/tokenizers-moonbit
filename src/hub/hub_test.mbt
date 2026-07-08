@@ -142,6 +142,31 @@ test "Hub response metadata parses headers case-insensitively" {
 }
 
 ///|
+test "Hub HTTP status diagnostics describe common failures" {
+  @test.assert_eq(
+    hub_http_status_diagnostic(401),
+    "HTTP 401 (private or gated repository; provide a valid Hub token)",
+  )
+  @test.assert_eq(
+    hub_http_status_diagnostic(403),
+    "HTTP 403 (private or gated repository; provide a valid Hub token)",
+  )
+  @test.assert_eq(
+    hub_http_status_diagnostic(404),
+    "HTTP 404 (missing repository, revision, or tokenizer.json file)",
+  )
+  @test.assert_eq(
+    hub_http_status_diagnostic(429),
+    "HTTP 429 (rate limit exceeded; retry later or use a Hub token)",
+  )
+  @test.assert_eq(
+    hub_http_status_diagnostic(503),
+    "HTTP 503 (Hub service unavailable; retry later)",
+  )
+  @test.assert_eq(hub_http_status_diagnostic(418), "HTTP 418")
+}
+
+///|
 test "Hub response decision handles cache and range statuses" {
   let json =
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0,"[UNK]":1},"unk_token":"[UNK]"}}
@@ -225,6 +250,23 @@ test "Hub response decision handles cache and range statuses" {
     ),
   )
   @test.assert_eq(mismatched_range.should_retry_without_range(), true)
+  let unauthorized = decide_tokenizer_json_response(
+    plan,
+    HubResponseMetadata::new(401),
+  )
+  @test.assert_eq(unauthorized.can_use_cache(), false)
+  @test.assert_eq(
+    unauthorized.message,
+    "Hub response cannot be applied to tokenizer cache: HTTP 401 (private or gated repository; provide a valid Hub token)",
+  )
+  let missing = decide_tokenizer_json_response(
+    plan,
+    HubResponseMetadata::new(404),
+  )
+  @test.assert_eq(
+    missing.message,
+    "Hub response cannot be applied to tokenizer cache: HTTP 404 (missing repository, revision, or tokenizer.json file)",
+  )
 }
 
 ///|
@@ -296,6 +338,18 @@ test "Hub HEAD plan and decision validate cached metadata" {
   )
   @test.assert_eq(unsupported.can_use_cache(), false)
   @test.assert_eq(unsupported.should_write_full_body(), false)
+  @test.assert_eq(
+    unsupported.message,
+    "Hub HEAD response cannot validate tokenizer cache: HTTP 405",
+  )
+  let unavailable = decide_tokenizer_json_head_response(
+    head_plan,
+    HubResponseMetadata::new(503),
+  )
+  @test.assert_eq(
+    unavailable.message,
+    "Hub HEAD response cannot validate tokenizer cache: HTTP 503 (Hub service unavailable; retry later)",
+  )
 }
 
 ///|

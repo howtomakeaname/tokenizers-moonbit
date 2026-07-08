@@ -517,14 +517,14 @@ pub struct TokenizerState {
 pub enum Trainer {
   WordLevelTrainer(unk_token~ : String, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, show_progress~ : Bool)
   WordPieceTrainer(unk_token~ : String, continuing_subword_prefix~ : String, end_of_word_suffix~ : String?, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, max_input_chars_per_word~ : Int, max_token_length~ : Int?, initial_alphabet~ : Array[String], limit_alphabet~ : Int?, show_progress~ : Bool)
-  BpeTrainer(unk_token~ : String?, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, continuing_subword_prefix~ : String?, end_of_word_suffix~ : String?, fuse_unk~ : Bool, initial_alphabet~ : Array[String], limit_alphabet~ : Int?, max_token_length~ : Int?, show_progress~ : Bool)
+  BpeTrainer(unk_token~ : String?, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, continuing_subword_prefix~ : String?, end_of_word_suffix~ : String?, fuse_unk~ : Bool, initial_alphabet~ : Array[String], limit_alphabet~ : Int?, max_token_length~ : Int?, show_progress~ : Bool, progress_format~ : String)
   UnigramTrainer(unk_token~ : String, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, byte_fallback~ : Bool, fuse_unk~ : Bool, shrinking_factor~ : Double, max_piece_length~ : Int?, initial_alphabet~ : Array[String], n_sub_iterations~ : Int, show_progress~ : Bool)
 } derive(Eq, @debug.Debug)
 pub fn Trainer::__getstate__(Self) -> TrainerState
 pub fn Trainer::__repr__(Self) -> String
 pub fn Trainer::__setstate__(TrainerState) -> Self raise @types.TokenizerError
 pub fn Trainer::__str__(Self) -> String
-pub fn Trainer::bpe(unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?, show_progress? : Bool) -> Self
+pub fn Trainer::bpe(unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?, show_progress? : Bool, progress_format? : String) -> Self
 pub fn Trainer::byte_fallback(Self) -> Bool?
 pub fn Trainer::continuing_subword_prefix(Self) -> String?
 pub fn Trainer::end_of_word_suffix(Self) -> String?
@@ -539,6 +539,7 @@ pub fn Trainer::max_piece_length(Self) -> Int?
 pub fn Trainer::max_token_length(Self) -> Int?
 pub fn Trainer::min_frequency(Self) -> Int
 pub fn Trainer::n_sub_iterations(Self) -> Int?
+pub fn Trainer::progress_format(Self) -> String?
 pub fn Trainer::show_progress(Self) -> Bool
 pub fn Trainer::shrinking_factor(Self) -> Double?
 pub fn Trainer::special_added_tokens(Self) -> Array[AddedToken]
@@ -568,6 +569,7 @@ pub struct TrainerState {
   shrinking_factor : Double?
   max_piece_length : Int?
   n_sub_iterations : Int?
+  progress_format : String?
 } derive(Eq, @debug.Debug)
 pub fn TrainerState::with_kind(Self, String) -> Self
 
