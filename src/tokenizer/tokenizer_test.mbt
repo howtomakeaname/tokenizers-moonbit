@@ -2708,11 +2708,13 @@ test "Trainer default vocab_size mirrors HF caps" {
 ///|
 test "Trainer default min_frequency documents remaining HF delta" {
   // HF 0.22.x defaults WordLevel/WordPiece/BPE min_frequency to 0. MoonBit
-  // currently preserves its historical defaults here until the training-output
-  // impact is changed in a dedicated parity step.
-  @test.assert_eq(Trainer::wordlevel().min_frequency(), 1)
-  @test.assert_eq(Trainer::wordpiece().min_frequency(), 1)
+  // has aligned WordLevel/WordPiece; BPE keeps its historical default until the
+  // merge-output impact is changed in a dedicated parity step.
+  @test.assert_eq(Trainer::wordlevel().min_frequency(), 0)
+  @test.assert_eq(Trainer::wordpiece().min_frequency(), 0)
   @test.assert_eq(Trainer::bpe().min_frequency(), 2)
+  @test.assert_eq(Trainer::wordlevel(min_frequency=1).min_frequency(), 1)
+  @test.assert_eq(Trainer::wordpiece(min_frequency=1).min_frequency(), 1)
 }
 
 ///|
