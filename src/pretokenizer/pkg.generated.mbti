@@ -51,6 +51,7 @@ pub enum PreTokenizer {
   Sequence(Array[PreTokenizer])
 }
 pub fn PreTokenizer::byte_level(add_prefix_space? : Bool, use_regex? : Bool, trim_offsets? : Bool) -> Self
+pub fn PreTokenizer::byte_level_alphabet() -> Array[String]
 pub fn PreTokenizer::from_json(Json) -> Self raise @types.TokenizerError
 pub fn PreTokenizer::pre_tokenize(Self, String, base_offset? : Int) -> Array[@types.Split]
 pub fn PreTokenizer::pre_tokenize_str(Self, String) -> Array[(String, (Int, Int))]

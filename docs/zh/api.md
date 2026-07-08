@@ -253,6 +253,8 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 
 `PreTokenizer::pre_tokenize_str(text)` 返回 HF 风格 `(value, offsets)` tuple，
 便于组件级检查和 binding shim。
+`PreTokenizer::byte_level_alphabet()` 对齐 HF ByteLevel.alphabet，返回与
+`@pretokenizer.byte_level_alphabet()` 相同的 256 个符号表。
 
 `Encoding::words()` 作为 HF Python 已废弃但仍存在的 `word_ids()` 属性别名提供。
 

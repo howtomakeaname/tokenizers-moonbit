@@ -154,6 +154,16 @@ test "pre_tokenize_str returns HF-style value offset tuples" {
 }
 
 ///|
+test "bytelevel alphabet alias matches top-level helper" {
+  let direct = byte_level_alphabet()
+  let facade = PreTokenizer::byte_level_alphabet()
+  @test.assert_eq(facade.length(), 256)
+  @test.assert_eq(facade, direct)
+  @test.assert_eq(facade.contains("A"), true)
+  @test.assert_eq(facade.contains("!"), true)
+}
+
+///|
 test "split pretokenizer supports inverted literal behavior modes" {
   let removed = PreTokenizer::Split(
     pattern="Hello",
