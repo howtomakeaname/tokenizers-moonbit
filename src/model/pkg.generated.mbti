@@ -38,6 +38,8 @@ pub fn Model::__getstate__(Self) -> ModelState raise @types.TokenizerError
 pub fn Model::__repr__(Self) -> String raise @types.TokenizerError
 pub fn Model::__setstate__(ModelState) -> Self raise @types.TokenizerError
 pub fn Model::__str__(Self) -> String raise @types.TokenizerError
+pub fn Model::_clear_cache(Self) -> Unit
+pub fn Model::_resize_cache(Self, Int) -> Unit
 pub fn Model::byte_fallback(Self) -> Bool?
 pub fn Model::cache_size(Self) -> Int
 pub fn Model::clear_cache(Self) -> Unit

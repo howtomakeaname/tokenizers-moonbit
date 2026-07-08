@@ -213,3 +213,23 @@ test "model JSON state aliases round-trip serializable models" {
     unigram.to_json(),
   )
 }
+
+///|
+test "model exposes HF-style cache maintenance aliases" {
+  let bpe = Model::train_bpe(
+    ["lower lower"],
+    unk_token=Some("[UNK]"),
+    min_frequency=2,
+  )
+  ignore(bpe.tokenize("lower"))
+  @test.assert_eq(bpe.cache_size(), 1)
+  bpe._clear_cache()
+  @test.assert_eq(bpe.cache_size(), 0)
+  bpe._resize_cache(0)
+  ignore(bpe.tokenize("lower"))
+  @test.assert_eq(bpe.cache_size(), 0)
+  bpe._resize_cache(1)
+  ignore(bpe.tokenize("lower"))
+  ignore(bpe.tokenize("low"))
+  @test.assert_eq(bpe.cache_size(), 1)
+}

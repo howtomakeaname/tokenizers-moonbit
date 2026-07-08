@@ -309,6 +309,12 @@ pub fn Model::clear_cache(self : Model) -> Unit {
 }
 
 ///|
+/// HF Python binding alias for clearing model caches.
+pub fn Model::_clear_cache(self : Model) -> Unit {
+  self.clear_cache()
+}
+
+///|
 /// Resize model-level tokenization caches. A capacity of `0` disables future
 /// caching; negative values are clamped to zero. The previous unbounded behavior
 /// is preserved until callers opt in to a bounded cache.
@@ -323,6 +329,12 @@ pub fn Model::resize_cache(self : Model, capacity : Int) -> Unit {
       resize_token_cache(m.cache, capacity, cap => m.cache_capacity = cap)
     WordLevel(_) => ()
   }
+}
+
+///|
+/// HF Python binding alias for resizing model caches.
+pub fn Model::_resize_cache(self : Model, capacity : Int) -> Unit {
+  self.resize_cache(capacity)
 }
 
 ///|
