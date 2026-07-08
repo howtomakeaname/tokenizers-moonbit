@@ -2708,13 +2708,13 @@ test "Trainer default vocab_size mirrors HF caps" {
 ///|
 test "Trainer default min_frequency documents remaining HF delta" {
   // HF 0.22.x defaults WordLevel/WordPiece/BPE min_frequency to 0. MoonBit
-  // has aligned WordLevel/WordPiece; BPE keeps its historical default until the
-  // merge-output impact is changed in a dedicated parity step.
+  // now aligns these defaults while preserving explicit historical values.
   @test.assert_eq(Trainer::wordlevel().min_frequency(), 0)
   @test.assert_eq(Trainer::wordpiece().min_frequency(), 0)
-  @test.assert_eq(Trainer::bpe().min_frequency(), 2)
+  @test.assert_eq(Trainer::bpe().min_frequency(), 0)
   @test.assert_eq(Trainer::wordlevel(min_frequency=1).min_frequency(), 1)
   @test.assert_eq(Trainer::wordpiece(min_frequency=1).min_frequency(), 1)
+  @test.assert_eq(Trainer::bpe(min_frequency=2).min_frequency(), 2)
 }
 
 ///|
@@ -3148,6 +3148,30 @@ test "train_bpe learns frequent merges" {
   assert_true(tok.token_to_id("lower") is Some(_))
   let enc = tok.encode("lower low", add_special_tokens=false)
   @test.assert_eq(enc.tokens, ["lower", "low"])
+}
+
+///|
+test "train_bpe default learns singleton merges like HF" {
+  let default_tok = Tokenizer::train_bpe(
+    ["ab"],
+    unk_token=Some("[UNK]"),
+    vocab_size=Some(8),
+  )
+  @test.assert_eq(default_tok.token_to_id("ab") is Some(_), true)
+  @test.assert_eq(default_tok.encode("ab", add_special_tokens=false).tokens, [
+    "ab",
+  ])
+
+  let old_threshold = Tokenizer::train_bpe(
+    ["ab"],
+    unk_token=Some("[UNK]"),
+    vocab_size=Some(8),
+    min_frequency=2,
+  )
+  @test.assert_eq(old_threshold.token_to_id("ab"), None)
+  @test.assert_eq(old_threshold.encode("ab", add_special_tokens=false).tokens, [
+    "a", "b",
+  ])
 }
 
 ///|

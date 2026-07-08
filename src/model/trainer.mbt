@@ -301,7 +301,7 @@ fn char_string(c : Char) -> String {
 pub fn Model::train_bpe(
   texts : Array[String],
   unk_token? : String? = Some("[UNK]"),
-  min_frequency? : Int = 2,
+  min_frequency? : Int = 0,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
   continuing_subword_prefix? : String? = None,
@@ -346,7 +346,7 @@ pub fn Model::train_bpe(
 pub fn Model::train_bpe_from_tokens(
   tokenized_texts : Array[Array[String]],
   unk_token? : String? = Some("[UNK]"),
-  min_frequency? : Int = 2,
+  min_frequency? : Int = 0,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
   continuing_subword_prefix? : String? = None,
@@ -644,11 +644,12 @@ fn best_bpe_pair(
     }
   }
   let mut best : (String, String)? = None
-  let mut best_count = min_frequency - 1
+  let mut best_count = -1
   for p in order {
     match counts.get(p) {
       Some(n) =>
-        if bpe_merged_token_allowed(
+        if n >= min_frequency &&
+          bpe_merged_token_allowed(
             p, max_token_length, continuing_subword_prefix,
           ) &&
           (n > best_count || (n == best_count && bpe_pair_less(p, best))) {
