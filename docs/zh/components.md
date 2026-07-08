@@ -34,7 +34,7 @@
 | `Whitespace`、`WhitespaceSplit`、`BertPreTokenizer`、`Punctuation`、`Metaspace`、`Sequence` | ✅ |
 | `Split`：GPT-2 / Qwen-Llama3 / o200k / CLIP / CJK / digit-triplet / 尾部空白正则族 | ✅ |
 | `Digits`、`Delimiter`、`FixedLength`、`UnicodeScripts` | ✅ |
-| 任意 `Split` 正则 | 🚧 已支持的 deterministic family 正常加载；JSON 中不支持的 regex pattern 在加载期抛 `UnsupportedComponent`（手写构造的运行时 fallback 仍为单段） |
+| `Split` 正则策略 | ✅ 已支持的 deterministic family 正常加载；JSON 中不支持的 regex pattern 在加载期抛 `UnsupportedComponent`（手写构造的运行时 fallback 仍为单段） |
 
 ## Post-processors
 
@@ -62,11 +62,11 @@ E5-small、MixedBread、SmolLM2。
 
 ## 限制
 
-- **通用正则引擎：** 本项目不内置完整 backtracking 或完整通用 Unicode regex
+- **正则策略：** 本项目有意不内置完整 backtracking 或完整通用 Unicode regex
   引擎。当前支持的 `Split` / `Replace` regex family 来自真实 HuggingFace
   tokenizer 配置，并以 deterministic scanner 实现。look-ahead/look-behind、
   backreference、任意 alternation/grouping 语义以及未覆盖的 Unicode property
-  组合，在迁移前需要单独验证。
+  组合会显式失败，而不是近似匹配。
 - **Precompiled charsmap：** tokenizer.json 中的 `precompiled_charsmap` 会先做
   base64 解码，再按 SentencePiece double-array trie 应用到 Unicode scalar；空/缺失
   map 继续走常见 SPM NFKC + Unicode 空白折叠路径，并保留 ASCII fast path。

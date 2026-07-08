@@ -296,6 +296,12 @@ test "Regex wrapper exposes supported deterministic subset" {
   @test.assert_eq(unsupported.is_supported(), false)
   @test.assert_eq(unsupported.find_matches("ab"), None)
   @test.assert_eq(unsupported.replace_all("ab", "X"), None)
+  for pattern in ["(.)\\1", "foo.*bar", "[A-Z]{5,}", "\\p{Greek}+"] {
+    let regex = Regex::new(pattern)
+    @test.assert_eq(regex.is_supported(), false)
+    @test.assert_eq(regex.find_matches("foo AAAAA αα"), None)
+    @test.assert_eq(regex.replace_all("foo AAAAA αα", "X"), None)
+  }
 }
 
 ///|
