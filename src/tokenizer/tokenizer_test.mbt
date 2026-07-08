@@ -2686,10 +2686,15 @@ test "Trainer default vocab_size mirrors HF caps" {
   @test.assert_eq(Trainer::wordpiece().vocab_size(), Some(30000))
   @test.assert_eq(Trainer::bpe().vocab_size(), Some(30000))
   @test.assert_eq(Trainer::unigram().vocab_size(), Some(8000))
+  @test.assert_eq(Trainer::unigram().max_piece_length(), Some(16))
   @test.assert_eq(Trainer::wordlevel(vocab_size=None).vocab_size(), None)
   @test.assert_eq(Trainer::wordpiece(vocab_size=None).vocab_size(), None)
   @test.assert_eq(Trainer::bpe(vocab_size=None).vocab_size(), None)
   @test.assert_eq(Trainer::unigram(vocab_size=None).vocab_size(), None)
+  @test.assert_eq(
+    Trainer::unigram(max_piece_length=None).max_piece_length(),
+    None,
+  )
 }
 
 ///|

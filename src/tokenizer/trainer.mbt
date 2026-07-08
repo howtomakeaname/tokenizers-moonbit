@@ -195,7 +195,7 @@ pub fn Trainer::unigram(
   byte_fallback? : Bool = false,
   fuse_unk? : Bool = true,
   shrinking_factor? : Double = 0.75,
-  max_piece_length? : Int? = None,
+  max_piece_length? : Int? = Some(16),
   initial_alphabet? : Array[String] = [],
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
