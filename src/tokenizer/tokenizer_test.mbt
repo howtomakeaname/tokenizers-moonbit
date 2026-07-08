@@ -1435,6 +1435,8 @@ test "encode_pair tracks sequence ids separate from type ids" {
   @test.assert_eq(enc.token_to_chars(3), Some((1, (0, 1))))
   @test.assert_eq(enc.get_token_chars(1), Some((0, (0, 3))))
   @test.assert_eq(enc.token_to_offsets(3), Some((0, 1)))
+  @test.assert_eq(enc.token_to_char_offsets(3), Some((0, 1)))
+  @test.assert_eq(enc.token_to_char_offsets(0), None)
   @test.assert_eq(enc.char_to_token(1, sequence_id=0), Some(1))
   @test.assert_eq(enc.char_to_token(0, sequence_id=1), Some(3))
   @test.assert_eq(
@@ -1447,6 +1449,8 @@ test "encode_pair tracks sequence ids separate from type ids" {
   @test.assert_eq(enc.token_to_word(1), Some((0, 0)))
   @test.assert_eq(enc.token_to_word(3), Some((1, 0)))
   @test.assert_eq(enc.get_token_word(3), Some((1, 0)))
+  @test.assert_eq(enc.token_to_word_index(3), Some(0))
+  @test.assert_eq(enc.token_to_word_index(0), None)
   @test.assert_eq(enc.word_to_tokens(0, sequence_id=1), Some((3, 4)))
   @test.assert_eq(
     enc.word_to_tokens_by_sequence_index(0, sequence_index=1),

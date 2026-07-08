@@ -722,6 +722,15 @@ pub fn Encoding::token_to_offsets(self : Encoding, token : Int) -> (Int, Int)? {
 }
 
 ///|
+/// HF Python shape helper returning only `(start, end)` for a token.
+pub fn Encoding::token_to_char_offsets(
+  self : Encoding,
+  token : Int,
+) -> (Int, Int)? {
+  self.token_to_offsets(token)
+}
+
+///|
 /// Get the word that contains the token at index `token`.
 pub fn Encoding::token_to_word(self : Encoding, token : Int) -> (Int, Int)? {
   match self.token_to_sequence(token) {
@@ -742,6 +751,15 @@ pub fn Encoding::token_to_word(self : Encoding, token : Int) -> (Int, Int)? {
 /// Python-binding getter alias for `token_to_word`.
 pub fn Encoding::get_token_word(self : Encoding, token : Int) -> (Int, Int)? {
   self.token_to_word(token)
+}
+
+///|
+/// HF Python shape helper returning only the word index for a token.
+pub fn Encoding::token_to_word_index(self : Encoding, token : Int) -> Int? {
+  match self.token_to_word(token) {
+    Some((_, word)) => Some(word)
+    None => None
+  }
 }
 
 ///|

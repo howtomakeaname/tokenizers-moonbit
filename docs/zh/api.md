@@ -356,6 +356,8 @@ fn Encoding::sequence_ids(self : Encoding) -> Array[Int?]
 fn Encoding::word_ids(self : Encoding) -> Array[Int?]
 fn Encoding::char_to_token_by_sequence_index(self : Encoding, pos : Int, sequence_index? : Int = 0) -> Int?
 fn Encoding::char_to_word_by_sequence_index(self : Encoding, pos : Int, sequence_index? : Int = 0) -> Int?
+fn Encoding::token_to_char_offsets(self : Encoding, token : Int) -> (Int, Int)?
+fn Encoding::token_to_word_index(self : Encoding, token : Int) -> Int?
 fn Encoding::word_to_tokens_by_sequence_index(self : Encoding, word : Int, sequence_index? : Int = 0) -> (Int, Int)?
 fn Encoding::word_to_chars_by_sequence_index(self : Encoding, word : Int, sequence_index? : Int = 0) -> (Int, Int)?
 fn Encoding::len(self : Encoding) -> Int
@@ -371,6 +373,8 @@ encoding 内部结果。`Encoding::merge` / `merge_with` 默认采用 HF 风格�
 growing offsets；显式传 `growing_offsets=false` 可保留输入 offsets 不变。
 `*_by_sequence_index` helper 是面向 binding 层的命名 alias，用来映射 HF 的
 `sequence_index` 关键字，同时保留现有 MoonBit `sequence_id` API。
+`token_to_char_offsets` 与 `token_to_word_index` 暴露 HF Python 的返回形态，
+同时保留 MoonBit 现有信息更完整的 `token_to_chars` / `token_to_word` 方法。
 
 ## TokenizerError
 

@@ -391,6 +391,8 @@ fn Encoding::sequence_ids(self : Encoding) -> Array[Int?]
 fn Encoding::word_ids(self : Encoding) -> Array[Int?]
 fn Encoding::char_to_token_by_sequence_index(self : Encoding, pos : Int, sequence_index? : Int = 0) -> Int?
 fn Encoding::char_to_word_by_sequence_index(self : Encoding, pos : Int, sequence_index? : Int = 0) -> Int?
+fn Encoding::token_to_char_offsets(self : Encoding, token : Int) -> (Int, Int)?
+fn Encoding::token_to_word_index(self : Encoding, token : Int) -> Int?
 fn Encoding::word_to_tokens_by_sequence_index(self : Encoding, word : Int, sequence_index? : Int = 0) -> (Int, Int)?
 fn Encoding::word_to_chars_by_sequence_index(self : Encoding, word : Int, sequence_index? : Int = 0) -> (Int, Int)?
 fn Encoding::len(self : Encoding) -> Int
@@ -428,7 +430,9 @@ of mutating in place. `Encoding::merge` and `merge_with` default to HF-style
 growing offsets; pass `growing_offsets=false` to keep input offsets unchanged.
 The `*_by_sequence_index` helpers are naming aliases for binding layers that
 map HF's `sequence_index` keyword while preserving the existing MoonBit
-`sequence_id` APIs.
+`sequence_id` APIs. `token_to_char_offsets` and `token_to_word_index` expose the
+HF Python return shapes while keeping the richer MoonBit `token_to_chars` /
+`token_to_word` methods intact.
 
 ### TruncationParams (`@tokenizer`)
 

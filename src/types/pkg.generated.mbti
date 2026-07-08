@@ -94,10 +94,12 @@ pub fn Encoding::sequence_ids(Self) -> Array[Int?]
 pub fn Encoding::set_sequence_id(Self, Int) -> Self
 pub fn Encoding::special_tokens_mask(Self) -> Array[Int]
 pub fn Encoding::take_overflowing(Self) -> (Self, Array[Self])
+pub fn Encoding::token_to_char_offsets(Self, Int) -> (Int, Int)?
 pub fn Encoding::token_to_chars(Self, Int) -> (Int, (Int, Int))?
 pub fn Encoding::token_to_offsets(Self, Int) -> (Int, Int)?
 pub fn Encoding::token_to_sequence(Self, Int) -> Int?
 pub fn Encoding::token_to_word(Self, Int) -> (Int, Int)?
+pub fn Encoding::token_to_word_index(Self, Int) -> Int?
 pub fn Encoding::tokens(Self) -> Array[String]
 pub fn Encoding::truncate(Self, Int, stride? : Int, direction? : EncodingDirection) -> Self
 pub fn Encoding::type_ids(Self) -> Array[Int]
