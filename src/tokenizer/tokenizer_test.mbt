@@ -2681,6 +2681,18 @@ test "Trainer exposes HF-style configuration getters" {
 }
 
 ///|
+test "Trainer default vocab_size mirrors HF caps" {
+  @test.assert_eq(Trainer::wordlevel().vocab_size(), Some(30000))
+  @test.assert_eq(Trainer::wordpiece().vocab_size(), Some(30000))
+  @test.assert_eq(Trainer::bpe().vocab_size(), Some(30000))
+  @test.assert_eq(Trainer::unigram().vocab_size(), Some(8000))
+  @test.assert_eq(Trainer::wordlevel(vocab_size=None).vocab_size(), None)
+  @test.assert_eq(Trainer::wordpiece(vocab_size=None).vocab_size(), None)
+  @test.assert_eq(Trainer::bpe(vocab_size=None).vocab_size(), None)
+  @test.assert_eq(Trainer::unigram(vocab_size=None).vocab_size(), None)
+}
+
+///|
 test "Trainer exposes state and string aliases" {
   let mask = AddedToken::special("[MASK]")
     .with_lstrip(true)
