@@ -176,6 +176,19 @@ test "split pretokenizer supports common regex spans" {
     (14, 16),
   ])
 
+  let ascii_space_run = PreTokenizer::Split(
+    pattern=" {2,}",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("a   b\t\tc  d", base_offset=2)
+  @test.assert_eq(ascii_space_run.map(x => x.value), ["a", "b\t\tc", "d"])
+  @test.assert_eq(ascii_space_run.map(x => x.offsets), [
+    (2, 3),
+    (6, 10),
+    (12, 13),
+  ])
+
   let word_boundary_literal = PreTokenizer::Split(
     pattern="\\bfoo\\b",
     behavior=Isolated,

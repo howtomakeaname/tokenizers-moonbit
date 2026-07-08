@@ -956,9 +956,6 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     Some(out) => return out
     None => ()
   }
-  if pattern == " {2,}" {
-    return @common.replace_space_runs(s, content, min_run=2)
-  }
   if pattern == "\\s{2,}" || pattern == "[\\s]{2,}" {
     return @common.replace_min_char_runs(
       s,

@@ -1470,6 +1470,18 @@ test "from_str supports grouped literal Split regex" {
 }
 
 ///|
+test "from_str supports ascii space-run Split regex" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"Split","pattern":{"Regex":" {2,}"},"behavior":"Removed","invert":false},
+    #| "model":{"type":"WordLevel","vocab":{"a":0,"b\t\tc":1,"d":2,"[UNK]":3},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode("a   b\t\tc  d", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["a", "b\t\tc", "d"])
+  @test.assert_eq(enc.ids, [0, 1, 2])
+}
+
+///|
 test "from_str supports legacy string merges format" {
   let json =
     #|{"model":{"type":"BPE","vocab":{"h":0,"e":1,"he":2},"merges":["h e"]}}

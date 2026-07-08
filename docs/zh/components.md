@@ -72,7 +72,7 @@ E5-small、MixedBread、SmolLM2。
   map 继续走常见 SPM NFKC + Unicode 空白折叠路径，并保留 ASCII fast path。
 - **任意 Split 正则：** 当前识别主流 tokenizer 的常见正则族，并覆盖 literal / escaped-literal
   alternatives（`foo|bar`、`(foo)` / `(?:foo)`、`(foo|bar)`、
-  `(?:foo|bar)`、`foo|a\\.b`，以及 `^foo$` / `\\bfoo\\b` /
+  `(?:foo|bar)`、`foo|a\\.b`、` {2,}`，以及 `^foo$` / `\\bfoo\\b` /
   `^(?:foo|bar)` / `(?:foo|bar)$` / `\\b(?:foo|bar)\\b` /
   `^\\b(?:foo|bar)\\b$` 这类 anchored / word-boundary 形式）、`\s+`、
   `\S+`、`\s+$`、`\s{2,}` / `\s{3,}` / `\s{4,}` 以及 `\s{2}` /

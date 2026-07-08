@@ -131,6 +131,10 @@ test "replace helpers cover regex run semantics" {
     Some("a1b#c#"),
   )
   @test.assert_eq(
+    replace_simple_regex("a   b c  d", " {2,}", "_"),
+    Some("a_b c_d"),
+  )
+  @test.assert_eq(
     replace_simple_regex("abc123DE", "[A-Za-z]{1,2}", "L"),
     Some("LL123L"),
   )
@@ -203,6 +207,16 @@ test "Regex wrapper exposes supported deterministic subset" {
   @test.assert_eq(
     capturing_group_literal.find_matches("bar barbar"),
     Some([(0, 3), (4, 7), (7, 10)]),
+  )
+  let ascii_space_run = Regex::new(" {2,}")
+  @test.assert_eq(ascii_space_run.is_supported(), true)
+  @test.assert_eq(
+    ascii_space_run.find_matches("a   b\t\tc  d"),
+    Some([(1, 4), (8, 10)]),
+  )
+  @test.assert_eq(
+    ascii_space_run.replace_all("a   b\t\tc  d", "_"),
+    Some("a_b\t\tc_d"),
   )
   let anchored_literal = Regex::new("^foo$")
   @test.assert_eq(anchored_literal.is_supported(), true)
@@ -847,6 +861,7 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{P}\\p{S}]{3}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\p{P}\\p{S}]{1,3}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^\\s\\p{L}\\p{N}]+"), true)
+  @test.assert_eq(is_simple_split_regex_pattern(" {2,}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("\\s{2,}"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[^\\S\\r\\n]+"), true)
   @test.assert_eq(is_simple_split_regex_pattern("[\\r\\n]+"), true)

@@ -108,6 +108,8 @@ pub fn simple_split_regex_matches(
   }
   if pattern == "\\s+" {
     Some(run_matches(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
+  } else if pattern == " {2,}" {
+    Some(run_matches_min(chars, fn(c) { c == ' ' }, min_run=2))
   } else if pattern == "\\s{2,}" || pattern == "[\\s]{2,}" {
     Some(
       run_matches_min(
@@ -709,6 +711,7 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
 ///|
 fn is_simple_space_regex_pattern(pattern : String) -> Bool {
   pattern == "\\s+" ||
+  pattern == " {2,}" ||
   pattern == "\\s{2,}" ||
   pattern == "[\\s]{2,}" ||
   pattern == "\\s{3,}" ||

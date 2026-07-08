@@ -76,7 +76,7 @@ E5-small, MixedBread and SmolLM2.
 - **Arbitrary `Split` regex:** well-known GPT-2 / Qwen-Llama3 / o200k / CLIP /
   CJK / digit-triplet patterns plus common simple spans such as literal and
   escaped-literal alternatives (`foo|bar`, `(foo)` / `(?:foo)`,
-  `(foo|bar)`, `(?:foo|bar)`, `foo|a\\.b`) including anchored and
+  `(foo|bar)`, `(?:foo|bar)`, `foo|a\\.b`), ` {2,}`, including anchored and
   word-boundary forms like `^foo$` / `\\bfoo\\b` / `^(?:foo|bar)` /
   `(?:foo|bar)$` / `\\b(?:foo|bar)\\b` / `^\\b(?:foo|bar)\\b$`, `\s+`, `\S+`,
   `^\s+`, `\s+$`, `\s{2,}` / `\s{3,}` / `\s{4,}` and exact

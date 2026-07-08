@@ -263,8 +263,9 @@ Lookups consult the added/special vocabulary first, then the model vocabulary.
   `\p{L}`/`\p{N}`/`\p{P}`/`\p{S}` classes, punctuation-or-symbol unions,
   anchored `^...+` / `...+$`, exact `{2..4}` and minimum `{2,}`/`{3,}`/`{4,}`
   quantifiers across those class families, grouped literals and simple literal
-  alternatives such as `(?:foo)` / `foo|bar` / `(?:foo|bar)` plus
-  anchored/word-boundary forms like
+  alternatives such as `(?:foo)` / `foo|bar` / `(?:foo|bar)`, the
+  SentencePiece-style ASCII space run ` {2,}`, plus anchored/word-boundary
+  forms like
   `^foo$` / `\\bfoo\\b` / `^(?:foo|bar)` / `(?:foo|bar)$` /
   `\\b(?:foo|bar)\\b` / `^\\b(?:foo|bar)\\b$`, bounded
   `{1,2}`/`{1,3}`/`{1,4}` forms and ranged `{2,3}`/`{2,4}`/`{3,4}`
