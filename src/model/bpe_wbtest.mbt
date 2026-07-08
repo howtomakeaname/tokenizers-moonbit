@@ -215,6 +215,30 @@ test "model JSON state aliases round-trip serializable models" {
 }
 
 ///|
+test "model unigram trainer accepts unk_piece alias" {
+  let unigram = Model::train_unigram(
+    ["hello hello help"],
+    unk_token="<unused>",
+    unk_piece=Some("<UNK>"),
+    min_frequency=1,
+    show_progress=false,
+  )
+  @test.assert_eq(unigram.kind(), "Unigram")
+  @test.assert_eq(unigram.unk_token(), Some("<UNK>"))
+  @test.assert_eq(unigram.unk_id(), unigram.token_to_id("<UNK>"))
+  @test.assert_eq(unigram.token_to_id("<unused>"), None)
+
+  let from_tokens = Model::train_unigram_from_tokens(
+    [["hello", "hello"]],
+    unk_token="<unused>",
+    unk_piece=Some("<TOK_UNK>"),
+    show_progress=false,
+  )
+  @test.assert_eq(from_tokens.unk_token(), Some("<TOK_UNK>"))
+  @test.assert_eq(from_tokens.token_to_id("<unused>"), None)
+}
+
+///|
 test "model exposes HF-style cache maintenance aliases" {
   let bpe = Model::train_bpe(
     ["lower lower"],

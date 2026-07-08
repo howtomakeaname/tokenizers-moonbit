@@ -702,6 +702,7 @@ fn replace_bpe_pair(
 pub fn Model::train_unigram(
   texts : Array[String],
   unk_token? : String = "<unk>",
+  unk_piece? : String? = None,
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
@@ -717,6 +718,10 @@ pub fn Model::train_unigram(
   ignore(shrinking_factor)
   ignore(n_sub_iterations)
   ignore(show_progress)
+  let unk_token = match unk_piece {
+    Some(piece) => piece
+    None => unk_token
+  }
   let tokenized : Array[Array[String]] = []
   for text in texts {
     tokenized.push(whitespace_words(text))
@@ -743,6 +748,7 @@ pub fn Model::train_unigram(
 pub fn Model::train_unigram_from_tokens(
   tokenized_texts : Array[Array[String]],
   unk_token? : String = "<unk>",
+  unk_piece? : String? = None,
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
@@ -756,6 +762,10 @@ pub fn Model::train_unigram_from_tokens(
   seed_size? : Int = 1000000,
 ) -> Model {
   ignore(show_progress)
+  let unk_token = match unk_piece {
+    Some(piece) => piece
+    None => unk_token
+  }
   let word_counts : Map[String, Int] = {}
   let word_order : Array[String] = []
   let char_counts : Map[String, Int] = {}
