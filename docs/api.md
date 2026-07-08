@@ -278,6 +278,9 @@ Digits/Delimiter/FixedLength settings, and Sequence children.
 `Normalizer` also exposes read-only configuration getters for binding layers,
 including `kind`, Strip left/right flags, Replace pattern/content, Prepend
 content, BertNormalizer flags, and Sequence child normalizers.
+`Decoder` exposes read-only configuration getters for binding layers, including
+ByteLevel flags, WordPiece prefix/cleanup, Metaspace settings, BPEDecoder
+suffix, Strip/Replace settings, CTC settings, and Sequence children.
 
 `Encoding::words()` is available as a deprecated HF Python alias for
 `word_ids()`.

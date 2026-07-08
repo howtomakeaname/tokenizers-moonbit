@@ -513,3 +513,57 @@ test "WordPiece decoder cleanup uses BERT punctuation and contraction rules" {
     "hi ? there",
   )
 }
+
+///|
+test "decoders expose HF-style configuration getters" {
+  let bytelevel = Decoder::ByteLevel(
+    add_prefix_space=true,
+    trim_offsets=false,
+    use_regex=false,
+  )
+  @test.assert_eq(bytelevel.kind(), "ByteLevel")
+  @test.assert_eq(bytelevel.add_prefix_space(), Some(true))
+  @test.assert_eq(bytelevel.trim_offsets(), Some(false))
+  @test.assert_eq(bytelevel.use_regex(), Some(false))
+
+  let wordpiece = Decoder::wordpiece(prefix="@@", cleanup=false)
+  @test.assert_eq(wordpiece.kind(), "WordPiece")
+  @test.assert_eq(wordpiece.prefix(), Some("@@"))
+  @test.assert_eq(wordpiece.cleanup(), Some(false))
+
+  let metaspace = Decoder::Metaspace(replacement='▁', prepend_scheme="always")
+  @test.assert_eq(metaspace.kind(), "Metaspace")
+  @test.assert_eq(metaspace.replacement(), Some('▁'))
+  @test.assert_eq(metaspace.prepend_scheme(), Some("always"))
+
+  let bpe = Decoder::BPEDecoder(suffix="</w>")
+  @test.assert_eq(bpe.kind(), "BPEDecoder")
+  @test.assert_eq(bpe.suffix(), Some("</w>"))
+
+  let strip = Decoder::Strip(content='▁', start=1, stop=2)
+  @test.assert_eq(strip.kind(), "Strip")
+  @test.assert_eq(strip.content(), Some("▁"))
+  @test.assert_eq(strip.start(), Some(1))
+  @test.assert_eq(strip.stop(), Some(2))
+
+  let replace = Decoder::replace("▁", " ")
+  @test.assert_eq(replace.kind(), "Replace")
+  @test.assert_eq(replace.pattern(), Some("▁"))
+  @test.assert_eq(replace.content(), Some(" "))
+
+  let ctc = Decoder::ctc(pad_token="_", word_delimiter_token="|", cleanup=false)
+  @test.assert_eq(ctc.kind(), "CTC")
+  @test.assert_eq(ctc.pad_token(), Some("_"))
+  @test.assert_eq(ctc.word_delimiter_token(), Some("|"))
+  @test.assert_eq(ctc.cleanup(), Some(false))
+
+  let seq = Decoder::Sequence([Decoder::byte_fallback(), Decoder::Fuse])
+  @test.assert_eq(seq.kind(), "Sequence")
+  @test.assert_eq(seq.decoders().map(d => d.kind()), ["ByteFallback", "Fuse"])
+  let steps = seq.decoders()
+  steps.push(Decoder::wordpiece())
+  @test.assert_eq(seq.decoders().length(), 2)
+  @test.assert_eq(Decoder::Fuse.kind(), "Fuse")
+  @test.assert_eq(Decoder::byte_fallback().kind(), "ByteFallback")
+  @test.assert_eq(Decoder::Fuse.pattern(), None)
+}

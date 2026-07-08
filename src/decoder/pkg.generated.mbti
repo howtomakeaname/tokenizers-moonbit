@@ -22,13 +22,29 @@ pub enum Decoder {
   CTC(pad_token~ : String, word_delimiter_token~ : String, cleanup~ : Bool)
   Sequence(Array[Decoder])
 }
+pub fn Decoder::add_prefix_space(Self) -> Bool?
 pub fn Decoder::byte_fallback() -> Self
+pub fn Decoder::cleanup(Self) -> Bool?
+pub fn Decoder::content(Self) -> String?
 pub fn Decoder::ctc(pad_token? : String, word_delimiter_token? : String, cleanup? : Bool) -> Self
 pub fn Decoder::decode(Self, Array[String]) -> String
 pub fn Decoder::decode_chain(Self, Array[String]) -> Array[String]
+pub fn Decoder::decoders(Self) -> Array[Self]
 pub fn Decoder::from_json(Json) -> Self raise @types.TokenizerError
+pub fn Decoder::kind(Self) -> String
+pub fn Decoder::pad_token(Self) -> String?
+pub fn Decoder::pattern(Self) -> String?
+pub fn Decoder::prefix(Self) -> String?
+pub fn Decoder::prepend_scheme(Self) -> String?
 pub fn Decoder::replace(String, String) -> Self
+pub fn Decoder::replacement(Self) -> Char?
+pub fn Decoder::start(Self) -> Int?
+pub fn Decoder::stop(Self) -> Int?
+pub fn Decoder::suffix(Self) -> String?
 pub fn Decoder::to_json(Self) -> String?
+pub fn Decoder::trim_offsets(Self) -> Bool?
+pub fn Decoder::use_regex(Self) -> Bool?
+pub fn Decoder::word_delimiter_token(Self) -> String?
 pub fn Decoder::wordpiece(prefix? : String, cleanup? : Bool) -> Self
 
 // Type aliases

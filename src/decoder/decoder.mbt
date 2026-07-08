@@ -20,6 +20,145 @@ pub enum Decoder {
 }
 
 ///|
+/// Return the decoder family name used by thin binding layers.
+pub fn Decoder::kind(self : Decoder) -> String {
+  match self {
+    ByteLevel(..) => "ByteLevel"
+    WordPiece(..) => "WordPiece"
+    Metaspace(..) => "Metaspace"
+    BPEDecoder(..) => "BPEDecoder"
+    Strip(..) => "Strip"
+    Fuse => "Fuse"
+    Replace(..) => "Replace"
+    ByteFallback => "ByteFallback"
+    CTC(..) => "CTC"
+    Sequence(_) => "Sequence"
+  }
+}
+
+///|
+pub fn Decoder::add_prefix_space(self : Decoder) -> Bool? {
+  match self {
+    ByteLevel(add_prefix_space~, ..) => Some(add_prefix_space)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::trim_offsets(self : Decoder) -> Bool? {
+  match self {
+    ByteLevel(trim_offsets~, ..) => Some(trim_offsets)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::use_regex(self : Decoder) -> Bool? {
+  match self {
+    ByteLevel(use_regex~, ..) => Some(use_regex)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::prefix(self : Decoder) -> String? {
+  match self {
+    WordPiece(prefix~, ..) => Some(prefix)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::cleanup(self : Decoder) -> Bool? {
+  match self {
+    WordPiece(cleanup~, ..) => Some(cleanup)
+    CTC(cleanup~, ..) => Some(cleanup)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::replacement(self : Decoder) -> Char? {
+  match self {
+    Metaspace(replacement~, ..) => Some(replacement)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::prepend_scheme(self : Decoder) -> String? {
+  match self {
+    Metaspace(prepend_scheme~, ..) => Some(prepend_scheme)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::suffix(self : Decoder) -> String? {
+  match self {
+    BPEDecoder(suffix~) => Some(suffix)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::content(self : Decoder) -> String? {
+  match self {
+    Strip(content~, ..) => Some(@common.char_string(content))
+    Replace(content~, ..) => Some(content)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::start(self : Decoder) -> Int? {
+  match self {
+    Strip(start~, ..) => Some(start)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::stop(self : Decoder) -> Int? {
+  match self {
+    Strip(stop~, ..) => Some(stop)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::pattern(self : Decoder) -> String? {
+  match self {
+    Replace(pattern~, ..) => Some(pattern)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::pad_token(self : Decoder) -> String? {
+  match self {
+    CTC(pad_token~, ..) => Some(pad_token)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::word_delimiter_token(self : Decoder) -> String? {
+  match self {
+    CTC(word_delimiter_token~, ..) => Some(word_delimiter_token)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::decoders(self : Decoder) -> Array[Decoder] {
+  match self {
+    Sequence(steps) => steps.copy()
+    _ => []
+  }
+}
+
+///|
 pub fn Decoder::replace(pattern : String, content : String) -> Decoder {
   Replace(pattern~, content~)
 }
