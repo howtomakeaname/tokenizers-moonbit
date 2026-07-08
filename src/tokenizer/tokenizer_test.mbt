@@ -724,6 +724,7 @@ test "Encoding public manipulation APIs mirror HF style" {
   ])
   @test.assert_eq(base.ids, [1, 2, 3])
   @test.assert_eq(base.word_ids(), [Some(0), Some(1), Some(2)])
+  @test.assert_eq(base.words(), [Some(0), Some(1), Some(2)])
   let typed = base.with_type_ids([7, 7, 7]).with_sequence_id(2)
   @test.assert_eq(typed.type_ids, [7, 7, 7])
   @test.assert_eq(typed.sequence_ids(), [Some(2), Some(2), Some(2)])

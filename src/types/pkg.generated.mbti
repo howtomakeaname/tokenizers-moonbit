@@ -108,6 +108,7 @@ pub fn Encoding::word_ids(Self) -> Array[Int?]
 pub fn Encoding::word_to_chars(Self, Int, sequence_id? : Int) -> (Int, Int)?
 pub fn Encoding::word_to_offsets(Self, Int, sequence_id? : Int) -> (Int, Int)?
 pub fn Encoding::word_to_tokens(Self, Int, sequence_id? : Int) -> (Int, Int)?
+pub fn Encoding::words(Self) -> Array[Int?]
 
 pub(all) struct EncodingBuffers {
   ids : Array[Int]

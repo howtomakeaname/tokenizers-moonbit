@@ -660,6 +660,12 @@ pub fn Encoding::word_ids(self : Encoding) -> Array[Int?] {
 }
 
 ///|
+/// Deprecated HF/Python property alias for `word_ids`.
+pub fn Encoding::words(self : Encoding) -> Array[Int?] {
+  self.word_ids()
+}
+
+///|
 /// Return the input sequence id that produced token `token`, or `None` for
 /// special/padding tokens and out-of-range indices.
 pub fn Encoding::token_to_sequence(self : Encoding, token : Int) -> Int? {

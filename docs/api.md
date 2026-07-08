@@ -266,6 +266,9 @@ Lookups consult the added/special vocabulary first, then the model vocabulary.
 pre-tokenizer `split`, state/tuple helpers, and `to_encoding` /
 `into_encoding`.
 
+`Encoding::words()` is available as a deprecated HF Python alias for
+`word_ids()`.
+
 ## Component compatibility notes
 
 - `Normalizer::Replace`, `Decoder::Replace`, and regex `PreTokenizer::Split`

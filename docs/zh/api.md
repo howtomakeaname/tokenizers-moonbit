@@ -251,6 +251,8 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 `PreTokenizedString` 提供 `get_splits` / `splits`、`normalize`、pre-tokenizer
 `split`、state/tuple helper，以及 `to_encoding` / `into_encoding`。
 
+`Encoding::words()` 作为 HF Python 已废弃但仍存在的 `word_ids()` 属性别名提供。
+
 ## 组件兼容性说明
 
 - `Normalizer::Replace`、`Decoder::Replace` 与正则 `PreTokenizer::Split`
