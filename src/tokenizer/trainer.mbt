@@ -44,7 +44,7 @@ pub enum Trainer {
     progress_format~ : String
   )
   UnigramTrainer(
-    unk_token~ : String,
+    unk_token~ : String?,
     min_frequency~ : Int,
     special_tokens~ : Array[String],
     special_added_tokens~ : Array[AddedToken],
@@ -186,7 +186,7 @@ pub fn Trainer::bpe(
 
 ///|
 pub fn Trainer::unigram(
-  unk_token? : String = "<unk>",
+  unk_token? : String? = None,
   unk_piece? : String? = None,
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
@@ -202,7 +202,7 @@ pub fn Trainer::unigram(
   seed_size? : Int = 1000000,
 ) -> Trainer {
   let unk_token = match unk_piece {
-    Some(piece) => piece
+    Some(piece) => Some(piece)
     None => unk_token
   }
   UnigramTrainer(
@@ -239,7 +239,7 @@ pub fn Trainer::unk_token(self : Trainer) -> String? {
     WordLevelTrainer(unk_token~, ..) => Some(unk_token)
     WordPieceTrainer(unk_token~, ..) => Some(unk_token)
     BpeTrainer(unk_token~, ..) => unk_token
-    UnigramTrainer(unk_token~, ..) => Some(unk_token)
+    UnigramTrainer(unk_token~, ..) => unk_token
   }
 }
 
@@ -471,7 +471,7 @@ pub fn Trainer::from_state(
       )
     "UnigramTrainer" | "Unigram" =>
       Trainer::unigram(
-        unk_token=state.unk_token.unwrap_or("<unk>"),
+        unk_token=state.unk_token,
         min_frequency=state.min_frequency,
         special_tokens=state.special_tokens,
         special_added_tokens=state.special_added_tokens,
@@ -1300,7 +1300,7 @@ pub fn Tokenizer::train_bpe_from_tokens(
 /// Train a deterministic Unigram tokenizer from whitespace-delimited text.
 pub fn Tokenizer::train_unigram(
   texts : Array[String],
-  unk_token? : String = "<unk>",
+  unk_token? : String? = None,
   unk_piece? : String? = None,
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
@@ -1315,7 +1315,7 @@ pub fn Tokenizer::train_unigram(
   seed_size? : Int = 1000000,
 ) -> Tokenizer {
   let unk_token = match unk_piece {
-    Some(piece) => piece
+    Some(piece) => Some(piece)
     None => unk_token
   }
   Tokenizer::train_unigram_with_pretokenizer(
@@ -1341,7 +1341,7 @@ pub fn Tokenizer::train_unigram(
 pub fn Tokenizer::train_unigram_with_pretokenizer(
   texts : Array[String],
   pre_tokenizer : @pretokenizer.PreTokenizer,
-  unk_token? : String = "<unk>",
+  unk_token? : String? = None,
   unk_piece? : String? = None,
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
@@ -1356,7 +1356,7 @@ pub fn Tokenizer::train_unigram_with_pretokenizer(
   seed_size? : Int = 1000000,
 ) -> Tokenizer {
   let unk_token = match unk_piece {
-    Some(piece) => piece
+    Some(piece) => Some(piece)
     None => unk_token
   }
   let tokenized : Array[Array[String]] = []
@@ -1387,7 +1387,7 @@ pub fn Tokenizer::train_unigram_with_pretokenizer(
 /// Train a Unigram tokenizer from pre-tokenized token streams.
 pub fn Tokenizer::train_unigram_from_tokens(
   tokenized_texts : Array[Array[String]],
-  unk_token? : String = "<unk>",
+  unk_token? : String? = None,
   unk_piece? : String? = None,
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
@@ -1403,7 +1403,7 @@ pub fn Tokenizer::train_unigram_from_tokens(
   seed_size? : Int = 1000000,
 ) -> Tokenizer {
   let unk_token = match unk_piece {
-    Some(piece) => piece
+    Some(piece) => Some(piece)
     None => unk_token
   }
   {

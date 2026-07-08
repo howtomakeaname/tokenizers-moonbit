@@ -959,7 +959,7 @@ fn bench_train_unigram_case(
     b.keep(
       @tokenizer.Tokenizer::train_unigram(
         corpus,
-        unk_token="<unk>",
+        unk_token=Some("<unk>"),
         min_frequency=1,
         special_tokens=["<pad>"],
         vocab_size=Some(512),
@@ -972,7 +972,7 @@ fn bench_train_unigram_case(
 fn bench_trained_unigram_to_json_case(b : @bench.T, case_name : String) -> Unit {
   let tok = @tokenizer.Tokenizer::train_unigram(
     [corpus_mixed(), corpus_mixed()],
-    unk_token="<unk>",
+    unk_token=Some("<unk>"),
     special_tokens=["<pad>"],
     vocab_size=Some(512),
   )

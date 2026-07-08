@@ -2695,6 +2695,7 @@ test "Trainer default vocab_size mirrors HF caps" {
   @test.assert_eq(Trainer::bpe().vocab_size(), Some(30000))
   @test.assert_eq(Trainer::unigram().vocab_size(), Some(8000))
   @test.assert_eq(Trainer::unigram().max_piece_length(), Some(16))
+  @test.assert_eq(Trainer::unigram().unk_token(), None)
   @test.assert_eq(Trainer::wordlevel(vocab_size=None).vocab_size(), None)
   @test.assert_eq(Trainer::wordpiece(vocab_size=None).vocab_size(), None)
   @test.assert_eq(Trainer::bpe(vocab_size=None).vocab_size(), None)
@@ -3334,9 +3335,16 @@ test "Trainer bpe accepts compatibility knobs and special AddedToken" {
 
 ///|
 test "train_unigram prefers learned whole words" {
-  let tok = Tokenizer::train_unigram(["hello hello help"], unk_token="<unk>", special_tokens=[
-    "<pad>",
-  ])
+  let default_tok = Tokenizer::train_unigram(["hello hello help"])
+  @test.assert_eq(default_tok.get_model().unk_token(), None)
+  @test.assert_eq(default_tok.get_model().unk_id(), None)
+  @test.assert_eq(default_tok.token_to_id("<unk>"), None)
+
+  let tok = Tokenizer::train_unigram(
+    ["hello hello help"],
+    unk_token=Some("<unk>"),
+    special_tokens=["<pad>"],
+  )
   @test.assert_eq(tok.token_to_id("<unk>"), Some(0))
   @test.assert_eq(tok.token_to_id("<pad>"), Some(1))
   assert_true(tok.token_to_id("hello") is Some(_))
@@ -3355,7 +3363,7 @@ test "train_unigram supports custom pretokenizer and reload" {
   let tok = Tokenizer::train_unigram_with_pretokenizer(
     ["moon,moon,bit"],
     pt,
-    unk_token="<unk>",
+    unk_token=Some("<unk>"),
     special_tokens=["<pad>"],
   )
   let loaded = Tokenizer::from_str(tok.to_json())
@@ -3368,7 +3376,7 @@ test "train_unigram supports custom pretokenizer and reload" {
 test "train_unigram respects vocab_size cap" {
   let tok = Tokenizer::train_unigram(
     ["ab ac"],
-    unk_token="<unk>",
+    unk_token=Some("<unk>"),
     special_tokens=["<pad>"],
     vocab_size=Some(4),
   )
@@ -3382,7 +3390,7 @@ test "train_unigram respects vocab_size cap" {
 test "train_unigram ranks deterministic candidates before applying vocab cap" {
   let tok = Tokenizer::train_unigram(
     ["alpha alpha alp alp ha ha"],
-    unk_token="<unk>",
+    unk_token=Some("<unk>"),
     vocab_size=Some(6),
     shrinking_factor=0.5,
     n_sub_iterations=4,
@@ -3422,7 +3430,7 @@ test "train_unigram supports unk_piece and max_piece_length" {
 ///|
 test "train_unigram preserves initial alphabet" {
   let trainer = Trainer::unigram(
-    unk_token="<unk>",
+    unk_token=Some("<unk>"),
     initial_alphabet=["z", "xy", ""],
     vocab_size=Some(4),
     show_progress=false,
@@ -3448,7 +3456,7 @@ test "train_unigram preserves initial alphabet" {
 test "train_unigram seed_size caps ranked seeds after characters" {
   let chars_only = Tokenizer::train_unigram(
     ["ab ab"],
-    unk_token="<unk>",
+    unk_token=Some("<unk>"),
     seed_size=2,
     show_progress=false,
   )
@@ -3461,7 +3469,7 @@ test "train_unigram seed_size caps ranked seeds after characters" {
 
   let with_top_seed = Tokenizer::train_unigram(
     ["ab ab"],
-    unk_token="<unk>",
+    unk_token=Some("<unk>"),
     seed_size=3,
     show_progress=false,
   )
@@ -3477,7 +3485,7 @@ test "train_unigram seed_size caps ranked seeds after characters" {
 test "train_unigram preserves explicit unk position in special tokens" {
   let tok = Tokenizer::train_unigram(
     ["hello hello"],
-    unk_token="<unk>",
+    unk_token=Some("<unk>"),
     special_tokens=["<pad>", "<unk>"],
     show_progress=false,
   )

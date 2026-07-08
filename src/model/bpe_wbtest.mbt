@@ -221,7 +221,7 @@ test "model JSON state aliases round-trip serializable models" {
 
   let unigram = Model::train_unigram(
     ["hello hello"],
-    unk_token="<unk>",
+    unk_token=Some("<unk>"),
     show_progress=false,
   )
   @test.assert_eq(
@@ -234,7 +234,7 @@ test "model JSON state aliases round-trip serializable models" {
 test "model unigram trainer accepts unk_piece alias" {
   let unigram = Model::train_unigram(
     ["hello hello help"],
-    unk_token="<unused>",
+    unk_token=Some("<unused>"),
     unk_piece=Some("<UNK>"),
     min_frequency=1,
     show_progress=false,
@@ -246,7 +246,7 @@ test "model unigram trainer accepts unk_piece alias" {
 
   let from_tokens = Model::train_unigram_from_tokens(
     [["hello", "hello"]],
-    unk_token="<unused>",
+    unk_token=Some("<unused>"),
     unk_piece=Some("<TOK_UNK>"),
     show_progress=false,
   )
@@ -366,7 +366,7 @@ test "standalone model artifact loaders round trip saved artifacts" {
 
   let unigram = Model::train_unigram(
     ["hello hello"],
-    unk_token="<unk>",
+    unk_token=Some("<unk>"),
     show_progress=false,
   )
   let unigram_paths = unigram.save(dir, prefix="uni") catch {

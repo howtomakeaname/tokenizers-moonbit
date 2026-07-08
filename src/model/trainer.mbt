@@ -717,7 +717,7 @@ fn replace_bpe_pair(
 /// make known whole words preferred over character segmentation.
 pub fn Model::train_unigram(
   texts : Array[String],
-  unk_token? : String = "<unk>",
+  unk_token? : String? = None,
   unk_piece? : String? = None,
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
@@ -735,7 +735,7 @@ pub fn Model::train_unigram(
   ignore(n_sub_iterations)
   ignore(show_progress)
   let unk_token = match unk_piece {
-    Some(piece) => piece
+    Some(piece) => Some(piece)
     None => unk_token
   }
   let tokenized : Array[Array[String]] = []
@@ -763,7 +763,7 @@ pub fn Model::train_unigram(
 /// Train a deterministic Unigram model from pre-tokenized token streams.
 pub fn Model::train_unigram_from_tokens(
   tokenized_texts : Array[Array[String]],
-  unk_token? : String = "<unk>",
+  unk_token? : String? = None,
   unk_piece? : String? = None,
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
@@ -779,7 +779,7 @@ pub fn Model::train_unigram_from_tokens(
 ) -> Model {
   ignore(show_progress)
   let unk_token = match unk_piece {
-    Some(piece) => piece
+    Some(piece) => Some(piece)
     None => unk_token
   }
   let word_counts : Map[String, Int] = {}
@@ -811,20 +811,28 @@ pub fn Model::train_unigram_from_tokens(
   }
 
   let mut unk_id : Int? = None
-  if !array_contains_string(special_tokens, unk_token) {
-    unk_id = add_token(unk_token, 0.0)
+  match unk_token {
+    Some(unk) =>
+      if !array_contains_string(special_tokens, unk) {
+        unk_id = add_token(unk, 0.0)
+      }
+    None => ()
   }
   for tok in special_tokens {
     let id = add_token(tok, 0.0)
-    if tok == unk_token {
-      match id {
-        Some(n) => unk_id = Some(n)
-        None =>
-          match vocab.get(tok) {
-            Some(p) => unk_id = Some(p.0)
-            None => ()
+    match unk_token {
+      Some(unk) =>
+        if tok == unk {
+          match id {
+            Some(n) => unk_id = Some(n)
+            None =>
+              match vocab.get(tok) {
+                Some(p) => unk_id = Some(p.0)
+                None => ()
+              }
           }
-      }
+        }
+      None => ()
     }
   }
 
