@@ -219,6 +219,21 @@ test "Hub response decision handles cache and range statuses" {
   @test.assert_eq(partial.should_append_range(), true)
   @test.assert_eq(partial.range_start, Some(32))
   @test.assert_eq(partial.expected_size, Some(256))
+  let partial_with_larger_total = decide_tokenizer_json_response(
+    plan,
+    HubResponseMetadata::new(
+      206,
+      resolved_revision=Some("def456"),
+      etag=Some("etag-new"),
+      content_length=Some(96),
+      content_range_start=Some(32),
+      content_range_end=Some(127),
+      content_range_total=Some(512),
+      accept_ranges=true,
+    ),
+  )
+  @test.assert_eq(partial_with_larger_total.should_append_range(), true)
+  @test.assert_eq(partial_with_larger_total.expected_size, Some(512))
   let bad_partial = decide_tokenizer_json_response(
     plan_tokenizer_json_request(
       "org/no-resume-tokenizer",
@@ -236,6 +251,34 @@ test "Hub response decision handles cache and range statuses" {
     ),
   )
   @test.assert_eq(bad_partial.should_retry_without_range(), true)
+  let mismatched_total = decide_tokenizer_json_response(
+    plan,
+    HubResponseMetadata::new(
+      206,
+      resolved_revision=Some("def456"),
+      etag=Some("etag-new"),
+      content_length=Some(225),
+      content_range_start=Some(32),
+      content_range_end=Some(256),
+      content_range_total=Some(256),
+      accept_ranges=true,
+    ),
+  )
+  @test.assert_eq(mismatched_total.should_retry_without_range(), true)
+  let mismatched_body_length = decide_tokenizer_json_response(
+    plan,
+    HubResponseMetadata::new(
+      206,
+      resolved_revision=Some("def456"),
+      etag=Some("etag-new"),
+      content_length=Some(223),
+      content_range_start=Some(32),
+      content_range_end=Some(255),
+      content_range_total=Some(256),
+      accept_ranges=true,
+    ),
+  )
+  @test.assert_eq(mismatched_body_length.should_retry_without_range(), true)
   let mismatched_range = decide_tokenizer_json_response(
     plan,
     HubResponseMetadata::new(

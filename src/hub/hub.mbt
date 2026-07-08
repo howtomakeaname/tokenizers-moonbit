@@ -334,22 +334,23 @@ pub fn decide_tokenizer_json_response(
     match plan.range_start {
       Some(start) =>
         match plan.resume_metadata {
-          Some(resume_meta) =>
+          Some(resume_meta) => {
+            let (range_matches, expected_size) = validate_range_response(
+              metadata, start,
+            )
             if start > 0 &&
               resume_meta.downloaded_size == start &&
-              content_range_matches_start(metadata, start) {
+              range_matches {
               return {
                 action: AppendRangeToCachedTokenizer,
                 resolved_revision,
                 etag,
-                expected_size: combine_range_size(
-                  start,
-                  metadata.content_length,
-                ),
+                expected_size,
                 range_start: Some(start),
                 message: "Hub response 206: append ranged body to incomplete tokenizer.json",
               }
             }
+          }
           None => ()
         }
       None => ()
@@ -567,13 +568,36 @@ fn combine_range_size(start : Int, body_length : Int?) -> Int? {
 }
 
 ///|
-fn content_range_matches_start(
+fn validate_range_response(
   metadata : HubResponseMetadata,
   start : Int,
-) -> Bool {
-  match metadata.content_range_start {
-    Some(range_start) => range_start == start
-    None => true
+) -> (Bool, Int?) {
+  match
+    (
+      metadata.content_range_start,
+      metadata.content_range_end,
+      metadata.content_range_total,
+    ) {
+    (Some(range_start), Some(range_end), Some(total)) => {
+      if range_start != start || range_end < range_start || range_end >= total {
+        return (false, None)
+      }
+      match metadata.content_length {
+        Some(body_length) =>
+          if body_length != range_end - range_start + 1 {
+            return (false, None)
+          }
+        None => ()
+      }
+      (true, Some(total))
+    }
+    (Some(range_start), _, _) =>
+      if range_start == start {
+        (true, combine_range_size(start, metadata.content_length))
+      } else {
+        (false, None)
+      }
+    (None, _, _) => (true, combine_range_size(start, metadata.content_length))
   }
 }
 
