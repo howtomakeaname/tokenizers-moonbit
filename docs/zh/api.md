@@ -252,8 +252,8 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 `__len__`、`is_empty`、state/tuple 往返、`normalize`、`replace`、`prepend`、
 `append`、`clear`、`lowercase`、`uppercase`、`lstrip`、`rstrip`、`strip`、
 `nfc`、`nfd`、`nfkc`、`nfkd`、`slice`、`map`、`filter`、literal `split`
-以及受支持 deterministic 子集的 `split_regex`，并提供 `__str__` / `__repr__`
-显示 alias。
+以及受支持 deterministic 子集的 `split_regex`、单 index `get_item` /
+`__getitem__`，并提供 `__str__` / `__repr__` 显示 alias。
 
 `PreTokenizedString` 提供 `get_splits` / `splits`、`normalize`、pre-tokenizer
 `split`、state/tuple helper，以及 `to_encoding` / `into_encoding`。

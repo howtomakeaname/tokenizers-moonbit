@@ -269,8 +269,8 @@ Lookups consult the added/special vocabulary first, then the model vocabulary.
 `__len__`, `is_empty`, state/tuple round-trips, `normalize`, `replace`,
 `prepend`, `append`, `clear`, `lowercase`, `uppercase`, `lstrip`, `rstrip`,
 `strip`, `nfc`, `nfd`, `nfkc`, `nfkd`, `slice`, `map`, `filter`, literal
-`split`, supported deterministic `split_regex`, and `__str__` / `__repr__`
-display aliases.
+`split`, supported deterministic `split_regex`, single-index `get_item` /
+`__getitem__`, and `__str__` / `__repr__` display aliases.
 
 `PreTokenizedString` provides `get_splits` / `splits`, `normalize`,
 pre-tokenizer `split`, state/tuple helpers, and `to_encoding` /

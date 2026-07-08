@@ -235,6 +235,34 @@ pub fn NormalizedString::__len__(self : NormalizedString) -> Int {
 }
 
 ///|
+/// HF-style single-index access for Python binding shims.
+pub fn NormalizedString::get_item(
+  self : NormalizedString,
+  index : Int,
+) -> NormalizedString? {
+  if index < 0 {
+    return None
+  }
+  let chars = self.normalized.to_array()
+  if index >= chars.length() {
+    return None
+  }
+  let normalized = @common.char_string(chars[index])
+  // This immutable migration wrapper does not track per-char original offsets
+  // yet, so the item keeps the parent original and exposes a one-char current view.
+  Some({ original: self.original, normalized })
+}
+
+///|
+/// Python `__getitem__`-style alias for `get_item`.
+pub fn NormalizedString::__getitem__(
+  self : NormalizedString,
+  index : Int,
+) -> NormalizedString? {
+  self.get_item(index)
+}
+
+///|
 pub fn NormalizedString::is_empty(self : NormalizedString) -> Bool {
   self.normalized.is_empty()
 }

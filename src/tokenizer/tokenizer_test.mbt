@@ -509,6 +509,10 @@ test "NormalizedString and PreTokenizedString expose low level migration API" {
   @test.assert_eq(ns.len(), 10)
   @test.assert_eq(ns.__len__(), 10)
   @test.assert_eq(ns.is_empty(), false)
+  @test.assert_eq(ns.get_item(0).unwrap().as_tuple(), (" Hello  Moon ", "_"))
+  @test.assert_eq(ns.__getitem__(1).unwrap().as_tuple(), (" Hello  Moon ", "h"))
+  @test.assert_eq(ns.get_item(-1) is None, true)
+  @test.assert_eq(ns.__getitem__(10) is None, true)
   @test.assert_eq(ns.as_tuple(), (" Hello  Moon ", "_hellomoon"))
   let ns_state = ns.__getstate__()
   @test.assert_eq(ns_state.normalized, "_hellomoon")
@@ -523,6 +527,14 @@ test "NormalizedString and PreTokenizedString expose low level migration API" {
   @test.assert_eq(
     NormalizedString::new("Line\n\"Q\"\\").lowercase().__repr__(),
     "NormalizedString(original=\"Line\\n\\\"Q\\\"\\\\\", normalized=\"line\\n\\\"q\\\"\\\\\")",
+  )
+  @test.assert_eq(
+    NormalizedString::new("Line\n\"Q\"\\")
+    .lowercase()
+    .__getitem__(4)
+    .unwrap()
+    .__repr__(),
+    "NormalizedString(original=\"Line\\n\\\"Q\\\"\\\\\", normalized=\"\\n\")",
   )
   let appended = ns.append("!").uppercase()
   @test.assert_eq(appended.get_original(), " Hello  Moon ")

@@ -130,6 +130,7 @@ pub struct NormalizedString {
   original : String
   normalized : String
 }
+pub fn NormalizedString::__getitem__(Self, Int) -> Self?
 pub fn NormalizedString::__getstate__(Self) -> NormalizedStringState
 pub fn NormalizedString::__len__(Self) -> Int
 pub fn NormalizedString::__repr__(Self) -> String
@@ -142,6 +143,7 @@ pub fn NormalizedString::filter(Self, (Char) -> Bool) -> Self
 pub fn NormalizedString::from_state(NormalizedStringState) -> Self
 pub fn NormalizedString::from_tuple((String, String)) -> Self
 pub fn NormalizedString::get(Self) -> String
+pub fn NormalizedString::get_item(Self, Int) -> Self?
 pub fn NormalizedString::get_normalized(Self) -> String
 pub fn NormalizedString::get_original(Self) -> String
 pub fn NormalizedString::get_state(Self) -> NormalizedStringState
