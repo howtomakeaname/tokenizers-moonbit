@@ -500,6 +500,20 @@ test "NormalizedString and PreTokenizedString expose low level migration API" {
     NormalizedString::from_tuple(("Raw", "raw")).as_tuple(),
     ("Raw", "raw"),
   )
+  let appended = ns.append("!").uppercase()
+  @test.assert_eq(appended.get_original(), " Hello  Moon ")
+  @test.assert_eq(appended.get(), "_HELLOMOON!")
+  @test.assert_eq(
+    NormalizedString::new("  MiXeD  ").lowercase().strip().get(),
+    "mixed",
+  )
+  @test.assert_eq(NormalizedString::new("  left  ").lstrip().get(), "left  ")
+  @test.assert_eq(NormalizedString::new("  right  ").rstrip().get(), "  right")
+  @test.assert_eq(NormalizedString::new("clear").clear().get(), "")
+  @test.assert_eq(NormalizedString::new("e\u{301}").nfc().get(), "é")
+  @test.assert_eq(NormalizedString::new("é").nfd().get(), "e\u{301}")
+  @test.assert_eq(NormalizedString::new("\u{ff21}\u{ff22}").nfkc().get(), "AB")
+  @test.assert_eq(NormalizedString::new("\u{fb01}").nfkd().get(), "fi")
   @test.assert_eq(ns.slice(1, 6).get(), "hello")
   let parts = NormalizedString::new("a,b,c").split(",")
   @test.assert_eq(parts.map(p => p.get()), ["a", "b", "c"])

@@ -239,6 +239,18 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 
 查询顺序：added/special vocabulary 优先，其次模型词表。
 
+## 低层迁移 API
+
+`NormalizedString` 暴露一组便于薄 binding 层映射 HF API 的 helper：
+`get` / `normalized` / `to_string`、`get_original` / `original`、`len` /
+`__len__`、`is_empty`、state/tuple 往返、`normalize`、`replace`、`prepend`、
+`append`、`clear`、`lowercase`、`uppercase`、`lstrip`、`rstrip`、`strip`、
+`nfc`、`nfd`、`nfkc`、`nfkd`、`slice`、`map`、`filter`、literal `split`
+以及受支持 deterministic 子集的 `split_regex`。
+
+`PreTokenizedString` 提供 `get_splits` / `splits`、`normalize`、pre-tokenizer
+`split`、state/tuple helper，以及 `to_encoding` / `into_encoding`。
+
 ## 组件兼容性说明
 
 - `Normalizer::Replace`、`Decoder::Replace` 与正则 `PreTokenizer::Split`

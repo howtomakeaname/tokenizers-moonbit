@@ -253,6 +253,19 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 
 Lookups consult the added/special vocabulary first, then the model vocabulary.
 
+## Low-level migration API
+
+`NormalizedString` exposes HF-style helpers for thin binding layers:
+`get` / `normalized` / `to_string`, `get_original` / `original`, `len` /
+`__len__`, `is_empty`, state/tuple round-trips, `normalize`, `replace`,
+`prepend`, `append`, `clear`, `lowercase`, `uppercase`, `lstrip`, `rstrip`,
+`strip`, `nfc`, `nfd`, `nfkc`, `nfkd`, `slice`, `map`, `filter`, literal
+`split`, and supported deterministic `split_regex`.
+
+`PreTokenizedString` provides `get_splits` / `splits`, `normalize`,
+pre-tokenizer `split`, state/tuple helpers, and `to_encoding` /
+`into_encoding`.
+
 ## Component compatibility notes
 
 - `Normalizer::Replace`, `Decoder::Replace`, and regex `PreTokenizer::Split`

@@ -230,6 +230,75 @@ pub fn NormalizedString::normalize(
 }
 
 ///|
+/// Append text to the current normalized string.
+pub fn NormalizedString::append(
+  self : NormalizedString,
+  suffix : String,
+) -> NormalizedString {
+  { ..self, normalized: self.normalized + suffix }
+}
+
+///|
+/// Clear the current normalized string while preserving the original snapshot.
+pub fn NormalizedString::clear(self : NormalizedString) -> NormalizedString {
+  { ..self, normalized: "" }
+}
+
+///|
+/// HF-style lowercase convenience alias.
+pub fn NormalizedString::lowercase(self : NormalizedString) -> NormalizedString {
+  self.normalize(@normalizer.Normalizer::Lowercase)
+}
+
+///|
+/// HF-style uppercase convenience alias.
+pub fn NormalizedString::uppercase(self : NormalizedString) -> NormalizedString {
+  { ..self, normalized: self.normalized.to_upper() }
+}
+
+///|
+/// Strip leading ASCII whitespace, matching the existing Strip normalizer.
+pub fn NormalizedString::lstrip(self : NormalizedString) -> NormalizedString {
+  self.normalize(@normalizer.Normalizer::Strip(left=true, right=false))
+}
+
+///|
+/// Strip trailing ASCII whitespace, matching the existing Strip normalizer.
+pub fn NormalizedString::rstrip(self : NormalizedString) -> NormalizedString {
+  self.normalize(@normalizer.Normalizer::Strip(left=false, right=true))
+}
+
+///|
+/// Strip leading and trailing ASCII whitespace.
+pub fn NormalizedString::strip(self : NormalizedString) -> NormalizedString {
+  self.normalize(@normalizer.Normalizer::Strip(left=true, right=true))
+}
+
+///|
+/// Unicode NFC convenience alias.
+pub fn NormalizedString::nfc(self : NormalizedString) -> NormalizedString {
+  self.normalize(@normalizer.Normalizer::NFC)
+}
+
+///|
+/// Unicode NFD convenience alias.
+pub fn NormalizedString::nfd(self : NormalizedString) -> NormalizedString {
+  self.normalize(@normalizer.Normalizer::NFD)
+}
+
+///|
+/// Unicode NFKC convenience alias.
+pub fn NormalizedString::nfkc(self : NormalizedString) -> NormalizedString {
+  self.normalize(@normalizer.Normalizer::NFKC)
+}
+
+///|
+/// Unicode NFKD convenience alias.
+pub fn NormalizedString::nfkd(self : NormalizedString) -> NormalizedString {
+  self.normalize(@normalizer.Normalizer::NFKD)
+}
+
+///|
 pub fn NormalizedString::replace(
   self : NormalizedString,
   pattern : String,

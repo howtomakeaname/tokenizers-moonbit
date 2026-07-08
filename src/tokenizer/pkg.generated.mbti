@@ -125,7 +125,9 @@ pub struct NormalizedString {
 pub fn NormalizedString::__getstate__(Self) -> NormalizedStringState
 pub fn NormalizedString::__len__(Self) -> Int
 pub fn NormalizedString::__setstate__(NormalizedStringState) -> Self
+pub fn NormalizedString::append(Self, String) -> Self
 pub fn NormalizedString::as_tuple(Self) -> (String, String)
+pub fn NormalizedString::clear(Self) -> Self
 pub fn NormalizedString::filter(Self, (Char) -> Bool) -> Self
 pub fn NormalizedString::from_state(NormalizedStringState) -> Self
 pub fn NormalizedString::from_tuple((String, String)) -> Self
@@ -135,17 +137,26 @@ pub fn NormalizedString::get_original(Self) -> String
 pub fn NormalizedString::get_state(Self) -> NormalizedStringState
 pub fn NormalizedString::is_empty(Self) -> Bool
 pub fn NormalizedString::len(Self) -> Int
+pub fn NormalizedString::lowercase(Self) -> Self
+pub fn NormalizedString::lstrip(Self) -> Self
 pub fn NormalizedString::map(Self, (Char) -> String) -> Self
 pub fn NormalizedString::new(String) -> Self
+pub fn NormalizedString::nfc(Self) -> Self
+pub fn NormalizedString::nfd(Self) -> Self
+pub fn NormalizedString::nfkc(Self) -> Self
+pub fn NormalizedString::nfkd(Self) -> Self
 pub fn NormalizedString::normalize(Self, @normalizer.Normalizer) -> Self
 pub fn NormalizedString::normalized(Self) -> String
 pub fn NormalizedString::original(Self) -> String
 pub fn NormalizedString::prepend(Self, String) -> Self
 pub fn NormalizedString::replace(Self, String, String) -> Self
+pub fn NormalizedString::rstrip(Self) -> Self
 pub fn NormalizedString::slice(Self, Int, Int) -> Self
 pub fn NormalizedString::split(Self, String) -> Array[Self]
 pub fn NormalizedString::split_regex(Self, @common.Regex) -> Array[Self]?
+pub fn NormalizedString::strip(Self) -> Self
 pub fn NormalizedString::to_string(Self) -> String
+pub fn NormalizedString::uppercase(Self) -> Self
 
 pub struct NormalizedStringState {
   original : String
