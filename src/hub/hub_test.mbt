@@ -392,6 +392,20 @@ test "Hub HEAD plan and decision validate cached metadata" {
   @test.assert_eq(head_plan.headers.get("If-Range"), None)
   @test.assert_eq(head_plan.range_start, None)
   @test.assert_eq(head_plan.resume_metadata, None)
+  let slash_revision_head_plan = head_tokenizer_json_request(
+    "org/head-decision-tokenizer",
+    options=HubDownloadOptions::new(
+      endpoint="https://hf.example",
+      revision="refs/pr/7",
+      cache_dir=Some(cache),
+    ),
+  )
+  @test.assert_eq(
+    slash_revision_head_plan.url,
+    "https://hf.example/org/head-decision-tokenizer/resolve/refs%2Fpr%2F7/tokenizer.json",
+  )
+  @test.assert_eq(slash_revision_head_plan.headers.get("Range"), None)
+  @test.assert_eq(slash_revision_head_plan.headers.get("If-Range"), None)
   let not_modified = decide_tokenizer_json_head_response(
     head_plan,
     HubResponseMetadata::new(
