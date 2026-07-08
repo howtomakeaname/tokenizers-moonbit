@@ -985,6 +985,7 @@ pub fn Tokenizer::train_wordlevel(
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Tokenizer {
   Tokenizer::train_wordlevel_with_pretokenizer(
     texts,
@@ -993,6 +994,7 @@ pub fn Tokenizer::train_wordlevel(
     min_frequency~,
     special_tokens~,
     vocab_size~,
+    show_progress~,
   )
 }
 
@@ -1006,6 +1008,7 @@ pub fn Tokenizer::train_wordlevel_with_pretokenizer(
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Tokenizer {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -1020,6 +1023,7 @@ pub fn Tokenizer::train_wordlevel_with_pretokenizer(
     special_tokens~,
     pre_tokenizer=Some(pre_tokenizer),
     vocab_size~,
+    show_progress~,
   )
 }
 
@@ -1035,6 +1039,7 @@ pub fn Tokenizer::train_wordlevel_from_tokens(
   special_tokens? : Array[String] = [],
   pre_tokenizer? : @pretokenizer.PreTokenizer? = None,
   vocab_size? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Tokenizer {
   {
     normalizer: None,
@@ -1045,6 +1050,7 @@ pub fn Tokenizer::train_wordlevel_from_tokens(
       min_frequency~,
       special_tokens~,
       vocab_size~,
+      show_progress~,
     ),
     post_processor: None,
     decoder: None,
@@ -1070,6 +1076,7 @@ pub fn Tokenizer::train_wordpiece(
   max_token_length? : Int? = None,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Tokenizer {
   Tokenizer::train_wordpiece_with_pretokenizer(
     texts,
@@ -1084,6 +1091,7 @@ pub fn Tokenizer::train_wordpiece(
     max_token_length~,
     initial_alphabet~,
     limit_alphabet~,
+    show_progress~,
   )
 }
 
@@ -1102,6 +1110,7 @@ pub fn Tokenizer::train_wordpiece_with_pretokenizer(
   max_token_length? : Int? = None,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Tokenizer {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -1122,6 +1131,7 @@ pub fn Tokenizer::train_wordpiece_with_pretokenizer(
     max_token_length~,
     initial_alphabet~,
     limit_alphabet~,
+    show_progress~,
   )
 }
 
@@ -1140,6 +1150,7 @@ pub fn Tokenizer::train_wordpiece_from_tokens(
   max_token_length? : Int? = None,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Tokenizer {
   {
     normalizer: None,
@@ -1156,6 +1167,7 @@ pub fn Tokenizer::train_wordpiece_from_tokens(
       max_token_length~,
       initial_alphabet~,
       limit_alphabet~,
+      show_progress~,
     ),
     post_processor: None,
     decoder: None,
@@ -1181,6 +1193,7 @@ pub fn Tokenizer::train_bpe(
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
   max_token_length? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Tokenizer {
   Tokenizer::train_bpe_with_pretokenizer(
     texts,
@@ -1195,6 +1208,7 @@ pub fn Tokenizer::train_bpe(
     initial_alphabet~,
     limit_alphabet~,
     max_token_length~,
+    show_progress~,
   )
 }
 
@@ -1213,6 +1227,7 @@ pub fn Tokenizer::train_bpe_with_pretokenizer(
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
   max_token_length? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Tokenizer {
   let tokenized : Array[Array[String]] = []
   for text in texts {
@@ -1233,6 +1248,7 @@ pub fn Tokenizer::train_bpe_with_pretokenizer(
     initial_alphabet~,
     limit_alphabet~,
     max_token_length~,
+    show_progress~,
   )
 }
 
@@ -1251,6 +1267,7 @@ pub fn Tokenizer::train_bpe_from_tokens(
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
   max_token_length? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Tokenizer {
   {
     normalizer: None,
@@ -1267,6 +1284,7 @@ pub fn Tokenizer::train_bpe_from_tokens(
       initial_alphabet~,
       limit_alphabet~,
       max_token_length~,
+      show_progress~,
     ),
     post_processor: None,
     decoder: None,

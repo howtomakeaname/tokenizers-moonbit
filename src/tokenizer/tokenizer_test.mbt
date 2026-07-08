@@ -2706,6 +2706,26 @@ test "Trainer default vocab_size mirrors HF caps" {
 }
 
 ///|
+test "Tokenizer train helpers accept no-op show_progress option" {
+  @test.assert_eq(
+    Tokenizer::train_wordlevel(["hello hello"], show_progress=false).to_json(),
+    Tokenizer::train_wordlevel(["hello hello"]).to_json(),
+  )
+  @test.assert_eq(
+    Tokenizer::train_wordpiece(
+      ["hello hello"],
+      continuing_subword_prefix="##",
+      show_progress=false,
+    ).to_json(),
+    Tokenizer::train_wordpiece(["hello hello"], continuing_subword_prefix="##").to_json(),
+  )
+  @test.assert_eq(
+    Tokenizer::train_bpe(["ab ab"], min_frequency=1, show_progress=false).to_json(),
+    Tokenizer::train_bpe(["ab ab"], min_frequency=1).to_json(),
+  )
+}
+
+///|
 test "Trainer exposes state and string aliases" {
   let mask = AddedToken::special("[MASK]")
     .with_lstrip(true)
