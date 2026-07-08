@@ -274,11 +274,12 @@ unsupported-component 错误，不返回有损 state。
 
 `Trainer` 暴露返回副本的配置 getter，例如 `kind`、`unk_token`、
 `min_frequency`、`special_tokens`、`special_added_tokens`、`vocab_size`、
-`show_progress`，以及 WordPiece、BPE、Unigram trainer 的模型特有 knobs。这些
-helper 用于 binding/property 映射，不改变训练行为。`TrainerState` 以及
-`get_state` / `from_state` / `__getstate__` / `__setstate__` 会保留同一份 typed
-配置，包括 `AddedToken` 元数据；`__str__` / `__repr__` 返回紧凑 JSON 视图，
-便于 binding 日志和诊断。
+`show_progress`，以及 WordPiece、BPE、Unigram trainer 的模型特有 knobs。
+Unigram 训练也接受 `initial_alphabet`，并对多字符条目沿用 HF 的“只保留第一个字符”
+规则。这些 helper 用于 binding/property 映射，不改变训练行为。`TrainerState`
+以及 `get_state` / `from_state` / `__getstate__` / `__setstate__` 会保留同一份
+typed 配置，包括 `AddedToken` 元数据；`__str__` / `__repr__` 返回紧凑 JSON
+视图，便于 binding 日志和诊断。
 
 `Model` 暴露只读配置 getter，便于 binding 层映射属性，包括 `kind`、`unk_token`、
 `unk_id`、WordPiece/BPE 的 prefix/suffix knobs、BPE dropout 与 merge flags，以及

@@ -2374,6 +2374,7 @@ test "Trainer exposes HF-style configuration getters" {
     fuse_unk=false,
     shrinking_factor=0.5,
     max_piece_length=Some(4),
+    initial_alphabet=["z", "xy"],
     n_sub_iterations=3,
   )
   @test.assert_eq(unigram.kind(), "UnigramTrainer")
@@ -2382,6 +2383,7 @@ test "Trainer exposes HF-style configuration getters" {
   @test.assert_eq(unigram.fuse_unk(), Some(false))
   @test.assert_eq(unigram.shrinking_factor(), Some(0.5))
   @test.assert_eq(unigram.max_piece_length(), Some(4))
+  @test.assert_eq(unigram.initial_alphabet(), ["z", "xy"])
   @test.assert_eq(unigram.n_sub_iterations(), Some(3))
   @test.assert_eq(unigram.continuing_subword_prefix(), None)
 }
@@ -2949,6 +2951,31 @@ test "train_unigram supports unk_piece and max_piece_length" {
   for token in enc.tokens {
     @test.assert_eq(token.char_length() <= 2, true)
   }
+}
+
+///|
+test "train_unigram preserves initial alphabet" {
+  let trainer = Trainer::unigram(
+    unk_token="<unk>",
+    initial_alphabet=["z", "xy", ""],
+    vocab_size=Some(4),
+    show_progress=false,
+  )
+  @test.assert_eq(trainer.initial_alphabet(), ["z", "xy", ""])
+  let restored = Trainer::__setstate__(trainer.__getstate__())
+  @test.assert_eq(restored.initial_alphabet(), ["z", "xy", ""])
+
+  let tok = Tokenizer::new(@model.Model::train_wordlevel_from_tokens([[]])).train_from_iterator(
+    ["aa aa"],
+    trainer,
+  )
+  @test.assert_eq(tok.token_to_id("<unk>"), Some(0))
+  @test.assert_eq(tok.token_to_id("z"), Some(1))
+  // HF keeps only the first character from each initial_alphabet string.
+  @test.assert_eq(tok.token_to_id("x"), Some(2))
+  @test.assert_eq(tok.token_to_id("xy"), None)
+  @test.assert_eq(tok.token_to_id("a"), Some(3))
+  @test.assert_eq(tok.token_to_id("aa"), None)
 }
 
 ///|

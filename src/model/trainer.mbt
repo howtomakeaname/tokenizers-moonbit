@@ -612,6 +612,7 @@ pub fn Model::train_unigram(
   byte_fallback? : Bool = false,
   fuse_unk? : Bool = true,
   max_piece_length? : Int? = None,
+  initial_alphabet? : Array[String] = [],
   shrinking_factor? : Double = 0.75,
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
@@ -632,6 +633,7 @@ pub fn Model::train_unigram(
     byte_fallback~,
     fuse_unk~,
     max_piece_length~,
+    initial_alphabet~,
     shrinking_factor~,
     n_sub_iterations~,
     show_progress~,
@@ -649,6 +651,7 @@ pub fn Model::train_unigram_from_tokens(
   byte_fallback? : Bool = false,
   fuse_unk? : Bool = true,
   max_piece_length? : Int? = None,
+  initial_alphabet? : Array[String] = [],
   shrinking_factor? : Double = 0.75,
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
@@ -693,6 +696,12 @@ pub fn Model::train_unigram_from_tokens(
     unk_id = add_token(unk_token, 0.0)
   }
 
+  for tok in initial_alphabet {
+    match initial_alphabet_piece(tok) {
+      Some(piece) => ignore(add_token(piece, -10.0))
+      None => ()
+    }
+  }
   let chars = sorted_wordlevel_candidates(char_order, char_counts, 1)
   for item in chars {
     ignore(add_token(item.0, -10.0))

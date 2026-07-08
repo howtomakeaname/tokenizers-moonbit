@@ -52,6 +52,7 @@ pub enum Trainer {
     fuse_unk~ : Bool,
     shrinking_factor~ : Double,
     max_piece_length~ : Int?,
+    initial_alphabet~ : Array[String],
     n_sub_iterations~ : Int,
     show_progress~ : Bool
   )
@@ -181,6 +182,7 @@ pub fn Trainer::unigram(
   fuse_unk? : Bool = true,
   shrinking_factor? : Double = 0.75,
   max_piece_length? : Int? = None,
+  initial_alphabet? : Array[String] = [],
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
 ) -> Trainer {
@@ -198,6 +200,7 @@ pub fn Trainer::unigram(
     fuse_unk~,
     shrinking_factor~,
     max_piece_length~,
+    initial_alphabet~,
     n_sub_iterations~,
     show_progress~,
   )
@@ -288,6 +291,7 @@ pub fn Trainer::initial_alphabet(self : Trainer) -> Array[String] {
   match self {
     WordPieceTrainer(initial_alphabet~, ..) => initial_alphabet.copy()
     BpeTrainer(initial_alphabet~, ..) => initial_alphabet.copy()
+    UnigramTrainer(initial_alphabet~, ..) => initial_alphabet.copy()
     _ => []
   }
 }
@@ -441,6 +445,7 @@ pub fn Trainer::from_state(
         fuse_unk=state.fuse_unk.unwrap_or(true),
         shrinking_factor=state.shrinking_factor.unwrap_or(0.75),
         max_piece_length=state.max_piece_length,
+        initial_alphabet=state.initial_alphabet,
         n_sub_iterations=state.n_sub_iterations.unwrap_or(2),
         show_progress=state.show_progress,
       )
@@ -682,6 +687,7 @@ pub fn Tokenizer::train_from_iterator(
       fuse_unk~,
       shrinking_factor~,
       max_piece_length~,
+      initial_alphabet~,
       n_sub_iterations~,
       show_progress~,
       ..
@@ -695,6 +701,7 @@ pub fn Tokenizer::train_from_iterator(
         byte_fallback~,
         fuse_unk~,
         max_piece_length~,
+        initial_alphabet~,
         shrinking_factor~,
         n_sub_iterations~,
         show_progress~,
@@ -1206,6 +1213,7 @@ pub fn Tokenizer::train_unigram(
   byte_fallback? : Bool = false,
   fuse_unk? : Bool = true,
   max_piece_length? : Int? = None,
+  initial_alphabet? : Array[String] = [],
   shrinking_factor? : Double = 0.75,
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
@@ -1224,6 +1232,7 @@ pub fn Tokenizer::train_unigram(
     byte_fallback~,
     fuse_unk~,
     max_piece_length~,
+    initial_alphabet~,
     shrinking_factor~,
     n_sub_iterations~,
     show_progress~,
@@ -1243,6 +1252,7 @@ pub fn Tokenizer::train_unigram_with_pretokenizer(
   byte_fallback? : Bool = false,
   fuse_unk? : Bool = true,
   max_piece_length? : Int? = None,
+  initial_alphabet? : Array[String] = [],
   shrinking_factor? : Double = 0.75,
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
@@ -1267,6 +1277,7 @@ pub fn Tokenizer::train_unigram_with_pretokenizer(
     byte_fallback~,
     fuse_unk~,
     max_piece_length~,
+    initial_alphabet~,
     shrinking_factor~,
     n_sub_iterations~,
     show_progress~,
@@ -1286,6 +1297,7 @@ pub fn Tokenizer::train_unigram_from_tokens(
   byte_fallback? : Bool = false,
   fuse_unk? : Bool = true,
   max_piece_length? : Int? = None,
+  initial_alphabet? : Array[String] = [],
   shrinking_factor? : Double = 0.75,
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
@@ -1306,6 +1318,7 @@ pub fn Tokenizer::train_unigram_from_tokens(
       byte_fallback~,
       fuse_unk~,
       max_piece_length~,
+      initial_alphabet~,
       shrinking_factor~,
       n_sub_iterations~,
       show_progress~,

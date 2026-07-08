@@ -295,11 +295,13 @@ an unsupported-component error instead of returning lossy state.
 `Trainer` exposes copy-returning configuration getters such as `kind`,
 `unk_token`, `min_frequency`, `special_tokens`, `special_added_tokens`,
 `vocab_size`, `show_progress`, and model-specific knobs for WordPiece, BPE and
-Unigram trainers. These helpers are intended for binding/property mapping and do
-not change training behavior. `TrainerState` plus `get_state` / `from_state` /
-`__getstate__` / `__setstate__` preserve the same typed configuration, including
-`AddedToken` metadata, and `__str__` / `__repr__` return a compact JSON view for
-binding logs and diagnostics.
+Unigram trainers. Unigram training also accepts `initial_alphabet`, matching HF's
+first-character retention rule for multi-character entries. These helpers are
+intended for binding/property mapping and do not change training behavior.
+`TrainerState` plus `get_state` / `from_state` / `__getstate__` /
+`__setstate__` preserve the same typed configuration, including `AddedToken`
+metadata, and `__str__` / `__repr__` return a compact JSON view for binding logs
+and diagnostics.
 
 `Model` exposes read-only configuration getters for binding layers, including
 `kind`, `unk_token`, `unk_id`, WordPiece/BPE prefix/suffix knobs, BPE dropout and
