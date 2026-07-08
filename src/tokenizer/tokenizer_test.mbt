@@ -2120,6 +2120,64 @@ test "encode_batch reuses duplicate inputs without aliasing encodings" {
   @test.assert_eq(parallel.map(e => e.ids), batch.map(e => e.ids))
   @test.assert_eq(parallel_fast.map(e => e.ids), batch.map(e => e.ids))
   @test.assert_eq(parallel_fast[0].offsets, [(0, 0), (0, 0)])
+
+  let pair_batch = tok.encode_pair_batch(
+    [("hello", "moon"), ("hello", "moon"), ("moon", "hello")],
+    add_special_tokens=false,
+  )
+  let pair_parallel = tok.encode_pair_batch_parallel(
+    [("hello", "moon"), ("hello", "moon"), ("moon", "hello")],
+    add_special_tokens=false,
+  )
+  let pair_parallel_fast = tok.encode_pair_batch_parallel_fast(
+    [("hello", "moon"), ("hello", "moon"), ("moon", "hello")],
+    add_special_tokens=false,
+  )
+  @test.assert_eq(pair_parallel.map(e => e.ids), pair_batch.map(e => e.ids))
+  @test.assert_eq(
+    pair_parallel_fast.map(e => e.ids),
+    pair_batch.map(e => e.ids),
+  )
+  @test.assert_eq(pair_parallel[0].type_ids, pair_batch[0].type_ids)
+  @test.assert_eq(pair_parallel_fast[0].offsets, [(0, 0), (0, 0)])
+
+  let pre_batch = tok.encode_pretokenized_batch(
+    [["hello"], ["hello", "moon"], ["hello"]],
+    add_special_tokens=false,
+  )
+  let pre_parallel = tok.encode_pretokenized_batch_parallel(
+    [["hello"], ["hello", "moon"], ["hello"]],
+    add_special_tokens=false,
+  )
+  let pre_parallel_fast = tok.encode_pretokenized_batch_parallel_fast(
+    [["hello"], ["hello", "moon"], ["hello"]],
+    add_special_tokens=false,
+  )
+  @test.assert_eq(pre_parallel.map(e => e.ids), pre_batch.map(e => e.ids))
+  @test.assert_eq(pre_parallel_fast.map(e => e.ids), pre_batch.map(e => e.ids))
+  @test.assert_eq(pre_parallel_fast[0].offsets, [(0, 0), (0, 0)])
+
+  let pre_pair_batch = tok.encode_pretokenized_pair_batch(
+    [(["hello"], ["moon"]), (["hello"], ["moon"])],
+    add_special_tokens=false,
+  )
+  let pre_pair_parallel = tok.encode_pretokenized_pair_batch_parallel(
+    [(["hello"], ["moon"]), (["hello"], ["moon"])],
+    add_special_tokens=false,
+  )
+  let pre_pair_parallel_fast = tok.encode_pretokenized_pair_batch_parallel_fast(
+    [(["hello"], ["moon"]), (["hello"], ["moon"])],
+    add_special_tokens=false,
+  )
+  @test.assert_eq(
+    pre_pair_parallel.map(e => e.ids),
+    pre_pair_batch.map(e => e.ids),
+  )
+  @test.assert_eq(
+    pre_pair_parallel_fast.map(e => e.ids),
+    pre_pair_batch.map(e => e.ids),
+  )
+  @test.assert_eq(pre_pair_parallel_fast[0].offsets, [(0, 0), (0, 0)])
 }
 
 ///|
