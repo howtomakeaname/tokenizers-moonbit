@@ -188,6 +188,22 @@ test "Regex wrapper exposes supported deterministic subset" {
   @test.assert_eq(escaped.is_supported(), true)
   @test.assert_eq(escaped.find_matches("a.b axb"), Some([(0, 3)]))
   @test.assert_eq(escaped.replace_all("a.b axb", "X"), Some("X axb"))
+  let grouped_literal = Regex::new("(?:foo)")
+  @test.assert_eq(grouped_literal.is_supported(), true)
+  @test.assert_eq(
+    grouped_literal.find_matches("foo food foo"),
+    Some([(0, 3), (4, 7), (9, 12)]),
+  )
+  @test.assert_eq(
+    grouped_literal.replace_all("foo food foo", "X"),
+    Some("X Xd X"),
+  )
+  let capturing_group_literal = Regex::new("(bar)")
+  @test.assert_eq(capturing_group_literal.is_supported(), true)
+  @test.assert_eq(
+    capturing_group_literal.find_matches("bar barbar"),
+    Some([(0, 3), (4, 7), (7, 10)]),
+  )
   let anchored_literal = Regex::new("^foo$")
   @test.assert_eq(anchored_literal.is_supported(), true)
   @test.assert_eq(anchored_literal.find_matches("foo"), Some([(0, 3)]))
@@ -253,6 +269,15 @@ test "Regex wrapper exposes supported deterministic subset" {
     Some([(0, 3)]),
   )
   @test.assert_eq(leading_word_alternatives.find_matches("food bar"), Some([]))
+  let whole_word_literal = Regex::new("^\\b(?:foo)\\b$")
+  @test.assert_eq(whole_word_literal.is_supported(), true)
+  @test.assert_eq(whole_word_literal.find_matches("foo"), Some([(0, 3)]))
+  @test.assert_eq(whole_word_literal.find_matches("foo!"), Some([]))
+  @test.assert_eq(whole_word_literal.find_matches("_foo"), Some([]))
+  let whole_word_alternatives = Regex::new("^\\b(?:foo|bar)\\b$")
+  @test.assert_eq(whole_word_alternatives.is_supported(), true)
+  @test.assert_eq(whole_word_alternatives.find_matches("bar"), Some([(0, 3)]))
+  @test.assert_eq(whole_word_alternatives.find_matches("bar."), Some([]))
   let unsupported = Regex::new("(?<=a)b")
   @test.assert_eq(unsupported.is_supported(), false)
   @test.assert_eq(unsupported.find_matches("ab"), None)
@@ -842,4 +867,11 @@ test "split regex helpers cover simple patterns" {
     is_simple_split_regex_pattern("[^\\s\\p{L}\\p{N}]{1,3}"),
     true,
   )
+  @test.assert_eq(is_simple_split_regex_pattern("(foo)"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("(?:foo)"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("^\\b(?:foo)\\b$"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("^\\b(?:foo|bar)\\b$"), true)
+  @test.assert_eq(is_simple_split_regex_pattern("(?<=a)b"), false)
+  @test.assert_eq(is_simple_split_regex_pattern("foo.*bar"), false)
+  @test.assert_eq(is_simple_split_regex_pattern("[A-Z]{5,}"), false)
 }

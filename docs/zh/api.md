@@ -246,8 +246,10 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
   whitespace/newline/水平空白、digit 与反集、word 与反集、ASCII alnum/letter、
   Unicode `\p{L}`/`\p{N}`/`\p{P}`/`\p{S}`、punctuation-or-symbol union、
   anchored `^...+` / `...+$`、覆盖上述 class family 的精确 `{2..4}` 与最小
-  `{2,}`/`{3,}`/`{4,}`、`^foo$` / `\\bfoo\\b` / `foo|bar` / `(?:foo|bar)` /
-  `^(?:foo|bar)` / `(?:foo|bar)$` / `\\b(?:foo|bar)\\b` 这类简单 literal / alternation，以及 bounded `{1,2}`/`{1,3}`/`{1,4}` 与 ranged
+  `{2,}`/`{3,}`/`{4,}`、`^foo$` / `\\bfoo\\b` / `foo|bar` /
+  `(foo)` / `(?:foo)` / `(?:foo|bar)` / `^(?:foo|bar)` /
+  `(?:foo|bar)$` / `\\b(?:foo|bar)\\b` / `^\\b(?:foo|bar)\\b$`
+  这类简单 literal / alternation，以及 bounded `{1,2}`/`{1,3}`/`{1,4}` 与 ranged
   `{2,3}`/`{2,4}`/`{3,4}` 等 HF 常见 tokenizer regex。Normalizer 与 Decoder
   `Replace` 对 bounded/ranged 量词保持直接分发路径，使合成 cleanup benchmark
   继续快于 HF。

@@ -985,7 +985,7 @@ fn regex_literal_spec(pattern : String) -> (String, Bool, Bool, Bool, Bool)? {
       if start >= stop {
         return None
       }
-      let body = char_slice(chars, start, stop)
+      let body = regex_alternation_body(char_slice(chars, start, stop))
       if has_unescaped_pipe(body) {
         return None
       }

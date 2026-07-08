@@ -71,9 +71,10 @@ E5-small、MixedBread、SmolLM2。
   base64 解码，再按 SentencePiece double-array trie 应用到 Unicode scalar；空/缺失
   map 继续走常见 SPM NFKC + Unicode 空白折叠路径，并保留 ASCII fast path。
 - **任意 Split 正则：** 当前识别主流 tokenizer 的常见正则族，并覆盖 literal / escaped-literal
-  alternatives（`foo|bar`、`(foo|bar)`、`(?:foo|bar)`、`foo|a\\.b`，以及
-  `^foo$` / `\\bfoo\\b` / `^(?:foo|bar)` / `(?:foo|bar)$` /
-  `\\b(?:foo|bar)\\b` 这类 anchored / word-boundary 形式）、`\s+`、
+  alternatives（`foo|bar`、`(foo)` / `(?:foo)`、`(foo|bar)`、
+  `(?:foo|bar)`、`foo|a\\.b`，以及 `^foo$` / `\\bfoo\\b` /
+  `^(?:foo|bar)` / `(?:foo|bar)$` / `\\b(?:foo|bar)\\b` /
+  `^\\b(?:foo|bar)\\b$` 这类 anchored / word-boundary 形式）、`\s+`、
   `\S+`、`\s+$`、`\s{2,}` / `\s{3,}` / `\s{4,}` 以及 `\s{2}` /
   `\s{3}` / `\s{4}` 精确空白 run、`[\r\n]+` 及 `{2,}` / `{3,}` /
   `{4,}`、`{2}` / `{3}` / `{4}` 换行量词、`[^\S\r\n]+` 及水平空白

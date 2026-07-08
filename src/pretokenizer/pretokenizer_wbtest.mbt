@@ -163,6 +163,19 @@ test "split pretokenizer supports common regex spans" {
   ).pre_tokenize("xa.bya-b", base_offset=0)
   @test.assert_eq(escaped_literal.map(x => x.value), ["x", "a.b", "ya-b"])
 
+  let grouped_literal = PreTokenizer::Split(
+    pattern="(?:foo)",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("xxfoo food foo", base_offset=5)
+  @test.assert_eq(grouped_literal.map(x => x.value), ["xx", " ", "d "])
+  @test.assert_eq(grouped_literal.map(x => x.offsets), [
+    (5, 7),
+    (10, 11),
+    (14, 16),
+  ])
+
   let word_boundary_literal = PreTokenizer::Split(
     pattern="\\bfoo\\b",
     behavior=Isolated,
@@ -231,6 +244,23 @@ test "split pretokenizer supports common regex spans" {
     (4, 18),
     (18, 21),
   ])
+
+  let whole_word_boundary_literal = PreTokenizer::Split(
+    pattern="^\\b(?:foo)\\b$",
+    behavior=Isolated,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("foo", base_offset=4)
+  @test.assert_eq(whole_word_boundary_literal.map(x => x.value), ["foo"])
+  @test.assert_eq(whole_word_boundary_literal.map(x => x.offsets), [(4, 7)])
+
+  let whole_word_boundary_alternatives = PreTokenizer::Split(
+    pattern="^\\b(?:foo|bar)\\b$",
+    behavior=Removed,
+    invert=false,
+    regex=true,
+  ).pre_tokenize("bar.", base_offset=0)
+  @test.assert_eq(whole_word_boundary_alternatives.map(x => x.value), ["bar."])
 
   let wide_spaces = PreTokenizer::Split(
     pattern="\\s{2,}",

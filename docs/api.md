@@ -262,11 +262,13 @@ Lookups consult the added/special vocabulary first, then the model vocabulary.
   and inverse word runs, ASCII alnum/letter classes, Unicode
   `\p{L}`/`\p{N}`/`\p{P}`/`\p{S}` classes, punctuation-or-symbol unions,
   anchored `^...+` / `...+$`, exact `{2..4}` and minimum `{2,}`/`{3,}`/`{4,}`
-  quantifiers across those class families, simple literal alternatives such as
-  `foo|bar` / `(?:foo|bar)` plus anchored/word-boundary forms like
+  quantifiers across those class families, grouped literals and simple literal
+  alternatives such as `(?:foo)` / `foo|bar` / `(?:foo|bar)` plus
+  anchored/word-boundary forms like
   `^foo$` / `\\bfoo\\b` / `^(?:foo|bar)` / `(?:foo|bar)$` /
-  `\\b(?:foo|bar)\\b`, bounded `{1,2}`/`{1,3}`/`{1,4}` forms and
-  ranged `{2,3}`/`{2,4}`/`{3,4}` runs. Normalizer and Decoder
+  `\\b(?:foo|bar)\\b` / `^\\b(?:foo|bar)\\b$`, bounded
+  `{1,2}`/`{1,3}`/`{1,4}` forms and ranged `{2,3}`/`{2,4}`/`{3,4}`
+  runs. Normalizer and Decoder
   `Replace` keep hot bounded/ranged quantifier forms on direct dispatch paths
   so synthetic cleanup benchmarks stay faster than HF.
 - Unknown complex Split regexes are rejected during loading; unknown Replace

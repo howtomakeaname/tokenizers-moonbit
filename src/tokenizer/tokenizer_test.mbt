@@ -1458,6 +1458,18 @@ test "from_str supports ranged Split regex quantifiers" {
 }
 
 ///|
+test "from_str supports grouped literal Split regex" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"Split","pattern":{"Regex":"(?:foo)"},"behavior":"Removed","invert":false},
+    #| "model":{"type":"WordLevel","vocab":{"xx":0," ":1,"d ":2,"[UNK]":3},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode("xxfoo food foo", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["xx", " ", "d "])
+  @test.assert_eq(enc.ids, [0, 1, 2])
+}
+
+///|
 test "from_str supports legacy string merges format" {
   let json =
     #|{"model":{"type":"BPE","vocab":{"h":0,"e":1,"he":2},"merges":["h e"]}}
