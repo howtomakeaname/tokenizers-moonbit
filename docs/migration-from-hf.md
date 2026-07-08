@@ -14,6 +14,7 @@ Chinese version: [`docs/zh/migration-from-hf.md`](./zh/migration-from-hf.md)
 | `Tokenizer.from_pretrained(id, local_files_only=True)` | `@tokenizer.from_pretrained(id)` or `@tokenizer.from_pretrained_cached(id, cache_dir=...)` |
 | `Tokenizer.from_pretrained(id)` | `@hub.from_pretrained(id)` on native/js, or host fetch + `@tokenizer.from_pretrained_downloaded(id, json)` |
 | `tok.save("dir/tokenizer.json")` / directory workflows | `tok.save(path)` or `tok.save_pretrained(dir)` |
+| `BPE.read_file(vocab, merges)` / model artifacts | `@model.Model::from_bpe_files(vocab, merges)` and the WordPiece/WordLevel/Unigram file loaders |
 
 ```python
 from tokenizers import Tokenizer
@@ -159,7 +160,10 @@ HF's switch for templating/chat use cases.
   `max_input_chars_per_word`, and `byte_fallback`; WordPiece/BPE also support
   `initial_alphabet`, `limit_alphabet`, and `max_token_length`, plus a
   `byte_level_alphabet()` helper matching HF
-  `ByteLevel.alphabet()` workflows.
+  `ByteLevel.alphabet()` workflows. Trainer defaults for `vocab_size`,
+  `min_frequency`, BPE `unk_token`, and Unigram `unk_token` now follow HF
+  defaults; pass explicit `unk_token=Some(...)` / `unk_piece=Some(...)` or
+  historical thresholds when you need the older MoonBit behavior.
 - **Regex components:** common HF `Split`/`Replace` regex families are handled by
   shared deterministic fast paths across wasm/js/native: `\s`, `\d`, `\w`,
   ASCII classes, Unicode letter/number/punctuation/symbol classes, anchored

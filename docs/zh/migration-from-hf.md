@@ -14,6 +14,7 @@
 | `Tokenizer.from_pretrained(id, local_files_only=True)` | `@tokenizer.from_pretrained(id)` 或 `@tokenizer.from_pretrained_cached(id, cache_dir=...)` |
 | `Tokenizer.from_pretrained(id)` | native/js 使用 `@hub.from_pretrained(id)`；wasm 可宿主 fetch 后调用 `@tokenizer.from_pretrained_downloaded(id, json)` |
 | `tok.save("dir/tokenizer.json")` / 目录工作流 | `tok.save(path)` 或 `tok.save_pretrained(dir)` |
+| `BPE.read_file(vocab, merges)` / 模型文件 | `@model.Model::from_bpe_files(vocab, merges)` 以及 WordPiece/WordLevel/Unigram 文件 loader |
 
 ```python
 from tokenizers import Tokenizer
@@ -136,3 +137,6 @@ mask 为 `1`。启用 `encode_special_tokens` 后，输入文本中的 special t
   continuation prefix、end-of-word suffix、`max_input_chars_per_word`、`byte_fallback`
   等常见参数；WordPiece/BPE 还支持 `initial_alphabet`、`limit_alphabet` 与
   `max_token_length`，并提供对齐 HF `ByteLevel.alphabet()` 工作流的 `byte_level_alphabet()` helper。
+  `vocab_size`、`min_frequency`、BPE `unk_token` 与 Unigram `unk_token` 的 trainer
+  默认值已对齐 HF；如需旧的 MoonBit 行为，可显式传入 `unk_token=Some(...)` /
+  `unk_piece=Some(...)` 或历史阈值。
