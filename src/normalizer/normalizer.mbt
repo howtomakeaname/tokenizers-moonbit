@@ -176,6 +176,68 @@ pub fn Normalizer::__getitem__(self : Normalizer, index : Int) -> Normalizer? {
 }
 
 ///|
+pub fn Normalizer::nfc() -> Normalizer {
+  NFC
+}
+
+///|
+pub fn Normalizer::nfd() -> Normalizer {
+  NFD
+}
+
+///|
+pub fn Normalizer::nfkc() -> Normalizer {
+  NFKC
+}
+
+///|
+pub fn Normalizer::nfkd() -> Normalizer {
+  NFKD
+}
+
+///|
+pub fn Normalizer::byte_level() -> Normalizer {
+  ByteLevel
+}
+
+///|
+pub fn Normalizer::strip(
+  left? : Bool = true,
+  right? : Bool = true,
+) -> Normalizer {
+  Strip(left~, right~)
+}
+
+///|
+pub fn Normalizer::replace(pattern : String, content : String) -> Normalizer {
+  Replace(pattern~, content~)
+}
+
+///|
+pub fn Normalizer::prepend_normalizer(prepend : String) -> Normalizer {
+  Prepend(prepend~)
+}
+
+///|
+pub fn Normalizer::bert_normalizer(
+  clean_text? : Bool = true,
+  handle_chinese_chars? : Bool = true,
+  strip_accents? : Bool? = None,
+  lowercase? : Bool = true,
+) -> Normalizer {
+  let strip_accents = match strip_accents {
+    Some(value) => value
+    None => lowercase
+  }
+  BertNormalizer(clean_text~, handle_chinese_chars~, strip_accents~, lowercase~)
+}
+
+///|
+pub fn Normalizer::sequence(normalizers : Array[Normalizer]) -> Normalizer {
+  Sequence(normalizers)
+}
+
+///|
 pub fn Normalizer::get_state(
   self : Normalizer,
 ) -> NormalizerState raise @types.TokenizerError {

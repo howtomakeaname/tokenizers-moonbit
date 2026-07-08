@@ -224,6 +224,35 @@ pub fn Decoder::replace(pattern : String, content : String) -> Decoder {
 }
 
 ///|
+pub fn Decoder::byte_level(
+  add_prefix_space? : Bool = true,
+  trim_offsets? : Bool = true,
+  use_regex? : Bool = true,
+) -> Decoder {
+  ByteLevel(add_prefix_space~, trim_offsets~, use_regex~)
+}
+
+///|
+pub fn Decoder::bpe_decoder(suffix? : String = "</w>") -> Decoder {
+  BPEDecoder(suffix~)
+}
+
+///|
+pub fn Decoder::strip(content : Char, start : Int, stop : Int) -> Decoder {
+  Strip(content~, start~, stop~)
+}
+
+///|
+pub fn Decoder::fuse() -> Decoder {
+  Fuse
+}
+
+///|
+pub fn Decoder::sequence(decoders : Array[Decoder]) -> Decoder {
+  Sequence(decoders)
+}
+
+///|
 pub fn Decoder::byte_fallback() -> Decoder {
   ByteFallback
 }

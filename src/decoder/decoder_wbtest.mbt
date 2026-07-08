@@ -569,6 +569,43 @@ test "decoders expose HF-style configuration getters" {
 }
 
 ///|
+test "decoder HF Python constructor aliases build existing variants" {
+  let bytelevel = Decoder::byte_level()
+  @test.assert_eq(bytelevel.kind(), "ByteLevel")
+  @test.assert_eq(bytelevel.add_prefix_space(), Some(true))
+  @test.assert_eq(bytelevel.trim_offsets(), Some(true))
+  @test.assert_eq(bytelevel.use_regex(), Some(true))
+  @test.assert_eq(
+    bytelevel.to_json(),
+    Some(
+      "{\"type\":\"ByteLevel\",\"add_prefix_space\":true,\"trim_offsets\":true,\"use_regex\":true}",
+    ),
+  )
+
+  let bpe = Decoder::bpe_decoder()
+  @test.assert_eq(bpe.kind(), "BPEDecoder")
+  @test.assert_eq(bpe.suffix(), Some("</w>"))
+  @test.assert_eq(bpe.decode_chain(["low</w>", "er"]), ["low ", "er"])
+
+  let strip = Decoder::strip(' ', 1, 1)
+  @test.assert_eq(strip.kind(), "Strip")
+  @test.assert_eq(strip.content(), Some(" "))
+  @test.assert_eq(strip.start(), Some(1))
+  @test.assert_eq(strip.stop(), Some(1))
+
+  let fused = Decoder::fuse()
+  @test.assert_eq(fused.kind(), "Fuse")
+  @test.assert_eq(fused.decode_chain(["low ", "er"]), ["low er"])
+
+  let sequence = Decoder::sequence([bpe, strip, fused])
+  @test.assert_eq(sequence.kind(), "Sequence")
+  @test.assert_eq(sequence.decoders().map(decoder => decoder.kind()), [
+    "BPEDecoder", "Strip", "Fuse",
+  ])
+  @test.assert_eq(sequence.decode_chain(["low</w>", "er "]), ["lower"])
+}
+
+///|
 test "decoders expose JSON state and string aliases" {
   let decoder = Decoder::Sequence([
     Decoder::replace("▁", " "),

@@ -229,6 +229,68 @@ test "pretokenizer exposes HF-style configuration getters" {
 }
 
 ///|
+test "pretokenizer HF-style factories wrap enum variants" {
+  @test.assert_eq(PreTokenizer::whitespace().kind(), "Whitespace")
+  @test.assert_eq(PreTokenizer::whitespace().pre_tokenize_str("Hi, moon"), [
+    ("Hi", (0, 2)),
+    (",", (2, 3)),
+    ("moon", (4, 8)),
+  ])
+
+  @test.assert_eq(PreTokenizer::bert_pre_tokenizer().kind(), "BertPreTokenizer")
+
+  let metaspace = PreTokenizer::metaspace()
+  @test.assert_eq(metaspace.kind(), "Metaspace")
+  @test.assert_eq(metaspace.replacement(), Some('▁'))
+  @test.assert_eq(metaspace.prepend_scheme(), Some("always"))
+  @test.assert_eq(metaspace.split_enabled(), Some(true))
+
+  let punctuation = PreTokenizer::punctuation()
+  @test.assert_eq(punctuation.kind(), "Punctuation")
+  @test.assert_eq(punctuation.behavior(), Some(Isolated))
+  @test.assert_eq(
+    PreTokenizer::punctuation(behavior=Contiguous).to_json(),
+    Some("{\"type\":\"Punctuation\",\"behavior\":\"Contiguous\"}"),
+  )
+
+  let digits = PreTokenizer::digits()
+  @test.assert_eq(digits.kind(), "Digits")
+  @test.assert_eq(digits.individual_digits(), Some(false))
+  @test.assert_eq(
+    PreTokenizer::digits(individual_digits=true).pre_tokenize_str("a12"),
+    [("a", (0, 1)), ("1", (1, 2)), ("2", (2, 3))],
+  )
+
+  let delimiter = PreTokenizer::char_delimiter_split(',')
+  @test.assert_eq(delimiter.kind(), "Delimiter")
+  @test.assert_eq(delimiter.delimiter(), Some(','))
+  @test.assert_eq(
+    delimiter.to_json(),
+    Some("{\"type\":\"Delimiter\",\"delimiter\":\",\"}"),
+  )
+  @test.assert_eq(delimiter.pre_tokenize_str("a,b,,c"), [
+    ("a", (0, 1)),
+    ("b", (2, 3)),
+    ("c", (5, 6)),
+  ])
+
+  let fixed = PreTokenizer::fixed_length()
+  @test.assert_eq(fixed.kind(), "FixedLength")
+  @test.assert_eq(fixed.length(), Some(5))
+
+  @test.assert_eq(PreTokenizer::unicode_scripts().kind(), "UnicodeScripts")
+
+  let sequence = PreTokenizer::sequence([
+    PreTokenizer::whitespace_split(),
+    PreTokenizer::digits(),
+  ])
+  @test.assert_eq(sequence.kind(), "Sequence")
+  @test.assert_eq(sequence.pre_tokenizers().map(p => p.kind()), [
+    "WhitespaceSplit", "Digits",
+  ])
+}
+
+///|
 test "pretokenizer exposes JSON state and string aliases" {
   let pre = PreTokenizer::Sequence([
     PreTokenizer::WhitespaceSplit,

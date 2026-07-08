@@ -283,14 +283,22 @@ the same 256-symbol table as `@pretokenizer.byte_level_alphabet()`.
 `PreTokenizer` also exposes read-only configuration getters for binding layers,
 including ByteLevel flags, Metaspace settings, Split/Punctuation behavior,
 Digits/Delimiter/FixedLength settings, and Sequence children.
+It also provides lower-snake builder aliases for common HF constructors such as
+`whitespace`, `metaspace`, `punctuation`, `digits`,
+`char_delimiter_split`, `fixed_length`, `unicode_scripts`, and `sequence`.
 `Normalizer::normalize_str(input)` is available as an HF-style alias for
 `normalize(input)`.
 `Normalizer` also exposes read-only configuration getters for binding layers,
 including `kind`, Strip left/right flags, Replace pattern/content, Prepend
 content, BertNormalizer flags, and Sequence child normalizers.
+It also provides lower-snake builder aliases for common typed constructors such
+as `nfc`, `nfd`, `nfkc`, `nfkd`, `byte_level`, `strip`, `replace`,
+`prepend_normalizer`, `bert_normalizer`, and `sequence`.
 `Decoder` exposes read-only configuration getters for binding layers, including
 ByteLevel flags, WordPiece prefix/cleanup, Metaspace settings, BPEDecoder
 suffix, Strip/Replace settings, CTC settings, and Sequence children.
+It also provides lower-snake builder aliases for common HF constructors such as
+`byte_level`, `bpe_decoder`, `strip`, `fuse`, and `sequence`.
 `PostProcessor` exposes read-only configuration getters for binding layers,
 including Bert/Roberta special token pairs, ByteLevel/Roberta flags,
 TemplateProcessing typed pieces and special tokens, and Sequence processors.

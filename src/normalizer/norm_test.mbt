@@ -535,6 +535,51 @@ test "normalizer exposes HF-style configuration getters" {
 }
 
 ///|
+test "normalizer HF-style factories wrap enum variants" {
+  @test.assert_eq(Normalizer::nfc().kind(), "NFC")
+  @test.assert_eq(Normalizer::nfd().kind(), "NFD")
+  @test.assert_eq(Normalizer::nfkc().normalize("Ａ"), "A")
+  @test.assert_eq(Normalizer::nfkd().kind(), "NFKD")
+  @test.assert_eq(
+    Normalizer::byte_level().normalize("Hi 我"),
+    Normalizer::ByteLevel.normalize("Hi 我"),
+  )
+
+  let strip = Normalizer::strip(left=false)
+  @test.assert_eq(strip.kind(), "Strip")
+  @test.assert_eq(strip.strip_left(), Some(false))
+  @test.assert_eq(strip.strip_right(), Some(true))
+  @test.assert_eq(
+    strip.to_json(),
+    Some("{\"type\":\"Strip\",\"strip_left\":false,\"strip_right\":true}"),
+  )
+
+  let replace = Normalizer::replace("\\s+", " ")
+  @test.assert_eq(replace.kind(), "Replace")
+  @test.assert_eq(replace.pattern(), Some("\\s+"))
+  @test.assert_eq(replace.content(), Some(" "))
+
+  let prepend = Normalizer::prepend_normalizer("▁")
+  @test.assert_eq(prepend.kind(), "Prepend")
+  @test.assert_eq(prepend.prepend(), Some("▁"))
+  @test.assert_eq(prepend.normalize("word"), "▁word")
+
+  let bert = Normalizer::bert_normalizer(lowercase=false)
+  @test.assert_eq(bert.kind(), "BertNormalizer")
+  @test.assert_eq(bert.lowercase(), Some(false))
+  @test.assert_eq(bert.strip_accents(), Some(false))
+  let forced_accents = Normalizer::bert_normalizer(
+    lowercase=false,
+    strip_accents=Some(true),
+  )
+  @test.assert_eq(forced_accents.strip_accents(), Some(true))
+
+  let seq = Normalizer::sequence([Normalizer::nfc(), replace])
+  @test.assert_eq(seq.kind(), "Sequence")
+  @test.assert_eq(seq.normalizers().map(n => n.kind()), ["NFC", "Replace"])
+}
+
+///|
 test "normalizer exposes JSON state and string aliases" {
   let norm = Normalizer::Sequence([
     Normalizer::Lowercase,

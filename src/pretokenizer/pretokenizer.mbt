@@ -266,6 +266,59 @@ pub fn PreTokenizer::whitespace_split() -> PreTokenizer {
 }
 
 ///|
+pub fn PreTokenizer::whitespace() -> PreTokenizer {
+  Whitespace
+}
+
+///|
+pub fn PreTokenizer::bert_pre_tokenizer() -> PreTokenizer {
+  BertPreTokenizer
+}
+
+///|
+pub fn PreTokenizer::metaspace(
+  replacement? : Char = '▁',
+  prepend_scheme? : String = "always",
+  split? : Bool = true,
+) -> PreTokenizer {
+  Metaspace(replacement~, prepend_scheme~, split~)
+}
+
+///|
+pub fn PreTokenizer::punctuation(
+  behavior? : SplitBehavior = Isolated,
+) -> PreTokenizer {
+  Punctuation(behavior~)
+}
+
+///|
+pub fn PreTokenizer::digits(individual_digits? : Bool = false) -> PreTokenizer {
+  Digits(individual_digits~)
+}
+
+///|
+pub fn PreTokenizer::char_delimiter_split(delimiter : Char) -> PreTokenizer {
+  Delimiter(delimiter~)
+}
+
+///|
+pub fn PreTokenizer::fixed_length(length? : Int = 5) -> PreTokenizer {
+  FixedLength(length~)
+}
+
+///|
+pub fn PreTokenizer::unicode_scripts() -> PreTokenizer {
+  UnicodeScripts
+}
+
+///|
+pub fn PreTokenizer::sequence(
+  pre_tokenizers : Array[PreTokenizer],
+) -> PreTokenizer {
+  Sequence(pre_tokenizers)
+}
+
+///|
 /// Public constructor for GPT-2/RoBERTa style ByteLevel pre-tokenization.
 pub fn PreTokenizer::byte_level(
   add_prefix_space? : Bool = false,

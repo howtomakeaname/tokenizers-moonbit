@@ -57,9 +57,13 @@ pub fn PreTokenizer::__setstate__(PreTokenizerState) -> Self raise @types.Tokeni
 pub fn PreTokenizer::__str__(Self) -> String raise @types.TokenizerError
 pub fn PreTokenizer::add_prefix_space(Self) -> Bool?
 pub fn PreTokenizer::behavior(Self) -> SplitBehavior?
+pub fn PreTokenizer::bert_pre_tokenizer() -> Self
 pub fn PreTokenizer::byte_level(add_prefix_space? : Bool, use_regex? : Bool, trim_offsets? : Bool) -> Self
 pub fn PreTokenizer::byte_level_alphabet() -> Array[String]
+pub fn PreTokenizer::char_delimiter_split(Char) -> Self
 pub fn PreTokenizer::delimiter(Self) -> Char?
+pub fn PreTokenizer::digits(individual_digits? : Bool) -> Self
+pub fn PreTokenizer::fixed_length(length? : Int) -> Self
 pub fn PreTokenizer::from_json(Json) -> Self raise @types.TokenizerError
 pub fn PreTokenizer::from_state(PreTokenizerState) -> Self raise @types.TokenizerError
 pub fn PreTokenizer::get_item(Self, Int) -> Self?
@@ -68,18 +72,23 @@ pub fn PreTokenizer::individual_digits(Self) -> Bool?
 pub fn PreTokenizer::invert(Self) -> Bool?
 pub fn PreTokenizer::kind(Self) -> String
 pub fn PreTokenizer::length(Self) -> Int?
+pub fn PreTokenizer::metaspace(replacement? : Char, prepend_scheme? : String, split? : Bool) -> Self
 pub fn PreTokenizer::pattern(Self) -> String?
 pub fn PreTokenizer::pre_tokenize(Self, String, base_offset? : Int) -> Array[@types.Split]
 pub fn PreTokenizer::pre_tokenize_str(Self, String) -> Array[(String, (Int, Int))]
 pub fn PreTokenizer::pre_tokenizers(Self) -> Array[Self]
 pub fn PreTokenizer::prepend_scheme(Self) -> String?
+pub fn PreTokenizer::punctuation(behavior? : SplitBehavior) -> Self
 pub fn PreTokenizer::regex(Self) -> Bool?
 pub fn PreTokenizer::replacement(Self) -> Char?
+pub fn PreTokenizer::sequence(Array[Self]) -> Self
 pub fn PreTokenizer::split(String, SplitBehavior, Bool, Bool) -> Self
 pub fn PreTokenizer::split_enabled(Self) -> Bool?
 pub fn PreTokenizer::to_json(Self) -> String?
 pub fn PreTokenizer::trim_offsets(Self) -> Bool?
+pub fn PreTokenizer::unicode_scripts() -> Self
 pub fn PreTokenizer::use_regex(Self) -> Bool?
+pub fn PreTokenizer::whitespace() -> Self
 pub fn PreTokenizer::whitespace_split() -> Self
 
 pub struct PreTokenizerState {
