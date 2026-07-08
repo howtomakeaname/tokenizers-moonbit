@@ -239,6 +239,26 @@ test "model unigram trainer accepts unk_piece alias" {
 }
 
 ///|
+test "model trainers accept no-op show_progress option" {
+  @test.assert_eq(
+    Model::train_wordlevel(["hello hello"], show_progress=false).to_json(),
+    Model::train_wordlevel(["hello hello"]).to_json(),
+  )
+  @test.assert_eq(
+    Model::train_wordpiece(
+      ["hello hello"],
+      continuing_subword_prefix="##",
+      show_progress=false,
+    ).to_json(),
+    Model::train_wordpiece(["hello hello"], continuing_subword_prefix="##").to_json(),
+  )
+  @test.assert_eq(
+    Model::train_bpe(["ab ab"], min_frequency=1, show_progress=false).to_json(),
+    Model::train_bpe(["ab ab"], min_frequency=1).to_json(),
+  )
+}
+
+///|
 test "model exposes HF-style cache maintenance aliases" {
   let bpe = Model::train_bpe(
     ["lower lower"],

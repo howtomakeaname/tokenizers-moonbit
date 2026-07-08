@@ -13,7 +13,9 @@ pub fn Model::train_wordlevel(
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Model {
+  ignore(show_progress)
   let tokenized : Array[Array[String]] = []
   for text in texts {
     tokenized.push(whitespace_words(text))
@@ -24,6 +26,7 @@ pub fn Model::train_wordlevel(
     min_frequency~,
     special_tokens~,
     vocab_size~,
+    show_progress~,
   )
 }
 
@@ -37,7 +40,9 @@ pub fn Model::train_wordlevel_from_tokens(
   min_frequency? : Int = 1,
   special_tokens? : Array[String] = [],
   vocab_size? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Model {
+  ignore(show_progress)
   let counts : Map[String, Int] = {}
   let order : Array[String] = []
   for tokens in tokenized_texts {
@@ -127,7 +132,9 @@ pub fn Model::train_wordpiece(
   max_token_length? : Int? = None,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Model {
+  ignore(show_progress)
   let tokenized : Array[Array[String]] = []
   for text in texts {
     tokenized.push(whitespace_words(text))
@@ -144,6 +151,7 @@ pub fn Model::train_wordpiece(
     max_token_length~,
     initial_alphabet~,
     limit_alphabet~,
+    show_progress~,
   )
 }
 
@@ -161,7 +169,9 @@ pub fn Model::train_wordpiece_from_tokens(
   max_token_length? : Int? = None,
   initial_alphabet? : Array[String] = [],
   limit_alphabet? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Model {
+  ignore(show_progress)
   let word_counts : Map[String, Int] = {}
   let word_order : Array[String] = []
   let piece_counts : Map[String, Int] = {}
@@ -304,7 +314,9 @@ pub fn Model::train_bpe(
   ignore_merges? : Bool = false,
   dropout? : Double? = None,
   cache_capacity? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Model {
+  ignore(show_progress)
   let tokenized : Array[Array[String]] = []
   for text in texts {
     tokenized.push(whitespace_words(text))
@@ -325,6 +337,7 @@ pub fn Model::train_bpe(
     ignore_merges~,
     dropout~,
     cache_capacity~,
+    show_progress~,
   )
 }
 
@@ -346,7 +359,9 @@ pub fn Model::train_bpe_from_tokens(
   ignore_merges? : Bool = false,
   dropout? : Double? = None,
   cache_capacity? : Int? = None,
+  show_progress? : Bool = true,
 ) -> Model {
+  ignore(show_progress)
   let word_counts : Map[String, Int] = {}
   let word_order : Array[String] = []
   let alphabet_counts : Map[String, Int] = {}
