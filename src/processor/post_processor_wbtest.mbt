@@ -1,0 +1,91 @@
+// PostProcessor white-box compatibility tests.
+
+///|
+test "post-processors expose HF-style configuration getters" {
+  let bert = PostProcessor::bert(("[SEP]", 102), ("[CLS]", 101))
+  @test.assert_eq(bert.kind(), "BertProcessing")
+  @test.assert_eq(bert.sep(), Some(("[SEP]", 102)))
+  @test.assert_eq(bert.cls(), Some(("[CLS]", 101)))
+  @test.assert_eq(bert.trim_offsets(), None)
+
+  let roberta = PostProcessor::roberta(
+    ("</s>", 2),
+    ("<s>", 0),
+    trim_offsets=false,
+    add_prefix_space=false,
+  )
+  @test.assert_eq(roberta.kind(), "RobertaProcessing")
+  @test.assert_eq(roberta.sep(), Some(("</s>", 2)))
+  @test.assert_eq(roberta.cls(), Some(("<s>", 0)))
+  @test.assert_eq(roberta.trim_offsets(), Some(false))
+  @test.assert_eq(roberta.add_prefix_space(), Some(false))
+
+  let bytelevel = PostProcessor::byte_level(
+    add_prefix_space=false,
+    trim_offsets=false,
+    use_regex=false,
+  )
+  @test.assert_eq(bytelevel.kind(), "ByteLevel")
+  @test.assert_eq(bytelevel.add_prefix_space(), Some(false))
+  @test.assert_eq(bytelevel.trim_offsets(), Some(false))
+  @test.assert_eq(bytelevel.use_regex(), Some(false))
+
+  let specials : Map[String, SpecialToken] = {}
+  specials["<s>"] = SpecialToken::new("<s>", [0], ["<s>"])
+  specials["</s>"] = SpecialToken::new("</s>", [1], ["</s>"])
+  let template = PostProcessor::template(
+    [SpecialTokenRef(id="<s>", type_id=0), SequenceRef(id="A", type_id=0)],
+    [
+      SpecialTokenRef(id="<s>", type_id=0),
+      SequenceRef(id="A", type_id=0),
+      SequenceRef(id="B", type_id=1),
+      SpecialTokenRef(id="</s>", type_id=1),
+    ],
+    specials,
+  )
+  @test.assert_eq(template.kind(), "TemplateProcessing")
+  @test.assert_eq(template.single_pieces(), [
+    SpecialTokenRef(id="<s>", type_id=0),
+    SequenceRef(id="A", type_id=0),
+  ])
+  @test.assert_eq(template.pair_pieces().length(), 4)
+  @test.assert_eq(
+    template.special_tokens().get("<s>"),
+    Some(SpecialToken::new("<s>", [0], ["<s>"])),
+  )
+
+  let seq = PostProcessor::sequence([bytelevel, bert])
+  @test.assert_eq(seq.kind(), "Sequence")
+  @test.assert_eq(seq.processors().map(p => p.kind()), [
+    "ByteLevel", "BertProcessing",
+  ])
+}
+
+///|
+test "post-processor aggregate getters return copies" {
+  let specials : Map[String, SpecialToken] = {}
+  specials["<multi>"] = SpecialToken::new("<multi>", [10, 11], ["<m>", "</m>"])
+  let template = PostProcessor::template(
+    [SpecialTokenRef(id="<multi>", type_id=0)],
+    [SpecialTokenRef(id="<multi>", type_id=1)],
+    specials,
+  )
+  let single = template.single_pieces()
+  single.push(SequenceRef(id="A", type_id=0))
+  @test.assert_eq(template.single_pieces().length(), 1)
+
+  let copied_specials = template.special_tokens()
+  copied_specials["<multi>"] = SpecialToken::new("<multi>", [99], ["<changed>"])
+  @test.assert_eq(
+    template.special_tokens().get("<multi>"),
+    Some(SpecialToken::new("<multi>", [10, 11], ["<m>", "</m>"])),
+  )
+
+  let seq = PostProcessor::sequence([
+    PostProcessor::byte_level(),
+    PostProcessor::bert(("[SEP]", 1), ("[CLS]", 2)),
+  ])
+  let processors = seq.processors()
+  processors.push(PostProcessor::byte_level(trim_offsets=false))
+  @test.assert_eq(seq.processors().length(), 2)
+}

@@ -50,6 +50,97 @@ pub enum PostProcessor {
 }
 
 ///|
+/// Return the post-processor family name used by thin binding layers.
+pub fn PostProcessor::kind(self : PostProcessor) -> String {
+  match self {
+    TemplateProcessing(..) => "TemplateProcessing"
+    BertProcessing(..) => "BertProcessing"
+    RobertaProcessing(..) => "RobertaProcessing"
+    ByteLevel(..) => "ByteLevel"
+    Sequence(_) => "Sequence"
+  }
+}
+
+///|
+pub fn PostProcessor::sep(self : PostProcessor) -> (String, Int)? {
+  match self {
+    BertProcessing(sep~, ..) => Some(sep)
+    RobertaProcessing(sep~, ..) => Some(sep)
+    _ => None
+  }
+}
+
+///|
+pub fn PostProcessor::cls(self : PostProcessor) -> (String, Int)? {
+  match self {
+    BertProcessing(cls~, ..) => Some(cls)
+    RobertaProcessing(cls~, ..) => Some(cls)
+    _ => None
+  }
+}
+
+///|
+pub fn PostProcessor::trim_offsets(self : PostProcessor) -> Bool? {
+  match self {
+    RobertaProcessing(trim_offsets~, ..) => Some(trim_offsets)
+    ByteLevel(trim_offsets~, ..) => Some(trim_offsets)
+    _ => None
+  }
+}
+
+///|
+pub fn PostProcessor::add_prefix_space(self : PostProcessor) -> Bool? {
+  match self {
+    RobertaProcessing(add_prefix_space~, ..) => Some(add_prefix_space)
+    ByteLevel(add_prefix_space~, ..) => Some(add_prefix_space)
+    _ => None
+  }
+}
+
+///|
+pub fn PostProcessor::use_regex(self : PostProcessor) -> Bool? {
+  match self {
+    ByteLevel(use_regex~, ..) => Some(use_regex)
+    _ => None
+  }
+}
+
+///|
+pub fn PostProcessor::single_pieces(self : PostProcessor) -> Array[Piece] {
+  match self {
+    TemplateProcessing(single~, ..) => single.copy()
+    _ => []
+  }
+}
+
+///|
+pub fn PostProcessor::pair_pieces(self : PostProcessor) -> Array[Piece] {
+  match self {
+    TemplateProcessing(pair~, ..) => pair.copy()
+    _ => []
+  }
+}
+
+///|
+pub fn PostProcessor::special_tokens(
+  self : PostProcessor,
+) -> Map[String, SpecialToken] {
+  match self {
+    TemplateProcessing(special_tokens~, ..) =>
+      copy_special_tokens(special_tokens)
+    _ => {}
+  }
+}
+
+///|
+pub fn PostProcessor::processors(self : PostProcessor) -> Array[PostProcessor] {
+  match self {
+    Sequence(steps) => steps.copy()
+    _ => []
+  }
+}
+
+///|
 /// Programmatic constructor for HF-style BERT post-processing:
 /// `[CLS] A [SEP]` and `[CLS] A [SEP] B [SEP]`.
 pub fn PostProcessor::bert(
@@ -357,6 +448,18 @@ fn count_specials(
     }
   }
   n
+}
+
+///|
+fn copy_special_tokens(
+  special_tokens : Map[String, SpecialToken],
+) -> Map[String, SpecialToken] {
+  let out : Map[String, SpecialToken] = {}
+  for kv in special_tokens {
+    let (key, st) = kv
+    out[key] = SpecialToken::new(st.id, st.ids, st.tokens)
+  }
+  out
 }
 
 ///|

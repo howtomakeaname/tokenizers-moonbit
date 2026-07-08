@@ -281,6 +281,9 @@ content, BertNormalizer flags, and Sequence child normalizers.
 `Decoder` exposes read-only configuration getters for binding layers, including
 ByteLevel flags, WordPiece prefix/cleanup, Metaspace settings, BPEDecoder
 suffix, Strip/Replace settings, CTC settings, and Sequence children.
+`PostProcessor` exposes read-only configuration getters for binding layers,
+including Bert/Roberta special token pairs, ByteLevel/Roberta flags,
+TemplateProcessing typed pieces and special tokens, and Sequence processors.
 
 `Encoding::words()` is available as a deprecated HF Python alias for
 `word_ids()`.

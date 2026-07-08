@@ -262,6 +262,9 @@ Split/Punctuation behavior、Digits/Delimiter/FixedLength 设置与 Sequence 子
 Replace pattern/content、Prepend 内容、BertNormalizer 标记与 Sequence 子 normalizer。
 `Decoder` 提供只读配置 getter，覆盖 ByteLevel 标记、WordPiece prefix/cleanup、
 Metaspace 设置、BPEDecoder suffix、Strip/Replace/CTC 设置与 Sequence 子项。
+`PostProcessor` 提供只读配置 getter，覆盖 Bert/Roberta special token pair、
+ByteLevel/Roberta 标记、TemplateProcessing typed pieces 与 special tokens、
+以及 Sequence processors。
 
 `Encoding::words()` 作为 HF Python 已废弃但仍存在的 `word_ids()` 属性别名提供。
 

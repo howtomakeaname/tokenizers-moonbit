@@ -1,3 +1,7 @@
 import {
   "howtomakeaname/tokenizers-moonbit/types",
 }
+
+import {
+  "moonbitlang/core/test",
+} for "wbtest"
