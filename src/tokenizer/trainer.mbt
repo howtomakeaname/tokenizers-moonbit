@@ -55,7 +55,8 @@ pub enum Trainer {
     max_piece_length~ : Int?,
     initial_alphabet~ : Array[String],
     n_sub_iterations~ : Int,
-    show_progress~ : Bool
+    show_progress~ : Bool,
+    seed_size~ : Int
   )
 } derive(Debug, Eq)
 
@@ -80,6 +81,7 @@ pub struct TrainerState {
   shrinking_factor : Double?
   max_piece_length : Int?
   n_sub_iterations : Int?
+  seed_size : Int?
   progress_format : String?
 } derive(Debug, Eq)
 
@@ -189,6 +191,7 @@ pub fn Trainer::unigram(
   initial_alphabet? : Array[String] = [],
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
+  seed_size? : Int = 1000000,
 ) -> Trainer {
   let unk_token = match unk_piece {
     Some(piece) => piece
@@ -207,6 +210,7 @@ pub fn Trainer::unigram(
     initial_alphabet~,
     n_sub_iterations~,
     show_progress~,
+    seed_size~,
   )
 }
 
@@ -369,6 +373,14 @@ pub fn Trainer::n_sub_iterations(self : Trainer) -> Int? {
 }
 
 ///|
+pub fn Trainer::seed_size(self : Trainer) -> Int? {
+  match self {
+    UnigramTrainer(seed_size~, ..) => Some(seed_size)
+    _ => None
+  }
+}
+
+///|
 pub fn Trainer::progress_format(self : Trainer) -> String? {
   match self {
     BpeTrainer(progress_format~, ..) => Some(progress_format)
@@ -397,6 +409,7 @@ pub fn Trainer::get_state(self : Trainer) -> TrainerState {
     shrinking_factor: self.shrinking_factor(),
     max_piece_length: self.max_piece_length(),
     n_sub_iterations: self.n_sub_iterations(),
+    seed_size: self.seed_size(),
     progress_format: self.progress_format(),
   }
 }
@@ -462,6 +475,7 @@ pub fn Trainer::from_state(
         initial_alphabet=state.initial_alphabet,
         n_sub_iterations=state.n_sub_iterations.unwrap_or(2),
         show_progress=state.show_progress,
+        seed_size=state.seed_size.unwrap_or(1000000),
       )
     other => raise @types.UnsupportedComponent("trainer type: \{other}")
   }
@@ -528,6 +542,8 @@ fn trainer_state_to_json(state : TrainerState) -> String {
   write_optional_int_json(sb, state.max_piece_length)
   sb.write_string(",\"n_sub_iterations\":")
   write_optional_int_json(sb, state.n_sub_iterations)
+  sb.write_string(",\"seed_size\":")
+  write_optional_int_json(sb, state.seed_size)
   sb.write_string(",\"progress_format\":")
   write_optional_string_json(sb, state.progress_format)
   sb.write_char('}')
@@ -716,6 +732,7 @@ pub fn Tokenizer::train_from_iterator(
       initial_alphabet~,
       n_sub_iterations~,
       show_progress~,
+      seed_size~,
       ..
     ) =>
       @model.Model::train_unigram_from_tokens(
@@ -731,6 +748,7 @@ pub fn Tokenizer::train_from_iterator(
         shrinking_factor~,
         n_sub_iterations~,
         show_progress~,
+        seed_size~,
       )
   }
   let trained = {
@@ -1243,6 +1261,7 @@ pub fn Tokenizer::train_unigram(
   shrinking_factor? : Double = 0.75,
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
+  seed_size? : Int = 1000000,
 ) -> Tokenizer {
   let unk_token = match unk_piece {
     Some(piece) => piece
@@ -1262,6 +1281,7 @@ pub fn Tokenizer::train_unigram(
     shrinking_factor~,
     n_sub_iterations~,
     show_progress~,
+    seed_size~,
   )
 }
 
@@ -1282,6 +1302,7 @@ pub fn Tokenizer::train_unigram_with_pretokenizer(
   shrinking_factor? : Double = 0.75,
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
+  seed_size? : Int = 1000000,
 ) -> Tokenizer {
   let unk_token = match unk_piece {
     Some(piece) => piece
@@ -1307,6 +1328,7 @@ pub fn Tokenizer::train_unigram_with_pretokenizer(
     shrinking_factor~,
     n_sub_iterations~,
     show_progress~,
+    seed_size~,
   )
 }
 
@@ -1327,6 +1349,7 @@ pub fn Tokenizer::train_unigram_from_tokens(
   shrinking_factor? : Double = 0.75,
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
+  seed_size? : Int = 1000000,
 ) -> Tokenizer {
   let unk_token = match unk_piece {
     Some(piece) => piece
@@ -1348,6 +1371,7 @@ pub fn Tokenizer::train_unigram_from_tokens(
       shrinking_factor~,
       n_sub_iterations~,
       show_progress~,
+      seed_size~,
     ),
     post_processor: None,
     decoder: None,

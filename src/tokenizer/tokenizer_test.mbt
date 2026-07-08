@@ -2496,6 +2496,7 @@ test "Trainer exposes HF-style configuration getters" {
     max_piece_length=Some(4),
     initial_alphabet=["z", "xy"],
     n_sub_iterations=3,
+    seed_size=128,
   )
   @test.assert_eq(unigram.kind(), "UnigramTrainer")
   @test.assert_eq(unigram.unk_token(), Some("<UNK>"))
@@ -2505,8 +2506,10 @@ test "Trainer exposes HF-style configuration getters" {
   @test.assert_eq(unigram.max_piece_length(), Some(4))
   @test.assert_eq(unigram.initial_alphabet(), ["z", "xy"])
   @test.assert_eq(unigram.n_sub_iterations(), Some(3))
+  @test.assert_eq(unigram.seed_size(), Some(128))
   @test.assert_eq(unigram.continuing_subword_prefix(), None)
   @test.assert_eq(unigram.progress_format(), None)
+  @test.assert_eq(Trainer::unigram().seed_size(), Some(1000000))
 }
 
 ///|
@@ -2582,6 +2585,31 @@ test "Trainer exposes state and string aliases" {
     Trainer::bpe(progress_format="unknown").progress_format(),
     Some("indicatif"),
   )
+}
+
+///|
+test "Trainer unigram seed_size state defaults and roundtrips" {
+  let default_trainer = Trainer::unigram(show_progress=false)
+  let default_state = default_trainer.__getstate__()
+  @test.assert_eq(default_state.seed_size, Some(1000000))
+  @test.assert_eq(default_trainer.seed_size(), Some(1000000))
+  @test.assert_eq(
+    default_trainer.__str__().contains("\"seed_size\":1000000"),
+    true,
+  )
+
+  let trainer = Trainer::unigram(
+    initial_alphabet=["z"],
+    seed_size=3,
+    show_progress=false,
+  )
+  let state = trainer.__getstate__()
+  @test.assert_eq(state.seed_size, Some(3))
+  let restored = Trainer::from_state(state)
+  @test.assert_eq(restored.kind(), "UnigramTrainer")
+  @test.assert_eq(restored.initial_alphabet(), ["z"])
+  @test.assert_eq(restored.seed_size(), Some(3))
+  @test.assert_eq(restored.__str__().contains("\"seed_size\":3"), true)
 }
 
 ///|
@@ -3077,7 +3105,7 @@ test "train_unigram respects vocab_size cap" {
 }
 
 ///|
-test "train_unigram ranks EM candidates before applying vocab cap" {
+test "train_unigram ranks deterministic candidates before applying vocab cap" {
   let tok = Tokenizer::train_unigram(
     ["alpha alpha alp alp ha ha"],
     unk_token="<unk>",
@@ -3140,6 +3168,35 @@ test "train_unigram preserves initial alphabet" {
   @test.assert_eq(tok.token_to_id("xy"), None)
   @test.assert_eq(tok.token_to_id("a"), Some(3))
   @test.assert_eq(tok.token_to_id("aa"), None)
+}
+
+///|
+test "train_unigram seed_size caps ranked seeds after characters" {
+  let chars_only = Tokenizer::train_unigram(
+    ["ab ab"],
+    unk_token="<unk>",
+    seed_size=2,
+    show_progress=false,
+  )
+  @test.assert_eq(chars_only.token_to_id("a") is Some(_), true)
+  @test.assert_eq(chars_only.token_to_id("b") is Some(_), true)
+  @test.assert_eq(chars_only.token_to_id("ab"), None)
+  @test.assert_eq(chars_only.encode("ab", add_special_tokens=false).tokens, [
+    "a", "b",
+  ])
+
+  let with_top_seed = Tokenizer::train_unigram(
+    ["ab ab"],
+    unk_token="<unk>",
+    seed_size=3,
+    show_progress=false,
+  )
+  @test.assert_eq(with_top_seed.token_to_id("a") is Some(_), true)
+  @test.assert_eq(with_top_seed.token_to_id("b") is Some(_), true)
+  @test.assert_eq(with_top_seed.token_to_id("ab") is Some(_), true)
+  @test.assert_eq(with_top_seed.encode("ab", add_special_tokens=false).tokens, [
+    "ab",
+  ])
 }
 
 ///|

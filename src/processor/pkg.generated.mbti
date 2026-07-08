@@ -36,6 +36,7 @@ pub fn PostProcessor::from_json(Json) -> Self raise @types.TokenizerError
 pub fn PostProcessor::from_state(PostProcessorState) -> Self raise @types.TokenizerError
 pub fn PostProcessor::get_state(Self) -> PostProcessorState raise @types.TokenizerError
 pub fn PostProcessor::kind(Self) -> String
+pub fn PostProcessor::num_special_tokens_to_add(Self, is_pair? : Bool) -> Int
 pub fn PostProcessor::pair_pieces(Self) -> Array[Piece]
 pub fn PostProcessor::process(Self, @types.Encoding, @types.Encoding?) -> @types.Encoding
 pub fn PostProcessor::processors(Self) -> Array[Self]

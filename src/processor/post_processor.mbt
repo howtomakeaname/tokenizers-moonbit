@@ -501,6 +501,15 @@ pub fn PostProcessor::added_tokens(
 }
 
 ///|
+/// HF Python binding alias for `added_tokens(pair=is_pair)`.
+pub fn PostProcessor::num_special_tokens_to_add(
+  self : PostProcessor,
+  is_pair? : Bool = false,
+) -> Int {
+  self.added_tokens(pair=is_pair)
+}
+
+///|
 fn count_specials(
   pieces : Array[Piece],
   special_tokens : Map[String, SpecialToken],

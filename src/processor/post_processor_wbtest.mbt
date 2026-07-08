@@ -91,6 +91,34 @@ test "post-processor aggregate getters return copies" {
 }
 
 ///|
+test "post-processors expose num_special_tokens_to_add alias" {
+  let bert = PostProcessor::bert(("[SEP]", 102), ("[CLS]", 101))
+  @test.assert_eq(bert.num_special_tokens_to_add(), 2)
+  @test.assert_eq(bert.num_special_tokens_to_add(is_pair=true), 3)
+
+  let roberta = PostProcessor::roberta(("</s>", 2), ("<s>", 0))
+  @test.assert_eq(roberta.num_special_tokens_to_add(), 2)
+  @test.assert_eq(roberta.num_special_tokens_to_add(is_pair=true), 4)
+
+  let specials : Map[String, SpecialToken] = {}
+  specials["<multi>"] = SpecialToken::new("<multi>", [10, 11], ["<m>", "</m>"])
+  let template = PostProcessor::template(
+    [SpecialTokenRef(id="<multi>", type_id=0)],
+    [SpecialTokenRef(id="<multi>", type_id=0), SequenceRef(id="B", type_id=1)],
+    specials,
+  )
+  @test.assert_eq(template.num_special_tokens_to_add(), 2)
+  @test.assert_eq(template.num_special_tokens_to_add(is_pair=true), 2)
+
+  let seq = PostProcessor::sequence([PostProcessor::byte_level(), bert])
+  @test.assert_eq(seq.num_special_tokens_to_add(is_pair=true), 3)
+  @test.assert_eq(
+    seq.num_special_tokens_to_add(is_pair=true),
+    seq.added_tokens(pair=true),
+  )
+}
+
+///|
 test "post-processors expose JSON state and string aliases" {
   let specials : Map[String, SpecialToken] = {}
   specials["<s>"] = SpecialToken::new("<s>", [0], ["<s>"])

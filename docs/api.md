@@ -212,6 +212,8 @@ special tokens that appear in input text stay on the ordinary model path instead
 of being extracted as special added tokens. `post_process` exposes the configured
 post-processor for already-built encodings, and `num_special_tokens_to_add`
 reports how many special tokens would be injected for single or pair inputs.
+The same count is also available on `PostProcessor` as
+`num_special_tokens_to_add(is_pair)` for HF Python binding parity.
 
 ## Added tokens
 
@@ -302,8 +304,9 @@ summary with token count and exposed attribute names.
 Unigram trainers. BPE trainers also preserve `progress_format` as configuration
 state (`"indicatif"`, `"json"`, or `"silent"`) while progress output remains a
 cross-target no-op. Unigram training also accepts `initial_alphabet`, matching
-HF's first-character retention rule for multi-character entries. These helpers
-are intended for binding/property mapping and do not change training behavior.
+HF's first-character retention rule for multi-character entries, and preserves
+`seed_size` as the deterministic MVP's ranked candidate cap. These helpers are
+intended for binding/property mapping and do not change training behavior.
 `TrainerState` plus `get_state` / `from_state` / `__getstate__` /
 `__setstate__` preserve the same typed configuration, including `AddedToken`
 metadata, and `__str__` / `__repr__` return a compact JSON view for binding logs

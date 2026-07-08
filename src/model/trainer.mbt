@@ -668,7 +668,7 @@ fn replace_bpe_pair(
 ///
 /// This MVP provides a compact, serializable Unigram vocabulary suitable for
 /// local migration workflows. It reserves the unk token, then adds a character
-/// alphabet and high-frequency whole pre-tokens with deterministic scores that
+/// alphabet and ranked whole/subpiece candidates with deterministic scores that
 /// make known whole words preferred over character segmentation.
 pub fn Model::train_unigram(
   texts : Array[String],
@@ -683,6 +683,7 @@ pub fn Model::train_unigram(
   shrinking_factor? : Double = 0.75,
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
+  seed_size? : Int = 1000000,
 ) -> Model {
   ignore(shrinking_factor)
   ignore(n_sub_iterations)
@@ -704,6 +705,7 @@ pub fn Model::train_unigram(
     shrinking_factor~,
     n_sub_iterations~,
     show_progress~,
+    seed_size~,
   )
 }
 
@@ -722,6 +724,7 @@ pub fn Model::train_unigram_from_tokens(
   shrinking_factor? : Double = 0.75,
   n_sub_iterations? : Int = 2,
   show_progress? : Bool = true,
+  seed_size? : Int = 1000000,
 ) -> Model {
   ignore(show_progress)
   let word_counts : Map[String, Int] = {}
@@ -770,6 +773,7 @@ pub fn Model::train_unigram_from_tokens(
     }
   }
 
+  let char_seed_start = vocab_r.length()
   for tok in initial_alphabet {
     match initial_alphabet_piece(tok) {
       Some(piece) => ignore(add_token(piece, -10.0))
@@ -780,6 +784,7 @@ pub fn Model::train_unigram_from_tokens(
   for item in chars {
     ignore(add_token(item.0, -10.0))
   }
+  let char_seed_count = vocab_r.length() - char_seed_start
 
   let candidates = select_unigram_candidates(
     piece_order,
@@ -792,6 +797,8 @@ pub fn Model::train_unigram_from_tokens(
     vocab_size~,
     shrinking_factor~,
     n_sub_iterations~,
+    seed_size~,
+    char_seed_count~,
   )
   for item in candidates {
     ignore(add_token(item.token, item.score))
@@ -829,6 +836,8 @@ fn select_unigram_candidates(
   vocab_size~ : Int?,
   shrinking_factor~ : Double,
   n_sub_iterations~ : Int,
+  seed_size~ : Int,
+  char_seed_count~ : Int,
 ) -> Array[UnigramTrainCandidate] {
   let candidates : Array[UnigramTrainCandidate] = []
   for
@@ -856,14 +865,31 @@ fn select_unigram_candidates(
     }
   }
   candidates.sort_by(unigram_candidate_compare)
-  let target = unigram_candidate_target(
-    current_size,
-    vocab_size,
+  let seed_target = unigram_seed_candidate_target(
+    seed_size,
+    char_seed_count,
     candidates.length(),
   )
+  let target = unigram_candidate_target(current_size, vocab_size, seed_target)
   unigram_shrink_candidates(
     candidates, target, shrinking_factor, n_sub_iterations,
   )
+}
+
+///|
+fn unigram_seed_candidate_target(
+  seed_size : Int,
+  char_seed_count : Int,
+  available : Int,
+) -> Int {
+  let remaining = seed_size - char_seed_count
+  if remaining <= 0 {
+    0
+  } else if remaining < available {
+    remaining
+  } else {
+    available
+  }
 }
 
 ///|
