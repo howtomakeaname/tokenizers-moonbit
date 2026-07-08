@@ -226,6 +226,26 @@ test "pretokenizer exposes HF-style configuration getters" {
 }
 
 ///|
+test "pretokenizer exposes JSON state and string aliases" {
+  let pre = PreTokenizer::Sequence([
+    PreTokenizer::WhitespaceSplit,
+    PreTokenizer::Digits(individual_digits=false),
+  ])
+  let state = pre.__getstate__()
+  @test.assert_eq(pre.__str__(), state.json)
+  @test.assert_eq(pre.__repr__(), state.json)
+  @test.assert_eq(PreTokenizer::__setstate__(state).to_json(), pre.to_json())
+
+  let parsed = PreTokenizer::from_state(
+    PreTokenizerState::new(
+      "{\"type\":\"ByteLevel\",\"add_prefix_space\":true,\"use_regex\":false,\"trim_offsets\":true}",
+    ),
+  )
+  @test.assert_eq(parsed.kind(), "ByteLevel")
+  @test.assert_eq(parsed.use_regex(), Some(false))
+}
+
+///|
 test "split pretokenizer supports inverted literal behavior modes" {
   let removed = PreTokenizer::Split(
     pattern="Hello",

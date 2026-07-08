@@ -3,6 +3,7 @@ package "howtomakeaname/tokenizers-moonbit/decoder"
 
 import {
   "howtomakeaname/tokenizers-moonbit/types",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -22,6 +23,10 @@ pub enum Decoder {
   CTC(pad_token~ : String, word_delimiter_token~ : String, cleanup~ : Bool)
   Sequence(Array[Decoder])
 }
+pub fn Decoder::__getstate__(Self) -> DecoderState raise @types.TokenizerError
+pub fn Decoder::__repr__(Self) -> String raise @types.TokenizerError
+pub fn Decoder::__setstate__(DecoderState) -> Self raise @types.TokenizerError
+pub fn Decoder::__str__(Self) -> String raise @types.TokenizerError
 pub fn Decoder::add_prefix_space(Self) -> Bool?
 pub fn Decoder::byte_fallback() -> Self
 pub fn Decoder::cleanup(Self) -> Bool?
@@ -31,6 +36,8 @@ pub fn Decoder::decode(Self, Array[String]) -> String
 pub fn Decoder::decode_chain(Self, Array[String]) -> Array[String]
 pub fn Decoder::decoders(Self) -> Array[Self]
 pub fn Decoder::from_json(Json) -> Self raise @types.TokenizerError
+pub fn Decoder::from_state(DecoderState) -> Self raise @types.TokenizerError
+pub fn Decoder::get_state(Self) -> DecoderState raise @types.TokenizerError
 pub fn Decoder::kind(Self) -> String
 pub fn Decoder::pad_token(Self) -> String?
 pub fn Decoder::pattern(Self) -> String?
@@ -46,6 +53,11 @@ pub fn Decoder::trim_offsets(Self) -> Bool?
 pub fn Decoder::use_regex(Self) -> Bool?
 pub fn Decoder::word_delimiter_token(Self) -> String?
 pub fn Decoder::wordpiece(prefix? : String, cleanup? : Bool) -> Self
+
+pub struct DecoderState {
+  json : String
+} derive(Eq, @debug.Debug)
+pub fn DecoderState::new(String) -> Self
 
 // Type aliases
 

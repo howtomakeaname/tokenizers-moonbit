@@ -284,6 +284,10 @@ suffix, Strip/Replace settings, CTC settings, and Sequence children.
 `PostProcessor` exposes read-only configuration getters for binding layers,
 including Bert/Roberta special token pairs, ByteLevel/Roberta flags,
 TemplateProcessing typed pieces and special tokens, and Sequence processors.
+`Normalizer`, `PreTokenizer`, `Decoder`, and `PostProcessor` also expose
+JSON-backed `get_state` / `from_state` / `__getstate__` / `__setstate__` plus
+`__str__` / `__repr__` aliases. Components without a serialized JSON form report
+an unsupported-component error instead of returning lossy state.
 
 `Encoding::words()` is available as a deprecated HF Python alias for
 `word_ids()`.

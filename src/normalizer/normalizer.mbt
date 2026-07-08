@@ -38,6 +38,17 @@ pub(all) enum Normalizer {
 }
 
 ///|
+/// JSON-backed component state used by thin binding layers.
+pub struct NormalizerState {
+  json : String
+} derive(Debug, Eq)
+
+///|
+pub fn NormalizerState::new(json : String) -> NormalizerState {
+  { json, }
+}
+
+///|
 /// Return the normalizer family name used by thin binding layers.
 pub fn Normalizer::kind(self : Normalizer) -> String {
   match self {
@@ -135,6 +146,62 @@ pub fn Normalizer::normalizers(self : Normalizer) -> Array[Normalizer] {
   match self {
     Sequence(steps) => steps.copy()
     _ => []
+  }
+}
+
+///|
+pub fn Normalizer::get_state(
+  self : Normalizer,
+) -> NormalizerState raise @types.TokenizerError {
+  { json: self.state_json() }
+}
+
+///|
+pub fn Normalizer::from_state(
+  state : NormalizerState,
+) -> Normalizer raise @types.TokenizerError {
+  let parsed = @json.parse(state.json) catch {
+    err => raise @types.ParseError("invalid normalizer state: \{err}")
+  }
+  Normalizer::from_json(parsed)
+}
+
+///|
+pub fn Normalizer::__getstate__(
+  self : Normalizer,
+) -> NormalizerState raise @types.TokenizerError {
+  self.get_state()
+}
+
+///|
+pub fn Normalizer::__setstate__(
+  state : NormalizerState,
+) -> Normalizer raise @types.TokenizerError {
+  Normalizer::from_state(state)
+}
+
+///|
+pub fn Normalizer::__str__(
+  self : Normalizer,
+) -> String raise @types.TokenizerError {
+  self.state_json()
+}
+
+///|
+pub fn Normalizer::__repr__(
+  self : Normalizer,
+) -> String raise @types.TokenizerError {
+  self.state_json()
+}
+
+///|
+fn Normalizer::state_json(
+  self : Normalizer,
+) -> String raise @types.TokenizerError {
+  match self.to_json() {
+    Some(json) => json
+    None =>
+      raise @types.UnsupportedComponent("normalizer has no serialized state")
   }
 }
 

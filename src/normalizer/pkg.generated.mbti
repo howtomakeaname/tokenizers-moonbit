@@ -3,6 +3,7 @@ package "howtomakeaname/tokenizers-moonbit/normalizer"
 
 import {
   "howtomakeaname/tokenizers-moonbit/types",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -38,9 +39,15 @@ pub(all) enum Normalizer {
   BertNormalizer(clean_text~ : Bool, handle_chinese_chars~ : Bool, strip_accents~ : Bool, lowercase~ : Bool)
   Sequence(Array[Normalizer])
 }
+pub fn Normalizer::__getstate__(Self) -> NormalizerState raise @types.TokenizerError
+pub fn Normalizer::__repr__(Self) -> String raise @types.TokenizerError
+pub fn Normalizer::__setstate__(NormalizerState) -> Self raise @types.TokenizerError
+pub fn Normalizer::__str__(Self) -> String raise @types.TokenizerError
 pub fn Normalizer::clean_text(Self) -> Bool?
 pub fn Normalizer::content(Self) -> String?
 pub fn Normalizer::from_json(Json) -> Self raise @types.TokenizerError
+pub fn Normalizer::from_state(NormalizerState) -> Self raise @types.TokenizerError
+pub fn Normalizer::get_state(Self) -> NormalizerState raise @types.TokenizerError
 pub fn Normalizer::handle_chinese_chars(Self) -> Bool?
 pub fn Normalizer::kind(Self) -> String
 pub fn Normalizer::lowercase(Self) -> Bool?
@@ -53,6 +60,11 @@ pub fn Normalizer::strip_accents(Self) -> Bool?
 pub fn Normalizer::strip_left(Self) -> Bool?
 pub fn Normalizer::strip_right(Self) -> Bool?
 pub fn Normalizer::to_json(Self) -> String?
+
+pub struct NormalizerState {
+  json : String
+} derive(Eq, @debug.Debug)
+pub fn NormalizerState::new(String) -> Self
 
 pub(all) struct PrecompiledCharsMap {
   trie : Array[Int]

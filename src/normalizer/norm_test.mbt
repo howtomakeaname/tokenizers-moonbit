@@ -529,3 +529,37 @@ test "normalizer exposes HF-style configuration getters" {
   @test.assert_eq(Normalizer::NFC.kind(), "NFC")
   @test.assert_eq(Normalizer::Lowercase.pattern(), None)
 }
+
+///|
+test "normalizer exposes JSON state and string aliases" {
+  let norm = Normalizer::Sequence([
+    Normalizer::Lowercase,
+    Normalizer::Replace(pattern="\\s+", content=" "),
+  ])
+  let state = norm.__getstate__()
+  @test.assert_eq(norm.__str__(), state.json)
+  @test.assert_eq(norm.__repr__(), state.json)
+  @test.assert_eq(Normalizer::__setstate__(state).to_json(), norm.to_json())
+
+  let parsed = Normalizer::from_state(
+    NormalizerState::new(
+      "{\"type\":\"Strip\",\"strip_left\":true,\"strip_right\":false}",
+    ),
+  )
+  @test.assert_eq(parsed.kind(), "Strip")
+  @test.assert_eq(parsed.strip_right(), Some(false))
+}
+
+///|
+test "normalizer state rejects components without serialized JSON" {
+  let json = "{\"type\":\"Precompiled\",\"precompiled_charsmap\":\"" +
+    "DAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQQ0AAAAAAAB4AA==" +
+    "\"}"
+  let norm = Normalizer::from_json(@json.parse(json))
+  let mut raised = false
+  try norm.__getstate__() |> ignore catch {
+    @types.UnsupportedComponent(_) => raised = true
+    _ => ()
+  }
+  @test.assert_eq(raised, true)
+}

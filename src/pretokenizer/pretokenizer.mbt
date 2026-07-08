@@ -36,6 +36,17 @@ pub enum PreTokenizer {
 }
 
 ///|
+/// JSON-backed component state used by thin binding layers.
+pub struct PreTokenizerState {
+  json : String
+} derive(Debug, Eq)
+
+///|
+pub fn PreTokenizerState::new(json : String) -> PreTokenizerState {
+  { json, }
+}
+
+///|
 /// Return the pre-tokenizer family name used by thin binding layers.
 pub fn PreTokenizer::kind(self : PreTokenizer) -> String {
   match self {
@@ -51,6 +62,62 @@ pub fn PreTokenizer::kind(self : PreTokenizer) -> String {
     FixedLength(..) => "FixedLength"
     UnicodeScripts => "UnicodeScripts"
     Sequence(_) => "Sequence"
+  }
+}
+
+///|
+pub fn PreTokenizer::get_state(
+  self : PreTokenizer,
+) -> PreTokenizerState raise @types.TokenizerError {
+  { json: self.state_json() }
+}
+
+///|
+pub fn PreTokenizer::from_state(
+  state : PreTokenizerState,
+) -> PreTokenizer raise @types.TokenizerError {
+  let parsed = @json.parse(state.json) catch {
+    err => raise @types.ParseError("invalid pre-tokenizer state: \{err}")
+  }
+  PreTokenizer::from_json(parsed)
+}
+
+///|
+pub fn PreTokenizer::__getstate__(
+  self : PreTokenizer,
+) -> PreTokenizerState raise @types.TokenizerError {
+  self.get_state()
+}
+
+///|
+pub fn PreTokenizer::__setstate__(
+  state : PreTokenizerState,
+) -> PreTokenizer raise @types.TokenizerError {
+  PreTokenizer::from_state(state)
+}
+
+///|
+pub fn PreTokenizer::__str__(
+  self : PreTokenizer,
+) -> String raise @types.TokenizerError {
+  self.state_json()
+}
+
+///|
+pub fn PreTokenizer::__repr__(
+  self : PreTokenizer,
+) -> String raise @types.TokenizerError {
+  self.state_json()
+}
+
+///|
+fn PreTokenizer::state_json(
+  self : PreTokenizer,
+) -> String raise @types.TokenizerError {
+  match self.to_json() {
+    Some(json) => json
+    None =>
+      raise @types.UnsupportedComponent("pre_tokenizer has no serialized state")
   }
 }
 

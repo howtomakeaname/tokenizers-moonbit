@@ -567,3 +567,23 @@ test "decoders expose HF-style configuration getters" {
   @test.assert_eq(Decoder::byte_fallback().kind(), "ByteFallback")
   @test.assert_eq(Decoder::Fuse.pattern(), None)
 }
+
+///|
+test "decoders expose JSON state and string aliases" {
+  let decoder = Decoder::Sequence([
+    Decoder::replace("▁", " "),
+    Decoder::wordpiece(prefix="@@", cleanup=false),
+  ])
+  let state = decoder.__getstate__()
+  @test.assert_eq(decoder.__str__(), state.json)
+  @test.assert_eq(decoder.__repr__(), state.json)
+  @test.assert_eq(Decoder::__setstate__(state).to_json(), decoder.to_json())
+
+  let parsed = Decoder::from_state(
+    DecoderState::new(
+      "{\"type\":\"WordPiece\",\"prefix\":\"@@\",\"cleanup\":false}",
+    ),
+  )
+  @test.assert_eq(parsed.kind(), "WordPiece")
+  @test.assert_eq(parsed.cleanup(), Some(false))
+}

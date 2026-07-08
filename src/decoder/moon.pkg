@@ -4,6 +4,7 @@ import {
   "howtomakeaname/tokenizers-moonbit/pretokenizer",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/buffer",
+  "moonbitlang/core/json",
 }
 
 import {

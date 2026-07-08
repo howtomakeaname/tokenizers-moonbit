@@ -23,12 +23,18 @@ pub enum PostProcessor {
   ByteLevel(add_prefix_space~ : Bool, trim_offsets~ : Bool, use_regex~ : Bool)
   Sequence(Array[PostProcessor])
 }
+pub fn PostProcessor::__getstate__(Self) -> PostProcessorState raise @types.TokenizerError
+pub fn PostProcessor::__repr__(Self) -> String raise @types.TokenizerError
+pub fn PostProcessor::__setstate__(PostProcessorState) -> Self raise @types.TokenizerError
+pub fn PostProcessor::__str__(Self) -> String raise @types.TokenizerError
 pub fn PostProcessor::add_prefix_space(Self) -> Bool?
 pub fn PostProcessor::added_tokens(Self, pair? : Bool) -> Int
 pub fn PostProcessor::bert((String, Int), (String, Int)) -> Self
 pub fn PostProcessor::byte_level(add_prefix_space? : Bool, trim_offsets? : Bool, use_regex? : Bool) -> Self
 pub fn PostProcessor::cls(Self) -> (String, Int)?
 pub fn PostProcessor::from_json(Json) -> Self raise @types.TokenizerError
+pub fn PostProcessor::from_state(PostProcessorState) -> Self raise @types.TokenizerError
+pub fn PostProcessor::get_state(Self) -> PostProcessorState raise @types.TokenizerError
 pub fn PostProcessor::kind(Self) -> String
 pub fn PostProcessor::pair_pieces(Self) -> Array[Piece]
 pub fn PostProcessor::process(Self, @types.Encoding, @types.Encoding?) -> @types.Encoding
@@ -43,6 +49,11 @@ pub fn PostProcessor::template_from_strings(String, String, Map[String, SpecialT
 pub fn PostProcessor::to_json(Self) -> String?
 pub fn PostProcessor::trim_offsets(Self) -> Bool?
 pub fn PostProcessor::use_regex(Self) -> Bool?
+
+pub struct PostProcessorState {
+  json : String
+} derive(Eq, @debug.Debug)
+pub fn PostProcessorState::new(String) -> Self
 
 pub struct SpecialToken {
   id : String

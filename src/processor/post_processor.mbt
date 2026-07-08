@@ -50,6 +50,17 @@ pub enum PostProcessor {
 }
 
 ///|
+/// JSON-backed component state used by thin binding layers.
+pub struct PostProcessorState {
+  json : String
+} derive(Debug, Eq)
+
+///|
+pub fn PostProcessorState::new(json : String) -> PostProcessorState {
+  { json, }
+}
+
+///|
 /// Return the post-processor family name used by thin binding layers.
 pub fn PostProcessor::kind(self : PostProcessor) -> String {
   match self {
@@ -58,6 +69,64 @@ pub fn PostProcessor::kind(self : PostProcessor) -> String {
     RobertaProcessing(..) => "RobertaProcessing"
     ByteLevel(..) => "ByteLevel"
     Sequence(_) => "Sequence"
+  }
+}
+
+///|
+pub fn PostProcessor::get_state(
+  self : PostProcessor,
+) -> PostProcessorState raise @types.TokenizerError {
+  { json: self.state_json() }
+}
+
+///|
+pub fn PostProcessor::from_state(
+  state : PostProcessorState,
+) -> PostProcessor raise @types.TokenizerError {
+  let parsed = @json.parse(state.json) catch {
+    err => raise @types.ParseError("invalid post-processor state: \{err}")
+  }
+  PostProcessor::from_json(parsed)
+}
+
+///|
+pub fn PostProcessor::__getstate__(
+  self : PostProcessor,
+) -> PostProcessorState raise @types.TokenizerError {
+  self.get_state()
+}
+
+///|
+pub fn PostProcessor::__setstate__(
+  state : PostProcessorState,
+) -> PostProcessor raise @types.TokenizerError {
+  PostProcessor::from_state(state)
+}
+
+///|
+pub fn PostProcessor::__str__(
+  self : PostProcessor,
+) -> String raise @types.TokenizerError {
+  self.state_json()
+}
+
+///|
+pub fn PostProcessor::__repr__(
+  self : PostProcessor,
+) -> String raise @types.TokenizerError {
+  self.state_json()
+}
+
+///|
+fn PostProcessor::state_json(
+  self : PostProcessor,
+) -> String raise @types.TokenizerError {
+  match self.to_json() {
+    Some(json) => json
+    None =>
+      raise @types.UnsupportedComponent(
+        "post_processor has no serialized state",
+      )
   }
 }
 

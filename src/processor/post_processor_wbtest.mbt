@@ -89,3 +89,34 @@ test "post-processor aggregate getters return copies" {
   processors.push(PostProcessor::byte_level(trim_offsets=false))
   @test.assert_eq(seq.processors().length(), 2)
 }
+
+///|
+test "post-processors expose JSON state and string aliases" {
+  let specials : Map[String, SpecialToken] = {}
+  specials["<s>"] = SpecialToken::new("<s>", [0], ["<s>"])
+  specials["</s>"] = SpecialToken::new("</s>", [1], ["</s>"])
+  let processor = PostProcessor::sequence([
+    PostProcessor::byte_level(trim_offsets=false),
+    PostProcessor::template(
+      [SpecialTokenRef(id="<s>", type_id=0), SequenceRef(id="A", type_id=0)],
+      [SequenceRef(id="A", type_id=0), SpecialTokenRef(id="</s>", type_id=1)],
+      specials,
+    ),
+  ])
+  let state = processor.__getstate__()
+  @test.assert_eq(processor.__str__(), state.json)
+  @test.assert_eq(processor.__repr__(), state.json)
+  @test.assert_eq(
+    PostProcessor::__setstate__(state).to_json(),
+    processor.to_json(),
+  )
+
+  let parsed = PostProcessor::from_state(
+    PostProcessorState::new(
+      "{\"type\":\"RobertaProcessing\",\"sep\":[\"</s>\",2],\"cls\":[\"<s>\",0],\"trim_offsets\":false,\"add_prefix_space\":false}",
+    ),
+  )
+  @test.assert_eq(parsed.kind(), "RobertaProcessing")
+  @test.assert_eq(parsed.trim_offsets(), Some(false))
+  @test.assert_eq(parsed.add_prefix_space(), Some(false))
+}

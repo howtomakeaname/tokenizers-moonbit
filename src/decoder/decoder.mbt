@@ -20,6 +20,17 @@ pub enum Decoder {
 }
 
 ///|
+/// JSON-backed component state used by thin binding layers.
+pub struct DecoderState {
+  json : String
+} derive(Debug, Eq)
+
+///|
+pub fn DecoderState::new(json : String) -> DecoderState {
+  { json, }
+}
+
+///|
 /// Return the decoder family name used by thin binding layers.
 pub fn Decoder::kind(self : Decoder) -> String {
   match self {
@@ -33,6 +44,55 @@ pub fn Decoder::kind(self : Decoder) -> String {
     ByteFallback => "ByteFallback"
     CTC(..) => "CTC"
     Sequence(_) => "Sequence"
+  }
+}
+
+///|
+pub fn Decoder::get_state(
+  self : Decoder,
+) -> DecoderState raise @types.TokenizerError {
+  { json: self.state_json() }
+}
+
+///|
+pub fn Decoder::from_state(
+  state : DecoderState,
+) -> Decoder raise @types.TokenizerError {
+  let parsed = @json.parse(state.json) catch {
+    err => raise @types.ParseError("invalid decoder state: \{err}")
+  }
+  Decoder::from_json(parsed)
+}
+
+///|
+pub fn Decoder::__getstate__(
+  self : Decoder,
+) -> DecoderState raise @types.TokenizerError {
+  self.get_state()
+}
+
+///|
+pub fn Decoder::__setstate__(
+  state : DecoderState,
+) -> Decoder raise @types.TokenizerError {
+  Decoder::from_state(state)
+}
+
+///|
+pub fn Decoder::__str__(self : Decoder) -> String raise @types.TokenizerError {
+  self.state_json()
+}
+
+///|
+pub fn Decoder::__repr__(self : Decoder) -> String raise @types.TokenizerError {
+  self.state_json()
+}
+
+///|
+fn Decoder::state_json(self : Decoder) -> String raise @types.TokenizerError {
+  match self.to_json() {
+    Some(json) => json
+    None => raise @types.UnsupportedComponent("decoder has no serialized state")
   }
 }
 

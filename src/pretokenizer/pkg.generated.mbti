@@ -50,12 +50,18 @@ pub enum PreTokenizer {
   UnicodeScripts
   Sequence(Array[PreTokenizer])
 }
+pub fn PreTokenizer::__getstate__(Self) -> PreTokenizerState raise @types.TokenizerError
+pub fn PreTokenizer::__repr__(Self) -> String raise @types.TokenizerError
+pub fn PreTokenizer::__setstate__(PreTokenizerState) -> Self raise @types.TokenizerError
+pub fn PreTokenizer::__str__(Self) -> String raise @types.TokenizerError
 pub fn PreTokenizer::add_prefix_space(Self) -> Bool?
 pub fn PreTokenizer::behavior(Self) -> SplitBehavior?
 pub fn PreTokenizer::byte_level(add_prefix_space? : Bool, use_regex? : Bool, trim_offsets? : Bool) -> Self
 pub fn PreTokenizer::byte_level_alphabet() -> Array[String]
 pub fn PreTokenizer::delimiter(Self) -> Char?
 pub fn PreTokenizer::from_json(Json) -> Self raise @types.TokenizerError
+pub fn PreTokenizer::from_state(PreTokenizerState) -> Self raise @types.TokenizerError
+pub fn PreTokenizer::get_state(Self) -> PreTokenizerState raise @types.TokenizerError
 pub fn PreTokenizer::individual_digits(Self) -> Bool?
 pub fn PreTokenizer::invert(Self) -> Bool?
 pub fn PreTokenizer::kind(Self) -> String
@@ -73,6 +79,11 @@ pub fn PreTokenizer::to_json(Self) -> String?
 pub fn PreTokenizer::trim_offsets(Self) -> Bool?
 pub fn PreTokenizer::use_regex(Self) -> Bool?
 pub fn PreTokenizer::whitespace_split() -> Self
+
+pub struct PreTokenizerState {
+  json : String
+} derive(Eq, @debug.Debug)
+pub fn PreTokenizerState::new(String) -> Self
 
 pub enum SplitBehavior {
   Removed
