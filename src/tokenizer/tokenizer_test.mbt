@@ -377,6 +377,10 @@ test "Encoding exposes HF-style getter accessors" {
   let state = enc.__getstate__()
   @test.assert_eq(state.ids, [0, 1, 2, 2])
   @test.assert_eq(state.tokens, ["hello", "moon", "[PAD]", "[PAD]"])
+  @test.assert_eq(
+    enc.__repr__(),
+    "Encoding(num_tokens=4, attributes=[ids, type_ids, tokens, offsets, attention_mask, special_tokens_mask, overflowing])",
+  )
   let restored = @types.Encoding::__setstate__(state)
   @test.assert_eq(restored.get_ids(), enc.get_ids())
   @test.assert_eq(restored.get_tokens(), enc.get_tokens())
@@ -450,6 +454,11 @@ test "AddedToken exposes binding property aliases" {
   @test.assert_eq(tok.get_special(), true)
   @test.assert_eq(tok.is_special(), true)
   @test.assert_eq(tok.as_tuple(), ("<tag>", true, true, true, false, true))
+  @test.assert_eq(tok.__str__(), "<tag>")
+  @test.assert_eq(
+    tok.__repr__(),
+    "AddedToken(\"<tag>\", rstrip=True, lstrip=True, single_word=True, normalized=False, special=True)",
+  )
   let state = tok.__getstate__()
   @test.assert_eq(state.content, "<tag>")
   @test.assert_eq(state.single_word, true)
@@ -462,6 +471,10 @@ test "AddedToken exposes binding property aliases" {
   @test.assert_eq(special.content(), "[MASK]")
   @test.assert_eq(special.normalized(), false)
   @test.assert_eq(special.is_special(), true)
+  @test.assert_eq(
+    AddedToken::new("a\"b\\c\n").__repr__(),
+    "AddedToken(\"a\\\"b\\\\c\\n\", rstrip=False, lstrip=False, single_word=False, normalized=True, special=False)",
+  )
 }
 
 ///|
@@ -488,6 +501,11 @@ test "NormalizedString and PreTokenizedString expose low level migration API" {
   @test.assert_eq(ns.get_normalized(), "_hellomoon")
   @test.assert_eq(ns.normalized(), "_hellomoon")
   @test.assert_eq(ns.to_string(), "_hellomoon")
+  @test.assert_eq(ns.__str__(), "_hellomoon")
+  @test.assert_eq(
+    ns.__repr__(),
+    "NormalizedString(original=\" Hello  Moon \", normalized=\"_hellomoon\")",
+  )
   @test.assert_eq(ns.len(), 10)
   @test.assert_eq(ns.__len__(), 10)
   @test.assert_eq(ns.is_empty(), false)
@@ -501,6 +519,10 @@ test "NormalizedString and PreTokenizedString expose low level migration API" {
   @test.assert_eq(
     NormalizedString::from_tuple(("Raw", "raw")).as_tuple(),
     ("Raw", "raw"),
+  )
+  @test.assert_eq(
+    NormalizedString::new("Line\n\"Q\"\\").lowercase().__repr__(),
+    "NormalizedString(original=\"Line\\n\\\"Q\\\"\\\\\", normalized=\"line\\n\\\"q\\\"\\\\\")",
   )
   let appended = ns.append("!").uppercase()
   @test.assert_eq(appended.get_original(), " Hello  Moon ")
@@ -2097,6 +2119,72 @@ test "from_pretrained reports actionable offline resolution errors" {
     true,
   )
   @test.assert_eq(hint.message.contains("private or gated"), true)
+}
+
+///|
+test "Hub identifier validation accepts HF-safe ids and revisions" {
+  @test.assert_eq(Tokenizer::is_valid_hub_identifier("bert-base-uncased"), true)
+  @test.assert_eq(Tokenizer::is_valid_hub_identifier("org/model_1.0"), true)
+  @test.assert_eq(Tokenizer::is_valid_hub_identifier("refs/pr/7"), true)
+  @test.assert_eq(Tokenizer::is_valid_hub_identifier("feature/foo"), true)
+  @test.assert_eq(Tokenizer::is_valid_hub_identifier("org/model name"), false)
+  @test.assert_eq(Tokenizer::is_valid_hub_identifier("org/model@x"), false)
+  @test.assert_eq(Tokenizer::is_valid_hub_identifier("../escape"), false)
+  @test.assert_eq(Tokenizer::is_valid_hub_identifier("org/../model"), false)
+  @test.assert_eq(Tokenizer::is_valid_hub_identifier("refs//pr"), false)
+}
+
+///|
+test "Hub validation rejects unsafe cache writes without rejecting local paths" {
+  let root = "_build/hub_validation_cache"
+  ensure_dir(root)
+  let local_dir = "_build/local model@unsafe"
+  ensure_dir(local_dir)
+  let json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"local":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  @fs.write_string_to_file(local_dir + "/tokenizer.json", json) catch {
+    _ => ()
+  }
+  let local_tok = Tokenizer::from_pretrained(local_dir)
+  @test.assert_eq(local_tok.encode("local", add_special_tokens=false).ids, [0])
+
+  let mut bad_model = false
+  try
+    Tokenizer::from_pretrained_downloaded(
+      "org/model name",
+      json,
+      cache_dir=Some(root),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) => bad_model = msg.contains("expected only")
+    _ => ()
+  }
+  @test.assert_eq(bad_model, true)
+
+  let mut bad_revision = false
+  try
+    Tokenizer::write_pretrained_ref_revision(
+      "org/model",
+      "abc123",
+      revision="../escape",
+      cache_dir=Some(root),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) => bad_revision = msg.contains("Revision")
+    _ => ()
+  }
+  @test.assert_eq(bad_revision, true)
+  @test.assert_eq(@fs.path_exists(root + "/escape"), false)
+  @test.assert_eq(
+    Tokenizer::from_pretrained_cache_paths(
+      "org/../model",
+      revision="main",
+      cache_dir=Some(root),
+    ),
+    None,
+  )
 }
 
 ///|

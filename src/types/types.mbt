@@ -187,6 +187,14 @@ pub fn Encoding::__len__(self : Encoding) -> Int {
 }
 
 ///|
+/// Python binding alias for `repr(encoding)`.
+pub fn Encoding::__repr__(self : Encoding) -> String {
+  "Encoding(num_tokens=" +
+  self.ids.length().to_string() +
+  ", attributes=[ids, type_ids, tokens, offsets, attention_mask, special_tokens_mask, overflowing])"
+}
+
+///|
 /// Build an Encoding from the full HF-style tuple representation. This is
 /// intentionally equivalent to `Encoding::from_state` but easier for thin
 /// Python/FFI shims that already marshal positional buffers.

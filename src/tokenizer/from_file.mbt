@@ -354,6 +354,11 @@ pub fn Tokenizer::from_pretrained_cache_paths(
   resolved_revision? : String? = None,
   cache_dir? : String? = None,
 ) -> PretrainedCachePaths? {
+  if !is_valid_hub_identifier(model_id) ||
+    !is_valid_hub_identifier(revision) ||
+    !valid_optional_hub_revision(resolved_revision) {
+    return None
+  }
   let root = match cache_dir {
     Some(c) => c
     None =>
@@ -419,6 +424,9 @@ pub fn Tokenizer::write_pretrained_ref_revision(
   revision? : String = "main",
   cache_dir? : String? = None,
 ) -> String raise @types.TokenizerError {
+  validate_hub_model_id(model_id)
+  validate_hub_revision(revision)
+  validate_hub_revision(resolved_revision)
   let paths = match
     Tokenizer::from_pretrained_cache_paths(
       model_id,
@@ -468,6 +476,12 @@ pub fn Tokenizer::write_pretrained_download_resume_metadata(
   expected_size? : Int? = None,
   downloaded_size? : Int = 0,
 ) -> PretrainedDownloadResumeMetadata raise @types.TokenizerError {
+  validate_hub_model_id(model_id)
+  validate_hub_revision(revision)
+  match resolved_revision {
+    Some(rev) => if !rev.is_empty() { validate_hub_revision(rev) }
+    None => ()
+  }
   let paths = match
     Tokenizer::from_pretrained_cache_paths(
       model_id,
@@ -778,6 +792,22 @@ pub fn Tokenizer::from_pretrained_resolution_hint(
     Some(c) => Some(c)
     None => default_hub_cache_dir()
   }
+  if !is_valid_hub_identifier(model_id) || !is_valid_hub_identifier(revision) {
+    return {
+      model_id,
+      revision,
+      cache_dir: root,
+      repo_cache_dir: None,
+      ref_path: None,
+      resolved_revision: None,
+      snapshot_dir: None,
+      tokenizer_json_path: None,
+      cache_exists: false,
+      message: "from_pretrained cannot inspect local HuggingFace Hub cache for '" +
+      model_id +
+      "' because the model id or revision contains invalid characters; expected only alphanumeric or '-', '_', '.', '/'.",
+    }
+  }
   match root {
     None =>
       {
@@ -865,6 +895,12 @@ pub fn cache_pretrained_tokenizer_json(
   resolved_revision? : String? = None,
   cache_dir? : String? = None,
 ) -> String raise @types.TokenizerError {
+  validate_hub_model_id(model_id)
+  validate_hub_revision(revision)
+  match resolved_revision {
+    Some(rev) => if !rev.is_empty() { validate_hub_revision(rev) }
+    None => ()
+  }
   let root = match cache_dir {
     Some(c) => c
     None =>
@@ -955,21 +991,15 @@ fn resolve_hub_cache_path(
   revision~ : String,
   cache_dir~ : String?,
 ) -> String? {
-  let root = match cache_dir {
-    Some(c) => c
-    None =>
-      match default_hub_cache_dir() {
-        Some(c) => c
-        None => return None
+  match
+    Tokenizer::from_pretrained_cache_paths(model_id, revision~, cache_dir~) {
+    Some(paths) =>
+      if @fs.path_exists(paths.tokenizer_json_path) {
+        Some(paths.tokenizer_json_path)
+      } else {
+        None
       }
-  }
-  let repo = root + "/" + hub_model_dir(model_id)
-  let rev = read_revision_ref(repo, revision).unwrap_or(revision)
-  let tok = repo + "/snapshots/" + rev + "/tokenizer.json"
-  if @fs.path_exists(tok) {
-    Some(tok)
-  } else {
-    None
+    None => None
   }
 }
 
@@ -1057,6 +1087,100 @@ fn read_revision_ref(repo : String, revision : String) -> String? {
   let path = repo + "/refs/" + revision
   let content = @fs.read_file_to_string(path) catch { _ => return None }
   Some(trim_ascii_ws(content))
+}
+
+///|
+pub fn is_valid_hub_identifier(value : String) -> Bool {
+  if value.is_empty() || value.has_prefix("/") || value.has_suffix("/") {
+    return false
+  }
+  let mut segment_len = 0
+  let mut segment = StringBuilder::new()
+  for c in value {
+    if !is_hub_identifier_char(c) {
+      return false
+    }
+    if c == '/' {
+      if !valid_hub_path_segment(segment.to_string()) {
+        return false
+      }
+      segment = StringBuilder::new()
+      segment_len = 0
+    } else {
+      segment.write_char(c)
+      segment_len = segment_len + 1
+    }
+  }
+  segment_len > 0 && valid_hub_path_segment(segment.to_string())
+}
+
+///|
+pub fn Tokenizer::is_valid_hub_identifier(value : String) -> Bool {
+  is_valid_hub_identifier(value)
+}
+
+///|
+pub fn validate_hub_model_id(
+  model_id : String,
+) -> Unit raise @types.TokenizerError {
+  validate_hub_identifier(model_id, "Model")
+}
+
+///|
+pub fn Tokenizer::validate_hub_model_id(
+  model_id : String,
+) -> Unit raise @types.TokenizerError {
+  validate_hub_model_id(model_id)
+}
+
+///|
+pub fn validate_hub_revision(
+  revision : String,
+) -> Unit raise @types.TokenizerError {
+  validate_hub_identifier(revision, "Revision")
+}
+
+///|
+pub fn Tokenizer::validate_hub_revision(
+  revision : String,
+) -> Unit raise @types.TokenizerError {
+  validate_hub_revision(revision)
+}
+
+///|
+fn validate_hub_identifier(
+  value : String,
+  label : String,
+) -> Unit raise @types.TokenizerError {
+  if !is_valid_hub_identifier(value) {
+    raise @types.ParseError(
+      "\{label} \"\{value}\" contains invalid characters, expected only alphanumeric or '-', '_', '.', '/'",
+    )
+  }
+}
+
+///|
+fn valid_optional_hub_revision(value : String?) -> Bool {
+  match value {
+    Some(v) => v.is_empty() || is_valid_hub_identifier(v)
+    None => true
+  }
+}
+
+///|
+fn is_hub_identifier_char(c : Char) -> Bool {
+  (c >= 'a' && c <= 'z') ||
+  (c >= 'A' && c <= 'Z') ||
+  (c >= '0' && c <= '9') ||
+  c == '-' ||
+  c == '_' ||
+  c == '.' ||
+  c == '/'
+}
+
+///|
+fn valid_hub_path_segment(segment : String) -> Bool {
+  !segment.is_empty() && segment != "." && segment != ".."
 }
 
 ///|

@@ -242,6 +242,8 @@ increasing the vocabulary size. Ordinary added tokens now keep
 `encode_special_tokens` is enabled, in which case special token strings found in
 input text are encoded as ordinary model tokens. `get_added_tokens_decoder`
 returns HF-style `id -> AddedToken` metadata for migration and introspection.
+`AddedToken::__str__()` returns the token content and `__repr__()` returns a
+stable HF-style configuration summary.
 
 ## Vocabulary
 
@@ -260,7 +262,8 @@ Lookups consult the added/special vocabulary first, then the model vocabulary.
 `__len__`, `is_empty`, state/tuple round-trips, `normalize`, `replace`,
 `prepend`, `append`, `clear`, `lowercase`, `uppercase`, `lstrip`, `rstrip`,
 `strip`, `nfc`, `nfd`, `nfkc`, `nfkd`, `slice`, `map`, `filter`, literal
-`split`, and supported deterministic `split_regex`.
+`split`, supported deterministic `split_regex`, and `__str__` / `__repr__`
+display aliases.
 
 `PreTokenizedString` provides `get_splits` / `splits`, `normalize`,
 pre-tokenizer `split`, state/tuple helpers, and `to_encoding` /
@@ -290,7 +293,8 @@ JSON-backed `get_state` / `from_state` / `__getstate__` / `__setstate__` plus
 an unsupported-component error instead of returning lossy state.
 
 `Encoding::words()` is available as a deprecated HF Python alias for
-`word_ids()`.
+`word_ids()`. `Encoding::__repr__()` returns the HF-style compact diagnostic
+summary with token count and exposed attribute names.
 
 `Trainer` exposes copy-returning configuration getters such as `kind`,
 `unk_token`, `min_frequency`, `special_tokens`, `special_added_tokens`,

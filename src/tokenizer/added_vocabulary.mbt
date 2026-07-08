@@ -176,6 +176,32 @@ pub fn AddedToken::__setstate__(state : AddedTokenState) -> AddedToken {
 }
 
 ///|
+/// Python binding alias for `str(added_token)`.
+pub fn AddedToken::__str__(self : AddedToken) -> String {
+  self.content
+}
+
+///|
+/// Python binding alias for `repr(added_token)`.
+pub fn AddedToken::__repr__(self : AddedToken) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("AddedToken(")
+  write_repr_string(sb, self.content)
+  sb.write_string(", rstrip=")
+  sb.write_string(bool_repr(self.rstrip))
+  sb.write_string(", lstrip=")
+  sb.write_string(bool_repr(self.lstrip))
+  sb.write_string(", single_word=")
+  sb.write_string(bool_repr(self.single_word))
+  sb.write_string(", normalized=")
+  sb.write_string(bool_repr(self.normalized))
+  sb.write_string(", special=")
+  sb.write_string(bool_repr(self.special))
+  sb.write_char(')')
+  sb.to_string()
+}
+
+///|
 pub fn AddedToken::get_content(self : AddedToken) -> String {
   self.content
 }

@@ -22,6 +22,44 @@ test "download options default to online main revision" {
 }
 
 ///|
+test "Hub cache application validates model id and revision" {
+  let json =
+    #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let mut bad_model = false
+  try
+    apply_tokenizer_json_response(
+      "org/model name",
+      json,
+      HubResponseMetadata::new(200),
+      options=HubDownloadOptions::new(cache_dir=Some("_build/hub_validation")),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) => bad_model = msg.contains("Model")
+    _ => ()
+  }
+  @test.assert_eq(bad_model, true)
+
+  let mut bad_revision = false
+  try
+    apply_tokenizer_json_response(
+      "org/model",
+      json,
+      HubResponseMetadata::new(200),
+      options=HubDownloadOptions::new(
+        revision="../escape",
+        cache_dir=Some("_build/hub_validation"),
+      ),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) => bad_revision = msg.contains("Revision")
+    _ => ()
+  }
+  @test.assert_eq(bad_revision, true)
+}
+
+///|
 test "Hub request plan uses cache etag and resume range" {
   let json =
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0,"[UNK]":1},"unk_token":"[UNK]"}}

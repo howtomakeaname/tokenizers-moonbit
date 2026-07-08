@@ -486,6 +486,7 @@ pub fn apply_tokenizer_json_response(
   tokenizer_config_json? : String? = None,
   special_tokens_map_json? : String? = None,
 ) -> @tokenizer.Tokenizer raise @types.TokenizerError {
+  validate_hub_request(model_id, options.revision)
   let plan = plan_tokenizer_json_request(model_id, options~)
   let decision = decide_tokenizer_json_response(plan, metadata)
   match decision.action {
@@ -623,6 +624,7 @@ pub async fn from_pretrained(
       "from_pretrained local cache miss and local_files_only=true: \{model_id}",
     )
   }
+  validate_hub_request(model_id, options.revision)
   let result = download_tokenizer_json(model_id, options~)
   @tokenizer.Tokenizer::from_pretrained_downloaded(
     model_id,
@@ -729,6 +731,7 @@ pub fn apply_tokenizer_json_download_chunks(
   final_url : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
+  validate_hub_request(model_id, options.revision)
   let plan = plan_tokenizer_json_request(model_id, options~)
   let decision = decide_tokenizer_json_response(plan, metadata)
   match decision.action {
@@ -762,6 +765,7 @@ pub fn apply_tokenizer_json_download_bytes(
   final_url : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
+  validate_hub_request(model_id, options.revision)
   let plan = plan_tokenizer_json_request(model_id, options~)
   let decision = decide_tokenizer_json_response(plan, metadata)
   match decision.action {
@@ -1030,6 +1034,7 @@ pub async fn download_tokenizer_json(
   model_id : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
+  validate_hub_request(model_id, options.revision)
   let plan = plan_tokenizer_json_request(model_id, options~)
   async_download_with_redirects(
     model_id,
@@ -1046,6 +1051,7 @@ pub async fn head_tokenizer_json(
   model_id : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubHeadResult raise @types.TokenizerError {
+  validate_hub_request(model_id, options.revision)
   let plan = head_tokenizer_json_request(model_id, options~)
   async_head_with_redirects(plan, max_redirects=options.max_redirects)
 }
@@ -1263,6 +1269,15 @@ fn build_headers(options : HubDownloadOptions) -> Map[String, String] {
     None => ()
   }
   out
+}
+
+///|
+fn validate_hub_request(
+  model_id : String,
+  revision : String,
+) -> Unit raise @types.TokenizerError {
+  @tokenizer.Tokenizer::validate_hub_model_id(model_id)
+  @tokenizer.Tokenizer::validate_hub_revision(revision)
 }
 
 ///|

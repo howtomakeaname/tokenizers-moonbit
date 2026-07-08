@@ -45,6 +45,12 @@ pub fn from_pretrained_ref_revision(String, revision? : String, cache_dir? : Str
 
 pub fn from_pretrained_resolution_hint(String, revision? : String, cache_dir? : String?) -> PretrainedResolutionHint
 
+pub fn is_valid_hub_identifier(String) -> Bool
+
+pub fn validate_hub_model_id(String) -> Unit raise @types.TokenizerError
+
+pub fn validate_hub_revision(String) -> Unit raise @types.TokenizerError
+
 pub fn write_pretrained_download_resume_metadata(String, revision? : String, resolved_revision? : String?, cache_dir? : String?, etag? : String?, expected_size? : Int?, downloaded_size? : Int) -> PretrainedDownloadResumeMetadata raise @types.TokenizerError
 
 pub fn write_pretrained_ref_revision(String, String, revision? : String, cache_dir? : String?) -> String raise @types.TokenizerError
@@ -61,7 +67,9 @@ pub struct AddedToken {
   special : Bool
 } derive(Eq, @debug.Debug)
 pub fn AddedToken::__getstate__(Self) -> AddedTokenState
+pub fn AddedToken::__repr__(Self) -> String
 pub fn AddedToken::__setstate__(AddedTokenState) -> Self
+pub fn AddedToken::__str__(Self) -> String
 pub fn AddedToken::as_tuple(Self) -> (String, Bool, Bool, Bool, Bool, Bool)
 pub fn AddedToken::content(Self) -> String
 pub fn AddedToken::from_state(AddedTokenState) -> Self
@@ -124,7 +132,9 @@ pub struct NormalizedString {
 }
 pub fn NormalizedString::__getstate__(Self) -> NormalizedStringState
 pub fn NormalizedString::__len__(Self) -> Int
+pub fn NormalizedString::__repr__(Self) -> String
 pub fn NormalizedString::__setstate__(NormalizedStringState) -> Self
+pub fn NormalizedString::__str__(Self) -> String
 pub fn NormalizedString::append(Self, String) -> Self
 pub fn NormalizedString::as_tuple(Self) -> (String, String)
 pub fn NormalizedString::clear(Self) -> Self
@@ -439,6 +449,7 @@ pub fn Tokenizer::get_vocab(Self, with_added_tokens? : Bool) -> Map[String, Int]
 pub fn Tokenizer::get_vocab_size(Self, with_added_tokens? : Bool) -> Int
 pub fn Tokenizer::id_to_token(Self, Int) -> String?
 pub fn Tokenizer::is_special_token(Self, String) -> Bool
+pub fn Tokenizer::is_valid_hub_identifier(String) -> Bool
 pub fn Tokenizer::model(Self) -> @model.Model
 pub fn Tokenizer::new(@model.Model) -> Self
 pub fn Tokenizer::no_padding(Self) -> Self
@@ -473,6 +484,8 @@ pub fn Tokenizer::train_wordpiece(Array[String], unk_token? : String, continuing
 pub fn Tokenizer::train_wordpiece_from_tokens(Array[Array[String]], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int, special_tokens? : Array[String], pre_tokenizer? : @pretokenizer.PreTokenizer?, vocab_size? : Int?, max_input_chars_per_word? : Int, max_token_length? : Int?, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
 pub fn Tokenizer::train_wordpiece_with_pretokenizer(Array[String], @pretokenizer.PreTokenizer, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, max_token_length? : Int?, initial_alphabet? : Array[String], limit_alphabet? : Int?) -> Self
 pub fn Tokenizer::truncation(Self) -> TruncationParams?
+pub fn Tokenizer::validate_hub_model_id(String) -> Unit raise @types.TokenizerError
+pub fn Tokenizer::validate_hub_revision(String) -> Unit raise @types.TokenizerError
 pub fn Tokenizer::vocab(Self, with_added_tokens? : Bool) -> Map[String, Int]
 pub fn Tokenizer::vocab_size(Self, with_added_tokens? : Bool) -> Int
 pub fn Tokenizer::with_component_hooks(Self, TokenizerComponentHooks) -> Self

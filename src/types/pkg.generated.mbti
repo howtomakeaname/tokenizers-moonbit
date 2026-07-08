@@ -47,6 +47,7 @@ pub(all) struct Encoding {
 } derive(Eq, @debug.Debug)
 pub fn Encoding::__getstate__(Self) -> EncodingState
 pub fn Encoding::__len__(Self) -> Int
+pub fn Encoding::__repr__(Self) -> String
 pub fn Encoding::__setstate__(EncodingState) -> Self
 pub fn Encoding::as_buffers(Self) -> EncodingBuffers
 pub fn Encoding::as_tuple(Self) -> (Array[Int], Array[Int], Array[String], Array[(Int, Int)], Array[Int], Array[Int], Array[Int?], Array[Int?], Array[Self])

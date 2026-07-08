@@ -172,6 +172,24 @@ pub fn NormalizedString::__setstate__(
 }
 
 ///|
+/// Python binding alias for `str(normalized_string)`.
+pub fn NormalizedString::__str__(self : NormalizedString) -> String {
+  self.normalized
+}
+
+///|
+/// Python binding alias for `repr(normalized_string)`.
+pub fn NormalizedString::__repr__(self : NormalizedString) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("NormalizedString(original=")
+  write_repr_string(sb, self.original)
+  sb.write_string(", normalized=")
+  write_repr_string(sb, self.normalized)
+  sb.write_char(')')
+  sb.to_string()
+}
+
+///|
 pub fn NormalizedString::get_original(self : NormalizedString) -> String {
   self.original
 }
@@ -1505,12 +1523,50 @@ fn write_json_string(sb : StringBuilder, s : String) -> Unit {
 }
 
 ///|
+fn write_repr_string(sb : StringBuilder, s : String) -> Unit {
+  sb.write_char('"')
+  for c in s {
+    match c {
+      '"' => sb.write_string("\\\"")
+      '\\' => sb.write_string("\\\\")
+      '\n' => sb.write_string("\\n")
+      '\r' => sb.write_string("\\r")
+      '\t' => sb.write_string("\\t")
+      _ =>
+        if c.to_int() < 0x20 {
+          write_control_escape(sb, c.to_int())
+        } else {
+          sb.write_char(c)
+        }
+    }
+  }
+  sb.write_char('"')
+}
+
+///|
 fn bool_json(v : Bool) -> String {
   if v {
     "true"
   } else {
     "false"
   }
+}
+
+///|
+fn bool_repr(v : Bool) -> String {
+  if v {
+    "True"
+  } else {
+    "False"
+  }
+}
+
+///|
+fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
+  let digits = "0123456789ABCDEF".to_array()
+  sb.write_string("\\u00")
+  sb.write_char(digits[u / 16 % 16])
+  sb.write_char(digits[u % 16])
 }
 
 ///|
