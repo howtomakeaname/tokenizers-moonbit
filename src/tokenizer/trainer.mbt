@@ -942,11 +942,10 @@ fn split_training_lines(content : String) -> Array[String] {
   let chars = content.to_array()
   let mut sb = StringBuilder::new()
   for c in chars {
+    sb.write_char(c)
     if c == '\n' {
       out.push(sb.to_string())
       sb = StringBuilder::new()
-    } else if c != '\r' {
-      sb.write_char(c)
     }
   }
   let tail = sb.to_string()

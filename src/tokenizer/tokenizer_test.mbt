@@ -2782,6 +2782,23 @@ test "Tokenizer train_from_files trains line oriented corpus" {
 }
 
 ///|
+test "Tokenizer train_from_files preserves line endings without pretokenizer" {
+  let path = "_build/tokenizer_train_from_files_line_endings.txt"
+  @fs.write_string_to_file(path, "aa\nbb\r\n") catch {
+    _ => ()
+  }
+  let base = Tokenizer::new(@model.Model::train_wordlevel_from_tokens([[]]))
+  let trained = base.train_from_files(
+    [path],
+    Trainer::wordlevel(unk_token="[UNK]", min_frequency=1),
+  )
+  @test.assert_eq(trained.token_to_id("aa\n") is Some(_), true)
+  @test.assert_eq(trained.token_to_id("bb\r\n") is Some(_), true)
+  @test.assert_eq(trained.token_to_id("aa"), None)
+  @test.assert_eq(trained.token_to_id("bb"), None)
+}
+
+///|
 test "train_wordlevel orders tokens like HF by frequency then token" {
   let tok = Tokenizer::train_wordlevel(
     ["b a a c c c d", "b b a"],
