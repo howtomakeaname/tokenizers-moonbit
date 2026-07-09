@@ -42,6 +42,7 @@ pub fn Decoder::decoders(Self) -> Array[Self]
 pub fn Decoder::from_json(Json) -> Self raise @types.TokenizerError
 pub fn Decoder::from_state(DecoderState) -> Self raise @types.TokenizerError
 pub fn Decoder::fuse() -> Self
+pub fn Decoder::get_decoders(Self) -> Array[Self]
 pub fn Decoder::get_item(Self, Int) -> Self?
 pub fn Decoder::get_state(Self) -> DecoderState raise @types.TokenizerError
 pub fn Decoder::kind(Self) -> String

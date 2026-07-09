@@ -52,6 +52,7 @@ pub fn Normalizer::content(Self) -> String?
 pub fn Normalizer::from_json(Json) -> Self raise @types.TokenizerError
 pub fn Normalizer::from_state(NormalizerState) -> Self raise @types.TokenizerError
 pub fn Normalizer::get_item(Self, Int) -> Self?
+pub fn Normalizer::get_normalizers(Self) -> Array[Self]
 pub fn Normalizer::get_state(Self) -> NormalizerState raise @types.TokenizerError
 pub fn Normalizer::handle_chinese_chars(Self) -> Bool?
 pub fn Normalizer::kind(Self) -> String

@@ -351,6 +351,14 @@ pub fn PostProcessor::processors(self : PostProcessor) -> Array[PostProcessor] {
 }
 
 ///|
+/// HF/Python getter alias for Sequence child post-processors.
+pub fn PostProcessor::get_processors(
+  self : PostProcessor,
+) -> Array[PostProcessor] {
+  self.processors()
+}
+
+///|
 pub fn PostProcessor::__len__(self : PostProcessor) -> Int {
   match self {
     Sequence(steps) => steps.length()

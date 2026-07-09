@@ -150,6 +150,12 @@ pub fn Normalizer::normalizers(self : Normalizer) -> Array[Normalizer] {
 }
 
 ///|
+/// HF/Python getter alias for Sequence child normalizers.
+pub fn Normalizer::get_normalizers(self : Normalizer) -> Array[Normalizer] {
+  self.normalizers()
+}
+
+///|
 pub fn Normalizer::__len__(self : Normalizer) -> Int {
   match self {
     Sequence(steps) => steps.length()

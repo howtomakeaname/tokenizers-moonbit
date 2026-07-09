@@ -48,6 +48,7 @@ pub fn PostProcessor::cls(Self) -> (String, Int)?
 pub fn PostProcessor::from_json(Json) -> Self raise @types.TokenizerError
 pub fn PostProcessor::from_state(PostProcessorState) -> Self raise @types.TokenizerError
 pub fn PostProcessor::get_item(Self, Int) -> Self?
+pub fn PostProcessor::get_processors(Self) -> Array[Self]
 pub fn PostProcessor::get_state(Self) -> PostProcessorState raise @types.TokenizerError
 pub fn PostProcessor::kind(Self) -> String
 pub fn PostProcessor::num_special_tokens_to_add(Self, is_pair? : Bool) -> Int

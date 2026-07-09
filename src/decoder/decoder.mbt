@@ -219,6 +219,12 @@ pub fn Decoder::decoders(self : Decoder) -> Array[Decoder] {
 }
 
 ///|
+/// HF/Python getter alias for Sequence child decoders.
+pub fn Decoder::get_decoders(self : Decoder) -> Array[Decoder] {
+  self.decoders()
+}
+
+///|
 pub fn Decoder::__len__(self : Decoder) -> Int {
   match self {
     Sequence(steps) => steps.length()

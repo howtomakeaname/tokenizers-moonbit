@@ -235,6 +235,14 @@ pub fn PreTokenizer::pre_tokenizers(self : PreTokenizer) -> Array[PreTokenizer] 
 }
 
 ///|
+/// HF/Python getter alias for Sequence child pre-tokenizers.
+pub fn PreTokenizer::get_pre_tokenizers(
+  self : PreTokenizer,
+) -> Array[PreTokenizer] {
+  self.pre_tokenizers()
+}
+
+///|
 pub fn PreTokenizer::__len__(self : PreTokenizer) -> Int {
   match self {
     Sequence(steps) => steps.length()
