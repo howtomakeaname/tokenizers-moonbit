@@ -260,12 +260,21 @@ fn Tokenizer::enable_truncation(
   strategy? : TruncationStrategy = LongestFirst,
   direction? : TruncationDirection = Right,
 ) -> Tokenizer
+fn Tokenizer::enable_truncation_hf(
+  self : Tokenizer, max_length : Int, stride? : Int = 0,
+  strategy? : String = "longest_first", direction? : String = "right",
+) -> Tokenizer raise TokenizerError
 fn Tokenizer::no_truncation(self : Tokenizer) -> Tokenizer
 fn Tokenizer::enable_padding(
   self : Tokenizer, length? : Int? = None, direction? : PaddingDirection = Right,
   pad_id? : Int = 0, pad_type_id? : Int = 0, pad_token? : String = "[PAD]",
   pad_to_multiple_of? : Int? = None,
 ) -> Tokenizer
+fn Tokenizer::enable_padding_hf(
+  self : Tokenizer, length? : Int? = None, direction? : String = "right",
+  pad_id? : Int = 0, pad_type_id? : Int = 0, pad_token? : String = "[PAD]",
+  pad_to_multiple_of? : Int? = None,
+) -> Tokenizer raise TokenizerError
 fn Tokenizer::no_padding(self : Tokenizer) -> Tokenizer
 
 fn Tokenizer::get_normalizer(self : Tokenizer) -> @normalizer.Normalizer?
@@ -328,6 +337,9 @@ construction in tests or synthetic pipelines.
 The `set_*` component/config methods are writable-property style aliases for the
 corresponding `with_*` builders, preserving the same return-a-new-tokenizer
 semantics for thin binding layers.
+`enable_truncation_hf` and `enable_padding_hf` accept HF-style string
+`strategy` / `direction` values and raise on invalid strings, while preserving
+the existing typed `enable_*` APIs.
 `template_from_strings` accepts the same `$A` / `$B` / `$0:1` HF template DSL
 used in tokenizer.json files, and `SpecialToken::new` supports multi-id special
 tokens.

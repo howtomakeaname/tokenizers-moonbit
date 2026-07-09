@@ -126,6 +126,8 @@ Encoding truncate_hf 边界对齐：`Encoding::truncate_hf(max_len, stride)` 在
 
 Encoding HF direction 边界对齐：`truncate_hf` / `pad_hf` 对非 `left`/`right` 的 direction 字符串显式 `ParseError`，不再静默回落为 right。
 
+Tokenizer HF 字符串配置 wrapper 小闭环：`enable_truncation_hf(max_length, strategy="longest_first", direction="right")` 与 `enable_padding_hf(direction="right", ...)` 已补齐，接受 HF 风格字符串 strategy/direction 并对非法值抛 `ParseError`，同时保留现有 typed `enable_truncation` / `enable_padding` API。
+
 Encoding merge defaults 小闭环：`Encoding::merge` / `merge_with` 已暴露，默认 `growing_offsets=true`，显式 `false` 时保留各段原 offsets；已补默认 growing 与显式 false 两种行为测试。
 
 Encoding validation 小闭环：`Encoding::new` / `from_state` / `from_buffers` / `from_tuple` 以及 `__setstate__` 已校验公开 parallel arrays 长度一致性；省略 `sequence_ids` / `word_ids` 仍保留 HF-style 默认值，传入非空且长度不匹配会抛 `ParseError`。`with_type_ids` / `with_special_tokens_mask` / `with_attention_mask` / `with_word_ids` 也会校验 replacement array 长度，`set_sequence_id` / `with_sequence_id` 拒绝负数 sequence id。

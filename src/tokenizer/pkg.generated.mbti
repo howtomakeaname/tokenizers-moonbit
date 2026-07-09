@@ -381,7 +381,9 @@ pub fn Tokenizer::decoder(Self) -> @decoder.Decoder?
 pub fn Tokenizer::disable_encode_special_tokens(Self) -> Self
 pub fn Tokenizer::enable_encode_special_tokens(Self) -> Self
 pub fn Tokenizer::enable_padding(Self, length? : Int?, direction? : PaddingDirection, pad_id? : Int, pad_type_id? : Int, pad_token? : String, pad_to_multiple_of? : Int?) -> Self
+pub fn Tokenizer::enable_padding_hf(Self, length? : Int?, direction? : String, pad_id? : Int, pad_type_id? : Int, pad_token? : String, pad_to_multiple_of? : Int?) -> Self raise @types.TokenizerError
 pub fn Tokenizer::enable_truncation(Self, Int, stride? : Int, strategy? : TruncationStrategy, direction? : TruncationDirection) -> Self
+pub fn Tokenizer::enable_truncation_hf(Self, Int, stride? : Int, strategy? : String, direction? : String) -> Self raise @types.TokenizerError
 pub fn Tokenizer::encode(Self, String, add_special_tokens? : Bool) -> @types.Encoding
 pub fn Tokenizer::encode_batch(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
 pub fn Tokenizer::encode_batch_fast(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]

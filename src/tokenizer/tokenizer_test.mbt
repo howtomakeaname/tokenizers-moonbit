@@ -180,6 +180,25 @@ test "Tokenizer exposes Python property-style component and config aliases" {
     TruncationParams::from_tuple((6, 1, Right, LongestFirst)).as_tuple(),
     (6, 1, Right, LongestFirst),
   )
+  let hf_trunc = tok
+    .enable_truncation_hf(7, stride=1, strategy="only_second", direction="left")
+    .truncation()
+    .unwrap()
+  @test.assert_eq(hf_trunc.as_tuple(), (7, 1, Left, OnlySecond))
+  let mut bad_trunc_direction = false
+  try tok.enable_truncation_hf(7, direction="middle") |> ignore catch {
+    @types.ParseError(msg) =>
+      bad_trunc_direction = msg.contains("invalid truncation direction")
+    _ => ()
+  }
+  @test.assert_eq(bad_trunc_direction, true)
+  let mut bad_trunc_strategy = false
+  try tok.enable_truncation_hf(7, strategy="first_only") |> ignore catch {
+    @types.ParseError(msg) =>
+      bad_trunc_strategy = msg.contains("invalid truncation strategy")
+    _ => ()
+  }
+  @test.assert_eq(bad_trunc_strategy, true)
   let padding = tok.padding().unwrap()
   @test.assert_eq(padding.strategy(), Fixed(8))
   @test.assert_eq(padding.get_strategy(), Fixed(8))
@@ -201,6 +220,28 @@ test "Tokenizer exposes Python property-style component and config aliases" {
     PaddingParams::from_tuple((BatchLongest, Right, 0, 0, "<pad>", None)).as_tuple(),
     (BatchLongest, Right, 0, 0, "<pad>", None),
   )
+  let hf_padding = tok
+    .enable_padding_hf(
+      length=Some(6),
+      direction="left",
+      pad_id=9,
+      pad_type_id=8,
+      pad_token="<pad>",
+      pad_to_multiple_of=Some(2),
+    )
+    .padding()
+    .unwrap()
+  @test.assert_eq(
+    hf_padding.as_tuple(),
+    (Fixed(6), Left, 9, 8, "<pad>", Some(2)),
+  )
+  let mut bad_padding_direction = false
+  try tok.enable_padding_hf(direction="middle") |> ignore catch {
+    @types.ParseError(msg) =>
+      bad_padding_direction = msg.contains("invalid padding direction")
+    _ => ()
+  }
+  @test.assert_eq(bad_padding_direction, true)
   @test.assert_eq(tok.no_truncation().truncation(), None)
   @test.assert_eq(tok.no_padding().padding(), None)
 }

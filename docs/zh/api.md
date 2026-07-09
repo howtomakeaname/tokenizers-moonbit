@@ -236,12 +236,21 @@ fn Tokenizer::enable_truncation(
   strategy? : TruncationStrategy = LongestFirst,
   direction? : TruncationDirection = Right,
 ) -> Tokenizer
+fn Tokenizer::enable_truncation_hf(
+  self : Tokenizer, max_length : Int, stride? : Int = 0,
+  strategy? : String = "longest_first", direction? : String = "right",
+) -> Tokenizer raise TokenizerError
 fn Tokenizer::no_truncation(self : Tokenizer) -> Tokenizer
 fn Tokenizer::enable_padding(
   self : Tokenizer, length? : Int? = None, direction? : PaddingDirection = Right,
   pad_id? : Int = 0, pad_type_id? : Int = 0, pad_token? : String = "[PAD]",
   pad_to_multiple_of? : Int? = None,
 ) -> Tokenizer
+fn Tokenizer::enable_padding_hf(
+  self : Tokenizer, length? : Int? = None, direction? : String = "right",
+  pad_id? : Int = 0, pad_type_id? : Int = 0, pad_token? : String = "[PAD]",
+  pad_to_multiple_of? : Int? = None,
+) -> Tokenizer raise TokenizerError
 fn Tokenizer::no_padding(self : Tokenizer) -> Tokenizer
 
 fn Tokenizer::get_normalizer(self : Tokenizer) -> @normalizer.Normalizer?
@@ -270,6 +279,8 @@ builder 返回 tokenizer，可链式调用，例如
 使缓存的原始 JSON 失效，后续序列化尽量从已建模的 typed state 生成。
 `set_*` 组件/配置方法是对应 `with_*` builder 的 writable-property 风格 alias，
 保留同样“返回新 tokenizer”的语义，便于薄 binding 层映射 setter。
+`enable_truncation_hf` 与 `enable_padding_hf` 接受 HF 风格字符串
+`strategy` / `direction`，非法字符串会抛错；原 typed `enable_*` API 保持不变。
 
 ```moonbit
 fn TruncationParams::new(max_length : Int) -> TruncationParams

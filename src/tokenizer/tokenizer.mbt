@@ -1099,6 +1099,23 @@ pub fn Tokenizer::enable_truncation(
 }
 
 ///|
+/// HF Python-style truncation wrapper using string strategy/direction values.
+pub fn Tokenizer::enable_truncation_hf(
+  self : Tokenizer,
+  max_length : Int,
+  stride? : Int = 0,
+  strategy? : String = "longest_first",
+  direction? : String = "right",
+) -> Tokenizer raise @types.TokenizerError {
+  self.enable_truncation(
+    max_length,
+    stride~,
+    strategy=parse_truncation_strategy_hf(strategy),
+    direction=parse_truncation_direction_hf(direction),
+  )
+}
+
+///|
 /// HF-style mutating alias for clearing truncation configuration.
 pub fn Tokenizer::no_truncation(self : Tokenizer) -> Tokenizer {
   self.with_truncation(None)
@@ -1147,6 +1164,27 @@ pub fn Tokenizer::enable_padding(
       .with_pad_type_id(pad_type_id)
       .with_pad_to_multiple_of(pad_to_multiple_of),
     ),
+  )
+}
+
+///|
+/// HF Python-style padding wrapper using string direction values.
+pub fn Tokenizer::enable_padding_hf(
+  self : Tokenizer,
+  length? : Int? = None,
+  direction? : String = "right",
+  pad_id? : Int = 0,
+  pad_type_id? : Int = 0,
+  pad_token? : String = "[PAD]",
+  pad_to_multiple_of? : Int? = None,
+) -> Tokenizer raise @types.TokenizerError {
+  self.enable_padding(
+    length~,
+    direction=parse_padding_direction_hf(direction),
+    pad_id~,
+    pad_type_id~,
+    pad_token~,
+    pad_to_multiple_of~,
   )
 }
 
@@ -1911,6 +1949,29 @@ fn parse_truncation(j : Json) -> TruncationParams raise @types.TokenizerError {
 }
 
 ///|
+fn parse_truncation_direction_hf(
+  direction : String,
+) -> TruncationDirection raise @types.TokenizerError {
+  match direction.to_lower() {
+    "left" => TruncationDirection::Left
+    "right" => TruncationDirection::Right
+    other => raise @types.ParseError("invalid truncation direction: \{other}")
+  }
+}
+
+///|
+fn parse_truncation_strategy_hf(
+  strategy : String,
+) -> TruncationStrategy raise @types.TokenizerError {
+  match strategy.to_lower() {
+    "longest_first" => TruncationStrategy::LongestFirst
+    "only_first" => TruncationStrategy::OnlyFirst
+    "only_second" => TruncationStrategy::OnlySecond
+    other => raise @types.ParseError("invalid truncation strategy: \{other}")
+  }
+}
+
+///|
 fn parse_padding_strategy(obj : Map[String, Json]) -> PaddingStrategy {
   match obj.get("strategy") {
     Some(String("Fixed")) => Fixed(@types.get_int(obj, "length", default=0))
@@ -1920,6 +1981,17 @@ fn parse_padding_strategy(obj : Map[String, Json]) -> PaddingStrategy {
         _ => BatchLongest
       }
     _ => BatchLongest
+  }
+}
+
+///|
+fn parse_padding_direction_hf(
+  direction : String,
+) -> PaddingDirection raise @types.TokenizerError {
+  match direction.to_lower() {
+    "left" => PaddingDirection::Left
+    "right" => PaddingDirection::Right
+    other => raise @types.ParseError("invalid padding direction: \{other}")
   }
 }
 
