@@ -289,7 +289,13 @@ builder 返回 tokenizer，可链式调用，例如
 fn TruncationParams::new(max_length : Int) -> TruncationParams
 fn TruncationParams::with_stride(self : TruncationParams, stride : Int) -> TruncationParams
 fn TruncationParams::with_direction(self : TruncationParams, direction : TruncationDirection) -> TruncationParams
+fn TruncationParams::with_direction_hf(self : TruncationParams, direction : String) -> TruncationParams raise TokenizerError
 fn TruncationParams::with_strategy(self : TruncationParams, strategy : TruncationStrategy) -> TruncationParams
+fn TruncationParams::with_strategy_hf(self : TruncationParams, strategy : String) -> TruncationParams raise TokenizerError
+fn TruncationParams::direction_string(self : TruncationParams) -> String
+fn TruncationParams::get_direction_string(self : TruncationParams) -> String
+fn TruncationParams::strategy_string(self : TruncationParams) -> String
+fn TruncationParams::get_strategy_string(self : TruncationParams) -> String
 
 fn PaddingParams::new(
   strategy : PaddingStrategy, pad_id~ : Int = 0, pad_token~ : String = "[PAD]",
@@ -297,8 +303,11 @@ fn PaddingParams::new(
 fn PaddingParams::fixed(length : Int, pad_id~ : Int = 0, pad_token~ : String = "[PAD]") -> PaddingParams
 fn PaddingParams::batch_longest(pad_id~ : Int = 0, pad_token~ : String = "[PAD]") -> PaddingParams
 fn PaddingParams::with_direction(self : PaddingParams, direction : PaddingDirection) -> PaddingParams
+fn PaddingParams::with_direction_hf(self : PaddingParams, direction : String) -> PaddingParams raise TokenizerError
 fn PaddingParams::with_pad_type_id(self : PaddingParams, pad_type_id : Int) -> PaddingParams
 fn PaddingParams::with_pad_to_multiple_of(self : PaddingParams, pad_to_multiple_of : Int?) -> PaddingParams
+fn PaddingParams::direction_string(self : PaddingParams) -> String
+fn PaddingParams::get_direction_string(self : PaddingParams) -> String
 
 fn Decoder::wordpiece(prefix? : String = "##", cleanup? : Bool = true) -> Decoder
 fn Decoder::byte_fallback() -> Decoder
