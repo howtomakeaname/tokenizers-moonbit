@@ -27,7 +27,7 @@
 | R8 | 文档 + 迁移指南 | ✅ |
 | R9 | HF 无缝迁移缺口收敛（API / offsets / charsmap / save / pretrained） | ✅（Hub 下载已由可选 native/js `hub` 包承接）|
 | R10 | 架构治理与模块化（公共库 / 测试与基准分层 / HF 风格组件边界） | ✅（A0–A5 全部完成）|
-| R11 | HF tokenizers 全量兼容缺口收敛（低频 API / 高级训练 / 正则与并行） | 🚧 排期中（`encode_fast`、迁移序列化 API、缓存控制 API、BPE dropout、模型文件级保存、HF config alias、EncodeInput、Token/Regex/Encoding/Tokenizer state API、Tokenizer train pipeline MVP、高级 trainer knobs 与 Trainer state、Hub sidecar/metadata/离线校验/诊断 hint/ref/resume 元数据/条件请求计划/响应决策/HEAD 预检/流式落盘、batch parallel 兼容入口、NormalizedString/PreTokenizedString 低层 API 与 binding alias、async 兼容入口、regex literal 策略、错误分类 helper、Python binding alias 第二十五批已完成） |
+| R11 | HF tokenizers 全量兼容缺口收敛（低频 API / 高级训练 / 正则与并行） | 🚧 排期中（`encode_fast`、迁移序列化 API、缓存控制 API、BPE dropout、模型文件级保存、HF config alias、EncodeInput、Token/Regex/Encoding/Tokenizer state API、Tokenizer train pipeline MVP、高级 trainer knobs 与 Trainer state、Hub sidecar/metadata/离线校验/诊断 hint/ref/resume 元数据/条件请求计划/响应决策/HEAD 预检/流式落盘、batch parallel 兼容入口、NormalizedString/PreTokenizedString 低层 API 与 binding alias、async 兼容入口、regex literal 策略、错误分类 helper、Python binding alias 第三十四批已完成） |
 
 ## R11：对齐 HuggingFace tokenizers 的剩余缺口排期（2026-06-12 复评）
 
@@ -65,6 +65,10 @@
 第三十一批继续收敛 Python binding 长尾：补充 `Encoding` 的 HF 形态 helper（`*_by_sequence_index`、`token_to_char_offsets`、`token_to_word_index`、`truncate_hf`、`pad_hf`），保留现有 MoonBit typed/富返回值 API；同时锁定 Hub request header 合约（`Accept`、空 token 不生成 `Authorization`、JS/native `User-Agent` 差异）、GET/HEAD 的 slash revision URL segment 编码、HEAD plan 去除 Range/If-Range，以及 direct `local_files_only` 网络入口拒绝语义。
 
 第三十二批继续补齐 Python binding 构造器长尾：`Decoder::metaspace(replacement='▁', prepend_scheme="always")` 作为 HF `decoders.Metaspace(...)` lower-snake factory alias，复用现有 `Metaspace` typed variant，不改变 decode 语义。
+
+第三十三批继续补齐低层 pre-tokenizer binding 长尾：`PreTokenizedString::get_item(index)` / `__getitem__(index)` 返回当前 split，负 index 或越界返回 `None`；与 `NormalizedString`、`Normalizer`/`PreTokenizer`/`PostProcessor` sequence 组件的单 index 访问形态保持一致，便于 Python binding 映射 `pretokenized[index]`。
+
+第三十四批补齐 Decoder sequence binding 长尾：`Decoder::get_item(index)` / `__getitem__(index)` 对 `Sequence` 返回子 decoder，非 sequence、负 index 或越界返回 `None`；与 `Normalizer` / `PreTokenizer` / `PostProcessor` 的 sequence 组件索引 alias 保持一致，不改变 decode 行为或 JSON/state。
 
 训练/模型文件近期增量：`Trainer::{wordlevel,wordpiece,bpe,unigram}` 默认 `vocab_size` 已对齐 HF cap（30000/8000），Unigram trainer 默认 `max_piece_length=Some(16)` 且显式 `None` 保留旧 escape hatch；tokenizer/model-level trainer 入口补充 `show_progress` no-op，model-level Unigram 补充 `unk_piece` alias。`Model::save` 之外已补 `Model::from_bpe_files` / `from_wordpiece_file` / `from_wordlevel_file` / `from_unigram_file` standalone artifact loader，覆盖 BPE `vocab.json`+`merges.txt`、WordPiece `vocab.txt`、WordLevel `vocab.json`、Unigram JSON 的保存后重载。
 

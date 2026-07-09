@@ -300,9 +300,9 @@ Lookups consult the added/special vocabulary first, then the model vocabulary.
 `split`, supported deterministic `split_regex`, single-index `get_item` /
 `__getitem__`, and `__str__` / `__repr__` display aliases.
 
-`PreTokenizedString` provides `get_splits` / `splits`, `normalize`,
-pre-tokenizer `split`, state/tuple helpers, and `to_encoding` /
-`into_encoding`.
+`PreTokenizedString` provides `get_splits` / `splits`, single-index
+`get_item` / `__getitem__`, `normalize`, pre-tokenizer `split`, state/tuple
+helpers, and `to_encoding` / `into_encoding`.
 
 `PreTokenizer::pre_tokenize_str(text)` returns HF-style `(value, offsets)` tuples
 for quick component-level checks and binding shims.
@@ -324,7 +324,8 @@ as `nfc`, `nfd`, `nfkc`, `nfkd`, `byte_level`, `strip`, `replace`,
 `prepend_normalizer`, `bert_normalizer`, and `sequence`.
 `Decoder` exposes read-only configuration getters for binding layers, including
 ByteLevel flags, WordPiece prefix/cleanup, Metaspace settings, BPEDecoder
-suffix, Strip/Replace settings, CTC settings, and Sequence children.
+suffix, Strip/Replace settings, CTC settings, Sequence children, and
+single-index Sequence access via `get_item` / `__getitem__`.
 It also provides lower-snake builder aliases for common HF constructors such as
 `byte_level`, `bpe_decoder`, `strip`, `fuse`, and `sequence`.
 `PostProcessor` exposes read-only configuration getters for binding layers,

@@ -282,8 +282,9 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 以及受支持 deterministic 子集的 `split_regex`、单 index `get_item` /
 `__getitem__`，并提供 `__str__` / `__repr__` 显示 alias。
 
-`PreTokenizedString` 提供 `get_splits` / `splits`、`normalize`、pre-tokenizer
-`split`、state/tuple helper，以及 `to_encoding` / `into_encoding`。
+`PreTokenizedString` 提供 `get_splits` / `splits`、单 index `get_item` /
+`__getitem__`、`normalize`、pre-tokenizer `split`、state/tuple helper，以及
+`to_encoding` / `into_encoding`。
 
 `PreTokenizer::pre_tokenize_str(text)` 返回 HF 风格 `(value, offsets)` tuple，
 便于组件级检查和 binding shim。
@@ -301,7 +302,8 @@ Replace pattern/content、Prepend 内容、BertNormalizer 标记与 Sequence 子
 `nfkc`、`nfkd`、`byte_level`、`strip`、`replace`、`prepend_normalizer`、
 `bert_normalizer` 和 `sequence`。
 `Decoder` 提供只读配置 getter，覆盖 ByteLevel 标记、WordPiece prefix/cleanup、
-Metaspace 设置、BPEDecoder suffix、Strip/Replace/CTC 设置与 Sequence 子项。
+Metaspace 设置、BPEDecoder suffix、Strip/Replace/CTC 设置、Sequence 子项，以及
+通过 `get_item` / `__getitem__` 进行的 Sequence 单 index 访问。
 同时提供常见 HF 构造器的 lower-snake builder alias，例如 `byte_level`、
 `bpe_decoder`、`strip`、`fuse` 和 `sequence`。
 `PostProcessor` 提供只读配置 getter，覆盖 Bert/Roberta special token pair、
