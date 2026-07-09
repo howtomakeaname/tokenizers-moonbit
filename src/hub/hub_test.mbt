@@ -903,6 +903,62 @@ async test "direct Hub network APIs reject local_files_only" {
 }
 
 ///|
+async test "from_pretrained loads local tokenizer file and directory without Hub" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hub":0,"local":1,"dir":2,"[UNK]":3},"unk_token":"[UNK]"}}
+  let file_path = "_build/hub_local_tokenizer.json"
+  let dir_path = "_build/hub_local_pretrained"
+  @fs.write_string_to_file(file_path, json) catch {
+    _ => abort("cannot write local tokenizer file")
+  }
+  @fs.create_dir(dir_path) catch {
+    _ => ()
+  }
+  @fs.write_string_to_file(dir_path + "/tokenizer.json", json) catch {
+    _ => abort("cannot write local tokenizer directory")
+  }
+  let options = HubDownloadOptions::new(
+    endpoint="https://127.0.0.1:9",
+    local_files_only=false,
+  )
+  let from_file = from_pretrained(file_path, options~)
+  let from_dir = from_pretrained(dir_path, options~)
+  @test.assert_eq(from_file.encode("hub local", add_special_tokens=false).ids, [
+    0, 1,
+  ])
+  @test.assert_eq(
+    from_dir.encode("hub local dir", add_special_tokens=false).ids,
+    [0, 1, 2],
+  )
+}
+
+///|
+async test "from_pretrained reports local directory missing tokenizer before Hub" {
+  let dir_path = "_build/hub_local_missing_tokenizer"
+  @fs.create_dir(dir_path) catch {
+    _ => ()
+  }
+  let mut missing = false
+  try
+    from_pretrained(
+      dir_path,
+      options=HubDownloadOptions::new(
+        endpoint="https://127.0.0.1:9",
+        local_files_only=false,
+      ),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      missing = msg.contains("from_pretrained directory missing tokenizer.json")
+    _ => ()
+  }
+  @test.assert_eq(missing, true)
+}
+
+///|
 async test "from_pretrained honors local_files_only cache hit and miss" {
   let json =
     #|{"version":"1.0",

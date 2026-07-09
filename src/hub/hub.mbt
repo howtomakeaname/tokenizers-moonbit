@@ -687,6 +687,11 @@ fn refresh_ref_from_decision(
 }
 
 ///|
+fn is_existing_local_pretrained_path(path : String) -> Bool {
+  @fs.path_exists(path)
+}
+
+///|
 /// Load a tokenizer from a local path/cache first, otherwise download
 /// `tokenizer.json` from HuggingFace Hub (or a compatible endpoint), persist it
 /// into the HF-style cache layout, and parse it with the core tokenizer loader.
@@ -699,6 +704,13 @@ pub async fn from_pretrained(
   model_id : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> @tokenizer.Tokenizer raise @types.TokenizerError {
+  if is_existing_local_pretrained_path(model_id) {
+    return @tokenizer.Tokenizer::from_pretrained_cached(
+      model_id,
+      revision=options.revision,
+      cache_dir=options.cache_dir,
+    )
+  }
   try
     @tokenizer.Tokenizer::from_pretrained_cached(
       model_id,
