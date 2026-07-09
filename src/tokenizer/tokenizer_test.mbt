@@ -3064,6 +3064,18 @@ test "Tokenizer train_from_iterator applies pipeline and preserves added special
     length=Some(3),
   )
   @test.assert_eq(with_length.to_json(), trained.to_json())
+  let with_zero_length = base.train_from_iterator(
+    ["HELLO [MASK]", "hello Moon", "MOON"],
+    Trainer::wordlevel(unk_token="[UNK]", min_frequency=1),
+    length=Some(0),
+  )
+  @test.assert_eq(with_zero_length.to_json(), trained.to_json())
+  let with_large_length = base.train_from_iterator(
+    ["HELLO [MASK]", "hello Moon", "MOON"],
+    Trainer::wordlevel(unk_token="[UNK]", min_frequency=1),
+    length=Some(999),
+  )
+  @test.assert_eq(with_large_length.to_json(), trained.to_json())
   @test.assert_eq(trained.get_normalizer() is Some(_), true)
   @test.assert_eq(trained.get_pre_tokenizer() is Some(_), true)
 }
@@ -3187,6 +3199,30 @@ test "Trainer deduplicates special tokens while preserving metadata" {
     trained.encode("hello <s> <base>", add_special_tokens=false).tokens,
     ["hello", "<s> ", "<base>"],
   )
+}
+
+///|
+test "Trainer merges duplicate explicit special token metadata" {
+  let base = Tokenizer::new(@model.Model::train_wordlevel_from_tokens([[]])).with_pre_tokenizer(
+    Some(@pretokenizer.PreTokenizer::whitespace_split()),
+  )
+  let trained = base.train_from_iterator(
+    ["hello <extra>", "world"],
+    Trainer::wordlevel(
+      unk_token="[UNK]",
+      special_tokens=["<extra>"],
+      special_added_tokens=[AddedToken::special("<extra>").with_lstrip(true)],
+      show_progress=false,
+    ),
+  )
+  @test.assert_eq(trained.token_to_id("<extra>"), Some(0))
+  @test.assert_eq(trained.get_added_tokens_count(special_only=true), 1)
+  @test.assert_eq(trained.all_special_tokens(), ["<extra>"])
+  let extra = trained.get_added_tokens_decoder().get(0).unwrap()
+  @test.assert_eq(extra.content, "<extra>")
+  @test.assert_eq(extra.lstrip, true)
+  @test.assert_eq(extra.special, true)
+  @test.assert_eq(extra.normalized, false)
 }
 
 ///|
@@ -3655,6 +3691,27 @@ test "Tokenizer train_from_files trains line oriented corpus" {
     _ => ()
   }
   @test.assert_eq(missing_file, true)
+
+  let ok_path = "_build/tokenizer_train_from_files_ok.txt"
+  let missing_path = "_build/tokenizer_train_from_files_missing_second.txt"
+  @fs.write_string_to_file(ok_path, "hello\n") catch {
+    _ => ()
+  }
+  let mut missing_after_ok = false
+  try
+    base.train_from_files(
+      [ok_path, missing_path],
+      Trainer::wordlevel(unk_token="[UNK]"),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      missing_after_ok = msg.contains(
+        "cannot read training file: " + missing_path,
+      )
+    _ => ()
+  }
+  @test.assert_eq(missing_after_ok, true)
 }
 
 ///|
@@ -3672,6 +3729,41 @@ test "Tokenizer train_from_files preserves line endings without pretokenizer" {
   @test.assert_eq(trained.token_to_id("bb\r\n") is Some(_), true)
   @test.assert_eq(trained.token_to_id("aa"), None)
   @test.assert_eq(trained.token_to_id("bb"), None)
+
+  let no_tail_newline_path = "_build/tokenizer_train_from_files_no_tail_newline.txt"
+  @fs.write_string_to_file(no_tail_newline_path, "aa\nbb") catch {
+    _ => ()
+  }
+  let no_tail = base.train_from_files(
+    [no_tail_newline_path],
+    Trainer::wordlevel(unk_token="[UNK]", min_frequency=1),
+  )
+  @test.assert_eq(no_tail.token_to_id("aa\n") is Some(_), true)
+  @test.assert_eq(no_tail.token_to_id("bb") is Some(_), true)
+  @test.assert_eq(no_tail.token_to_id("bb\n"), None)
+
+  let empty_path = "_build/tokenizer_train_from_files_empty.txt"
+  @fs.write_string_to_file(empty_path, "") catch {
+    _ => ()
+  }
+  let empty_file = Tokenizer::new(
+      @model.Model::train_wordlevel_from_tokens([[]]),
+    )
+    .with_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+    .train_from_files(
+      [empty_path],
+      Trainer::wordlevel(unk_token="[UNK]", min_frequency=1),
+    )
+  let empty_iterator = Tokenizer::new(
+      @model.Model::train_wordlevel_from_tokens([[]]),
+    )
+    .with_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+    .train_from_iterator(
+      [""],
+      Trainer::wordlevel(unk_token="[UNK]", min_frequency=1),
+      length=Some(0),
+    )
+  @test.assert_eq(empty_file.to_json(), empty_iterator.to_json())
 }
 
 ///|
