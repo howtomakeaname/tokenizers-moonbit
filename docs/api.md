@@ -18,6 +18,8 @@ fn from_pretrained_cached(
 fn from_pretrained_downloaded(
   model_id : String, tokenizer_json : String, revision? : String = "main",
   resolved_revision? : String? = None, cache_dir? : String? = None,
+  tokenizer_config_json? : String? = None, special_tokens_map_json? : String? = None,
+  etag? : String? = None,
 ) -> Tokenizer raise TokenizerError
 fn Tokenizer::to_str(self : Tokenizer, pretty? : Bool = false) -> String raise TokenizerError
 fn Tokenizer::save(self : Tokenizer, path : String, pretty? : Bool = true) -> Unit raise TokenizerError
@@ -124,6 +126,7 @@ fn HubDownloadOptions::new(
   local_files_only? : Bool = false,
   max_redirects? : Int = 5,
   user_agent? : String? = Some("unknown/None; hf_hub/...; python/...; tokenizers/..."),
+  stream_chunk_size? : Int = 65536,
 ) -> HubDownloadOptions
 
 async fn @hub.from_pretrained(

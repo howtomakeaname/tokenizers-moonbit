@@ -1270,6 +1270,14 @@ test "Encoding public manipulation APIs mirror HF style" {
     ).offsets,
     [(0, 2), (2, 4)],
   )
+  let padded_before_merge = @types.Encoding::from_tokens([
+    { id: 14, value: "ab", offsets: (0, 2) },
+  ]).pad(3, pad_id=0, pad_token="[PAD]")
+  let merged_after_padding = padded_before_merge.merge_with(
+    @types.Encoding::from_tokens([{ id: 15, value: "cd", offsets: (0, 2) }]),
+  )
+  @test.assert_eq(merged_after_padding.tokens, ["ab", "[PAD]", "[PAD]", "cd"])
+  @test.assert_eq(merged_after_padding.offsets, [(0, 2), (0, 0), (0, 0), (0, 2)])
   let (without_overflow, overflow) = truncated.take_overflowing()
   @test.assert_eq(without_overflow.get_overflowing().length(), 0)
   @test.assert_eq(overflow.length(), 1)
