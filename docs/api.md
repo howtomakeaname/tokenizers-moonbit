@@ -103,8 +103,10 @@ loader, then downloads `/<model>/resolve/<revision>/tokenizer.json` via
 `moonbitlang/async/http`, follows redirects, stores the result in the HF-style
 cache, and parses it. It supports custom endpoints/mirrors, explicit cache roots,
 `HF_TOKEN` or an explicit bearer token, HF-style request headers, and
-`local_files_only=true`. For users in regions where `huggingface.co` is slow,
-pass a mirror endpoint, for example:
+`local_files_only=true`. `HF_ENDPOINT` supplies the default endpoint when set,
+and truthy `HF_HUB_OFFLINE` values (`1`, `true`, `yes`, `on`) default hub
+options to local-only mode unless options override them. For users in regions
+where `huggingface.co` is slow, pass a mirror endpoint, for example:
 
 ```moonbit
 let tok = @hub.from_pretrained(

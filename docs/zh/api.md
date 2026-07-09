@@ -88,7 +88,9 @@ async fn @hub.from_pretrained(
 `moonbitlang/async/http` 下载 `/<model>/resolve/<revision>/tokenizer.json`，跟随
 redirect，写入 HF 风格 cache 后复用核心 loader。支持自定义 endpoint/mirror、显式
 cache 根目录、`HF_TOKEN` 或显式 bearer token、HF 风格请求 headers，以及
-`local_files_only=true`。中国大陆用户可显式配置镜像：
+`local_files_only=true`。`HF_ENDPOINT` 可作为默认 endpoint；`HF_HUB_OFFLINE`
+为真值（`1`、`true`、`yes`、`on`）时会让默认 hub options 进入 local-only 模式，
+除非调用方显式覆盖。中国大陆用户可显式配置镜像：
 
 ```moonbit
 let tok = @hub.from_pretrained(

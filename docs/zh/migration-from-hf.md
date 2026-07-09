@@ -30,7 +30,8 @@ HF Hub cache snapshot 解析（`$HUGGINGFACE_HUB_CACHE`、`$HF_HUB_CACHE`、
 `$HF_HOME/hub`、`$HOME/.cache/huggingface/hub`）。在线下载由可选 `@hub` 包在 native/js 后端提供：
 它会下载 `tokenizer.json`、写入相同 cache 布局并复用核心 loader。native 请求使用接近
 HuggingFace/tokenizers 客户端的 headers，并支持通过
-`HubDownloadOptions::new(endpoint="https://hf-mirror.com")` 配置镜像。wasm/wasm-gc 可由
+`HF_ENDPOINT` 或 `HubDownloadOptions::new(endpoint="https://hf-mirror.com")` 配置镜像；
+`HF_HUB_OFFLINE` 为真值时默认 hub options 会进入 local-only 模式。wasm/wasm-gc 可由
 宿主环境 fetch JSON 后调用 `@tokenizer.from_pretrained_downloaded`。
 `save_pretrained(dir)` 会写出 `dir/tokenizer.json`，保存后的目录可直接通过
 `from_pretrained(dir)` 重新加载。

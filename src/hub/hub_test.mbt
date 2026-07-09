@@ -30,6 +30,28 @@ test "download options default to online main revision" {
 }
 
 ///|
+test "download options honor Hub environment defaults" {
+  @sys.set_env_var("HF_ENDPOINT", "https://env-hf.example")
+  @sys.set_env_var("HF_HUB_OFFLINE", "1")
+  let env_opts = HubDownloadOptions::new()
+  @test.assert_eq(env_opts.endpoint, "https://env-hf.example")
+  @test.assert_eq(env_opts.local_files_only, true)
+
+  let explicit = HubDownloadOptions::new(
+    endpoint="https://explicit-hf.example",
+    local_files_only=false,
+  )
+  @test.assert_eq(explicit.endpoint, "https://explicit-hf.example")
+  @test.assert_eq(explicit.local_files_only, false)
+
+  @sys.set_env_var("HF_ENDPOINT", "")
+  @sys.set_env_var("HF_HUB_OFFLINE", "false")
+  let reset = HubDownloadOptions::new()
+  @test.assert_eq(reset.endpoint, "https://huggingface.co")
+  @test.assert_eq(reset.local_files_only, false)
+}
+
+///|
 test "Hub cache application validates model id and revision" {
   let json =
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0,"[UNK]":1},"unk_token":"[UNK]"}}

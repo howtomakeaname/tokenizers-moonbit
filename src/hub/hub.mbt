@@ -25,11 +25,11 @@ pub struct HubDownloadOptions {
 
 ///|
 pub fn HubDownloadOptions::new(
-  endpoint? : String = "https://huggingface.co",
+  endpoint? : String = default_endpoint(),
   revision? : String = "main",
   cache_dir? : String? = None,
   token? : String? = None,
-  local_files_only? : Bool = false,
+  local_files_only? : Bool = default_local_files_only(),
   max_redirects? : Int = 5,
   user_agent? : String? = Some(
     "unknown/None; hf_hub/0.34.4; python/3.x; tokenizers/0.21.4",
@@ -75,6 +75,28 @@ fn positive_stream_chunk_size(n : Int) -> Int {
   } else {
     65536
   }
+}
+
+///|
+fn default_endpoint() -> String {
+  match @sys.get_env_var("HF_ENDPOINT") {
+    Some(v) => if !v.is_empty() { v } else { "https://huggingface.co" }
+    None => "https://huggingface.co"
+  }
+}
+
+///|
+fn default_local_files_only() -> Bool {
+  match @sys.get_env_var("HF_HUB_OFFLINE") {
+    Some(v) => is_truthy_env(v)
+    None => false
+  }
+}
+
+///|
+fn is_truthy_env(value : String) -> Bool {
+  let lower = value.to_lower()
+  lower == "1" || lower == "true" || lower == "yes" || lower == "on"
 }
 
 ///|

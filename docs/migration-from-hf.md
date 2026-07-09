@@ -33,7 +33,8 @@ existing HF Hub cache snapshot via `$HUGGINGFACE_HUB_CACHE`, `$HF_HUB_CACHE`,
 `@hub` package on native/js: it fetches `tokenizer.json`, writes the same cache
 layout, and then reuses the core loader. It uses HuggingFace/tokenizers-like
 request headers on native and supports mirror endpoints via
-`HubDownloadOptions::new(endpoint="https://hf-mirror.com")`. Wasm/wasm-gc callers
+`HF_ENDPOINT` or `HubDownloadOptions::new(endpoint="https://hf-mirror.com")`;
+truthy `HF_HUB_OFFLINE` defaults hub options to local-only mode. Wasm/wasm-gc callers
 can fetch JSON in the host environment and call
 `@tokenizer.from_pretrained_downloaded`.
 `save_pretrained(dir)` writes `dir/tokenizer.json`, so saved artifacts can be
