@@ -41,8 +41,22 @@ pub fn PostProcessor::process(
     }
     Sequence(steps) => {
       let mut acc = a
+      let mut pair = b
       for step in steps {
-        acc = step.process(acc, b)
+        match step {
+          ByteLevel(add_prefix_space~, trim_offsets~, ..) => {
+            acc = process_byte_level_offsets(
+              acc, trim_offsets, add_prefix_space,
+            )
+            pair = pair.map(eb => {
+              process_byte_level_offsets(eb, trim_offsets, add_prefix_space)
+            })
+          }
+          _ => {
+            acc = step.process(acc, pair)
+            pair = None
+          }
+        }
       }
       acc
     }

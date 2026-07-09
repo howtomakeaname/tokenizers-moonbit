@@ -39,6 +39,22 @@ test "bert encode_pair builds [CLS] A [SEP] B [SEP] with type ids" {
 }
 
 ///|
+test "sequence post-processor preserves pair input without duplication" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"[UNK]":0,"[CLS]":1,"[SEP]":2,"a":3,"b":4},"unk_token":"[UNK]"},
+    #| "post_processor":{"type":"Sequence","processors":[{"type":"ByteLevel","trim_offsets":false},{"type":"BertProcessing","sep":["[SEP]",2],"cls":["[CLS]",1]}]}}
+  let tok = @tokenizer.Tokenizer::from_str(json)
+  let enc = tok.encode_pair("a", "b", add_special_tokens=true)
+  @test.assert_eq(enc.tokens, ["[CLS]", "a", "[SEP]", "b", "[SEP]"])
+  @test.assert_eq(enc.ids, [1, 3, 2, 4, 2])
+  @test.assert_eq(enc.type_ids, [0, 0, 0, 1, 1])
+  @test.assert_eq(enc.sequence_ids(), [None, Some(0), None, Some(1), None])
+  @test.assert_eq(enc.special_tokens_mask, [1, 0, 1, 0, 1])
+}
+
+///|
 test "roberta encode_pair keeps all type ids zero" {
   guard load_text("tests/data/roberta.full.json") is Some(model_json) else {
     return

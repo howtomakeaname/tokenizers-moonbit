@@ -90,6 +90,8 @@ Decoder Metaspace split state 小闭环：`Decoder::Metaspace` 与 `Decoder::met
 
 PostProcessor 配置 getter alias 小闭环：`get_sep` / `get_cls` / `get_trim_offsets` / `get_add_prefix_space` / `get_use_regex` / `get_single_pieces` / `get_single` / `get_pair_pieces` / `get_pair` / `get_special_tokens` 已补齐，均委托现有 property-style getter，便于 Python binding 统一暴露 `get_*` 配置属性。
 
+PostProcessor Sequence pair 小闭环：`Sequence([ByteLevel, BertProcessing/Template/...])` 在 pair 输入下会先分别处理 A/B 的 ByteLevel offsets，再把原始 pair 交给后续组装型 processor，避免旧实现把 B 合并进 A 后又把原 B 再传入导致 pair 序列重复；已按 HF `Sequence([ByteLevel, BertProcessing])` 对拍补 `encode_pair` 回归测试。
+
 TemplateProcessing typed alias 小闭环：`PostProcessor::single()` / `pair()` 分别作为 `single_pieces()` / `pair_pieces()` 的 HF-style typed alias；返回数组副本，非 Template processor 返回空数组，并覆盖 parsed pieces 与 `template_from_strings` 两种构造路径。
 
 TemplateProcessing 叶子对象互操作：`SpecialToken::{get_id,id,get_ids,ids,get_tokens,tokens,as_tuple,from_tuple}` 已补齐，数组 getter 返回副本，方便 Python binding 映射 TemplateProcessing special token 元数据。
