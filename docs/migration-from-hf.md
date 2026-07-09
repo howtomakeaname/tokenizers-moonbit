@@ -32,7 +32,8 @@ existing HF Hub cache snapshot via `$HUGGINGFACE_HUB_CACHE`, `$HF_HUB_CACHE`,
 `$HF_HOME/hub`, or `$HOME/.cache/huggingface/hub`. Online download is provided by the optional
 `@hub` package on native/js: it fetches `tokenizer.json`, writes the same cache
 layout, and then reuses the core loader. It uses HuggingFace/tokenizers-like
-request headers on native and supports mirror endpoints via
+request headers on native, discovers auth tokens from `HF_TOKEN`, `HF_TOKEN_PATH`
+or `$HF_HOME/token`, and supports mirror endpoints via
 `HF_ENDPOINT` or `HubDownloadOptions::new(endpoint="https://hf-mirror.com")`;
 truthy `HF_HUB_OFFLINE` defaults hub options to local-only mode. Wasm/wasm-gc callers
 can fetch JSON in the host environment and call

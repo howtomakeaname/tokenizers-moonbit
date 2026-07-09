@@ -1352,13 +1352,71 @@ fn build_headers(options : HubDownloadOptions) -> Map[String, String] {
   }
   let token = match options.token {
     Some(t) => Some(t)
-    None => @sys.get_env_var("HF_TOKEN")
+    None => resolve_auth_token()
   }
   match token {
     Some(t) => if !t.is_empty() { out["Authorization"] = "Bearer " + t }
     None => ()
   }
   out
+}
+
+///|
+fn resolve_auth_token() -> String? {
+  match @sys.get_env_var("HF_TOKEN") {
+    Some(t) => if !t.is_empty() { return Some(t) }
+    None => ()
+  }
+  match @sys.get_env_var("HF_TOKEN_PATH") {
+    Some(path) =>
+      if !path.is_empty() {
+        match read_token_file(path) {
+          Some(t) => if !t.is_empty() { return Some(t) }
+          None => ()
+        }
+      }
+    None => ()
+  }
+  match @sys.get_env_var("HF_HOME") {
+    Some(home) =>
+      if !home.is_empty() {
+        match read_token_file(home + "/token") {
+          Some(t) => if !t.is_empty() { return Some(t) }
+          None => ()
+        }
+      }
+    None => ()
+  }
+  None
+}
+
+///|
+fn read_token_file(path : String) -> String? {
+  let content = @fs.read_file_to_string(path) catch { _ => return None }
+  Some(trim_ascii_ws(content))
+}
+
+///|
+fn trim_ascii_ws(s : String) -> String {
+  let chars = s.to_array()
+  let mut start = 0
+  let mut stop = chars.length()
+  while start < stop && is_ascii_ws(chars[start]) {
+    start = start + 1
+  }
+  while stop > start && is_ascii_ws(chars[stop - 1]) {
+    stop = stop - 1
+  }
+  let sb = StringBuilder::new()
+  for i in start..<stop {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
+}
+
+///|
+fn is_ascii_ws(c : Char) -> Bool {
+  c == ' ' || c == '\n' || c == '\r' || c == '\t'
 }
 
 ///|

@@ -164,6 +164,51 @@ test "Hub request headers avoid empty auth and optional user agent" {
     with_user_agent.headers.get("User-Agent"),
     expected_user_agent_header(Some("custom-agent")),
   )
+
+  @fs.write_string_to_file("_build/hub_token_path", " file-token \n") catch {
+    _ => ()
+  }
+  @sys.set_env_var("HF_TOKEN", "")
+  @sys.set_env_var("HF_TOKEN_PATH", "_build/hub_token_path")
+  let from_token_path = plan_tokenizer_json_request(
+    "bert-base-uncased",
+    options=HubDownloadOptions::new(user_agent=None),
+  )
+  @test.assert_eq(
+    from_token_path.headers.get("Authorization"),
+    Some("Bearer file-token"),
+  )
+
+  @sys.set_env_var("HF_TOKEN", "env-token")
+  let from_env_token = plan_tokenizer_json_request(
+    "bert-base-uncased",
+    options=HubDownloadOptions::new(user_agent=None),
+  )
+  @test.assert_eq(
+    from_env_token.headers.get("Authorization"),
+    Some("Bearer env-token"),
+  )
+
+  @fs.create_dir("_build/hub_hf_home_token") catch {
+    _ => ()
+  }
+  @fs.write_string_to_file("_build/hub_hf_home_token/token", " home-token\n") catch {
+    _ => ()
+  }
+  @sys.set_env_var("HF_TOKEN", "")
+  @sys.set_env_var("HF_TOKEN_PATH", "")
+  @sys.set_env_var("HF_HOME", "_build/hub_hf_home_token")
+  let from_hf_home = plan_tokenizer_json_request(
+    "bert-base-uncased",
+    options=HubDownloadOptions::new(user_agent=None),
+  )
+  @test.assert_eq(
+    from_hf_home.headers.get("Authorization"),
+    Some("Bearer home-token"),
+  )
+  @sys.set_env_var("HF_TOKEN", "")
+  @sys.set_env_var("HF_TOKEN_PATH", "")
+  @sys.set_env_var("HF_HOME", "")
 }
 
 ///|
