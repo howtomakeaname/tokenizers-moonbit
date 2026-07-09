@@ -393,6 +393,145 @@ test "Encoding exposes HF-style getter accessors" {
 }
 
 ///|
+test "Encoding interop constructors validate parallel array lengths" {
+  let ids = [1, 2]
+  let type_ids = [0, 0]
+  let tokens = ["a", "b"]
+  let offsets = [(0, 1), (1, 2)]
+  let special = [0, 0]
+  let attention = [1, 1]
+  let mut raised_new = false
+  try
+    @types.Encoding::new(ids, [0], tokens, offsets, special, attention)
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      raised_new = msg.contains("type_ids length 1 does not match ids length 2")
+    _ => ()
+  }
+  @test.assert_eq(raised_new, true)
+
+  let buffers = @types.EncodingBuffers::{
+    ids,
+    type_ids,
+    tokens,
+    offsets,
+    special_tokens_mask: special,
+    attention_mask: attention,
+  }
+  let mut raised_buffers = false
+  try
+    @types.Encoding::from_buffers(buffers, sequence_ids=[Some(0)]) |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      raised_buffers = msg.contains(
+        "sequence_ids length 1 does not match ids length 2",
+      )
+    _ => ()
+  }
+  @test.assert_eq(raised_buffers, true)
+
+  let mut raised_tuple = false
+  try
+    @types.Encoding::from_tuple(
+      (
+        ids,
+        type_ids,
+        tokens,
+        [(0, 1)],
+        special,
+        attention,
+        [Some(0), Some(0)],
+        [Some(0), Some(1)],
+        [],
+      ),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      raised_tuple = msg.contains(
+        "offsets length 1 does not match ids length 2",
+      )
+    _ => ()
+  }
+  @test.assert_eq(raised_tuple, true)
+
+  let mut raised_state = false
+  try
+    @types.Encoding::__setstate__({
+      ids,
+      type_ids,
+      tokens,
+      offsets,
+      special_tokens_mask: special,
+      attention_mask: attention,
+      sequence_ids: [Some(0), Some(0)],
+      word_ids: [Some(0)],
+      overflowing: [],
+    })
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      raised_state = msg.contains(
+        "word_ids length 1 does not match ids length 2",
+      )
+    _ => ()
+  }
+  @test.assert_eq(raised_state, true)
+}
+
+///|
+test "Encoding setters validate replacement array lengths" {
+  let enc = @types.Encoding::from_tokens([
+    { id: 1, value: "a", offsets: (0, 1) },
+    { id: 2, value: "b", offsets: (1, 2) },
+  ])
+  let mut raised_type_ids = false
+  try enc.with_type_ids([0]) |> ignore catch {
+    @types.ParseError(msg) =>
+      raised_type_ids = msg.contains(
+        "type_ids length 1 does not match ids length 2",
+      )
+    _ => ()
+  }
+  @test.assert_eq(raised_type_ids, true)
+  let mut raised_special = false
+  try enc.with_special_tokens_mask([0]) |> ignore catch {
+    @types.ParseError(msg) =>
+      raised_special = msg.contains(
+        "special_tokens_mask length 1 does not match ids length 2",
+      )
+    _ => ()
+  }
+  @test.assert_eq(raised_special, true)
+  let mut raised_attention = false
+  try enc.with_attention_mask([1]) |> ignore catch {
+    @types.ParseError(msg) =>
+      raised_attention = msg.contains(
+        "attention_mask length 1 does not match ids length 2",
+      )
+    _ => ()
+  }
+  @test.assert_eq(raised_attention, true)
+  let mut raised_words = false
+  try enc.with_word_ids([Some(0)]) |> ignore catch {
+    @types.ParseError(msg) =>
+      raised_words = msg.contains(
+        "word_ids length 1 does not match ids length 2",
+      )
+    _ => ()
+  }
+  @test.assert_eq(raised_words, true)
+  let mut raised_sequence = false
+  try enc.set_sequence_id(-1) |> ignore catch {
+    @types.ParseError(msg) =>
+      raised_sequence = msg.contains("sequence_id must be non-negative")
+    _ => ()
+  }
+  @test.assert_eq(raised_sequence, true)
+}
+
+///|
 test "Tokenizer exposes Python pickle-style state roundtrip" {
   let json =
     #|{"version":"1.0",
@@ -3023,7 +3162,7 @@ test "Trainer default vocab_size mirrors HF caps" {
 }
 
 ///|
-test "Trainer default min_frequency documents remaining HF delta" {
+test "Trainer default min_frequency aligns with HF" {
   // HF 0.22.x defaults WordLevel/WordPiece/BPE min_frequency to 0. MoonBit
   // now aligns these defaults while preserving explicit historical values.
   @test.assert_eq(Trainer::wordlevel().min_frequency(), 0)
