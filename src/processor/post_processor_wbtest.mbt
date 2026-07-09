@@ -156,6 +156,16 @@ test "post-processor aggregate getters return copies" {
   single_alias.push(SequenceRef(id="B", type_id=1))
   @test.assert_eq(template.single().length(), 1)
   @test.assert_eq(PostProcessor::byte_level().single(), [])
+  let string_template = PostProcessor::template_from_strings(
+    "<multi>:0 $A:0", "<multi>:0 $A:0 <multi>:1 $B:1", specials,
+  )
+  @test.assert_eq(string_template.single(), [
+    SpecialTokenRef(id="<multi>", type_id=0),
+    SequenceRef(id="A", type_id=0),
+  ])
+  let parsed_single_alias = string_template.single()
+  parsed_single_alias.push(SequenceRef(id="B", type_id=1))
+  @test.assert_eq(string_template.single().length(), 2)
   let pair_alias = template.pair()
   pair_alias.push(SequenceRef(id="B", type_id=1))
   @test.assert_eq(template.pair().length(), 1)
