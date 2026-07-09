@@ -78,11 +78,21 @@ pub fn Normalizer::strip_left(self : Normalizer) -> Bool? {
 }
 
 ///|
+pub fn Normalizer::get_strip_left(self : Normalizer) -> Bool? {
+  self.strip_left()
+}
+
+///|
 pub fn Normalizer::strip_right(self : Normalizer) -> Bool? {
   match self {
     Strip(right~, ..) => Some(right)
     _ => None
   }
+}
+
+///|
+pub fn Normalizer::get_strip_right(self : Normalizer) -> Bool? {
+  self.strip_right()
 }
 
 ///|
@@ -94,11 +104,21 @@ pub fn Normalizer::pattern(self : Normalizer) -> String? {
 }
 
 ///|
+pub fn Normalizer::get_pattern(self : Normalizer) -> String? {
+  self.pattern()
+}
+
+///|
 pub fn Normalizer::content(self : Normalizer) -> String? {
   match self {
     Replace(content~, ..) => Some(content)
     _ => None
   }
+}
+
+///|
+pub fn Normalizer::get_content(self : Normalizer) -> String? {
+  self.content()
 }
 
 ///|
@@ -110,11 +130,21 @@ pub fn Normalizer::prepend(self : Normalizer) -> String? {
 }
 
 ///|
+pub fn Normalizer::get_prepend(self : Normalizer) -> String? {
+  self.prepend()
+}
+
+///|
 pub fn Normalizer::clean_text(self : Normalizer) -> Bool? {
   match self {
     BertNormalizer(clean_text~, ..) => Some(clean_text)
     _ => None
   }
+}
+
+///|
+pub fn Normalizer::get_clean_text(self : Normalizer) -> Bool? {
+  self.clean_text()
 }
 
 ///|
@@ -126,6 +156,11 @@ pub fn Normalizer::handle_chinese_chars(self : Normalizer) -> Bool? {
 }
 
 ///|
+pub fn Normalizer::get_handle_chinese_chars(self : Normalizer) -> Bool? {
+  self.handle_chinese_chars()
+}
+
+///|
 pub fn Normalizer::strip_accents(self : Normalizer) -> Bool? {
   match self {
     BertNormalizer(strip_accents~, ..) => Some(strip_accents)
@@ -134,11 +169,21 @@ pub fn Normalizer::strip_accents(self : Normalizer) -> Bool? {
 }
 
 ///|
+pub fn Normalizer::get_strip_accents(self : Normalizer) -> Bool? {
+  self.strip_accents()
+}
+
+///|
 pub fn Normalizer::lowercase(self : Normalizer) -> Bool? {
   match self {
     BertNormalizer(lowercase~, ..) => Some(lowercase)
     _ => None
   }
+}
+
+///|
+pub fn Normalizer::get_lowercase(self : Normalizer) -> Bool? {
+  self.lowercase()
 }
 
 ///|
