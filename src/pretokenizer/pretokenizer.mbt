@@ -365,8 +365,8 @@ pub fn SplitBehavior::merged_with_next() -> SplitBehavior {
 pub fn PreTokenizer::split(
   pattern : String,
   behavior : SplitBehavior,
-  invert : Bool,
-  regex : Bool,
+  invert? : Bool = false,
+  regex? : Bool = false,
 ) -> PreTokenizer {
   Split(pattern~, behavior~, invert~, regex~)
 }

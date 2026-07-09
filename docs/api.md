@@ -351,7 +351,8 @@ Sequence pre-tokenizers support `__len__`, `get_item`, and `__getitem__`.
 It also provides lower-snake builder aliases for common HF constructors such as
 `whitespace`, `metaspace`, `punctuation`, `digits`,
 `byte_level` (default `add_prefix_space=true`), `char_delimiter_split`,
-`fixed_length`, `unicode_scripts`, and `sequence`.
+`split` (`invert=false`, `regex=false` by default), `fixed_length`,
+`unicode_scripts`, and `sequence`.
 `Normalizer::normalize_str(input)` is available as an HF-style alias for
 `normalize(input)`.
 `Normalizer` also exposes read-only configuration getters for binding layers,

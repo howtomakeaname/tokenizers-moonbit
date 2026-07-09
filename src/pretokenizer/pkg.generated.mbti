@@ -83,7 +83,7 @@ pub fn PreTokenizer::punctuation(behavior? : SplitBehavior) -> Self
 pub fn PreTokenizer::regex(Self) -> Bool?
 pub fn PreTokenizer::replacement(Self) -> Char?
 pub fn PreTokenizer::sequence(Array[Self]) -> Self
-pub fn PreTokenizer::split(String, SplitBehavior, Bool, Bool) -> Self
+pub fn PreTokenizer::split(String, SplitBehavior, invert? : Bool, regex? : Bool) -> Self
 pub fn PreTokenizer::split_enabled(Self) -> Bool?
 pub fn PreTokenizer::to_json(Self) -> String?
 pub fn PreTokenizer::trim_offsets(Self) -> Bool?

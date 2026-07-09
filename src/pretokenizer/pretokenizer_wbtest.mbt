@@ -284,6 +284,16 @@ test "pretokenizer HF-style factories wrap enum variants" {
     ("c", (5, 6)),
   ])
 
+  let split = PreTokenizer::split(",", Isolated)
+  @test.assert_eq(split.kind(), "Split")
+  @test.assert_eq(split.invert(), Some(false))
+  @test.assert_eq(split.regex(), Some(false))
+  @test.assert_eq(split.pre_tokenize_str("a,b"), [
+    ("a", (0, 1)),
+    (",", (1, 2)),
+    ("b", (2, 3)),
+  ])
+
   let fixed = PreTokenizer::fixed_length()
   @test.assert_eq(fixed.kind(), "FixedLength")
   @test.assert_eq(fixed.length(), Some(5))

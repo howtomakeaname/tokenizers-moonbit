@@ -3047,8 +3047,8 @@ test "train_wordlevel supports custom pretokenizer" {
   let pt = @pretokenizer.PreTokenizer::split(
     ",",
     @pretokenizer.SplitBehavior::removed(),
-    false,
-    false,
+    invert=false,
+    regex=false,
   )
   let tok = Tokenizer::train_wordlevel_with_pretokenizer(
     ["hello,world", "hello"],
@@ -3190,8 +3190,8 @@ test "train_wordpiece supports custom pretokenizer and to_json reload" {
   let pt = @pretokenizer.PreTokenizer::split(
     ",",
     @pretokenizer.SplitBehavior::removed(),
-    false,
-    false,
+    invert=false,
+    regex=false,
   )
   let tok = Tokenizer::train_wordpiece_with_pretokenizer(
     ["moon,bit", "moon"],
@@ -3243,8 +3243,8 @@ test "train_wordpiece alphabet controls survive custom pretokenizer reload" {
   let pt = @pretokenizer.PreTokenizer::split(
     ",",
     @pretokenizer.SplitBehavior::removed(),
-    false,
-    false,
+    invert=false,
+    regex=false,
   )
   let tok = Tokenizer::train_wordpiece_with_pretokenizer(
     ["moon,bit"],
@@ -3323,8 +3323,8 @@ test "train_bpe supports custom pretokenizer and reload" {
   let pt = @pretokenizer.PreTokenizer::split(
     ",",
     @pretokenizer.SplitBehavior::removed(),
-    false,
-    false,
+    invert=false,
+    regex=false,
   )
   let tok = Tokenizer::train_bpe_with_pretokenizer(
     ["moon,moon,bit"],
@@ -3492,8 +3492,8 @@ test "train_unigram supports custom pretokenizer and reload" {
   let pt = @pretokenizer.PreTokenizer::split(
     ",",
     @pretokenizer.SplitBehavior::removed(),
-    false,
-    false,
+    invert=false,
+    regex=false,
   )
   let tok = Tokenizer::train_unigram_with_pretokenizer(
     ["moon,moon,bit"],

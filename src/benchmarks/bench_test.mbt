@@ -747,8 +747,8 @@ fn bench_train_wordlevel_split_case(
   let pt = @pretokenizer.PreTokenizer::split(
     ",",
     @pretokenizer.SplitBehavior::removed(),
-    false,
-    false,
+    invert=false,
+    regex=false,
   )
   b.bench(name="wordlevel-train-split-\{case_name}", fn() {
     b.keep(
@@ -793,8 +793,8 @@ fn bench_trained_wordlevel_to_json_case(
     @pretokenizer.PreTokenizer::split(
       ",",
       @pretokenizer.SplitBehavior::removed(),
-      false,
-      false,
+      invert=false,
+      regex=false,
     ),
     unk_token="[UNK]",
     special_tokens=["[PAD]"],
@@ -1341,8 +1341,8 @@ fn bench_split_trailing_ws_regex_case(b : @bench.T, case_name : String) -> Unit 
   let pt = @pretokenizer.PreTokenizer::split(
     "\\s+$",
     @pretokenizer.SplitBehavior::removed(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + "\t \n"
   b.bench(name="pretokenizer-split-trailing-ws-regex-\{case_name}", fn() {
@@ -1358,8 +1358,8 @@ fn bench_split_horizontal_ws_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "[^\\S\\r\\n]+",
     @pretokenizer.SplitBehavior::removed(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + "\t  more horizontal whitespace\n next line"
   b.bench(name="pretokenizer-split-horizontal-ws-regex-\{case_name}", fn() {
@@ -1372,8 +1372,8 @@ fn bench_split_exact_ws_regex_case(b : @bench.T, case_name : String) -> Unit {
   let pt = @pretokenizer.PreTokenizer::split(
     "[\\s]{3}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " \t\u{a0} exact\n\n\n runs    end"
   b.bench(name="pretokenizer-split-exact-ws-regex-\{case_name}", fn() {
@@ -1389,8 +1389,8 @@ fn bench_split_literal_contiguous_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "=",
     @pretokenizer.SplitBehavior::contiguous(),
-    false,
-    false,
+    invert=false,
+    regex=false,
   )
   let text = corpus_mixed() + " a===b x====y z==done"
   b.bench(name="pretokenizer-split-literal-contiguous-\{case_name}", fn() {
@@ -1406,8 +1406,8 @@ fn bench_split_exact_digit_contiguous_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "\\d{2}",
     @pretokenizer.SplitBehavior::contiguous(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " ids 20260610 and 12345678"
   b.bench(name="pretokenizer-split-exact-digit-contiguous-\{case_name}", fn() {
@@ -1423,8 +1423,8 @@ fn bench_split_newline_quantifier_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "[\\r\\n]{2,}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + "\r\nparagraph\n\nnext\r\n\nend"
   b.bench(name="pretokenizer-split-newline-quantifier-regex-\{case_name}", fn() {
@@ -1437,8 +1437,8 @@ fn bench_split_nonspace_regex_case(b : @bench.T, case_name : String) -> Unit {
   let pt = @pretokenizer.PreTokenizer::split(
     "\\S+",
     @pretokenizer.SplitBehavior::removed(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed()
   b.bench(name="pretokenizer-split-nonspace-regex-\{case_name}", fn() {
@@ -1451,8 +1451,8 @@ fn bench_split_digit_regex_case(b : @bench.T, case_name : String) -> Unit {
   let pt = @pretokenizer.PreTokenizer::split(
     "\\d+",
     @pretokenizer.SplitBehavior::removed(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " 12345 2026"
   b.bench(name="pretokenizer-split-digit-regex-\{case_name}", fn() {
@@ -1465,8 +1465,8 @@ fn bench_split_digit_class_regex_case(b : @bench.T, case_name : String) -> Unit 
   let pt = @pretokenizer.PreTokenizer::split(
     "[\\d]{2,}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " a1b12c１２3 20260608"
   b.bench(name="pretokenizer-split-digit-class-regex-\{case_name}", fn() {
@@ -1479,8 +1479,8 @@ fn bench_split_exact_digit_regex_case(b : @bench.T, case_name : String) -> Unit 
   let pt = @pretokenizer.PreTokenizer::split(
     "\\d{2}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " 123456789 20260608 42"
   b.bench(name="pretokenizer-split-exact-digit-regex-\{case_name}", fn() {
@@ -1496,8 +1496,8 @@ fn bench_split_word_quantifier_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "\\w{2,}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " snake_case x cde MoonBit2026"
   b.bench(name="pretokenizer-split-word-quantifier-regex-\{case_name}", fn() {
@@ -1513,8 +1513,8 @@ fn bench_split_bounded_word_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "\\w{1,3}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " snake_case x cde MoonBit2026"
   b.bench(name="pretokenizer-split-bounded-word-regex-\{case_name}", fn() {
@@ -1527,8 +1527,8 @@ fn bench_split_min_inverse_regex_case(b : @bench.T, case_name : String) -> Unit 
   let pt = @pretokenizer.PreTokenizer::split(
     "\\D{3,}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " a12 bc003 id=2026 done"
   b.bench(name="pretokenizer-split-min-inverse-regex-\{case_name}", fn() {
@@ -1544,8 +1544,8 @@ fn bench_split_exact_inverse_union_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "[^\\s\\p{L}\\p{N}]{4}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " ab,$+🙂 cd。42 path/to/file.rs done!!!!"
   b.bench(name="pretokenizer-split-exact-inverse-union-regex-\{case_name}", fn() {
@@ -1561,8 +1561,8 @@ fn bench_split_ascii_letter_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "[A-Za-z]+",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " ASCIIonly words_with_digits abc123é中 XYZ"
   b.bench(name="pretokenizer-split-ascii-letter-regex-\{case_name}", fn() {
@@ -1575,8 +1575,8 @@ fn bench_split_ascii_alnum_regex_case(b : @bench.T, case_name : String) -> Unit 
   let pt = @pretokenizer.PreTokenizer::split(
     "[A-Za-z0-9]+",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " ASCII123 words_with_digits abc123é中 XYZ_42"
   b.bench(name="pretokenizer-split-ascii-alnum-regex-\{case_name}", fn() {
@@ -1592,8 +1592,8 @@ fn bench_split_bounded_digit_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "\\d{1,4}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " 123456789 20260608 42"
   b.bench(name="pretokenizer-split-bounded-digit-regex-\{case_name}", fn() {
@@ -1606,8 +1606,8 @@ fn bench_split_punctuation_regex_case(b : @bench.T, case_name : String) -> Unit 
   let pt = @pretokenizer.PreTokenizer::split(
     "[\\p{P}\\p{S}]+",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " $+🙂 ok。 code(a+b); path/to/file.rs"
   b.bench(name="pretokenizer-split-punct-symbol-regex-\{case_name}", fn() {
@@ -1623,8 +1623,8 @@ fn bench_split_punct_quantifier_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "\\p{P}{2,}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " wait!!! ok?! path/to/file.rs"
   b.bench(name="pretokenizer-split-punct-quantifier-regex-\{case_name}", fn() {
@@ -1640,8 +1640,8 @@ fn bench_split_union_quantifier_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "[\\p{P}\\p{S}]{2,}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " $+🙂 wait!!! ok?! path/to/file.rs"
   b.bench(name="pretokenizer-split-union-quantifier-regex-\{case_name}", fn() {
@@ -1657,8 +1657,8 @@ fn bench_split_bounded_union_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "[\\p{P}\\p{S}]{1,3}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " $+🙂 wait!!! ok?! path/to/file.rs"
   b.bench(name="pretokenizer-split-bounded-union-regex-\{case_name}", fn() {
@@ -1674,8 +1674,8 @@ fn bench_split_bounded_inverse_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "[^\\s\\p{L}\\p{N}]{1,3}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " $+🙂 wait!!! ok?! path/to/file.rs"
   b.bench(name="pretokenizer-split-bounded-inverse-regex-\{case_name}", fn() {
@@ -1691,8 +1691,8 @@ fn bench_split_ranged_union_regex_case(
   let pt = @pretokenizer.PreTokenizer::split(
     "[\\p{P}\\p{S}]{2,4}",
     @pretokenizer.SplitBehavior::isolated(),
-    false,
-    true,
+    invert=false,
+    regex=true,
   )
   let text = corpus_mixed() + " $+🙂 wait!!!!! ok?! path/to/file.rs"
   b.bench(name="pretokenizer-split-ranged-union-regex-\{case_name}", fn() {
