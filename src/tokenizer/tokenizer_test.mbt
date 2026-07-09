@@ -1275,11 +1275,22 @@ test "EncodeInput unified API dispatches raw pretokenized pair and fast batch" {
   let fast = tok.encode_input_batch_fast(batch, add_special_tokens=true)
   let plus = tok.batch_encode_plus(batch, add_special_tokens=true)
   let plus_fast = tok.batch_encode_plus_fast(batch, add_special_tokens=true)
+  let async_one = tok.async_encode(batch[0], add_special_tokens=true)
+  let async_one_fast = tok.async_encode_fast(batch[0], add_special_tokens=true)
+  let async_batch = tok.async_encode_batch(batch, add_special_tokens=true)
+  let async_batch_fast = tok.async_encode_batch_fast(
+    batch,
+    add_special_tokens=true,
+  )
+  @test.assert_eq(async_one.ids, regular[0].ids)
+  assert_fast_encoding_matches(regular[0], async_one_fast)
   @test.assert_eq(regular.length(), 3)
   for i in 0..<regular.length() {
     @test.assert_eq(plus[i].ids, regular[i].ids)
+    @test.assert_eq(async_batch[i].ids, regular[i].ids)
     assert_fast_encoding_matches(regular[i], fast[i])
     assert_fast_encoding_matches(plus[i], plus_fast[i])
+    assert_fast_encoding_matches(regular[i], async_batch_fast[i])
   }
 }
 

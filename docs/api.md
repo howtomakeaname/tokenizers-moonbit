@@ -169,6 +169,14 @@ fn Tokenizer::decode_stream(
 fn DecodeStream::step(self : DecodeStream, id : Int) -> (DecodeStream, String?)
 ```
 
+Fast encode variants (`encode_fast`, `encode_batch_fast`,
+`encode_sequence_input_fast`, `encode_input_fast`, `encode_input_batch_fast`,
+and `batch_encode_plus_fast`) keep ids/tokens/masks/sequence metadata aligned
+with regular encode paths while zeroing offsets. Async-compatible aliases
+(`async_encode`, `async_encode_fast`, `async_encode_batch`,
+`async_encode_batch_fast`, `async_decode`, `async_decode_batch`) delegate to the
+same deterministic synchronous implementation on every target.
+
 All `encode_*_with_byte_offsets` variants return HF-style UTF-8 byte offsets.
 For pre-tokenized inputs, offsets are measured against a synthetic normalized
 text formed by joining normalized words with one ASCII space; the tokenizer's

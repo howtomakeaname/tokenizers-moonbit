@@ -153,6 +153,13 @@ fn Tokenizer::decode_stream(
 fn DecodeStream::step(self : DecodeStream, id : Int) -> (DecodeStream, String?)
 ```
 
+Fast encode 变体（`encode_fast`、`encode_batch_fast`、
+`encode_sequence_input_fast`、`encode_input_fast`、`encode_input_batch_fast`、
+`batch_encode_plus_fast`）保持 ids/tokens/masks/sequence metadata 与普通 encode
+路径一致，同时把 offsets 置零。Async 兼容 alias（`async_encode`、
+`async_encode_fast`、`async_encode_batch`、`async_encode_batch_fast`、
+`async_decode`、`async_decode_batch`）在所有 target 上委托同一套确定性同步实现。
+
 所有 `encode_*_with_byte_offsets` 变体返回 HF 风格 UTF-8 byte offsets。
 pre-tokenized 输入会跳过 tokenizer 的 pre-tokenizer 阶段，但 normalizer、model、
 post-processor、truncation 与 padding 仍会执行；offsets 按“归一化后的词用单个 ASCII
