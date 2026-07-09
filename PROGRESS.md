@@ -84,6 +84,8 @@ PreTokenizer ByteLevel 默认值对齐：HF 0.22.2 `ByteLevel()` 默认 `add_pre
 
 PreTokenizer Split constructor 默认参数对齐：`PreTokenizer::split(pattern, behavior)` 现在默认 `invert=false`、`regex=false`，对齐 HF literal-string `Split(pattern, behavior)` 常用入口；显式参数仍保留。
 
+PreTokenizer FixedLength JSON 边界对齐：`tokenizer.json` / state 中 `FixedLength.length <= 0` 现在显式 `ParseError`，避免旧实现静默按 step=1 切分；手写 enum 仍保持无 `raise` 的内部逃生路径。
+
 Model vocab getter 小闭环：`Model::get_vocab_size()` 作为 `vocab_size()` 的 HF-style alias 已补齐，和 Tokenizer 的命名保持一致。
 
 第三十五批补齐低层 value display alias：`Token::__str__()` / `Split::__str__()` 返回 surface value，`Token::__repr__()` / `Split::__repr__()` 返回带转义的紧凑诊断摘要，覆盖 Python binding 对底层 token/split 对象的显示迁移。

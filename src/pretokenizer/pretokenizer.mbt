@@ -604,8 +604,7 @@ pub fn PreTokenizer::from_json(
       )
     "Delimiter" | "CharDelimiterSplit" =>
       Delimiter(delimiter=@types.get_char(obj, "delimiter", default=' '))
-    "FixedLength" =>
-      FixedLength(length=@types.get_int(obj, "length", default=5))
+    "FixedLength" => parse_fixed_length(obj)
     "UnicodeScripts" => UnicodeScripts
     "Split" => {
       let (pattern, regex) = parse_pattern_info(obj)
@@ -633,6 +632,17 @@ pub fn PreTokenizer::from_json(
     }
     other => raise @types.UnsupportedComponent("pre_tokenizer type: \{other}")
   }
+}
+
+///|
+fn parse_fixed_length(
+  obj : Map[String, Json],
+) -> PreTokenizer raise @types.TokenizerError {
+  let length = @types.get_int(obj, "length", default=5)
+  if length <= 0 {
+    raise @types.ParseError("FixedLength length must be positive")
+  }
+  FixedLength(length~)
 }
 
 ///|

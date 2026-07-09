@@ -1171,6 +1171,18 @@ test "pretokenizer to_json covers serializable variants" {
     PreTokenizer::FixedLength(length=4).to_json(),
     Some("{\"type\":\"FixedLength\",\"length\":4}"),
   )
+  let mut bad_fixed_length = false
+  try
+    PreTokenizer::from_state(
+      PreTokenizerState::new("{\"type\":\"FixedLength\",\"length\":0}"),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      bad_fixed_length = msg.contains("FixedLength length must be positive")
+    _ => ()
+  }
+  @test.assert_eq(bad_fixed_length, true)
   @test.assert_eq(
     PreTokenizer::Sequence([
       PreTokenizer::WhitespaceSplit,
