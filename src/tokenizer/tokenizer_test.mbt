@@ -3422,6 +3422,54 @@ test "Trainer unigram seed_size state defaults and roundtrips" {
 }
 
 ///|
+test "Trainer from_state accepts legacy trainer kinds" {
+  let wordlevel = Trainer::from_state(
+    Trainer::wordlevel(min_frequency=2, special_tokens=["[PAD]"])
+    .__getstate__()
+    .with_kind("WordLevel"),
+  )
+  @test.assert_eq(wordlevel.kind(), "WordLevelTrainer")
+  @test.assert_eq(wordlevel.min_frequency(), 2)
+  @test.assert_eq(wordlevel.special_tokens(), ["[PAD]"])
+
+  let wordpiece = Trainer::from_state(
+    Trainer::wordpiece(
+      continuing_subword_prefix="@@",
+      max_input_chars_per_word=42,
+    )
+    .__getstate__()
+    .with_kind("WordPiece"),
+  )
+  @test.assert_eq(wordpiece.kind(), "WordPieceTrainer")
+  @test.assert_eq(wordpiece.continuing_subword_prefix(), Some("@@"))
+  @test.assert_eq(wordpiece.max_input_chars_per_word(), Some(42))
+
+  let bpe = Trainer::from_state(
+    Trainer::bpe(progress_format="json", fuse_unk=true)
+    .__getstate__()
+    .with_kind("BPE"),
+  )
+  @test.assert_eq(bpe.kind(), "BpeTrainer")
+  @test.assert_eq(bpe.progress_format(), Some("json"))
+  @test.assert_eq(bpe.fuse_unk(), Some(true))
+  @test.assert_eq(
+    Trainer::from_state(
+      Trainer::bpe(progress_format="silent").__getstate__().with_kind("Bpe"),
+    ).progress_format(),
+    Some("silent"),
+  )
+
+  let unigram = Trainer::from_state(
+    Trainer::unigram(max_piece_length=Some(4), seed_size=128)
+    .__getstate__()
+    .with_kind("Unigram"),
+  )
+  @test.assert_eq(unigram.kind(), "UnigramTrainer")
+  @test.assert_eq(unigram.max_piece_length(), Some(4))
+  @test.assert_eq(unigram.seed_size(), Some(128))
+}
+
+///|
 test "Trainer state rejects unknown trainer kind" {
   let state = Trainer::wordlevel().__getstate__()
   let bad = state.with_kind("UnknownTrainer")
