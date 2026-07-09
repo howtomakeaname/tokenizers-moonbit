@@ -276,16 +276,29 @@ test "Tokenizer component hooks override normalize pretokenize and decode" {
 test "Tokenizer persists component hooks on normal encode and decode paths" {
   let json =
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[UNK]":2},"unk_token":"[UNK]"}}
-  let hooks = TokenizerComponentHooks::new(
-    normalize=Some(hook_lowercase),
-    pre_tokenize=Some(hook_comma_pre_tokenize),
-    decode=Some(hook_pipe_decode),
-  )
+  let hooks = TokenizerComponentHooks::empty()
+    .with_normalize(Some(hook_lowercase))
+    .with_pre_tokenize(Some(hook_comma_pre_tokenize))
+    .with_decode(Some(hook_pipe_decode))
   let tok = Tokenizer::from_str(json).with_component_hooks(hooks)
+  let hooks_from_getter = tok.get_component_hooks()
+  let hooks_from_alias = tok.component_hooks()
   let enc = tok.encode("HELLO,MOON", add_special_tokens=false)
   @test.assert_eq(enc.tokens, ["hello", "moon"])
   @test.assert_eq(enc.ids, [0, 1])
   @test.assert_eq(enc.offsets, [(0, 5), (6, 10)])
+  @test.assert_eq(
+    Tokenizer::from_str(json).encode_with_hooks(
+      "HELLO,MOON",
+      hooks_from_getter,
+      add_special_tokens=false,
+    ).ids,
+    [0, 1],
+  )
+  @test.assert_eq(
+    Tokenizer::from_str(json).decode_with_hooks([0, 1], hooks_from_alias),
+    "hello|moon",
+  )
   @test.assert_eq(
     tok.encode_fast("HELLO,MOON", add_special_tokens=false).offsets,
     [(0, 0), (0, 0)],
@@ -1464,9 +1477,17 @@ test "encode_fast keeps encoding metadata and zeros offsets" {
     tok.encode_plus("HELLO", pair=Some("moon"), add_special_tokens=false).ids,
     tok.encode_pair("HELLO", "moon", add_special_tokens=false).ids,
   )
+  @test.assert_eq(
+    tok.encode_plus("HELLO moon", add_special_tokens=false).ids,
+    tok.encode("HELLO moon", add_special_tokens=false).ids,
+  )
   assert_fast_encoding_matches(
     tok.encode_pair("HELLO", "moon", add_special_tokens=false),
     tok.encode_plus_fast("HELLO", pair=Some("moon"), add_special_tokens=false),
+  )
+  assert_fast_encoding_matches(
+    tok.encode("HELLO moon", add_special_tokens=false),
+    tok.encode_plus_fast("HELLO moon", add_special_tokens=false),
   )
 }
 
