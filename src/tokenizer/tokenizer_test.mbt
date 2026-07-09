@@ -3499,6 +3499,19 @@ test "Tokenizer train_from_files trains line oriented corpus" {
     1,
   )
   @test.assert_eq(trained.to_json().contains("WordPiece"), true)
+  let mut missing_file = false
+  try
+    base.train_from_files(
+      ["_build/tokenizer_missing_training_file.txt"],
+      Trainer::wordlevel(unk_token="[UNK]"),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      missing_file = msg.contains("cannot read training file")
+    _ => ()
+  }
+  @test.assert_eq(missing_file, true)
 }
 
 ///|

@@ -549,4 +549,20 @@ test "bpe standalone loader skips version comments and reads text merges" {
   @test.assert_eq(loaded.token_to_id("low"), Some(5))
   @test.assert_eq(loaded.id_to_token(5), Some("low"))
   @test.assert_eq(loaded.tokenize("low").map(t => t.value), ["low"])
+  let loaded_with_knobs = Model::from_bpe_files(
+    vocab_path,
+    merges_path,
+    unk_token=None,
+    fuse_unk=true,
+    byte_fallback=true,
+    ignore_merges=true,
+    dropout=Some(1.0),
+  ) catch {
+    _ => abort("load manual bpe artifacts with knobs failed")
+  }
+  @test.assert_eq(loaded_with_knobs.unk_token(), None)
+  @test.assert_eq(loaded_with_knobs.fuse_unk(), Some(true))
+  @test.assert_eq(loaded_with_knobs.byte_fallback(), Some(true))
+  @test.assert_eq(loaded_with_knobs.ignore_merges(), Some(true))
+  @test.assert_eq(loaded_with_knobs.dropout(), Some(1.0))
 }
