@@ -407,7 +407,9 @@ as `nfc`, `nfd`, `nfkc`, `nfkd`, `byte_level`, `strip`, `replace`,
 ByteLevel flags, WordPiece prefix/cleanup, Metaspace settings, BPEDecoder
 suffix, Strip/Replace settings, CTC settings, Sequence children, and
 Sequence access via `decoders` / `get_decoders` plus `__len__` / `get_item` /
-`__getitem__`.
+`__getitem__`. These fields also have `get_*` aliases such as
+`get_prefix`, `get_cleanup`, and `get_word_delimiter_token` for Python binding
+property access.
 It also provides lower-snake builder aliases for common HF constructors such as
 `byte_level`, `bpe_decoder`, `strip`, `fuse`, and `sequence`.
 `PostProcessor` exposes read-only configuration getters for binding layers,

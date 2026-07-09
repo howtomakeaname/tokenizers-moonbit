@@ -78,6 +78,8 @@ Normalizer 配置 getter alias 小闭环：`get_strip_left` / `get_strip_right` 
 
 PreTokenizer 配置 getter alias 小闭环：`get_add_prefix_space` / `get_use_regex` / `get_trim_offsets` / `get_replacement` / `get_prepend_scheme` / `get_split` / `get_behavior` / `get_pattern` / `get_invert` / `get_regex` / `get_individual_digits` / `get_delimiter` / `get_length` 已补齐，均委托现有 property-style getter，便于 Python binding 统一暴露 `get_*` 配置属性。
 
+Decoder 配置 getter alias 小闭环：`get_add_prefix_space` / `get_trim_offsets` / `get_use_regex` / `get_prefix` / `get_cleanup` / `get_replacement` / `get_prepend_scheme` / `get_suffix` / `get_content` / `get_start` / `get_stop` / `get_pattern` / `get_pad_token` / `get_word_delimiter_token` 已补齐，均委托现有 property-style getter，便于 Python binding 统一暴露 `get_*` 配置属性。
+
 TemplateProcessing typed alias 小闭环：`PostProcessor::single()` / `pair()` 分别作为 `single_pieces()` / `pair_pieces()` 的 HF-style typed alias；返回数组副本，非 Template processor 返回空数组，并覆盖 parsed pieces 与 `template_from_strings` 两种构造路径。
 
 TemplateProcessing 叶子对象互操作：`SpecialToken::{get_id,id,get_ids,ids,get_tokens,tokens,as_tuple,from_tuple}` 已补齐，数组 getter 返回副本，方便 Python binding 映射 TemplateProcessing special token 元数据。
