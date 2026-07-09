@@ -36,13 +36,28 @@ pub fn Piece::kind(self : Piece) -> String {
 }
 
 ///|
+pub fn Piece::get_kind(self : Piece) -> String {
+  self.kind()
+}
+
+///|
 pub fn Piece::id(self : Piece) -> String {
   self.as_tuple().1
 }
 
 ///|
+pub fn Piece::get_id(self : Piece) -> String {
+  self.id()
+}
+
+///|
 pub fn Piece::type_id(self : Piece) -> Int {
   self.as_tuple().2
+}
+
+///|
+pub fn Piece::get_type_id(self : Piece) -> Int {
+  self.type_id()
 }
 
 ///|

@@ -76,7 +76,7 @@ TemplateProcessing typed alias 小闭环：`PostProcessor::pair()` 作为 `pair_
 
 TemplateProcessing 叶子对象互操作：`SpecialToken::{get_id,id,get_ids,ids,get_tokens,tokens,as_tuple,from_tuple}` 已补齐，数组 getter 返回副本，方便 Python binding 映射 TemplateProcessing special token 元数据。
 
-TemplateProcessing Piece 互操作：`Piece::{kind,id,type_id,as_tuple,from_tuple}` 已补齐，覆盖 `SequenceRef` / `SpecialTokenRef` 两类模板叶子，未知 kind 显式报 parse error。
+TemplateProcessing Piece 互操作：`Piece::{kind,get_kind,id,get_id,type_id,get_type_id,as_tuple,from_tuple}` 已补齐，覆盖 `SequenceRef` / `SpecialTokenRef` 两类模板叶子，未知 kind 显式报 parse error。
 
 TemplateProcessing 叶子对象显示 alias：`Piece::__str__/__repr__` 与 `SpecialToken::__str__/__repr__` 已补齐，repr 对字符串字段做转义，便于 Python binding 日志和调试输出。
 

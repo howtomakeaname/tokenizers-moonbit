@@ -50,8 +50,11 @@ test "post-processors expose HF-style configuration getters" {
   ])
   let seq_piece = SequenceRef(id="A", type_id=0)
   @test.assert_eq(seq_piece.kind(), "SequenceRef")
+  @test.assert_eq(seq_piece.get_kind(), "SequenceRef")
   @test.assert_eq(seq_piece.id(), "A")
+  @test.assert_eq(seq_piece.get_id(), "A")
   @test.assert_eq(seq_piece.type_id(), 0)
+  @test.assert_eq(seq_piece.get_type_id(), 0)
   @test.assert_eq(seq_piece.as_tuple(), ("SequenceRef", "A", 0))
   @test.assert_eq(seq_piece.__str__(), "A")
   @test.assert_eq(
