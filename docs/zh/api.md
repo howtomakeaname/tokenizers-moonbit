@@ -328,6 +328,7 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 `@pretokenizer.byte_level_alphabet()` 相同的 256 个符号表。
 `PreTokenizer` 也提供只读配置 getter，覆盖 ByteLevel 标记、Metaspace 设置、
 Split/Punctuation behavior、Digits/Delimiter/FixedLength 设置与 Sequence 子项。
+Sequence pre-tokenizer 支持 `__len__`、`get_item`、`__getitem__`。
 同时提供常见 HF 构造器的 lower-snake builder alias，例如 `whitespace`、
 `metaspace`、`punctuation`、`digits`、`char_delimiter_split`、`fixed_length`、
 `unicode_scripts` 和 `sequence`。
@@ -339,12 +340,13 @@ Replace pattern/content、Prepend 内容、BertNormalizer 标记与 Sequence 子
 `bert_normalizer` 和 `sequence`。
 `Decoder` 提供只读配置 getter，覆盖 ByteLevel 标记、WordPiece prefix/cleanup、
 Metaspace 设置、BPEDecoder suffix、Strip/Replace/CTC 设置、Sequence 子项，以及
-通过 `get_item` / `__getitem__` 进行的 Sequence 单 index 访问。
+通过 `__len__` / `get_item` / `__getitem__` 进行的 Sequence 访问。
 同时提供常见 HF 构造器的 lower-snake builder alias，例如 `byte_level`、
 `bpe_decoder`、`strip`、`fuse` 和 `sequence`。
 `PostProcessor` 提供只读配置 getter，覆盖 Bert/Roberta special token pair、
 ByteLevel/Roberta 标记、TemplateProcessing typed pieces 与 special tokens、
 以及 Sequence processors。
+Sequence post-processor 支持 `__len__`、`get_item`、`__getitem__`。
 `Normalizer`、`PreTokenizer`、`Decoder` 与 `PostProcessor` 也提供基于 JSON 的
 `get_state` / `from_state` / `__getstate__` / `__setstate__`，以及
 `__str__` / `__repr__` alias。没有稳定 JSON 序列化形态的组件会显式返回

@@ -347,6 +347,7 @@ the same 256-symbol table as `@pretokenizer.byte_level_alphabet()`.
 `PreTokenizer` also exposes read-only configuration getters for binding layers,
 including ByteLevel flags, Metaspace settings, Split/Punctuation behavior,
 Digits/Delimiter/FixedLength settings, and Sequence children.
+Sequence pre-tokenizers support `__len__`, `get_item`, and `__getitem__`.
 It also provides lower-snake builder aliases for common HF constructors such as
 `whitespace`, `metaspace`, `punctuation`, `digits`,
 `char_delimiter_split`, `fixed_length`, `unicode_scripts`, and `sequence`.
@@ -361,12 +362,13 @@ as `nfc`, `nfd`, `nfkc`, `nfkd`, `byte_level`, `strip`, `replace`,
 `Decoder` exposes read-only configuration getters for binding layers, including
 ByteLevel flags, WordPiece prefix/cleanup, Metaspace settings, BPEDecoder
 suffix, Strip/Replace settings, CTC settings, Sequence children, and
-single-index Sequence access via `get_item` / `__getitem__`.
+Sequence access via `__len__` / `get_item` / `__getitem__`.
 It also provides lower-snake builder aliases for common HF constructors such as
 `byte_level`, `bpe_decoder`, `strip`, `fuse`, and `sequence`.
 `PostProcessor` exposes read-only configuration getters for binding layers,
 including Bert/Roberta special token pairs, ByteLevel/Roberta flags,
 TemplateProcessing typed pieces and special tokens, and Sequence processors.
+Sequence post-processors support `__len__`, `get_item`, and `__getitem__`.
 `Normalizer`, `PreTokenizer`, `Decoder`, and `PostProcessor` also expose
 JSON-backed `get_state` / `from_state` / `__getstate__` / `__setstate__` plus
 `__str__` / `__repr__` aliases. Components without a serialized JSON form report

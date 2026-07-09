@@ -52,6 +52,7 @@ pub enum PreTokenizer {
 }
 pub fn PreTokenizer::__getitem__(Self, Int) -> Self?
 pub fn PreTokenizer::__getstate__(Self) -> PreTokenizerState raise @types.TokenizerError
+pub fn PreTokenizer::__len__(Self) -> Int
 pub fn PreTokenizer::__repr__(Self) -> String raise @types.TokenizerError
 pub fn PreTokenizer::__setstate__(PreTokenizerState) -> Self raise @types.TokenizerError
 pub fn PreTokenizer::__str__(Self) -> String raise @types.TokenizerError

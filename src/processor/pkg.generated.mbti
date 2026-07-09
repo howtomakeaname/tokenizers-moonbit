@@ -25,6 +25,7 @@ pub enum PostProcessor {
 }
 pub fn PostProcessor::__getitem__(Self, Int) -> Self?
 pub fn PostProcessor::__getstate__(Self) -> PostProcessorState raise @types.TokenizerError
+pub fn PostProcessor::__len__(Self) -> Int
 pub fn PostProcessor::__repr__(Self) -> String raise @types.TokenizerError
 pub fn PostProcessor::__setstate__(PostProcessorState) -> Self raise @types.TokenizerError
 pub fn PostProcessor::__str__(Self) -> String raise @types.TokenizerError

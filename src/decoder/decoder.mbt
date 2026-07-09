@@ -219,6 +219,14 @@ pub fn Decoder::decoders(self : Decoder) -> Array[Decoder] {
 }
 
 ///|
+pub fn Decoder::__len__(self : Decoder) -> Int {
+  match self {
+    Sequence(steps) => steps.length()
+    _ => 0
+  }
+}
+
+///|
 pub fn Decoder::get_item(self : Decoder, index : Int) -> Decoder? {
   match self {
     Sequence(steps) =>

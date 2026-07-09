@@ -235,6 +235,14 @@ pub fn PreTokenizer::pre_tokenizers(self : PreTokenizer) -> Array[PreTokenizer] 
 }
 
 ///|
+pub fn PreTokenizer::__len__(self : PreTokenizer) -> Int {
+  match self {
+    Sequence(steps) => steps.length()
+    _ => 0
+  }
+}
+
+///|
 pub fn PreTokenizer::get_item(
   self : PreTokenizer,
   index : Int,

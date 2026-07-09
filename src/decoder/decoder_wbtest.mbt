@@ -560,6 +560,8 @@ test "decoders expose HF-style configuration getters" {
   let seq = Decoder::Sequence([Decoder::byte_fallback(), Decoder::Fuse])
   @test.assert_eq(seq.kind(), "Sequence")
   @test.assert_eq(seq.decoders().map(d => d.kind()), ["ByteFallback", "Fuse"])
+  @test.assert_eq(seq.__len__(), 2)
+  @test.assert_eq(Decoder::Fuse.__len__(), 0)
   @test.assert_eq(seq.get_item(0).unwrap().kind(), "ByteFallback")
   @test.assert_eq(seq.__getitem__(1).unwrap().kind(), "Fuse")
   @test.assert_eq(seq.get_item(-1) is None, true)

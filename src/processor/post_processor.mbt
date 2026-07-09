@@ -216,6 +216,14 @@ pub fn PostProcessor::processors(self : PostProcessor) -> Array[PostProcessor] {
 }
 
 ///|
+pub fn PostProcessor::__len__(self : PostProcessor) -> Int {
+  match self {
+    Sequence(steps) => steps.length()
+    _ => 0
+  }
+}
+
+///|
 pub fn PostProcessor::get_item(
   self : PostProcessor,
   index : Int,

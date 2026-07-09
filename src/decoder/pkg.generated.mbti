@@ -25,6 +25,7 @@ pub enum Decoder {
 }
 pub fn Decoder::__getitem__(Self, Int) -> Self?
 pub fn Decoder::__getstate__(Self) -> DecoderState raise @types.TokenizerError
+pub fn Decoder::__len__(Self) -> Int
 pub fn Decoder::__repr__(Self) -> String raise @types.TokenizerError
 pub fn Decoder::__setstate__(DecoderState) -> Self raise @types.TokenizerError
 pub fn Decoder::__str__(Self) -> String raise @types.TokenizerError

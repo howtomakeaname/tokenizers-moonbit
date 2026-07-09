@@ -70,6 +70,8 @@
 
 第三十四批补齐 Decoder sequence binding 长尾：`Decoder::get_item(index)` / `__getitem__(index)` 对 `Sequence` 返回子 decoder，非 sequence、负 index 或越界返回 `None`；与 `Normalizer` / `PreTokenizer` / `PostProcessor` 的 sequence 组件索引 alias 保持一致，不改变 decode 行为或 JSON/state。
 
+第三十四批追加补齐 Sequence component 长度 alias：`PreTokenizer::__len__()` / `PostProcessor::__len__()` / `Decoder::__len__()` 对 `Sequence` 返回子组件数、非 sequence 返回 `0`，与 `Normalizer::__len__()` 保持一致，便于 Python binding 映射 `len(component)`。
+
 第三十五批补齐低层 value display alias：`Token::__str__()` / `Split::__str__()` 返回 surface value，`Token::__repr__()` / `Split::__repr__()` 返回带转义的紧凑诊断摘要，覆盖 Python binding 对底层 token/split 对象的显示迁移。
 
 第三十六批补齐 Trainer constructor alias 长尾：`Trainer::wordlevel_trainer` / `wordpiece_trainer` / `bpe_trainer` / `unigram_trainer` 作为 HF/Python lower-snake constructor 入口，全部委托现有 typed builder，保持默认值、state 与训练行为一致。
