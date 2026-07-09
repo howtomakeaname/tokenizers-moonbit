@@ -172,8 +172,11 @@ test "pretokenizer exposes HF-style configuration getters" {
   )
   @test.assert_eq(bytelevel.kind(), "ByteLevel")
   @test.assert_eq(bytelevel.add_prefix_space(), Some(true))
+  @test.assert_eq(bytelevel.get_add_prefix_space(), Some(true))
   @test.assert_eq(bytelevel.use_regex(), Some(false))
+  @test.assert_eq(bytelevel.get_use_regex(), Some(false))
   @test.assert_eq(bytelevel.trim_offsets(), Some(false))
+  @test.assert_eq(bytelevel.get_trim_offsets(), Some(false))
 
   let metaspace = PreTokenizer::Metaspace(
     replacement='▁',
@@ -182,12 +185,16 @@ test "pretokenizer exposes HF-style configuration getters" {
   )
   @test.assert_eq(metaspace.kind(), "Metaspace")
   @test.assert_eq(metaspace.replacement(), Some('▁'))
+  @test.assert_eq(metaspace.get_replacement(), Some('▁'))
   @test.assert_eq(metaspace.prepend_scheme(), Some("always"))
+  @test.assert_eq(metaspace.get_prepend_scheme(), Some("always"))
   @test.assert_eq(metaspace.split_enabled(), Some(false))
+  @test.assert_eq(metaspace.get_split(), Some(false))
 
   let punctuation = PreTokenizer::Punctuation(behavior=Contiguous)
   @test.assert_eq(punctuation.kind(), "Punctuation")
   @test.assert_eq(punctuation.behavior(), Some(Contiguous))
+  @test.assert_eq(punctuation.get_behavior(), Some(Contiguous))
 
   let split = PreTokenizer::Split(
     pattern="\\s+",
@@ -197,21 +204,28 @@ test "pretokenizer exposes HF-style configuration getters" {
   )
   @test.assert_eq(split.kind(), "Split")
   @test.assert_eq(split.pattern(), Some("\\s+"))
+  @test.assert_eq(split.get_pattern(), Some("\\s+"))
   @test.assert_eq(split.behavior(), Some(Removed))
+  @test.assert_eq(split.get_behavior(), Some(Removed))
   @test.assert_eq(split.invert(), Some(true))
+  @test.assert_eq(split.get_invert(), Some(true))
   @test.assert_eq(split.regex(), Some(true))
+  @test.assert_eq(split.get_regex(), Some(true))
 
   let digits = PreTokenizer::Digits(individual_digits=true)
   @test.assert_eq(digits.kind(), "Digits")
   @test.assert_eq(digits.individual_digits(), Some(true))
+  @test.assert_eq(digits.get_individual_digits(), Some(true))
 
   let delimiter = PreTokenizer::Delimiter(delimiter=',')
   @test.assert_eq(delimiter.kind(), "Delimiter")
   @test.assert_eq(delimiter.delimiter(), Some(','))
+  @test.assert_eq(delimiter.get_delimiter(), Some(','))
 
   let fixed = PreTokenizer::FixedLength(length=3)
   @test.assert_eq(fixed.kind(), "FixedLength")
   @test.assert_eq(fixed.length(), Some(3))
+  @test.assert_eq(fixed.get_length(), Some(3))
 
   let sequence = PreTokenizer::Sequence([PreTokenizer::WhitespaceSplit, digits])
   @test.assert_eq(sequence.kind(), "Sequence")

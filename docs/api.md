@@ -381,7 +381,9 @@ for quick component-level checks and binding shims.
 the same 256-symbol table as `@pretokenizer.byte_level_alphabet()`.
 `PreTokenizer` also exposes read-only configuration getters for binding layers,
 including ByteLevel flags, Metaspace settings, Split/Punctuation behavior,
-Digits/Delimiter/FixedLength settings, and Sequence children.
+Digits/Delimiter/FixedLength settings, and Sequence children. These fields also
+have `get_*` aliases such as `get_add_prefix_space`, `get_pattern`, and
+`get_individual_digits` for Python binding property access.
 Sequence pre-tokenizers support `pre_tokenizers` / `get_pre_tokenizers`,
 `__len__`, `get_item`, and `__getitem__`.
 It also provides lower-snake builder aliases for common HF constructors such as

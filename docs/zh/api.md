@@ -358,6 +358,8 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 `@pretokenizer.byte_level_alphabet()` 相同的 256 个符号表。
 `PreTokenizer` 也提供只读配置 getter，覆盖 ByteLevel 标记、Metaspace 设置、
 Split/Punctuation behavior、Digits/Delimiter/FixedLength 设置与 Sequence 子项。
+这些字段同时提供 `get_*` alias，例如 `get_add_prefix_space`、`get_pattern`、
+`get_individual_digits`，便于 Python binding 做属性访问。
 Sequence pre-tokenizer 支持 `pre_tokenizers` / `get_pre_tokenizers`、`__len__`、
 `get_item`、`__getitem__`。
 同时提供常见 HF 构造器的 lower-snake builder alias，例如 `whitespace`、
