@@ -226,6 +226,13 @@ fn Tokenizer::with_post_processor(self : Tokenizer, post_processor : @processor.
 fn Tokenizer::with_decoder(self : Tokenizer, decoder : @decoder.Decoder?) -> Tokenizer
 fn Tokenizer::with_truncation(self : Tokenizer, params : TruncationParams?) -> Tokenizer
 fn Tokenizer::with_padding(self : Tokenizer, params : PaddingParams?) -> Tokenizer
+fn Tokenizer::set_normalizer(self : Tokenizer, normalizer : @normalizer.Normalizer?) -> Tokenizer
+fn Tokenizer::set_pre_tokenizer(self : Tokenizer, pre_tokenizer : @pretokenizer.PreTokenizer?) -> Tokenizer
+fn Tokenizer::set_model(self : Tokenizer, model : @model.Model) -> Tokenizer
+fn Tokenizer::set_post_processor(self : Tokenizer, post_processor : @processor.PostProcessor?) -> Tokenizer
+fn Tokenizer::set_decoder(self : Tokenizer, decoder : @decoder.Decoder?) -> Tokenizer
+fn Tokenizer::set_truncation(self : Tokenizer, params : TruncationParams?) -> Tokenizer
+fn Tokenizer::set_padding(self : Tokenizer, params : PaddingParams?) -> Tokenizer
 fn Tokenizer::enable_truncation(
   self : Tokenizer, max_length : Int, stride? : Int = 0,
   strategy? : TruncationStrategy = LongestFirst,
@@ -281,6 +288,9 @@ Builders return a tokenizer and can be chained:
 the cached source JSON so constructed tokenizers serialize from typed state where
 supported. Decoder and post-processor builders mirror common HF component
 construction in tests or synthetic pipelines.
+The `set_*` component/config methods are writable-property style aliases for the
+corresponding `with_*` builders, preserving the same return-a-new-tokenizer
+semantics for thin binding layers.
 `template_from_strings` accepts the same `$A` / `$B` / `$0:1` HF template DSL
 used in tokenizer.json files, and `SpecialToken::new` supports multi-id special
 tokens.

@@ -204,6 +204,13 @@ fn Tokenizer::with_post_processor(self : Tokenizer, post_processor : @processor.
 fn Tokenizer::with_decoder(self : Tokenizer, decoder : @decoder.Decoder?) -> Tokenizer
 fn Tokenizer::with_truncation(self : Tokenizer, params : TruncationParams?) -> Tokenizer
 fn Tokenizer::with_padding(self : Tokenizer, params : PaddingParams?) -> Tokenizer
+fn Tokenizer::set_normalizer(self : Tokenizer, normalizer : @normalizer.Normalizer?) -> Tokenizer
+fn Tokenizer::set_pre_tokenizer(self : Tokenizer, pre_tokenizer : @pretokenizer.PreTokenizer?) -> Tokenizer
+fn Tokenizer::set_model(self : Tokenizer, model : @model.Model) -> Tokenizer
+fn Tokenizer::set_post_processor(self : Tokenizer, post_processor : @processor.PostProcessor?) -> Tokenizer
+fn Tokenizer::set_decoder(self : Tokenizer, decoder : @decoder.Decoder?) -> Tokenizer
+fn Tokenizer::set_truncation(self : Tokenizer, params : TruncationParams?) -> Tokenizer
+fn Tokenizer::set_padding(self : Tokenizer, params : PaddingParams?) -> Tokenizer
 fn Tokenizer::enable_truncation(
   self : Tokenizer, max_length : Int, stride? : Int = 0,
   strategy? : TruncationStrategy = LongestFirst,
@@ -241,6 +248,8 @@ fn Tokenizer::post_process(
 builder 返回 tokenizer，可链式调用，例如
 `Tokenizer::new(model).with_pre_tokenizer(..).with_decoder(..)`；修改组件后会
 使缓存的原始 JSON 失效，后续序列化尽量从已建模的 typed state 生成。
+`set_*` 组件/配置方法是对应 `with_*` builder 的 writable-property 风格 alias，
+保留同样“返回新 tokenizer”的语义，便于薄 binding 层映射 setter。
 
 ```moonbit
 fn TruncationParams::new(max_length : Int) -> TruncationParams
