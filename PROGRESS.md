@@ -130,6 +130,8 @@ AddedToken 注册计数小闭环：`add_tokens_with_count` / `add_special_tokens
 
 AddedToken Unicode whitespace 小闭环：`lstrip` / `rstrip` 在 added-token 抽取阶段已从 ASCII whitespace 扩展到 HF/Rust regex 同类 Unicode whitespace（含 NBSP），只影响 added token 周边空白吸收，不改变 `Normalizer::Strip` 的 ASCII helper 语义。
 
+AddedToken state/property 覆盖近期增量：`AddedToken::get_state()` 已和 `__getstate__()` 等价覆盖，`with_special(false)` 显式切回非 special 且不隐式改写 normalized 配置的行为已补回归测试。
+
 Encoding truncate_hf 边界对齐：`Encoding::truncate_hf(max_len, stride)` 在 `stride >= max_len` 时显式报错，匹配 HF 公开 wrapper；typed `truncate` 保持原有宽松不可变 API。
 
 Encoding HF direction 边界对齐：`truncate_hf` / `pad_hf` 对非 `left`/`right` 的 direction 字符串显式 `ParseError`，不再静默回落为 right。
