@@ -370,6 +370,8 @@ including Bert/Roberta special token pairs, ByteLevel/Roberta flags,
 TemplateProcessing typed pieces and special tokens, and Sequence processors.
 TemplateProcessing exposes typed `single()` and `pair()` aliases for its
 templates.
+`SpecialToken` exposes tuple interop plus copy-returning `id` / `ids` / `tokens`
+getters.
 Sequence post-processors support `__len__`, `get_item`, and `__getitem__`.
 `Normalizer`, `PreTokenizer`, `Decoder`, and `PostProcessor` also expose
 JSON-backed `get_state` / `from_state` / `__getstate__` / `__setstate__` plus

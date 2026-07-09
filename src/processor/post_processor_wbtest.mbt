@@ -72,6 +72,23 @@ test "post-processors expose HF-style configuration getters" {
 test "post-processor aggregate getters return copies" {
   let specials : Map[String, SpecialToken] = {}
   specials["<multi>"] = SpecialToken::new("<multi>", [10, 11], ["<m>", "</m>"])
+  let multi = specials["<multi>"]
+  @test.assert_eq(multi.get_id(), "<multi>")
+  @test.assert_eq(multi.id(), "<multi>")
+  @test.assert_eq(multi.get_ids(), [10, 11])
+  @test.assert_eq(multi.ids(), [10, 11])
+  @test.assert_eq(multi.get_tokens(), ["<m>", "</m>"])
+  @test.assert_eq(multi.tokens(), ["<m>", "</m>"])
+  @test.assert_eq(
+    SpecialToken::from_tuple(("<x>", [1, 2], ["x", "y"])).as_tuple(),
+    ("<x>", [1, 2], ["x", "y"]),
+  )
+  let copied_ids = multi.ids()
+  copied_ids.push(99)
+  @test.assert_eq(multi.ids(), [10, 11])
+  let copied_tokens = multi.tokens()
+  copied_tokens.push("<changed>")
+  @test.assert_eq(multi.tokens(), ["<m>", "</m>"])
   let template = PostProcessor::template(
     [SpecialTokenRef(id="<multi>", type_id=0)],
     [SpecialTokenRef(id="<multi>", type_id=1)],

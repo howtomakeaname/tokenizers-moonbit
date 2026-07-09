@@ -66,7 +66,15 @@ pub struct SpecialToken {
   ids : Array[Int]
   tokens : Array[String]
 } derive(Eq, @debug.Debug)
+pub fn SpecialToken::as_tuple(Self) -> (String, Array[Int], Array[String])
+pub fn SpecialToken::from_tuple((String, Array[Int], Array[String])) -> Self
+pub fn SpecialToken::get_id(Self) -> String
+pub fn SpecialToken::get_ids(Self) -> Array[Int]
+pub fn SpecialToken::get_tokens(Self) -> Array[String]
+pub fn SpecialToken::id(Self) -> String
+pub fn SpecialToken::ids(Self) -> Array[Int]
 pub fn SpecialToken::new(String, Array[Int], Array[String]) -> Self
+pub fn SpecialToken::tokens(Self) -> Array[String]
 
 // Type aliases
 

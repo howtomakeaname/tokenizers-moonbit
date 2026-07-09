@@ -32,6 +32,50 @@ pub fn SpecialToken::new(
 }
 
 ///|
+pub fn SpecialToken::from_tuple(
+  t : (String, Array[Int], Array[String]),
+) -> SpecialToken {
+  SpecialToken::new(t.0, t.1, t.2)
+}
+
+///|
+pub fn SpecialToken::as_tuple(
+  self : SpecialToken,
+) -> (String, Array[Int], Array[String]) {
+  (self.id, self.ids.copy(), self.tokens.copy())
+}
+
+///|
+pub fn SpecialToken::get_id(self : SpecialToken) -> String {
+  self.id
+}
+
+///|
+pub fn SpecialToken::id(self : SpecialToken) -> String {
+  self.get_id()
+}
+
+///|
+pub fn SpecialToken::get_ids(self : SpecialToken) -> Array[Int] {
+  self.ids.copy()
+}
+
+///|
+pub fn SpecialToken::ids(self : SpecialToken) -> Array[Int] {
+  self.get_ids()
+}
+
+///|
+pub fn SpecialToken::get_tokens(self : SpecialToken) -> Array[String] {
+  self.tokens.copy()
+}
+
+///|
+pub fn SpecialToken::tokens(self : SpecialToken) -> Array[String] {
+  self.get_tokens()
+}
+
+///|
 pub enum PostProcessor {
   TemplateProcessing(
     single~ : Array[Piece],
