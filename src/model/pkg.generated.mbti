@@ -55,6 +55,7 @@ pub fn Model::from_wordpiece_file(String, unk_token? : String, continuing_subwor
 pub fn Model::fuse_unk(Self) -> Bool?
 pub fn Model::get_state(Self) -> ModelState raise @types.TokenizerError
 pub fn Model::get_vocab(Self) -> Map[String, Int]
+pub fn Model::get_vocab_size(Self) -> Int
 pub fn Model::id_to_token(Self, Int) -> String?
 pub fn Model::ignore_merges(Self) -> Bool?
 pub fn Model::kind(Self) -> String

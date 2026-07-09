@@ -192,6 +192,7 @@ test "model JSON state aliases round-trip serializable models" {
   let bpe_state = bpe.__getstate__()
   @test.assert_eq(bpe.__str__(), bpe_state.json)
   @test.assert_eq(bpe.__repr__(), bpe_state.json)
+  @test.assert_eq(bpe.get_vocab_size(), bpe.vocab_size())
   @test.assert_eq(Model::__setstate__(bpe_state).to_json(), bpe.to_json())
   @test.assert_eq(
     Model::from_state(ModelState::new(bpe.__str__()))

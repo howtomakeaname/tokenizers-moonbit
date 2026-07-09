@@ -280,6 +280,12 @@ pub fn Model::vocab_size(self : Model) -> Int {
 }
 
 ///|
+/// HF-style getter alias for `vocab_size`.
+pub fn Model::get_vocab_size(self : Model) -> Int {
+  self.vocab_size()
+}
+
+///|
 /// Return a copy of the model vocabulary as `token -> id`.
 pub fn Model::get_vocab(self : Model) -> Map[String, Int] {
   match self {
