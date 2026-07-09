@@ -303,6 +303,12 @@ pub fn Model::get_vocab(self : Model) -> Map[String, Int] {
 }
 
 ///|
+/// Python/property-style alias for `get_vocab`.
+pub fn Model::vocab(self : Model) -> Map[String, Int] {
+  self.get_vocab()
+}
+
+///|
 /// Clear model-level tokenization caches. This mirrors HF's cache maintenance
 /// API and is a no-op for models without an internal word cache.
 pub fn Model::clear_cache(self : Model) -> Unit {

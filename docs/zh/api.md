@@ -379,7 +379,8 @@ binding/property 映射，不改变训练行为。`TrainerState` 以及 `get_sta
 `unk_id`、WordPiece/BPE 的 prefix/suffix knobs、BPE dropout 与 merge flags，以及
 BPE/Unigram 的 byte-fallback/fuse-unk flags。它也支持基于 JSON 的 `get_state` /
 `from_state` / `__getstate__` / `__setstate__`，以及返回紧凑 model JSON 的
-`__str__` / `__repr__` alias。`get_vocab_size()` 作为 `vocab_size()` 的 HF 风格别名提供。
+`__str__` / `__repr__` alias。`get_vocab_size()` 作为 `vocab_size()` 的 HF 风格别名提供，
+`vocab()` 作为 `get_vocab()` 的属性式 alias。
 
 `Tokenizer::__str__()` 与 `Tokenizer::__repr__()` 是面向 Python binding 的薄别名，
 返回紧凑 `to_str()` JSON 形式。

@@ -75,6 +75,7 @@ pub fn Model::train_wordpiece(Array[String], unk_token? : String, continuing_sub
 pub fn Model::train_wordpiece_from_tokens(Array[Array[String]], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, max_token_length? : Int?, initial_alphabet? : Array[String], limit_alphabet? : Int?, show_progress? : Bool) -> Self
 pub fn Model::unk_id(Self) -> Int?
 pub fn Model::unk_token(Self) -> String?
+pub fn Model::vocab(Self) -> Map[String, Int]
 pub fn Model::vocab_size(Self) -> Int
 
 pub struct ModelState {

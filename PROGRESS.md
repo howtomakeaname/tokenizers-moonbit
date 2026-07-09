@@ -88,6 +88,8 @@ PreTokenizer FixedLength JSON 边界对齐：`tokenizer.json` / state 中 `Fixed
 
 Model vocab getter 小闭环：`Model::get_vocab_size()` 作为 `vocab_size()` 的 HF-style alias 已补齐，和 Tokenizer 的命名保持一致。
 
+Model vocab property alias 小闭环：`Model::vocab()` 已补齐，作为 `get_vocab()` 的属性式 alias，并保持返回词表副本，避免调用方修改内部 vocab。
+
 第三十五批补齐低层 value display alias：`Token::__str__()` / `Split::__str__()` 返回 surface value，`Token::__repr__()` / `Split::__repr__()` 返回带转义的紧凑诊断摘要，覆盖 Python binding 对底层 token/split 对象的显示迁移。
 
 第三十六批补齐 Trainer constructor alias 长尾：`Trainer::wordlevel_trainer` / `wordpiece_trainer` / `bpe_trainer` / `unigram_trainer` 作为 HF/Python lower-snake constructor 入口，全部委托现有 typed builder，保持默认值、state 与训练行为一致。
