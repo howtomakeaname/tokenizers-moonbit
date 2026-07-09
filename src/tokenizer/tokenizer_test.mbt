@@ -2040,6 +2040,16 @@ test "from_pretrained resolves local HuggingFace hub cache snapshots" {
     #|{"version":"1.0",
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"hub":0,"cache":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let previous_huggingface_hub_cache = @sys.get_env_var("HUGGINGFACE_HUB_CACHE")
+  let previous_hf_hub_cache = @sys.get_env_var("HF_HUB_CACHE")
+  let previous_hf_home = @sys.get_env_var("HF_HOME")
+  let previous_home = @sys.get_env_var("HOME")
+  fn restore_env(name : String, previous : String?) -> Unit {
+    match previous {
+      Some(v) => @sys.set_env_var(name, v)
+      None => @sys.set_env_var(name, "")
+    }
+  }
   let root = "_build/hf_cache_test"
   let hub = root + "/hub"
   let repo = hub + "/models--org--toy-tokenizer"
@@ -2106,6 +2116,75 @@ test "from_pretrained resolves local HuggingFace hub cache snapshots" {
     hf_hub_implicit.encode("hub cache", add_special_tokens=false).ids,
     [0, 1],
   )
+
+  let hf_home_root = "_build/hf_home_cache_alias_test"
+  let hf_home = hf_home_root + "/home"
+  let hf_home_hub = hf_home + "/hub"
+  let hf_home_repo = hf_home_hub + "/models--org--hf-home-cache-tokenizer"
+  let hf_home_refs = hf_home_repo + "/refs"
+  let hf_home_snapshots = hf_home_repo + "/snapshots"
+  let hf_home_rev = hf_home_snapshots + "/ghi789"
+  ensure_dir(hf_home_root)
+  ensure_dir(hf_home)
+  ensure_dir(hf_home_hub)
+  ensure_dir(hf_home_repo)
+  ensure_dir(hf_home_refs)
+  ensure_dir(hf_home_snapshots)
+  ensure_dir(hf_home_rev)
+  @fs.write_string_to_file(hf_home_refs + "/main", "ghi789\n") catch {
+    _ => ()
+  }
+  @fs.write_string_to_file(hf_home_rev + "/tokenizer.json", json) catch {
+    _ => ()
+  }
+  @sys.set_env_var("HUGGINGFACE_HUB_CACHE", "")
+  @sys.set_env_var("HF_HUB_CACHE", "")
+  @sys.set_env_var("HF_HOME", hf_home)
+  let hf_home_implicit = Tokenizer::from_pretrained(
+    "org/hf-home-cache-tokenizer",
+  )
+  @test.assert_eq(
+    hf_home_implicit.encode("hub cache", add_special_tokens=false).ids,
+    [0, 1],
+  )
+
+  let home_root = "_build/home_cache_alias_test"
+  let home = home_root + "/home"
+  let home_cache = home + "/.cache"
+  let home_hf = home_cache + "/huggingface"
+  let home_hub = home_hf + "/hub"
+  let home_repo = home_hub + "/models--org--home-cache-tokenizer"
+  let home_refs = home_repo + "/refs"
+  let home_snapshots = home_repo + "/snapshots"
+  let home_rev = home_snapshots + "/jkl012"
+  ensure_dir(home_root)
+  ensure_dir(home)
+  ensure_dir(home_cache)
+  ensure_dir(home_hf)
+  ensure_dir(home_hub)
+  ensure_dir(home_repo)
+  ensure_dir(home_refs)
+  ensure_dir(home_snapshots)
+  ensure_dir(home_rev)
+  @fs.write_string_to_file(home_refs + "/main", "jkl012\n") catch {
+    _ => ()
+  }
+  @fs.write_string_to_file(home_rev + "/tokenizer.json", json) catch {
+    _ => ()
+  }
+  @sys.set_env_var("HUGGINGFACE_HUB_CACHE", "")
+  @sys.set_env_var("HF_HUB_CACHE", "")
+  @sys.set_env_var("HF_HOME", "")
+  @sys.set_env_var("HOME", home)
+  let home_implicit = Tokenizer::from_pretrained("org/home-cache-tokenizer")
+  @test.assert_eq(
+    home_implicit.encode("hub cache", add_special_tokens=false).ids,
+    [0, 1],
+  )
+  restore_env("HUGGINGFACE_HUB_CACHE", previous_huggingface_hub_cache)
+  restore_env("HF_HUB_CACHE", previous_hf_hub_cache)
+  restore_env("HF_HOME", previous_hf_home)
+  restore_env("HOME", previous_home)
 }
 
 ///|
@@ -2176,6 +2255,7 @@ test "from_pretrained_downloaded writes HF-style cache and refs" {
   @test.assert_eq(meta.cache_exists(), true)
   @test.assert_eq(meta.etag_matches(Some("etag-tokenizer-json")), true)
   @test.assert_eq(meta.etag_matches(Some("stale-etag")), false)
+  @test.assert_eq(meta.etag_matches(None), true)
   @test.assert_eq(
     meta.is_fresh(
       resolved_revision=Some("def456"),
@@ -2218,6 +2298,23 @@ test "from_pretrained_downloaded writes HF-style cache and refs" {
       cache_dir=Some(hub),
     ),
     true,
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained_cache_etag_matches(
+      "org/downloaded-tokenizer",
+      None,
+      revision="main",
+      cache_dir=Some(hub),
+    ),
+    true,
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained_cache_etag_matches(
+      "org/not-cached",
+      None,
+      cache_dir=Some(hub),
+    ),
+    false,
   )
   @test.assert_eq(
     Tokenizer::from_pretrained_cache_is_fresh(
