@@ -121,6 +121,26 @@ pub fn Trainer::wordlevel(
 }
 
 ///|
+/// HF Python-style constructor alias for binding layers.
+pub fn Trainer::wordlevel_trainer(
+  unk_token? : String = "[UNK]",
+  min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [],
+  special_added_tokens? : Array[AddedToken] = [],
+  vocab_size? : Int? = Some(30000),
+  show_progress? : Bool = true,
+) -> Trainer {
+  Trainer::wordlevel(
+    unk_token~,
+    min_frequency~,
+    special_tokens~,
+    special_added_tokens~,
+    vocab_size~,
+    show_progress~,
+  )
+}
+
+///|
 pub fn Trainer::wordpiece(
   unk_token? : String = "[UNK]",
   continuing_subword_prefix? : String = "##",
@@ -136,6 +156,38 @@ pub fn Trainer::wordpiece(
   show_progress? : Bool = true,
 ) -> Trainer {
   WordPieceTrainer(
+    unk_token~,
+    continuing_subword_prefix~,
+    end_of_word_suffix~,
+    min_frequency~,
+    special_tokens~,
+    special_added_tokens~,
+    vocab_size~,
+    max_input_chars_per_word~,
+    max_token_length~,
+    initial_alphabet~,
+    limit_alphabet~,
+    show_progress~,
+  )
+}
+
+///|
+/// HF Python-style constructor alias for binding layers.
+pub fn Trainer::wordpiece_trainer(
+  unk_token? : String = "[UNK]",
+  continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None,
+  min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [],
+  special_added_tokens? : Array[AddedToken] = [],
+  vocab_size? : Int? = Some(30000),
+  max_input_chars_per_word? : Int = 100,
+  max_token_length? : Int? = None,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
+  show_progress? : Bool = true,
+) -> Trainer {
+  Trainer::wordpiece(
     unk_token~,
     continuing_subword_prefix~,
     end_of_word_suffix~,
@@ -185,6 +237,40 @@ pub fn Trainer::bpe(
 }
 
 ///|
+/// HF Python-style constructor alias for binding layers.
+pub fn Trainer::bpe_trainer(
+  unk_token? : String? = None,
+  min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [],
+  special_added_tokens? : Array[AddedToken] = [],
+  vocab_size? : Int? = Some(30000),
+  continuing_subword_prefix? : String? = None,
+  end_of_word_suffix? : String? = None,
+  fuse_unk? : Bool = false,
+  initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None,
+  max_token_length? : Int? = None,
+  show_progress? : Bool = true,
+  progress_format? : String = "indicatif",
+) -> Trainer {
+  Trainer::bpe(
+    unk_token~,
+    min_frequency~,
+    special_tokens~,
+    special_added_tokens~,
+    vocab_size~,
+    continuing_subword_prefix~,
+    end_of_word_suffix~,
+    fuse_unk~,
+    initial_alphabet~,
+    limit_alphabet~,
+    max_token_length~,
+    show_progress~,
+    progress_format~,
+  )
+}
+
+///|
 pub fn Trainer::unigram(
   unk_token? : String? = None,
   unk_piece? : String? = None,
@@ -207,6 +293,42 @@ pub fn Trainer::unigram(
   }
   UnigramTrainer(
     unk_token~,
+    min_frequency~,
+    special_tokens~,
+    special_added_tokens~,
+    vocab_size~,
+    byte_fallback~,
+    fuse_unk~,
+    shrinking_factor~,
+    max_piece_length~,
+    initial_alphabet~,
+    n_sub_iterations~,
+    show_progress~,
+    seed_size~,
+  )
+}
+
+///|
+/// HF Python-style constructor alias for binding layers.
+pub fn Trainer::unigram_trainer(
+  unk_token? : String? = None,
+  unk_piece? : String? = None,
+  min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [],
+  special_added_tokens? : Array[AddedToken] = [],
+  vocab_size? : Int? = Some(8000),
+  byte_fallback? : Bool = false,
+  fuse_unk? : Bool = true,
+  shrinking_factor? : Double = 0.75,
+  max_piece_length? : Int? = Some(16),
+  initial_alphabet? : Array[String] = [],
+  n_sub_iterations? : Int = 2,
+  show_progress? : Bool = true,
+  seed_size? : Int = 1000000,
+) -> Trainer {
+  Trainer::unigram(
+    unk_token~,
+    unk_piece~,
     min_frequency~,
     special_tokens~,
     special_added_tokens~,

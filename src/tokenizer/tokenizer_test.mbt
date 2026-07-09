@@ -2711,6 +2711,78 @@ test "Trainer exposes HF-style configuration getters" {
 }
 
 ///|
+test "Trainer exposes lower-snake constructor aliases" {
+  @test.assert_eq(
+    Trainer::wordlevel_trainer(
+      unk_token="<unk>",
+      min_frequency=2,
+      special_tokens=["<pad>"],
+      vocab_size=Some(16),
+      show_progress=false,
+    ).get_state(),
+    Trainer::wordlevel(
+      unk_token="<unk>",
+      min_frequency=2,
+      special_tokens=["<pad>"],
+      vocab_size=Some(16),
+      show_progress=false,
+    ).get_state(),
+  )
+  @test.assert_eq(
+    Trainer::wordpiece_trainer(
+      continuing_subword_prefix="@@",
+      end_of_word_suffix=Some("</w>"),
+      max_input_chars_per_word=32,
+      max_token_length=Some(8),
+      initial_alphabet=["z"],
+      limit_alphabet=Some(9),
+    ).get_state(),
+    Trainer::wordpiece(
+      continuing_subword_prefix="@@",
+      end_of_word_suffix=Some("</w>"),
+      max_input_chars_per_word=32,
+      max_token_length=Some(8),
+      initial_alphabet=["z"],
+      limit_alphabet=Some(9),
+    ).get_state(),
+  )
+  @test.assert_eq(
+    Trainer::bpe_trainer(
+      unk_token=Some("[UNK]"),
+      continuing_subword_prefix=Some("@@"),
+      end_of_word_suffix=Some("</w>"),
+      fuse_unk=true,
+      progress_format="silent",
+    ).get_state(),
+    Trainer::bpe(
+      unk_token=Some("[UNK]"),
+      continuing_subword_prefix=Some("@@"),
+      end_of_word_suffix=Some("</w>"),
+      fuse_unk=true,
+      progress_format="silent",
+    ).get_state(),
+  )
+  @test.assert_eq(
+    Trainer::unigram_trainer(
+      unk_piece=Some("<UNK>"),
+      byte_fallback=true,
+      fuse_unk=false,
+      shrinking_factor=0.5,
+      max_piece_length=Some(4),
+      seed_size=128,
+    ).get_state(),
+    Trainer::unigram(
+      unk_piece=Some("<UNK>"),
+      byte_fallback=true,
+      fuse_unk=false,
+      shrinking_factor=0.5,
+      max_piece_length=Some(4),
+      seed_size=128,
+    ).get_state(),
+  )
+}
+
+///|
 test "Trainer default vocab_size mirrors HF caps" {
   @test.assert_eq(Trainer::wordlevel().vocab_size(), Some(30000))
   @test.assert_eq(Trainer::wordpiece().vocab_size(), Some(30000))
