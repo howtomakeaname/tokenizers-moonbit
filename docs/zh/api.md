@@ -72,14 +72,20 @@ fn Model::from_bpe_files(
   fuse_unk? : Bool = false, byte_fallback? : Bool = false,
   ignore_merges? : Bool = false, dropout? : Double? = None,
 ) -> Model raise TokenizerError
+fn Model::bpe_read_file(...) -> Model raise TokenizerError
+fn Model::bpe_from_file(...) -> Model raise TokenizerError
 fn Model::from_wordpiece_file(
   vocab_path : String, unk_token? : String = "[UNK]",
   continuing_subword_prefix? : String = "##", end_of_word_suffix? : String? = None,
   max_input_chars_per_word? : Int = 100,
 ) -> Model raise TokenizerError
+fn Model::wordpiece_read_file(...) -> Model raise TokenizerError
+fn Model::wordpiece_from_file(...) -> Model raise TokenizerError
 fn Model::from_wordlevel_file(
   vocab_path : String, unk_token? : String = "[UNK]",
 ) -> Model raise TokenizerError
+fn Model::wordlevel_read_file(...) -> Model raise TokenizerError
+fn Model::wordlevel_from_file(...) -> Model raise TokenizerError
 fn Model::from_unigram_file(vocab_path : String) -> Model raise TokenizerError
 ```
 
@@ -91,6 +97,9 @@ model，包括保存出来的 Unigram JSON 片段；BPE merges 会跳过 `#versi
 `Model::wordlevel` 与 `Model::wordpiece` 提供内存词表构造入口，便于迁移 HF
 `models.WordLevel(vocab=...)` 与 `models.WordPiece(vocab=...)`；构造时会复制输入
 vocab，再建立 dense id lookup 表。
+`*_read_file` 与 `*_from_file` 模型 helper 是同一套 BPE/WordPiece/WordLevel
+artifact loader 的命名 alias，用于对齐 HF model class methods；Unigram 仍只暴露
+JSON artifact loader，因为 HF 没有对应的 file-class helper。
 
 ### 可选 Hub 下载器（`@hub`，native/js）
 

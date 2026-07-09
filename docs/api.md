@@ -81,14 +81,20 @@ fn Model::from_bpe_files(
   fuse_unk? : Bool = false, byte_fallback? : Bool = false,
   ignore_merges? : Bool = false, dropout? : Double? = None,
 ) -> Model raise TokenizerError
+fn Model::bpe_read_file(...) -> Model raise TokenizerError
+fn Model::bpe_from_file(...) -> Model raise TokenizerError
 fn Model::from_wordpiece_file(
   vocab_path : String, unk_token? : String = "[UNK]",
   continuing_subword_prefix? : String = "##", end_of_word_suffix? : String? = None,
   max_input_chars_per_word? : Int = 100,
 ) -> Model raise TokenizerError
+fn Model::wordpiece_read_file(...) -> Model raise TokenizerError
+fn Model::wordpiece_from_file(...) -> Model raise TokenizerError
 fn Model::from_wordlevel_file(
   vocab_path : String, unk_token? : String = "[UNK]",
 ) -> Model raise TokenizerError
+fn Model::wordlevel_read_file(...) -> Model raise TokenizerError
+fn Model::wordlevel_from_file(...) -> Model raise TokenizerError
 fn Model::from_unigram_file(vocab_path : String) -> Model raise TokenizerError
 ```
 
@@ -102,6 +108,10 @@ legacy merge splitting semantics as tokenizer JSON loading.
 the common HF `models.WordLevel(vocab=...)` and `models.WordPiece(vocab=...)`
 migration path; constructor inputs are copied before building dense id lookup
 tables.
+The `*_read_file` and `*_from_file` model helpers are naming aliases for the
+same BPE/WordPiece/WordLevel artifact loaders, matching HF model class methods;
+Unigram intentionally only exposes the JSON artifact loader because HF has no
+matching file-class helper.
 
 ### Optional Hub downloader (`@hub`, native/js)
 

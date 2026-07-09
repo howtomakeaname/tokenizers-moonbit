@@ -34,6 +34,58 @@ pub fn Model::from_bpe_files(
 }
 
 ///|
+/// HF-style `models.BPE.read_file` / `from_file` naming alias.
+pub fn Model::bpe_read_file(
+  vocab_path : String,
+  merges_path : String,
+  unk_token? : String? = Some("[UNK]"),
+  continuing_subword_prefix? : String? = None,
+  end_of_word_suffix? : String? = None,
+  fuse_unk? : Bool = false,
+  byte_fallback? : Bool = false,
+  ignore_merges? : Bool = false,
+  dropout? : Double? = None,
+) -> Model raise @types.TokenizerError {
+  Model::from_bpe_files(
+    vocab_path,
+    merges_path,
+    unk_token~,
+    continuing_subword_prefix~,
+    end_of_word_suffix~,
+    fuse_unk~,
+    byte_fallback~,
+    ignore_merges~,
+    dropout~,
+  )
+}
+
+///|
+/// HF-style `models.BPE.from_file` naming alias.
+pub fn Model::bpe_from_file(
+  vocab_path : String,
+  merges_path : String,
+  unk_token? : String? = Some("[UNK]"),
+  continuing_subword_prefix? : String? = None,
+  end_of_word_suffix? : String? = None,
+  fuse_unk? : Bool = false,
+  byte_fallback? : Bool = false,
+  ignore_merges? : Bool = false,
+  dropout? : Double? = None,
+) -> Model raise @types.TokenizerError {
+  Model::bpe_read_file(
+    vocab_path,
+    merges_path,
+    unk_token~,
+    continuing_subword_prefix~,
+    end_of_word_suffix~,
+    fuse_unk~,
+    byte_fallback~,
+    ignore_merges~,
+    dropout~,
+  )
+}
+
+///|
 pub fn Model::from_wordpiece_file(
   vocab_path : String,
   unk_token? : String = "[UNK]",
@@ -55,6 +107,42 @@ pub fn Model::from_wordpiece_file(
 }
 
 ///|
+/// HF-style `models.WordPiece.read_file` / `from_file` naming alias.
+pub fn Model::wordpiece_read_file(
+  vocab_path : String,
+  unk_token? : String = "[UNK]",
+  continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None,
+  max_input_chars_per_word? : Int = 100,
+) -> Model raise @types.TokenizerError {
+  Model::from_wordpiece_file(
+    vocab_path,
+    unk_token~,
+    continuing_subword_prefix~,
+    end_of_word_suffix~,
+    max_input_chars_per_word~,
+  )
+}
+
+///|
+/// HF-style `models.WordPiece.from_file` naming alias.
+pub fn Model::wordpiece_from_file(
+  vocab_path : String,
+  unk_token? : String = "[UNK]",
+  continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None,
+  max_input_chars_per_word? : Int = 100,
+) -> Model raise @types.TokenizerError {
+  Model::wordpiece_read_file(
+    vocab_path,
+    unk_token~,
+    continuing_subword_prefix~,
+    end_of_word_suffix~,
+    max_input_chars_per_word~,
+  )
+}
+
+///|
 pub fn Model::from_wordlevel_file(
   vocab_path : String,
   unk_token? : String = "[UNK]",
@@ -64,6 +152,24 @@ pub fn Model::from_wordlevel_file(
   }
   let (vocab, vocab_r) = parse_vocab(obj)
   WordLevel(WordLevelModel::{ vocab, vocab_r, unk_token })
+}
+
+///|
+/// HF-style `models.WordLevel.read_file` / `from_file` naming alias.
+pub fn Model::wordlevel_read_file(
+  vocab_path : String,
+  unk_token? : String = "[UNK]",
+) -> Model raise @types.TokenizerError {
+  Model::from_wordlevel_file(vocab_path, unk_token~)
+}
+
+///|
+/// HF-style `models.WordLevel.from_file` naming alias.
+pub fn Model::wordlevel_from_file(
+  vocab_path : String,
+  unk_token? : String = "[UNK]",
+) -> Model raise @types.TokenizerError {
+  Model::wordlevel_read_file(vocab_path, unk_token~)
 }
 
 ///|

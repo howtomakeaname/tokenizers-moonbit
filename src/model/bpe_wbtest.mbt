@@ -510,7 +510,15 @@ test "standalone model artifact loaders round trip saved artifacts" {
   let loaded_bpe = Model::from_bpe_files(bpe_paths[0], bpe_paths[1]) catch {
     _ => abort("load bpe artifacts failed")
   }
+  let loaded_bpe_read = Model::bpe_read_file(bpe_paths[0], bpe_paths[1]) catch {
+    _ => abort("load bpe artifacts via read_file alias failed")
+  }
+  let loaded_bpe_from = Model::bpe_from_file(bpe_paths[0], bpe_paths[1]) catch {
+    _ => abort("load bpe artifacts via from_file alias failed")
+  }
   @test.assert_eq(loaded_bpe.kind(), "BPE")
+  @test.assert_eq(loaded_bpe_read.to_json(), loaded_bpe.to_json())
+  @test.assert_eq(loaded_bpe_from.tokenize("abab").map(t => t.value), ["abab"])
   @test.assert_eq(loaded_bpe.token_to_id("ab"), bpe.token_to_id("ab"))
   @test.assert_eq(
     loaded_bpe.id_to_token(loaded_bpe.token_to_id("ab").unwrap()),
@@ -529,7 +537,15 @@ test "standalone model artifact loaders round trip saved artifacts" {
   let loaded_wordpiece = Model::from_wordpiece_file(wordpiece_paths[0]) catch {
     _ => abort("load wordpiece artifact failed")
   }
+  let loaded_wordpiece_read = Model::wordpiece_read_file(wordpiece_paths[0]) catch {
+    _ => abort("load wordpiece artifact via read_file alias failed")
+  }
+  let loaded_wordpiece_from = Model::wordpiece_from_file(wordpiece_paths[0]) catch {
+    _ => abort("load wordpiece artifact via from_file alias failed")
+  }
   @test.assert_eq(loaded_wordpiece.kind(), "WordPiece")
+  @test.assert_eq(loaded_wordpiece_read.to_json(), loaded_wordpiece.to_json())
+  @test.assert_eq(loaded_wordpiece_from.to_json(), loaded_wordpiece.to_json())
   @test.assert_eq(
     loaded_wordpiece.token_to_id("hello"),
     wordpiece.token_to_id("hello"),
@@ -552,7 +568,15 @@ test "standalone model artifact loaders round trip saved artifacts" {
   let loaded_wordlevel = Model::from_wordlevel_file(wordlevel_paths[0]) catch {
     _ => abort("load wordlevel artifact failed")
   }
+  let loaded_wordlevel_read = Model::wordlevel_read_file(wordlevel_paths[0]) catch {
+    _ => abort("load wordlevel artifact via read_file alias failed")
+  }
+  let loaded_wordlevel_from = Model::wordlevel_from_file(wordlevel_paths[0]) catch {
+    _ => abort("load wordlevel artifact via from_file alias failed")
+  }
   @test.assert_eq(loaded_wordlevel.kind(), "WordLevel")
+  @test.assert_eq(loaded_wordlevel_read.to_json(), loaded_wordlevel.to_json())
+  @test.assert_eq(loaded_wordlevel_from.to_json(), loaded_wordlevel.to_json())
   @test.assert_eq(
     loaded_wordlevel.token_to_id("hello"),
     wordlevel.token_to_id("hello"),

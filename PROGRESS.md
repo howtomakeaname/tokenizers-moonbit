@@ -114,6 +114,8 @@ Model vocab property alias 小闭环：`Model::vocab()` 已补齐，作为 `get_
 
 Model 直接构造器小闭环：`Model::wordlevel(vocab, unk_token="<unk>")` 与 `Model::wordpiece(vocab, unk_token="[UNK]", continuing_subword_prefix="##", end_of_word_suffix=None, max_input_chars_per_word=100)` 已补齐，覆盖 HF `models.WordLevel(vocab=...)` / `models.WordPiece(vocab=...)` 的内存词表迁移入口；构造时复制 vocab 并建立 dense reverse lookup，测试覆盖稀疏 id、默认参数、tokenize、state 往返与输入 Map 修改隔离。
 
+Model artifact 命名 alias 小闭环：`bpe_read_file` / `bpe_from_file`、`wordpiece_read_file` / `wordpiece_from_file`、`wordlevel_read_file` / `wordlevel_from_file` 已补齐，委托现有 standalone artifact loader，对齐 HF `models.*.read_file/from_file` 命名；Unigram 不补对应 alias，因为 HF Python API 未提供同名入口。
+
 Encoding 显示 alias 小闭环：`Encoding::__str__()` 已补齐，返回与 `__repr__()` 相同的 HF-style 诊断摘要，覆盖 Python binding 的 `str(encoding)` 映射。
 
 AddedToken constructor 小闭环：`AddedToken::new` 已支持 `single_word` / `lstrip` / `rstrip` / `normalized` / `special` HF-style keyword 参数；`special=true` 且未显式指定 `normalized` 时默认 `false`，保留普通 token 默认 `normalized=true`。

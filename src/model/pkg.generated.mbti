@@ -40,6 +40,8 @@ pub fn Model::__setstate__(ModelState) -> Self raise @types.TokenizerError
 pub fn Model::__str__(Self) -> String raise @types.TokenizerError
 pub fn Model::_clear_cache(Self) -> Unit
 pub fn Model::_resize_cache(Self, Int) -> Unit
+pub fn Model::bpe_from_file(String, String, unk_token? : String?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?) -> Self raise @types.TokenizerError
+pub fn Model::bpe_read_file(String, String, unk_token? : String?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?) -> Self raise @types.TokenizerError
 pub fn Model::byte_fallback(Self) -> Bool?
 pub fn Model::cache_size(Self) -> Int
 pub fn Model::clear_cache(Self) -> Unit
@@ -78,7 +80,11 @@ pub fn Model::unk_token(Self) -> String?
 pub fn Model::vocab(Self) -> Map[String, Int]
 pub fn Model::vocab_size(Self) -> Int
 pub fn Model::wordlevel(Map[String, Int], unk_token? : String) -> Self
+pub fn Model::wordlevel_from_file(String, unk_token? : String) -> Self raise @types.TokenizerError
+pub fn Model::wordlevel_read_file(String, unk_token? : String) -> Self raise @types.TokenizerError
 pub fn Model::wordpiece(Map[String, Int], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int) -> Self
+pub fn Model::wordpiece_from_file(String, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int) -> Self raise @types.TokenizerError
+pub fn Model::wordpiece_read_file(String, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int) -> Self raise @types.TokenizerError
 
 pub struct ModelState {
   json : String

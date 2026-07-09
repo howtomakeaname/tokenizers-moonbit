@@ -14,7 +14,7 @@
 | `Tokenizer.from_pretrained(id, local_files_only=True)` | `@tokenizer.from_pretrained(id)` 或 `@tokenizer.from_pretrained_cached(id, cache_dir=...)` |
 | `Tokenizer.from_pretrained(id)` | native/js 使用 `@hub.from_pretrained(id)`；wasm 可宿主 fetch 后调用 `@tokenizer.from_pretrained_downloaded(id, json)` |
 | `tok.save("dir/tokenizer.json")` / 目录工作流 | `tok.save(path)`（默认 pretty）或 `tok.save_pretrained(dir)` |
-| `BPE.read_file(vocab, merges)` / 模型文件 | `@model.Model::from_bpe_files(vocab, merges)` 以及 WordPiece/WordLevel/Unigram 文件 loader |
+| `BPE.read_file(vocab, merges)` / `BPE.from_file(...)` / 模型文件 | `@model.Model::bpe_read_file(vocab, merges)` / `bpe_from_file(...)`，或显式 `from_bpe_files` loader；WordPiece/WordLevel 也提供对应 `*_read_file` / `*_from_file` alias |
 
 ```python
 from tokenizers import Tokenizer
