@@ -346,7 +346,8 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 `@pretokenizer.byte_level_alphabet()` 相同的 256 个符号表。
 `PreTokenizer` 也提供只读配置 getter，覆盖 ByteLevel 标记、Metaspace 设置、
 Split/Punctuation behavior、Digits/Delimiter/FixedLength 设置与 Sequence 子项。
-Sequence pre-tokenizer 支持 `__len__`、`get_item`、`__getitem__`。
+Sequence pre-tokenizer 支持 `pre_tokenizers` / `get_pre_tokenizers`、`__len__`、
+`get_item`、`__getitem__`。
 同时提供常见 HF 构造器的 lower-snake builder alias，例如 `whitespace`、
 `metaspace`、`punctuation`、`digits`、`byte_level`（默认
 `add_prefix_space=true`）、`char_delimiter_split`、`split`（默认 `invert=false`、
@@ -354,13 +355,15 @@ Sequence pre-tokenizer 支持 `__len__`、`get_item`、`__getitem__`。
 `Normalizer::normalize_str(input)` 作为 HF 风格别名，等价于 `normalize(input)`。
 `Normalizer` 也提供只读配置 getter，覆盖 `kind`、Strip 左右裁剪标记、
 Replace pattern/content、Prepend 内容、BertNormalizer 标记与 Sequence 子 normalizer。
+Sequence normalizer 同时提供返回副本的 `normalizers` / `get_normalizers` getter。
 同时提供常见 typed 构造器的 lower-snake builder alias，例如 `nfc`、`nfd`、
 `nfkc`、`nfkd`、`byte_level`、`strip`、`replace`、`prepend_normalizer`、
 `bert_normalizer`、`lowercase_normalizer`、`strip_accents_normalizer`、`nmt`、
 `precompiled` 和 `sequence`。
 `Decoder` 提供只读配置 getter，覆盖 ByteLevel 标记、WordPiece prefix/cleanup、
 Metaspace 设置、BPEDecoder suffix、Strip/Replace/CTC 设置、Sequence 子项，以及
-通过 `__len__` / `get_item` / `__getitem__` 进行的 Sequence 访问。
+通过 `decoders` / `get_decoders`、`__len__` / `get_item` / `__getitem__` 进行的
+Sequence 访问。
 同时提供常见 HF 构造器的 lower-snake builder alias，例如 `byte_level`、
 `bpe_decoder`、`strip`、`fuse` 和 `sequence`。
 `PostProcessor` 提供只读配置 getter，覆盖 Bert/Roberta special token pair、
@@ -374,7 +377,8 @@ TemplateProcessing 提供 typed `single()` 与 `pair()` alias 访问模板。
 `__repr__` 显示 alias。
 `SpecialToken` 提供 tuple 互操作、返回副本的 `id` / `ids` / `tokens` getter，以及
 `__str__` / `__repr__`。
-Sequence post-processor 支持 `__len__`、`get_item`、`__getitem__`。
+Sequence post-processor 支持 `processors` / `get_processors`、`__len__`、
+`get_item`、`__getitem__`。
 `Normalizer`、`PreTokenizer`、`Decoder` 与 `PostProcessor` 也提供基于 JSON 的
 `get_state` / `from_state` / `__getstate__` / `__setstate__`，以及
 `__str__` / `__repr__` alias。没有稳定 JSON 序列化形态的组件会显式返回

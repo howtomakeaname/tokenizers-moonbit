@@ -72,6 +72,8 @@
 
 第三十四批追加补齐 Sequence component 长度 alias：`PreTokenizer::__len__()` / `PostProcessor::__len__()` / `Decoder::__len__()` 对 `Sequence` 返回子组件数、非 sequence 返回 `0`，与 `Normalizer::__len__()` 保持一致，便于 Python binding 映射 `len(component)`。
 
+Sequence component 子列表 getter 小闭环：`Normalizer::get_normalizers` / `PreTokenizer::get_pre_tokenizers` / `Decoder::get_decoders` / `PostProcessor::get_processors` 已补齐，作为现有 `normalizers` / `pre_tokenizers` / `decoders` / `processors` 的 HF-style getter alias；返回数组副本，修改返回值不影响原组件。
+
 TemplateProcessing typed alias 小闭环：`PostProcessor::single()` / `pair()` 分别作为 `single_pieces()` / `pair_pieces()` 的 HF-style typed alias；返回数组副本，非 Template processor 返回空数组，并覆盖 parsed pieces 与 `template_from_strings` 两种构造路径。
 
 TemplateProcessing 叶子对象互操作：`SpecialToken::{get_id,id,get_ids,ids,get_tokens,tokens,as_tuple,from_tuple}` 已补齐，数组 getter 返回副本，方便 Python binding 映射 TemplateProcessing special token 元数据。
