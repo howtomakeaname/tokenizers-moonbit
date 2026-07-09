@@ -379,6 +379,8 @@ deterministic MVP 的 ranked candidate cap。这些 helper 用于
 binding/property 映射，不改变训练行为。`TrainerState` 以及 `get_state` /
 `from_state` / `__getstate__` / `__setstate__` 会保留同一份 typed 配置，包括
 `AddedToken` 元数据；`__str__` / `__repr__` 返回紧凑 JSON 视图，便于 binding 日志和诊断。
+`Tokenizer::train_from_iterator(texts, trainer, length=None)` 接受 HF 的 `length`
+progress hint，并作为 no-op 透传，不改变训练结果。
 
 `Model` 暴露只读配置 getter，便于 binding 层映射属性，包括 `kind`、`unk_token`、
 `unk_id`、WordPiece/BPE 的 prefix/suffix knobs、BPE dropout 与 merge flags，以及

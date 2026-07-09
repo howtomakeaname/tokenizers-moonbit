@@ -782,7 +782,9 @@ pub fn Tokenizer::train_from_iterator(
   self : Tokenizer,
   texts : Array[String],
   trainer : Trainer,
+  length? : Int? = None,
 ) -> Tokenizer {
+  ignore(length)
   let tokenized = self.training_tokenized_texts(texts)
   let special_added_tokens = trainer_special_added_tokens(trainer)
   let special_tokens = merge_training_special_tokens(

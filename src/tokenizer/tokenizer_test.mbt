@@ -2621,6 +2621,12 @@ test "Tokenizer train_from_iterator applies pipeline and preserves added special
     trained.encode("HELLO moon [MASK]", add_special_tokens=false).tokens,
     ["hello", "moon", "[MASK]"],
   )
+  let with_length = base.train_from_iterator(
+    ["HELLO [MASK]", "hello Moon", "MOON"],
+    Trainer::wordlevel(unk_token="[UNK]", min_frequency=1),
+    length=Some(3),
+  )
+  @test.assert_eq(with_length.to_json(), trained.to_json())
   @test.assert_eq(trained.get_normalizer() is Some(_), true)
   @test.assert_eq(trained.get_pre_tokenizer() is Some(_), true)
 }

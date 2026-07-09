@@ -407,6 +407,9 @@ intended for binding/property mapping and do not change training behavior.
 `__setstate__` preserve the same typed configuration, including `AddedToken`
 metadata, and `__str__` / `__repr__` return a compact JSON view for binding logs
 and diagnostics.
+`Tokenizer::train_from_iterator(texts, trainer, length=None)` accepts the HF
+`length` progress hint as a no-op so bindings can pass it through without
+changing training results.
 
 `Model` exposes read-only configuration getters for binding layers, including
 `kind`, `unk_token`, `unk_id`, WordPiece/BPE prefix/suffix knobs, BPE dropout and
