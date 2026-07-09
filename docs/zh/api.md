@@ -43,6 +43,8 @@ fn Tokenizer::save_pretrained(
 - `from_pretrained_aux_file(path, filename)` 与
   `from_pretrained_aux_file_path(path, filename)` 可解析 tokenizer 邻近 sidecar 文件，
   例如 `added_tokens.json`，但不解释文件内容。
+  `cache_pretrained_aux_file(model_id, filename, content, ...)` 可把 raw sidecar
+  内容写入简化的 HF-compatible refs/snapshots cache，之后仍由同一套 aux reader 读回。
 - `to_str(pretty)` 默认保持 compact/verbatim JSON。`save(path, pretty)` 对齐 HF
   `Tokenizer.save`，默认写出两空格 pretty JSON；传 `pretty=false` 可保留精确
   compact/verbatim bytes。`save_pretrained(dir, pretty)` 仍保持 compact 默认；
@@ -109,7 +111,9 @@ cache 根目录、`HF_TOKEN` 或显式 bearer token、通过 `HF_TOKEN_PATH` / `
 `hub_file_url` 与 `plan_hub_file_request` 为 `tokenizer_config.json`、
 `special_tokens_map.json`、`added_tokens.json` 等 tokenizer 邻近 sidecar 文件暴露同一套
 URL revision 编码与请求 headers；sidecar request plan 不附带 tokenizer cache/range
-metadata。
+metadata。`apply_hub_file_download_result` 可把完整 sidecar response body 作为 raw
+snapshot 内容写入 cache；sidecar 自动下载、ETag/Range/resume 决策和内容解析仍不属于
+这个 helper 的范围。
 
 ```moonbit
 let tok = @hub.from_pretrained(

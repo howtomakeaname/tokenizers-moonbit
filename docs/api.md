@@ -49,6 +49,9 @@ fn Tokenizer::save_pretrained(
 - `from_pretrained_aux_file(path, filename)` and
   `from_pretrained_aux_file_path(path, filename)` resolve tokenizer-adjacent
   sidecar files such as `added_tokens.json` without interpreting their content.
+  `cache_pretrained_aux_file(model_id, filename, content, ...)` writes raw
+  sidecar content into the simplified HF-compatible refs/snapshots cache so the
+  same aux readers can resolve it later.
 - `to_str(pretty)` defaults to compact/verbatim JSON. `save(path, pretty)`
   follows HF `Tokenizer.save` and defaults to two-space pretty output; pass
   `pretty=false` for exact compact/verbatim bytes. `save_pretrained(dir, pretty)`
@@ -125,6 +128,9 @@ where `huggingface.co` is slow, pass a mirror endpoint, for example:
 and request headers for tokenizer-adjacent sidecar files such as
 `tokenizer_config.json`, `special_tokens_map.json`, or `added_tokens.json`;
 sidecar plans intentionally do not attach tokenizer cache/range metadata.
+`apply_hub_file_download_result` can cache a complete sidecar response body as
+raw snapshot content. Sidecar auto-download, ETag/Range/resume decisions, and
+sidecar content parsing remain intentionally out of scope for this helper.
 
 ```moonbit
 let tok = @hub.from_pretrained(
