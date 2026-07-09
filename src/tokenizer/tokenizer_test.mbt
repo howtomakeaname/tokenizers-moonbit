@@ -1989,6 +1989,9 @@ test "from_pretrained loads local directory or tokenizer file" {
   let tok = Tokenizer::from_str(json)
   let path = "_build/tokenizer.json"
   tok.save(path)
+  @fs.write_string_to_file("_build/added_tokens.json", "{\"added\":[]}") catch {
+    _ => ()
+  }
   let from_dir = Tokenizer::from_pretrained("_build")
   let from_file = Tokenizer::from_pretrained(path)
   @test.assert_eq(from_dir.encode("local dir", add_special_tokens=false).ids, [
@@ -1997,6 +2000,18 @@ test "from_pretrained loads local directory or tokenizer file" {
   @test.assert_eq(from_file.encode("local dir", add_special_tokens=false).ids, [
     0, 1,
   ])
+  @test.assert_eq(
+    Tokenizer::from_pretrained_aux_file("_build", "added_tokens.json"),
+    Some("{\"added\":[]}"),
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained_aux_file_path(path, "added_tokens.json"),
+    Some("_build/added_tokens.json"),
+  )
+  @test.assert_eq(
+    Tokenizer::from_pretrained_aux_file("_build", "../tokenizer.json"),
+    None,
+  )
 }
 
 ///|
@@ -2133,6 +2148,22 @@ test "from_pretrained_downloaded writes HF-style cache and refs" {
   @test.assert_eq(
     aux.special_tokens_map_json,
     Some("{\"unk_token\":\"[UNK]\"}"),
+  )
+  @fs.write_string_to_file(
+    hub +
+    "/models--org--downloaded-tokenizer/snapshots/def456/added_tokens.json",
+    "{\"added\":[]}",
+  ) catch {
+    _ => ()
+  }
+  @test.assert_eq(
+    Tokenizer::from_pretrained_aux_file(
+      "org/downloaded-tokenizer",
+      "added_tokens.json",
+      revision="main",
+      cache_dir=Some(hub),
+    ),
+    Some("{\"added\":[]}"),
   )
   let meta = Tokenizer::from_pretrained_cache_metadata(
     "org/downloaded-tokenizer",

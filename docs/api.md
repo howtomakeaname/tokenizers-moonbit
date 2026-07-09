@@ -46,6 +46,9 @@ fn Tokenizer::save_pretrained(
   Hub cache layout before parsing. The optional `@hub` package provides native/js
   async HTTP downloading on top of this API; wasm users can keep host-side fetch
   logic and call this function with the fetched JSON.
+- `from_pretrained_aux_file(path, filename)` and
+  `from_pretrained_aux_file_path(path, filename)` resolve tokenizer-adjacent
+  sidecar files such as `added_tokens.json` without interpreting their content.
 - `to_str(pretty)` defaults to compact/verbatim JSON. `save(path, pretty)`
   follows HF `Tokenizer.save` and defaults to two-space pretty output; pass
   `pretty=false` for exact compact/verbatim bytes. `save_pretrained(dir, pretty)`

@@ -40,6 +40,9 @@ fn Tokenizer::save_pretrained(
 - `from_pretrained_downloaded` 用于网络调用方桥接：传入已下载的 `tokenizer.json`
   文本后写入标准 HF Hub cache 布局并立即解析。可选 `@hub` 包基于它在 native/js
   后端提供异步 HTTP 下载；wasm 场景可由宿主 fetch 后调用该函数。
+- `from_pretrained_aux_file(path, filename)` 与
+  `from_pretrained_aux_file_path(path, filename)` 可解析 tokenizer 邻近 sidecar 文件，
+  例如 `added_tokens.json`，但不解释文件内容。
 - `to_str(pretty)` 默认保持 compact/verbatim JSON。`save(path, pretty)` 对齐 HF
   `Tokenizer.save`，默认写出两空格 pretty JSON；传 `pretty=false` 可保留精确
   compact/verbatim bytes。`save_pretrained(dir, pretty)` 仍保持 compact 默认；

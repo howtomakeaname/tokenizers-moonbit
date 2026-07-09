@@ -110,6 +110,8 @@ Trainer iterator length 兼容：`Tokenizer::train_from_iterator(..., length=Som
 
 Hub env/local-only 小闭环：新增 `@hub.from_pretrained(..., local_files_only=true)` cache hit/miss 覆盖，验证缓存命中直接返回本地 tokenizer 且不触网，缓存缺失抛出 `from_pretrained local cache miss and local_files_only=true`；核心 `from_pretrained` 默认 cache root 识别 `$HF_HUB_CACHE`（在 legacy `$HUGGINGFACE_HUB_CACHE` 之后、`$HF_HOME/hub` 之前）；`HubDownloadOptions::new()` 读取 `$HF_ENDPOINT` 作为默认 endpoint，并在 `$HF_HUB_OFFLINE` 为真值时默认进入 local-only 模式；Hub request auth 也按显式 token → `$HF_TOKEN` → `$HF_TOKEN_PATH` → `$HF_HOME/token` 顺序发现 bearer token，显式 options 仍可覆盖。
 
+Hub/Core sidecar 文件族小闭环：新增 `from_pretrained_aux_file(_path)`，可按本地目录/文件/Hub cache snapshot 解析 tokenizer 邻近的通用 basename sidecar（如 `added_tokens.json`），返回原始文本或路径，不解释内容并拒绝路径穿越文件名。
+
 Tokenizer public API 文档同步闭环：英文/中文 API 文档补齐已实现但此前未列全的 `from_buffer`、`to_str(pretty)`、`save(path, pretty)`、`save_pretrained(pretty/save_model/model_prefix)`、`enable_truncation` / `no_truncation`、`enable_padding` / `no_padding`、`enable_encode_special_tokens` / `disable_encode_special_tokens`，减少 HF 迁移时对源码的依赖。
 
 训练/模型文件近期增量：`Trainer::{wordlevel,wordpiece,bpe,unigram}` 默认 `vocab_size` 已对齐 HF cap（30000/8000），Unigram trainer 默认 `max_piece_length=Some(16)` 且显式 `None` 保留旧 escape hatch；tokenizer/model-level trainer 入口补充 `show_progress` no-op，model-level Unigram 补充 `unk_piece` alias。`Model::save` 之外已补 `Model::from_bpe_files` / `from_wordpiece_file` / `from_wordlevel_file` / `from_unigram_file` standalone artifact loader，覆盖 BPE `vocab.json`+`merges.txt`、WordPiece `vocab.txt`、WordLevel `vocab.json`、Unigram JSON 的保存后重载。

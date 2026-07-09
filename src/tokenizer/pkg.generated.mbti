@@ -23,6 +23,10 @@ pub fn from_file(String) -> Tokenizer raise @types.TokenizerError
 
 pub fn from_pretrained(String) -> Tokenizer raise @types.TokenizerError
 
+pub fn from_pretrained_aux_file(String, String, revision? : String, cache_dir? : String?) -> String?
+
+pub fn from_pretrained_aux_file_path(String, String, revision? : String, cache_dir? : String?) -> String?
+
 pub fn from_pretrained_aux_files(String, revision? : String, cache_dir? : String?) -> PretrainedAuxFiles
 
 pub fn from_pretrained_cache_etag_matches(String, String?, revision? : String, cache_dir? : String?) -> Bool
@@ -423,6 +427,8 @@ pub fn Tokenizer::encode_with_hooks_fast(Self, String, TokenizerComponentHooks, 
 pub fn Tokenizer::from_buffer(Bytes) -> Self raise @types.TokenizerError
 pub fn Tokenizer::from_file(String) -> Self raise @types.TokenizerError
 pub fn Tokenizer::from_pretrained(String) -> Self raise @types.TokenizerError
+pub fn Tokenizer::from_pretrained_aux_file(String, String, revision? : String, cache_dir? : String?) -> String?
+pub fn Tokenizer::from_pretrained_aux_file_path(String, String, revision? : String, cache_dir? : String?) -> String?
 pub fn Tokenizer::from_pretrained_aux_files(String, revision? : String, cache_dir? : String?) -> PretrainedAuxFiles
 pub fn Tokenizer::from_pretrained_cache_etag_matches(String, String?, revision? : String, cache_dir? : String?) -> Bool
 pub fn Tokenizer::from_pretrained_cache_exists(String, revision? : String, cache_dir? : String?) -> Bool

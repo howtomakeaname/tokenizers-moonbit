@@ -211,18 +211,19 @@ pub fn Tokenizer::from_pretrained_aux_files(
   revision? : String = "main",
   cache_dir? : String? = None,
 ) -> PretrainedAuxFiles {
-  let base = resolve_pretrained_base_dir(path, revision~, cache_dir~)
-  match base {
-    Some(dir) =>
-      {
-        tokenizer_config_json: read_optional_file(
-          join_path(dir, "tokenizer_config.json"),
-        ),
-        special_tokens_map_json: read_optional_file(
-          join_path(dir, "special_tokens_map.json"),
-        ),
-      }
-    None => { tokenizer_config_json: None, special_tokens_map_json: None }
+  {
+    tokenizer_config_json: Tokenizer::from_pretrained_aux_file(
+      path,
+      "tokenizer_config.json",
+      revision~,
+      cache_dir~,
+    ),
+    special_tokens_map_json: Tokenizer::from_pretrained_aux_file(
+      path,
+      "special_tokens_map.json",
+      revision~,
+      cache_dir~,
+    ),
   }
 }
 
@@ -233,6 +234,70 @@ pub fn from_pretrained_aux_files(
   cache_dir? : String? = None,
 ) -> PretrainedAuxFiles {
   Tokenizer::from_pretrained_aux_files(path, revision~, cache_dir~)
+}
+
+///|
+/// Resolve a tokenizer-adjacent sidecar file by basename using the same local
+/// directory / file / Hub cache rules as `from_pretrained`.
+pub fn Tokenizer::from_pretrained_aux_file_path(
+  path : String,
+  filename : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> String? {
+  if !is_valid_aux_filename(filename) {
+    return None
+  }
+  match resolve_pretrained_base_dir(path, revision~, cache_dir~) {
+    Some(dir) => optional_existing_path(join_path(dir, filename))
+    None => None
+  }
+}
+
+///|
+pub fn from_pretrained_aux_file_path(
+  path : String,
+  filename : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> String? {
+  Tokenizer::from_pretrained_aux_file_path(
+    path,
+    filename,
+    revision~,
+    cache_dir~,
+  )
+}
+
+///|
+/// Read a tokenizer-adjacent sidecar file by basename, returning raw text when
+/// present. The core package does not interpret the content.
+pub fn Tokenizer::from_pretrained_aux_file(
+  path : String,
+  filename : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> String? {
+  match
+    Tokenizer::from_pretrained_aux_file_path(
+      path,
+      filename,
+      revision~,
+      cache_dir~,
+    ) {
+    Some(p) => read_optional_file(p)
+    None => None
+  }
+}
+
+///|
+pub fn from_pretrained_aux_file(
+  path : String,
+  filename : String,
+  revision? : String = "main",
+  cache_dir? : String? = None,
+) -> String? {
+  Tokenizer::from_pretrained_aux_file(path, filename, revision~, cache_dir~)
 }
 
 ///|
@@ -1507,4 +1572,23 @@ fn join_path(path : String, name : String) -> String {
   } else {
     path + "/" + name
   }
+}
+
+///|
+fn is_valid_aux_filename(name : String) -> Bool {
+  if name.is_empty() || name == "." || name == ".." {
+    return false
+  }
+  for c in name {
+    let ok = (c >= 'a' && c <= 'z') ||
+      (c >= 'A' && c <= 'Z') ||
+      (c >= '0' && c <= '9') ||
+      c == '.' ||
+      c == '_' ||
+      c == '-'
+    if !ok {
+      return false
+    }
+  }
+  true
 }
