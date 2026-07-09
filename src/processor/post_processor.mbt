@@ -393,6 +393,15 @@ pub fn PostProcessor::bert(
 }
 
 ///|
+/// HF class-name style alias for `BertProcessing`.
+pub fn PostProcessor::bert_processing(
+  sep : (String, Int),
+  cls : (String, Int),
+) -> PostProcessor {
+  PostProcessor::bert(sep, cls)
+}
+
+///|
 /// Programmatic constructor for RoBERTa post-processing.
 pub fn PostProcessor::roberta(
   sep : (String, Int),
@@ -404,6 +413,17 @@ pub fn PostProcessor::roberta(
 }
 
 ///|
+/// HF class-name style alias for `RobertaProcessing`.
+pub fn PostProcessor::roberta_processing(
+  sep : (String, Int),
+  cls : (String, Int),
+  trim_offsets? : Bool = true,
+  add_prefix_space? : Bool = true,
+) -> PostProcessor {
+  PostProcessor::roberta(sep, cls, trim_offsets~, add_prefix_space~)
+}
+
+///|
 /// Programmatic constructor for template processing using already-parsed pieces.
 pub fn PostProcessor::template(
   single : Array[Piece],
@@ -411,6 +431,16 @@ pub fn PostProcessor::template(
   special_tokens : Map[String, SpecialToken],
 ) -> PostProcessor {
   TemplateProcessing(single~, pair~, special_tokens~)
+}
+
+///|
+/// HF class-name style alias for `TemplateProcessing` with parsed pieces.
+pub fn PostProcessor::template_processing(
+  single : Array[Piece],
+  pair : Array[Piece],
+  special_tokens : Map[String, SpecialToken],
+) -> PostProcessor {
+  PostProcessor::template(single, pair, special_tokens)
 }
 
 ///|

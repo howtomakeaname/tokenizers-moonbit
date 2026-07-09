@@ -42,6 +42,7 @@ pub fn PostProcessor::__str__(Self) -> String raise @types.TokenizerError
 pub fn PostProcessor::add_prefix_space(Self) -> Bool?
 pub fn PostProcessor::added_tokens(Self, pair? : Bool) -> Int
 pub fn PostProcessor::bert((String, Int), (String, Int)) -> Self
+pub fn PostProcessor::bert_processing((String, Int), (String, Int)) -> Self
 pub fn PostProcessor::byte_level(add_prefix_space? : Bool, trim_offsets? : Bool, use_regex? : Bool) -> Self
 pub fn PostProcessor::cls(Self) -> (String, Int)?
 pub fn PostProcessor::from_json(Json) -> Self raise @types.TokenizerError
@@ -55,6 +56,7 @@ pub fn PostProcessor::pair_pieces(Self) -> Array[Piece]
 pub fn PostProcessor::process(Self, @types.Encoding, @types.Encoding?) -> @types.Encoding
 pub fn PostProcessor::processors(Self) -> Array[Self]
 pub fn PostProcessor::roberta((String, Int), (String, Int), trim_offsets? : Bool, add_prefix_space? : Bool) -> Self
+pub fn PostProcessor::roberta_processing((String, Int), (String, Int), trim_offsets? : Bool, add_prefix_space? : Bool) -> Self
 pub fn PostProcessor::sep(Self) -> (String, Int)?
 pub fn PostProcessor::sequence(Array[Self]) -> Self
 pub fn PostProcessor::single(Self) -> Array[Piece]
@@ -62,6 +64,7 @@ pub fn PostProcessor::single_pieces(Self) -> Array[Piece]
 pub fn PostProcessor::special_tokens(Self) -> Map[String, SpecialToken]
 pub fn PostProcessor::template(Array[Piece], Array[Piece], Map[String, SpecialToken]) -> Self
 pub fn PostProcessor::template_from_strings(String, String, Map[String, SpecialToken]) -> Self raise @types.TokenizerError
+pub fn PostProcessor::template_processing(Array[Piece], Array[Piece], Map[String, SpecialToken]) -> Self
 pub fn PostProcessor::to_json(Self) -> String?
 pub fn PostProcessor::trim_offsets(Self) -> Bool?
 pub fn PostProcessor::use_regex(Self) -> Bool?

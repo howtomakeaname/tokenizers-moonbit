@@ -3,7 +3,12 @@
 ///|
 test "post-processors expose HF-style configuration getters" {
   let bert = PostProcessor::bert(("[SEP]", 102), ("[CLS]", 101))
+  let bert_alias = PostProcessor::bert_processing(
+    ("[SEP]", 102),
+    ("[CLS]", 101),
+  )
   @test.assert_eq(bert.kind(), "BertProcessing")
+  @test.assert_eq(bert_alias.to_json(), bert.to_json())
   @test.assert_eq(bert.sep(), Some(("[SEP]", 102)))
   @test.assert_eq(bert.cls(), Some(("[CLS]", 101)))
   @test.assert_eq(bert.trim_offsets(), None)
@@ -14,7 +19,14 @@ test "post-processors expose HF-style configuration getters" {
     trim_offsets=false,
     add_prefix_space=false,
   )
+  let roberta_alias = PostProcessor::roberta_processing(
+    ("</s>", 2),
+    ("<s>", 0),
+    trim_offsets=false,
+    add_prefix_space=false,
+  )
   @test.assert_eq(roberta.kind(), "RobertaProcessing")
+  @test.assert_eq(roberta_alias.to_json(), roberta.to_json())
   @test.assert_eq(roberta.sep(), Some(("</s>", 2)))
   @test.assert_eq(roberta.cls(), Some(("<s>", 0)))
   @test.assert_eq(roberta.trim_offsets(), Some(false))
@@ -43,7 +55,13 @@ test "post-processors expose HF-style configuration getters" {
     ],
     specials,
   )
+  let template_alias = PostProcessor::template_processing(
+    template.single_pieces(),
+    template.pair_pieces(),
+    template.special_tokens(),
+  )
   @test.assert_eq(template.kind(), "TemplateProcessing")
+  @test.assert_eq(template_alias.to_json(), template.to_json())
   @test.assert_eq(template.single_pieces(), [
     SpecialTokenRef(id="<s>", type_id=0),
     SequenceRef(id="A", type_id=0),

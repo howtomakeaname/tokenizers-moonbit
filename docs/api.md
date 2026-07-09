@@ -375,6 +375,8 @@ It also provides lower-snake builder aliases for common HF constructors such as
 `PostProcessor` exposes read-only configuration getters for binding layers,
 including Bert/Roberta special token pairs, ByteLevel/Roberta flags,
 TemplateProcessing typed pieces and special tokens, and Sequence processors.
+HF class-name style constructor aliases are also available:
+`bert_processing`, `roberta_processing`, and `template_processing`.
 TemplateProcessing exposes typed `single()` and `pair()` aliases for its
 templates.
 `Piece` exposes `kind` / `get_kind`, `id` / `get_id`, `type_id` /

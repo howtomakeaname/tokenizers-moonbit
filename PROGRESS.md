@@ -80,6 +80,8 @@ TemplateProcessing Piece 互操作：`Piece::{kind,get_kind,id,get_id,type_id,ge
 
 TemplateProcessing 叶子对象显示 alias：`Piece::__str__/__repr__` 与 `SpecialToken::__str__/__repr__` 已补齐，repr 对字符串字段做转义，便于 Python binding 日志和调试输出。
 
+PostProcessor constructor alias 小闭环：`PostProcessor::bert_processing` / `roberta_processing` / `template_processing` 已补齐，作为 HF 类名风格构造入口，均委托现有 typed builder，不改变 process 或 JSON 行为。
+
 PreTokenizer ByteLevel 默认值对齐：HF 0.22.2 `ByteLevel()` 默认 `add_prefix_space=true`，`PreTokenizer::byte_level()` 已同步该默认值；显式 `add_prefix_space=false` 保留旧行为。
 
 PreTokenizer Split constructor 默认参数对齐：`PreTokenizer::split(pattern, behavior)` 现在默认 `invert=false`、`regex=false`，对齐 HF literal-string `Split(pattern, behavior)` 常用入口；显式参数仍保留。
