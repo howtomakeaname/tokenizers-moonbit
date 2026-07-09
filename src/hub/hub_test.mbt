@@ -981,6 +981,17 @@ async test "direct Hub network APIs reject local_files_only" {
     _ => ()
   }
   @test.assert_eq(head_rejected, true)
+
+  let mut sidecar_rejected = false
+  try
+    download_hub_file("bert-base-uncased", "added_tokens.json", options~)
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      sidecar_rejected = msg.contains("local_files_only=true")
+    _ => ()
+  }
+  @test.assert_eq(sidecar_rejected, true)
 }
 
 ///|

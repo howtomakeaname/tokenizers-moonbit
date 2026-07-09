@@ -1220,6 +1220,29 @@ pub async fn download_tokenizer_json(
 }
 
 ///|
+/// Download a tokenizer-adjacent Hub file such as `added_tokens.json` as raw
+/// text, following redirects. This helper intentionally uses a simple 2xx-only
+/// policy and does not apply tokenizer.json cache/Range/resume decisions.
+pub async fn download_hub_file(
+  model_id : String,
+  filename : String,
+  options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> HubDownloadResult raise @types.TokenizerError {
+  validate_hub_request(model_id, options.revision)
+  validate_hub_filename(filename)
+  if filename == "tokenizer.json" {
+    return download_tokenizer_json(model_id, options~)
+  }
+  reject_local_files_only_direct_download(options.local_files_only)
+  let plan = plan_hub_file_request(model_id, filename, options~)
+  async_download_file_with_redirects(
+    options,
+    plan,
+    max_redirects=options.max_redirects,
+  )
+}
+
+///|
 /// Perform a real HTTP HEAD preflight for `tokenizer.json`, following redirects
 /// and returning cache-freshness metadata without reading a response body.
 pub async fn head_tokenizer_json(
@@ -1360,7 +1383,7 @@ async fn async_download_with_redirects(
       client.close()
       []
     } else {
-      let chunks = read_tokenizer_json_stream_bytes(
+      let chunks = read_hub_response_stream_bytes(
         client,
         current,
         options.stream_chunk_size,
@@ -1389,7 +1412,67 @@ async fn async_download_with_redirects(
 }
 
 ///|
-async fn read_tokenizer_json_stream_bytes(
+async fn async_download_file_with_redirects(
+  options : HubDownloadOptions,
+  plan : HubRequestPlan,
+  max_redirects~ : Int,
+) -> HubDownloadResult raise @types.TokenizerError {
+  let mut current = plan.url
+  let mut remaining = max_redirects
+  while true {
+    let (response, client) = @http.get_stream(current, headers=plan.headers) catch {
+      _ => raise @types.ParseError("Hub file download failed: \{current}")
+    }
+    if is_redirect(response.code) {
+      client.close()
+      if remaining <= 0 {
+        raise @types.ParseError(
+          "Hub file download exceeded redirect limit: \{plan.url}",
+        )
+      }
+      match header(response.headers, "location") {
+        Some(next) => {
+          current = resolve_redirect(current, next)
+          remaining = remaining - 1
+          continue
+        }
+        None =>
+          raise @types.ParseError(
+            "Hub file redirect missing Location header: \{current}",
+          )
+      }
+    }
+    let metadata = HubResponseMetadata::from_headers(
+      response.code,
+      response.headers,
+    )
+    if metadata.status < 200 || metadata.status >= 300 {
+      client.close()
+      raise @types.ParseError(
+        "Hub file download failed: " +
+        hub_http_status_diagnostic(metadata.status),
+      )
+    }
+    let chunks = read_hub_response_stream_bytes(
+      client,
+      current,
+      options.stream_chunk_size,
+    )
+    client.close()
+    let content = @utf8.decode_lossy(concat_bytes([], chunks)[:])
+    return {
+      content,
+      resolved_revision: metadata.resolved_revision,
+      etag: metadata.etag,
+      final_url: current,
+      status: metadata.status,
+    }
+  }
+  raise @types.ParseError("unreachable Hub file download loop")
+}
+
+///|
+async fn read_hub_response_stream_bytes(
   client : @http.Client,
   url : String,
   chunk_size : Int,
