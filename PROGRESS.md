@@ -104,7 +104,7 @@ Encoding HF direction 边界对齐：`truncate_hf` / `pad_hf` 对非 `left`/`rig
 
 Encoding merge defaults 小闭环：`Encoding::merge` / `merge_with` 已暴露，默认 `growing_offsets=true`，显式 `false` 时保留各段原 offsets；已补默认 growing 与显式 false 两种行为测试。
 
-Encoding validation 待补：当前 `Encoding::new` / `from_state` / `from_buffers` / `from_tuple` 主要做数组复制，`sequence_ids` / `word_ids` 长度不匹配会按 `ids` 长度默认填充；核心 parallel arrays 长度一致性和 `with_*` setter 校验尚未实现。后续若继续对齐 Python binding，应新增 constructor/state validation 与 mismatch 单测后再标完成。
+Encoding validation 小闭环：`Encoding::new` / `from_state` / `from_buffers` / `from_tuple` 以及 `__setstate__` 已校验公开 parallel arrays 长度一致性；省略 `sequence_ids` / `word_ids` 仍保留 HF-style 默认值，传入非空且长度不匹配会抛 `ParseError`。`with_type_ids` / `with_special_tokens_mask` / `with_attention_mask` / `with_word_ids` 也会校验 replacement array 长度，`set_sequence_id` / `with_sequence_id` 拒绝负数 sequence id。
 
 Trainer iterator length 兼容：`Tokenizer::train_from_iterator(..., length=Some(n))` 已接受 HF progress hint 参数并作为 no-op，训练结果与不传 `length` 一致。
 

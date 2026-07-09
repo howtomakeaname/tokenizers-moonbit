@@ -441,10 +441,14 @@ fn bench_encoding_manipulation_case(
         pad_type_id=0,
         pad_token="[PAD]",
         direction=@types.Right,
-      )
+      ) catch {
+        _ => abort("encoding manipulation benchmark uses mismatched type ids")
+      }
     let right = enc
       .truncate(4, stride=1, direction=@types.Left)
-      .with_sequence_id(1)
+      .with_sequence_id(1) catch {
+        _ => abort("encoding manipulation benchmark uses invalid sequence id")
+      }
     let merged = left.merge_with(right, growing_offsets=true)
     let (plain, overflowing) = merged.take_overflowing()
     b.keep(plain.ids.length() + overflowing.length())

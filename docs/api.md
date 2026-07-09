@@ -503,13 +503,13 @@ fn Encoding::new(
   ids : Array[Int], type_ids : Array[Int], tokens : Array[String],
   offsets : Array[(Int, Int)], special_tokens_mask : Array[Int], attention_mask : Array[Int],
   sequence_ids? : Array[Int?] = [], word_ids? : Array[Int?] = [], overflowing? : Array[Encoding] = [],
-) -> Encoding
+) -> Encoding raise TokenizerError
 fn Encoding::from_tokens(tokens : Array[Token], type_id? : Int = 0) -> Encoding
-fn Encoding::with_type_ids(self : Encoding, type_ids : Array[Int]) -> Encoding
-fn Encoding::with_special_tokens_mask(self : Encoding, special_tokens_mask : Array[Int]) -> Encoding
-fn Encoding::with_attention_mask(self : Encoding, attention_mask : Array[Int]) -> Encoding
-fn Encoding::with_word_ids(self : Encoding, word_ids : Array[Int?]) -> Encoding
-fn Encoding::with_sequence_id(self : Encoding, sequence_id : Int) -> Encoding
+fn Encoding::with_type_ids(self : Encoding, type_ids : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::with_special_tokens_mask(self : Encoding, special_tokens_mask : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::with_attention_mask(self : Encoding, attention_mask : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::with_word_ids(self : Encoding, word_ids : Array[Int?]) -> Encoding raise TokenizerError
+fn Encoding::with_sequence_id(self : Encoding, sequence_id : Int) -> Encoding raise TokenizerError
 fn Encoding::with_overflowing(self : Encoding, overflowing : Array[Encoding]) -> Encoding
 fn Encoding::take_overflowing(self : Encoding) -> (Encoding, Array[Encoding])
 fn Encoding::truncate(self : Encoding, max_len : Int, stride? : Int = 0, direction? : EncodingDirection = Right) -> Encoding
@@ -532,6 +532,11 @@ and `n_sequences` cover HF's lightweight encoding metadata helpers. Public
 manipulation helpers mirror HF's `Encoding` API but return updated values instead
 of mutating in place. `Encoding::merge` and `merge_with` default to HF-style
 growing offsets; pass `growing_offsets=false` to keep input offsets unchanged.
+Interop constructors and replacement-array setters validate that all public
+parallel arrays match `ids.length()`; omitted `sequence_ids` / `word_ids`
+continue to use HF-style defaults, while mismatched non-empty arrays raise
+`ParseError`. `set_sequence_id` / `with_sequence_id` reject negative sequence
+ids.
 The `*_by_sequence_index` helpers are naming aliases for binding layers that
 map HF's `sequence_index` keyword while preserving the existing MoonBit
 `sequence_id` APIs. `token_to_char_offsets` and `token_to_word_index` expose the

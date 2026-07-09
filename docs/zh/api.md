@@ -458,6 +458,16 @@ fn Encoding::word_to_chars_by_sequence_index(self : Encoding, word : Int, sequen
 fn Encoding::len(self : Encoding) -> Int
 fn Encoding::is_empty(self : Encoding) -> Bool
 fn Encoding::n_sequences(self : Encoding) -> Int
+fn Encoding::new(
+  ids : Array[Int], type_ids : Array[Int], tokens : Array[String],
+  offsets : Array[(Int, Int)], special_tokens_mask : Array[Int], attention_mask : Array[Int],
+  sequence_ids? : Array[Int?] = [], word_ids? : Array[Int?] = [], overflowing? : Array[Encoding] = [],
+) -> Encoding raise TokenizerError
+fn Encoding::with_type_ids(self : Encoding, type_ids : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::with_special_tokens_mask(self : Encoding, special_tokens_mask : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::with_attention_mask(self : Encoding, attention_mask : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::with_word_ids(self : Encoding, word_ids : Array[Int?]) -> Encoding raise TokenizerError
+fn Encoding::with_sequence_id(self : Encoding, sequence_id : Int) -> Encoding raise TokenizerError
 fn Encoding::truncate_hf(self : Encoding, max_len : Int, stride? : Int = 0, direction? : String = "right") -> Encoding raise TokenizerError
 fn Encoding::pad_hf(
   self : Encoding, length : Int, direction? : String = "right",
@@ -471,6 +481,10 @@ fn Encoding::pad_hf(
 `get_*` accessor 会返回数组副本，便于 HF `Encoding` 迁移，同时避免调用方修改
 encoding 内部结果。`Encoding::merge` / `merge_with` 默认采用 HF 风格的
 growing offsets；显式传 `growing_offsets=false` 可保留输入 offsets 不变。
+interop constructor 和 replacement-array setter 会校验公开 parallel arrays
+均与 `ids.length()` 一致；省略 `sequence_ids` / `word_ids` 时仍使用 HF 风格默认值，
+但传入非空且长度不一致的数组会抛 `ParseError`。`set_sequence_id` /
+`with_sequence_id` 会拒绝负数 sequence id。
 `*_by_sequence_index` helper 是面向 binding 层的命名 alias，用来映射 HF 的
 `sequence_index` 关键字，同时保留现有 MoonBit `sequence_id` API。
 `token_to_char_offsets` 与 `token_to_word_index` 暴露 HF Python 的返回形态，

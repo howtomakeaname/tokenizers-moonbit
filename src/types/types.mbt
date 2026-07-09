@@ -70,6 +70,40 @@ pub fn Encoding::new(
   sequence_ids? : Array[Int?] = [],
   word_ids? : Array[Int?] = [],
   overflowing? : Array[Encoding] = [],
+) -> Encoding raise TokenizerError {
+  validate_encoding_required_lengths(
+    ids, type_ids, tokens, offsets, special_tokens_mask, attention_mask,
+  )
+  validate_encoding_optional_length(
+    "sequence_ids",
+    sequence_ids.length(),
+    ids.length(),
+  )
+  validate_encoding_optional_length("word_ids", word_ids.length(), ids.length())
+  encoding_from_parts_unchecked(
+    ids,
+    type_ids,
+    tokens,
+    offsets,
+    special_tokens_mask,
+    attention_mask,
+    sequence_ids~,
+    word_ids~,
+    overflowing~,
+  )
+}
+
+///|
+fn encoding_from_parts_unchecked(
+  ids : Array[Int],
+  type_ids : Array[Int],
+  tokens : Array[String],
+  offsets : Array[(Int, Int)],
+  special_tokens_mask : Array[Int],
+  attention_mask : Array[Int],
+  sequence_ids~ : Array[Int?],
+  word_ids~ : Array[Int?],
+  overflowing~ : Array[Encoding],
 ) -> Encoding {
   let n = ids.length()
   {
@@ -94,8 +128,55 @@ pub fn Encoding::new(
 }
 
 ///|
+fn validate_encoding_required_lengths(
+  ids : Array[Int],
+  type_ids : Array[Int],
+  tokens : Array[String],
+  offsets : Array[(Int, Int)],
+  special_tokens_mask : Array[Int],
+  attention_mask : Array[Int],
+) -> Unit raise TokenizerError {
+  let n = ids.length()
+  validate_encoding_length("type_ids", type_ids.length(), n)
+  validate_encoding_length("tokens", tokens.length(), n)
+  validate_encoding_length("offsets", offsets.length(), n)
+  validate_encoding_length(
+    "special_tokens_mask",
+    special_tokens_mask.length(),
+    n,
+  )
+  validate_encoding_length("attention_mask", attention_mask.length(), n)
+}
+
+///|
+fn validate_encoding_optional_length(
+  name : String,
+  actual : Int,
+  expected : Int,
+) -> Unit raise TokenizerError {
+  if actual != 0 {
+    validate_encoding_length(name, actual, expected)
+  }
+}
+
+///|
+fn validate_encoding_length(
+  name : String,
+  actual : Int,
+  expected : Int,
+) -> Unit raise TokenizerError {
+  if actual != expected {
+    raise ParseError(
+      "Encoding \{name} length \{actual} does not match ids length \{expected}",
+    )
+  }
+}
+
+///|
 /// Restore an Encoding from an interop state snapshot.
-pub fn Encoding::from_state(state : EncodingState) -> Encoding {
+pub fn Encoding::from_state(
+  state : EncodingState,
+) -> Encoding raise TokenizerError {
   Encoding::new(
     state.ids,
     state.type_ids,
@@ -117,7 +198,7 @@ pub fn Encoding::from_buffers(
   sequence_ids? : Array[Int?] = [],
   word_ids? : Array[Int?] = [],
   overflowing? : Array[Encoding] = [],
-) -> Encoding {
+) -> Encoding raise TokenizerError {
   Encoding::new(
     buffers.ids,
     buffers.type_ids,
@@ -176,7 +257,9 @@ pub fn Encoding::__getstate__(self : Encoding) -> EncodingState {
 
 ///|
 /// Python pickle compatibility alias for restoring an Encoding state.
-pub fn Encoding::__setstate__(state : EncodingState) -> Encoding {
+pub fn Encoding::__setstate__(
+  state : EncodingState,
+) -> Encoding raise TokenizerError {
   Encoding::from_state(state)
 }
 
@@ -216,7 +299,7 @@ pub fn Encoding::from_tuple(
     Array[Int?],
     Array[Encoding],
   ),
-) -> Encoding {
+) -> Encoding raise TokenizerError {
   Encoding::new(
     t.0,
     t.1,
@@ -284,7 +367,7 @@ pub fn Encoding::from_tokens(
     sequence_ids.push(Some(0))
     word_ids.push(Some(i))
   }
-  Encoding::new(
+  encoding_from_parts_unchecked(
     ids,
     type_ids,
     values,
@@ -293,6 +376,7 @@ pub fn Encoding::from_tokens(
     attention,
     sequence_ids~,
     word_ids~,
+    overflowing=[],
   )
 }
 
@@ -300,7 +384,8 @@ pub fn Encoding::from_tokens(
 pub fn Encoding::with_type_ids(
   self : Encoding,
   type_ids : Array[Int],
-) -> Encoding {
+) -> Encoding raise TokenizerError {
+  validate_encoding_length("type_ids", type_ids.length(), self.ids.length())
   { ..self, type_ids: type_ids.copy() }
 }
 
@@ -308,7 +393,12 @@ pub fn Encoding::with_type_ids(
 pub fn Encoding::with_special_tokens_mask(
   self : Encoding,
   special_tokens_mask : Array[Int],
-) -> Encoding {
+) -> Encoding raise TokenizerError {
+  validate_encoding_length(
+    "special_tokens_mask",
+    special_tokens_mask.length(),
+    self.ids.length(),
+  )
   { ..self, special_tokens_mask: special_tokens_mask.copy() }
 }
 
@@ -316,7 +406,12 @@ pub fn Encoding::with_special_tokens_mask(
 pub fn Encoding::with_attention_mask(
   self : Encoding,
   attention_mask : Array[Int],
-) -> Encoding {
+) -> Encoding raise TokenizerError {
+  validate_encoding_length(
+    "attention_mask",
+    attention_mask.length(),
+    self.ids.length(),
+  )
   { ..self, attention_mask: attention_mask.copy() }
 }
 
@@ -324,7 +419,8 @@ pub fn Encoding::with_attention_mask(
 pub fn Encoding::with_word_ids(
   self : Encoding,
   word_ids : Array[Int?],
-) -> Encoding {
+) -> Encoding raise TokenizerError {
+  validate_encoding_length("word_ids", word_ids.length(), self.ids.length())
   { ..self, word_ids: word_ids.copy() }
 }
 
@@ -332,7 +428,10 @@ pub fn Encoding::with_word_ids(
 pub fn Encoding::with_sequence_id(
   self : Encoding,
   sequence_id : Int,
-) -> Encoding {
+) -> Encoding raise TokenizerError {
+  if sequence_id < 0 {
+    raise ParseError("sequence_id must be non-negative")
+  }
   { ..self, sequence_ids: Array::make(self.ids.length(), Some(sequence_id)) }
 }
 
@@ -343,7 +442,7 @@ pub fn Encoding::with_sequence_id(
 pub fn Encoding::set_sequence_id(
   self : Encoding,
   sequence_id : Int,
-) -> Encoding {
+) -> Encoding raise TokenizerError {
   self.with_sequence_id(sequence_id)
 }
 

@@ -48,7 +48,7 @@ pub(all) struct Encoding {
 pub fn Encoding::__getstate__(Self) -> EncodingState
 pub fn Encoding::__len__(Self) -> Int
 pub fn Encoding::__repr__(Self) -> String
-pub fn Encoding::__setstate__(EncodingState) -> Self
+pub fn Encoding::__setstate__(EncodingState) -> Self raise TokenizerError
 pub fn Encoding::__str__(Self) -> String
 pub fn Encoding::as_buffers(Self) -> EncodingBuffers
 pub fn Encoding::as_tuple(Self) -> (Array[Int], Array[Int], Array[String], Array[(Int, Int)], Array[Int], Array[Int], Array[Int?], Array[Int?], Array[Self])
@@ -58,10 +58,10 @@ pub fn Encoding::char_to_token_by_sequence_index(Self, Int, sequence_index? : In
 pub fn Encoding::char_to_word(Self, Int, sequence_id? : Int) -> Int?
 pub fn Encoding::char_to_word_by_sequence_index(Self, Int, sequence_index? : Int) -> Int?
 pub fn Encoding::empty() -> Self
-pub fn Encoding::from_buffers(EncodingBuffers, sequence_ids? : Array[Int?], word_ids? : Array[Int?], overflowing? : Array[Self]) -> Self
-pub fn Encoding::from_state(EncodingState) -> Self
+pub fn Encoding::from_buffers(EncodingBuffers, sequence_ids? : Array[Int?], word_ids? : Array[Int?], overflowing? : Array[Self]) -> Self raise TokenizerError
+pub fn Encoding::from_state(EncodingState) -> Self raise TokenizerError
 pub fn Encoding::from_tokens(Array[Token], type_id? : Int) -> Self
-pub fn Encoding::from_tuple((Array[Int], Array[Int], Array[String], Array[(Int, Int)], Array[Int], Array[Int], Array[Int?], Array[Int?], Array[Self])) -> Self
+pub fn Encoding::from_tuple((Array[Int], Array[Int], Array[String], Array[(Int, Int)], Array[Int], Array[Int], Array[Int?], Array[Int?], Array[Self])) -> Self raise TokenizerError
 pub fn Encoding::get_attention_mask(Self) -> Array[Int]
 pub fn Encoding::get_buffers(Self) -> EncodingBuffers
 pub fn Encoding::get_char_token(Self, Int, sequence_id? : Int) -> Int?
@@ -87,13 +87,13 @@ pub fn Encoding::len(Self) -> Int
 pub fn Encoding::merge(Array[Self], growing_offsets? : Bool) -> Self
 pub fn Encoding::merge_with(Self, Self, growing_offsets? : Bool) -> Self
 pub fn Encoding::n_sequences(Self) -> Int
-pub fn Encoding::new(Array[Int], Array[Int], Array[String], Array[(Int, Int)], Array[Int], Array[Int], sequence_ids? : Array[Int?], word_ids? : Array[Int?], overflowing? : Array[Self]) -> Self
+pub fn Encoding::new(Array[Int], Array[Int], Array[String], Array[(Int, Int)], Array[Int], Array[Int], sequence_ids? : Array[Int?], word_ids? : Array[Int?], overflowing? : Array[Self]) -> Self raise TokenizerError
 pub fn Encoding::offsets(Self) -> Array[(Int, Int)]
 pub fn Encoding::overflowing(Self) -> Array[Self]
 pub fn Encoding::pad(Self, Int, pad_id? : Int, pad_type_id? : Int, pad_token? : String, direction? : EncodingDirection) -> Self
 pub fn Encoding::pad_hf(Self, Int, direction? : String, pad_id? : Int, pad_type_id? : Int, pad_token? : String) -> Self raise TokenizerError
 pub fn Encoding::sequence_ids(Self) -> Array[Int?]
-pub fn Encoding::set_sequence_id(Self, Int) -> Self
+pub fn Encoding::set_sequence_id(Self, Int) -> Self raise TokenizerError
 pub fn Encoding::special_tokens_mask(Self) -> Array[Int]
 pub fn Encoding::take_overflowing(Self) -> (Self, Array[Self])
 pub fn Encoding::token_to_char_offsets(Self, Int) -> (Int, Int)?
@@ -106,12 +106,12 @@ pub fn Encoding::tokens(Self) -> Array[String]
 pub fn Encoding::truncate(Self, Int, stride? : Int, direction? : EncodingDirection) -> Self
 pub fn Encoding::truncate_hf(Self, Int, stride? : Int, direction? : String) -> Self raise TokenizerError
 pub fn Encoding::type_ids(Self) -> Array[Int]
-pub fn Encoding::with_attention_mask(Self, Array[Int]) -> Self
+pub fn Encoding::with_attention_mask(Self, Array[Int]) -> Self raise TokenizerError
 pub fn Encoding::with_overflowing(Self, Array[Self]) -> Self
-pub fn Encoding::with_sequence_id(Self, Int) -> Self
-pub fn Encoding::with_special_tokens_mask(Self, Array[Int]) -> Self
-pub fn Encoding::with_type_ids(Self, Array[Int]) -> Self
-pub fn Encoding::with_word_ids(Self, Array[Int?]) -> Self
+pub fn Encoding::with_sequence_id(Self, Int) -> Self raise TokenizerError
+pub fn Encoding::with_special_tokens_mask(Self, Array[Int]) -> Self raise TokenizerError
+pub fn Encoding::with_type_ids(Self, Array[Int]) -> Self raise TokenizerError
+pub fn Encoding::with_word_ids(Self, Array[Int?]) -> Self raise TokenizerError
 pub fn Encoding::word_ids(Self) -> Array[Int?]
 pub fn Encoding::word_to_chars(Self, Int, sequence_id? : Int) -> (Int, Int)?
 pub fn Encoding::word_to_chars_by_sequence_index(Self, Int, sequence_index? : Int) -> (Int, Int)?
