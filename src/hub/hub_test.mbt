@@ -373,6 +373,39 @@ test "Hub response metadata parses headers case-insensitively" {
 }
 
 ///|
+test "Hub response metadata ignores malformed length and range headers" {
+  let invalid = HubResponseMetadata::from_headers(206, {
+    "Content-Length": "",
+    "Accept-Ranges": "none",
+    "Content-Range": "items 0-10/20",
+  })
+  @test.assert_eq(invalid.content_length, None)
+  @test.assert_eq(invalid.accept_ranges, false)
+  @test.assert_eq(invalid.content_range_start, None)
+  @test.assert_eq(invalid.content_range_end, None)
+  @test.assert_eq(invalid.content_range_total, None)
+
+  let unsatisfied = HubResponseMetadata::from_headers(416, {
+    "Content-Length": "abc",
+    "Accept-Ranges": "Bytes",
+    "Content-Range": "bytes */256",
+  })
+  @test.assert_eq(unsatisfied.content_length, None)
+  @test.assert_eq(unsatisfied.accept_ranges, true)
+  @test.assert_eq(unsatisfied.content_range_start, None)
+  @test.assert_eq(unsatisfied.content_range_end, None)
+  @test.assert_eq(unsatisfied.content_range_total, Some(256))
+
+  let reversed = HubResponseMetadata::from_headers(206, {
+    "Content-Length": "5",
+    "Content-Range": "bytes 20-10/100",
+  })
+  @test.assert_eq(reversed.content_range_start, Some(20))
+  @test.assert_eq(reversed.content_range_end, Some(10))
+  @test.assert_eq(reversed.content_range_total, Some(100))
+}
+
+///|
 test "Hub HTTP status diagnostics describe common failures" {
   @test.assert_eq(
     hub_http_status_diagnostic(401),
@@ -631,6 +664,18 @@ test "Hub HEAD plan and decision validate cached metadata" {
     ),
   )
   @test.assert_eq(same_etag.can_use_cache(), true)
+  let empty_remote_metadata = decide_tokenizer_json_head_response(
+    head_plan,
+    HubResponseMetadata::new(
+      200,
+      resolved_revision=Some(""),
+      etag=Some(""),
+      content_length=Some(json.length()),
+      accept_ranges=true,
+    ),
+  )
+  @test.assert_eq(empty_remote_metadata.can_use_cache(), false)
+  @test.assert_eq(empty_remote_metadata.should_write_full_body(), true)
   let changed = decide_tokenizer_json_head_response(
     head_plan,
     HubResponseMetadata::new(

@@ -154,6 +154,8 @@ Hub sidecar request/download/cache 小闭环：新增 `hub_file_url` / `plan_hub
 
 Hub 高层本地路径语义小闭环：`@hub.from_pretrained` 对已存在的本地 `tokenizer.json` 文件或含 `tokenizer.json` 的目录直接委托 core loader 返回，不做 HEAD/GET；已补 native async 测试覆盖本地单文件、本地目录、本地目录缺 `tokenizer.json` 错误优先，以及 `local_files_only=true` cache miss 仍报本地 cache miss。
 
+Hub metadata/HEAD correctness 覆盖近期增量：`HubResponseMetadata::from_headers` 已补空/非法 `Content-Length`、非 `bytes` `Accept-Ranges`、`Content-Range: bytes */total`、非法单位与反向 range 解析边界；HEAD `200` 在远端 revision/ETag 为空时不会误判缓存命中，而是要求重新下载。
+
 Tokenizer public API 文档同步闭环：英文/中文 API 文档补齐已实现但此前未列全的 `from_buffer`、`to_str(pretty)`、`save(path, pretty)`、`save_pretrained(pretty/save_model/model_prefix)`、`enable_truncation` / `no_truncation`、`enable_padding` / `no_padding`、`enable_encode_special_tokens` / `disable_encode_special_tokens`，减少 HF 迁移时对源码的依赖。
 
 训练/模型文件近期增量：`Trainer::{wordlevel,wordpiece,bpe,unigram}`、对应 lower-snake alias、`Model::train_*` 以及 `Tokenizer::train_wordlevel*` / `train_wordpiece*` / `train_bpe*` / `train_unigram*` convenience helper 的默认 `vocab_size` 已统一对齐 HF cap（WordLevel/WordPiece/BPE 为 `Some(30000)`，Unigram 为 `Some(8000)`；显式 `None` 表示不设 cap），Unigram trainer 默认 `max_piece_length=Some(16)` 且显式 `None` 保留旧 escape hatch；tokenizer/model-level trainer 入口补充 `show_progress` no-op，model-level Unigram 补充 `unk_piece` alias。`Model::save` 之外已补 `Model::from_bpe_files` / `from_wordpiece_file` / `from_wordlevel_file` / `from_unigram_file` standalone artifact loader，覆盖 BPE `vocab.json`+`merges.txt`、WordPiece `vocab.txt`、WordLevel `vocab.json`、Unigram JSON 的保存后重载。
