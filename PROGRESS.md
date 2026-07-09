@@ -39,7 +39,7 @@
 
 - 已对拍 HF 0.22.2：`Tokenizer.post_process(..., add_special_tokens=False)` 与 `PostProcessor.process(..., add_special_tokens=False)` 会跳过 BERT/Template/RoBERTa special token 注入，但 ByteLevel/RoBERTa 的 offset trimming 等非 special-token 后处理仍会执行。
 - MoonBit 本轮只在 tokenizer-level 显式 `Tokenizer::post_process(..., add_special_tokens=false)` 补齐上述 HF 语义：复用现有 post-processor 产物后移除无 sequence 的 injected special tokens，因此 Template type_id、ByteLevel/RoBERTa offset trimming 与 Sequence 组合的非 special-token 效果仍保留；未改 `processor` 包 internals，也未触碰 normalizer/pretokenizer/processor sequence alias。
-- Python binding 建议继续把带 `add_special_tokens` 参数的 post-process 入口映射到 `Tokenizer::post_process`；低层 `PostProcessor::process` 暂保持精简 MoonBit 原生签名，避免扩大 processor API 面。
+- Python binding 可把带 `add_special_tokens` 参数的 post-process 入口映射到 `Tokenizer::post_process`，低层 `PostProcessor::process` 也已补同名 flag 并复用同一“先执行非 special 后处理，再移除注入 special token”的语义。
 
 | 优先级 | 缺口 | 当前状态 | 验收标准 | 建议排期 |
 |---|---|---|---|---|
@@ -91,6 +91,8 @@ Decoder Metaspace split state 小闭环：`Decoder::Metaspace` 与 `Decoder::met
 PostProcessor 配置 getter alias 小闭环：`get_sep` / `get_cls` / `get_trim_offsets` / `get_add_prefix_space` / `get_use_regex` / `get_single_pieces` / `get_single` / `get_pair_pieces` / `get_pair` / `get_special_tokens` 已补齐，均委托现有 property-style getter，便于 Python binding 统一暴露 `get_*` 配置属性。
 
 PostProcessor Sequence pair 小闭环：`Sequence([ByteLevel, BertProcessing/Template/...])` 在 pair 输入下会先分别处理 A/B 的 ByteLevel offsets，再把原始 pair 交给后续组装型 processor，避免旧实现把 B 合并进 A 后又把原 B 再传入导致 pair 序列重复；已按 HF `Sequence([ByteLevel, BertProcessing])` 对拍补 `encode_pair` 回归测试。
+
+PostProcessor process flag 小闭环：低层 `PostProcessor::process(a, b, add_special_tokens=false)` 已对齐 HF 公开参数，跳过 special token 注入但保留 Template type_id、ByteLevel/RoBERTa offset trimming 等非 special-token 后处理效果；Tokenizer-level `post_process` 改为委托该低层实现。
 
 TemplateProcessing typed alias 小闭环：`PostProcessor::single()` / `pair()` 分别作为 `single_pieces()` / `pair_pieces()` 的 HF-style typed alias；返回数组副本，非 Template processor 返回空数组，并覆盖 parsed pieces 与 `template_from_strings` 两种构造路径。
 

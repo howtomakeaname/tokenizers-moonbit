@@ -338,8 +338,8 @@ special token 不再被提前抽取为 special added token，而是留在普通 
 `post_process` 可对已构造的 encoding 显式应用当前 post-processor；
 当 `add_special_tokens=false` 时会按 HF 语义跳过 special token 注入，但仍保留
 ByteLevel/RoBERTa offset trimming 等非 special-token 后处理效果。Python binding
-应优先映射这个 tokenizer-level 入口；低层 `PostProcessor::process` 仍保留精简的
-MoonBit 原生签名。`num_special_tokens_to_add` 返回单句或句对会额外插入的 special token 数量。
+应优先映射这个 tokenizer-level 入口；低层 `PostProcessor::process` 也接受同名
+`add_special_tokens` 标志。`num_special_tokens_to_add` 返回单句或句对会额外插入的 special token 数量。
 同名计数也在 `PostProcessor::num_special_tokens_to_add(is_pair)` 上提供，
 用于对齐 HF Python binding。
 

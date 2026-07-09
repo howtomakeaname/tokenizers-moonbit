@@ -64,7 +64,7 @@ pub fn PostProcessor::kind(Self) -> String
 pub fn PostProcessor::num_special_tokens_to_add(Self, is_pair? : Bool) -> Int
 pub fn PostProcessor::pair(Self) -> Array[Piece]
 pub fn PostProcessor::pair_pieces(Self) -> Array[Piece]
-pub fn PostProcessor::process(Self, @types.Encoding, @types.Encoding?) -> @types.Encoding
+pub fn PostProcessor::process(Self, @types.Encoding, @types.Encoding?, add_special_tokens? : Bool) -> @types.Encoding
 pub fn PostProcessor::processors(Self) -> Array[Self]
 pub fn PostProcessor::roberta((String, Int), (String, Int), trim_offsets? : Bool, add_prefix_space? : Bool) -> Self
 pub fn PostProcessor::roberta_processing((String, Int), (String, Int), trim_offsets? : Bool, add_prefix_space? : Bool) -> Self

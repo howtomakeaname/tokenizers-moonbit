@@ -265,6 +265,45 @@ test "post-processors expose num_special_tokens_to_add alias" {
 }
 
 ///|
+test "post-processor process can skip special token insertion" {
+  let bert = PostProcessor::bert(("[SEP]", 2), ("[CLS]", 1))
+  let a = @types.Encoding::from_tokens([
+    { id: 3, value: "hello", offsets: (0, 5) },
+  ]).with_sequence_id(0) catch {
+    _ => abort("set sequence id for a failed")
+  }
+  let b = @types.Encoding::from_tokens([
+    { id: 4, value: "world", offsets: (0, 5) },
+  ]).with_sequence_id(1) catch {
+    _ => abort("set sequence id for b failed")
+  }
+  let pair = bert.process(a, Some(b), add_special_tokens=true)
+  @test.assert_eq(pair.tokens, ["[CLS]", "hello", "[SEP]", "world", "[SEP]"])
+  @test.assert_eq(pair.sequence_ids(), [None, Some(0), None, Some(1), None])
+  let plain = bert.process(a, Some(b), add_special_tokens=false)
+  @test.assert_eq(plain.tokens, ["hello", "world"])
+  @test.assert_eq(plain.sequence_ids(), [Some(0), Some(1)])
+
+  let specials : Map[String, SpecialToken] = {}
+  specials["<s>"] = SpecialToken::new("<s>", [10], ["<s>"])
+  specials["</s>"] = SpecialToken::new("</s>", [11], ["</s>"])
+  let template = PostProcessor::template(
+    [SpecialTokenRef(id="<s>", type_id=3), SequenceRef(id="A", type_id=2)],
+    [
+      SpecialTokenRef(id="<s>", type_id=3),
+      SequenceRef(id="A", type_id=2),
+      SequenceRef(id="B", type_id=4),
+      SpecialTokenRef(id="</s>", type_id=4),
+    ],
+    specials,
+  )
+  let templated = template.process(a, Some(b), add_special_tokens=false)
+  @test.assert_eq(templated.tokens, ["hello", "world"])
+  @test.assert_eq(templated.type_ids, [2, 4])
+  @test.assert_eq(templated.special_tokens_mask, [0, 0])
+}
+
+///|
 test "post-processors expose JSON state and string aliases" {
   let specials : Map[String, SpecialToken] = {}
   specials["<s>"] = SpecialToken::new("<s>", [0], ["<s>"])
