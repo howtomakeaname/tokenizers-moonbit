@@ -65,6 +65,7 @@ pub fn Normalizer::get_strip_left(Self) -> Bool?
 pub fn Normalizer::get_strip_right(Self) -> Bool?
 pub fn Normalizer::handle_chinese_chars(Self) -> Bool?
 pub fn Normalizer::kind(Self) -> String
+pub fn Normalizer::left(Self) -> Bool?
 pub fn Normalizer::lowercase(Self) -> Bool?
 pub fn Normalizer::lowercase_normalizer() -> Self
 pub fn Normalizer::nfc() -> Self
@@ -80,6 +81,7 @@ pub fn Normalizer::precompiled() -> Self
 pub fn Normalizer::prepend(Self) -> String?
 pub fn Normalizer::prepend_normalizer(String) -> Self
 pub fn Normalizer::replace(String, String) -> Self
+pub fn Normalizer::right(Self) -> Bool?
 pub fn Normalizer::sequence(Array[Self]) -> Self
 pub fn Normalizer::strip(left? : Bool, right? : Bool) -> Self
 pub fn Normalizer::strip_accents(Self) -> Bool?

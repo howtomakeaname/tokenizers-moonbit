@@ -498,8 +498,12 @@ test "normalizer exposes HF-style configuration getters" {
   @test.assert_eq(strip.kind(), "Strip")
   @test.assert_eq(strip.strip_left(), Some(true))
   @test.assert_eq(strip.get_strip_left(), Some(true))
+  @test.assert_eq(strip.left(), Some(true))
   @test.assert_eq(strip.strip_right(), Some(false))
   @test.assert_eq(strip.get_strip_right(), Some(false))
+  @test.assert_eq(strip.right(), Some(false))
+  @test.assert_eq(Normalizer::NFC.left(), None)
+  @test.assert_eq(Normalizer::NFC.right(), None)
 
   let replace = Normalizer::Replace(pattern="\\s+", content=" ")
   @test.assert_eq(replace.kind(), "Replace")

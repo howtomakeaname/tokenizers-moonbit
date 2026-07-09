@@ -409,7 +409,8 @@ helpers, and `to_encoding` / `into_encoding`.
 `PreTokenizer::pre_tokenize_str(text)` returns HF-style `(value, offsets)` tuples
 for quick component-level checks and binding shims.
 `PreTokenizer::byte_level_alphabet()` mirrors HF ByteLevel.alphabet and returns
-the same 256-symbol table as `@pretokenizer.byte_level_alphabet()`.
+the same 256-symbol table as `@pretokenizer.byte_level_alphabet()`;
+`PreTokenizer::alphabet()` is the exact-name alias for the same helper.
 `PreTokenizer` also exposes read-only configuration getters for binding layers,
 including ByteLevel flags, Metaspace settings, Split/Punctuation behavior,
 Digits/Delimiter/FixedLength settings, and Sequence children. These fields also
@@ -428,7 +429,8 @@ It also provides lower-snake builder aliases for common HF constructors such as
 including `kind`, Strip left/right flags, Replace pattern/content, Prepend
 content, BertNormalizer flags, and Sequence child normalizers. These fields also
 have `get_*` aliases such as `get_strip_left`, `get_pattern`, and
-`get_clean_text` for Python binding property access. Sequence normalizers expose
+`get_clean_text` for Python binding property access; `left()` and `right()` are
+exact-name aliases for HF `Strip.left` / `Strip.right`. Sequence normalizers expose
 both `normalizers` and `get_normalizers` copy-returning getters.
 It also provides lower-snake builder aliases for common typed constructors such
 as `nfc`, `nfd`, `nfkc`, `nfkd`, `byte_level`, `strip`, `replace`,

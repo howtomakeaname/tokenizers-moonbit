@@ -157,10 +157,15 @@ test "pre_tokenize_str returns HF-style value offset tuples" {
 test "bytelevel alphabet alias matches top-level helper" {
   let direct = byte_level_alphabet()
   let facade = PreTokenizer::byte_level_alphabet()
+  let exact = PreTokenizer::alphabet()
   @test.assert_eq(facade.length(), 256)
   @test.assert_eq(facade, direct)
+  @test.assert_eq(exact.length(), 256)
+  @test.assert_eq(exact, direct)
   @test.assert_eq(facade.contains("A"), true)
   @test.assert_eq(facade.contains("!"), true)
+  exact.push("<changed>")
+  @test.assert_eq(PreTokenizer::alphabet().length(), 256)
 }
 
 ///|

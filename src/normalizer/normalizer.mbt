@@ -83,6 +83,12 @@ pub fn Normalizer::get_strip_left(self : Normalizer) -> Bool? {
 }
 
 ///|
+/// HF/Python property-style alias for `Strip.left`.
+pub fn Normalizer::left(self : Normalizer) -> Bool? {
+  self.strip_left()
+}
+
+///|
 pub fn Normalizer::strip_right(self : Normalizer) -> Bool? {
   match self {
     Strip(right~, ..) => Some(right)
@@ -92,6 +98,12 @@ pub fn Normalizer::strip_right(self : Normalizer) -> Bool? {
 
 ///|
 pub fn Normalizer::get_strip_right(self : Normalizer) -> Bool? {
+  self.strip_right()
+}
+
+///|
+/// HF/Python property-style alias for `Strip.right`.
+pub fn Normalizer::right(self : Normalizer) -> Bool? {
   self.strip_right()
 }
 

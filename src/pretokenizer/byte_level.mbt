@@ -97,6 +97,12 @@ pub fn PreTokenizer::byte_level_alphabet() -> Array[String] {
 }
 
 ///|
+/// HF-style ByteLevel.alphabet alias with the exact Python method name.
+pub fn PreTokenizer::alphabet() -> Array[String] {
+  byte_level_alphabet()
+}
+
+///|
 /// Inverse of `byte_level_encode_str`: map each char back to a byte, then
 /// decode the byte sequence as UTF-8 (lossy).
 pub fn byte_level_decode_str(s : String) -> String {

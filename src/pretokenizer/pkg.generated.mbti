@@ -57,6 +57,7 @@ pub fn PreTokenizer::__repr__(Self) -> String raise @types.TokenizerError
 pub fn PreTokenizer::__setstate__(PreTokenizerState) -> Self raise @types.TokenizerError
 pub fn PreTokenizer::__str__(Self) -> String raise @types.TokenizerError
 pub fn PreTokenizer::add_prefix_space(Self) -> Bool?
+pub fn PreTokenizer::alphabet() -> Array[String]
 pub fn PreTokenizer::behavior(Self) -> SplitBehavior?
 pub fn PreTokenizer::bert_pre_tokenizer() -> Self
 pub fn PreTokenizer::byte_level(add_prefix_space? : Bool, use_regex? : Bool, trim_offsets? : Bool) -> Self
