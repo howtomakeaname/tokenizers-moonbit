@@ -199,10 +199,12 @@ pub fn PaddingParams::__setstate__(PaddingParamsState) -> Self
 pub fn PaddingParams::as_tuple(Self) -> (PaddingStrategy, PaddingDirection, Int, Int, String, Int?)
 pub fn PaddingParams::batch_longest(pad_id? : Int, pad_token? : String) -> Self
 pub fn PaddingParams::direction(Self) -> PaddingDirection
+pub fn PaddingParams::direction_string(Self) -> String
 pub fn PaddingParams::fixed(Int, pad_id? : Int, pad_token? : String) -> Self
 pub fn PaddingParams::from_state(PaddingParamsState) -> Self
 pub fn PaddingParams::from_tuple((PaddingStrategy, PaddingDirection, Int, Int, String, Int?)) -> Self
 pub fn PaddingParams::get_direction(Self) -> PaddingDirection
+pub fn PaddingParams::get_direction_string(Self) -> String
 pub fn PaddingParams::get_pad_id(Self) -> Int
 pub fn PaddingParams::get_pad_to_multiple_of(Self) -> Int?
 pub fn PaddingParams::get_pad_token(Self) -> String
@@ -216,6 +218,7 @@ pub fn PaddingParams::pad_token(Self) -> String
 pub fn PaddingParams::pad_type_id(Self) -> Int
 pub fn PaddingParams::strategy(Self) -> PaddingStrategy
 pub fn PaddingParams::with_direction(Self, PaddingDirection) -> Self
+pub fn PaddingParams::with_direction_hf(Self, String) -> Self raise @types.TokenizerError
 pub fn PaddingParams::with_pad_to_multiple_of(Self, Int?) -> Self
 pub fn PaddingParams::with_pad_type_id(Self, Int) -> Self
 
@@ -621,19 +624,25 @@ pub fn TruncationParams::__getstate__(Self) -> TruncationParamsState
 pub fn TruncationParams::__setstate__(TruncationParamsState) -> Self
 pub fn TruncationParams::as_tuple(Self) -> (Int, Int, TruncationDirection, TruncationStrategy)
 pub fn TruncationParams::direction(Self) -> TruncationDirection
+pub fn TruncationParams::direction_string(Self) -> String
 pub fn TruncationParams::from_state(TruncationParamsState) -> Self
 pub fn TruncationParams::from_tuple((Int, Int, TruncationDirection, TruncationStrategy)) -> Self
 pub fn TruncationParams::get_direction(Self) -> TruncationDirection
+pub fn TruncationParams::get_direction_string(Self) -> String
 pub fn TruncationParams::get_max_length(Self) -> Int
 pub fn TruncationParams::get_state(Self) -> TruncationParamsState
 pub fn TruncationParams::get_strategy(Self) -> TruncationStrategy
+pub fn TruncationParams::get_strategy_string(Self) -> String
 pub fn TruncationParams::get_stride(Self) -> Int
 pub fn TruncationParams::max_length(Self) -> Int
 pub fn TruncationParams::new(Int) -> Self
 pub fn TruncationParams::strategy(Self) -> TruncationStrategy
+pub fn TruncationParams::strategy_string(Self) -> String
 pub fn TruncationParams::stride(Self) -> Int
 pub fn TruncationParams::with_direction(Self, TruncationDirection) -> Self
+pub fn TruncationParams::with_direction_hf(Self, String) -> Self raise @types.TokenizerError
 pub fn TruncationParams::with_strategy(Self, TruncationStrategy) -> Self
+pub fn TruncationParams::with_strategy_hf(Self, String) -> Self raise @types.TokenizerError
 pub fn TruncationParams::with_stride(Self, Int) -> Self
 
 pub(all) struct TruncationParamsState {

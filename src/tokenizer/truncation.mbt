@@ -109,11 +109,27 @@ pub fn TruncationParams::with_direction(
 }
 
 ///|
+pub fn TruncationParams::with_direction_hf(
+  self : TruncationParams,
+  direction : String,
+) -> TruncationParams raise @types.TokenizerError {
+  self.with_direction(parse_truncation_param_direction_hf(direction))
+}
+
+///|
 pub fn TruncationParams::with_strategy(
   self : TruncationParams,
   strategy : TruncationStrategy,
 ) -> TruncationParams {
   { ..self, strategy, }
+}
+
+///|
+pub fn TruncationParams::with_strategy_hf(
+  self : TruncationParams,
+  strategy : String,
+) -> TruncationParams raise @types.TokenizerError {
+  self.with_strategy(parse_truncation_param_strategy_hf(strategy))
 }
 
 ///|
@@ -151,6 +167,21 @@ pub fn TruncationParams::direction(
 }
 
 ///|
+pub fn TruncationParams::direction_string(self : TruncationParams) -> String {
+  match self.direction {
+    Left => "left"
+    Right => "right"
+  }
+}
+
+///|
+pub fn TruncationParams::get_direction_string(
+  self : TruncationParams,
+) -> String {
+  self.direction_string()
+}
+
+///|
 pub fn TruncationParams::get_strategy(
   self : TruncationParams,
 ) -> TruncationStrategy {
@@ -162,6 +193,43 @@ pub fn TruncationParams::strategy(
   self : TruncationParams,
 ) -> TruncationStrategy {
   self.strategy
+}
+
+///|
+pub fn TruncationParams::strategy_string(self : TruncationParams) -> String {
+  match self.strategy {
+    LongestFirst => "longest_first"
+    OnlyFirst => "only_first"
+    OnlySecond => "only_second"
+  }
+}
+
+///|
+pub fn TruncationParams::get_strategy_string(self : TruncationParams) -> String {
+  self.strategy_string()
+}
+
+///|
+fn parse_truncation_param_direction_hf(
+  direction : String,
+) -> TruncationDirection raise @types.TokenizerError {
+  match direction.to_lower() {
+    "left" => Left
+    "right" => Right
+    other => raise @types.ParseError("invalid truncation direction: \{other}")
+  }
+}
+
+///|
+fn parse_truncation_param_strategy_hf(
+  strategy : String,
+) -> TruncationStrategy raise @types.TokenizerError {
+  match strategy.to_lower() {
+    "longest_first" => LongestFirst
+    "only_first" => OnlyFirst
+    "only_second" => OnlySecond
+    other => raise @types.ParseError("invalid truncation strategy: \{other}")
+  }
 }
 
 // Slice an encoding's parallel arrays to [start, stop).

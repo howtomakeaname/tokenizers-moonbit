@@ -172,7 +172,11 @@ test "Tokenizer exposes Python property-style component and config aliases" {
   @test.assert_eq(trunc.get_strategy(), OnlyFirst)
   @test.assert_eq(trunc.direction(), Left)
   @test.assert_eq(trunc.get_direction(), Left)
+  @test.assert_eq(trunc.direction_string(), "left")
+  @test.assert_eq(trunc.get_direction_string(), "left")
   @test.assert_eq(trunc.as_tuple(), (5, 2, Left, OnlyFirst))
+  @test.assert_eq(trunc.strategy_string(), "only_first")
+  @test.assert_eq(trunc.get_strategy_string(), "only_first")
   let trunc_state = trunc.__getstate__()
   @test.assert_eq(trunc_state.max_length, 5)
   @test.assert_eq(TruncationParams::__setstate__(trunc_state), trunc)
@@ -185,6 +189,13 @@ test "Tokenizer exposes Python property-style component and config aliases" {
     .truncation()
     .unwrap()
   @test.assert_eq(hf_trunc.as_tuple(), (7, 1, Left, OnlySecond))
+  @test.assert_eq(
+    TruncationParams::new(9)
+    .with_direction_hf("left")
+    .with_strategy_hf("only_second")
+    .as_tuple(),
+    (9, 0, Left, OnlySecond),
+  )
   let mut bad_trunc_direction = false
   try tok.enable_truncation_hf(7, direction="middle") |> ignore catch {
     @types.ParseError(msg) =>
@@ -199,11 +210,19 @@ test "Tokenizer exposes Python property-style component and config aliases" {
     _ => ()
   }
   @test.assert_eq(bad_trunc_strategy, true)
+  try TruncationParams::new(7).with_strategy_hf("first_only") |> ignore catch {
+    @types.ParseError(msg) =>
+      bad_trunc_strategy = msg.contains("invalid truncation strategy")
+    _ => ()
+  }
+  @test.assert_eq(bad_trunc_strategy, true)
   let padding = tok.padding().unwrap()
   @test.assert_eq(padding.strategy(), Fixed(8))
   @test.assert_eq(padding.get_strategy(), Fixed(8))
   @test.assert_eq(padding.direction(), Left)
   @test.assert_eq(padding.get_direction(), Left)
+  @test.assert_eq(padding.direction_string(), "left")
+  @test.assert_eq(padding.get_direction_string(), "left")
   @test.assert_eq(padding.pad_id(), 1)
   @test.assert_eq(padding.get_pad_id(), 1)
   @test.assert_eq(padding.pad_type_id(), 7)
@@ -235,8 +254,20 @@ test "Tokenizer exposes Python property-style component and config aliases" {
     hf_padding.as_tuple(),
     (Fixed(6), Left, 9, 8, "<pad>", Some(2)),
   )
+  @test.assert_eq(
+    PaddingParams::batch_longest().with_direction_hf("left").as_tuple(),
+    (BatchLongest, Left, 0, 0, "[PAD]", None),
+  )
   let mut bad_padding_direction = false
   try tok.enable_padding_hf(direction="middle") |> ignore catch {
+    @types.ParseError(msg) =>
+      bad_padding_direction = msg.contains("invalid padding direction")
+    _ => ()
+  }
+  @test.assert_eq(bad_padding_direction, true)
+  try
+    PaddingParams::batch_longest().with_direction_hf("middle") |> ignore
+  catch {
     @types.ParseError(msg) =>
       bad_padding_direction = msg.contains("invalid padding direction")
     _ => ()

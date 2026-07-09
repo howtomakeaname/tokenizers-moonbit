@@ -145,6 +145,14 @@ pub fn PaddingParams::with_direction(
 }
 
 ///|
+pub fn PaddingParams::with_direction_hf(
+  self : PaddingParams,
+  direction : String,
+) -> PaddingParams raise @types.TokenizerError {
+  self.with_direction(parse_padding_param_direction_hf(direction))
+}
+
+///|
 pub fn PaddingParams::with_pad_type_id(
   self : PaddingParams,
   pad_type_id : Int,
@@ -178,6 +186,19 @@ pub fn PaddingParams::get_direction(self : PaddingParams) -> PaddingDirection {
 ///|
 pub fn PaddingParams::direction(self : PaddingParams) -> PaddingDirection {
   self.direction
+}
+
+///|
+pub fn PaddingParams::direction_string(self : PaddingParams) -> String {
+  match self.direction {
+    Left => "left"
+    Right => "right"
+  }
+}
+
+///|
+pub fn PaddingParams::get_direction_string(self : PaddingParams) -> String {
+  self.direction_string()
 }
 
 ///|
@@ -218,6 +239,17 @@ pub fn PaddingParams::get_pad_to_multiple_of(self : PaddingParams) -> Int? {
 ///|
 pub fn PaddingParams::pad_to_multiple_of(self : PaddingParams) -> Int? {
   self.pad_to_multiple_of
+}
+
+///|
+fn parse_padding_param_direction_hf(
+  direction : String,
+) -> PaddingDirection raise @types.TokenizerError {
+  match direction.to_lower() {
+    "left" => Left
+    "right" => Right
+    other => raise @types.ParseError("invalid padding direction: \{other}")
+  }
 }
 
 ///|
