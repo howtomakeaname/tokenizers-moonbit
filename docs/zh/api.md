@@ -8,6 +8,7 @@
 
 ```moonbit
 fn Tokenizer::from_str(json : String) -> Tokenizer raise TokenizerError
+fn Tokenizer::from_buffer(buffer : Bytes) -> Tokenizer raise TokenizerError
 fn from_file(path : String) -> Tokenizer raise TokenizerError
 fn from_pretrained(path_or_model_id : String) -> Tokenizer raise TokenizerError
 fn from_pretrained_cached(
@@ -17,9 +18,16 @@ fn from_pretrained_downloaded(
   model_id : String, tokenizer_json : String, revision? : String = "main",
   resolved_revision? : String? = None, cache_dir? : String? = None,
 ) -> Tokenizer raise TokenizerError
-fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise TokenizerError
+fn Tokenizer::to_str(self : Tokenizer, pretty? : Bool = false) -> String raise TokenizerError
+fn Tokenizer::save(self : Tokenizer, path : String, pretty? : Bool = false) -> Unit raise TokenizerError
+fn Tokenizer::save_pretrained(
+  self : Tokenizer, dir : String, pretty? : Bool = false,
+  save_model? : Bool = false, model_prefix? : String = "",
+) -> String raise TokenizerError
 ```
 
+- `from_buffer` 解析 UTF-8 bytes；`from_file` 使用 `moonbitlang/x/fs` 读取文件后调用
+  `from_str`。
 - `from_pretrained` 支持 tokenizer JSON 文件、本地含 `tokenizer.json` 的目录，
   以及已存在的 HuggingFace Hub 本地 cache（按 `$HUGGINGFACE_HUB_CACHE`、
   `$HF_HUB_CACHE`、`$HF_HOME/hub`、`$HOME/.cache/huggingface/hub` 顺序解析）。
@@ -32,8 +40,9 @@ fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise To
 - `from_pretrained_downloaded` 用于网络调用方桥接：传入已下载的 `tokenizer.json`
   文本后写入标准 HF Hub cache 布局并立即解析。可选 `@hub` 包基于它在 native/js
   后端提供异步 HTTP 下载；wasm 场景可由宿主 fetch 后调用该函数。
-- `save_pretrained(dir)` 创建/复用 HF 风格目录并写出 `dir/tokenizer.json`，返回
-  具体 JSON 路径，便于日志记录或后续 `from_file` 加载。
+- `to_str(pretty)`、`save(path, pretty)`、`save_pretrained(dir, pretty)` 默认保持
+  compact/verbatim JSON；显式 `pretty=true` 时写出两空格 pretty JSON。
+  `save_pretrained(save_model=true)` 还能在 `tokenizer.json` 旁写出模型 sidecar artifacts。
 - 程序化构造的 tokenizer 会序列化已支持 typed serializer 的 normalizer、
   pre-tokenizer、model、post-processor、decoder、truncation、padding 与 added token
   状态；从 HF JSON 加载的 tokenizer 在 builder 修改 typed state 前仍保持原始 JSON
@@ -181,6 +190,18 @@ fn Tokenizer::with_post_processor(self : Tokenizer, post_processor : @processor.
 fn Tokenizer::with_decoder(self : Tokenizer, decoder : @decoder.Decoder?) -> Tokenizer
 fn Tokenizer::with_truncation(self : Tokenizer, params : TruncationParams?) -> Tokenizer
 fn Tokenizer::with_padding(self : Tokenizer, params : PaddingParams?) -> Tokenizer
+fn Tokenizer::enable_truncation(
+  self : Tokenizer, max_length : Int, stride? : Int = 0,
+  strategy? : TruncationStrategy = LongestFirst,
+  direction? : TruncationDirection = Right,
+) -> Tokenizer
+fn Tokenizer::no_truncation(self : Tokenizer) -> Tokenizer
+fn Tokenizer::enable_padding(
+  self : Tokenizer, length? : Int? = None, direction? : PaddingDirection = Right,
+  pad_id? : Int = 0, pad_type_id? : Int = 0, pad_token? : String = "[PAD]",
+  pad_to_multiple_of? : Int? = None,
+) -> Tokenizer
+fn Tokenizer::no_padding(self : Tokenizer) -> Tokenizer
 
 fn Tokenizer::get_normalizer(self : Tokenizer) -> @normalizer.Normalizer?
 fn Tokenizer::get_pre_tokenizer(self : Tokenizer) -> @pretokenizer.PreTokenizer?
@@ -191,6 +212,8 @@ fn Tokenizer::get_truncation(self : Tokenizer) -> TruncationParams?
 fn Tokenizer::get_padding(self : Tokenizer) -> PaddingParams?
 
 fn Tokenizer::set_encode_special_tokens(self : Tokenizer, value : Bool) -> Tokenizer
+fn Tokenizer::enable_encode_special_tokens(self : Tokenizer) -> Tokenizer
+fn Tokenizer::disable_encode_special_tokens(self : Tokenizer) -> Tokenizer
 fn Tokenizer::get_encode_special_tokens(self : Tokenizer) -> Bool
 fn Tokenizer::num_special_tokens_to_add(self : Tokenizer, is_pair? : Bool = false) -> Int
 fn Tokenizer::post_process(

@@ -9,6 +9,7 @@ Chinese version: [`docs/zh/api.md`](./zh/api.md)
 
 ```moonbit
 fn Tokenizer::from_str(json : String) -> Tokenizer raise TokenizerError
+fn Tokenizer::from_buffer(buffer : Bytes) -> Tokenizer raise TokenizerError
 fn from_file(path : String) -> Tokenizer raise TokenizerError
 fn from_pretrained(path_or_model_id : String) -> Tokenizer raise TokenizerError
 fn from_pretrained_cached(
@@ -18,13 +19,19 @@ fn from_pretrained_downloaded(
   model_id : String, tokenizer_json : String, revision? : String = "main",
   resolved_revision? : String? = None, cache_dir? : String? = None,
 ) -> Tokenizer raise TokenizerError
-fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise TokenizerError
+fn Tokenizer::to_str(self : Tokenizer, pretty? : Bool = false) -> String raise TokenizerError
+fn Tokenizer::save(self : Tokenizer, path : String, pretty? : Bool = false) -> Unit raise TokenizerError
+fn Tokenizer::save_pretrained(
+  self : Tokenizer, dir : String, pretty? : Bool = false,
+  save_model? : Bool = false, model_prefix? : String = "",
+) -> String raise TokenizerError
 ```
 
 - `from_str` parses `tokenizer.json` text; it does no file IO and works on all backends.
   A small multi-entry parsed-JSON cache keeps repeated or alternating stable
   tokenizer payloads hot while still returning fresh tokenizer state.
-- `from_file` reads via `moonbitlang/x/fs` and then calls `from_str`.
+- `from_buffer` parses UTF-8 bytes, and `from_file` reads via `moonbitlang/x/fs`
+  before calling `from_str`.
 - `from_pretrained` accepts a tokenizer JSON file, a local directory containing
   `tokenizer.json`, or an already-populated HuggingFace Hub cache entry. It does
   not perform network downloads; it resolves `$HUGGINGFACE_HUB_CACHE`,
@@ -39,9 +46,10 @@ fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise To
   Hub cache layout before parsing. The optional `@hub` package provides native/js
   async HTTP downloading on top of this API; wasm users can keep host-side fetch
   logic and call this function with the fetched JSON.
-- `save_pretrained(dir)` creates/uses an HF-style directory and writes
-  `dir/tokenizer.json`, returning the concrete JSON path for logging or later
-  `from_file` calls.
+- `to_str(pretty)`, `save(path, pretty)`, and `save_pretrained(dir, pretty)`
+  support compact/verbatim JSON by default and two-space pretty output when
+  requested. `save_pretrained(save_model=true)` can also write model sidecar
+  artifacts next to `tokenizer.json`.
 - Programmatically constructed tokenizers serialize typed normalizer,
   pre-tokenizer, model, post-processor, decoder, truncation, padding and added
   token state when those components expose a typed serializer; loaded HF
@@ -201,6 +209,18 @@ fn Tokenizer::with_post_processor(self : Tokenizer, post_processor : @processor.
 fn Tokenizer::with_decoder(self : Tokenizer, decoder : @decoder.Decoder?) -> Tokenizer
 fn Tokenizer::with_truncation(self : Tokenizer, params : TruncationParams?) -> Tokenizer
 fn Tokenizer::with_padding(self : Tokenizer, params : PaddingParams?) -> Tokenizer
+fn Tokenizer::enable_truncation(
+  self : Tokenizer, max_length : Int, stride? : Int = 0,
+  strategy? : TruncationStrategy = LongestFirst,
+  direction? : TruncationDirection = Right,
+) -> Tokenizer
+fn Tokenizer::no_truncation(self : Tokenizer) -> Tokenizer
+fn Tokenizer::enable_padding(
+  self : Tokenizer, length? : Int? = None, direction? : PaddingDirection = Right,
+  pad_id? : Int = 0, pad_type_id? : Int = 0, pad_token? : String = "[PAD]",
+  pad_to_multiple_of? : Int? = None,
+) -> Tokenizer
+fn Tokenizer::no_padding(self : Tokenizer) -> Tokenizer
 
 fn Tokenizer::get_normalizer(self : Tokenizer) -> @normalizer.Normalizer?
 fn Tokenizer::get_pre_tokenizer(self : Tokenizer) -> @pretokenizer.PreTokenizer?
@@ -211,6 +231,8 @@ fn Tokenizer::get_truncation(self : Tokenizer) -> TruncationParams?
 fn Tokenizer::get_padding(self : Tokenizer) -> PaddingParams?
 
 fn Tokenizer::set_encode_special_tokens(self : Tokenizer, value : Bool) -> Tokenizer
+fn Tokenizer::enable_encode_special_tokens(self : Tokenizer) -> Tokenizer
+fn Tokenizer::disable_encode_special_tokens(self : Tokenizer) -> Tokenizer
 fn Tokenizer::get_encode_special_tokens(self : Tokenizer) -> Bool
 fn Tokenizer::num_special_tokens_to_add(self : Tokenizer, is_pair? : Bool = false) -> Int
 fn Tokenizer::post_process(
