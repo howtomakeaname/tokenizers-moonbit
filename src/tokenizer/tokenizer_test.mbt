@@ -424,12 +424,21 @@ test "Token exposes tuple interop helpers" {
   @test.assert_eq(tok.get_offsets(), (2, 7))
   @test.assert_eq(tok.offsets(), (2, 7))
   @test.assert_eq(tok.as_tuple(), (7, "hello", (2, 7)))
+  @test.assert_eq(tok.__str__(), "hello")
+  @test.assert_eq(
+    tok.__repr__(),
+    "Token(id=7, value=\"hello\", offsets=(2, 7))",
+  )
   let state = tok.__getstate__()
   @test.assert_eq(state.id, 7)
   @test.assert_eq(@types.Token::__setstate__(state).as_tuple(), tok.as_tuple())
   @test.assert_eq(
     @types.Token::from_tuple((8, "moon", (0, 4))).as_tuple(),
     (8, "moon", (0, 4)),
+  )
+  @test.assert_eq(
+    @types.Token::new(9, "a\"b\\c\n").__repr__(),
+    "Token(id=9, value=\"a\\\"b\\\\c\\n\", offsets=(0, 0))",
   )
 }
 
@@ -582,6 +591,11 @@ test "NormalizedString and PreTokenizedString expose low level migration API" {
   @test.assert_eq(first_split.get_offsets(), (0, 5))
   @test.assert_eq(first_split.offsets(), (0, 5))
   @test.assert_eq(first_split.as_tuple(), ("hello", (0, 5)))
+  @test.assert_eq(first_split.__str__(), "hello")
+  @test.assert_eq(
+    first_split.__repr__(),
+    "Split(value=\"hello\", offsets=(0, 5))",
+  )
   let split_state = first_split.__getstate__()
   @test.assert_eq(split_state.value, "hello")
   @test.assert_eq(
@@ -593,6 +607,10 @@ test "NormalizedString and PreTokenizedString expose low level migration API" {
     ("x", (2, 3)),
   )
   @test.assert_eq(@types.Split::new("y", offsets=(4, 5)).value(), "y")
+  @test.assert_eq(
+    @types.Split::new("a\"b\\c\n").__repr__(),
+    "Split(value=\"a\\\"b\\\\c\\n\", offsets=(0, 0))",
+  )
   let pts_tuple = pts.as_tuple()
   @test.assert_eq(pts_tuple.0, "Hello Moon")
   @test.assert_eq(pts_tuple.1.map(s => s.value), ["hello", "moon"])

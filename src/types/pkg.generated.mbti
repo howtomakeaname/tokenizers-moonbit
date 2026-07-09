@@ -150,7 +150,9 @@ pub(all) struct Split {
   offsets : (Int, Int)
 } derive(Eq, @debug.Debug)
 pub fn Split::__getstate__(Self) -> SplitState
+pub fn Split::__repr__(Self) -> String
 pub fn Split::__setstate__(SplitState) -> Self
+pub fn Split::__str__(Self) -> String
 pub fn Split::as_tuple(Self) -> (String, (Int, Int))
 pub fn Split::from_state(SplitState) -> Self
 pub fn Split::from_tuple((String, (Int, Int))) -> Self
@@ -172,7 +174,9 @@ pub(all) struct Token {
   offsets : (Int, Int)
 } derive(Eq, @debug.Debug)
 pub fn Token::__getstate__(Self) -> TokenState
+pub fn Token::__repr__(Self) -> String
 pub fn Token::__setstate__(TokenState) -> Self
+pub fn Token::__str__(Self) -> String
 pub fn Token::as_tuple(Self) -> (Int, String, (Int, Int))
 pub fn Token::from_state(TokenState) -> Self
 pub fn Token::from_tuple((Int, String, (Int, Int))) -> Self

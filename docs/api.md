@@ -279,6 +279,8 @@ input text are encoded as ordinary model tokens. `get_added_tokens_decoder`
 returns HF-style `id -> AddedToken` metadata for migration and introspection.
 `AddedToken::__str__()` returns the token content and `__repr__()` returns a
 stable HF-style configuration summary.
+Low-level `Token` and `Split` values also expose `__str__()` as their surface
+value and `__repr__()` as a compact escaped diagnostic summary.
 
 ## Vocabulary
 

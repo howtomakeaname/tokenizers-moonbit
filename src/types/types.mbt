@@ -1034,6 +1034,28 @@ pub fn Token::__setstate__(state : TokenState) -> Token {
 }
 
 ///|
+/// Python binding alias for `str(token)`.
+pub fn Token::__str__(self : Token) -> String {
+  self.value
+}
+
+///|
+/// Python binding alias for `repr(token)`.
+pub fn Token::__repr__(self : Token) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("Token(id=")
+  sb.write_string(self.id.to_string())
+  sb.write_string(", value=")
+  write_repr_string(sb, self.value)
+  sb.write_string(", offsets=(")
+  sb.write_string(self.offsets.0.to_string())
+  sb.write_string(", ")
+  sb.write_string(self.offsets.1.to_string())
+  sb.write_string("))")
+  sb.to_string()
+}
+
+///|
 pub fn Token::get_id(self : Token) -> Int {
   self.id
 }
@@ -1121,6 +1143,26 @@ pub fn Split::__getstate__(self : Split) -> SplitState {
 /// Python pickle compatibility alias for restoring split state.
 pub fn Split::__setstate__(state : SplitState) -> Split {
   Split::from_state(state)
+}
+
+///|
+/// Python binding alias for `str(split)`.
+pub fn Split::__str__(self : Split) -> String {
+  self.value
+}
+
+///|
+/// Python binding alias for `repr(split)`.
+pub fn Split::__repr__(self : Split) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("Split(value=")
+  write_repr_string(sb, self.value)
+  sb.write_string(", offsets=(")
+  sb.write_string(self.offsets.0.to_string())
+  sb.write_string(", ")
+  sb.write_string(self.offsets.1.to_string())
+  sb.write_string("))")
+  sb.to_string()
 }
 
 ///|
@@ -1253,4 +1295,33 @@ fn concat_opt_ints(a : Array[Int?], b : Array[Int?]) -> Array[Int?] {
     out.push(x)
   }
   out
+}
+
+///|
+fn write_repr_string(sb : StringBuilder, s : String) -> Unit {
+  sb.write_char('"')
+  for c in s {
+    match c {
+      '"' => sb.write_string("\\\"")
+      '\\' => sb.write_string("\\\\")
+      '\n' => sb.write_string("\\n")
+      '\r' => sb.write_string("\\r")
+      '\t' => sb.write_string("\\t")
+      _ =>
+        if c.to_int() < 0x20 {
+          write_control_escape(sb, c.to_int())
+        } else {
+          sb.write_char(c)
+        }
+    }
+  }
+  sb.write_char('"')
+}
+
+///|
+fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
+  let hex = "0123456789ABCDEF".to_array()
+  sb.write_string("\\u00")
+  sb.write_char(hex[u / 16 % 16])
+  sb.write_char(hex[u % 16])
 }
