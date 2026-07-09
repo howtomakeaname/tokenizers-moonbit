@@ -66,6 +66,14 @@ fn Tokenizer::save_pretrained(
 ### Standalone model artifacts (`@model`)
 
 ```moonbit
+fn Model::wordlevel(
+  vocab : Map[String, Int], unk_token? : String = "<unk>",
+) -> Model
+fn Model::wordpiece(
+  vocab : Map[String, Int], unk_token? : String = "[UNK]",
+  continuing_subword_prefix? : String = "##", end_of_word_suffix? : String? = None,
+  max_input_chars_per_word? : Int = 100,
+) -> Model
 fn Model::save(self : Model, folder : String, prefix? : String = "") -> Array[String] raise TokenizerError
 fn Model::from_bpe_files(
   vocab_path : String, merges_path : String, unk_token? : String? = Some("[UNK]"),
@@ -90,6 +98,10 @@ score-preserving Unigram JSON artifact. The standalone loaders read those common
 HF artifact formats back into typed models, including saved Unigram JSON
 fragments; BPE merge files skip `#version:` comment lines and use the same
 legacy merge splitting semantics as tokenizer JSON loading.
+`Model::wordlevel` and `Model::wordpiece` provide in-memory constructors for
+the common HF `models.WordLevel(vocab=...)` and `models.WordPiece(vocab=...)`
+migration path; constructor inputs are copied before building dense id lookup
+tables.
 
 ### Optional Hub downloader (`@hub`, native/js)
 

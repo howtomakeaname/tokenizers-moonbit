@@ -371,6 +371,67 @@ test "model JSON state aliases round-trip serializable models" {
 }
 
 ///|
+test "model direct constructors build WordLevel and WordPiece" {
+  let wl_vocab : Map[String, Int] = {}
+  wl_vocab["[UNK]"] = 0
+  wl_vocab["hello"] = 2
+  let wordlevel = Model::wordlevel(wl_vocab, unk_token="[UNK]")
+  wl_vocab["later"] = 9
+  @test.assert_eq(wordlevel.kind(), "WordLevel")
+  @test.assert_eq(wordlevel.unk_token(), Some("[UNK]"))
+  @test.assert_eq(wordlevel.token_to_id("hello"), Some(2))
+  @test.assert_eq(wordlevel.id_to_token(1), None)
+  @test.assert_eq(wordlevel.id_to_token(2), Some("hello"))
+  @test.assert_eq(wordlevel.get_vocab().get("later"), None)
+  @test.assert_eq(wordlevel.tokenize("missing").map(t => t.value), ["[UNK]"])
+  @test.assert_eq(
+    Model::from_state(wordlevel.__getstate__()).to_json(),
+    wordlevel.to_json(),
+  )
+
+  let empty_wl_vocab : Map[String, Int] = {}
+  let default_wordlevel = Model::wordlevel(empty_wl_vocab)
+  @test.assert_eq(default_wordlevel.unk_token(), Some("<unk>"))
+
+  let wp_vocab : Map[String, Int] = {}
+  wp_vocab["[UNK]"] = 0
+  wp_vocab["hello"] = 1
+  wp_vocab["he"] = 2
+  wp_vocab["##llo"] = 3
+  let wordpiece = Model::wordpiece(wp_vocab)
+  wp_vocab["later"] = 9
+  @test.assert_eq(wordpiece.kind(), "WordPiece")
+  @test.assert_eq(wordpiece.unk_token(), Some("[UNK]"))
+  @test.assert_eq(wordpiece.continuing_subword_prefix(), Some("##"))
+  @test.assert_eq(wordpiece.max_input_chars_per_word(), Some(100))
+  @test.assert_eq(wordpiece.get_vocab().get("later"), None)
+  @test.assert_eq(wordpiece.tokenize("hello").map(t => t.value), ["hello"])
+  @test.assert_eq(wordpiece.tokenize("help").map(t => t.value), ["[UNK]"])
+  @test.assert_eq(
+    Model::from_state(wordpiece.__getstate__()).to_json(),
+    wordpiece.to_json(),
+  )
+
+  let wp_suffix_vocab : Map[String, Int] = {}
+  wp_suffix_vocab["[UNK]"] = 0
+  wp_suffix_vocab["he"] = 1
+  wp_suffix_vocab["##llo</w>"] = 2
+  let suffix_wordpiece = Model::wordpiece(
+    wp_suffix_vocab,
+    end_of_word_suffix=Some("</w>"),
+    max_input_chars_per_word=5,
+  )
+  @test.assert_eq(suffix_wordpiece.end_of_word_suffix(), Some("</w>"))
+  @test.assert_eq(suffix_wordpiece.max_input_chars_per_word(), Some(5))
+  @test.assert_eq(suffix_wordpiece.tokenize("hello").map(t => t.value), [
+    "he", "##llo</w>",
+  ])
+  @test.assert_eq(suffix_wordpiece.tokenize("hello!").map(t => t.value), [
+    "[UNK]",
+  ])
+}
+
+///|
 test "model unigram trainer accepts unk_piece alias" {
   let unigram = Model::train_unigram(
     ["hello hello help"],

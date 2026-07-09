@@ -309,6 +309,53 @@ pub fn Model::vocab(self : Model) -> Map[String, Int] {
 }
 
 ///|
+/// Construct a WordLevel model directly from an in-memory vocabulary.
+/// The vocabulary is copied so later caller mutations do not affect the model.
+pub fn Model::wordlevel(
+  vocab : Map[String, Int],
+  unk_token? : String = "<unk>",
+) -> Model {
+  let copied = vocab.copy()
+  WordLevel(WordLevelModel::{
+    vocab: copied,
+    vocab_r: build_vocab_r(copied),
+    unk_token,
+  })
+}
+
+///|
+/// Construct a WordPiece model directly from an in-memory vocabulary.
+/// This mirrors the common HF `models.WordPiece(vocab=...)` migration path.
+pub fn Model::wordpiece(
+  vocab : Map[String, Int],
+  unk_token? : String = "[UNK]",
+  continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None,
+  max_input_chars_per_word? : Int = 100,
+) -> Model {
+  let copied = vocab.copy()
+  WordPiece(WordPieceModel::{
+    vocab: copied,
+    vocab_r: build_vocab_r(copied),
+    unk_token,
+    continuing_subword_prefix,
+    end_of_word_suffix,
+    max_input_chars_per_word,
+    cache: {},
+    cache_capacity: None,
+  })
+}
+
+///|
+fn build_vocab_r(vocab : Map[String, Int]) -> Array[String?] {
+  let vocab_r : Array[String?] = Array::make(vocab.length(), None)
+  for kv in vocab.to_array() {
+    set_vocab_r(vocab_r, kv.1, kv.0)
+  }
+  vocab_r
+}
+
+///|
 /// Clear model-level tokenization caches. This mirrors HF's cache maintenance
 /// API and is a no-op for models without an internal word cache.
 pub fn Model::clear_cache(self : Model) -> Unit {

@@ -57,6 +57,14 @@ fn Tokenizer::save_pretrained(
 ### 独立模型文件（`@model`）
 
 ```moonbit
+fn Model::wordlevel(
+  vocab : Map[String, Int], unk_token? : String = "<unk>",
+) -> Model
+fn Model::wordpiece(
+  vocab : Map[String, Int], unk_token? : String = "[UNK]",
+  continuing_subword_prefix? : String = "##", end_of_word_suffix? : String? = None,
+  max_input_chars_per_word? : Int = 100,
+) -> Model
 fn Model::save(self : Model, folder : String, prefix? : String = "") -> Array[String] raise TokenizerError
 fn Model::from_bpe_files(
   vocab_path : String, merges_path : String, unk_token? : String? = Some("[UNK]"),
@@ -80,6 +88,9 @@ WordPiece 为 `vocab.txt`，WordLevel 为 `vocab.json`，Unigram 为紧凑且保
 的 JSON 文件。对应 standalone loader 可把这些常见 HF artifact 重新读回 typed
 model，包括保存出来的 Unigram JSON 片段；BPE merges 会跳过 `#version:` 注释行，
 并沿用 tokenizer JSON 加载路径的 legacy merge 拆分语义。
+`Model::wordlevel` 与 `Model::wordpiece` 提供内存词表构造入口，便于迁移 HF
+`models.WordLevel(vocab=...)` 与 `models.WordPiece(vocab=...)`；构造时会复制输入
+vocab，再建立 dense id lookup 表。
 
 ### 可选 Hub 下载器（`@hub`，native/js）
 
