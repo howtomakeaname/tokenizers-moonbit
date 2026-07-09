@@ -329,6 +329,8 @@ fn Tokenizer::add_special_tokens(self : Tokenizer, tokens : Array[AddedToken]) -
 fn Tokenizer::add_special_tokens_with_count(self : Tokenizer, tokens : Array[AddedToken]) -> (Tokenizer, Int)
 fn Tokenizer::add_special_token_strings(self : Tokenizer, tokens : Array[String]) -> Tokenizer
 fn Tokenizer::get_added_tokens_decoder(self : Tokenizer) -> Map[Int, AddedToken]
+fn Tokenizer::get_all_special_tokens(self : Tokenizer) -> Array[String]
+fn Tokenizer::get_all_special_ids(self : Tokenizer) -> Array[Int]
 fn Tokenizer::is_special_token(self : Tokenizer, token : String) -> Bool
 ```
 
@@ -339,7 +341,9 @@ increasing the vocabulary size. Ordinary added tokens now keep
 `special_tokens_mask=0`; only `special=true` entries set mask `1` unless
 `encode_special_tokens` is enabled, in which case special token strings found in
 input text are encoded as ordinary model tokens. `get_added_tokens_decoder`
-returns HF-style `id -> AddedToken` metadata for migration and introspection.
+returns HF-style `id -> AddedToken` metadata for migration and introspection;
+`get_all_special_tokens` / `get_all_special_ids` are getter aliases for the
+ordered special-token lists.
 `AddedToken::new` accepts HF-style keyword defaults; when `special=true` and
 `normalized` is omitted it defaults to `false`, matching HF's constructor.
 `AddedToken::__str__()` returns the token content and `__repr__()` returns a

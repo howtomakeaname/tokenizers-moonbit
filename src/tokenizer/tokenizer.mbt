@@ -1393,6 +1393,12 @@ pub fn Tokenizer::all_special_tokens(self : Tokenizer) -> Array[String] {
 }
 
 ///|
+/// HF/Python getter alias for `all_special_tokens`.
+pub fn Tokenizer::get_all_special_tokens(self : Tokenizer) -> Array[String] {
+  self.all_special_tokens()
+}
+
+///|
 /// Return all special added token ids ordered by id.
 pub fn Tokenizer::all_special_ids(self : Tokenizer) -> Array[Int] {
   let pairs = self.get_added_tokens_decoder().to_array()
@@ -1404,6 +1410,12 @@ pub fn Tokenizer::all_special_ids(self : Tokenizer) -> Array[Int] {
     }
   }
   out
+}
+
+///|
+/// HF/Python getter alias for `all_special_ids`.
+pub fn Tokenizer::get_all_special_ids(self : Tokenizer) -> Array[Int] {
+  self.all_special_ids()
 }
 
 ///|

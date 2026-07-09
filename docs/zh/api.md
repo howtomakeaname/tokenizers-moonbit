@@ -311,6 +311,8 @@ fn Tokenizer::add_special_tokens(self : Tokenizer, tokens : Array[AddedToken]) -
 fn Tokenizer::add_special_tokens_with_count(self : Tokenizer, tokens : Array[AddedToken]) -> (Tokenizer, Int)
 fn Tokenizer::add_special_token_strings(self : Tokenizer, tokens : Array[String]) -> Tokenizer
 fn Tokenizer::get_added_tokens_decoder(self : Tokenizer) -> Map[Int, AddedToken]
+fn Tokenizer::get_all_special_tokens(self : Tokenizer) -> Array[String]
+fn Tokenizer::get_all_special_ids(self : Tokenizer) -> Array[Int]
 fn Tokenizer::is_special_token(self : Tokenizer, token : String) -> Bool
 ```
 
@@ -318,7 +320,8 @@ fn Tokenizer::is_special_token(self : Tokenizer, token : String) -> Bool
 model 词表的 token 也可以注册为 added/special token 用于预切分，但不会增加词表大小。
 普通 added token 的 `special_tokens_mask=0`，只有 `special=true` 的条目会标为 `1`；若启用
 `encode_special_tokens`，输入文本中的 special token 字符串会作为普通 model token 编码。
-`get_added_tokens_decoder` 返回 HF 风格的 `id -> AddedToken` 元数据，便于迁移和调试。
+`get_added_tokens_decoder` 返回 HF 风格的 `id -> AddedToken` 元数据，便于迁移和调试；
+`get_all_special_tokens` / `get_all_special_ids` 是有序 special token 列表的 getter alias。
 `AddedToken::new` 接受 HF 风格 keyword 默认值；`special=true` 且省略 `normalized`
 时默认 `false`，对齐 HF constructor。
 `AddedToken::__str__()` 返回 token content，`__repr__()` 返回稳定的 HF 风格配置摘要。

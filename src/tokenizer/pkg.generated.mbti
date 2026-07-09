@@ -448,6 +448,8 @@ pub fn Tokenizer::from_str(String) -> Self raise @types.TokenizerError
 pub fn Tokenizer::get_added_tokens(Self) -> Array[AddedToken]
 pub fn Tokenizer::get_added_tokens_count(Self, special_only? : Bool) -> Int
 pub fn Tokenizer::get_added_tokens_decoder(Self) -> Map[Int, AddedToken]
+pub fn Tokenizer::get_all_special_ids(Self) -> Array[Int]
+pub fn Tokenizer::get_all_special_tokens(Self) -> Array[String]
 pub fn Tokenizer::get_component_hooks(Self) -> TokenizerComponentHooks
 pub fn Tokenizer::get_decoder(Self) -> @decoder.Decoder?
 pub fn Tokenizer::get_encode_special_tokens(Self) -> Bool
