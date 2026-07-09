@@ -953,12 +953,30 @@ pub fn Tokenizer::with_normalizer(
 }
 
 ///|
+/// HF/Python writable-property style alias for `with_normalizer`.
+pub fn Tokenizer::set_normalizer(
+  self : Tokenizer,
+  normalizer : @normalizer.Normalizer?,
+) -> Tokenizer {
+  self.with_normalizer(normalizer)
+}
+
+///|
 /// Attach/clear a pre-tokenizer (builder; returns a fresh tokenizer value).
 pub fn Tokenizer::with_pre_tokenizer(
   self : Tokenizer,
   pre_tokenizer : @pretokenizer.PreTokenizer?,
 ) -> Tokenizer {
   { ..self, pre_tokenizer, source_json: None }
+}
+
+///|
+/// HF/Python writable-property style alias for `with_pre_tokenizer`.
+pub fn Tokenizer::set_pre_tokenizer(
+  self : Tokenizer,
+  pre_tokenizer : @pretokenizer.PreTokenizer?,
+) -> Tokenizer {
+  self.with_pre_tokenizer(pre_tokenizer)
 }
 
 ///|
@@ -971,6 +989,15 @@ pub fn Tokenizer::with_model(
 }
 
 ///|
+/// HF/Python writable-property style alias for `with_model`.
+pub fn Tokenizer::set_model(
+  self : Tokenizer,
+  model : @model.Model,
+) -> Tokenizer {
+  self.with_model(model)
+}
+
+///|
 /// Attach/clear a post-processor (builder; returns a fresh tokenizer value).
 pub fn Tokenizer::with_post_processor(
   self : Tokenizer,
@@ -980,12 +1007,30 @@ pub fn Tokenizer::with_post_processor(
 }
 
 ///|
+/// HF/Python writable-property style alias for `with_post_processor`.
+pub fn Tokenizer::set_post_processor(
+  self : Tokenizer,
+  post_processor : @processor.PostProcessor?,
+) -> Tokenizer {
+  self.with_post_processor(post_processor)
+}
+
+///|
 /// Attach/clear a decoder (builder; returns a fresh tokenizer value).
 pub fn Tokenizer::with_decoder(
   self : Tokenizer,
   decoder : @decoder.Decoder?,
 ) -> Tokenizer {
   { ..self, decoder, source_json: None }
+}
+
+///|
+/// HF/Python writable-property style alias for `with_decoder`.
+pub fn Tokenizer::set_decoder(
+  self : Tokenizer,
+  decoder : @decoder.Decoder?,
+) -> Tokenizer {
+  self.with_decoder(decoder)
 }
 
 ///|
@@ -1015,6 +1060,15 @@ pub fn Tokenizer::with_truncation(
   self.truncation = params
   self.source_json = None
   self
+}
+
+///|
+/// HF/Python writable-property style alias for `with_truncation`.
+pub fn Tokenizer::set_truncation(
+  self : Tokenizer,
+  params : TruncationParams?,
+) -> Tokenizer {
+  self.with_truncation(params)
 }
 
 ///|
@@ -1054,6 +1108,15 @@ pub fn Tokenizer::with_padding(
   self.padding = params
   self.source_json = None
   self
+}
+
+///|
+/// HF/Python writable-property style alias for `with_padding`.
+pub fn Tokenizer::set_padding(
+  self : Tokenizer,
+  params : PaddingParams?,
+) -> Tokenizer {
+  self.with_padding(params)
 }
 
 ///|
