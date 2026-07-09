@@ -530,6 +530,9 @@ JSON-backed `get_state` / `from_state` / `__getstate__` / `__setstate__`, plus
 `__str__` / `__repr__` aliases for compact model JSON. `get_vocab_size()` is
 available as an HF-style alias for `vocab_size()`, and `vocab()` is a
 property-style alias for `get_vocab()`.
+Non-vocab model configuration fields also provide `get_*` aliases such as
+`get_unk_token`, `get_continuing_subword_prefix`, `get_byte_fallback`, and
+`get_dropout` for binding property access.
 
 `Tokenizer::__str__()` and `Tokenizer::__repr__()` are thin Python binding
 aliases for the compact `to_str()` JSON form. `TokenizerState::new(json)`

@@ -166,6 +166,11 @@ pub fn Model::unk_token(self : Model) -> String? {
 }
 
 ///|
+pub fn Model::get_unk_token(self : Model) -> String? {
+  self.unk_token()
+}
+
+///|
 pub fn Model::unk_id(self : Model) -> Int? {
   match self {
     Unigram(m) => m.unk_id
@@ -178,12 +183,22 @@ pub fn Model::unk_id(self : Model) -> Int? {
 }
 
 ///|
+pub fn Model::get_unk_id(self : Model) -> Int? {
+  self.unk_id()
+}
+
+///|
 pub fn Model::continuing_subword_prefix(self : Model) -> String? {
   match self {
     BPE(m) => m.continuing_subword_prefix
     WordPiece(m) => Some(m.continuing_subword_prefix)
     _ => None
   }
+}
+
+///|
+pub fn Model::get_continuing_subword_prefix(self : Model) -> String? {
+  self.continuing_subword_prefix()
 }
 
 ///|
@@ -196,11 +211,21 @@ pub fn Model::end_of_word_suffix(self : Model) -> String? {
 }
 
 ///|
+pub fn Model::get_end_of_word_suffix(self : Model) -> String? {
+  self.end_of_word_suffix()
+}
+
+///|
 pub fn Model::max_input_chars_per_word(self : Model) -> Int? {
   match self {
     WordPiece(m) => Some(m.max_input_chars_per_word)
     _ => None
   }
+}
+
+///|
+pub fn Model::get_max_input_chars_per_word(self : Model) -> Int? {
+  self.max_input_chars_per_word()
 }
 
 ///|
@@ -213,12 +238,22 @@ pub fn Model::byte_fallback(self : Model) -> Bool? {
 }
 
 ///|
+pub fn Model::get_byte_fallback(self : Model) -> Bool? {
+  self.byte_fallback()
+}
+
+///|
 pub fn Model::fuse_unk(self : Model) -> Bool? {
   match self {
     BPE(m) => Some(m.fuse_unk)
     Unigram(m) => Some(m.fuse_unk)
     _ => None
   }
+}
+
+///|
+pub fn Model::get_fuse_unk(self : Model) -> Bool? {
+  self.fuse_unk()
 }
 
 ///|
@@ -230,11 +265,21 @@ pub fn Model::ignore_merges(self : Model) -> Bool? {
 }
 
 ///|
+pub fn Model::get_ignore_merges(self : Model) -> Bool? {
+  self.ignore_merges()
+}
+
+///|
 pub fn Model::dropout(self : Model) -> Double? {
   match self {
     BPE(m) => m.dropout
     _ => None
   }
+}
+
+///|
+pub fn Model::get_dropout(self : Model) -> Double? {
+  self.dropout()
 }
 
 ///|

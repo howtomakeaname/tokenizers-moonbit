@@ -491,6 +491,9 @@ BPE/Unigram 的 byte-fallback/fuse-unk flags。它也支持基于 JSON 的 `get_
 `from_state` / `__getstate__` / `__setstate__`，以及返回紧凑 model JSON 的
 `__str__` / `__repr__` alias。`get_vocab_size()` 作为 `vocab_size()` 的 HF 风格别名提供，
 `vocab()` 作为 `get_vocab()` 的属性式 alias。
+非 vocab 的 model 配置字段也提供 `get_*` alias，例如 `get_unk_token`、
+`get_continuing_subword_prefix`、`get_byte_fallback`、`get_dropout`，便于 binding
+属性访问。
 
 `Tokenizer::__str__()` 与 `Tokenizer::__repr__()` 是面向 Python binding 的薄别名，
 返回紧凑 `to_str()` JSON 形式。`TokenizerState::new(json)` 与其他 JSON-backed

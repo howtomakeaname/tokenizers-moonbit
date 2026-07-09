@@ -55,7 +55,16 @@ pub fn Model::from_unigram_file(String) -> Self raise @types.TokenizerError
 pub fn Model::from_wordlevel_file(String, unk_token? : String) -> Self raise @types.TokenizerError
 pub fn Model::from_wordpiece_file(String, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int) -> Self raise @types.TokenizerError
 pub fn Model::fuse_unk(Self) -> Bool?
+pub fn Model::get_byte_fallback(Self) -> Bool?
+pub fn Model::get_continuing_subword_prefix(Self) -> String?
+pub fn Model::get_dropout(Self) -> Double?
+pub fn Model::get_end_of_word_suffix(Self) -> String?
+pub fn Model::get_fuse_unk(Self) -> Bool?
+pub fn Model::get_ignore_merges(Self) -> Bool?
+pub fn Model::get_max_input_chars_per_word(Self) -> Int?
 pub fn Model::get_state(Self) -> ModelState raise @types.TokenizerError
+pub fn Model::get_unk_id(Self) -> Int?
+pub fn Model::get_unk_token(Self) -> String?
 pub fn Model::get_vocab(Self) -> Map[String, Int]
 pub fn Model::get_vocab_size(Self) -> Int
 pub fn Model::id_to_token(Self, Int) -> String?

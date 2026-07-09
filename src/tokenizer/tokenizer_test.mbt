@@ -921,8 +921,11 @@ test "Model exposes HF-style configuration getters" {
   ).get_model()
   @test.assert_eq(wordlevel.kind(), "WordLevel")
   @test.assert_eq(wordlevel.unk_token(), Some("[UNK]"))
+  @test.assert_eq(wordlevel.get_unk_token(), Some("[UNK]"))
   @test.assert_eq(wordlevel.unk_id(), Some(0))
+  @test.assert_eq(wordlevel.get_unk_id(), Some(0))
   @test.assert_eq(wordlevel.continuing_subword_prefix(), None)
+  @test.assert_eq(wordlevel.get_continuing_subword_prefix(), None)
 
   let wordpiece = Tokenizer::from_str(
     (
@@ -932,10 +935,15 @@ test "Model exposes HF-style configuration getters" {
   ).get_model()
   @test.assert_eq(wordpiece.kind(), "WordPiece")
   @test.assert_eq(wordpiece.unk_token(), Some("[UNK]"))
+  @test.assert_eq(wordpiece.get_unk_token(), Some("[UNK]"))
   @test.assert_eq(wordpiece.unk_id(), Some(0))
+  @test.assert_eq(wordpiece.get_unk_id(), Some(0))
   @test.assert_eq(wordpiece.continuing_subword_prefix(), Some("##"))
+  @test.assert_eq(wordpiece.get_continuing_subword_prefix(), Some("##"))
   @test.assert_eq(wordpiece.end_of_word_suffix(), Some("</w>"))
+  @test.assert_eq(wordpiece.get_end_of_word_suffix(), Some("</w>"))
   @test.assert_eq(wordpiece.max_input_chars_per_word(), Some(42))
+  @test.assert_eq(wordpiece.get_max_input_chars_per_word(), Some(42))
 
   let bpe = Tokenizer::from_str(
     (
@@ -945,13 +953,21 @@ test "Model exposes HF-style configuration getters" {
   ).get_model()
   @test.assert_eq(bpe.kind(), "BPE")
   @test.assert_eq(bpe.unk_token(), Some("[UNK]"))
+  @test.assert_eq(bpe.get_unk_token(), Some("[UNK]"))
   @test.assert_eq(bpe.unk_id(), Some(0))
+  @test.assert_eq(bpe.get_unk_id(), Some(0))
   @test.assert_eq(bpe.continuing_subword_prefix(), Some("@@"))
+  @test.assert_eq(bpe.get_continuing_subword_prefix(), Some("@@"))
   @test.assert_eq(bpe.end_of_word_suffix(), Some("</w>"))
+  @test.assert_eq(bpe.get_end_of_word_suffix(), Some("</w>"))
   @test.assert_eq(bpe.dropout(), Some(0.25))
+  @test.assert_eq(bpe.get_dropout(), Some(0.25))
   @test.assert_eq(bpe.byte_fallback(), Some(true))
+  @test.assert_eq(bpe.get_byte_fallback(), Some(true))
   @test.assert_eq(bpe.fuse_unk(), Some(true))
+  @test.assert_eq(bpe.get_fuse_unk(), Some(true))
   @test.assert_eq(bpe.ignore_merges(), Some(true))
+  @test.assert_eq(bpe.get_ignore_merges(), Some(true))
 
   let unigram = Tokenizer::from_str(
     (
@@ -961,10 +977,15 @@ test "Model exposes HF-style configuration getters" {
   ).get_model()
   @test.assert_eq(unigram.kind(), "Unigram")
   @test.assert_eq(unigram.unk_token(), Some("<unk>"))
+  @test.assert_eq(unigram.get_unk_token(), Some("<unk>"))
   @test.assert_eq(unigram.unk_id(), Some(0))
+  @test.assert_eq(unigram.get_unk_id(), Some(0))
   @test.assert_eq(unigram.byte_fallback(), Some(true))
+  @test.assert_eq(unigram.get_byte_fallback(), Some(true))
   @test.assert_eq(unigram.fuse_unk(), Some(false))
+  @test.assert_eq(unigram.get_fuse_unk(), Some(false))
   @test.assert_eq(unigram.dropout(), None)
+  @test.assert_eq(unigram.get_dropout(), None)
 }
 
 ///|
