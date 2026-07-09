@@ -330,8 +330,9 @@ fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
 Split/Punctuation behavior、Digits/Delimiter/FixedLength 设置与 Sequence 子项。
 Sequence pre-tokenizer 支持 `__len__`、`get_item`、`__getitem__`。
 同时提供常见 HF 构造器的 lower-snake builder alias，例如 `whitespace`、
-`metaspace`、`punctuation`、`digits`、`char_delimiter_split`、`fixed_length`、
-`unicode_scripts` 和 `sequence`。
+`metaspace`、`punctuation`、`digits`、`byte_level`（默认
+`add_prefix_space=true`）、`char_delimiter_split`、`fixed_length`、`unicode_scripts`
+和 `sequence`。
 `Normalizer::normalize_str(input)` 作为 HF 风格别名，等价于 `normalize(input)`。
 `Normalizer` 也提供只读配置 getter，覆盖 `kind`、Strip 左右裁剪标记、
 Replace pattern/content、Prepend 内容、BertNormalizer 标记与 Sequence 子 normalizer。

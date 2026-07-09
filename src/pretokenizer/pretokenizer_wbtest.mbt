@@ -247,6 +247,14 @@ test "pretokenizer HF-style factories wrap enum variants" {
   @test.assert_eq(metaspace.prepend_scheme(), Some("always"))
   @test.assert_eq(metaspace.split_enabled(), Some(true))
 
+  let bytelevel = PreTokenizer::byte_level()
+  @test.assert_eq(bytelevel.add_prefix_space(), Some(true))
+  @test.assert_eq(bytelevel.pre_tokenize_str("Hello"), [("ĠHello", (0, 5))])
+  @test.assert_eq(
+    PreTokenizer::byte_level(add_prefix_space=false).pre_tokenize_str("Hello"),
+    [("Hello", (0, 5))],
+  )
+
   let punctuation = PreTokenizer::punctuation()
   @test.assert_eq(punctuation.kind(), "Punctuation")
   @test.assert_eq(punctuation.behavior(), Some(Isolated))

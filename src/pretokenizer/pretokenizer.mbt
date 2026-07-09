@@ -329,7 +329,7 @@ pub fn PreTokenizer::sequence(
 ///|
 /// Public constructor for GPT-2/RoBERTa style ByteLevel pre-tokenization.
 pub fn PreTokenizer::byte_level(
-  add_prefix_space? : Bool = false,
+  add_prefix_space? : Bool = true,
   use_regex? : Bool = true,
   trim_offsets? : Bool = true,
 ) -> PreTokenizer {

@@ -78,6 +78,8 @@ TemplateProcessing 叶子对象互操作：`SpecialToken::{get_id,id,get_ids,ids
 
 TemplateProcessing Piece 互操作：`Piece::{kind,id,type_id,as_tuple,from_tuple}` 已补齐，覆盖 `SequenceRef` / `SpecialTokenRef` 两类模板叶子，未知 kind 显式报 parse error。
 
+PreTokenizer ByteLevel 默认值对齐：HF 0.22.2 `ByteLevel()` 默认 `add_prefix_space=true`，`PreTokenizer::byte_level()` 已同步该默认值；显式 `add_prefix_space=false` 保留旧行为。
+
 第三十五批补齐低层 value display alias：`Token::__str__()` / `Split::__str__()` 返回 surface value，`Token::__repr__()` / `Split::__repr__()` 返回带转义的紧凑诊断摘要，覆盖 Python binding 对底层 token/split 对象的显示迁移。
 
 第三十六批补齐 Trainer constructor alias 长尾：`Trainer::wordlevel_trainer` / `wordpiece_trainer` / `bpe_trainer` / `unigram_trainer` 作为 HF/Python lower-snake constructor 入口，全部委托现有 typed builder，保持默认值、state 与训练行为一致。
