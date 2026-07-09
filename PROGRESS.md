@@ -72,7 +72,7 @@
 
 第三十四批追加补齐 Sequence component 长度 alias：`PreTokenizer::__len__()` / `PostProcessor::__len__()` / `Decoder::__len__()` 对 `Sequence` 返回子组件数、非 sequence 返回 `0`，与 `Normalizer::__len__()` 保持一致，便于 Python binding 映射 `len(component)`。
 
-TemplateProcessing typed alias 小闭环：`PostProcessor::pair()` 作为 `pair_pieces()` 的 HF-style typed alias，和已有 `single()` 对称；返回数组副本，非 Template processor 返回空数组。
+TemplateProcessing typed alias 小闭环：`PostProcessor::single()` / `pair()` 分别作为 `single_pieces()` / `pair_pieces()` 的 HF-style typed alias；返回数组副本，非 Template processor 返回空数组，并覆盖 parsed pieces 与 `template_from_strings` 两种构造路径。
 
 TemplateProcessing 叶子对象互操作：`SpecialToken::{get_id,id,get_ids,ids,get_tokens,tokens,as_tuple,from_tuple}` 已补齐，数组 getter 返回副本，方便 Python binding 映射 TemplateProcessing special token 元数据。
 
@@ -108,11 +108,13 @@ Trainer iterator length 兼容：`Tokenizer::train_from_iterator(..., length=Som
 
 第三十六批补齐 Trainer constructor alias 长尾：`Trainer::wordlevel_trainer` / `wordpiece_trainer` / `bpe_trainer` / `unigram_trainer` 作为 HF/Python lower-snake constructor 入口，全部委托现有 typed builder，保持默认值、state 与训练行为一致。
 
-Hub env/local-only 小闭环：新增 `@hub.from_pretrained(..., local_files_only=true)` cache hit/miss 覆盖，验证缓存命中直接返回本地 tokenizer 且不触网，缓存缺失抛出 `from_pretrained local cache miss and local_files_only=true`；核心 `from_pretrained` 默认 cache root 识别 `$HF_HUB_CACHE`（在 legacy `$HUGGINGFACE_HUB_CACHE` 之后、`$HF_HOME/hub` 之前）；`HubDownloadOptions::new()` 读取 `$HF_ENDPOINT` 作为默认 endpoint，并在 `$HF_HUB_OFFLINE` 为真值时默认进入 local-only 模式；Hub request auth 也按显式 token → `$HF_TOKEN` → `$HF_TOKEN_PATH` → `$HF_HOME/token` 顺序发现 bearer token，显式 options 仍可覆盖。
+Hub env/local-only 小闭环：新增 `@hub.from_pretrained(..., local_files_only=true)` cache hit/miss 覆盖，验证缓存命中直接返回本地 tokenizer 且不触网，缓存缺失抛出 `from_pretrained local cache miss and local_files_only=true`；核心 `from_pretrained` 默认 cache root 识别 `$HF_HUB_CACHE`（在 legacy `$HUGGINGFACE_HUB_CACHE` 之后、`$HF_HOME/hub` 之前），并补齐 `$HF_HOME/hub` 与 `$HOME/.cache/huggingface/hub` fallback 测试；`PretrainedCacheMetadata::etag_matches(None)` / tokenizer-level cache etag helper 明确表示“无 expected ETag 时只要求 cache 存在”；`HubDownloadOptions::new()` 读取 `$HF_ENDPOINT` 作为默认 endpoint，并在 `$HF_HUB_OFFLINE` 为真值时默认进入 local-only 模式；Hub request auth 也按显式 token → `$HF_TOKEN` → `$HF_TOKEN_PATH` → `$HF_HOME/token` 顺序发现 bearer token，显式 options 仍可覆盖。
 
 Hub/Core sidecar 文件族小闭环：新增 `from_pretrained_aux_file(_path)`，可按本地目录/文件/Hub cache snapshot 解析 tokenizer 邻近的通用 basename sidecar（如 `added_tokens.json`），返回原始文本或路径，不解释内容并拒绝路径穿越文件名。
 
 Hub sidecar request plan 小闭环：新增 `hub_file_url` / `plan_hub_file_request`，复用 tokenizer.json 的 endpoint/revision 编码与 HF-style headers，支持 tokenizer 邻近 basename sidecar 的本地纯规划；非 tokenizer.json 文件不附带 tokenizer cache/range metadata。
+
+Hub 高层本地路径语义小闭环：`@hub.from_pretrained` 对已存在的本地 `tokenizer.json` 文件或含 `tokenizer.json` 的目录直接委托 core loader 返回，不做 HEAD/GET；已补 native async 测试覆盖本地单文件、本地目录、本地目录缺 `tokenizer.json` 错误优先，以及 `local_files_only=true` cache miss 仍报本地 cache miss。
 
 Tokenizer public API 文档同步闭环：英文/中文 API 文档补齐已实现但此前未列全的 `from_buffer`、`to_str(pretty)`、`save(path, pretty)`、`save_pretrained(pretty/save_model/model_prefix)`、`enable_truncation` / `no_truncation`、`enable_padding` / `no_padding`、`enable_encode_special_tokens` / `disable_encode_special_tokens`，减少 HF 迁移时对源码的依赖。
 
