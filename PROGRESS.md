@@ -78,6 +78,8 @@ Normalizer 配置 getter alias 小闭环：`get_strip_left` / `get_strip_right` 
 
 Normalizer Strip 精确属性名小闭环：`Normalizer::left()` / `right()` 已作为 HF `normalizers.Strip.left/right` 精确名称 alias 补齐，非 Strip normalizer 返回 `None`，不改变 normalize / state / JSON 行为。
 
+Normalizer Bert strip_accents 三态保真：`BertNormalizer.strip_accents` 已从 Bool 折叠修正为 `Bool?` 三态，`None` 在 JSON/state 中序列化为 `null`，归一化行为按 HF 0.22.2 对拍随 `lowercase` 决定是否去音调；显式 `true/false` 保持原语义。
+
 PreTokenizer 配置 getter alias 小闭环：`get_add_prefix_space` / `get_use_regex` / `get_trim_offsets` / `get_replacement` / `get_prepend_scheme` / `get_split` / `get_behavior` / `get_pattern` / `get_invert` / `get_regex` / `get_individual_digits` / `get_delimiter` / `get_length` 已补齐，均委托现有 property-style getter，便于 Python binding 统一暴露 `get_*` 配置属性。
 
 PreTokenizer ByteLevel alphabet 精确方法名小闭环：`PreTokenizer::alphabet()` 已作为 HF `ByteLevel.alphabet()` 精确名称 alias 补齐，返回和 `byte_level_alphabet()` 相同的 256 项副本。

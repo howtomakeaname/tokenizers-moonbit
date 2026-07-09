@@ -407,6 +407,8 @@ Replace pattern/content、Prepend 内容、BertNormalizer 标记与 Sequence 子
 `get_clean_text`，便于 Python binding 做属性访问；`left()` / `right()` 是 HF
 `Strip.left` / `Strip.right` 的精确名称 alias。Sequence normalizer 同时提供返回副本的
 `normalizers` / `get_normalizers` getter。
+对 `BertNormalizer`，`strip_accents()` / `get_strip_accents()` 会保留 HF 三态配置：
+`None` 序列化为 JSON `null`，归一化时按 `lowercase` 决定是否去音调。
 同时提供常见 typed 构造器的 lower-snake builder alias，例如 `nfc`、`nfd`、
 `nfkc`、`nfkd`、`byte_level`、`strip`、`replace`、`prepend_normalizer`、
 `bert_normalizer`、`lowercase_normalizer`、`strip_accents_normalizer`、`nmt`、

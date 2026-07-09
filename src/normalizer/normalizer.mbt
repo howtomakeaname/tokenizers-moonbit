@@ -31,7 +31,7 @@ pub(all) enum Normalizer {
   BertNormalizer(
     clean_text~ : Bool,
     handle_chinese_chars~ : Bool,
-    strip_accents~ : Bool,
+    strip_accents~ : Bool?,
     lowercase~ : Bool
   )
   Sequence(Array[Normalizer])
@@ -175,7 +175,7 @@ pub fn Normalizer::get_handle_chinese_chars(self : Normalizer) -> Bool? {
 ///|
 pub fn Normalizer::strip_accents(self : Normalizer) -> Bool? {
   match self {
-    BertNormalizer(strip_accents~, ..) => Some(strip_accents)
+    BertNormalizer(strip_accents~, ..) => strip_accents
     _ => None
   }
 }
@@ -308,10 +308,6 @@ pub fn Normalizer::bert_normalizer(
   strip_accents? : Bool? = None,
   lowercase? : Bool = true,
 ) -> Normalizer {
-  let strip_accents = match strip_accents {
-    Some(value) => value
-    None => lowercase
-  }
   BertNormalizer(clean_text~, handle_chinese_chars~, strip_accents~, lowercase~)
 }
 
@@ -441,18 +437,23 @@ fn prepend_to_json(prepend : String) -> String {
 fn bert_normalizer_to_json(
   clean_text : Bool,
   handle_chinese_chars : Bool,
-  strip_accents : Bool,
+  strip_accents : Bool?,
   lowercase : Bool,
 ) -> String {
-  "{\"type\":\"BertNormalizer\",\"clean_text\":" +
-  bool_json(clean_text) +
-  ",\"handle_chinese_chars\":" +
-  bool_json(handle_chinese_chars) +
-  ",\"strip_accents\":" +
-  bool_json(strip_accents) +
-  ",\"lowercase\":" +
-  bool_json(lowercase) +
-  "}"
+  let sb = StringBuilder::new()
+  sb.write_string("{\"type\":\"BertNormalizer\",\"clean_text\":")
+  sb.write_string(bool_json(clean_text))
+  sb.write_string(",\"handle_chinese_chars\":")
+  sb.write_string(bool_json(handle_chinese_chars))
+  sb.write_string(",\"strip_accents\":")
+  match strip_accents {
+    Some(value) => sb.write_string(bool_json(value))
+    None => sb.write_string("null")
+  }
+  sb.write_string(",\"lowercase\":")
+  sb.write_string(bool_json(lowercase))
+  sb.write_char('}')
+  sb.to_string()
 }
 
 ///|
@@ -540,11 +541,10 @@ pub fn Normalizer::from_json(
       }
     "BertNormalizer" => {
       let lowercase = @types.get_bool(obj, "lowercase", default=true)
-      // strip_accents defaults to the lowercase value when absent/null (HF).
       let strip_accents = match obj.get("strip_accents") {
-        Some(True) => true
-        Some(False) => false
-        _ => lowercase
+        Some(True) => Some(true)
+        Some(False) => Some(false)
+        _ => None
       }
       BertNormalizer(
         clean_text=@types.get_bool(obj, "clean_text", default=true),

@@ -432,6 +432,9 @@ have `get_*` aliases such as `get_strip_left`, `get_pattern`, and
 `get_clean_text` for Python binding property access; `left()` and `right()` are
 exact-name aliases for HF `Strip.left` / `Strip.right`. Sequence normalizers expose
 both `normalizers` and `get_normalizers` copy-returning getters.
+For `BertNormalizer`, `strip_accents()` / `get_strip_accents()` preserve HF's
+three-state setting: `None` serializes as JSON `null` and behaves like
+`lowercase` during normalization.
 It also provides lower-snake builder aliases for common typed constructors such
 as `nfc`, `nfd`, `nfkc`, `nfkd`, `byte_level`, `strip`, `replace`,
 `prepend_normalizer`, `bert_normalizer`, `lowercase_normalizer`,

@@ -535,7 +535,7 @@ test "normalizer exposes HF-style configuration getters" {
   let bert = Normalizer::BertNormalizer(
     clean_text=true,
     handle_chinese_chars=false,
-    strip_accents=true,
+    strip_accents=Some(true),
     lowercase=false,
   )
   @test.assert_eq(bert.kind(), "BertNormalizer")
@@ -601,12 +601,24 @@ test "normalizer HF-style factories wrap enum variants" {
   let bert = Normalizer::bert_normalizer(lowercase=false)
   @test.assert_eq(bert.kind(), "BertNormalizer")
   @test.assert_eq(bert.lowercase(), Some(false))
-  @test.assert_eq(bert.strip_accents(), Some(false))
+  @test.assert_eq(bert.strip_accents(), None)
+  @test.assert_eq(bert.normalize("café ÀBC"), "café ÀBC")
   let forced_accents = Normalizer::bert_normalizer(
     lowercase=false,
     strip_accents=Some(true),
   )
   @test.assert_eq(forced_accents.strip_accents(), Some(true))
+  @test.assert_eq(forced_accents.normalize("café ÀBC"), "cafe ABC")
+
+  let default_accents = Normalizer::bert_normalizer(lowercase=true)
+  @test.assert_eq(default_accents.strip_accents(), None)
+  @test.assert_eq(default_accents.normalize("café ÀBC"), "cafe abc")
+  @test.assert_eq(
+    default_accents.to_json(),
+    Some(
+      "{\"type\":\"BertNormalizer\",\"clean_text\":true,\"handle_chinese_chars\":true,\"strip_accents\":null,\"lowercase\":true}",
+    ),
+  )
 
   let seq = Normalizer::sequence([Normalizer::nfc(), replace])
   @test.assert_eq(seq.kind(), "Sequence")
@@ -631,6 +643,19 @@ test "normalizer exposes JSON state and string aliases" {
   )
   @test.assert_eq(parsed.kind(), "Strip")
   @test.assert_eq(parsed.strip_right(), Some(false))
+
+  let parsed_bert = Normalizer::from_state(
+    NormalizerState::new(
+      "{\"type\":\"BertNormalizer\",\"clean_text\":true,\"handle_chinese_chars\":true,\"strip_accents\":null,\"lowercase\":false}",
+    ),
+  )
+  @test.assert_eq(parsed_bert.kind(), "BertNormalizer")
+  @test.assert_eq(parsed_bert.strip_accents(), None)
+  @test.assert_eq(parsed_bert.normalize("café ÀBC"), "café ÀBC")
+  @test.assert_eq(
+    Normalizer::__setstate__(parsed_bert.__getstate__()).to_json(),
+    parsed_bert.to_json(),
+  )
 }
 
 ///|

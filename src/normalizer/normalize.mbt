@@ -34,7 +34,11 @@ pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
       if handle_chinese_chars {
         s = bert_pad_chinese(s)
       }
-      if sa {
+      let should_strip_accents = match sa {
+        Some(value) => value
+        None => lowercase
+      }
+      if should_strip_accents {
         s = strip_accents(s)
       }
       if lowercase {

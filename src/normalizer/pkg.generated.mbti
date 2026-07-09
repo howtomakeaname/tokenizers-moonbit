@@ -36,7 +36,7 @@ pub(all) enum Normalizer {
   Nmt
   Precompiled
   PrecompiledMap(data~ : PrecompiledCharsMap)
-  BertNormalizer(clean_text~ : Bool, handle_chinese_chars~ : Bool, strip_accents~ : Bool, lowercase~ : Bool)
+  BertNormalizer(clean_text~ : Bool, handle_chinese_chars~ : Bool, strip_accents~ : Bool?, lowercase~ : Bool)
   Sequence(Array[Normalizer])
 }
 pub fn Normalizer::__getitem__(Self, Int) -> Self?
