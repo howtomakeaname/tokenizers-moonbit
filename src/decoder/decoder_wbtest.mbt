@@ -536,12 +536,18 @@ test "decoders expose HF-style configuration getters" {
   @test.assert_eq(wordpiece.cleanup(), Some(false))
   @test.assert_eq(wordpiece.get_cleanup(), Some(false))
 
-  let metaspace = Decoder::Metaspace(replacement='▁', prepend_scheme="always")
+  let metaspace = Decoder::Metaspace(
+    replacement='▁',
+    prepend_scheme="always",
+    split=false,
+  )
   @test.assert_eq(metaspace.kind(), "Metaspace")
   @test.assert_eq(metaspace.replacement(), Some('▁'))
   @test.assert_eq(metaspace.get_replacement(), Some('▁'))
   @test.assert_eq(metaspace.prepend_scheme(), Some("always"))
   @test.assert_eq(metaspace.get_prepend_scheme(), Some("always"))
+  @test.assert_eq(metaspace.split_enabled(), Some(false))
+  @test.assert_eq(metaspace.get_split(), Some(false))
 
   let bpe = Decoder::BPEDecoder(suffix="</w>")
   @test.assert_eq(bpe.kind(), "BPEDecoder")
@@ -615,10 +621,15 @@ test "decoder HF Python constructor aliases build existing variants" {
   @test.assert_eq(bpe.suffix(), Some("</w>"))
   @test.assert_eq(bpe.decode_chain(["low</w>", "er"]), ["low ", "er"])
 
-  let metaspace = Decoder::metaspace(replacement='-', prepend_scheme="never")
+  let metaspace = Decoder::metaspace(
+    replacement='-',
+    prepend_scheme="never",
+    split=false,
+  )
   @test.assert_eq(metaspace.kind(), "Metaspace")
   @test.assert_eq(metaspace.replacement(), Some('-'))
   @test.assert_eq(metaspace.prepend_scheme(), Some("never"))
+  @test.assert_eq(metaspace.split_enabled(), Some(false))
   @test.assert_eq(metaspace.decode_chain(["a-b"]), ["a b"])
 
   let strip = Decoder::strip(' ', 1, 1)
@@ -657,4 +668,22 @@ test "decoders expose JSON state and string aliases" {
   )
   @test.assert_eq(parsed.kind(), "WordPiece")
   @test.assert_eq(parsed.cleanup(), Some(false))
+
+  let metaspace = Decoder::from_state(
+    DecoderState::new(
+      "{\"type\":\"Metaspace\",\"replacement\":\"▁\",\"prepend_scheme\":\"always\",\"split\":false}",
+    ),
+  )
+  @test.assert_eq(metaspace.kind(), "Metaspace")
+  @test.assert_eq(metaspace.get_split(), Some(false))
+  @test.assert_eq(
+    metaspace.to_json(),
+    Some(
+      "{\"type\":\"Metaspace\",\"replacement\":\"▁\",\"prepend_scheme\":\"always\",\"split\":false}",
+    ),
+  )
+  @test.assert_eq(
+    Decoder::__setstate__(metaspace.__getstate__()).to_json(),
+    metaspace.to_json(),
+  )
 }

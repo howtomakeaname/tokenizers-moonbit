@@ -410,10 +410,10 @@ Replace pattern/content、Prepend 内容、BertNormalizer 标记与 Sequence 子
 `bert_normalizer`、`lowercase_normalizer`、`strip_accents_normalizer`、`nmt`、
 `precompiled` 和 `sequence`。
 `Decoder` 提供只读配置 getter，覆盖 ByteLevel 标记、WordPiece prefix/cleanup、
-Metaspace 设置、BPEDecoder suffix、Strip/Replace/CTC 设置、Sequence 子项，以及
+Metaspace replacement/prepend/split 设置、BPEDecoder suffix、Strip/Replace/CTC 设置、Sequence 子项，以及
 通过 `decoders` / `get_decoders`、`__len__` / `get_item` / `__getitem__` 进行的
 Sequence 访问。这些字段同时提供 `get_*` alias，例如 `get_prefix`、
-`get_cleanup`、`get_word_delimiter_token`，便于 Python binding 做属性访问。
+`get_cleanup`、`get_split`、`get_word_delimiter_token`，便于 Python binding 做属性访问。
 同时提供常见 HF 构造器的 lower-snake builder alias，例如 `byte_level`、
 `bpe_decoder`、`strip`、`fuse` 和 `sequence`。
 `PostProcessor` 提供只读配置 getter，覆盖 Bert/Roberta special token pair、

@@ -7,7 +7,7 @@
 pub enum Decoder {
   ByteLevel(add_prefix_space~ : Bool, trim_offsets~ : Bool, use_regex~ : Bool)
   WordPiece(prefix~ : String, cleanup~ : Bool)
-  Metaspace(replacement~ : Char, prepend_scheme~ : String)
+  Metaspace(replacement~ : Char, prepend_scheme~ : String, split~ : Bool)
   BPEDecoder(suffix~ : String)
   Strip(content~ : Char, start~ : Int, stop~ : Int)
   Fuse
@@ -189,6 +189,19 @@ pub fn Decoder::get_prepend_scheme(self : Decoder) -> String? {
 }
 
 ///|
+pub fn Decoder::split_enabled(self : Decoder) -> Bool? {
+  match self {
+    Metaspace(split~, ..) => Some(split)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::get_split(self : Decoder) -> Bool? {
+  self.split_enabled()
+}
+
+///|
 pub fn Decoder::suffix(self : Decoder) -> String? {
   match self {
     BPEDecoder(suffix~) => Some(suffix)
@@ -343,8 +356,9 @@ pub fn Decoder::bpe_decoder(suffix? : String = "</w>") -> Decoder {
 pub fn Decoder::metaspace(
   replacement? : Char = '▁',
   prepend_scheme? : String = "always",
+  split? : Bool = true,
 ) -> Decoder {
-  Metaspace(replacement~, prepend_scheme~)
+  Metaspace(replacement~, prepend_scheme~, split~)
 }
 
 ///|
@@ -391,8 +405,8 @@ pub fn Decoder::to_json(self : Decoder) -> String? {
     ByteLevel(add_prefix_space~, trim_offsets~, use_regex~) =>
       Some(bytelevel_to_json(add_prefix_space, trim_offsets, use_regex))
     WordPiece(prefix~, cleanup~) => Some(wordpiece_to_json(prefix, cleanup))
-    Metaspace(replacement~, prepend_scheme~) =>
-      Some(metaspace_to_json(replacement, prepend_scheme))
+    Metaspace(replacement~, prepend_scheme~, split~) =>
+      Some(metaspace_to_json(replacement, prepend_scheme, split))
     BPEDecoder(suffix~) => Some(bpe_decoder_to_json(suffix))
     Strip(content~, start~, stop~) => Some(strip_to_json(content, start, stop))
     Fuse => Some("{\"type\":\"Fuse\"}")
@@ -431,12 +445,18 @@ fn wordpiece_to_json(prefix : String, cleanup : Bool) -> String {
 }
 
 ///|
-fn metaspace_to_json(replacement : Char, prepend_scheme : String) -> String {
+fn metaspace_to_json(
+  replacement : Char,
+  prepend_scheme : String,
+  split : Bool,
+) -> String {
   let sb = StringBuilder::new()
   sb.write_string("{\"type\":\"Metaspace\",\"replacement\":")
   write_json_char(sb, replacement)
   sb.write_string(",\"prepend_scheme\":")
   write_json_string(sb, prepend_scheme)
+  sb.write_string(",\"split\":")
+  sb.write_string(bool_json(split))
   sb.write_char('}')
   sb.to_string()
 }
@@ -571,6 +591,7 @@ pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
               "never"
             }
         },
+        split=@types.get_bool(obj, "split", default=true),
       )
     "BPEDecoder" =>
       BPEDecoder(suffix=@types.get_str(obj, "suffix", default="</w>"))

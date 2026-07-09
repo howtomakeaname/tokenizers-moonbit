@@ -14,7 +14,7 @@ import {
 pub enum Decoder {
   ByteLevel(add_prefix_space~ : Bool, trim_offsets~ : Bool, use_regex~ : Bool)
   WordPiece(prefix~ : String, cleanup~ : Bool)
-  Metaspace(replacement~ : Char, prepend_scheme~ : String)
+  Metaspace(replacement~ : Char, prepend_scheme~ : String, split~ : Bool)
   BPEDecoder(suffix~ : String)
   Strip(content~ : Char, start~ : Int, stop~ : Int)
   Fuse
@@ -52,6 +52,7 @@ pub fn Decoder::get_pattern(Self) -> String?
 pub fn Decoder::get_prefix(Self) -> String?
 pub fn Decoder::get_prepend_scheme(Self) -> String?
 pub fn Decoder::get_replacement(Self) -> Char?
+pub fn Decoder::get_split(Self) -> Bool?
 pub fn Decoder::get_start(Self) -> Int?
 pub fn Decoder::get_state(Self) -> DecoderState raise @types.TokenizerError
 pub fn Decoder::get_stop(Self) -> Int?
@@ -60,7 +61,7 @@ pub fn Decoder::get_trim_offsets(Self) -> Bool?
 pub fn Decoder::get_use_regex(Self) -> Bool?
 pub fn Decoder::get_word_delimiter_token(Self) -> String?
 pub fn Decoder::kind(Self) -> String
-pub fn Decoder::metaspace(replacement? : Char, prepend_scheme? : String) -> Self
+pub fn Decoder::metaspace(replacement? : Char, prepend_scheme? : String, split? : Bool) -> Self
 pub fn Decoder::pad_token(Self) -> String?
 pub fn Decoder::pattern(Self) -> String?
 pub fn Decoder::prefix(Self) -> String?
@@ -68,6 +69,7 @@ pub fn Decoder::prepend_scheme(Self) -> String?
 pub fn Decoder::replace(String, String) -> Self
 pub fn Decoder::replacement(Self) -> Char?
 pub fn Decoder::sequence(Array[Self]) -> Self
+pub fn Decoder::split_enabled(Self) -> Bool?
 pub fn Decoder::start(Self) -> Int?
 pub fn Decoder::stop(Self) -> Int?
 pub fn Decoder::strip(Char, Int, Int) -> Self

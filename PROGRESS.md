@@ -80,6 +80,8 @@ PreTokenizer 配置 getter alias 小闭环：`get_add_prefix_space` / `get_use_r
 
 Decoder 配置 getter alias 小闭环：`get_add_prefix_space` / `get_trim_offsets` / `get_use_regex` / `get_prefix` / `get_cleanup` / `get_replacement` / `get_prepend_scheme` / `get_suffix` / `get_content` / `get_start` / `get_stop` / `get_pattern` / `get_pad_token` / `get_word_delimiter_token` 已补齐，均委托现有 property-style getter，便于 Python binding 统一暴露 `get_*` 配置属性。
 
+Decoder Metaspace split state 小闭环：`Decoder::Metaspace` 与 `Decoder::metaspace` 已保留 HF `split` 配置字段，`from_json` / `to_json` / state round-trip 会保真 `split:false`，并新增 `split_enabled` / `get_split` 配置 getter；HF 0.22.2 对拍显示该字段影响 state 形状但不改变当前 decode 输出，因此 decode 语义保持不变。
+
 PostProcessor 配置 getter alias 小闭环：`get_sep` / `get_cls` / `get_trim_offsets` / `get_add_prefix_space` / `get_use_regex` / `get_single_pieces` / `get_single` / `get_pair_pieces` / `get_pair` / `get_special_tokens` 已补齐，均委托现有 property-style getter，便于 Python binding 统一暴露 `get_*` 配置属性。
 
 TemplateProcessing typed alias 小闭环：`PostProcessor::single()` / `pair()` 分别作为 `single_pieces()` / `pair_pieces()` 的 HF-style typed alias；返回数组副本，非 Template processor 返回空数组，并覆盖 parsed pieces 与 `template_from_strings` 两种构造路径。
