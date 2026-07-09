@@ -343,7 +343,8 @@ Sequence pre-tokenizer 支持 `__len__`、`get_item`、`__getitem__`。
 Replace pattern/content、Prepend 内容、BertNormalizer 标记与 Sequence 子 normalizer。
 同时提供常见 typed 构造器的 lower-snake builder alias，例如 `nfc`、`nfd`、
 `nfkc`、`nfkd`、`byte_level`、`strip`、`replace`、`prepend_normalizer`、
-`bert_normalizer` 和 `sequence`。
+`bert_normalizer`、`lowercase_normalizer`、`strip_accents_normalizer`、`nmt`、
+`precompiled` 和 `sequence`。
 `Decoder` 提供只读配置 getter，覆盖 ByteLevel 标记、WordPiece prefix/cleanup、
 Metaspace 设置、BPEDecoder suffix、Strip/Replace/CTC 设置、Sequence 子项，以及
 通过 `__len__` / `get_item` / `__getitem__` 进行的 Sequence 访问。

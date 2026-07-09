@@ -508,6 +508,21 @@ test "normalizer exposes HF-style configuration getters" {
   @test.assert_eq(prepend.kind(), "Prepend")
   @test.assert_eq(prepend.prepend(), Some("▁"))
 
+  @test.assert_eq(Normalizer::lowercase_normalizer().kind(), "Lowercase")
+  @test.assert_eq(Normalizer::lowercase_normalizer().normalize("ABC"), "abc")
+  @test.assert_eq(Normalizer::strip_accents_normalizer().kind(), "StripAccents")
+  @test.assert_eq(
+    Normalizer::strip_accents_normalizer().normalize("café"),
+    "cafe",
+  )
+  @test.assert_eq(Normalizer::nmt().kind(), "Nmt")
+  @test.assert_eq(Normalizer::nmt().to_json(), Some("{\"type\":\"Nmt\"}"))
+  @test.assert_eq(Normalizer::precompiled().kind(), "Precompiled")
+  @test.assert_eq(
+    Normalizer::precompiled().to_json(),
+    Some("{\"type\":\"Precompiled\"}"),
+  )
+
   let bert = Normalizer::BertNormalizer(
     clean_text=true,
     handle_chinese_chars=false,

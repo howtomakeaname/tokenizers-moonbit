@@ -365,7 +365,8 @@ including `kind`, Strip left/right flags, Replace pattern/content, Prepend
 content, BertNormalizer flags, and Sequence child normalizers.
 It also provides lower-snake builder aliases for common typed constructors such
 as `nfc`, `nfd`, `nfkc`, `nfkd`, `byte_level`, `strip`, `replace`,
-`prepend_normalizer`, `bert_normalizer`, and `sequence`.
+`prepend_normalizer`, `bert_normalizer`, `lowercase_normalizer`,
+`strip_accents_normalizer`, `nmt`, `precompiled`, and `sequence`.
 `Decoder` exposes read-only configuration getters for binding layers, including
 ByteLevel flags, WordPiece prefix/cleanup, Metaspace settings, BPEDecoder
 suffix, Strip/Replace settings, CTC settings, Sequence children, and

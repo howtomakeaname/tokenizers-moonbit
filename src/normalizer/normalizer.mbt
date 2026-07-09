@@ -201,6 +201,26 @@ pub fn Normalizer::byte_level() -> Normalizer {
 }
 
 ///|
+pub fn Normalizer::lowercase_normalizer() -> Normalizer {
+  Lowercase
+}
+
+///|
+pub fn Normalizer::strip_accents_normalizer() -> Normalizer {
+  StripAccents
+}
+
+///|
+pub fn Normalizer::nmt() -> Normalizer {
+  Nmt
+}
+
+///|
+pub fn Normalizer::precompiled() -> Normalizer {
+  Precompiled
+}
+
+///|
 pub fn Normalizer::strip(
   left? : Bool = true,
   right? : Bool = true,
