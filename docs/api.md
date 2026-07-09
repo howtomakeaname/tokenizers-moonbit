@@ -273,14 +273,29 @@ fn Decoder::ctc(
 ) -> Decoder
 
 fn PostProcessor::bert(sep : (String, Int), cls : (String, Int)) -> PostProcessor
+fn PostProcessor::bert_processing(sep : (String, Int), cls : (String, Int)) -> PostProcessor
 fn PostProcessor::roberta(
   sep : (String, Int), cls : (String, Int),
   trim_offsets? : Bool = true, add_prefix_space? : Bool = true,
 ) -> PostProcessor
+fn PostProcessor::roberta_processing(
+  sep : (String, Int), cls : (String, Int),
+  trim_offsets? : Bool = true, add_prefix_space? : Bool = true,
+) -> PostProcessor
+fn PostProcessor::byte_level(
+  add_prefix_space? : Bool = true, trim_offsets? : Bool = true, use_regex? : Bool = true,
+) -> PostProcessor
 fn SpecialToken::new(id : String, ids : Array[Int], tokens : Array[String]) -> SpecialToken
+fn PostProcessor::template(
+  single : Array[Piece], pair : Array[Piece], special_tokens : Map[String, SpecialToken],
+) -> PostProcessor
+fn PostProcessor::template_processing(
+  single : Array[Piece], pair : Array[Piece], special_tokens : Map[String, SpecialToken],
+) -> PostProcessor
 fn PostProcessor::template_from_strings(
   single : String, pair : String, special_tokens : Map[String, SpecialToken],
 ) -> PostProcessor raise TokenizerError
+fn PostProcessor::sequence(steps : Array[PostProcessor]) -> PostProcessor
 ```
 
 Builders return a tokenizer and can be chained:
@@ -415,6 +430,9 @@ It also provides lower-snake builder aliases for common HF constructors such as
 `PostProcessor` exposes read-only configuration getters for binding layers,
 including Bert/Roberta special token pairs, ByteLevel/Roberta flags,
 TemplateProcessing typed pieces and special tokens, and Sequence processors.
+These fields also have `get_*` aliases such as `get_sep`,
+`get_trim_offsets`, `get_single_pieces`, and `get_special_tokens` for Python
+binding property access.
 HF class-name style constructor aliases are also available:
 `bert_processing`, `roberta_processing`, and `template_processing`.
 TemplateProcessing exposes typed `single()` and `pair()` aliases for its

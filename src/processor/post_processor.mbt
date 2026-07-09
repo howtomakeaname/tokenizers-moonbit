@@ -269,12 +269,22 @@ pub fn PostProcessor::sep(self : PostProcessor) -> (String, Int)? {
 }
 
 ///|
+pub fn PostProcessor::get_sep(self : PostProcessor) -> (String, Int)? {
+  self.sep()
+}
+
+///|
 pub fn PostProcessor::cls(self : PostProcessor) -> (String, Int)? {
   match self {
     BertProcessing(cls~, ..) => Some(cls)
     RobertaProcessing(cls~, ..) => Some(cls)
     _ => None
   }
+}
+
+///|
+pub fn PostProcessor::get_cls(self : PostProcessor) -> (String, Int)? {
+  self.cls()
 }
 
 ///|
@@ -287,12 +297,22 @@ pub fn PostProcessor::trim_offsets(self : PostProcessor) -> Bool? {
 }
 
 ///|
+pub fn PostProcessor::get_trim_offsets(self : PostProcessor) -> Bool? {
+  self.trim_offsets()
+}
+
+///|
 pub fn PostProcessor::add_prefix_space(self : PostProcessor) -> Bool? {
   match self {
     RobertaProcessing(add_prefix_space~, ..) => Some(add_prefix_space)
     ByteLevel(add_prefix_space~, ..) => Some(add_prefix_space)
     _ => None
   }
+}
+
+///|
+pub fn PostProcessor::get_add_prefix_space(self : PostProcessor) -> Bool? {
+  self.add_prefix_space()
 }
 
 ///|
@@ -304,6 +324,11 @@ pub fn PostProcessor::use_regex(self : PostProcessor) -> Bool? {
 }
 
 ///|
+pub fn PostProcessor::get_use_regex(self : PostProcessor) -> Bool? {
+  self.use_regex()
+}
+
+///|
 pub fn PostProcessor::single_pieces(self : PostProcessor) -> Array[Piece] {
   match self {
     TemplateProcessing(single~, ..) => single.copy()
@@ -312,9 +337,19 @@ pub fn PostProcessor::single_pieces(self : PostProcessor) -> Array[Piece] {
 }
 
 ///|
+pub fn PostProcessor::get_single_pieces(self : PostProcessor) -> Array[Piece] {
+  self.single_pieces()
+}
+
+///|
 /// HF-style `TemplateProcessing.single` typed alias.
 pub fn PostProcessor::single(self : PostProcessor) -> Array[Piece] {
   self.single_pieces()
+}
+
+///|
+pub fn PostProcessor::get_single(self : PostProcessor) -> Array[Piece] {
+  self.single()
 }
 
 ///|
@@ -326,9 +361,19 @@ pub fn PostProcessor::pair_pieces(self : PostProcessor) -> Array[Piece] {
 }
 
 ///|
+pub fn PostProcessor::get_pair_pieces(self : PostProcessor) -> Array[Piece] {
+  self.pair_pieces()
+}
+
+///|
 /// HF-style `TemplateProcessing.pair` typed alias.
 pub fn PostProcessor::pair(self : PostProcessor) -> Array[Piece] {
   self.pair_pieces()
+}
+
+///|
+pub fn PostProcessor::get_pair(self : PostProcessor) -> Array[Piece] {
+  self.pair()
 }
 
 ///|
@@ -340,6 +385,13 @@ pub fn PostProcessor::special_tokens(
       copy_special_tokens(special_tokens)
     _ => {}
   }
+}
+
+///|
+pub fn PostProcessor::get_special_tokens(
+  self : PostProcessor,
+) -> Map[String, SpecialToken] {
+  self.special_tokens()
 }
 
 ///|

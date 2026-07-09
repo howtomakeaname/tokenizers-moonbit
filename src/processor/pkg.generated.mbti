@@ -47,9 +47,19 @@ pub fn PostProcessor::byte_level(add_prefix_space? : Bool, trim_offsets? : Bool,
 pub fn PostProcessor::cls(Self) -> (String, Int)?
 pub fn PostProcessor::from_json(Json) -> Self raise @types.TokenizerError
 pub fn PostProcessor::from_state(PostProcessorState) -> Self raise @types.TokenizerError
+pub fn PostProcessor::get_add_prefix_space(Self) -> Bool?
+pub fn PostProcessor::get_cls(Self) -> (String, Int)?
 pub fn PostProcessor::get_item(Self, Int) -> Self?
+pub fn PostProcessor::get_pair(Self) -> Array[Piece]
+pub fn PostProcessor::get_pair_pieces(Self) -> Array[Piece]
 pub fn PostProcessor::get_processors(Self) -> Array[Self]
+pub fn PostProcessor::get_sep(Self) -> (String, Int)?
+pub fn PostProcessor::get_single(Self) -> Array[Piece]
+pub fn PostProcessor::get_single_pieces(Self) -> Array[Piece]
+pub fn PostProcessor::get_special_tokens(Self) -> Map[String, SpecialToken]
 pub fn PostProcessor::get_state(Self) -> PostProcessorState raise @types.TokenizerError
+pub fn PostProcessor::get_trim_offsets(Self) -> Bool?
+pub fn PostProcessor::get_use_regex(Self) -> Bool?
 pub fn PostProcessor::kind(Self) -> String
 pub fn PostProcessor::num_special_tokens_to_add(Self, is_pair? : Bool) -> Int
 pub fn PostProcessor::pair(Self) -> Array[Piece]

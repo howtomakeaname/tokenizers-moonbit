@@ -10,8 +10,13 @@ test "post-processors expose HF-style configuration getters" {
   @test.assert_eq(bert.kind(), "BertProcessing")
   @test.assert_eq(bert_alias.to_json(), bert.to_json())
   @test.assert_eq(bert.sep(), Some(("[SEP]", 102)))
+  @test.assert_eq(bert.get_sep(), Some(("[SEP]", 102)))
   @test.assert_eq(bert.cls(), Some(("[CLS]", 101)))
+  @test.assert_eq(bert.get_cls(), Some(("[CLS]", 101)))
   @test.assert_eq(bert.trim_offsets(), None)
+  @test.assert_eq(bert.get_trim_offsets(), None)
+  @test.assert_eq(bert.get_add_prefix_space(), None)
+  @test.assert_eq(bert.get_use_regex(), None)
 
   let roberta = PostProcessor::roberta(
     ("</s>", 2),
@@ -30,7 +35,19 @@ test "post-processors expose HF-style configuration getters" {
   @test.assert_eq(roberta.sep(), Some(("</s>", 2)))
   @test.assert_eq(roberta.cls(), Some(("<s>", 0)))
   @test.assert_eq(roberta.trim_offsets(), Some(false))
+  @test.assert_eq(roberta.get_trim_offsets(), Some(false))
   @test.assert_eq(roberta.add_prefix_space(), Some(false))
+  @test.assert_eq(roberta.get_add_prefix_space(), Some(false))
+  @test.assert_eq(
+    PostProcessor::roberta_processing(("</s>", 2), ("<s>", 0)).to_json(),
+    PostProcessor::roberta(("</s>", 2), ("<s>", 0)).to_json(),
+  )
+  let roberta_default = PostProcessor::roberta_processing(
+    ("</s>", 2),
+    ("<s>", 0),
+  )
+  @test.assert_eq(roberta_default.get_trim_offsets(), Some(true))
+  @test.assert_eq(roberta_default.get_add_prefix_space(), Some(true))
 
   let bytelevel = PostProcessor::byte_level(
     add_prefix_space=false,
@@ -41,6 +58,11 @@ test "post-processors expose HF-style configuration getters" {
   @test.assert_eq(bytelevel.add_prefix_space(), Some(false))
   @test.assert_eq(bytelevel.trim_offsets(), Some(false))
   @test.assert_eq(bytelevel.use_regex(), Some(false))
+  @test.assert_eq(bytelevel.get_sep(), None)
+  @test.assert_eq(bytelevel.get_cls(), None)
+  @test.assert_eq(bytelevel.get_add_prefix_space(), Some(false))
+  @test.assert_eq(bytelevel.get_trim_offsets(), Some(false))
+  @test.assert_eq(bytelevel.get_use_regex(), Some(false))
 
   let specials : Map[String, SpecialToken] = {}
   specials["<s>"] = SpecialToken::new("<s>", [0], ["<s>"])
@@ -62,10 +84,14 @@ test "post-processors expose HF-style configuration getters" {
   )
   @test.assert_eq(template.kind(), "TemplateProcessing")
   @test.assert_eq(template_alias.to_json(), template.to_json())
+  @test.assert_eq(template.__len__(), 0)
+  @test.assert_eq(template.get_item(0) is None, true)
   @test.assert_eq(template.single_pieces(), [
     SpecialTokenRef(id="<s>", type_id=0),
     SequenceRef(id="A", type_id=0),
   ])
+  @test.assert_eq(template.get_single_pieces(), template.single_pieces())
+  @test.assert_eq(PostProcessor::byte_level().get_single_pieces(), [])
   let seq_piece = SequenceRef(id="A", type_id=0)
   @test.assert_eq(seq_piece.kind(), "SequenceRef")
   @test.assert_eq(seq_piece.get_kind(), "SequenceRef")
@@ -95,11 +121,23 @@ test "post-processors expose HF-style configuration getters" {
   }
   @test.assert_eq(bad_piece, true)
   @test.assert_eq(template.single(), template.single_pieces())
+  @test.assert_eq(template.get_single(), template.single())
   @test.assert_eq(template.pair_pieces().length(), 4)
+  @test.assert_eq(template.get_pair_pieces(), template.pair_pieces())
+  @test.assert_eq(PostProcessor::byte_level().get_pair_pieces(), [])
   @test.assert_eq(template.pair(), template.pair_pieces())
+  @test.assert_eq(template.get_pair(), template.pair())
   @test.assert_eq(
     template.special_tokens().get("<s>"),
     Some(SpecialToken::new("<s>", [0], ["<s>"])),
+  )
+  @test.assert_eq(
+    template.get_special_tokens().get("<s>"),
+    Some(SpecialToken::new("<s>", [0], ["<s>"])),
+  )
+  @test.assert_eq(
+    PostProcessor::byte_level().get_special_tokens().get("<s>"),
+    None,
   )
 
   let seq = PostProcessor::sequence([bytelevel, bert])
@@ -110,6 +148,11 @@ test "post-processors expose HF-style configuration getters" {
   @test.assert_eq(seq.get_processors().map(p => p.kind()), [
     "ByteLevel", "BertProcessing",
   ])
+  @test.assert_eq(seq.get_sep(), None)
+  @test.assert_eq(seq.get_cls(), None)
+  @test.assert_eq(seq.get_trim_offsets(), None)
+  @test.assert_eq(seq.get_add_prefix_space(), None)
+  @test.assert_eq(seq.get_use_regex(), None)
   @test.assert_eq(seq.__len__(), 2)
   @test.assert_eq(PostProcessor::byte_level().__len__(), 0)
   @test.assert_eq(seq.get_item(0).unwrap().kind(), "ByteLevel")
