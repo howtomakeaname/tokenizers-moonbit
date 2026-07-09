@@ -219,6 +219,24 @@ pub fn Decoder::decoders(self : Decoder) -> Array[Decoder] {
 }
 
 ///|
+pub fn Decoder::get_item(self : Decoder, index : Int) -> Decoder? {
+  match self {
+    Sequence(steps) =>
+      if index >= 0 && index < steps.length() {
+        Some(steps[index])
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::__getitem__(self : Decoder, index : Int) -> Decoder? {
+  self.get_item(index)
+}
+
+///|
 pub fn Decoder::replace(pattern : String, content : String) -> Decoder {
   Replace(pattern~, content~)
 }

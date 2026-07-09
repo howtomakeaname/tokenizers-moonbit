@@ -586,6 +586,28 @@ pub fn PreTokenizedString::splits(
 }
 
 ///|
+/// HF-style single-index split access for Python binding shims.
+pub fn PreTokenizedString::get_item(
+  self : PreTokenizedString,
+  index : Int,
+) -> @types.Split? {
+  if index >= 0 && index < self.splits.length() {
+    Some(self.splits[index])
+  } else {
+    None
+  }
+}
+
+///|
+/// Python `__getitem__`-style alias for `get_item`.
+pub fn PreTokenizedString::__getitem__(
+  self : PreTokenizedString,
+  index : Int,
+) -> @types.Split? {
+  self.get_item(index)
+}
+
+///|
 pub fn PreTokenizedString::normalize(
   self : PreTokenizedString,
   normalizer : @normalizer.Normalizer,

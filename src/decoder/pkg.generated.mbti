@@ -23,6 +23,7 @@ pub enum Decoder {
   CTC(pad_token~ : String, word_delimiter_token~ : String, cleanup~ : Bool)
   Sequence(Array[Decoder])
 }
+pub fn Decoder::__getitem__(Self, Int) -> Self?
 pub fn Decoder::__getstate__(Self) -> DecoderState raise @types.TokenizerError
 pub fn Decoder::__repr__(Self) -> String raise @types.TokenizerError
 pub fn Decoder::__setstate__(DecoderState) -> Self raise @types.TokenizerError
@@ -40,6 +41,7 @@ pub fn Decoder::decoders(Self) -> Array[Self]
 pub fn Decoder::from_json(Json) -> Self raise @types.TokenizerError
 pub fn Decoder::from_state(DecoderState) -> Self raise @types.TokenizerError
 pub fn Decoder::fuse() -> Self
+pub fn Decoder::get_item(Self, Int) -> Self?
 pub fn Decoder::get_state(Self) -> DecoderState raise @types.TokenizerError
 pub fn Decoder::kind(Self) -> String
 pub fn Decoder::metaspace(replacement? : Char, prepend_scheme? : String) -> Self

@@ -231,6 +231,7 @@ pub struct PreTokenizedString {
   original : String
   splits : Array[@types.Split]
 }
+pub fn PreTokenizedString::__getitem__(Self, Int) -> @types.Split?
 pub fn PreTokenizedString::__getstate__(Self) -> PreTokenizedStringState
 pub fn PreTokenizedString::__len__(Self) -> Int
 pub fn PreTokenizedString::__setstate__(PreTokenizedStringState) -> Self
@@ -238,6 +239,7 @@ pub fn PreTokenizedString::as_tuple(Self) -> (String, Array[@types.Split])
 pub fn PreTokenizedString::from_splits(Array[@types.Split]) -> Self
 pub fn PreTokenizedString::from_state(PreTokenizedStringState) -> Self
 pub fn PreTokenizedString::from_tuple((String, Array[@types.Split])) -> Self
+pub fn PreTokenizedString::get_item(Self, Int) -> @types.Split?
 pub fn PreTokenizedString::get_original(Self) -> String
 pub fn PreTokenizedString::get_splits(Self) -> Array[@types.Split]
 pub fn PreTokenizedString::get_state(Self) -> PreTokenizedStringState

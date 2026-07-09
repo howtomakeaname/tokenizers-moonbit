@@ -572,6 +572,10 @@ test "NormalizedString and PreTokenizedString expose low level migration API" {
   @test.assert_eq(pts.is_empty(), false)
   @test.assert_eq(pts.get_splits().map(s => s.value), ["hello", "moon"])
   @test.assert_eq(pts.splits().map(s => s.value), ["hello", "moon"])
+  @test.assert_eq(pts.get_item(0).unwrap().as_tuple(), ("hello", (0, 5)))
+  @test.assert_eq(pts.__getitem__(1).unwrap().as_tuple(), ("moon", (6, 10)))
+  @test.assert_eq(pts.get_item(-1) is None, true)
+  @test.assert_eq(pts.__getitem__(2) is None, true)
   let first_split = pts.splits()[0]
   @test.assert_eq(first_split.get_value(), "hello")
   @test.assert_eq(first_split.value(), "hello")
