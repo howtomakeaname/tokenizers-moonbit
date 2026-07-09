@@ -360,7 +360,7 @@ Sequence post-processor 支持 `__len__`、`get_item`、`__getitem__`。
 unsupported-component 错误，不返回有损 state。
 
 `Encoding::words()` 作为 HF Python 已废弃但仍存在的 `word_ids()` 属性别名提供。
-`Encoding::__repr__()` 返回 HF 风格的紧凑诊断摘要，包含 token 数和暴露的属性名。
+`Encoding::__str__()` / `__repr__()` 返回 HF 风格的紧凑诊断摘要，包含 token 数和暴露的属性名。
 
 `Trainer` 暴露返回副本的配置 getter，例如 `kind`、`unk_token`、
 `min_frequency`、`special_tokens`、`special_added_tokens`、`vocab_size`、

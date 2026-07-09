@@ -384,7 +384,7 @@ JSON-backed `get_state` / `from_state` / `__getstate__` / `__setstate__` plus
 an unsupported-component error instead of returning lossy state.
 
 `Encoding::words()` is available as a deprecated HF Python alias for
-`word_ids()`. `Encoding::__repr__()` returns the HF-style compact diagnostic
+`word_ids()`. `Encoding::__str__()` / `__repr__()` return the HF-style compact diagnostic
 summary with token count and exposed attribute names.
 
 `Trainer` exposes copy-returning configuration getters such as `kind`,

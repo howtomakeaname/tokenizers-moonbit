@@ -381,6 +381,7 @@ test "Encoding exposes HF-style getter accessors" {
     enc.__repr__(),
     "Encoding(num_tokens=4, attributes=[ids, type_ids, tokens, offsets, attention_mask, special_tokens_mask, overflowing])",
   )
+  @test.assert_eq(enc.__str__(), enc.__repr__())
   let restored = @types.Encoding::__setstate__(state)
   @test.assert_eq(restored.get_ids(), enc.get_ids())
   @test.assert_eq(restored.get_tokens(), enc.get_tokens())

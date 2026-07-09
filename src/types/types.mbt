@@ -187,6 +187,12 @@ pub fn Encoding::__len__(self : Encoding) -> Int {
 }
 
 ///|
+/// Python binding alias for `str(encoding)`.
+pub fn Encoding::__str__(self : Encoding) -> String {
+  self.__repr__()
+}
+
+///|
 /// Python binding alias for `repr(encoding)`.
 pub fn Encoding::__repr__(self : Encoding) -> String {
   "Encoding(num_tokens=" +
