@@ -92,6 +92,8 @@ Model vocab property alias 小闭环：`Model::vocab()` 已补齐，作为 `get_
 
 Encoding 显示 alias 小闭环：`Encoding::__str__()` 已补齐，返回与 `__repr__()` 相同的 HF-style 诊断摘要，覆盖 Python binding 的 `str(encoding)` 映射。
 
+AddedToken constructor 小闭环：`AddedToken::new` 已支持 `single_word` / `lstrip` / `rstrip` / `normalized` / `special` HF-style keyword 参数；`special=true` 且未显式指定 `normalized` 时默认 `false`，保留普通 token 默认 `normalized=true`。
+
 第三十五批补齐低层 value display alias：`Token::__str__()` / `Split::__str__()` 返回 surface value，`Token::__repr__()` / `Split::__repr__()` 返回带转义的紧凑诊断摘要，覆盖 Python binding 对底层 token/split 对象的显示迁移。
 
 第三十六批补齐 Trainer constructor alias 长尾：`Trainer::wordlevel_trainer` / `wordpiece_trainer` / `bpe_trainer` / `unigram_trainer` 作为 HF/Python lower-snake constructor 入口，全部委托现有 typed builder，保持默认值、state 与训练行为一致。

@@ -83,7 +83,7 @@ pub fn AddedToken::get_special(Self) -> Bool
 pub fn AddedToken::get_state(Self) -> AddedTokenState
 pub fn AddedToken::is_special(Self) -> Bool
 pub fn AddedToken::lstrip(Self) -> Bool
-pub fn AddedToken::new(String) -> Self
+pub fn AddedToken::new(String, single_word? : Bool, lstrip? : Bool, rstrip? : Bool, normalized? : Bool?, special? : Bool) -> Self
 pub fn AddedToken::normalized(Self) -> Bool
 pub fn AddedToken::rstrip(Self) -> Bool
 pub fn AddedToken::single_word(Self) -> Bool

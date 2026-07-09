@@ -95,15 +95,19 @@ pub struct AddedTokenState {
 } derive(Debug, Eq)
 
 ///|
-pub fn AddedToken::new(content : String) -> AddedToken {
-  {
-    content,
-    single_word: false,
-    lstrip: false,
-    rstrip: false,
-    normalized: true,
-    special: false,
+pub fn AddedToken::new(
+  content : String,
+  single_word? : Bool = false,
+  lstrip? : Bool = false,
+  rstrip? : Bool = false,
+  normalized? : Bool? = None,
+  special? : Bool = false,
+) -> AddedToken {
+  let normalized = match normalized {
+    Some(v) => v
+    None => !special
   }
+  { content, single_word, lstrip, rstrip, normalized, special }
 }
 
 ///|
@@ -270,14 +274,7 @@ pub fn AddedToken::is_special(self : AddedToken) -> Bool {
 
 ///|
 pub fn AddedToken::special(content : String) -> AddedToken {
-  {
-    content,
-    single_word: false,
-    lstrip: false,
-    rstrip: false,
-    normalized: false,
-    special: true,
-  }
+  AddedToken::new(content, special=true)
 }
 
 ///|

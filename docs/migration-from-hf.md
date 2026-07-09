@@ -118,7 +118,7 @@ mutating in place, so rebind the stream before feeding the next id.
 | `tok.post_processor = processor` | `tok.with_post_processor(Some(processor))` |
 | `tok.decoder = decoder` | `tok.with_decoder(Some(decoder))` |
 | `tok.normalizer` / `tok.model` / ... | `tok.get_normalizer()` / `tok.get_model()` / ... |
-| `AddedToken("<x>", single_word=True)` | `AddedToken::new("<x>").with_single_word(true)` |
+| `AddedToken("<x>", single_word=True)` | `AddedToken::new("<x>", single_word=true)` |
 | `tok.add_tokens([...])` | `tok.add_tokens_with_count([...])` or `tok.add_tokens([...])` |
 | `tok.add_special_tokens([...])` | `tok.add_special_tokens_with_count([...])` or `tok.add_special_tokens([...])` |
 | `tok.encode_special_tokens = True` | `tok.set_encode_special_tokens(true)` |

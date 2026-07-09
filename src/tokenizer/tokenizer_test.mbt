@@ -445,6 +445,29 @@ test "Token exposes tuple interop helpers" {
 
 ///|
 test "AddedToken exposes binding property aliases" {
+  @test.assert_eq(
+    AddedToken::new("<plain>").as_tuple(),
+    ("<plain>", false, false, false, true, false),
+  )
+  @test.assert_eq(
+    AddedToken::new(
+      "<kw>",
+      single_word=true,
+      lstrip=true,
+      rstrip=true,
+      normalized=Some(false),
+      special=true,
+    ).as_tuple(),
+    ("<kw>", true, true, true, false, true),
+  )
+  @test.assert_eq(
+    AddedToken::new("<special>", special=true).as_tuple(),
+    ("<special>", false, false, false, false, true),
+  )
+  @test.assert_eq(
+    AddedToken::new("<special-norm>", normalized=Some(true), special=true).as_tuple(),
+    ("<special-norm>", false, false, false, true, true),
+  )
   let tok = AddedToken::new("<tag>")
     .with_single_word(true)
     .with_lstrip(true)

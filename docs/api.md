@@ -285,7 +285,10 @@ The same count is also available on `PostProcessor` as
 ## Added tokens
 
 ```moonbit
-fn AddedToken::new(content : String) -> AddedToken
+fn AddedToken::new(
+  content : String, single_word? : Bool = false, lstrip? : Bool = false,
+  rstrip? : Bool = false, normalized? : Bool? = None, special? : Bool = false,
+) -> AddedToken
 fn AddedToken::special(content : String) -> AddedToken
 fn AddedToken::with_single_word(self : AddedToken, single_word : Bool) -> AddedToken
 fn AddedToken::with_lstrip(self : AddedToken, lstrip : Bool) -> AddedToken
@@ -311,6 +314,8 @@ increasing the vocabulary size. Ordinary added tokens now keep
 `encode_special_tokens` is enabled, in which case special token strings found in
 input text are encoded as ordinary model tokens. `get_added_tokens_decoder`
 returns HF-style `id -> AddedToken` metadata for migration and introspection.
+`AddedToken::new` accepts HF-style keyword defaults; when `special=true` and
+`normalized` is omitted it defaults to `false`, matching HF's constructor.
 `AddedToken::__str__()` returns the token content and `__repr__()` returns a
 stable HF-style configuration summary.
 Low-level `Token` and `Split` values also expose `__str__()` as their surface

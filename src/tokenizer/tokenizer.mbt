@@ -1469,7 +1469,7 @@ pub fn Tokenizer::add_token_strings(
   self : Tokenizer,
   tokens : Array[String],
 ) -> Tokenizer {
-  self.add_tokens(tokens.map(AddedToken::new))
+  self.add_tokens(tokens.map(t => AddedToken::new(t)))
 }
 
 ///|
