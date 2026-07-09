@@ -129,8 +129,10 @@ and request headers for tokenizer-adjacent sidecar files such as
 `tokenizer_config.json`, `special_tokens_map.json`, or `added_tokens.json`;
 sidecar plans intentionally do not attach tokenizer cache/range metadata.
 `apply_hub_file_download_result` can cache a complete sidecar response body as
-raw snapshot content. Sidecar auto-download, ETag/Range/resume decisions, and
-sidecar content parsing remain intentionally out of scope for this helper.
+raw snapshot content, and `download_hub_file` can perform a simple 2xx-only GET
+for a tokenizer-adjacent sidecar. Sidecar auto-download from
+`from_pretrained`, ETag/Range/resume decisions, and sidecar content parsing
+remain intentionally out of scope for these helpers.
 
 ```moonbit
 let tok = @hub.from_pretrained(

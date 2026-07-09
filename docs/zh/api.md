@@ -112,8 +112,9 @@ cache 根目录、`HF_TOKEN` 或显式 bearer token、通过 `HF_TOKEN_PATH` / `
 `special_tokens_map.json`、`added_tokens.json` 等 tokenizer 邻近 sidecar 文件暴露同一套
 URL revision 编码与请求 headers；sidecar request plan 不附带 tokenizer cache/range
 metadata。`apply_hub_file_download_result` 可把完整 sidecar response body 作为 raw
-snapshot 内容写入 cache；sidecar 自动下载、ETag/Range/resume 决策和内容解析仍不属于
-这个 helper 的范围。
+snapshot 内容写入 cache，`download_hub_file` 可对 tokenizer 邻近 sidecar 做简单
+2xx-only GET。`from_pretrained` 自动下载 sidecar、ETag/Range/resume 决策和内容解析
+仍不属于这些 helper 的范围。
 
 ```moonbit
 let tok = @hub.from_pretrained(
