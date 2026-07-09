@@ -175,6 +175,87 @@ test "Hub request plan uses cache etag and resume range" {
 }
 
 ///|
+test "Hub sidecar download result writes raw file into cache" {
+  let cache = "_build/hub_sidecar_apply_cache"
+  let model = "org/sidecar-apply-tokenizer"
+  let result = apply_hub_file_download_result(
+    model,
+    "added_tokens.json",
+    "{\"added\":[]}",
+    HubResponseMetadata::new(
+      200,
+      resolved_revision=Some("sidecarrev"),
+      etag=Some("etag-added"),
+    ),
+    "https://hf.example/org/sidecar-apply-tokenizer/resolve/main/added_tokens.json",
+    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+  )
+  @test.assert_eq(result.filename, "added_tokens.json")
+  @test.assert_eq(result.content, "{\"added\":[]}")
+  @test.assert_eq(result.status, 200)
+  @test.assert_eq(result.resolved_revision, Some("sidecarrev"))
+  @test.assert_eq(result.etag, Some("etag-added"))
+  @test.assert_eq(
+    result.cache_path.has_suffix(
+      "/models--org--sidecar-apply-tokenizer/snapshots/sidecarrev/added_tokens.json",
+    ),
+    true,
+  )
+  @test.assert_eq(
+    @tokenizer.Tokenizer::from_pretrained_ref_revision(
+      model,
+      revision="main",
+      cache_dir=Some(cache),
+    ),
+    Some("sidecarrev"),
+  )
+  @test.assert_eq(
+    @tokenizer.Tokenizer::from_pretrained_aux_file(
+      model,
+      "added_tokens.json",
+      revision="main",
+      cache_dir=Some(cache),
+    ),
+    Some("{\"added\":[]}"),
+  )
+
+  let mut rejected_tokenizer_json = false
+  try
+    apply_hub_file_download_result(
+      model,
+      "tokenizer.json",
+      "{}",
+      HubResponseMetadata::new(200),
+      "https://hf.example/tokenizer.json",
+      options=HubDownloadOptions::new(cache_dir=Some(cache)),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      rejected_tokenizer_json = msg.contains("sidecar files")
+    _ => ()
+  }
+  @test.assert_eq(rejected_tokenizer_json, true)
+
+  let mut rejected_status = false
+  try
+    apply_hub_file_download_result(
+      model,
+      "special_tokens_map.json",
+      "{}",
+      HubResponseMetadata::new(404),
+      "https://hf.example/missing",
+      options=HubDownloadOptions::new(cache_dir=Some(cache)),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) => rejected_status = msg.contains("HTTP 404")
+    _ => ()
+  }
+  @test.assert_eq(rejected_status, true)
+}
+
+///|
 test "Hub request headers avoid empty auth and optional user agent" {
   let no_auth = plan_tokenizer_json_request(
     "bert-base-uncased",

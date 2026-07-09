@@ -762,6 +762,64 @@ pub struct HubDownloadResult {
 } derive(Debug, Eq)
 
 ///|
+/// Result of applying a tokenizer-adjacent Hub file body to the local snapshot
+/// cache. Unlike tokenizer.json downloads, sidecar files are cached as raw text
+/// without Range/ETag freshness decisions or content parsing.
+pub struct HubFileDownloadResult {
+  filename : String
+  content : String
+  cache_path : String
+  resolved_revision : String?
+  etag : String?
+  final_url : String
+  status : Int
+} derive(Debug, Eq)
+
+///|
+/// Apply a complete tokenizer-adjacent Hub file body to the HF-style local cache.
+/// This is the sidecar counterpart to `apply_tokenizer_json_download_result` but
+/// intentionally omits tokenizer-specific 304/206 cache decisions.
+pub fn apply_hub_file_download_result(
+  model_id : String,
+  filename : String,
+  response_body : String,
+  metadata : HubResponseMetadata,
+  final_url : String,
+  options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> HubFileDownloadResult raise @types.TokenizerError {
+  validate_hub_request(model_id, options.revision)
+  validate_hub_filename(filename)
+  if filename == "tokenizer.json" {
+    raise @types.ParseError(
+      "apply_hub_file_download_result is for tokenizer sidecar files",
+    )
+  }
+  if metadata.status < 200 || metadata.status >= 300 {
+    raise @types.ParseError(
+      "Hub sidecar response cannot be cached: " +
+      hub_http_status_diagnostic(metadata.status),
+    )
+  }
+  let cache_path = @tokenizer.Tokenizer::cache_pretrained_aux_file(
+    model_id,
+    filename,
+    response_body,
+    revision=options.revision,
+    resolved_revision=metadata.resolved_revision,
+    cache_dir=options.cache_dir,
+  )
+  {
+    filename,
+    content: response_body,
+    cache_path,
+    resolved_revision: metadata.resolved_revision,
+    etag: metadata.etag,
+    final_url,
+    status: metadata.status,
+  }
+}
+
+///|
 /// Convert a Hub response into a download result using the same 304/200/206 cache
 /// policy as the async downloader. This pure-ish helper lets tests and alternate
 /// transports share the cache/resume application logic without depending on the
