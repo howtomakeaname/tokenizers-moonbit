@@ -48,6 +48,22 @@ test "post-processors expose HF-style configuration getters" {
     SpecialTokenRef(id="<s>", type_id=0),
     SequenceRef(id="A", type_id=0),
   ])
+  let seq_piece = SequenceRef(id="A", type_id=0)
+  @test.assert_eq(seq_piece.kind(), "SequenceRef")
+  @test.assert_eq(seq_piece.id(), "A")
+  @test.assert_eq(seq_piece.type_id(), 0)
+  @test.assert_eq(seq_piece.as_tuple(), ("SequenceRef", "A", 0))
+  @test.assert_eq(
+    Piece::from_tuple(("SpecialTokenRef", "<s>", 0)).as_tuple(),
+    ("SpecialTokenRef", "<s>", 0),
+  )
+  let mut bad_piece = false
+  try Piece::from_tuple(("Unknown", "A", 0)) |> ignore catch {
+    @types.ParseError(msg) =>
+      bad_piece = msg.contains("unknown template piece kind")
+    _ => ()
+  }
+  @test.assert_eq(bad_piece, true)
   @test.assert_eq(template.single(), template.single_pieces())
   @test.assert_eq(template.pair_pieces().length(), 4)
   @test.assert_eq(template.pair(), template.pair_pieces())

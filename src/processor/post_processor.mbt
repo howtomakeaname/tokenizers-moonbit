@@ -12,6 +12,40 @@ pub enum Piece {
 } derive(Debug, Eq)
 
 ///|
+pub fn Piece::from_tuple(
+  t : (String, String, Int),
+) -> Piece raise @types.TokenizerError {
+  match t.0 {
+    "SequenceRef" => SequenceRef(id=t.1, type_id=t.2)
+    "SpecialTokenRef" => SpecialTokenRef(id=t.1, type_id=t.2)
+    other => raise @types.ParseError("unknown template piece kind: \{other}")
+  }
+}
+
+///|
+pub fn Piece::as_tuple(self : Piece) -> (String, String, Int) {
+  match self {
+    SequenceRef(id~, type_id~) => ("SequenceRef", id, type_id)
+    SpecialTokenRef(id~, type_id~) => ("SpecialTokenRef", id, type_id)
+  }
+}
+
+///|
+pub fn Piece::kind(self : Piece) -> String {
+  self.as_tuple().0
+}
+
+///|
+pub fn Piece::id(self : Piece) -> String {
+  self.as_tuple().1
+}
+
+///|
+pub fn Piece::type_id(self : Piece) -> Int {
+  self.as_tuple().2
+}
+
+///|
 /// A special token definition: its surface and the ids/tokens it expands to.
 pub struct SpecialToken {
   id : String

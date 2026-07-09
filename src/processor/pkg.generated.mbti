@@ -15,6 +15,11 @@ pub enum Piece {
   SequenceRef(id~ : String, type_id~ : Int)
   SpecialTokenRef(id~ : String, type_id~ : Int)
 } derive(Eq, @debug.Debug)
+pub fn Piece::as_tuple(Self) -> (String, String, Int)
+pub fn Piece::from_tuple((String, String, Int)) -> Self raise @types.TokenizerError
+pub fn Piece::id(Self) -> String
+pub fn Piece::kind(Self) -> String
+pub fn Piece::type_id(Self) -> Int
 
 pub enum PostProcessor {
   TemplateProcessing(single~ : Array[Piece], pair~ : Array[Piece], special_tokens~ : Map[String, SpecialToken])
