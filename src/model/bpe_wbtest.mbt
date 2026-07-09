@@ -105,6 +105,15 @@ test "bpe offsets track code-point spans" {
 }
 
 ///|
+test "bpe without unk_token emits unknown symbols with negative ids" {
+  let model = mk_bpe([("a", 0), ("b", 1), ("ab", 2)], [("a", "b")])
+  let toks = model.tokenize("abx", offset=4)
+  @test.assert_eq(surfaces_of(toks), ["ab", "x"])
+  @test.assert_eq(ids_of(toks), [2, -1])
+  @test.assert_eq(toks.map(t => t.offsets), [(4, 6), (6, 7)])
+}
+
+///|
 test "legacy merge splitter preserves right side spaces" {
   @test.assert_eq(split_legacy_merge("Ġ t"), ("Ġ", "t"))
   @test.assert_eq(split_legacy_merge("a b c"), ("a", "b c"))

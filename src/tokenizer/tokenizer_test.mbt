@@ -3790,6 +3790,10 @@ test "train_bpe default learns singleton merges like HF" {
   @test.assert_eq(default_tok.encode("ab", add_special_tokens=false).tokens, [
     "ab",
   ])
+  let unknown = default_tok.encode("ac", add_special_tokens=false)
+  @test.assert_eq(unknown.tokens, ["a", "c"])
+  @test.assert_eq(unknown.ids, [0, -1])
+  @test.assert_eq(unknown.offsets, [(0, 1), (1, 2)])
 
   let old_threshold = Tokenizer::train_bpe(
     ["ab"],
@@ -3965,6 +3969,10 @@ test "train_unigram prefers learned whole words" {
   @test.assert_eq(default_tok.get_model().unk_token(), None)
   @test.assert_eq(default_tok.get_model().unk_id(), None)
   @test.assert_eq(default_tok.token_to_id("<unk>"), None)
+  let default_unknown = default_tok.encode("hello z", add_special_tokens=false)
+  @test.assert_eq(default_unknown.tokens, ["hello", "z"])
+  @test.assert_eq(default_unknown.ids[1], -1)
+  @test.assert_eq(default_unknown.offsets, [(0, 5), (6, 7)])
 
   let tok = Tokenizer::train_unigram(
     ["hello hello help"],

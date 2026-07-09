@@ -71,3 +71,12 @@ test "unigram byte_fallback requires all byte tokens" {
   @test.assert_eq(unigram_surfaces(toks), ["😀"])
   @test.assert_eq(unigram_ids(toks), [0])
 }
+
+///|
+test "unigram without unk_id emits unknown chars with negative ids" {
+  let model = mk_unigram([("a", 0.0)], None, false, true)
+  let toks = model.tokenize("azz", offset=5)
+  @test.assert_eq(unigram_surfaces(toks), ["a", "z", "z"])
+  @test.assert_eq(unigram_ids(toks), [0, -1, -1])
+  @test.assert_eq(toks.map(t => t.offsets), [(5, 6), (6, 7), (7, 8)])
+}
