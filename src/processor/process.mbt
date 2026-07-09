@@ -59,7 +59,10 @@ pub fn PostProcessor::process(
           }
         }
       }
-      acc
+      match pair {
+        Some(_) => merge_plain(acc, pair)
+        None => acc
+      }
     }
   }
   if add_special_tokens {
