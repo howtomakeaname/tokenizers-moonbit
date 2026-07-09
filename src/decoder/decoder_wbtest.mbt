@@ -567,8 +567,15 @@ test "decoders expose HF-style configuration getters" {
   @test.assert_eq(replace.kind(), "Replace")
   @test.assert_eq(replace.pattern(), Some("▁"))
   @test.assert_eq(replace.get_pattern(), Some("▁"))
+  @test.assert_eq(replace.pattern_kind(), Some(@common.StringPattern))
+  @test.assert_eq(replace.get_pattern_kind(), Some(@common.StringPattern))
   @test.assert_eq(replace.content(), Some(" "))
   @test.assert_eq(replace.get_content(), Some(" "))
+
+  let regex_replace = Decoder::replace_regex("\\s+", "_")
+  @test.assert_eq(regex_replace.kind(), "Replace")
+  @test.assert_eq(regex_replace.pattern_kind(), Some(@common.RegexPattern))
+  @test.assert_eq(regex_replace.decode(["a b", "\tc ", "\\s+"]), "a_b_c_\\s+")
 
   let ctc = Decoder::ctc(pad_token="_", word_delimiter_token="|", cleanup=false)
   @test.assert_eq(ctc.kind(), "CTC")
@@ -668,6 +675,30 @@ test "decoders expose JSON state and string aliases" {
   )
   @test.assert_eq(parsed.kind(), "WordPiece")
   @test.assert_eq(parsed.cleanup(), Some(false))
+
+  let string_replace = Decoder::from_state(
+    DecoderState::new(
+      "{\"type\":\"Replace\",\"pattern\":{\"String\":\"\\\\s+\"},\"content\":\"_\"}",
+    ),
+  )
+  @test.assert_eq(string_replace.pattern_kind(), Some(@common.StringPattern))
+  @test.assert_eq(string_replace.decode(["a b", "\tc ", "\\s+"]), "a b\tc _")
+  @test.assert_eq(
+    Decoder::__setstate__(string_replace.__getstate__()).to_json(),
+    string_replace.to_json(),
+  )
+
+  let regex_replace = Decoder::from_state(
+    DecoderState::new(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"\\\\s+\"},\"content\":\"_\"}",
+    ),
+  )
+  @test.assert_eq(regex_replace.pattern_kind(), Some(@common.RegexPattern))
+  @test.assert_eq(regex_replace.decode(["a b", "\tc ", "\\s+"]), "a_b_c_\\s+")
+  @test.assert_eq(
+    Decoder::__setstate__(regex_replace.__getstate__()).to_json(),
+    regex_replace.to_json(),
+  )
 
   let metaspace = Decoder::from_state(
     DecoderState::new(

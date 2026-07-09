@@ -557,6 +557,10 @@ components for serialized round-trips.
   runs. Normalizer and Decoder
   `Replace` keep hot bounded/ranged quantifier forms on direct dispatch paths
   so synthetic cleanup benchmarks stay faster than HF.
+- Loaded `Replace` components preserve HF's tagged pattern shape: `{String: ...}`
+  uses literal substring replacement, while `{Regex: ...}` uses the deterministic
+  regex subset above. The binding-friendly `replace(...)` factories create the
+  literal-string form; `replace_regex(...)` creates the regex form.
 - Unknown complex Split regexes are rejected during loading; unknown Replace
   patterns keep the existing lightweight fallback and are treated as literal
   substring replacements.

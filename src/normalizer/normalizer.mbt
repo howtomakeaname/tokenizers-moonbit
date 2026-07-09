@@ -21,6 +21,7 @@ pub(all) enum Normalizer {
   StripAccents
   ByteLevel
   Replace(pattern~ : String, content~ : String)
+  ReplaceString(pattern~ : String, content~ : String)
   Prepend(prepend~ : String)
   // Moses/NMT style cleanup used by SentencePiece-era tokenizers.
   Nmt
@@ -60,7 +61,7 @@ pub fn Normalizer::kind(self : Normalizer) -> String {
     Strip(..) => "Strip"
     StripAccents => "StripAccents"
     ByteLevel => "ByteLevel"
-    Replace(..) => "Replace"
+    Replace(..) | ReplaceString(..) => "Replace"
     Prepend(..) => "Prepend"
     Nmt => "Nmt"
     Precompiled | PrecompiledMap(..) => "Precompiled"
@@ -111,6 +112,7 @@ pub fn Normalizer::right(self : Normalizer) -> Bool? {
 pub fn Normalizer::pattern(self : Normalizer) -> String? {
   match self {
     Replace(pattern~, ..) => Some(pattern)
+    ReplaceString(pattern~, ..) => Some(pattern)
     _ => None
   }
 }
@@ -121,9 +123,24 @@ pub fn Normalizer::get_pattern(self : Normalizer) -> String? {
 }
 
 ///|
+pub fn Normalizer::pattern_kind(self : Normalizer) -> @common.PatternKind? {
+  match self {
+    Replace(..) => Some(@common.RegexPattern)
+    ReplaceString(..) => Some(@common.StringPattern)
+    _ => None
+  }
+}
+
+///|
+pub fn Normalizer::get_pattern_kind(self : Normalizer) -> @common.PatternKind? {
+  self.pattern_kind()
+}
+
+///|
 pub fn Normalizer::content(self : Normalizer) -> String? {
   match self {
     Replace(content~, ..) => Some(content)
+    ReplaceString(content~, ..) => Some(content)
     _ => None
   }
 }
@@ -293,6 +310,14 @@ pub fn Normalizer::strip(
 
 ///|
 pub fn Normalizer::replace(pattern : String, content : String) -> Normalizer {
+  ReplaceString(pattern~, content~)
+}
+
+///|
+pub fn Normalizer::replace_regex(
+  pattern : String,
+  content : String,
+) -> Normalizer {
   Replace(pattern~, content~)
 }
 
@@ -384,7 +409,10 @@ pub fn Normalizer::to_json(self : Normalizer) -> String? {
     Strip(left~, right~) => Some(strip_to_json(left, right))
     StripAccents => Some("{\"type\":\"StripAccents\"}")
     ByteLevel => Some("{\"type\":\"ByteLevel\"}")
-    Replace(pattern~, content~) => Some(replace_to_json(pattern, content))
+    Replace(pattern~, content~) =>
+      Some(replace_to_json(pattern, content, @common.RegexPattern))
+    ReplaceString(pattern~, content~) =>
+      Some(replace_to_json(pattern, content, @common.StringPattern))
     Prepend(prepend~) => Some(prepend_to_json(prepend))
     Nmt => Some("{\"type\":\"Nmt\"}")
     Precompiled => Some("{\"type\":\"Precompiled\"}")
@@ -414,9 +442,17 @@ fn strip_to_json(left : Bool, right : Bool) -> String {
 }
 
 ///|
-fn replace_to_json(pattern : String, content : String) -> String {
+fn replace_to_json(
+  pattern : String,
+  content : String,
+  pattern_kind : @common.PatternKind,
+) -> String {
   let sb = StringBuilder::new()
-  sb.write_string("{\"type\":\"Replace\",\"pattern\":{\"String\":")
+  sb.write_string("{\"type\":\"Replace\",\"pattern\":{")
+  match pattern_kind {
+    @common.StringPattern => sb.write_string("\"String\":")
+    @common.RegexPattern => sb.write_string("\"Regex\":")
+  }
   write_json_string(sb, pattern)
   sb.write_string("},\"content\":")
   write_json_string(sb, content)
@@ -522,11 +558,14 @@ pub fn Normalizer::from_json(
         left=@types.get_bool(obj, "strip_left", default=true),
         right=@types.get_bool(obj, "strip_right", default=true),
       )
-    "Replace" =>
-      Replace(
-        pattern=parse_pattern(obj),
-        content=@types.get_str(obj, "content", default=""),
-      )
+    "Replace" => {
+      let (pattern, pattern_kind) = parse_pattern(obj)
+      let content = @types.get_str(obj, "content", default="")
+      match pattern_kind {
+        @common.StringPattern => ReplaceString(pattern~, content~)
+        @common.RegexPattern => Replace(pattern~, content~)
+      }
+    }
     "Prepend" => Prepend(prepend=@types.get_str(obj, "prepend", default=""))
     "Nmt" => Nmt
     "Precompiled" =>
@@ -654,21 +693,22 @@ fn base64_value(c : Char) -> Int {
   }
 }
 
-// HF "pattern" can be {"String": "x"} or {"Regex": "x"}; we keep the raw string.
+// HF "pattern" can be {"String": "x"} or {"Regex": "x"}; keep both payload and
+// tag so state and behavior do not conflate literal and regex patterns.
 
 ///|
-fn parse_pattern(obj : Map[String, Json]) -> String {
+fn parse_pattern(obj : Map[String, Json]) -> (String, @common.PatternKind) {
   match obj.get("pattern") {
     Some(Object(p)) =>
       match p.get("String") {
-        Some(String(s)) => s
+        Some(String(s)) => (s, @common.StringPattern)
         _ =>
           match p.get("Regex") {
-            Some(String(s)) => s
-            _ => ""
+            Some(String(s)) => (s, @common.RegexPattern)
+            _ => ("", @common.StringPattern)
           }
       }
-    Some(String(s)) => s
-    _ => ""
+    Some(String(s)) => (s, @common.StringPattern)
+    _ => ("", @common.StringPattern)
   }
 }

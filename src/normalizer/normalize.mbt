@@ -14,6 +14,8 @@ pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
     Nmt => nmt_normalize(input)
     Prepend(prepend~) => prepend + input
     Replace(pattern~, content~) => replace_all(input, pattern, content)
+    ReplaceString(pattern~, content~) =>
+      @common.replace_literal(input, pattern, content)
     Sequence(steps) => {
       let mut s = input
       for step in steps {

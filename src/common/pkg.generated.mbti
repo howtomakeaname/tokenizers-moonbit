@@ -91,6 +91,11 @@ pub fn simple_split_regex_matches(Array[Char], String) -> Array[Span]?
 // Errors
 
 // Types and methods
+pub(all) enum PatternKind {
+  StringPattern
+  RegexPattern
+} derive(Eq, @debug.Debug)
+
 pub struct Regex {
   pattern : String
 } derive(Eq, @debug.Debug)

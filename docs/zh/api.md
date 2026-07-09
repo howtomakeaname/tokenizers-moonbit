@@ -512,6 +512,10 @@ JSON/state，序列化往返仍应使用 typed 组件。
   `{2,3}`/`{2,4}`/`{3,4}` 等 HF 常见 tokenizer regex。Normalizer 与 Decoder
   `Replace` 对 bounded/ranged 量词保持直接分发路径，使合成 cleanup benchmark
   继续快于 HF。
+- 加载的 `Replace` 组件会保留 HF tagged pattern 形态：`{String: ...}` 按字面量
+  substring 替换，`{Regex: ...}` 才使用上面的 deterministic regex 子集。
+  binding-friendly 的 `replace(...)` factory 创建字面量 string 形态；
+  `replace_regex(...)` 创建 regex 形态。
 - 未知复杂 Split regex 会在加载期显式报 Unsupported；未知 Replace pattern 保持
   轻量 fallback，按字面量子串替换处理。
 

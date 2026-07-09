@@ -11,6 +11,8 @@ pub fn Decoder::decode(self : Decoder, tokens : Array[String]) -> String {
   match self {
     Replace(pattern~, content~) =>
       return decode_replace_direct(tokens, pattern, content)
+    ReplaceString(pattern~, content~) =>
+      return join(tokens.map(t => @common.replace_literal(t, pattern, content)))
     _ => ()
   }
   let out = self.decode_chain(tokens)
@@ -589,6 +591,8 @@ pub fn Decoder::decode_chain(
     Fuse => [join(tokens)]
     Replace(pattern~, content~) =>
       tokens.map(t => replace_all(t, pattern, content))
+    ReplaceString(pattern~, content~) =>
+      tokens.map(t => @common.replace_literal(t, pattern, content))
     Strip(content~, start~, stop~) =>
       tokens.map(t => strip_token(t, content, start, stop))
     ByteFallback => decode_byte_fallback(tokens)
@@ -664,6 +668,7 @@ fn decode_sentencepiece_sequence_fast(
   }
   let (pattern, content) = match decoders[0] {
     Replace(pattern~, content~) => (pattern, content)
+    ReplaceString(pattern~, content~) => (pattern, content)
     _ => return None
   }
   match decoders[1] {

@@ -2,6 +2,7 @@
 package "howtomakeaname/tokenizers-moonbit/decoder"
 
 import {
+  "howtomakeaname/tokenizers-moonbit/common",
   "howtomakeaname/tokenizers-moonbit/types",
   "moonbitlang/core/debug",
 }
@@ -19,6 +20,7 @@ pub enum Decoder {
   Strip(content~ : Char, start~ : Int, stop~ : Int)
   Fuse
   Replace(pattern~ : String, content~ : String)
+  ReplaceString(pattern~ : String, content~ : String)
   ByteFallback
   CTC(pad_token~ : String, word_delimiter_token~ : String, cleanup~ : Bool)
   Sequence(Array[Decoder])
@@ -49,6 +51,7 @@ pub fn Decoder::get_decoders(Self) -> Array[Self]
 pub fn Decoder::get_item(Self, Int) -> Self?
 pub fn Decoder::get_pad_token(Self) -> String?
 pub fn Decoder::get_pattern(Self) -> String?
+pub fn Decoder::get_pattern_kind(Self) -> @common.PatternKind?
 pub fn Decoder::get_prefix(Self) -> String?
 pub fn Decoder::get_prepend_scheme(Self) -> String?
 pub fn Decoder::get_replacement(Self) -> Char?
@@ -64,9 +67,11 @@ pub fn Decoder::kind(Self) -> String
 pub fn Decoder::metaspace(replacement? : Char, prepend_scheme? : String, split? : Bool) -> Self
 pub fn Decoder::pad_token(Self) -> String?
 pub fn Decoder::pattern(Self) -> String?
+pub fn Decoder::pattern_kind(Self) -> @common.PatternKind?
 pub fn Decoder::prefix(Self) -> String?
 pub fn Decoder::prepend_scheme(Self) -> String?
 pub fn Decoder::replace(String, String) -> Self
+pub fn Decoder::replace_regex(String, String) -> Self
 pub fn Decoder::replacement(Self) -> Char?
 pub fn Decoder::sequence(Array[Self]) -> Self
 pub fn Decoder::split_enabled(Self) -> Bool?

@@ -12,6 +12,7 @@ pub enum Decoder {
   Strip(content~ : Char, start~ : Int, stop~ : Int)
   Fuse
   Replace(pattern~ : String, content~ : String)
+  ReplaceString(pattern~ : String, content~ : String)
   // Reassemble <0xXX> byte tokens into UTF-8 text.
   ByteFallback
   // CTC decoder (speech models): dedup repeats, drop pad, delimiter -> space.
@@ -40,7 +41,7 @@ pub fn Decoder::kind(self : Decoder) -> String {
     BPEDecoder(..) => "BPEDecoder"
     Strip(..) => "Strip"
     Fuse => "Fuse"
-    Replace(..) => "Replace"
+    Replace(..) | ReplaceString(..) => "Replace"
     ByteFallback => "ByteFallback"
     CTC(..) => "CTC"
     Sequence(_) => "Sequence"
@@ -219,6 +220,7 @@ pub fn Decoder::content(self : Decoder) -> String? {
   match self {
     Strip(content~, ..) => Some(@common.char_string(content))
     Replace(content~, ..) => Some(content)
+    ReplaceString(content~, ..) => Some(content)
     _ => None
   }
 }
@@ -258,6 +260,7 @@ pub fn Decoder::get_stop(self : Decoder) -> Int? {
 pub fn Decoder::pattern(self : Decoder) -> String? {
   match self {
     Replace(pattern~, ..) => Some(pattern)
+    ReplaceString(pattern~, ..) => Some(pattern)
     _ => None
   }
 }
@@ -265,6 +268,20 @@ pub fn Decoder::pattern(self : Decoder) -> String? {
 ///|
 pub fn Decoder::get_pattern(self : Decoder) -> String? {
   self.pattern()
+}
+
+///|
+pub fn Decoder::pattern_kind(self : Decoder) -> @common.PatternKind? {
+  match self {
+    Replace(..) => Some(@common.RegexPattern)
+    ReplaceString(..) => Some(@common.StringPattern)
+    _ => None
+  }
+}
+
+///|
+pub fn Decoder::get_pattern_kind(self : Decoder) -> @common.PatternKind? {
+  self.pattern_kind()
 }
 
 ///|
@@ -335,6 +352,11 @@ pub fn Decoder::__getitem__(self : Decoder, index : Int) -> Decoder? {
 
 ///|
 pub fn Decoder::replace(pattern : String, content : String) -> Decoder {
+  ReplaceString(pattern~, content~)
+}
+
+///|
+pub fn Decoder::replace_regex(pattern : String, content : String) -> Decoder {
   Replace(pattern~, content~)
 }
 
@@ -410,7 +432,10 @@ pub fn Decoder::to_json(self : Decoder) -> String? {
     BPEDecoder(suffix~) => Some(bpe_decoder_to_json(suffix))
     Strip(content~, start~, stop~) => Some(strip_to_json(content, start, stop))
     Fuse => Some("{\"type\":\"Fuse\"}")
-    Replace(pattern~, content~) => Some(replace_to_json(pattern, content))
+    Replace(pattern~, content~) =>
+      Some(replace_to_json(pattern, content, @common.RegexPattern))
+    ReplaceString(pattern~, content~) =>
+      Some(replace_to_json(pattern, content, @common.StringPattern))
     ByteFallback => Some("{\"type\":\"ByteFallback\"}")
     CTC(pad_token~, word_delimiter_token~, cleanup~) =>
       Some(ctc_to_json(pad_token, word_delimiter_token, cleanup))
@@ -484,9 +509,17 @@ fn strip_to_json(content : Char, start : Int, stop : Int) -> String {
 }
 
 ///|
-fn replace_to_json(pattern : String, content : String) -> String {
+fn replace_to_json(
+  pattern : String,
+  content : String,
+  pattern_kind : @common.PatternKind,
+) -> String {
   let sb = StringBuilder::new()
-  sb.write_string("{\"type\":\"Replace\",\"pattern\":{\"String\":")
+  sb.write_string("{\"type\":\"Replace\",\"pattern\":{")
+  match pattern_kind {
+    @common.StringPattern => sb.write_string("\"String\":")
+    @common.RegexPattern => sb.write_string("\"Regex\":")
+  }
   write_json_string(sb, pattern)
   sb.write_string("},\"content\":")
   write_json_string(sb, content)
@@ -613,11 +646,14 @@ pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
         start=@types.get_int(obj, "start", default=0),
         stop=@types.get_int(obj, "stop", default=0),
       )
-    "Replace" =>
-      Replace(
-        pattern=parse_pattern(obj),
-        content=@types.get_str(obj, "content", default=""),
-      )
+    "Replace" => {
+      let (pattern, pattern_kind) = parse_pattern(obj)
+      let content = @types.get_str(obj, "content", default="")
+      match pattern_kind {
+        @common.StringPattern => ReplaceString(pattern~, content~)
+        @common.RegexPattern => Replace(pattern~, content~)
+      }
+    }
     "Sequence" => {
       let arr = match obj.get("decoders") {
         Some(Array(a)) => a
@@ -630,18 +666,18 @@ pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
 }
 
 ///|
-fn parse_pattern(obj : Map[String, Json]) -> String {
+fn parse_pattern(obj : Map[String, Json]) -> (String, @common.PatternKind) {
   match obj.get("pattern") {
     Some(Object(p)) =>
       match p.get("String") {
-        Some(String(s)) => s
+        Some(String(s)) => (s, @common.StringPattern)
         _ =>
           match p.get("Regex") {
-            Some(String(s)) => s
-            _ => ""
+            Some(String(s)) => (s, @common.RegexPattern)
+            _ => ("", @common.StringPattern)
           }
       }
-    Some(String(s)) => s
-    _ => ""
+    Some(String(s)) => (s, @common.StringPattern)
+    _ => ("", @common.StringPattern)
   }
 }

@@ -509,6 +509,8 @@ test "normalizer exposes HF-style configuration getters" {
   @test.assert_eq(replace.kind(), "Replace")
   @test.assert_eq(replace.pattern(), Some("\\s+"))
   @test.assert_eq(replace.get_pattern(), Some("\\s+"))
+  @test.assert_eq(replace.pattern_kind(), Some(@common.RegexPattern))
+  @test.assert_eq(replace.get_pattern_kind(), Some(@common.RegexPattern))
   @test.assert_eq(replace.content(), Some(" "))
   @test.assert_eq(replace.get_content(), Some(" "))
 
@@ -591,7 +593,24 @@ test "normalizer HF-style factories wrap enum variants" {
   let replace = Normalizer::replace("\\s+", " ")
   @test.assert_eq(replace.kind(), "Replace")
   @test.assert_eq(replace.pattern(), Some("\\s+"))
+  @test.assert_eq(replace.pattern_kind(), Some(@common.StringPattern))
   @test.assert_eq(replace.content(), Some(" "))
+  @test.assert_eq(replace.normalize("a b\tc \\s+"), "a b\tc  ")
+  @test.assert_eq(
+    replace.to_json(),
+    Some(
+      "{\"type\":\"Replace\",\"pattern\":{\"String\":\"\\\\s+\"},\"content\":\" \"}",
+    ),
+  )
+  let regex_replace = Normalizer::replace_regex("\\s+", "_")
+  @test.assert_eq(regex_replace.pattern_kind(), Some(@common.RegexPattern))
+  @test.assert_eq(regex_replace.normalize("a b\tc \\s+"), "a_b_c_\\s+")
+  @test.assert_eq(
+    regex_replace.to_json(),
+    Some(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"\\\\s+\"},\"content\":\"_\"}",
+    ),
+  )
 
   let prepend = Normalizer::prepend_normalizer("▁")
   @test.assert_eq(prepend.kind(), "Prepend")
@@ -643,6 +662,30 @@ test "normalizer exposes JSON state and string aliases" {
   )
   @test.assert_eq(parsed.kind(), "Strip")
   @test.assert_eq(parsed.strip_right(), Some(false))
+
+  let string_replace = Normalizer::from_state(
+    NormalizerState::new(
+      "{\"type\":\"Replace\",\"pattern\":{\"String\":\"\\\\s+\"},\"content\":\"_\"}",
+    ),
+  )
+  @test.assert_eq(string_replace.pattern_kind(), Some(@common.StringPattern))
+  @test.assert_eq(string_replace.normalize("a b\tc \\s+"), "a b\tc _")
+  @test.assert_eq(
+    Normalizer::__setstate__(string_replace.__getstate__()).to_json(),
+    string_replace.to_json(),
+  )
+
+  let regex_replace = Normalizer::from_state(
+    NormalizerState::new(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"\\\\s+\"},\"content\":\"_\"}",
+    ),
+  )
+  @test.assert_eq(regex_replace.pattern_kind(), Some(@common.RegexPattern))
+  @test.assert_eq(regex_replace.normalize("a b\tc \\s+"), "a_b_c_\\s+")
+  @test.assert_eq(
+    Normalizer::__setstate__(regex_replace.__getstate__()).to_json(),
+    regex_replace.to_json(),
+  )
 
   let parsed_bert = Normalizer::from_state(
     NormalizerState::new(

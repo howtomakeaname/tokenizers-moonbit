@@ -2,6 +2,7 @@
 package "howtomakeaname/tokenizers-moonbit/normalizer"
 
 import {
+  "howtomakeaname/tokenizers-moonbit/common",
   "howtomakeaname/tokenizers-moonbit/types",
   "moonbitlang/core/debug",
 }
@@ -32,6 +33,7 @@ pub(all) enum Normalizer {
   StripAccents
   ByteLevel
   Replace(pattern~ : String, content~ : String)
+  ReplaceString(pattern~ : String, content~ : String)
   Prepend(prepend~ : String)
   Nmt
   Precompiled
@@ -58,6 +60,7 @@ pub fn Normalizer::get_item(Self, Int) -> Self?
 pub fn Normalizer::get_lowercase(Self) -> Bool?
 pub fn Normalizer::get_normalizers(Self) -> Array[Self]
 pub fn Normalizer::get_pattern(Self) -> String?
+pub fn Normalizer::get_pattern_kind(Self) -> @common.PatternKind?
 pub fn Normalizer::get_prepend(Self) -> String?
 pub fn Normalizer::get_state(Self) -> NormalizerState raise @types.TokenizerError
 pub fn Normalizer::get_strip_accents(Self) -> Bool?
@@ -77,10 +80,12 @@ pub fn Normalizer::normalize(Self, String) -> String
 pub fn Normalizer::normalize_str(Self, String) -> String
 pub fn Normalizer::normalizers(Self) -> Array[Self]
 pub fn Normalizer::pattern(Self) -> String?
+pub fn Normalizer::pattern_kind(Self) -> @common.PatternKind?
 pub fn Normalizer::precompiled() -> Self
 pub fn Normalizer::prepend(Self) -> String?
 pub fn Normalizer::prepend_normalizer(String) -> Self
 pub fn Normalizer::replace(String, String) -> Self
+pub fn Normalizer::replace_regex(String, String) -> Self
 pub fn Normalizer::right(Self) -> Bool?
 pub fn Normalizer::sequence(Array[Self]) -> Self
 pub fn Normalizer::strip(left? : Bool, right? : Bool) -> Self
