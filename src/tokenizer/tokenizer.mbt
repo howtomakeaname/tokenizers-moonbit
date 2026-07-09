@@ -31,6 +31,11 @@ pub struct TokenizerState {
 } derive(Debug, Eq)
 
 ///|
+pub fn TokenizerState::new(json : String) -> TokenizerState {
+  { json, }
+}
+
+///|
 /// Lightweight custom component hooks for migration layers that cannot yet map a
 /// dynamic HF Python component to a typed MoonBit Normalizer/PreTokenizer/Decoder.
 /// Hooks can be supplied per call through explicit `*_with_hooks` APIs or

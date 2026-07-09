@@ -458,7 +458,8 @@ available as an HF-style alias for `vocab_size()`, and `vocab()` is a
 property-style alias for `get_vocab()`.
 
 `Tokenizer::__str__()` and `Tokenizer::__repr__()` are thin Python binding
-aliases for the compact `to_str()` JSON form.
+aliases for the compact `to_str()` JSON form. `TokenizerState::new(json)`
+matches the other JSON-backed state wrappers for binding/pickle shims.
 
 `TokenizerComponentHooks` provides runtime-only normalize, pre-tokenize, and
 decode callbacks for binding layers that cannot map a dynamic Python component

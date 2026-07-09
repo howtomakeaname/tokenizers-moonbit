@@ -533,6 +533,7 @@ pub fn TokenizerComponentHooks::with_pre_tokenize(Self, ((String, Int) -> Array[
 pub struct TokenizerState {
   json : String
 } derive(Eq, @debug.Debug)
+pub fn TokenizerState::new(String) -> Self
 
 pub enum Trainer {
   WordLevelTrainer(unk_token~ : String, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, show_progress~ : Bool)

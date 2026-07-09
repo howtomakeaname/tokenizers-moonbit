@@ -552,6 +552,10 @@ test "Tokenizer exposes Python pickle-style state roundtrip" {
     Tokenizer::from_state(tok.get_state()).to_json(),
     tok.to_json(),
   )
+  @test.assert_eq(
+    Tokenizer::from_state(TokenizerState::new(tok.to_str())).to_json(),
+    tok.to_json(),
+  )
 }
 
 ///|

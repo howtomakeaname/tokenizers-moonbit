@@ -423,7 +423,8 @@ BPE/Unigram 的 byte-fallback/fuse-unk flags。它也支持基于 JSON 的 `get_
 `vocab()` 作为 `get_vocab()` 的属性式 alias。
 
 `Tokenizer::__str__()` 与 `Tokenizer::__repr__()` 是面向 Python binding 的薄别名，
-返回紧凑 `to_str()` JSON 形式。
+返回紧凑 `to_str()` JSON 形式。`TokenizerState::new(json)` 与其他 JSON-backed
+state wrapper 保持一致，便于 binding/pickle shim 构造状态。
 
 `TokenizerComponentHooks` 提供仅运行时生效的 normalize、pre-tokenize、decode
 回调，供 binding 层临时承接还无法映射成 typed MoonBit 组件的动态 Python 组件。
