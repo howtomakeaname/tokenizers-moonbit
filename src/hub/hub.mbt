@@ -218,8 +218,47 @@ pub fn plan_tokenizer_json_request(
   model_id : String,
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubRequestPlan {
-  let url = tokenizer_json_url(options.endpoint, model_id, options.revision)
+  plan_hub_file_request_unchecked(model_id, "tokenizer.json", options)
+}
+
+///|
+/// Deterministic request plan for a tokenizer-adjacent Hub file. This shares
+/// URL revision encoding and auth headers with tokenizer.json, but intentionally
+/// leaves tokenizer-cache freshness/range metadata unset for non-tokenizer
+/// files.
+pub fn plan_hub_file_request(
+  model_id : String,
+  filename : String,
+  options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> HubRequestPlan raise @types.TokenizerError {
+  validate_hub_filename(filename)
+  plan_hub_file_request_unchecked(model_id, filename, options)
+}
+
+///|
+fn plan_hub_file_request_unchecked(
+  model_id : String,
+  filename : String,
+  options : HubDownloadOptions,
+) -> HubRequestPlan {
+  let url = hub_file_url_unchecked(
+    options.endpoint,
+    model_id,
+    options.revision,
+    filename,
+  )
   let headers = build_headers(options)
+  if filename != "tokenizer.json" {
+    return {
+      url,
+      headers,
+      cache_paths: None,
+      cache_metadata: None,
+      resume_metadata: None,
+      range_start: None,
+      conditional_etag: None,
+    }
+  }
   let paths = @tokenizer.Tokenizer::from_pretrained_cache_paths(
     model_id,
     revision=options.revision,
@@ -1129,12 +1168,52 @@ pub fn tokenizer_json_url(
   model_id : String,
   revision : String,
 ) -> String {
+  hub_file_url_unchecked(endpoint, model_id, revision, "tokenizer.json")
+}
+
+///|
+pub fn hub_file_url(
+  endpoint : String,
+  model_id : String,
+  revision : String,
+  filename : String,
+) -> String raise @types.TokenizerError {
+  validate_hub_filename(filename)
+  hub_file_url_unchecked(endpoint, model_id, revision, filename)
+}
+
+///|
+fn hub_file_url_unchecked(
+  endpoint : String,
+  model_id : String,
+  revision : String,
+  filename : String,
+) -> String {
   trim_trailing_slash(endpoint) +
   "/" +
   model_id +
   "/resolve/" +
   encode_hub_revision_segment(revision) +
-  "/tokenizer.json"
+  "/" +
+  filename
+}
+
+///|
+fn validate_hub_filename(filename : String) -> Unit raise @types.TokenizerError {
+  if filename.is_empty() || filename == "." || filename == ".." {
+    raise @types.ParseError("Hub filename must be a non-empty basename")
+  }
+  for c in filename {
+    let ok = (c >= 'a' && c <= 'z') ||
+      (c >= 'A' && c <= 'Z') ||
+      (c >= '0' && c <= '9') ||
+      c == '.' ||
+      c == '_' ||
+      c == '-'
+    if !ok {
+      raise @types.ParseError("Hub filename must be a basename: \{filename}")
+    }
+  }
 }
 
 ///|

@@ -16,6 +16,22 @@ test "tokenizer_json_url trims endpoint slash" {
     tokenizer_json_url("https://hf.example", "org/model", "feature/foo"),
     "https://hf.example/org/model/resolve/feature%2Ffoo/tokenizer.json",
   )
+  @test.assert_eq(
+    hub_file_url(
+      "https://hf.example/", "org/model", "refs/pr/7", "tokenizer_config.json",
+    ),
+    "https://hf.example/org/model/resolve/refs%2Fpr%2F7/tokenizer_config.json",
+  )
+  let mut bad_filename = false
+  try
+    hub_file_url("https://hf.example", "org/model", "main", "../config.json")
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      bad_filename = msg.contains("Hub filename must be a basename")
+    _ => ()
+  }
+  @test.assert_eq(bad_filename, true)
 }
 
 ///|
@@ -137,6 +153,25 @@ test "Hub request plan uses cache etag and resume range" {
     true,
   )
   @test.assert_eq(plan.resume_metadata.unwrap().downloaded_size, 256)
+  let sidecar_plan = plan_hub_file_request(
+    "org/request-plan-tokenizer",
+    "added_tokens.json",
+    options=HubDownloadOptions::new(
+      endpoint="https://hf.example/",
+      revision="refs/pr/7",
+      cache_dir=Some(cache),
+      token=Some("tok"),
+    ),
+  )
+  @test.assert_eq(
+    sidecar_plan.url,
+    "https://hf.example/org/request-plan-tokenizer/resolve/refs%2Fpr%2F7/added_tokens.json",
+  )
+  @test.assert_eq(sidecar_plan.headers.get("Authorization"), Some("Bearer tok"))
+  @test.assert_eq(sidecar_plan.headers.get("Accept"), Some("*/*"))
+  @test.assert_eq(sidecar_plan.cache_paths, None)
+  @test.assert_eq(sidecar_plan.resume_metadata, None)
+  @test.assert_eq(sidecar_plan.range_start, None)
 }
 
 ///|

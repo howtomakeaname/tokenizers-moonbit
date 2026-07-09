@@ -121,6 +121,11 @@ and truthy `HF_HUB_OFFLINE` values (`1`, `true`, `yes`, `on`) default hub
 options to local-only mode unless options override them. For users in regions
 where `huggingface.co` is slow, pass a mirror endpoint, for example:
 
+`hub_file_url` and `plan_hub_file_request` expose the same URL revision encoding
+and request headers for tokenizer-adjacent sidecar files such as
+`tokenizer_config.json`, `special_tokens_map.json`, or `added_tokens.json`;
+sidecar plans intentionally do not attach tokenizer cache/range metadata.
+
 ```moonbit
 let tok = @hub.from_pretrained(
   "bert-base-uncased",

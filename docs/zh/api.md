@@ -106,6 +106,11 @@ cache 根目录、`HF_TOKEN` 或显式 bearer token、通过 `HF_TOKEN_PATH` / `
 为真值（`1`、`true`、`yes`、`on`）时会让默认 hub options 进入 local-only 模式，
 除非调用方显式覆盖。中国大陆用户可显式配置镜像：
 
+`hub_file_url` 与 `plan_hub_file_request` 为 `tokenizer_config.json`、
+`special_tokens_map.json`、`added_tokens.json` 等 tokenizer 邻近 sidecar 文件暴露同一套
+URL revision 编码与请求 headers；sidecar request plan 不附带 tokenizer cache/range
+metadata。
+
 ```moonbit
 let tok = @hub.from_pretrained(
   "bert-base-uncased",

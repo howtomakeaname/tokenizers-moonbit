@@ -112,6 +112,8 @@ Hub env/local-only 小闭环：新增 `@hub.from_pretrained(..., local_files_onl
 
 Hub/Core sidecar 文件族小闭环：新增 `from_pretrained_aux_file(_path)`，可按本地目录/文件/Hub cache snapshot 解析 tokenizer 邻近的通用 basename sidecar（如 `added_tokens.json`），返回原始文本或路径，不解释内容并拒绝路径穿越文件名。
 
+Hub sidecar request plan 小闭环：新增 `hub_file_url` / `plan_hub_file_request`，复用 tokenizer.json 的 endpoint/revision 编码与 HF-style headers，支持 tokenizer 邻近 basename sidecar 的本地纯规划；非 tokenizer.json 文件不附带 tokenizer cache/range metadata。
+
 Tokenizer public API 文档同步闭环：英文/中文 API 文档补齐已实现但此前未列全的 `from_buffer`、`to_str(pretty)`、`save(path, pretty)`、`save_pretrained(pretty/save_model/model_prefix)`、`enable_truncation` / `no_truncation`、`enable_padding` / `no_padding`、`enable_encode_special_tokens` / `disable_encode_special_tokens`，减少 HF 迁移时对源码的依赖。
 
 训练/模型文件近期增量：`Trainer::{wordlevel,wordpiece,bpe,unigram}` 默认 `vocab_size` 已对齐 HF cap（30000/8000），Unigram trainer 默认 `max_piece_length=Some(16)` 且显式 `None` 保留旧 escape hatch；tokenizer/model-level trainer 入口补充 `show_progress` no-op，model-level Unigram 补充 `unk_piece` alias。`Model::save` 之外已补 `Model::from_bpe_files` / `from_wordpiece_file` / `from_wordlevel_file` / `from_unigram_file` standalone artifact loader，覆盖 BPE `vocab.json`+`merges.txt`、WordPiece `vocab.txt`、WordLevel `vocab.json`、Unigram JSON 的保存后重载。
