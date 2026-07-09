@@ -13,6 +13,8 @@ import {
 }
 
 // Values
+pub fn cache_pretrained_aux_file(String, String, String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> String raise @types.TokenizerError
+
 pub fn cache_pretrained_tokenizer_json(String, String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> String raise @types.TokenizerError
 
 pub fn clear_pretrained_download_resume_metadata(String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> Bool
@@ -357,6 +359,7 @@ pub fn Tokenizer::async_encode_fast(Self, EncodeInput, add_special_tokens? : Boo
 pub fn Tokenizer::batch_decode(Self, Array[Array[Int]], skip_special_tokens? : Bool) -> Array[String]
 pub fn Tokenizer::batch_encode_plus(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
 pub fn Tokenizer::batch_encode_plus_fast(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::cache_pretrained_aux_file(String, String, String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> String raise @types.TokenizerError
 pub fn Tokenizer::cache_size(Self) -> Int
 pub fn Tokenizer::clear_cache(Self) -> Self
 pub fn Tokenizer::clear_component_hooks(Self) -> Self

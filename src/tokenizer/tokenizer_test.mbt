@@ -2367,13 +2367,20 @@ test "from_pretrained_downloaded writes HF-style cache and refs" {
     aux.special_tokens_map_json,
     Some("{\"unk_token\":\"[UNK]\"}"),
   )
-  @fs.write_string_to_file(
-    hub +
-    "/models--org--downloaded-tokenizer/snapshots/def456/added_tokens.json",
+  let added_path = Tokenizer::cache_pretrained_aux_file(
+    "org/downloaded-tokenizer",
+    "added_tokens.json",
     "{\"added\":[]}",
-  ) catch {
-    _ => ()
-  }
+    revision="main",
+    resolved_revision=Some("def456"),
+    cache_dir=Some(hub),
+  )
+  @test.assert_eq(
+    added_path.has_suffix(
+      "/models--org--downloaded-tokenizer/snapshots/def456/added_tokens.json",
+    ),
+    true,
+  )
   @test.assert_eq(
     Tokenizer::from_pretrained_aux_file(
       "org/downloaded-tokenizer",
@@ -2383,6 +2390,20 @@ test "from_pretrained_downloaded writes HF-style cache and refs" {
     ),
     Some("{\"added\":[]}"),
   )
+  let mut bad_sidecar = false
+  try
+    Tokenizer::cache_pretrained_aux_file(
+      "org/downloaded-tokenizer",
+      "../escape.json",
+      "{}",
+      cache_dir=Some(hub),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) => bad_sidecar = msg.contains("basename")
+    _ => ()
+  }
+  @test.assert_eq(bad_sidecar, true)
   let meta = Tokenizer::from_pretrained_cache_metadata(
     "org/downloaded-tokenizer",
     revision="main",

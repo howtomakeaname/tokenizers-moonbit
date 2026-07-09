@@ -301,6 +301,88 @@ pub fn from_pretrained_aux_file(
 }
 
 ///|
+/// Store a downloaded tokenizer-adjacent sidecar into an HF-style Hub cache
+/// snapshot and update `refs/<revision>` when a resolved revision is available.
+/// The content is not interpreted; callers can read it back with
+/// `from_pretrained_aux_file`.
+pub fn Tokenizer::cache_pretrained_aux_file(
+  model_id : String,
+  filename : String,
+  content : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+) -> String raise @types.TokenizerError {
+  if !is_valid_aux_filename(filename) {
+    raise @types.ParseError(
+      "Hub sidecar filename must be a basename: \{filename}",
+    )
+  }
+  validate_hub_model_id(model_id)
+  validate_hub_revision(revision)
+  match resolved_revision {
+    Some(rev) => if !rev.is_empty() { validate_hub_revision(rev) }
+    None => ()
+  }
+  let root = match cache_dir {
+    Some(c) => c
+    None =>
+      match default_hub_cache_dir() {
+        Some(c) => c
+        None =>
+          raise @types.ParseError(
+            "cache_pretrained_aux_file needs cache_dir or HOME/HF_HOME/HF_HUB_CACHE/HUGGINGFACE_HUB_CACHE",
+          )
+      }
+  }
+  let repo_root = root + "/" + hub_model_dir(model_id)
+  let snapshot = match resolved_revision {
+    Some(r) => if r.is_empty() { revision } else { r }
+    None => read_revision_ref(repo_root, revision).unwrap_or(revision)
+  }
+  let paths = build_pretrained_cache_paths(
+    root,
+    model_id,
+    revision,
+    resolved_revision=Some(snapshot),
+  )
+  ensure_dir(root)
+  ensure_dir(paths.repo_cache_dir)
+  ensure_dir(paths.repo_cache_dir + "/snapshots")
+  ensure_dir(paths.snapshot_dir)
+  ensure_dir(paths.refs_dir)
+  ensure_parent_dir(paths.ref_path)
+  @fs.write_string_to_file(paths.ref_path, snapshot) catch {
+    _ =>
+      raise @types.ParseError("cannot write Hub cache ref: \{paths.ref_path}")
+  }
+  let path = join_path(paths.snapshot_dir, filename)
+  @fs.write_string_to_file(path, content) catch {
+    _ => raise @types.ParseError("cannot write downloaded Hub sidecar: \{path}")
+  }
+  path
+}
+
+///|
+pub fn cache_pretrained_aux_file(
+  model_id : String,
+  filename : String,
+  content : String,
+  revision? : String = "main",
+  resolved_revision? : String? = None,
+  cache_dir? : String? = None,
+) -> String raise @types.TokenizerError {
+  Tokenizer::cache_pretrained_aux_file(
+    model_id,
+    filename,
+    content,
+    revision~,
+    resolved_revision~,
+    cache_dir~,
+  )
+}
+
+///|
 /// Store downloaded `tokenizer.json` content into an HF-style Hub cache snapshot
 /// and load it immediately. This is the bridge used by network-capable callers
 /// such as the optional `hub` package: the core package only handles cache
@@ -1083,6 +1165,24 @@ fn resolve_pretrained_base_dir(
   }
   match resolve_hub_cache_path(path, revision~, cache_dir~) {
     Some(tok) => parent_dir(tok)
+    None => resolve_hub_cache_snapshot_dir(path, revision~, cache_dir~)
+  }
+}
+
+///|
+fn resolve_hub_cache_snapshot_dir(
+  model_id : String,
+  revision~ : String,
+  cache_dir~ : String?,
+) -> String? {
+  match
+    Tokenizer::from_pretrained_cache_paths(model_id, revision~, cache_dir~) {
+    Some(paths) =>
+      if @fs.path_exists(paths.snapshot_dir) {
+        Some(paths.snapshot_dir)
+      } else {
+        None
+      }
     None => None
   }
 }
