@@ -67,9 +67,22 @@ pub fn PreTokenizer::digits(individual_digits? : Bool) -> Self
 pub fn PreTokenizer::fixed_length(length? : Int) -> Self
 pub fn PreTokenizer::from_json(Json) -> Self raise @types.TokenizerError
 pub fn PreTokenizer::from_state(PreTokenizerState) -> Self raise @types.TokenizerError
+pub fn PreTokenizer::get_add_prefix_space(Self) -> Bool?
+pub fn PreTokenizer::get_behavior(Self) -> SplitBehavior?
+pub fn PreTokenizer::get_delimiter(Self) -> Char?
+pub fn PreTokenizer::get_individual_digits(Self) -> Bool?
+pub fn PreTokenizer::get_invert(Self) -> Bool?
 pub fn PreTokenizer::get_item(Self, Int) -> Self?
+pub fn PreTokenizer::get_length(Self) -> Int?
+pub fn PreTokenizer::get_pattern(Self) -> String?
 pub fn PreTokenizer::get_pre_tokenizers(Self) -> Array[Self]
+pub fn PreTokenizer::get_prepend_scheme(Self) -> String?
+pub fn PreTokenizer::get_regex(Self) -> Bool?
+pub fn PreTokenizer::get_replacement(Self) -> Char?
+pub fn PreTokenizer::get_split(Self) -> Bool?
 pub fn PreTokenizer::get_state(Self) -> PreTokenizerState raise @types.TokenizerError
+pub fn PreTokenizer::get_trim_offsets(Self) -> Bool?
+pub fn PreTokenizer::get_use_regex(Self) -> Bool?
 pub fn PreTokenizer::individual_digits(Self) -> Bool?
 pub fn PreTokenizer::invert(Self) -> Bool?
 pub fn PreTokenizer::kind(Self) -> String

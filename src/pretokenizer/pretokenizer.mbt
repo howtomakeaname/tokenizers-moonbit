@@ -130,11 +130,21 @@ pub fn PreTokenizer::add_prefix_space(self : PreTokenizer) -> Bool? {
 }
 
 ///|
+pub fn PreTokenizer::get_add_prefix_space(self : PreTokenizer) -> Bool? {
+  self.add_prefix_space()
+}
+
+///|
 pub fn PreTokenizer::use_regex(self : PreTokenizer) -> Bool? {
   match self {
     ByteLevel(use_regex~, ..) => Some(use_regex)
     _ => None
   }
+}
+
+///|
+pub fn PreTokenizer::get_use_regex(self : PreTokenizer) -> Bool? {
+  self.use_regex()
 }
 
 ///|
@@ -146,11 +156,21 @@ pub fn PreTokenizer::trim_offsets(self : PreTokenizer) -> Bool? {
 }
 
 ///|
+pub fn PreTokenizer::get_trim_offsets(self : PreTokenizer) -> Bool? {
+  self.trim_offsets()
+}
+
+///|
 pub fn PreTokenizer::replacement(self : PreTokenizer) -> Char? {
   match self {
     Metaspace(replacement~, ..) => Some(replacement)
     _ => None
   }
+}
+
+///|
+pub fn PreTokenizer::get_replacement(self : PreTokenizer) -> Char? {
+  self.replacement()
 }
 
 ///|
@@ -162,11 +182,21 @@ pub fn PreTokenizer::prepend_scheme(self : PreTokenizer) -> String? {
 }
 
 ///|
+pub fn PreTokenizer::get_prepend_scheme(self : PreTokenizer) -> String? {
+  self.prepend_scheme()
+}
+
+///|
 pub fn PreTokenizer::split_enabled(self : PreTokenizer) -> Bool? {
   match self {
     Metaspace(split~, ..) => Some(split)
     _ => None
   }
+}
+
+///|
+pub fn PreTokenizer::get_split(self : PreTokenizer) -> Bool? {
+  self.split_enabled()
 }
 
 ///|
@@ -179,11 +209,21 @@ pub fn PreTokenizer::behavior(self : PreTokenizer) -> SplitBehavior? {
 }
 
 ///|
+pub fn PreTokenizer::get_behavior(self : PreTokenizer) -> SplitBehavior? {
+  self.behavior()
+}
+
+///|
 pub fn PreTokenizer::pattern(self : PreTokenizer) -> String? {
   match self {
     Split(pattern~, ..) => Some(pattern)
     _ => None
   }
+}
+
+///|
+pub fn PreTokenizer::get_pattern(self : PreTokenizer) -> String? {
+  self.pattern()
 }
 
 ///|
@@ -195,11 +235,21 @@ pub fn PreTokenizer::invert(self : PreTokenizer) -> Bool? {
 }
 
 ///|
+pub fn PreTokenizer::get_invert(self : PreTokenizer) -> Bool? {
+  self.invert()
+}
+
+///|
 pub fn PreTokenizer::regex(self : PreTokenizer) -> Bool? {
   match self {
     Split(regex~, ..) => Some(regex)
     _ => None
   }
+}
+
+///|
+pub fn PreTokenizer::get_regex(self : PreTokenizer) -> Bool? {
+  self.regex()
 }
 
 ///|
@@ -211,6 +261,11 @@ pub fn PreTokenizer::individual_digits(self : PreTokenizer) -> Bool? {
 }
 
 ///|
+pub fn PreTokenizer::get_individual_digits(self : PreTokenizer) -> Bool? {
+  self.individual_digits()
+}
+
+///|
 pub fn PreTokenizer::delimiter(self : PreTokenizer) -> Char? {
   match self {
     Delimiter(delimiter~) => Some(delimiter)
@@ -219,11 +274,21 @@ pub fn PreTokenizer::delimiter(self : PreTokenizer) -> Char? {
 }
 
 ///|
+pub fn PreTokenizer::get_delimiter(self : PreTokenizer) -> Char? {
+  self.delimiter()
+}
+
+///|
 pub fn PreTokenizer::length(self : PreTokenizer) -> Int? {
   match self {
     FixedLength(length~) => Some(length)
     _ => None
   }
+}
+
+///|
+pub fn PreTokenizer::get_length(self : PreTokenizer) -> Int? {
+  self.length()
 }
 
 ///|
