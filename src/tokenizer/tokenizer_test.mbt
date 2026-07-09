@@ -950,6 +950,13 @@ test "Encoding public manipulation APIs mirror HF style" {
   @test.assert_eq(truncated.pad_hf(4, direction="left", pad_type_id=9).ids, [
     0, 0, 1, 2,
   ])
+  let mut bad_pad_direction = false
+  try truncated.pad_hf(4, direction="middle") |> ignore catch {
+    @types.ParseError(msg) =>
+      bad_pad_direction = msg.contains("invalid encoding direction: middle")
+    _ => ()
+  }
+  @test.assert_eq(bad_pad_direction, true)
   @test.assert_eq(
     typed.truncate_hf(2, stride=1, direction="right").ids,
     truncated.ids,
@@ -961,6 +968,15 @@ test "Encoding public manipulation APIs mirror HF style" {
     _ => ()
   }
   @test.assert_eq(bad_stride, true)
+  let mut bad_truncate_direction = false
+  try typed.truncate_hf(2, direction="middle") |> ignore catch {
+    @types.ParseError(msg) =>
+      bad_truncate_direction = msg.contains(
+        "invalid encoding direction: middle",
+      )
+    _ => ()
+  }
+  @test.assert_eq(bad_truncate_direction, true)
   @test.assert_eq(typed.truncate_hf(2, direction="left").ids, [2, 3])
   let merged = @types.Encoding::merge([
     @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2) }]),

@@ -495,7 +495,7 @@ pub fn Encoding::pad_hf(
   pad_id? : Int = 0,
   pad_type_id? : Int = 0,
   pad_token? : String = "[PAD]",
-) -> Encoding {
+) -> Encoding raise TokenizerError {
   self.pad(
     length,
     pad_id~,
@@ -518,10 +518,13 @@ pub fn Encoding::merge(
 }
 
 ///|
-fn parse_encoding_direction(direction : String) -> EncodingDirection {
+fn parse_encoding_direction(
+  direction : String,
+) -> EncodingDirection raise TokenizerError {
   match direction.to_lower() {
     "left" => Left
-    _ => Right
+    "right" => Right
+    other => raise ParseError("invalid encoding direction: \{other}")
   }
 }
 

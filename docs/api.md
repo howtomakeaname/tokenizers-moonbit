@@ -507,7 +507,7 @@ fn Encoding::pad(
 fn Encoding::pad_hf(
   self : Encoding, length : Int, direction? : String = "right",
   pad_id? : Int = 0, pad_type_id? : Int = 0, pad_token? : String = "[PAD]",
-) -> Encoding
+) -> Encoding raise TokenizerError
 fn Encoding::merge(encodings : Array[Encoding], growing_offsets? : Bool = true) -> Encoding
 fn Encoding::merge_with(self : Encoding, pair : Encoding, growing_offsets? : Bool = true) -> Encoding
 ```
@@ -524,8 +524,8 @@ map HF's `sequence_index` keyword while preserving the existing MoonBit
 HF Python return shapes while keeping the richer MoonBit `token_to_chars` /
 `token_to_word` methods intact. `truncate_hf` and `pad_hf` accept HF-style
 string directions and keyword order while delegating to the typed MoonBit
-helpers. `truncate_hf` raises when `stride >= max_len`, matching HF's public
-wrapper boundary.
+helpers. They raise on invalid direction strings; `truncate_hf` also raises
+when `stride >= max_len`, matching HF's public wrapper boundary.
 
 ### TruncationParams (`@tokenizer`)
 

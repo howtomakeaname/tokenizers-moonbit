@@ -91,7 +91,7 @@ pub fn Encoding::new(Array[Int], Array[Int], Array[String], Array[(Int, Int)], A
 pub fn Encoding::offsets(Self) -> Array[(Int, Int)]
 pub fn Encoding::overflowing(Self) -> Array[Self]
 pub fn Encoding::pad(Self, Int, pad_id? : Int, pad_type_id? : Int, pad_token? : String, direction? : EncodingDirection) -> Self
-pub fn Encoding::pad_hf(Self, Int, direction? : String, pad_id? : Int, pad_type_id? : Int, pad_token? : String) -> Self
+pub fn Encoding::pad_hf(Self, Int, direction? : String, pad_id? : Int, pad_type_id? : Int, pad_token? : String) -> Self raise TokenizerError
 pub fn Encoding::sequence_ids(Self) -> Array[Int?]
 pub fn Encoding::set_sequence_id(Self, Int) -> Self
 pub fn Encoding::special_tokens_mask(Self) -> Array[Int]
