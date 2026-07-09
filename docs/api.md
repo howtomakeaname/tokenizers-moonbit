@@ -393,8 +393,10 @@ It also provides lower-snake builder aliases for common HF constructors such as
 `normalize(input)`.
 `Normalizer` also exposes read-only configuration getters for binding layers,
 including `kind`, Strip left/right flags, Replace pattern/content, Prepend
-content, BertNormalizer flags, and Sequence child normalizers.
-Sequence normalizers expose both `normalizers` and `get_normalizers` copy-returning getters.
+content, BertNormalizer flags, and Sequence child normalizers. These fields also
+have `get_*` aliases such as `get_strip_left`, `get_pattern`, and
+`get_clean_text` for Python binding property access. Sequence normalizers expose
+both `normalizers` and `get_normalizers` copy-returning getters.
 It also provides lower-snake builder aliases for common typed constructors such
 as `nfc`, `nfd`, `nfkc`, `nfkd`, `byte_level`, `strip`, `replace`,
 `prepend_normalizer`, `bert_normalizer`, `lowercase_normalizer`,

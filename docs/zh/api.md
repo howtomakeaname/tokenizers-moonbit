@@ -367,7 +367,9 @@ Sequence pre-tokenizer 支持 `pre_tokenizers` / `get_pre_tokenizers`、`__len__
 `Normalizer::normalize_str(input)` 作为 HF 风格别名，等价于 `normalize(input)`。
 `Normalizer` 也提供只读配置 getter，覆盖 `kind`、Strip 左右裁剪标记、
 Replace pattern/content、Prepend 内容、BertNormalizer 标记与 Sequence 子 normalizer。
-Sequence normalizer 同时提供返回副本的 `normalizers` / `get_normalizers` getter。
+这些字段同时提供 `get_*` alias，例如 `get_strip_left`、`get_pattern`、
+`get_clean_text`，便于 Python binding 做属性访问。Sequence normalizer 同时提供返回副本的
+`normalizers` / `get_normalizers` getter。
 同时提供常见 typed 构造器的 lower-snake builder alias，例如 `nfc`、`nfd`、
 `nfkc`、`nfkd`、`byte_level`、`strip`、`replace`、`prepend_normalizer`、
 `bert_normalizer`、`lowercase_normalizer`、`strip_accents_normalizer`、`nmt`、
