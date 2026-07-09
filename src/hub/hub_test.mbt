@@ -43,6 +43,11 @@ test "download options default to online main revision" {
   @test.assert_eq(opts.stream_chunk_size, 65536)
   @test.assert_eq(opts.with_stream_chunk_size(17).stream_chunk_size, 17)
   @test.assert_eq(opts.with_stream_chunk_size(0).stream_chunk_size, 65536)
+  @test.assert_eq(opts.with_stream_chunk_size(-1).stream_chunk_size, 65536)
+  @test.assert_eq(
+    HubDownloadOptions::new(stream_chunk_size=-8).stream_chunk_size,
+    65536,
+  )
 }
 
 ///|
@@ -52,6 +57,10 @@ test "download options honor Hub environment defaults" {
   let env_opts = HubDownloadOptions::new()
   @test.assert_eq(env_opts.endpoint, "https://env-hf.example")
   @test.assert_eq(env_opts.local_files_only, true)
+  for value in ["TRUE", "Yes", "ON"] {
+    @sys.set_env_var("HF_HUB_OFFLINE", value)
+    @test.assert_eq(HubDownloadOptions::new().local_files_only, true)
+  }
 
   let explicit = HubDownloadOptions::new(
     endpoint="https://explicit-hf.example",
@@ -257,6 +266,7 @@ test "Hub sidecar download result writes raw file into cache" {
 
 ///|
 test "Hub request headers avoid empty auth and optional user agent" {
+  @sys.set_env_var("HF_TOKEN", "env-token")
   let no_auth = plan_tokenizer_json_request(
     "bert-base-uncased",
     options=HubDownloadOptions::new(token=Some(""), user_agent=None),

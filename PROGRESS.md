@@ -150,6 +150,8 @@ Trainer iterator length 兼容：`Tokenizer::train_from_iterator(..., length=Som
 
 Hub env/local-only 小闭环：新增 `@hub.from_pretrained(..., local_files_only=true)` cache hit/miss 覆盖，验证缓存命中直接返回本地 tokenizer 且不触网，缓存缺失抛出 `from_pretrained local cache miss and local_files_only=true`；核心 `from_pretrained` 默认 cache root 识别 `$HF_HUB_CACHE`（在 legacy `$HUGGINGFACE_HUB_CACHE` 之后、`$HF_HOME/hub` 之前），并补齐 `$HF_HOME/hub` 与 `$HOME/.cache/huggingface/hub` fallback 测试；`PretrainedCacheMetadata::etag_matches(None)` / tokenizer-level cache etag helper 明确表示“无 expected ETag 时只要求 cache 存在”；`HubDownloadOptions::new()` 读取 `$HF_ENDPOINT` 作为默认 endpoint，并在 `$HF_HUB_OFFLINE` 为真值时默认进入 local-only 模式；Hub request auth 也按显式 token → `$HF_TOKEN` → `$HF_TOKEN_PATH` → `$HF_HOME/token` 顺序发现 bearer token，显式 options 仍可覆盖。
 
+Hub env/header 边界覆盖近期增量：补齐 `HF_HUB_OFFLINE` 真值大小写（`TRUE` / `Yes` / `ON`）、负数 `stream_chunk_size` 回落默认值，以及显式空 token 在 `HF_TOKEN` 存在时仍不生成 Authorization header 的测试。
+
 Hub/Core aux 与 sidecar 文件小闭环：`PretrainedAuxFiles` 固定覆盖 `tokenizer_config.json` / `special_tokens_map.json`；`from_pretrained_aux_file(_path)` 可按本地目录/文件/Hub cache snapshot 解析 tokenizer 邻近的通用 basename sidecar（如 `added_tokens.json`），返回原始文本或路径，不解释内容并拒绝路径穿越文件名；`cache_pretrained_aux_file` 可把 raw sidecar 写入 refs/snapshots cache，且 sidecar-only snapshot 也可由 aux reader 读回。
 
 Hub sidecar request/download/cache 小闭环：新增 `hub_file_url` / `plan_hub_file_request`，复用 tokenizer.json 的 endpoint/revision 编码与 HF-style headers，支持 tokenizer 邻近 basename sidecar 的本地纯规划；`download_hub_file` 可做简单 2xx-only sidecar GET 并跟随 redirect，`apply_hub_file_download_result` 可把完整 sidecar response body 写为 raw snapshot 文件；非 tokenizer.json 文件仍不附带 tokenizer cache/range metadata，也不做 `from_pretrained` 自动下载、ETag/Range/resume 或内容解析。
