@@ -42,9 +42,23 @@ pub fn Decoder::decoders(Self) -> Array[Self]
 pub fn Decoder::from_json(Json) -> Self raise @types.TokenizerError
 pub fn Decoder::from_state(DecoderState) -> Self raise @types.TokenizerError
 pub fn Decoder::fuse() -> Self
+pub fn Decoder::get_add_prefix_space(Self) -> Bool?
+pub fn Decoder::get_cleanup(Self) -> Bool?
+pub fn Decoder::get_content(Self) -> String?
 pub fn Decoder::get_decoders(Self) -> Array[Self]
 pub fn Decoder::get_item(Self, Int) -> Self?
+pub fn Decoder::get_pad_token(Self) -> String?
+pub fn Decoder::get_pattern(Self) -> String?
+pub fn Decoder::get_prefix(Self) -> String?
+pub fn Decoder::get_prepend_scheme(Self) -> String?
+pub fn Decoder::get_replacement(Self) -> Char?
+pub fn Decoder::get_start(Self) -> Int?
 pub fn Decoder::get_state(Self) -> DecoderState raise @types.TokenizerError
+pub fn Decoder::get_stop(Self) -> Int?
+pub fn Decoder::get_suffix(Self) -> String?
+pub fn Decoder::get_trim_offsets(Self) -> Bool?
+pub fn Decoder::get_use_regex(Self) -> Bool?
+pub fn Decoder::get_word_delimiter_token(Self) -> String?
 pub fn Decoder::kind(Self) -> String
 pub fn Decoder::metaspace(replacement? : Char, prepend_scheme? : String) -> Self
 pub fn Decoder::pad_token(Self) -> String?

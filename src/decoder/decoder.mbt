@@ -105,11 +105,21 @@ pub fn Decoder::add_prefix_space(self : Decoder) -> Bool? {
 }
 
 ///|
+pub fn Decoder::get_add_prefix_space(self : Decoder) -> Bool? {
+  self.add_prefix_space()
+}
+
+///|
 pub fn Decoder::trim_offsets(self : Decoder) -> Bool? {
   match self {
     ByteLevel(trim_offsets~, ..) => Some(trim_offsets)
     _ => None
   }
+}
+
+///|
+pub fn Decoder::get_trim_offsets(self : Decoder) -> Bool? {
+  self.trim_offsets()
 }
 
 ///|
@@ -121,11 +131,21 @@ pub fn Decoder::use_regex(self : Decoder) -> Bool? {
 }
 
 ///|
+pub fn Decoder::get_use_regex(self : Decoder) -> Bool? {
+  self.use_regex()
+}
+
+///|
 pub fn Decoder::prefix(self : Decoder) -> String? {
   match self {
     WordPiece(prefix~, ..) => Some(prefix)
     _ => None
   }
+}
+
+///|
+pub fn Decoder::get_prefix(self : Decoder) -> String? {
+  self.prefix()
 }
 
 ///|
@@ -138,11 +158,21 @@ pub fn Decoder::cleanup(self : Decoder) -> Bool? {
 }
 
 ///|
+pub fn Decoder::get_cleanup(self : Decoder) -> Bool? {
+  self.cleanup()
+}
+
+///|
 pub fn Decoder::replacement(self : Decoder) -> Char? {
   match self {
     Metaspace(replacement~, ..) => Some(replacement)
     _ => None
   }
+}
+
+///|
+pub fn Decoder::get_replacement(self : Decoder) -> Char? {
+  self.replacement()
 }
 
 ///|
@@ -154,11 +184,21 @@ pub fn Decoder::prepend_scheme(self : Decoder) -> String? {
 }
 
 ///|
+pub fn Decoder::get_prepend_scheme(self : Decoder) -> String? {
+  self.prepend_scheme()
+}
+
+///|
 pub fn Decoder::suffix(self : Decoder) -> String? {
   match self {
     BPEDecoder(suffix~) => Some(suffix)
     _ => None
   }
+}
+
+///|
+pub fn Decoder::get_suffix(self : Decoder) -> String? {
+  self.suffix()
 }
 
 ///|
@@ -171,11 +211,21 @@ pub fn Decoder::content(self : Decoder) -> String? {
 }
 
 ///|
+pub fn Decoder::get_content(self : Decoder) -> String? {
+  self.content()
+}
+
+///|
 pub fn Decoder::start(self : Decoder) -> Int? {
   match self {
     Strip(start~, ..) => Some(start)
     _ => None
   }
+}
+
+///|
+pub fn Decoder::get_start(self : Decoder) -> Int? {
+  self.start()
 }
 
 ///|
@@ -187,11 +237,21 @@ pub fn Decoder::stop(self : Decoder) -> Int? {
 }
 
 ///|
+pub fn Decoder::get_stop(self : Decoder) -> Int? {
+  self.stop()
+}
+
+///|
 pub fn Decoder::pattern(self : Decoder) -> String? {
   match self {
     Replace(pattern~, ..) => Some(pattern)
     _ => None
   }
+}
+
+///|
+pub fn Decoder::get_pattern(self : Decoder) -> String? {
+  self.pattern()
 }
 
 ///|
@@ -203,11 +263,21 @@ pub fn Decoder::pad_token(self : Decoder) -> String? {
 }
 
 ///|
+pub fn Decoder::get_pad_token(self : Decoder) -> String? {
+  self.pad_token()
+}
+
+///|
 pub fn Decoder::word_delimiter_token(self : Decoder) -> String? {
   match self {
     CTC(word_delimiter_token~, ..) => Some(word_delimiter_token)
     _ => None
   }
+}
+
+///|
+pub fn Decoder::get_word_delimiter_token(self : Decoder) -> String? {
+  self.word_delimiter_token()
 }
 
 ///|
