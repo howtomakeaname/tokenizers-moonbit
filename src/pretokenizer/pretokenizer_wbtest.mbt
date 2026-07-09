@@ -218,6 +218,9 @@ test "pretokenizer exposes HF-style configuration getters" {
   @test.assert_eq(sequence.pre_tokenizers().map(p => p.kind()), [
     "WhitespaceSplit", "Digits",
   ])
+  @test.assert_eq(sequence.get_pre_tokenizers().map(p => p.kind()), [
+    "WhitespaceSplit", "Digits",
+  ])
   @test.assert_eq(sequence.__len__(), 2)
   @test.assert_eq(PreTokenizer::Whitespace.__len__(), 0)
   @test.assert_eq(sequence.get_item(0).unwrap().kind(), "WhitespaceSplit")
@@ -226,6 +229,9 @@ test "pretokenizer exposes HF-style configuration getters" {
   let steps = sequence.pre_tokenizers()
   steps.push(PreTokenizer::Whitespace)
   @test.assert_eq(sequence.pre_tokenizers().length(), 2)
+  let getter_steps = sequence.get_pre_tokenizers()
+  getter_steps.push(PreTokenizer::Whitespace)
+  @test.assert_eq(sequence.get_pre_tokenizers().length(), 2)
   @test.assert_eq(PreTokenizer::Whitespace.kind(), "Whitespace")
   @test.assert_eq(PreTokenizer::Whitespace.pattern(), None)
 }

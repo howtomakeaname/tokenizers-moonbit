@@ -538,6 +538,9 @@ test "normalizer exposes HF-style configuration getters" {
   let seq = Normalizer::Sequence([Normalizer::Lowercase, replace])
   @test.assert_eq(seq.kind(), "Sequence")
   @test.assert_eq(seq.normalizers().map(n => n.kind()), ["Lowercase", "Replace"])
+  @test.assert_eq(seq.get_normalizers().map(n => n.kind()), [
+    "Lowercase", "Replace",
+  ])
   @test.assert_eq(seq.__len__(), 2)
   @test.assert_eq(seq.get_item(0).unwrap().kind(), "Lowercase")
   @test.assert_eq(seq.__getitem__(1).unwrap().kind(), "Replace")
@@ -545,6 +548,9 @@ test "normalizer exposes HF-style configuration getters" {
   let steps = seq.normalizers()
   steps.push(Normalizer::NFC)
   @test.assert_eq(seq.normalizers().length(), 2)
+  let getter_steps = seq.get_normalizers()
+  getter_steps.push(Normalizer::NFC)
+  @test.assert_eq(seq.get_normalizers().length(), 2)
   @test.assert_eq(Normalizer::NFC.kind(), "NFC")
   @test.assert_eq(Normalizer::Lowercase.pattern(), None)
 }
