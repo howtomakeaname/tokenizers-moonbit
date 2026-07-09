@@ -408,7 +408,12 @@ summary with token count and exposed attribute names.
 `vocab_size`, `show_progress`, and model-specific knobs for WordPiece, BPE and
 Unigram trainers. Binding layers can also use lower-snake constructor aliases:
 `wordlevel_trainer`, `wordpiece_trainer`, `bpe_trainer`, and
-`unigram_trainer`. BPE trainers also preserve `progress_format` as configuration
+`unigram_trainer`. The default `vocab_size` caps match HF across typed
+constructors, lower-snake aliases, model-level training helpers, and tokenizer
+training convenience helpers: WordLevel, WordPiece, and BPE default to
+`Some(30000)`, while Unigram defaults to `Some(8000)`. Passing
+`vocab_size=None` keeps training uncapped. BPE trainers also preserve
+`progress_format` as configuration
 state (`"indicatif"`, `"json"`, or `"silent"`) while progress output remains a
 cross-target no-op. Unigram training also accepts `initial_alphabet`, matching
 HF's first-character retention rule for multi-character entries, and preserves

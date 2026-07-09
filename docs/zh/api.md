@@ -382,7 +382,11 @@ unsupported-component 错误，不返回有损 state。
 `min_frequency`、`special_tokens`、`special_added_tokens`、`vocab_size`、
 `show_progress`，以及 WordPiece、BPE、Unigram trainer 的模型特有 knobs。
 binding 层也可以使用 lower-snake constructor alias：`wordlevel_trainer`、
-`wordpiece_trainer`、`bpe_trainer`、`unigram_trainer`。BPE trainer 也会把
+`wordpiece_trainer`、`bpe_trainer`、`unigram_trainer`。默认 `vocab_size` cap
+已在 typed constructor、lower-snake alias、model-level 训练 helper 与 tokenizer
+convenience 训练入口之间对齐 HF：WordLevel、WordPiece、BPE 默认
+`Some(30000)`，Unigram 默认 `Some(8000)`；显式传 `vocab_size=None` 表示不设 cap。
+BPE trainer 也会把
 `progress_format` 作为配置 state 保留（`"indicatif"`、`"json"`、`"silent"`），但真实
 progress 输出仍保持跨 target no-op。Unigram 训练也接受 `initial_alphabet`，
 并对多字符条目沿用 HF 的“只保留第一个字符”规则；同时保留 `seed_size` 作为
