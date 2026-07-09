@@ -1827,12 +1827,16 @@ test "save and Tokenizer::from_file preserve tokenizer behavior" {
   let tok = Tokenizer::from_str(json)
   let path = "_build/tokenizer_save_roundtrip.json"
   tok.save(path)
+  let default_saved = @fs.read_file_to_string(path)
+  @test.assert_eq(default_saved.contains("\n"), true)
   let loaded = Tokenizer::from_file(path)
-  @test.assert_eq(loaded.to_json(), json)
   @test.assert_eq(
     loaded.encode("hello moon", add_special_tokens=false).ids,
     tok.encode("hello moon", add_special_tokens=false).ids,
   )
+  let compact_path = "_build/tokenizer_save_roundtrip_compact.json"
+  tok.save(compact_path, pretty=false)
+  @test.assert_eq(@fs.read_file_to_string(compact_path), json)
   let pretty_path = "_build/tokenizer_save_roundtrip_pretty.json"
   tok.save(pretty_path, pretty=true)
   let pretty = @fs.read_file_to_string(pretty_path)

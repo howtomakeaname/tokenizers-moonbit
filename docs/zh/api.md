@@ -19,7 +19,7 @@ fn from_pretrained_downloaded(
   resolved_revision? : String? = None, cache_dir? : String? = None,
 ) -> Tokenizer raise TokenizerError
 fn Tokenizer::to_str(self : Tokenizer, pretty? : Bool = false) -> String raise TokenizerError
-fn Tokenizer::save(self : Tokenizer, path : String, pretty? : Bool = false) -> Unit raise TokenizerError
+fn Tokenizer::save(self : Tokenizer, path : String, pretty? : Bool = true) -> Unit raise TokenizerError
 fn Tokenizer::save_pretrained(
   self : Tokenizer, dir : String, pretty? : Bool = false,
   save_model? : Bool = false, model_prefix? : String = "",
@@ -40,8 +40,9 @@ fn Tokenizer::save_pretrained(
 - `from_pretrained_downloaded` 用于网络调用方桥接：传入已下载的 `tokenizer.json`
   文本后写入标准 HF Hub cache 布局并立即解析。可选 `@hub` 包基于它在 native/js
   后端提供异步 HTTP 下载；wasm 场景可由宿主 fetch 后调用该函数。
-- `to_str(pretty)`、`save(path, pretty)`、`save_pretrained(dir, pretty)` 默认保持
-  compact/verbatim JSON；显式 `pretty=true` 时写出两空格 pretty JSON。
+- `to_str(pretty)` 默认保持 compact/verbatim JSON。`save(path, pretty)` 对齐 HF
+  `Tokenizer.save`，默认写出两空格 pretty JSON；传 `pretty=false` 可保留精确
+  compact/verbatim bytes。`save_pretrained(dir, pretty)` 仍保持 compact 默认；
   `save_pretrained(save_model=true)` 还能在 `tokenizer.json` 旁写出模型 sidecar artifacts。
 - 程序化构造的 tokenizer 会序列化已支持 typed serializer 的 normalizer、
   pre-tokenizer、model、post-processor、decoder、truncation、padding 与 added token

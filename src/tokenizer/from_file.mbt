@@ -107,7 +107,7 @@ pub fn Tokenizer::from_file(
 pub fn Tokenizer::save(
   self : Tokenizer,
   path : String,
-  pretty? : Bool = false,
+  pretty? : Bool = true,
 ) -> Unit raise @types.TokenizerError {
   let content = self.to_str(pretty~)
   @fs.write_string_to_file(path, content) catch {

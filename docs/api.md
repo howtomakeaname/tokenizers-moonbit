@@ -20,7 +20,7 @@ fn from_pretrained_downloaded(
   resolved_revision? : String? = None, cache_dir? : String? = None,
 ) -> Tokenizer raise TokenizerError
 fn Tokenizer::to_str(self : Tokenizer, pretty? : Bool = false) -> String raise TokenizerError
-fn Tokenizer::save(self : Tokenizer, path : String, pretty? : Bool = false) -> Unit raise TokenizerError
+fn Tokenizer::save(self : Tokenizer, path : String, pretty? : Bool = true) -> Unit raise TokenizerError
 fn Tokenizer::save_pretrained(
   self : Tokenizer, dir : String, pretty? : Bool = false,
   save_model? : Bool = false, model_prefix? : String = "",
@@ -46,10 +46,11 @@ fn Tokenizer::save_pretrained(
   Hub cache layout before parsing. The optional `@hub` package provides native/js
   async HTTP downloading on top of this API; wasm users can keep host-side fetch
   logic and call this function with the fetched JSON.
-- `to_str(pretty)`, `save(path, pretty)`, and `save_pretrained(dir, pretty)`
-  support compact/verbatim JSON by default and two-space pretty output when
-  requested. `save_pretrained(save_model=true)` can also write model sidecar
-  artifacts next to `tokenizer.json`.
+- `to_str(pretty)` defaults to compact/verbatim JSON. `save(path, pretty)`
+  follows HF `Tokenizer.save` and defaults to two-space pretty output; pass
+  `pretty=false` for exact compact/verbatim bytes. `save_pretrained(dir, pretty)`
+  keeps its compact default and can also write model sidecar artifacts next to
+  `tokenizer.json` with `save_model=true`.
 - Programmatically constructed tokenizers serialize typed normalizer,
   pre-tokenizer, model, post-processor, decoder, truncation, padding and added
   token state when those components expose a typed serializer; loaded HF

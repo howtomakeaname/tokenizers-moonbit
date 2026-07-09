@@ -13,7 +13,7 @@ Chinese version: [`docs/zh/migration-from-hf.md`](./zh/migration-from-hf.md)
 | `Tokenizer.from_str(s)` | `@tokenizer.Tokenizer::from_str(s)` |
 | `Tokenizer.from_pretrained(id, local_files_only=True)` | `@tokenizer.from_pretrained(id)` or `@tokenizer.from_pretrained_cached(id, cache_dir=...)` |
 | `Tokenizer.from_pretrained(id)` | `@hub.from_pretrained(id)` on native/js, or host fetch + `@tokenizer.from_pretrained_downloaded(id, json)` |
-| `tok.save("dir/tokenizer.json")` / directory workflows | `tok.save(path)` or `tok.save_pretrained(dir)` |
+| `tok.save("dir/tokenizer.json")` / directory workflows | `tok.save(path)` (pretty by default) or `tok.save_pretrained(dir)` |
 | `BPE.read_file(vocab, merges)` / model artifacts | `@model.Model::from_bpe_files(vocab, merges)` and the WordPiece/WordLevel/Unigram file loaders |
 
 ```python
