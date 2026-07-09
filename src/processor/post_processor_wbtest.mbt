@@ -50,6 +50,7 @@ test "post-processors expose HF-style configuration getters" {
   ])
   @test.assert_eq(template.single(), template.single_pieces())
   @test.assert_eq(template.pair_pieces().length(), 4)
+  @test.assert_eq(template.pair(), template.pair_pieces())
   @test.assert_eq(
     template.special_tokens().get("<s>"),
     Some(SpecialToken::new("<s>", [0], ["<s>"])),
@@ -83,6 +84,10 @@ test "post-processor aggregate getters return copies" {
   single_alias.push(SequenceRef(id="B", type_id=1))
   @test.assert_eq(template.single().length(), 1)
   @test.assert_eq(PostProcessor::byte_level().single(), [])
+  let pair_alias = template.pair()
+  pair_alias.push(SequenceRef(id="B", type_id=1))
+  @test.assert_eq(template.pair().length(), 1)
+  @test.assert_eq(PostProcessor::byte_level().pair(), [])
 
   let copied_specials = template.special_tokens()
   copied_specials["<multi>"] = SpecialToken::new("<multi>", [99], ["<changed>"])

@@ -197,6 +197,12 @@ pub fn PostProcessor::pair_pieces(self : PostProcessor) -> Array[Piece] {
 }
 
 ///|
+/// HF-style `TemplateProcessing.pair` typed alias.
+pub fn PostProcessor::pair(self : PostProcessor) -> Array[Piece] {
+  self.pair_pieces()
+}
+
+///|
 pub fn PostProcessor::special_tokens(
   self : PostProcessor,
 ) -> Map[String, SpecialToken] {
