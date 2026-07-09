@@ -998,6 +998,14 @@ test "add_tokens and add_special_tokens extend the added vocabulary" {
   let special = tok.encode("hello [MASK] moon", add_special_tokens=false)
   @test.assert_eq(special.tokens, ["hello", " [MASK] ", "moon"])
   @test.assert_eq(special.special_tokens_mask, [0, 0, 0])
+  let unicode_space_special = tok.encode(
+    "hello\u{a0}[MASK]\u{a0}moon",
+    add_special_tokens=false,
+  )
+  @test.assert_eq(unicode_space_special.tokens, [
+    "hello", "\u{a0}[MASK]\u{a0}", "moon",
+  ])
+  @test.assert_eq(unicode_space_special.offsets, [(0, 5), (5, 13), (13, 17)])
   let processed = tok.encode("hello", add_special_tokens=true)
   @test.assert_eq(processed.tokens, ["[CLS]", "hello", "[SEP]"])
   @test.assert_eq(processed.sequence_ids(), [None, Some(0), None])

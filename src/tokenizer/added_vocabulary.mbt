@@ -644,7 +644,7 @@ fn is_word_char(c : Char) -> Bool {
 
 ///|
 fn is_ws(c : Char) -> Bool {
-  @common.is_ascii_whitespace(c)
+  @common.is_unicode_whitespace(c.to_int())
 }
 
 ///|

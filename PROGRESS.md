@@ -122,6 +122,8 @@ AddedToken constructor 小闭环：`AddedToken::new` 已支持 `single_word` / `
 
 AddedToken 注册计数小闭环：`add_tokens_with_count` / `add_special_tokens_with_count` 已按 HF 语义返回“新增 added-vocab 注册数”，已存在于 model vocab 的 token 首次注册为 added/special token 时也计数但保留原 id，重复注册返回 0；新增 `add_token_strings_with_count` / `add_special_token_strings_with_count` 字符串入口，和 AddedToken 数组入口共享同一计数语义。
 
+AddedToken Unicode whitespace 小闭环：`lstrip` / `rstrip` 在 added-token 抽取阶段已从 ASCII whitespace 扩展到 HF/Rust regex 同类 Unicode whitespace（含 NBSP），只影响 added token 周边空白吸收，不改变 `Normalizer::Strip` 的 ASCII helper 语义。
+
 Encoding truncate_hf 边界对齐：`Encoding::truncate_hf(max_len, stride)` 在 `stride >= max_len` 时显式报错，匹配 HF 公开 wrapper；typed `truncate` 保持原有宽松不可变 API。
 
 Encoding HF direction 边界对齐：`truncate_hf` / `pad_hf` 对非 `left`/`right` 的 direction 字符串显式 `ParseError`，不再静默回落为 right。
