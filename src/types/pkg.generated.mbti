@@ -104,7 +104,7 @@ pub fn Encoding::token_to_word(Self, Int) -> (Int, Int)?
 pub fn Encoding::token_to_word_index(Self, Int) -> Int?
 pub fn Encoding::tokens(Self) -> Array[String]
 pub fn Encoding::truncate(Self, Int, stride? : Int, direction? : EncodingDirection) -> Self
-pub fn Encoding::truncate_hf(Self, Int, stride? : Int, direction? : String) -> Self
+pub fn Encoding::truncate_hf(Self, Int, stride? : Int, direction? : String) -> Self raise TokenizerError
 pub fn Encoding::type_ids(Self) -> Array[Int]
 pub fn Encoding::with_attention_mask(Self, Array[Int]) -> Self
 pub fn Encoding::with_overflowing(Self, Array[Self]) -> Self

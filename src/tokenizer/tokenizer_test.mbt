@@ -954,6 +954,13 @@ test "Encoding public manipulation APIs mirror HF style" {
     typed.truncate_hf(2, stride=1, direction="right").ids,
     truncated.ids,
   )
+  let mut bad_stride = false
+  try typed.truncate_hf(2, stride=2, direction="right") |> ignore catch {
+    @types.ParseError(msg) =>
+      bad_stride = msg.contains("stride must be strictly less than max_len=2")
+    _ => ()
+  }
+  @test.assert_eq(bad_stride, true)
   @test.assert_eq(typed.truncate_hf(2, direction="left").ids, [2, 3])
   let merged = @types.Encoding::merge([
     @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2) }]),

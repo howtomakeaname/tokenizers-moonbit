@@ -499,7 +499,7 @@ fn Encoding::with_sequence_id(self : Encoding, sequence_id : Int) -> Encoding
 fn Encoding::with_overflowing(self : Encoding, overflowing : Array[Encoding]) -> Encoding
 fn Encoding::take_overflowing(self : Encoding) -> (Encoding, Array[Encoding])
 fn Encoding::truncate(self : Encoding, max_len : Int, stride? : Int = 0, direction? : EncodingDirection = Right) -> Encoding
-fn Encoding::truncate_hf(self : Encoding, max_len : Int, stride? : Int = 0, direction? : String = "right") -> Encoding
+fn Encoding::truncate_hf(self : Encoding, max_len : Int, stride? : Int = 0, direction? : String = "right") -> Encoding raise TokenizerError
 fn Encoding::pad(
   self : Encoding, target_length : Int, pad_id? : Int = 0, pad_type_id? : Int = 0,
   pad_token? : String = "[PAD]", direction? : EncodingDirection = Right,
@@ -524,7 +524,8 @@ map HF's `sequence_index` keyword while preserving the existing MoonBit
 HF Python return shapes while keeping the richer MoonBit `token_to_chars` /
 `token_to_word` methods intact. `truncate_hf` and `pad_hf` accept HF-style
 string directions and keyword order while delegating to the typed MoonBit
-helpers.
+helpers. `truncate_hf` raises when `stride >= max_len`, matching HF's public
+wrapper boundary.
 
 ### TruncationParams (`@tokenizer`)
 

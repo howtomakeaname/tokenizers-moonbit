@@ -423,7 +423,10 @@ pub fn Encoding::truncate_hf(
   max_len : Int,
   stride? : Int = 0,
   direction? : String = "right",
-) -> Encoding {
+) -> Encoding raise TokenizerError {
+  if stride >= max_len && max_len > 0 {
+    raise ParseError("stride must be strictly less than max_len=\{max_len}")
+  }
   self.truncate(max_len, stride~, direction=parse_encoding_direction(direction))
 }
 
