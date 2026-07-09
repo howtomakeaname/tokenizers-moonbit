@@ -46,7 +46,7 @@ pub fn BPEModel::tokenize(
   self : BPEModel,
   word : String,
   offset? : Int = 0,
-) -> Array[@types.Token] {
+) -> Array[@types.Token] raise @types.TokenizerError {
   let chars = word.to_array()
   let n = chars.length()
   if n == 0 {
@@ -265,7 +265,7 @@ fn BPEModel::collect_tokens(
   symbols : Array[Symbol],
   chars : Array[Char],
   offset : Int,
-) -> Array[@types.Token] {
+) -> Array[@types.Token] raise @types.TokenizerError {
   let raw : Array[@types.Token] = []
   let mut idx = 0
   // find head
@@ -310,18 +310,11 @@ fn BPEModel::collect_tokens(
                       offsets: (start, stop),
                     })
                   None =>
-                    raw.push(@types.Token::{
-                      id: -1,
-                      value: surface,
-                      offsets: (start, stop),
-                    })
+                    raise @types.VocabError(
+                      "Unk token `\{unk}` not found in the vocabulary",
+                    )
                 }
-              None =>
-                raw.push(@types.Token::{
-                  id: -1,
-                  value: sym.value,
-                  offsets: (start, stop),
-                })
+              None => ()
             }
         }
       }

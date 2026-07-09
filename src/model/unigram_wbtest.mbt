@@ -73,10 +73,34 @@ test "unigram byte_fallback requires all byte tokens" {
 }
 
 ///|
-test "unigram without unk_id emits unknown chars with negative ids" {
+test "unigram without unk_id errors on unknown chars" {
   let model = mk_unigram([("a", 0.0)], None, false, true)
-  let toks = model.tokenize("azz", offset=5)
-  @test.assert_eq(unigram_surfaces(toks), ["a", "z", "z"])
-  @test.assert_eq(unigram_ids(toks), [0, -1, -1])
-  @test.assert_eq(toks.map(t => t.offsets), [(5, 6), (6, 7), (7, 8)])
+  let known = model.tokenize("a", offset=5)
+  @test.assert_eq(unigram_surfaces(known), ["a"])
+  @test.assert_eq(unigram_ids(known), [0])
+  @test.assert_eq(known.map(t => t.offsets), [(5, 6)])
+  let mut raised = false
+  try model.tokenize("az", offset=5) |> ignore catch {
+    @types.VocabError(msg) =>
+      raised = msg.contains("unknown token") && msg.contains("unk_id")
+    _ => ()
+  }
+  @test.assert_eq(raised, true)
+}
+
+///|
+test "unigram byte_fallback does not bypass missing unk_id" {
+  let model = mk_unigram(
+    [("<0xF0>", -10.0), ("<0x9F>", -10.0), ("<0x98>", -10.0), ("<0x80>", -10.0)],
+    None,
+    true,
+    true,
+  )
+  let mut raised = false
+  try model.tokenize("😀") |> ignore catch {
+    @types.VocabError(msg) =>
+      raised = msg.contains("unknown token") && msg.contains("unk_id")
+    _ => ()
+  }
+  @test.assert_eq(raised, true)
 }

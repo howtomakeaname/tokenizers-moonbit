@@ -6,6 +6,7 @@
 fn mk_bpe(
   vocab : Array[(String, Int)],
   merges : Array[(String, String)],
+  unk_token? : String? = None,
 ) -> Model {
   let v : Map[String, Int] = {}
   let vr : Array[String?] = []
@@ -21,7 +22,7 @@ fn mk_bpe(
     vocab: v,
     vocab_r: vr,
     merges: m,
-    unk_token: None,
+    unk_token,
     continuing_subword_prefix: None,
     end_of_word_suffix: None,
     fuse_unk: false,
@@ -105,12 +106,24 @@ test "bpe offsets track code-point spans" {
 }
 
 ///|
-test "bpe without unk_token emits unknown symbols with negative ids" {
+test "bpe without unk_token drops unknown symbols like HF" {
   let model = mk_bpe([("a", 0), ("b", 1), ("ab", 2)], [("a", "b")])
   let toks = model.tokenize("abx", offset=4)
-  @test.assert_eq(surfaces_of(toks), ["ab", "x"])
-  @test.assert_eq(ids_of(toks), [2, -1])
-  @test.assert_eq(toks.map(t => t.offsets), [(4, 6), (6, 7)])
+  @test.assert_eq(surfaces_of(toks), ["ab"])
+  @test.assert_eq(ids_of(toks), [2])
+  @test.assert_eq(toks.map(t => t.offsets), [(4, 6)])
+}
+
+///|
+test "bpe configured unk_token must exist in vocab" {
+  let model = mk_bpe([("a", 0)], [], unk_token=Some("[UNK]"))
+  let mut raised = false
+  try model.tokenize("az", offset=4) |> ignore catch {
+    @types.VocabError(msg) =>
+      raised = msg.contains("Unk token") && msg.contains("[UNK]")
+    _ => ()
+  }
+  @test.assert_eq(raised, true)
 }
 
 ///|
@@ -384,6 +397,14 @@ test "model direct constructors build WordLevel and WordPiece" {
   @test.assert_eq(wordlevel.id_to_token(2), Some("hello"))
   @test.assert_eq(wordlevel.get_vocab().get("later"), None)
   @test.assert_eq(wordlevel.tokenize("missing").map(t => t.value), ["[UNK]"])
+  let missing_wordlevel_unk = Model::wordlevel({}, unk_token="[UNK]")
+  let mut missing_wl_unk_raised = false
+  try missing_wordlevel_unk.tokenize("missing") |> ignore catch {
+    @types.VocabError(msg) =>
+      missing_wl_unk_raised = msg.contains("WordLevel") && msg.contains("[UNK]")
+    _ => ()
+  }
+  @test.assert_eq(missing_wl_unk_raised, true)
   @test.assert_eq(
     Model::from_state(wordlevel.__getstate__()).to_json(),
     wordlevel.to_json(),
@@ -407,6 +428,14 @@ test "model direct constructors build WordLevel and WordPiece" {
   @test.assert_eq(wordpiece.get_vocab().get("later"), None)
   @test.assert_eq(wordpiece.tokenize("hello").map(t => t.value), ["hello"])
   @test.assert_eq(wordpiece.tokenize("help").map(t => t.value), ["[UNK]"])
+  let missing_wp_unk = Model::wordpiece({})
+  let mut missing_wp_unk_raised = false
+  try missing_wp_unk.tokenize("help") |> ignore catch {
+    @types.VocabError(msg) =>
+      missing_wp_unk_raised = msg.contains("WordPiece") && msg.contains("[UNK]")
+    _ => ()
+  }
+  @test.assert_eq(missing_wp_unk_raised, true)
   @test.assert_eq(
     Model::from_state(wordpiece.__getstate__()).to_json(),
     wordpiece.to_json(),

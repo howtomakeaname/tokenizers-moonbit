@@ -951,7 +951,7 @@ pub fn Model::tokenize(
   self : Model,
   word : String,
   offset? : Int = 0,
-) -> Array[@types.Token] {
+) -> Array[@types.Token] raise @types.TokenizerError {
   match self {
     BPE(m) => m.tokenize(word, offset~)
     WordPiece(m) => m.tokenize(word, offset~)

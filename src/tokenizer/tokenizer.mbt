@@ -647,7 +647,7 @@ pub fn PreTokenizedString::to_encoding(
   self : PreTokenizedString,
   model : @model.Model,
   type_id? : Int = 0,
-) -> @types.Encoding {
+) -> @types.Encoding raise @types.TokenizerError {
   let toks : Array[@types.Token] = []
   for s in self.splits {
     for t in model.tokenize(s.value, offset=s.offsets.0) {
@@ -663,7 +663,7 @@ pub fn PreTokenizedString::into_encoding(
   self : PreTokenizedString,
   model : @model.Model,
   type_id? : Int = 0,
-) -> @types.Encoding {
+) -> @types.Encoding raise @types.TokenizerError {
   self.to_encoding(model, type_id~)
 }
 

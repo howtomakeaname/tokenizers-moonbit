@@ -20,7 +20,7 @@ pub fn UnigramModel::tokenize(
   self : UnigramModel,
   word : String,
   offset? : Int = 0,
-) -> Array[@types.Token] {
+) -> Array[@types.Token] raise @types.TokenizerError {
   let chars = word.to_array()
   let n = chars.length()
   if n == 0 {
@@ -56,14 +56,23 @@ pub fn UnigramModel::tokenize(
         None => ()
       }
     }
-    // Fallback: a single unknown char as unk (so we always reach the end).
+    // HF allows Unigram without `unk_id`, but tokenization must fail if an
+    // unknown fallback is actually required.
     if best[end] == neg_inf && end > 0 {
       let start = end - 1
       if best[start] != neg_inf {
-        best[end] = best[start] - unk_penalty
-        back[end] = start
-        best_tok[end] = make_piece(chars, start, end)
-        best_id[end] = self.unk_id.unwrap_or(-1)
+        match self.unk_id {
+          Some(uid) => {
+            best[end] = best[start] - unk_penalty
+            back[end] = start
+            best_tok[end] = make_piece(chars, start, end)
+            best_id[end] = uid
+          }
+          None =>
+            raise @types.VocabError(
+              "Encountered an unknown token but `unk_id` is missing",
+            )
+        }
       }
     }
   }
@@ -77,7 +86,17 @@ pub fn UnigramModel::tokenize(
       break
     }
     let is_unk = !self.vocab.contains(best_tok[pos])
-    let id = if is_unk { self.unk_id.unwrap_or(-1) } else { best_id[pos] }
+    let id = if is_unk {
+      match self.unk_id {
+        Some(uid) => uid
+        None =>
+          raise @types.VocabError(
+            "Encountered an unknown token but `unk_id` is missing",
+          )
+      }
+    } else {
+      best_id[pos]
+    }
     rev.push(@types.Token::{ id, value: best_tok[pos], offsets: (start, pos) })
     pos = start
   }

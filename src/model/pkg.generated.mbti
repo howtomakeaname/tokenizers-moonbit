@@ -26,7 +26,7 @@ pub struct BPEModel {
   cache : Map[String, Array[@types.Token]]
   mut cache_capacity : Int?
 }
-pub fn BPEModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token]
+pub fn BPEModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
 
 pub enum Model {
   BPE(BPEModel)
@@ -75,7 +75,7 @@ pub fn Model::resize_cache(Self, Int) -> Unit
 pub fn Model::save(Self, String, prefix? : String) -> Array[String] raise @types.TokenizerError
 pub fn Model::to_json(Self) -> String?
 pub fn Model::token_to_id(Self, String) -> Int?
-pub fn Model::tokenize(Self, String, offset? : Int) -> Array[@types.Token]
+pub fn Model::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
 pub fn Model::train_bpe(Array[String], unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?, cache_capacity? : Int?, show_progress? : Bool) -> Self
 pub fn Model::train_bpe_from_tokens(Array[Array[String]], unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?, cache_capacity? : Int?, show_progress? : Bool) -> Self
 pub fn Model::train_unigram(Array[String], unk_token? : String?, unk_piece? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, max_piece_length? : Int?, initial_alphabet? : Array[String], shrinking_factor? : Double, n_sub_iterations? : Int, show_progress? : Bool, seed_size? : Int) -> Self
@@ -109,14 +109,14 @@ pub struct UnigramModel {
   cache : Map[String, Array[@types.Token]]
   mut cache_capacity : Int?
 }
-pub fn UnigramModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token]
+pub fn UnigramModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
 
 pub struct WordLevelModel {
   vocab : Map[String, Int]
   vocab_r : Array[String?]
   unk_token : String
 }
-pub fn WordLevelModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token]
+pub fn WordLevelModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
 
 pub struct WordPieceModel {
   vocab : Map[String, Int]
@@ -128,7 +128,7 @@ pub struct WordPieceModel {
   cache : Map[String, Array[@types.Token]]
   mut cache_capacity : Int?
 }
-pub fn WordPieceModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token]
+pub fn WordPieceModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
 
 // Type aliases
 

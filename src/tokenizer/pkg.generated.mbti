@@ -252,7 +252,7 @@ pub fn PreTokenizedString::get_item(Self, Int) -> @types.Split?
 pub fn PreTokenizedString::get_original(Self) -> String
 pub fn PreTokenizedString::get_splits(Self) -> Array[@types.Split]
 pub fn PreTokenizedString::get_state(Self) -> PreTokenizedStringState
-pub fn PreTokenizedString::into_encoding(Self, @model.Model, type_id? : Int) -> @types.Encoding
+pub fn PreTokenizedString::into_encoding(Self, @model.Model, type_id? : Int) -> @types.Encoding raise @types.TokenizerError
 pub fn PreTokenizedString::is_empty(Self) -> Bool
 pub fn PreTokenizedString::len(Self) -> Int
 pub fn PreTokenizedString::new(String) -> Self
@@ -260,7 +260,7 @@ pub fn PreTokenizedString::normalize(Self, @normalizer.Normalizer) -> Self
 pub fn PreTokenizedString::original(Self) -> String
 pub fn PreTokenizedString::split(Self, @pretokenizer.PreTokenizer) -> Self
 pub fn PreTokenizedString::splits(Self) -> Array[@types.Split]
-pub fn PreTokenizedString::to_encoding(Self, @model.Model, type_id? : Int) -> @types.Encoding
+pub fn PreTokenizedString::to_encoding(Self, @model.Model, type_id? : Int) -> @types.Encoding raise @types.TokenizerError
 
 pub struct PreTokenizedStringState {
   original : String
@@ -357,13 +357,13 @@ pub fn Tokenizer::all_special_ids(Self) -> Array[Int]
 pub fn Tokenizer::all_special_tokens(Self) -> Array[String]
 pub fn Tokenizer::async_decode(Self, Array[Int], skip_special_tokens? : Bool) -> String
 pub fn Tokenizer::async_decode_batch(Self, Array[Array[Int]], skip_special_tokens? : Bool) -> Array[String]
-pub fn Tokenizer::async_encode(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::async_encode_batch(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::async_encode_batch_fast(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::async_encode_fast(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::async_encode(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::async_encode_batch(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::async_encode_batch_fast(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::async_encode_fast(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
 pub fn Tokenizer::batch_decode(Self, Array[Array[Int]], skip_special_tokens? : Bool) -> Array[String]
-pub fn Tokenizer::batch_encode_plus(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::batch_encode_plus_fast(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
+pub fn Tokenizer::batch_encode_plus(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::batch_encode_plus_fast(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
 pub fn Tokenizer::cache_pretrained_aux_file(String, String, String, revision? : String, resolved_revision? : String?, cache_dir? : String?) -> String raise @types.TokenizerError
 pub fn Tokenizer::cache_size(Self) -> Int
 pub fn Tokenizer::clear_cache(Self) -> Self
@@ -387,53 +387,53 @@ pub fn Tokenizer::enable_padding(Self, length? : Int?, direction? : PaddingDirec
 pub fn Tokenizer::enable_padding_hf(Self, length? : Int?, direction? : String, pad_id? : Int, pad_type_id? : Int, pad_token? : String, pad_to_multiple_of? : Int?) -> Self raise @types.TokenizerError
 pub fn Tokenizer::enable_truncation(Self, Int, stride? : Int, strategy? : TruncationStrategy, direction? : TruncationDirection) -> Self
 pub fn Tokenizer::enable_truncation_hf(Self, Int, stride? : Int, strategy? : String, direction? : String) -> Self raise @types.TokenizerError
-pub fn Tokenizer::encode(Self, String, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_batch(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_batch_fast(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_batch_parallel(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_batch_parallel_fast(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_batch_with_byte_offsets(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_fast(Self, String, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_input(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_input_batch(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_input_batch_fast(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_input_fast(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_pair(Self, String, String, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_pair_batch(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pair_batch_fast(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pair_batch_parallel(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pair_batch_parallel_fast(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pair_batch_with_byte_offsets(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pair_fast(Self, String, String, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_pair_with_byte_offsets(Self, String, String, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_plus(Self, String, pair? : String?, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_plus_fast(Self, String, pair? : String?, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_pretokenized(Self, Array[String], add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_pretokenized_batch(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pretokenized_batch_fast(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pretokenized_batch_parallel(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pretokenized_batch_parallel_fast(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pretokenized_batch_with_byte_offsets(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pretokenized_fast(Self, Array[String], add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_pretokenized_pair(Self, Array[String], Array[String], add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_pretokenized_pair_batch(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pretokenized_pair_batch_fast(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pretokenized_pair_batch_parallel(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pretokenized_pair_batch_parallel_fast(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pretokenized_pair_batch_with_byte_offsets(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_pretokenized_pair_fast(Self, Array[String], Array[String], add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_pretokenized_pair_with_byte_offsets(Self, Array[String], Array[String], add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_pretokenized_with_byte_offsets(Self, Array[String], add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_sequence_input(Self, TextInputSequence, pair? : TextInputSequence?, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_sequence_input_fast(Self, TextInputSequence, pair? : TextInputSequence?, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode(Self, String, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_batch(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_batch_fast(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_batch_parallel(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_batch_parallel_fast(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_batch_with_byte_offsets(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_fast(Self, String, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_input(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_input_batch(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_input_batch_fast(Self, Array[EncodeInput], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_input_fast(Self, EncodeInput, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_pair(Self, String, String, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_pair_batch(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pair_batch_fast(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pair_batch_parallel(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pair_batch_parallel_fast(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pair_batch_with_byte_offsets(Self, Array[(String, String)], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pair_fast(Self, String, String, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_pair_with_byte_offsets(Self, String, String, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_plus(Self, String, pair? : String?, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_plus_fast(Self, String, pair? : String?, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized(Self, Array[String], add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_batch(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_batch_fast(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_batch_parallel(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_batch_parallel_fast(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_batch_with_byte_offsets(Self, Array[Array[String]], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_fast(Self, Array[String], add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_pair(Self, Array[String], Array[String], add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_pair_batch(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_pair_batch_fast(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_pair_batch_parallel(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_pair_batch_parallel_fast(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_pair_batch_with_byte_offsets(Self, Array[(Array[String], Array[String])], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_pair_fast(Self, Array[String], Array[String], add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_pair_with_byte_offsets(Self, Array[String], Array[String], add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_pretokenized_with_byte_offsets(Self, Array[String], add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_sequence_input(Self, TextInputSequence, pair? : TextInputSequence?, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_sequence_input_fast(Self, TextInputSequence, pair? : TextInputSequence?, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
 pub fn Tokenizer::encode_special_tokens(Self) -> Bool
-pub fn Tokenizer::encode_text(Self, String, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_text_batch(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_text_batch_fast(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding]
-pub fn Tokenizer::encode_text_fast(Self, String, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_with_byte_offsets(Self, String, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_with_hooks(Self, String, TokenizerComponentHooks, add_special_tokens? : Bool) -> @types.Encoding
-pub fn Tokenizer::encode_with_hooks_fast(Self, String, TokenizerComponentHooks, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::encode_text(Self, String, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_text_batch(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_text_batch_fast(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
+pub fn Tokenizer::encode_text_fast(Self, String, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_with_byte_offsets(Self, String, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_with_hooks(Self, String, TokenizerComponentHooks, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
+pub fn Tokenizer::encode_with_hooks_fast(Self, String, TokenizerComponentHooks, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
 pub fn Tokenizer::from_buffer(Bytes) -> Self raise @types.TokenizerError
 pub fn Tokenizer::from_file(String) -> Self raise @types.TokenizerError
 pub fn Tokenizer::from_pretrained(String) -> Self raise @types.TokenizerError

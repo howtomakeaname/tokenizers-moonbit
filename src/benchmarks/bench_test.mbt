@@ -47,7 +47,7 @@ fn corpus_mixed() -> String {
 fn corpus_code() -> String {
   let unit =
     #|pub fn encode_batch(tok : Tokenizer, xs : Array[String]) -> Array[Encoding] {
-    #|  xs.map(fn(x) { tok.encode(x, add_special_tokens=false) })
+    #|  xs.map(fn(x) { must_encode(tok, x, add_special_tokens=false) })
     #|}
     #|// UTF-8, byte_fallback, snake_case, camelCase, HTTP/2, JSON.parse
     #|
@@ -79,6 +79,127 @@ fn load_model(name : String) -> @tokenizer.Tokenizer? raise {
 }
 
 ///|
+fn must_encode(
+  tok : @tokenizer.Tokenizer,
+  text : String,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  tok.encode(text, add_special_tokens~) catch {
+    _ => abort("benchmark encode failed")
+  }
+}
+
+///|
+fn must_encode_fast(
+  tok : @tokenizer.Tokenizer,
+  text : String,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  tok.encode_fast(text, add_special_tokens~) catch {
+    _ => abort("benchmark encode_fast failed")
+  }
+}
+
+///|
+fn must_encode_with_byte_offsets(
+  tok : @tokenizer.Tokenizer,
+  text : String,
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  tok.encode_with_byte_offsets(text, add_special_tokens~) catch {
+    _ => abort("benchmark encode_with_byte_offsets failed")
+  }
+}
+
+///|
+fn must_encode_batch(
+  tok : @tokenizer.Tokenizer,
+  batch : Array[String],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  tok.encode_batch(batch, add_special_tokens~) catch {
+    _ => abort("benchmark encode_batch failed")
+  }
+}
+
+///|
+fn must_encode_batch_fast(
+  tok : @tokenizer.Tokenizer,
+  batch : Array[String],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  tok.encode_batch_fast(batch, add_special_tokens~) catch {
+    _ => abort("benchmark encode_batch_fast failed")
+  }
+}
+
+///|
+fn must_encode_pair_batch(
+  tok : @tokenizer.Tokenizer,
+  batch : Array[(String, String)],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  tok.encode_pair_batch(batch, add_special_tokens~) catch {
+    _ => abort("benchmark encode_pair_batch failed")
+  }
+}
+
+///|
+fn must_encode_pair_batch_fast(
+  tok : @tokenizer.Tokenizer,
+  batch : Array[(String, String)],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  tok.encode_pair_batch_fast(batch, add_special_tokens~) catch {
+    _ => abort("benchmark encode_pair_batch_fast failed")
+  }
+}
+
+///|
+fn must_encode_pretokenized(
+  tok : @tokenizer.Tokenizer,
+  words : Array[String],
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  tok.encode_pretokenized(words, add_special_tokens~) catch {
+    _ => abort("benchmark encode_pretokenized failed")
+  }
+}
+
+///|
+fn must_encode_pretokenized_with_byte_offsets(
+  tok : @tokenizer.Tokenizer,
+  words : Array[String],
+  add_special_tokens? : Bool = true,
+) -> @types.Encoding {
+  tok.encode_pretokenized_with_byte_offsets(words, add_special_tokens~) catch {
+    _ => abort("benchmark encode_pretokenized_with_byte_offsets failed")
+  }
+}
+
+///|
+fn must_encode_pretokenized_batch(
+  tok : @tokenizer.Tokenizer,
+  batch : Array[Array[String]],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  tok.encode_pretokenized_batch(batch, add_special_tokens~) catch {
+    _ => abort("benchmark encode_pretokenized_batch failed")
+  }
+}
+
+///|
+fn must_encode_pretokenized_pair_batch(
+  tok : @tokenizer.Tokenizer,
+  batch : Array[(Array[String], Array[String])],
+  add_special_tokens? : Bool = true,
+) -> Array[@types.Encoding] {
+  tok.encode_pretokenized_pair_batch(batch, add_special_tokens~) catch {
+    _ => abort("benchmark encode_pretokenized_pair_batch failed")
+  }
+}
+
+///|
 fn bench_encode_case(
   b : @bench.T,
   model : String,
@@ -88,7 +209,7 @@ fn bench_encode_case(
 ) -> Unit raise {
   guard load_model(model) is Some(tok) else { return }
   b.bench(name="\{model}-encode-\{case_name}", fn() {
-    b.keep(tok.encode(text, add_special_tokens~))
+    b.keep(must_encode(tok, text, add_special_tokens~))
   })
 }
 
@@ -102,7 +223,7 @@ fn bench_encode_fast_case(
 ) -> Unit raise {
   guard load_model(model) is Some(tok) else { return }
   b.bench(name="\{model}-encode-fast-\{case_name}", fn() {
-    b.keep(tok.encode_fast(text, add_special_tokens~))
+    b.keep(must_encode_fast(tok, text, add_special_tokens~))
   })
 }
 
@@ -115,7 +236,7 @@ fn bench_encode_byte_offsets_case(
 ) -> Unit raise {
   guard load_model(model) is Some(tok) else { return }
   b.bench(name="\{model}-encode-byte-offsets-\{case_name}", fn() {
-    b.keep(tok.encode_with_byte_offsets(text, add_special_tokens=false))
+    b.keep(must_encode_with_byte_offsets(tok, text, add_special_tokens=false))
   })
 }
 
@@ -127,7 +248,7 @@ fn bench_decode_case(
   text : String,
 ) -> Unit raise {
   guard load_model(model) is Some(tok) else { return }
-  let ids = tok.encode(text, add_special_tokens=false).ids
+  let ids = must_encode(tok, text, add_special_tokens=false).ids
   b.bench(name="\{model}-decode-\{case_name}", fn() {
     b.keep(tok.decode(ids, skip_special_tokens=false))
   })
@@ -141,7 +262,7 @@ fn bench_decode_stream_case(
   text : String,
 ) -> Unit raise {
   guard load_model(model) is Some(tok) else { return }
-  let ids = tok.encode(text, add_special_tokens=false).ids
+  let ids = must_encode(tok, text, add_special_tokens=false).ids
   b.bench(name="\{model}-decode-stream-\{case_name}", fn() {
     let mut stream = tok.decode_stream(skip_special_tokens=false)
     let chunks : Array[String] = []
@@ -165,7 +286,7 @@ fn bench_decode_batch_case(
   text : String,
 ) -> Unit raise {
   guard load_model(model) is Some(tok) else { return }
-  let ids = tok.encode(text, add_special_tokens=false).ids
+  let ids = must_encode(tok, text, add_special_tokens=false).ids
   let batch = [ids, ids, ids, ids, ids, ids, ids, ids]
   b.bench(name="\{model}-decode-batch-\{case_name}", fn() {
     b.keep(tok.decode_batch(batch, skip_special_tokens=false))
@@ -182,7 +303,7 @@ fn bench_encode_batch_case(
   guard load_model(model) is Some(tok) else { return }
   let batch = [text, text, text, text, text, text, text, text]
   b.bench(name="\{model}-encode-batch-\{case_name}", fn() {
-    b.keep(tok.encode_batch(batch, add_special_tokens=false))
+    b.keep(must_encode_batch(tok, batch, add_special_tokens=false))
   })
 }
 
@@ -196,7 +317,7 @@ fn bench_encode_batch_fast_case(
   guard load_model(model) is Some(tok) else { return }
   let batch = [text, text, text, text, text, text, text, text]
   b.bench(name="\{model}-encode-batch-fast-\{case_name}", fn() {
-    b.keep(tok.encode_batch_fast(batch, add_special_tokens=false))
+    b.keep(must_encode_batch_fast(tok, batch, add_special_tokens=false))
   })
 }
 
@@ -217,7 +338,7 @@ fn bench_encode_batch_padded_case(
   )
   let batch = [text, "Hello", text + " tail", "a", text, "MoonBit", text, "x"]
   b.bench(name="\{model}-encode-batch-padded-\{case_name}", fn() {
-    b.keep(tok.encode_batch(batch, add_special_tokens=false))
+    b.keep(must_encode_batch(tok, batch, add_special_tokens=false))
   })
 }
 
@@ -232,7 +353,7 @@ fn bench_encode_pair_batch_case(
   let pair = (text, "Second sequence: " + text)
   let batch = [pair, pair, pair, pair, pair, pair, pair, pair]
   b.bench(name="\{model}-encode-pair-batch-\{case_name}", fn() {
-    b.keep(tok.encode_pair_batch(batch, add_special_tokens=false))
+    b.keep(must_encode_pair_batch(tok, batch, add_special_tokens=false))
   })
 }
 
@@ -247,7 +368,7 @@ fn bench_encode_pair_batch_fast_case(
   let pair = (text, "Second sequence: " + text)
   let batch = [pair, pair, pair, pair, pair, pair, pair, pair]
   b.bench(name="\{model}-encode-pair-batch-fast-\{case_name}", fn() {
-    b.keep(tok.encode_pair_batch_fast(batch, add_special_tokens=false))
+    b.keep(must_encode_pair_batch_fast(tok, batch, add_special_tokens=false))
   })
 }
 
@@ -268,7 +389,7 @@ fn bench_encode_pretokenized_case(
   guard load_model(model) is Some(tok) else { return }
   let words = pretokenized_words()
   b.bench(name="\{model}-encode-pretokenized-\{case_name}", fn() {
-    b.keep(tok.encode_pretokenized(words, add_special_tokens=false))
+    b.keep(must_encode_pretokenized(tok, words, add_special_tokens=false))
   })
 }
 
@@ -282,7 +403,11 @@ fn bench_encode_pretokenized_byte_offsets_case(
   let words = pretokenized_words()
   b.bench(name="\{model}-encode-pretokenized-byte-offsets-\{case_name}", fn() {
     b.keep(
-      tok.encode_pretokenized_with_byte_offsets(words, add_special_tokens=false),
+      must_encode_pretokenized_with_byte_offsets(
+        tok,
+        words,
+        add_special_tokens=false,
+      ),
     )
   })
 }
@@ -297,7 +422,7 @@ fn bench_encode_pretokenized_batch_case(
   let words = pretokenized_words()
   let batch = [words, words, words, words, words, words, words, words]
   b.bench(name="\{model}-encode-pretokenized-batch-\{case_name}", fn() {
-    b.keep(tok.encode_pretokenized_batch(batch, add_special_tokens=false))
+    b.keep(must_encode_pretokenized_batch(tok, batch, add_special_tokens=false))
   })
 }
 
@@ -313,7 +438,9 @@ fn bench_encode_pretokenized_pair_batch_case(
   let pair = (a, bwords)
   let batch = [pair, pair, pair, pair, pair, pair, pair, pair]
   b.bench(name="\{model}-encode-pretokenized-pair-batch-\{case_name}", fn() {
-    b.keep(tok.encode_pretokenized_pair_batch(batch, add_special_tokens=false))
+    b.keep(
+      must_encode_pretokenized_pair_batch(tok, batch, add_special_tokens=false),
+    )
   })
 }
 
@@ -335,7 +462,7 @@ fn bench_encode_pretokenized_added_case(b : @bench.T) -> Unit raise {
     "The", "quick", "brown[MASK]fox", "jumps", "over", "MoonBit", "tokenizers",
   ]
   b.bench(name="synthetic-encode-pretokenized-added", fn() {
-    b.keep(tok.encode_pretokenized(words, add_special_tokens=false))
+    b.keep(must_encode_pretokenized(tok, words, add_special_tokens=false))
   })
 }
 
@@ -347,7 +474,7 @@ fn bench_offset_lookup_case(
   text : String,
 ) -> Unit raise {
   guard load_model(model) is Some(tok) else { return }
-  let enc = tok.encode_with_byte_offsets(text, add_special_tokens=false)
+  let enc = must_encode_with_byte_offsets(tok, text, add_special_tokens=false)
   guard enc.ids.length() > 0 else { return }
   let positions = [0, 1, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
   b.bench(name="\{model}-offset-lookup-\{case_name}", fn() {
@@ -390,7 +517,8 @@ fn bench_encoding_accessors_case(
   let tok = @tokenizer.Tokenizer::from_str(json).with_padding(
     Some(@tokenizer.PaddingParams::fixed(16, pad_id=8, pad_token="[PAD]")),
   )
-  let enc = tok.encode(
+  let enc = must_encode(
+    tok,
     "the quick brown fox jumps over moonbit tokenizers",
     add_special_tokens=false,
   )
@@ -426,7 +554,8 @@ fn bench_encoding_manipulation_case(
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"the":0,"quick":1,"brown":2,"fox":3,"jumps":4,"over":5,"moonbit":6,"tokenizers":7,"[UNK]":8},"unk_token":"[UNK]"}}
   let tok = @tokenizer.Tokenizer::from_str(json)
-  let enc = tok.encode(
+  let enc = must_encode(
+    tok,
     "the quick brown fox jumps over moonbit tokenizers",
     add_special_tokens=false,
   )
@@ -474,7 +603,9 @@ fn bench_tokenizer_builder_add_tokens_case(
     let tok = base
       .add_tokens(added)
       .with_decoder(Some(@decoder.Decoder::wordpiece(prefix="", cleanup=false)))
-    b.keep(tok.encode("hello <tag> [MASK] moon", add_special_tokens=false))
+    b.keep(
+      must_encode(tok, "hello <tag> [MASK] moon", add_special_tokens=false),
+    )
   })
 }
 
@@ -519,14 +650,16 @@ fn bench_tokenizer_post_process_case(
     #| "model":{"type":"WordLevel","vocab":{"hello":0,"world":1,"moon":2,"[SEP]":3,"[CLS]":4,"[MASK]":5,"[UNK]":6},"unk_token":"[UNK]"},
     #| "post_processor":{"type":"BertProcessing","sep":["[SEP]",3],"cls":["[CLS]",4]}}
   let tok = @tokenizer.Tokenizer::from_str(json)
-  let a = tok.encode("hello [MASK]", add_special_tokens=false)
-  let benc = tok.encode("world moon", add_special_tokens=false)
+  let a = must_encode(tok, "hello [MASK]", add_special_tokens=false)
+  let benc = must_encode(tok, "world moon", add_special_tokens=false)
   b.bench(name="tokenizer-post-process-\{case_name}", fn() {
     b.keep(tok.post_process(a, pair=Some(benc), add_special_tokens=true))
   })
   b.bench(name="tokenizer-encode-special-switch-\{case_name}", fn() {
     let switched = tok.set_encode_special_tokens(true)
-    b.keep(switched.encode("hello [MASK] world", add_special_tokens=false))
+    b.keep(
+      must_encode(switched, "hello [MASK] world", add_special_tokens=false),
+    )
   })
 }
 
@@ -534,9 +667,9 @@ fn bench_tokenizer_post_process_case(
 fn bench_wordpiece_repeated_case(b : @bench.T) -> Unit raise {
   guard load_model("bert") is Some(tok) else { return }
   let text = "tokenization tokenization tokenization tokenization tokenization"
-  ignore(tok.encode(text, add_special_tokens=false))
+  ignore(must_encode(tok, text, add_special_tokens=false))
   b.bench(name="bert-wordpiece-cache-repeat", fn() {
-    b.keep(tok.encode(text, add_special_tokens=false))
+    b.keep(must_encode(tok, text, add_special_tokens=false))
   })
 }
 
@@ -1720,7 +1853,7 @@ test "bench encode (gpt2)" (b : @bench.T) {
   guard load_model("gpt2") is Some(tok) else { return }
   let text = corpus_mixed()
   b.bench(name="gpt2-encode", fn() {
-    b.keep(tok.encode(text, add_special_tokens=false))
+    b.keep(must_encode(tok, text, add_special_tokens=false))
   })
 }
 
@@ -1729,7 +1862,7 @@ test "bench encode (bert)" (b : @bench.T) {
   guard load_model("bert") is Some(tok) else { return }
   let text = corpus_mixed()
   b.bench(name="bert-encode", fn() {
-    b.keep(tok.encode(text, add_special_tokens=true))
+    b.keep(must_encode(tok, text, add_special_tokens=true))
   })
 }
 
@@ -1738,7 +1871,7 @@ test "bench encode (llama byte_fallback)" (b : @bench.T) {
   guard load_model("llama") is Some(tok) else { return }
   let text = corpus_mixed()
   b.bench(name="llama-encode", fn() {
-    b.keep(tok.encode(text, add_special_tokens=false))
+    b.keep(must_encode(tok, text, add_special_tokens=false))
   })
 }
 
@@ -1747,7 +1880,7 @@ test "bench encode (Qwen2.5)" (b : @bench.T) {
   guard load_model("Qwen2.5") is Some(tok) else { return }
   let text = corpus_mixed()
   b.bench(name="qwen2.5-encode", fn() {
-    b.keep(tok.encode(text, add_special_tokens=false))
+    b.keep(must_encode(tok, text, add_special_tokens=false))
   })
 }
 
@@ -1782,7 +1915,7 @@ test "bench encode byte offsets matrix" (b : @bench.T) {
 ///|
 test "bench decode (gpt2)" (b : @bench.T) {
   guard load_model("gpt2") is Some(tok) else { return }
-  let ids = tok.encode(corpus_mixed(), add_special_tokens=false).ids
+  let ids = must_encode(tok, corpus_mixed(), add_special_tokens=false).ids
   b.bench(name="gpt2-decode", fn() {
     b.keep(tok.decode(ids, skip_special_tokens=false))
   })
@@ -1881,7 +2014,7 @@ test "bench bytelevel trim offsets" (b : @bench.T) {
   let tok = bytelevel_trim_fixture(true)
   let text = "a  b MoonBit tokenizers are fast. a  b MoonBit tokenizers are fast."
   b.bench(name="bytelevel-post-trim-offsets", fn() {
-    b.keep(tok.encode(text, add_special_tokens=true))
+    b.keep(must_encode(tok, text, add_special_tokens=true))
   })
 }
 

@@ -6,7 +6,7 @@ pub fn WordLevelModel::tokenize(
   self : WordLevelModel,
   word : String,
   offset? : Int = 0,
-) -> Array[@types.Token] {
+) -> Array[@types.Token] raise @types.TokenizerError {
   let span = word.char_length()
   match self.vocab.get(word) {
     Some(id) =>
@@ -22,13 +22,9 @@ pub fn WordLevelModel::tokenize(
             },
           ]
         None =>
-          [
-            @types.Token::{
-              id: -1,
-              value: word,
-              offsets: (offset, offset + span),
-            },
-          ]
+          raise @types.VocabError(
+            "WordLevel error: Missing \{self.unk_token} token from the vocabulary",
+          )
       }
   }
 }

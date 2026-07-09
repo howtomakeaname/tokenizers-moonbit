@@ -2056,6 +2056,19 @@ test "Tokenizer cache control clears resizes and isolates model caches" {
   @test.assert_eq(uni.cache_size(), 1)
   uni.clear_cache() |> ignore
   @test.assert_eq(uni.cache_size(), 0)
+
+  let unigram_without_unk =
+    #|{"version":"1.0",
+    #| "model":{"type":"Unigram","vocab":[["a",0.0]]}}
+  let strict_uni = Tokenizer::from_str(unigram_without_unk)
+  @test.assert_eq(strict_uni.encode("a", add_special_tokens=false).ids, [0])
+  let mut missing_unk_id = false
+  try strict_uni.encode("az", add_special_tokens=false) |> ignore catch {
+    @types.VocabError(msg) =>
+      missing_unk_id = msg.contains("unknown token") && msg.contains("unk_id")
+    _ => ()
+  }
+  @test.assert_eq(missing_unk_id, true)
 }
 
 ///|
@@ -4131,9 +4144,9 @@ test "train_bpe default learns singleton merges like HF" {
     "ab",
   ])
   let unknown = default_tok.encode("ac", add_special_tokens=false)
-  @test.assert_eq(unknown.tokens, ["a", "c"])
-  @test.assert_eq(unknown.ids, [0, -1])
-  @test.assert_eq(unknown.offsets, [(0, 1), (1, 2)])
+  @test.assert_eq(unknown.tokens, ["a"])
+  @test.assert_eq(unknown.ids, [0])
+  @test.assert_eq(unknown.offsets, [(0, 1)])
 
   let old_threshold = Tokenizer::train_bpe(
     ["ab"],
@@ -4309,10 +4322,16 @@ test "train_unigram prefers learned whole words" {
   @test.assert_eq(default_tok.get_model().unk_token(), None)
   @test.assert_eq(default_tok.get_model().unk_id(), None)
   @test.assert_eq(default_tok.token_to_id("<unk>"), None)
-  let default_unknown = default_tok.encode("hello z", add_special_tokens=false)
-  @test.assert_eq(default_unknown.tokens, ["hello", "z"])
-  @test.assert_eq(default_unknown.ids[1], -1)
-  @test.assert_eq(default_unknown.offsets, [(0, 5), (6, 7)])
+  let default_known = default_tok.encode("hello", add_special_tokens=false)
+  @test.assert_eq(default_known.tokens, ["hello"])
+  let mut default_unknown_raised = false
+  try default_tok.encode("hello z", add_special_tokens=false) |> ignore catch {
+    @types.VocabError(msg) =>
+      default_unknown_raised = msg.contains("unknown token") &&
+        msg.contains("unk_id")
+    _ => ()
+  }
+  @test.assert_eq(default_unknown_raised, true)
 
   let tok = Tokenizer::train_unigram(
     ["hello hello help"],

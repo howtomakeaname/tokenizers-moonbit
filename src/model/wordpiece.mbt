@@ -11,7 +11,7 @@ pub fn WordPieceModel::tokenize(
   self : WordPieceModel,
   word : String,
   offset? : Int = 0,
-) -> Array[@types.Token] {
+) -> Array[@types.Token] raise @types.TokenizerError {
   let chars = word.to_array()
   let n = chars.length()
   if n == 0 {
@@ -21,8 +21,8 @@ pub fn WordPieceModel::tokenize(
     Some(cached) => return shift_wordpiece_tokens(cached, offset)
     None => ()
   }
-  let unk_id = self.vocab.get(self.unk_token).unwrap_or(-1)
   if n > self.max_input_chars_per_word {
+    let unk_id = self.require_unk_id()
     let rel = [
       @types.Token::{ id: unk_id, value: self.unk_token, offsets: (0, n) },
     ]
@@ -58,7 +58,7 @@ pub fn WordPieceModel::tokenize(
       }
       Some(tok) => {
         out.push(@types.Token::{
-          id: self.vocab.get(tok).unwrap_or(unk_id),
+          id: self.vocab.get(tok).unwrap(),
           value: tok,
           offsets: (start, cur_end),
         })
@@ -67,6 +67,7 @@ pub fn WordPieceModel::tokenize(
     }
   }
   if is_bad {
+    let unk_id = self.require_unk_id()
     let rel = [
       @types.Token::{ id: unk_id, value: self.unk_token, offsets: (0, n) },
     ]
@@ -75,6 +76,19 @@ pub fn WordPieceModel::tokenize(
   } else {
     put_token_cache(self.cache, self.cache_capacity, word, out)
     shift_wordpiece_tokens(out, offset)
+  }
+}
+
+///|
+fn WordPieceModel::require_unk_id(
+  self : WordPieceModel,
+) -> Int raise @types.TokenizerError {
+  match self.vocab.get(self.unk_token) {
+    Some(uid) => uid
+    None =>
+      raise @types.VocabError(
+        "WordPiece error: Missing \{self.unk_token} token from the vocabulary",
+      )
   }
 }
 
