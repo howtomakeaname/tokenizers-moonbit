@@ -820,6 +820,35 @@ test "programmatic builder APIs attach pipeline components" {
     with_model.encode("hello moon", add_special_tokens=false).tokens,
     ["hello", "[UNK]"],
   )
+  let with_set_model = tok.set_model(replacement)
+  @test.assert_eq(
+    with_set_model.encode("hello moon", add_special_tokens=false).tokens,
+    ["hello", "[UNK]"],
+  )
+  let with_setters = Tokenizer::new(model)
+    .set_normalizer(Some(@normalizer.Normalizer::Lowercase))
+    .set_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+    .set_post_processor(None)
+    .set_decoder(Some(@decoder.Decoder::wordpiece(prefix="", cleanup=false)))
+    .set_truncation(Some(TruncationParams::new(2)))
+    .set_padding(Some(PaddingParams::fixed(4, pad_token="[PAD]")))
+  @test.assert_eq(with_setters.get_normalizer() is Some(_), true)
+  @test.assert_eq(with_setters.get_pre_tokenizer() is Some(_), true)
+  @test.assert_eq(with_setters.get_decoder() is Some(_), true)
+  @test.assert_eq(with_setters.get_post_processor() is None, true)
+  @test.assert_eq(with_setters.get_truncation() is Some(_), true)
+  @test.assert_eq(with_setters.get_padding() is Some(_), true)
+  @test.assert_eq(
+    with_setters.encode("HELLO moon", add_special_tokens=false).tokens,
+    ["hello", "moon", "[PAD]", "[PAD]"],
+  )
+  let cleared = with_setters
+    .set_truncation(None)
+    .set_padding(None)
+    .set_decoder(None)
+  @test.assert_eq(cleared.get_truncation(), None)
+  @test.assert_eq(cleared.get_padding(), None)
+  @test.assert_eq(cleared.get_decoder() is None, true)
 }
 
 ///|
