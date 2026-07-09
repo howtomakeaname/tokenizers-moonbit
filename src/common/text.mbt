@@ -1317,10 +1317,12 @@ pub fn bounded_regex_kind_pred(kind : Int, c : Char) -> Bool {
 }
 
 ///|
-/// Unicode whitespace coverage used for the common HF Regex `\s` subset.
+/// Unicode whitespace coverage used for HF/Rust-regex `\s`.
 pub fn is_unicode_whitespace(u : Int) -> Bool {
   u == 0x09 ||
   u == 0x0A ||
+  u == 0x0B ||
+  u == 0x0C ||
   u == 0x0D ||
   u == 0x20 ||
   u == 0x85 ||
