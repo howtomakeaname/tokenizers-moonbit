@@ -3162,6 +3162,71 @@ test "Trainer default vocab_size mirrors HF caps" {
 }
 
 ///|
+fn numbered_special_tokens(prefix : String, count : Int) -> Array[String] {
+  let out : Array[String] = []
+  for i in 0..<count {
+    out.push(prefix + i.to_string())
+  }
+  out
+}
+
+///|
+fn numbered_training_text(prefix : String, count : Int) -> String {
+  let parts : Array[String] = []
+  for i in 0..<count {
+    parts.push(prefix + i.to_string())
+  }
+  parts.join(" ")
+}
+
+///|
+test "Tokenizer convenience trainers default vocab_size mirrors HF caps" {
+  let many_wordlevel = numbered_training_text("wl", 30001)
+  @test.assert_eq(
+    Tokenizer::train_wordlevel([many_wordlevel]).get_vocab_size(),
+    30000,
+  )
+  @test.assert_eq(
+    Tokenizer::train_wordlevel([many_wordlevel], vocab_size=None).get_vocab_size(),
+    30002,
+  )
+
+  let many_wordpiece = numbered_special_tokens("<wp", 30001)
+  @test.assert_eq(
+    Tokenizer::train_wordpiece([], special_tokens=many_wordpiece).get_vocab_size(),
+    30000,
+  )
+  @test.assert_eq(
+    Tokenizer::train_wordpiece(
+      [],
+      special_tokens=many_wordpiece,
+      vocab_size=None,
+    ).get_vocab_size(),
+    30002,
+  )
+
+  let many_bpe = numbered_special_tokens("<bpe", 30001)
+  @test.assert_eq(
+    Tokenizer::train_bpe([], special_tokens=many_bpe).get_vocab_size(),
+    30000,
+  )
+  @test.assert_eq(
+    Tokenizer::train_bpe([], special_tokens=many_bpe, vocab_size=None).get_vocab_size(),
+    30001,
+  )
+
+  let many_unigram = numbered_special_tokens("<uni", 8001)
+  @test.assert_eq(
+    Tokenizer::train_unigram([], special_tokens=many_unigram).get_vocab_size(),
+    8000,
+  )
+  @test.assert_eq(
+    Tokenizer::train_unigram([], special_tokens=many_unigram, vocab_size=None).get_vocab_size(),
+    8001,
+  )
+}
+
+///|
 test "Trainer default min_frequency aligns with HF" {
   // HF 0.22.x defaults WordLevel/WordPiece/BPE min_frequency to 0. MoonBit
   // now aligns these defaults while preserving explicit historical values.

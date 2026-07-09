@@ -45,6 +45,15 @@ fn surfaces_of(tokens : Array[@types.Token]) -> Array[String] {
 }
 
 ///|
+fn numbered_tokens(prefix : String, count : Int) -> Array[String] {
+  let tokens : Array[String] = []
+  for i in 0..<count {
+    tokens.push(prefix + i.to_string())
+  }
+  tokens
+}
+
+///|
 test "bpe merges adjacent pairs by rank" {
   // chars: l o w e r ; merges build: lo, low, we, wer? choose ranks.
   let model = mk_bpe(
@@ -178,6 +187,123 @@ test "bpe trainer defaults to no unk token like HF" {
   )
   @test.assert_eq(explicit.unk_token(), Some("[UNK]"))
   @test.assert_eq(explicit.token_to_id("[UNK]") is Some(_), true)
+}
+
+///|
+test "model trainer convenience methods cap default vocab size" {
+  let tokens_30001 = numbered_tokens("wl", 30001)
+  let wordlevel = Model::train_wordlevel(tokens_30001, show_progress=false)
+  @test.assert_eq(wordlevel.get_vocab_size(), 30000)
+  let wordlevel_unlimited = Model::train_wordlevel(
+    tokens_30001,
+    vocab_size=None,
+    show_progress=false,
+  )
+  @test.assert_eq(wordlevel_unlimited.get_vocab_size() > 30000, true)
+
+  let wordlevel_from_tokens = Model::train_wordlevel_from_tokens(
+    [tokens_30001],
+    show_progress=false,
+  )
+  @test.assert_eq(wordlevel_from_tokens.get_vocab_size(), 30000)
+  let wordlevel_from_tokens_unlimited = Model::train_wordlevel_from_tokens(
+    [tokens_30001],
+    vocab_size=None,
+    show_progress=false,
+  )
+  @test.assert_eq(
+    wordlevel_from_tokens_unlimited.get_vocab_size() > 30000,
+    true,
+  )
+
+  let specials_30001 = numbered_tokens("sp", 30001)
+  let wordpiece = Model::train_wordpiece(
+    [],
+    special_tokens=specials_30001,
+    show_progress=false,
+  )
+  @test.assert_eq(wordpiece.get_vocab_size(), 30000)
+  let wordpiece_unlimited = Model::train_wordpiece(
+    [],
+    special_tokens=specials_30001,
+    vocab_size=None,
+    show_progress=false,
+  )
+  @test.assert_eq(wordpiece_unlimited.get_vocab_size() > 30000, true)
+
+  let wordpiece_from_tokens = Model::train_wordpiece_from_tokens(
+    [],
+    special_tokens=specials_30001,
+    show_progress=false,
+  )
+  @test.assert_eq(wordpiece_from_tokens.get_vocab_size(), 30000)
+  let wordpiece_from_tokens_unlimited = Model::train_wordpiece_from_tokens(
+    [],
+    special_tokens=specials_30001,
+    vocab_size=None,
+    show_progress=false,
+  )
+  @test.assert_eq(
+    wordpiece_from_tokens_unlimited.get_vocab_size() > 30000,
+    true,
+  )
+
+  let bpe = Model::train_bpe(
+    [],
+    special_tokens=specials_30001,
+    show_progress=false,
+  )
+  @test.assert_eq(bpe.get_vocab_size(), 30000)
+  let bpe_unlimited = Model::train_bpe(
+    [],
+    special_tokens=specials_30001,
+    vocab_size=None,
+    show_progress=false,
+  )
+  @test.assert_eq(bpe_unlimited.get_vocab_size() > 30000, true)
+
+  let bpe_from_tokens = Model::train_bpe_from_tokens(
+    [],
+    special_tokens=specials_30001,
+    show_progress=false,
+  )
+  @test.assert_eq(bpe_from_tokens.get_vocab_size(), 30000)
+  let bpe_from_tokens_unlimited = Model::train_bpe_from_tokens(
+    [],
+    special_tokens=specials_30001,
+    vocab_size=None,
+    show_progress=false,
+  )
+  @test.assert_eq(bpe_from_tokens_unlimited.get_vocab_size() > 30000, true)
+
+  let specials_8001 = numbered_tokens("uni", 8001)
+  let unigram = Model::train_unigram(
+    [],
+    special_tokens=specials_8001,
+    show_progress=false,
+  )
+  @test.assert_eq(unigram.get_vocab_size(), 8000)
+  let unigram_unlimited = Model::train_unigram(
+    [],
+    special_tokens=specials_8001,
+    vocab_size=None,
+    show_progress=false,
+  )
+  @test.assert_eq(unigram_unlimited.get_vocab_size() > 8000, true)
+
+  let unigram_from_tokens = Model::train_unigram_from_tokens(
+    [],
+    special_tokens=specials_8001,
+    show_progress=false,
+  )
+  @test.assert_eq(unigram_from_tokens.get_vocab_size(), 8000)
+  let unigram_from_tokens_unlimited = Model::train_unigram_from_tokens(
+    [],
+    special_tokens=specials_8001,
+    vocab_size=None,
+    show_progress=false,
+  )
+  @test.assert_eq(unigram_from_tokens_unlimited.get_vocab_size() > 8000, true)
 }
 
 ///|
