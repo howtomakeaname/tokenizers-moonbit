@@ -2148,6 +2148,12 @@ test "from_pretrained loads local directory or tokenizer file" {
     Some("_build/added_tokens.json"),
   )
   @test.assert_eq(
+    Tokenizer::from_pretrained_aux_file_path(
+      "_build/missing-tokenizer.json", "added_tokens.json",
+    ),
+    None,
+  )
+  @test.assert_eq(
     Tokenizer::from_pretrained_aux_file("_build", "../tokenizer.json"),
     None,
   )
@@ -2441,6 +2447,37 @@ test "from_pretrained_downloaded writes HF-style cache and refs" {
       cache_dir=Some(hub),
     ),
     None,
+  )
+  Tokenizer::from_pretrained_downloaded(
+    "org/no-sidecars-tokenizer",
+    json,
+    resolved_revision=Some("nosidecars"),
+    cache_dir=Some(hub),
+  )
+  |> ignore
+  @test.assert_eq(
+    Tokenizer::from_pretrained_cache_is_fresh(
+      "org/no-sidecars-tokenizer",
+      cache_dir=Some(hub),
+      require_tokenizer_config=true,
+    ),
+    false,
+  )
+  Tokenizer::from_pretrained_downloaded(
+    "org/config-only-tokenizer",
+    json,
+    resolved_revision=Some("configonly"),
+    cache_dir=Some(hub),
+    tokenizer_config_json=Some("{\"model_max_length\":256}"),
+  )
+  |> ignore
+  @test.assert_eq(
+    Tokenizer::from_pretrained_cache_is_fresh(
+      "org/config-only-tokenizer",
+      cache_dir=Some(hub),
+      require_special_tokens_map=true,
+    ),
+    false,
   )
   @test.assert_eq(
     Tokenizer::from_pretrained_cache_exists(

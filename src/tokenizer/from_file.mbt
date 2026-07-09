@@ -1157,7 +1157,10 @@ fn resolve_pretrained_base_dir(
   cache_dir~ : String?,
 ) -> String? {
   if path.has_suffix(".json") {
-    return parent_dir(path)
+    if @fs.path_exists(path) {
+      return parent_dir(path)
+    }
+    return None
   }
   let local_path = join_tokenizer_json(path)
   if @fs.path_exists(local_path) {
