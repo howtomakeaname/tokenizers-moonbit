@@ -352,9 +352,11 @@ fn AddedToken::with_special(self : AddedToken, special : Bool) -> AddedToken
 fn Tokenizer::add_tokens(self : Tokenizer, tokens : Array[AddedToken]) -> Tokenizer
 fn Tokenizer::add_tokens_with_count(self : Tokenizer, tokens : Array[AddedToken]) -> (Tokenizer, Int)
 fn Tokenizer::add_token_strings(self : Tokenizer, tokens : Array[String]) -> Tokenizer
+fn Tokenizer::add_token_strings_with_count(self : Tokenizer, tokens : Array[String]) -> (Tokenizer, Int)
 fn Tokenizer::add_special_tokens(self : Tokenizer, tokens : Array[AddedToken]) -> Tokenizer
 fn Tokenizer::add_special_tokens_with_count(self : Tokenizer, tokens : Array[AddedToken]) -> (Tokenizer, Int)
 fn Tokenizer::add_special_token_strings(self : Tokenizer, tokens : Array[String]) -> Tokenizer
+fn Tokenizer::add_special_token_strings_with_count(self : Tokenizer, tokens : Array[String]) -> (Tokenizer, Int)
 fn Tokenizer::get_added_tokens_decoder(self : Tokenizer) -> Map[Int, AddedToken]
 fn Tokenizer::get_all_special_tokens(self : Tokenizer) -> Array[String]
 fn Tokenizer::get_all_special_ids(self : Tokenizer) -> Array[Int]
@@ -362,9 +364,11 @@ fn Tokenizer::is_special_token(self : Tokenizer, token : String) -> Bool
 ```
 
 `add_tokens_with_count` / `add_special_tokens_with_count` return the number of
-new ids allocated, matching HF's duplicate-aware count semantics. Existing model
-tokens can still be registered as added/special tokens for extraction without
-increasing the vocabulary size. Ordinary added tokens now keep
+new token registrations, matching HF's duplicate-aware count semantics. Existing
+model tokens count the first time they are registered as added/special tokens,
+but keep their original ids and do not increase the vocabulary size. String
+entry points also expose `_with_count` variants with the same semantics.
+Ordinary added tokens now keep
 `special_tokens_mask=0`; only `special=true` entries set mask `1` unless
 `encode_special_tokens` is enabled, in which case special token strings found in
 input text are encoded as ordinary model tokens. `get_added_tokens_decoder`

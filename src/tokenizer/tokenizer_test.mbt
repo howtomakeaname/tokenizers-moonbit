@@ -928,7 +928,8 @@ test "add_tokens and add_special_tokens extend the added vocabulary" {
     AddedToken::new("<tag>").with_single_word(true),
     AddedToken::new("hello"),
   ])
-  @test.assert_eq(added_count, 1)
+  @test.assert_eq(added_count, 2)
+  @test.assert_eq(tok.add_tokens_with_count([AddedToken::new("hello")]).1, 0)
   @test.assert_eq(tok.token_to_id("<tag>"), Some(5))
   @test.assert_eq(tok.get_vocab_size(with_added_tokens=true), 6)
   @test.assert_eq(tok.get_vocab_size(with_added_tokens=false), 5)
@@ -946,15 +947,50 @@ test "add_tokens and add_special_tokens extend the added vocabulary" {
     AddedToken::new("[MASK]").with_lstrip(true).with_rstrip(true),
     AddedToken::new("[CLS]"),
   ])
-  @test.assert_eq(special_count, 1)
+  @test.assert_eq(special_count, 2)
   @test.assert_eq(tok.token_to_id("[MASK]"), Some(6))
   @test.assert_eq(tok.token_to_id("[CLS]") is Some(_), true)
+  let cls_id = tok.token_to_id("[CLS]").unwrap()
+  @test.assert_eq(tok.is_special_token("[CLS]"), true)
+  @test.assert_eq(tok.all_special_ids().contains(cls_id), true)
+  @test.assert_eq(tok.decode([cls_id], skip_special_tokens=true), "")
   let special = tok.encode("hello [MASK] moon", add_special_tokens=false)
   @test.assert_eq(special.tokens, ["hello", " [MASK] ", "moon"])
   @test.assert_eq(special.special_tokens_mask, [0, 0, 0])
   let processed = tok.encode("hello", add_special_tokens=true)
   @test.assert_eq(processed.tokens, ["[CLS]", "hello", "[SEP]"])
   @test.assert_eq(processed.sequence_ids(), [None, Some(0), None])
+
+  let (string_tok, string_count) = base.add_token_strings_with_count([
+    "hello", "<tag>", "hello",
+  ])
+  @test.assert_eq(string_count, 2)
+  @test.assert_eq(string_tok.token_to_id("hello"), base.token_to_id("hello"))
+  @test.assert_eq(string_tok.token_to_id("<tag>"), Some(5))
+  @test.assert_eq(string_tok.add_token_strings_with_count(["<tag>"]).1, 0)
+
+  let (string_special_tok, string_special_count) = base.add_special_token_strings_with_count([
+      "[CLS]", "[SEP]", "[CLS]",
+    ],
+  )
+  @test.assert_eq(string_special_count, 2)
+  let string_cls_id = string_special_tok.token_to_id("[CLS]").unwrap()
+  let string_sep_id = string_special_tok.token_to_id("[SEP]").unwrap()
+  @test.assert_eq(
+    string_special_tok.all_special_ids().contains(string_cls_id),
+    true,
+  )
+  @test.assert_eq(
+    string_special_tok.all_special_ids().contains(string_sep_id),
+    true,
+  )
+  @test.assert_eq(
+    string_special_tok.decode(
+      [string_cls_id, string_sep_id],
+      skip_special_tokens=true,
+    ),
+    "",
+  )
 }
 
 ///|

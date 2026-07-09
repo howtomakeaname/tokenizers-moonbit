@@ -1533,9 +1533,10 @@ pub fn Tokenizer::add_tokens(
 }
 
 ///|
-/// Add ordinary tokens and return `(tokenizer, number_of_new_ids)`, matching
-/// HF's `Tokenizer.add_tokens` count semantics while keeping MoonBit's builder
-/// style convenient.
+/// Add ordinary tokens and return `(tokenizer, number_of_new_registrations)`,
+/// matching HF's `Tokenizer.add_tokens` count semantics while keeping MoonBit's
+/// builder style convenient. Existing model tokens count the first time they
+/// are registered as added tokens, but they keep their original model ids.
 pub fn Tokenizer::add_tokens_with_count(
   self : Tokenizer,
   tokens : Array[AddedToken],
@@ -1549,7 +1550,16 @@ pub fn Tokenizer::add_token_strings(
   self : Tokenizer,
   tokens : Array[String],
 ) -> Tokenizer {
-  self.add_tokens(tokens.map(t => AddedToken::new(t)))
+  self.add_token_strings_with_count(tokens).0
+}
+
+///|
+/// Convenience overload for adding plain string tokens with HF-style count.
+pub fn Tokenizer::add_token_strings_with_count(
+  self : Tokenizer,
+  tokens : Array[String],
+) -> (Tokenizer, Int) {
+  self.add_tokens_with_count(tokens.map(t => AddedToken::new(t)))
 }
 
 ///|
@@ -1564,7 +1574,8 @@ pub fn Tokenizer::add_special_tokens(
 }
 
 ///|
-/// Add special tokens and return `(tokenizer, number_of_new_ids)`.
+/// Add special tokens and return `(tokenizer, number_of_new_registrations)`.
+/// Existing model tokens count the first time they become special added tokens.
 pub fn Tokenizer::add_special_tokens_with_count(
   self : Tokenizer,
   tokens : Array[AddedToken],
@@ -1578,7 +1589,16 @@ pub fn Tokenizer::add_special_token_strings(
   self : Tokenizer,
   tokens : Array[String],
 ) -> Tokenizer {
-  self.add_special_tokens(tokens.map(AddedToken::special))
+  self.add_special_token_strings_with_count(tokens).0
+}
+
+///|
+/// Convenience overload for adding plain string special tokens with HF-style count.
+pub fn Tokenizer::add_special_token_strings_with_count(
+  self : Tokenizer,
+  tokens : Array[String],
+) -> (Tokenizer, Int) {
+  self.add_special_tokens_with_count(tokens.map(AddedToken::special))
 }
 
 ///|
@@ -1611,10 +1631,10 @@ fn Tokenizer::add_tokens_impl(
       None => {
         let id = next_id
         next_id = next_id + 1
-        new_count = new_count + 1
         id
       }
     }
+    new_count = new_count + 1
     infos.push({
       id,
       content: tok.content,

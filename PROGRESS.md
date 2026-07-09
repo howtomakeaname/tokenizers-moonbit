@@ -110,6 +110,8 @@ Encoding 显示 alias 小闭环：`Encoding::__str__()` 已补齐，返回与 `_
 
 AddedToken constructor 小闭环：`AddedToken::new` 已支持 `single_word` / `lstrip` / `rstrip` / `normalized` / `special` HF-style keyword 参数；`special=true` 且未显式指定 `normalized` 时默认 `false`，保留普通 token 默认 `normalized=true`。
 
+AddedToken 注册计数小闭环：`add_tokens_with_count` / `add_special_tokens_with_count` 已按 HF 语义返回“新增 added-vocab 注册数”，已存在于 model vocab 的 token 首次注册为 added/special token 时也计数但保留原 id，重复注册返回 0；新增 `add_token_strings_with_count` / `add_special_token_strings_with_count` 字符串入口，和 AddedToken 数组入口共享同一计数语义。
+
 Encoding truncate_hf 边界对齐：`Encoding::truncate_hf(max_len, stride)` 在 `stride >= max_len` 时显式报错，匹配 HF 公开 wrapper；typed `truncate` 保持原有宽松不可变 API。
 
 Encoding HF direction 边界对齐：`truncate_hf` / `pad_hf` 对非 `left`/`right` 的 direction 字符串显式 `ParseError`，不再静默回落为 right。

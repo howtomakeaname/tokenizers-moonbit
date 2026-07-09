@@ -340,9 +340,11 @@ pub fn Tokenizer::__repr__(Self) -> String raise @types.TokenizerError
 pub fn Tokenizer::__setstate__(TokenizerState) -> Self raise @types.TokenizerError
 pub fn Tokenizer::__str__(Self) -> String raise @types.TokenizerError
 pub fn Tokenizer::add_special_token_strings(Self, Array[String]) -> Self
+pub fn Tokenizer::add_special_token_strings_with_count(Self, Array[String]) -> (Self, Int)
 pub fn Tokenizer::add_special_tokens(Self, Array[AddedToken]) -> Self
 pub fn Tokenizer::add_special_tokens_with_count(Self, Array[AddedToken]) -> (Self, Int)
 pub fn Tokenizer::add_token_strings(Self, Array[String]) -> Self
+pub fn Tokenizer::add_token_strings_with_count(Self, Array[String]) -> (Self, Int)
 pub fn Tokenizer::add_tokens(Self, Array[AddedToken]) -> Self
 pub fn Tokenizer::add_tokens_with_count(Self, Array[AddedToken]) -> (Self, Int)
 pub fn Tokenizer::added_tokens(Self) -> Array[AddedToken]

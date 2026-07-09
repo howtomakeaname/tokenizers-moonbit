@@ -337,17 +337,20 @@ fn AddedToken::with_special(self : AddedToken, special : Bool) -> AddedToken
 fn Tokenizer::add_tokens(self : Tokenizer, tokens : Array[AddedToken]) -> Tokenizer
 fn Tokenizer::add_tokens_with_count(self : Tokenizer, tokens : Array[AddedToken]) -> (Tokenizer, Int)
 fn Tokenizer::add_token_strings(self : Tokenizer, tokens : Array[String]) -> Tokenizer
+fn Tokenizer::add_token_strings_with_count(self : Tokenizer, tokens : Array[String]) -> (Tokenizer, Int)
 fn Tokenizer::add_special_tokens(self : Tokenizer, tokens : Array[AddedToken]) -> Tokenizer
 fn Tokenizer::add_special_tokens_with_count(self : Tokenizer, tokens : Array[AddedToken]) -> (Tokenizer, Int)
 fn Tokenizer::add_special_token_strings(self : Tokenizer, tokens : Array[String]) -> Tokenizer
+fn Tokenizer::add_special_token_strings_with_count(self : Tokenizer, tokens : Array[String]) -> (Tokenizer, Int)
 fn Tokenizer::get_added_tokens_decoder(self : Tokenizer) -> Map[Int, AddedToken]
 fn Tokenizer::get_all_special_tokens(self : Tokenizer) -> Array[String]
 fn Tokenizer::get_all_special_ids(self : Tokenizer) -> Array[Int]
 fn Tokenizer::is_special_token(self : Tokenizer, token : String) -> Bool
 ```
 
-`*_with_count` 返回新分配 id 的数量，对齐 HF 对重复 token 的计数语义；已存在于
-model 词表的 token 也可以注册为 added/special token 用于预切分，但不会增加词表大小。
+`*_with_count` 返回新注册 token 的数量，对齐 HF 对重复 token 的计数语义；已存在于
+model 词表的 token 首次注册为 added/special token 时也会计数，但保留原 model id，
+不会增加词表大小。字符串入口也提供同语义的 `_with_count` 变体。
 普通 added token 的 `special_tokens_mask=0`，只有 `special=true` 的条目会标为 `1`；若启用
 `encode_special_tokens`，输入文本中的 special token 字符串会作为普通 model token 编码。
 `get_added_tokens_decoder` 返回 HF 风格的 `id -> AddedToken` 元数据，便于迁移和调试；
