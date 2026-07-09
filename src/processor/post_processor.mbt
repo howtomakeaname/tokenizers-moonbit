@@ -46,6 +46,24 @@ pub fn Piece::type_id(self : Piece) -> Int {
 }
 
 ///|
+pub fn Piece::__str__(self : Piece) -> String {
+  self.id()
+}
+
+///|
+pub fn Piece::__repr__(self : Piece) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("Piece(kind=")
+  write_repr_string(sb, self.kind())
+  sb.write_string(", id=")
+  write_repr_string(sb, self.id())
+  sb.write_string(", type_id=")
+  sb.write_string(self.type_id().to_string())
+  sb.write_char(')')
+  sb.to_string()
+}
+
+///|
 /// A special token definition: its surface and the ids/tokens it expands to.
 pub struct SpecialToken {
   id : String
@@ -107,6 +125,24 @@ pub fn SpecialToken::get_tokens(self : SpecialToken) -> Array[String] {
 ///|
 pub fn SpecialToken::tokens(self : SpecialToken) -> Array[String] {
   self.get_tokens()
+}
+
+///|
+pub fn SpecialToken::__str__(self : SpecialToken) -> String {
+  self.id
+}
+
+///|
+pub fn SpecialToken::__repr__(self : SpecialToken) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("SpecialToken(id=")
+  write_repr_string(sb, self.id)
+  sb.write_string(", ids=")
+  write_int_array(sb, self.ids)
+  sb.write_string(", tokens=")
+  write_string_array(sb, self.tokens)
+  sb.write_char(')')
+  sb.to_string()
 }
 
 ///|
@@ -862,6 +898,35 @@ fn slice_chars(chars : Array[Char], start : Int, stop : Int) -> String {
     sb.write_char(chars[i])
   }
   sb.to_string()
+}
+
+///|
+fn write_repr_string(sb : StringBuilder, s : String) -> Unit {
+  sb.write_char('"')
+  for c in s {
+    match c {
+      '"' => sb.write_string("\\\"")
+      '\\' => sb.write_string("\\\\")
+      '\n' => sb.write_string("\\n")
+      '\r' => sb.write_string("\\r")
+      '\t' => sb.write_string("\\t")
+      _ =>
+        if c.to_int() < 0x20 {
+          write_control_escape(sb, c.to_int())
+        } else {
+          sb.write_char(c)
+        }
+    }
+  }
+  sb.write_char('"')
+}
+
+///|
+fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
+  let hex = "0123456789ABCDEF".to_array()
+  sb.write_string("\\u00")
+  sb.write_char(hex[u / 16 % 16])
+  sb.write_char(hex[u % 16])
 }
 
 ///|

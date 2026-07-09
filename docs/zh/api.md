@@ -349,8 +349,9 @@ ByteLevel/Roberta 标记、TemplateProcessing typed pieces 与 special tokens、
 以及 Sequence processors。
 TemplateProcessing 提供 typed `single()` 与 `pair()` alias 访问模板。
 `Piece` 提供 `kind`、`id`、`type_id` 以及 SequenceRef / SpecialTokenRef 模板叶子的
-tuple 互操作。
-`SpecialToken` 提供 tuple 互操作，以及返回副本的 `id` / `ids` / `tokens` getter。
+tuple 互操作，并提供 `__str__` / `__repr__` 显示 alias。
+`SpecialToken` 提供 tuple 互操作、返回副本的 `id` / `ids` / `tokens` getter，以及
+`__str__` / `__repr__`。
 Sequence post-processor 支持 `__len__`、`get_item`、`__getitem__`。
 `Normalizer`、`PreTokenizer`、`Decoder` 与 `PostProcessor` 也提供基于 JSON 的
 `get_state` / `from_state` / `__getstate__` / `__setstate__`，以及

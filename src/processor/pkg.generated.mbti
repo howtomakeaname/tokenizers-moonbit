@@ -15,6 +15,8 @@ pub enum Piece {
   SequenceRef(id~ : String, type_id~ : Int)
   SpecialTokenRef(id~ : String, type_id~ : Int)
 } derive(Eq, @debug.Debug)
+pub fn Piece::__repr__(Self) -> String
+pub fn Piece::__str__(Self) -> String
 pub fn Piece::as_tuple(Self) -> (String, String, Int)
 pub fn Piece::from_tuple((String, String, Int)) -> Self raise @types.TokenizerError
 pub fn Piece::id(Self) -> String
@@ -71,6 +73,8 @@ pub struct SpecialToken {
   ids : Array[Int]
   tokens : Array[String]
 } derive(Eq, @debug.Debug)
+pub fn SpecialToken::__repr__(Self) -> String
+pub fn SpecialToken::__str__(Self) -> String
 pub fn SpecialToken::as_tuple(Self) -> (String, Array[Int], Array[String])
 pub fn SpecialToken::from_tuple((String, Array[Int], Array[String])) -> Self
 pub fn SpecialToken::get_id(Self) -> String

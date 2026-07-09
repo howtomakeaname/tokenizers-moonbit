@@ -53,6 +53,15 @@ test "post-processors expose HF-style configuration getters" {
   @test.assert_eq(seq_piece.id(), "A")
   @test.assert_eq(seq_piece.type_id(), 0)
   @test.assert_eq(seq_piece.as_tuple(), ("SequenceRef", "A", 0))
+  @test.assert_eq(seq_piece.__str__(), "A")
+  @test.assert_eq(
+    seq_piece.__repr__(),
+    "Piece(kind=\"SequenceRef\", id=\"A\", type_id=0)",
+  )
+  @test.assert_eq(
+    SpecialTokenRef(id="a\"b\\c\n", type_id=7).__repr__(),
+    "Piece(kind=\"SpecialTokenRef\", id=\"a\\\"b\\\\c\\n\", type_id=7)",
+  )
   @test.assert_eq(
     Piece::from_tuple(("SpecialTokenRef", "<s>", 0)).as_tuple(),
     ("SpecialTokenRef", "<s>", 0),
@@ -95,6 +104,15 @@ test "post-processor aggregate getters return copies" {
   @test.assert_eq(multi.ids(), [10, 11])
   @test.assert_eq(multi.get_tokens(), ["<m>", "</m>"])
   @test.assert_eq(multi.tokens(), ["<m>", "</m>"])
+  @test.assert_eq(multi.__str__(), "<multi>")
+  @test.assert_eq(
+    multi.__repr__(),
+    "SpecialToken(id=\"<multi>\", ids=[10,11], tokens=[\"<m>\",\"</m>\"])",
+  )
+  @test.assert_eq(
+    SpecialToken::new("a\"b\\c\n", [1], ["x\ny"]).__repr__(),
+    "SpecialToken(id=\"a\\\"b\\\\c\\n\", ids=[1], tokens=[\"x\\ny\"])",
+  )
   @test.assert_eq(
     SpecialToken::from_tuple(("<x>", [1, 2], ["x", "y"])).as_tuple(),
     ("<x>", [1, 2], ["x", "y"]),

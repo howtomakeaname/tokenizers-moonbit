@@ -373,9 +373,9 @@ TemplateProcessing typed pieces and special tokens, and Sequence processors.
 TemplateProcessing exposes typed `single()` and `pair()` aliases for its
 templates.
 `Piece` exposes `kind`, `id`, `type_id`, and tuple interop for SequenceRef /
-SpecialTokenRef template leaves.
+SpecialTokenRef template leaves, plus `__str__` / `__repr__` display aliases.
 `SpecialToken` exposes tuple interop plus copy-returning `id` / `ids` / `tokens`
-getters.
+getters and `__str__` / `__repr__`.
 Sequence post-processors support `__len__`, `get_item`, and `__getitem__`.
 `Normalizer`, `PreTokenizer`, `Decoder`, and `PostProcessor` also expose
 JSON-backed `get_state` / `from_state` / `__getstate__` / `__setstate__` plus
