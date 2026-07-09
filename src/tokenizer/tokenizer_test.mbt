@@ -3047,6 +3047,37 @@ test "Trainer preserves AddedToken metadata for special tokens" {
 }
 
 ///|
+test "Trainer deduplicates special tokens while preserving metadata" {
+  let base = Tokenizer::new(@model.Model::train_wordlevel_from_tokens([[]]))
+    .with_pre_tokenizer(Some(@pretokenizer.PreTokenizer::whitespace_split()))
+    .add_special_tokens([AddedToken::special("<base>").with_lstrip(true)])
+  let trained = base.train_from_iterator(
+    ["hello <s> <base>", "world"],
+    Trainer::wordlevel(
+      unk_token="[UNK]",
+      special_tokens=["<s>", "<base>"],
+      special_added_tokens=[AddedToken::special("<s>").with_rstrip(true)],
+      show_progress=false,
+    ),
+  )
+  @test.assert_eq(trained.token_to_id("<s>"), Some(0))
+  @test.assert_eq(trained.token_to_id("<base>"), Some(1))
+  @test.assert_eq(trained.get_added_tokens_count(special_only=true), 2)
+  let decoder = trained.get_added_tokens_decoder()
+  let s = decoder.get(0).unwrap()
+  @test.assert_eq(s.content, "<s>")
+  @test.assert_eq(s.rstrip, true)
+  @test.assert_eq(s.special, true)
+  let base_added = decoder.get(1).unwrap()
+  @test.assert_eq(base_added.content, "<base>")
+  @test.assert_eq(base_added.lstrip, true)
+  @test.assert_eq(
+    trained.encode("hello <s> <base>", add_special_tokens=false).tokens,
+    ["hello", "<s> ", "<base>"],
+  )
+}
+
+///|
 test "Trainer exposes HF-style configuration getters" {
   let mask = AddedToken::special("[MASK]").with_lstrip(true)
   let wordlevel = Trainer::wordlevel(
