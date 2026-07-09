@@ -670,7 +670,7 @@ fn refresh_ref_from_decision(
 ) -> Unit {
   match decision.resolved_revision {
     Some(rev) =>
-      if !rev.is_empty() {
+      if !rev.is_empty() && cached_snapshot_exists(model_id, options, rev) {
         ignore(
           @tokenizer.Tokenizer::write_pretrained_ref_revision(
             model_id,
@@ -683,6 +683,24 @@ fn refresh_ref_from_decision(
         )
       }
     None => ()
+  }
+}
+
+///|
+fn cached_snapshot_exists(
+  model_id : String,
+  options : HubDownloadOptions,
+  resolved_revision : String,
+) -> Bool {
+  match
+    @tokenizer.Tokenizer::from_pretrained_cache_paths(
+      model_id,
+      revision=options.revision,
+      resolved_revision=Some(resolved_revision),
+      cache_dir=options.cache_dir,
+    ) {
+    Some(paths) => @fs.path_exists(paths.tokenizer_json_path)
+    None => false
   }
 }
 

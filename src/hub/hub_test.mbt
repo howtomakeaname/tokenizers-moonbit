@@ -598,6 +598,28 @@ test "Hub HEAD plan and decision validate cached metadata" {
     ),
   )
   @test.assert_eq(not_modified.can_use_cache(), true)
+  let reused_with_new_revision = apply_tokenizer_json_response(
+    "org/head-decision-tokenizer",
+    "",
+    HubResponseMetadata::new(
+      304,
+      resolved_revision=Some("newrev"),
+      etag=Some("etag-head"),
+    ),
+    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+  )
+  @test.assert_eq(
+    reused_with_new_revision.encode("head", add_special_tokens=false).ids,
+    [0],
+  )
+  @test.assert_eq(
+    @tokenizer.Tokenizer::from_pretrained_ref_revision(
+      "org/head-decision-tokenizer",
+      revision="main",
+      cache_dir=Some(cache),
+    ),
+    Some("headrev"),
+  )
   let same_etag = decide_tokenizer_json_head_response(
     head_plan,
     HubResponseMetadata::new(
