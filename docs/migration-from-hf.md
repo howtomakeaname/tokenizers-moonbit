@@ -28,8 +28,8 @@ let tok = @tokenizer.from_file("tokenizer.json")
 `from_str` takes JSON text and does no file IO, so it works on every backend.
 `from_file` uses `moonbitlang/x/fs`. Core `@tokenizer.from_pretrained` is the
 all-backend offline loader: it can load a local directory/file or resolve an
-existing HF Hub cache snapshot via `$HUGGINGFACE_HUB_CACHE`, `$HF_HOME/hub`, or
-`$HOME/.cache/huggingface/hub`. Online download is provided by the optional
+existing HF Hub cache snapshot via `$HUGGINGFACE_HUB_CACHE`, `$HF_HUB_CACHE`,
+`$HF_HOME/hub`, or `$HOME/.cache/huggingface/hub`. Online download is provided by the optional
 `@hub` package on native/js: it fetches `tokenizer.json`, writes the same cache
 layout, and then reuses the core loader. It uses HuggingFace/tokenizers-like
 request headers on native and supports mirror endpoints via

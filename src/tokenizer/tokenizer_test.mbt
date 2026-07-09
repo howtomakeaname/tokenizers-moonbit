@@ -2003,6 +2003,32 @@ test "from_pretrained resolves local HuggingFace hub cache snapshots" {
     cache_dir=Some(hub),
   )
   @test.assert_eq(explicit_rev.encode("hub", add_special_tokens=false).ids, [0])
+
+  let hf_hub_root = "_build/hf_hub_cache_alias_test"
+  let hf_hub = hf_hub_root + "/hub-cache"
+  let hf_hub_repo = hf_hub + "/models--org--hf-hub-cache-tokenizer"
+  let hf_hub_refs = hf_hub_repo + "/refs"
+  let hf_hub_snapshots = hf_hub_repo + "/snapshots"
+  let hf_hub_rev = hf_hub_snapshots + "/def456"
+  ensure_dir(hf_hub_root)
+  ensure_dir(hf_hub)
+  ensure_dir(hf_hub_repo)
+  ensure_dir(hf_hub_refs)
+  ensure_dir(hf_hub_snapshots)
+  ensure_dir(hf_hub_rev)
+  @fs.write_string_to_file(hf_hub_refs + "/main", "def456\n") catch {
+    _ => ()
+  }
+  @fs.write_string_to_file(hf_hub_rev + "/tokenizer.json", json) catch {
+    _ => ()
+  }
+  @sys.set_env_var("HUGGINGFACE_HUB_CACHE", "")
+  @sys.set_env_var("HF_HUB_CACHE", hf_hub)
+  let hf_hub_implicit = Tokenizer::from_pretrained("org/hf-hub-cache-tokenizer")
+  @test.assert_eq(
+    hf_hub_implicit.encode("hub cache", add_special_tokens=false).ids,
+    [0, 1],
+  )
 }
 
 ///|

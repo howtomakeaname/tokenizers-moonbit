@@ -28,8 +28,8 @@ fn Tokenizer::save_pretrained(self : Tokenizer, dir : String) -> String raise To
 - `from_pretrained` accepts a tokenizer JSON file, a local directory containing
   `tokenizer.json`, or an already-populated HuggingFace Hub cache entry. It does
   not perform network downloads; it resolves `$HUGGINGFACE_HUB_CACHE`,
-  `$HF_HOME/hub`, then `$HOME/.cache/huggingface/hub`. Stable pretrained sources
-  are kept in a small in-process FIFO cache for repeated loads. Offline
+  `$HF_HUB_CACHE`, `$HF_HOME/hub`, then `$HOME/.cache/huggingface/hub`.
+  Stable pretrained sources are kept in a small in-process FIFO cache for repeated loads. Offline
   resolution errors distinguish missing JSON files, local directories without
   `tokenizer.json`, and model ids that are absent from the local Hub cache.
 - `from_pretrained_cached` lets callers provide an explicit local Hub cache root

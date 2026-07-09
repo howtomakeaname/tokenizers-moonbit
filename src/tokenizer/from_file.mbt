@@ -171,7 +171,7 @@ pub fn from_pretrained(path : String) -> Tokenizer raise @types.TokenizerError {
 ///|
 /// Load a tokenizer from a local HF-style directory containing `tokenizer.json`,
 /// directly from a tokenizer JSON file path, or an already-populated HF Hub
-/// cache (`$HUGGINGFACE_HUB_CACHE`, `$HF_HOME/hub`, or
+/// cache (`$HUGGINGFACE_HUB_CACHE`, `$HF_HUB_CACHE`, `$HF_HOME/hub`, or
 /// `$HOME/.cache/huggingface/hub`).
 pub fn Tokenizer::from_pretrained(
   path : String,
@@ -437,7 +437,7 @@ pub fn Tokenizer::write_pretrained_ref_revision(
     Some(p) => p
     None =>
       raise @types.ParseError(
-        "write_pretrained_ref_revision needs cache_dir or HOME/HF_HOME/HUGGINGFACE_HUB_CACHE",
+        "write_pretrained_ref_revision needs cache_dir or HOME/HF_HOME/HF_HUB_CACHE/HUGGINGFACE_HUB_CACHE",
       )
   }
   ensure_parent_dir(paths.ref_path)
@@ -492,7 +492,7 @@ pub fn Tokenizer::write_pretrained_download_resume_metadata(
     Some(p) => p
     None =>
       raise @types.ParseError(
-        "write_pretrained_download_resume_metadata needs cache_dir or HOME/HF_HOME/HUGGINGFACE_HUB_CACHE",
+        "write_pretrained_download_resume_metadata needs cache_dir or HOME/HF_HOME/HF_HUB_CACHE/HUGGINGFACE_HUB_CACHE",
       )
   }
   ensure_dir(paths.snapshot_dir)
@@ -822,7 +822,7 @@ pub fn Tokenizer::from_pretrained_resolution_hint(
         cache_exists: false,
         message: "from_pretrained cannot inspect local HuggingFace Hub cache for '" +
         model_id +
-        "' because no cache_dir/HUGGINGFACE_HUB_CACHE/HF_HOME/HOME is configured. For private or gated repositories, download with an authenticated Hub client first and pass cache_dir or tokenizer.json explicitly.",
+        "' because no cache_dir/HUGGINGFACE_HUB_CACHE/HF_HUB_CACHE/HF_HOME/HOME is configured. For private or gated repositories, download with an authenticated Hub client first and pass cache_dir or tokenizer.json explicitly.",
       }
     Some(root_dir) => {
       let repo = root_dir + "/" + hub_model_dir(model_id)
@@ -908,7 +908,7 @@ pub fn cache_pretrained_tokenizer_json(
         Some(c) => c
         None =>
           raise @types.ParseError(
-            "from_pretrained download needs cache_dir or HOME/HF_HOME/HUGGINGFACE_HUB_CACHE",
+            "from_pretrained download needs cache_dir or HOME/HF_HOME/HF_HUB_CACHE/HUGGINGFACE_HUB_CACHE",
           )
       }
   }
@@ -1064,6 +1064,10 @@ fn write_optional_snapshot_file(
 ///|
 fn default_hub_cache_dir() -> String? {
   match @sys.get_env_var("HUGGINGFACE_HUB_CACHE") {
+    Some(v) => if !v.is_empty() { return Some(v) }
+    None => ()
+  }
+  match @sys.get_env_var("HF_HUB_CACHE") {
     Some(v) => if !v.is_empty() { return Some(v) }
     None => ()
   }
