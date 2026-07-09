@@ -142,6 +142,8 @@ Truncation/Padding 参数字符串 helper 小闭环：`TruncationParams::with_di
 
 PostProcessor Sequence pair 小闭环：`Sequence` 中只做 ByteLevel offset trimming 等不消费 pair 的步骤时，最终不再丢失第二段；`Sequence([ByteLevel, BertProcessing])` 继续把 pair 交给第一个真正消费 pair 的 processor，避免旧路径把第二段重复拼接；已补 ByteLevel-only pair 与 ByteLevel+BertProcessing pair 回归。
 
+Unknown-token fallback parity 小闭环：Unigram 在缺少 `unk_id` 且实际遇到 unknown 时改为抛 `VocabError("Encountered an unknown token but `unk_id` is missing")`，不再返回 `-1`；WordLevel/WordPiece 在 fallback token 未出现在 vocab 时按 HF 抛 `VocabError`；BPE 在 `unk_token=None` 时跳过未知 symbol，配置了 `unk_token` 但 vocab 缺失时抛错。`Model::tokenize`、`PreTokenizedString::to_encoding` 与 tokenizer encode/fast/batch/pair/pretokenized/async 兼容入口均已显式传播 `TokenizerError`，benchmark 通过 non-raising `must_encode*` wrapper 保持 `b.bench` callback 合约。
+
 Encoding merge defaults 小闭环：`Encoding::merge` / `merge_with` 已暴露，默认 `growing_offsets=true`，显式 `false` 时保留各段原 offsets；已补默认 growing 与显式 false 两种行为测试。
 
 Encoding merge pad/special offset 回归覆盖：HF 对拍确认前段末尾为 special/pad `(0,0)` 时，`growing_offsets=true` 不会按前一个非零 span 偏移后段；已补 padding 后 merge 的回归测试锁住该边界。
@@ -178,7 +180,7 @@ Hub/Pretrained API 文档同步近期增量：英文/中文 API 签名补齐 `fr
 
 训练文件/metadata correctness 覆盖近期增量：`train_from_iterator(length=...)` 已补 `0` / 大值 hint 不影响训练结果的回归测试；`train_from_files` 已覆盖多文件中后续文件缺失时的精确错误消息、无尾换行的末行保留、空文件与空 iterator 等价；`special_tokens` 与 `special_added_tokens` 同 content 时已覆盖去重并保留 `AddedToken` metadata。
 
-训练默认值近期对齐：HF 0.22.x 的 WordLevel/WordPiece/BPE `min_frequency` 默认是 `0`，MoonBit 已完成三者默认值对齐，并保留显式旧阈值测试；BPE trainer 默认 `unk_token=None` 已对齐 HF，显式 `Some("[UNK]")` 保留旧行为；Unigram trainer/tokenizer/model 默认 `unk_token=None` 已对齐 HF，显式 `unk_token=Some("<unk>")` / `unk_piece=Some(...)` 保留旧行为。后续训练风险主要转为完整 Unigram EM/大语料 golden 对拍和隐式 unk 关闭后的 unknown encode 边界验证。
+训练默认值近期对齐：HF 0.22.x 的 WordLevel/WordPiece/BPE `min_frequency` 默认是 `0`，MoonBit 已完成三者默认值对齐，并保留显式旧阈值测试；BPE trainer 默认 `unk_token=None` 已对齐 HF，显式 `Some("[UNK]")` 保留旧行为；Unigram trainer/tokenizer/model 默认 `unk_token=None` 已对齐 HF，显式 `unk_token=Some("<unk>")` / `unk_piece=Some(...)` 保留旧行为；隐式 unk 关闭后的 unknown encode 边界已按 HF 改为跳过或抛错。后续训练风险主要转为完整 Unigram EM/大语料 golden 对拍。
 
 ## R10：架构治理与模块化计划
 
@@ -246,11 +248,11 @@ Hub/Pretrained API 文档同步近期增量：英文/中文 API 签名补齐 `fr
 ### Models
 | 组件 | 状态 | 备注 |
 |---|---|---|
-| BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效 + word cache；decode 反查使用 dense id array 并在加载时直接填充；native mixed 抽样 gpt2/llama encode 快于 HF |
+| BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效 + word cache；decode 反查使用 dense id array 并在加载时直接填充；`unk_token=None` 时 unknown symbol 按 HF 跳过，配置 unk 但 vocab 缺失时抛错；native mixed 抽样 gpt2/llama encode 快于 HF |
 | byte_fallback / fuse_unk / ignore_merges | ✅ | |
-| WordPiece | ✅ | 贪心最长前缀；支持 `continuing_subword_prefix` 与 HF `end_of_word_suffix` |
-| Unigram | ✅ | Viterbi DP + word cache；`byte_fallback` / `fuse_unk` supported；native mixed 抽样 t5/bge/e5 encode 快于 HF |
-| WordLevel | ✅ | |
+| WordPiece | ✅ | 贪心最长前缀；支持 `continuing_subword_prefix` 与 HF `end_of_word_suffix`；fallback `[UNK]` 缺失时抛错 |
+| Unigram | ✅ | Viterbi DP + word cache；`byte_fallback` / `fuse_unk` supported；缺少 `unk_id` 且遇到 unknown 时抛错；native mixed 抽样 t5/bge/e5 encode 快于 HF |
+| WordLevel | ✅ | fallback unk token 缺失时抛错 |
 | dropout / word cache | ✅ | BPE `dropout` 已解析/序列化并在 `>0` 时禁用 word cache；BPE/WordPiece/Unigram word cache 已完成，后续仅保留更细粒度容量/性能优化 |
 
 ### Normalizers

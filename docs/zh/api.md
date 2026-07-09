@@ -151,38 +151,38 @@ let tok = @hub.from_pretrained(
 ```moonbit
 fn Tokenizer::encode(
   self : Tokenizer, text : String, add_special_tokens~ : Bool = true,
-) -> Encoding
+) -> Encoding raise TokenizerError
 
 fn Tokenizer::encode_pair(
   self : Tokenizer, text_a : String, text_b : String,
   add_special_tokens~ : Bool = true,
-) -> Encoding
+) -> Encoding raise TokenizerError
 
 fn Tokenizer::encode_batch(
   self : Tokenizer, texts : Array[String], add_special_tokens~ : Bool = true,
-) -> Array[Encoding]
+) -> Array[Encoding] raise TokenizerError
 
 fn Tokenizer::encode_pair_batch(
   self : Tokenizer, pairs : Array[(String, String)], add_special_tokens~ : Bool = true,
-) -> Array[Encoding]
+) -> Array[Encoding] raise TokenizerError
 
 fn Tokenizer::encode_pretokenized(
   self : Tokenizer, words : Array[String], add_special_tokens~ : Bool = true,
-) -> Encoding
+) -> Encoding raise TokenizerError
 
 fn Tokenizer::encode_pretokenized_pair(
   self : Tokenizer, words_a : Array[String], words_b : Array[String],
   add_special_tokens~ : Bool = true,
-) -> Encoding
+) -> Encoding raise TokenizerError
 
 fn Tokenizer::encode_pretokenized_batch(
   self : Tokenizer, batch : Array[Array[String]], add_special_tokens~ : Bool = true,
-) -> Array[Encoding]
+) -> Array[Encoding] raise TokenizerError
 
 fn Tokenizer::encode_pretokenized_pair_batch(
   self : Tokenizer, batch : Array[(Array[String], Array[String])],
   add_special_tokens~ : Bool = true,
-) -> Array[Encoding]
+) -> Array[Encoding] raise TokenizerError
 
 fn Tokenizer::decode(
   self : Tokenizer, ids : Array[Int], skip_special_tokens~ : Bool = true,
@@ -202,7 +202,9 @@ fn DecodeStream::step(self : DecodeStream, id : Int) -> (DecodeStream, String?)
 Fast encode 变体（`encode_fast`、`encode_batch_fast`、
 `encode_sequence_input_fast`、`encode_input_fast`、`encode_input_batch_fast`、
 `batch_encode_plus_fast`）保持 ids/tokens/masks/sequence metadata 与普通 encode
-路径一致，同时把 offsets 置零。Async 兼容 alias（`async_encode`、
+路径一致，同时把 offsets 置零。encode API 可能因模型级 tokenization 失败抛
+`TokenizerError`，例如 WordLevel/WordPiece/BPE/Unigram 的 unknown-token fallback
+配置缺失。Async 兼容 alias（`async_encode`、
 `async_encode_fast`、`async_encode_batch`、`async_encode_batch_fast`、
 `async_decode`、`async_decode_batch`）在所有 target 上委托同一套确定性同步实现。
 

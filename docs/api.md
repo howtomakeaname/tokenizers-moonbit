@@ -171,38 +171,38 @@ let tok = @hub.from_pretrained(
 ```moonbit
 fn Tokenizer::encode(
   self : Tokenizer, text : String, add_special_tokens~ : Bool = true,
-) -> Encoding
+) -> Encoding raise TokenizerError
 
 fn Tokenizer::encode_pair(
   self : Tokenizer, text_a : String, text_b : String,
   add_special_tokens~ : Bool = true,
-) -> Encoding
+) -> Encoding raise TokenizerError
 
 fn Tokenizer::encode_batch(
   self : Tokenizer, texts : Array[String], add_special_tokens~ : Bool = true,
-) -> Array[Encoding]
+) -> Array[Encoding] raise TokenizerError
 
 fn Tokenizer::encode_pair_batch(
   self : Tokenizer, pairs : Array[(String, String)], add_special_tokens~ : Bool = true,
-) -> Array[Encoding]
+) -> Array[Encoding] raise TokenizerError
 
 fn Tokenizer::encode_pretokenized(
   self : Tokenizer, words : Array[String], add_special_tokens~ : Bool = true,
-) -> Encoding
+) -> Encoding raise TokenizerError
 
 fn Tokenizer::encode_pretokenized_pair(
   self : Tokenizer, words_a : Array[String], words_b : Array[String],
   add_special_tokens~ : Bool = true,
-) -> Encoding
+) -> Encoding raise TokenizerError
 
 fn Tokenizer::encode_pretokenized_batch(
   self : Tokenizer, batch : Array[Array[String]], add_special_tokens~ : Bool = true,
-) -> Array[Encoding]
+) -> Array[Encoding] raise TokenizerError
 
 fn Tokenizer::encode_pretokenized_pair_batch(
   self : Tokenizer, batch : Array[(Array[String], Array[String])],
   add_special_tokens~ : Bool = true,
-) -> Array[Encoding]
+) -> Array[Encoding] raise TokenizerError
 
 fn Tokenizer::decode(
   self : Tokenizer, ids : Array[Int], skip_special_tokens~ : Bool = true,
@@ -222,7 +222,9 @@ fn DecodeStream::step(self : DecodeStream, id : Int) -> (DecodeStream, String?)
 Fast encode variants (`encode_fast`, `encode_batch_fast`,
 `encode_sequence_input_fast`, `encode_input_fast`, `encode_input_batch_fast`,
 and `batch_encode_plus_fast`) keep ids/tokens/masks/sequence metadata aligned
-with regular encode paths while zeroing offsets. Async-compatible aliases
+with regular encode paths while zeroing offsets. Encode APIs can raise
+`TokenizerError` for model-level tokenization failures, for example missing
+WordLevel/WordPiece/BPE/Unigram unknown-token fallback configuration. Async-compatible aliases
 (`async_encode`, `async_encode_fast`, `async_encode_batch`,
 `async_encode_batch_fast`, `async_decode`, `async_decode_batch`) delegate to the
 same deterministic synchronous implementation on every target.
