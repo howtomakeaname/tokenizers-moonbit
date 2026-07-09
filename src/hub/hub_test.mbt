@@ -801,6 +801,52 @@ async test "direct Hub network APIs reject local_files_only" {
 }
 
 ///|
+async test "from_pretrained honors local_files_only cache hit and miss" {
+  let json =
+    #|{"version":"1.0",
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"local":0,"only":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let cache = "_build/hub_from_pretrained_local_only_cache"
+  @tokenizer.Tokenizer::from_pretrained_downloaded(
+    "org/local-only",
+    json,
+    cache_dir=Some(cache),
+    resolved_revision=Some("abc123"),
+  )
+  |> ignore
+
+  let hit = from_pretrained(
+    "org/local-only",
+    options=HubDownloadOptions::new(
+      cache_dir=Some(cache),
+      endpoint="https://127.0.0.1:9",
+      local_files_only=true,
+    ),
+  )
+  @test.assert_eq(hit.encode("local only", add_special_tokens=false).ids, [0, 1])
+
+  let mut missed = false
+  try
+    from_pretrained(
+      "org/missing-local-only",
+      options=HubDownloadOptions::new(
+        cache_dir=Some(cache),
+        endpoint="https://127.0.0.1:9",
+        local_files_only=true,
+      ),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      missed = msg.contains(
+        "from_pretrained local cache miss and local_files_only=true",
+      )
+    _ => ()
+  }
+  @test.assert_eq(missed, true)
+}
+
+///|
 async test "optional online Hub smoke" {
   guard @sys.get_env_var("TOKENIZERS_MOONBIT_HUB_ONLINE_TEST") == Some("1") else {
     return
