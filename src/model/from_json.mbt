@@ -78,7 +78,7 @@ fn parse_merges(
   let merges : Map[(String, String), Int] = {}
   let marr = match obj.get("merges") {
     Some(Array(a)) => a
-    None => []
+    None => raise @types.VocabError("model.merges must be an array")
     _ => raise @types.VocabError("model.merges must be an array")
   }
   for i, entry in marr {
@@ -161,6 +161,19 @@ fn get_required_string(
 }
 
 ///|
+fn get_required_int(
+  obj : Map[String, Json],
+  key : String,
+  ctx : String,
+) -> Int raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(Number(n, ..)) => n.to_int()
+    _ =>
+      raise @types.ParseError("\{ctx}: missing or non-number \"\{key}\" field")
+  }
+}
+
+///|
 fn parse_wordlevel(
   obj : Map[String, Json],
 ) -> WordLevelModel raise @types.TokenizerError {
@@ -181,16 +194,12 @@ fn parse_wordpiece(
     vocab,
     vocab_r,
     unk_token: get_required_string(obj, "unk_token", "WordPiece model"),
-    continuing_subword_prefix: @types.get_str(
-      obj,
-      "continuing_subword_prefix",
-      default="##",
+    continuing_subword_prefix: get_required_string(
+      obj, "continuing_subword_prefix", "WordPiece model",
     ),
     end_of_word_suffix: @types.get_str_opt(obj, "end_of_word_suffix"),
-    max_input_chars_per_word: @types.get_int(
-      obj,
-      "max_input_chars_per_word",
-      default=100,
+    max_input_chars_per_word: get_required_int(
+      obj, "max_input_chars_per_word", "WordPiece model",
     ),
     cache: {},
     cache_capacity: None,

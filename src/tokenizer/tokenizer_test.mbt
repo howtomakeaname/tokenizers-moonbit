@@ -1970,7 +1970,7 @@ test "from_str decodes optional components and added tokens" {
     #| "added_tokens":[{"id":0,"content":"[UNK]","special":true}],
     #| "normalizer":{"type":"Lowercase"},
     #| "pre_tokenizer":{"type":"Whitespace"},
-    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"foo":1},"unk_token":"[UNK]"},
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"foo":1},"unk_token":"[UNK]","continuing_subword_prefix":"##","max_input_chars_per_word":100},
     #| "decoder":{"type":"WordPiece"}}
   let tok = Tokenizer::from_str(json)
   // [UNK] is an added special token: it resolves via the public lookups.
@@ -1984,7 +1984,7 @@ test "WordPiece repeated words keep offsets with word cache" {
   let json =
     #|{"version":"1.0",
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
-    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"token":1,"##ization":2},"unk_token":"[UNK]","continuing_subword_prefix":"##"}}
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"token":1,"##ization":2},"unk_token":"[UNK]","continuing_subword_prefix":"##","max_input_chars_per_word":100}}
   let tok = Tokenizer::from_str(json)
   let enc = tok.encode("tokenization tokenization", add_special_tokens=false)
   @test.assert_eq(enc.tokens, ["token", "##ization", "token", "##ization"])
@@ -1996,7 +1996,7 @@ test "WordPiece supports end_of_word_suffix in model config" {
   let json =
     #|{"version":"1.0",
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
-    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"token":1,"##ization</w>":2,"token</w>":3},"unk_token":"[UNK]","continuing_subword_prefix":"##","end_of_word_suffix":"</w>"}}
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"token":1,"##ization</w>":2,"token</w>":3},"unk_token":"[UNK]","continuing_subword_prefix":"##","end_of_word_suffix":"</w>","max_input_chars_per_word":100}}
   let tok = Tokenizer::from_str(json)
   let enc = tok.encode("tokenization token", add_special_tokens=false)
   @test.assert_eq(enc.tokens, ["token", "##ization</w>", "token</w>"])
@@ -2012,7 +2012,7 @@ test "Tokenizer cache control clears resizes and isolates model caches" {
   let wp_json =
     #|{"version":"1.0",
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
-    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"token":1,"##ization":2,"other":3},"unk_token":"[UNK]","continuing_subword_prefix":"##"}}
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"token":1,"##ization":2,"other":3},"unk_token":"[UNK]","continuing_subword_prefix":"##","max_input_chars_per_word":100}}
   let wp = Tokenizer::from_str(wp_json)
   @test.assert_eq(wp.cache_size(), 0)
   @test.assert_eq(
@@ -2102,6 +2102,52 @@ test "from_str requires WordLevel and WordPiece unk_token fields" {
     _ => ()
   }
   @test.assert_eq(wordpiece_raised, true)
+}
+
+///|
+test "from_str rejects missing BPE and WordPiece required model fields" {
+  let bpe_missing_merges =
+    #|{"version":"1.0",
+    #| "model":{"type":"BPE","vocab":{"a":0}}}
+  let mut bpe_merges_raised = false
+  try Tokenizer::from_str(bpe_missing_merges) |> ignore catch {
+    @types.VocabError(msg) => bpe_merges_raised = msg.contains("merges")
+    _ => ()
+  }
+  @test.assert_eq(bpe_merges_raised, true)
+
+  let wordpiece_missing_prefix =
+    #|{"version":"1.0",
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0},"unk_token":"[UNK]","max_input_chars_per_word":100}}
+  let mut missing_prefix_raised = false
+  try Tokenizer::from_str(wordpiece_missing_prefix) |> ignore catch {
+    @types.ParseError(msg) =>
+      missing_prefix_raised = msg.contains("continuing_subword_prefix")
+    _ => ()
+  }
+  @test.assert_eq(missing_prefix_raised, true)
+
+  let wordpiece_missing_max_chars =
+    #|{"version":"1.0",
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0},"unk_token":"[UNK]","continuing_subword_prefix":"##"}}
+  let mut missing_max_raised = false
+  try Tokenizer::from_str(wordpiece_missing_max_chars) |> ignore catch {
+    @types.ParseError(msg) =>
+      missing_max_raised = msg.contains("max_input_chars_per_word")
+    _ => ()
+  }
+  @test.assert_eq(missing_max_raised, true)
+
+  let wordpiece_invalid_max_chars =
+    #|{"version":"1.0",
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0},"unk_token":"[UNK]","continuing_subword_prefix":"##","max_input_chars_per_word":"100"}}
+  let mut invalid_max_raised = false
+  try Tokenizer::from_str(wordpiece_invalid_max_chars) |> ignore catch {
+    @types.ParseError(msg) =>
+      invalid_max_raised = msg.contains("max_input_chars_per_word")
+    _ => ()
+  }
+  @test.assert_eq(invalid_max_raised, true)
 }
 
 ///|
@@ -2321,7 +2367,7 @@ test "model save writes HF-style standalone artifacts" {
 
   let wp_json =
     #|{"version":"1.0",
-    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"hello":1,"##s":2},"unk_token":"[UNK]"}}
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"hello":1,"##s":2},"unk_token":"[UNK]","continuing_subword_prefix":"##","max_input_chars_per_word":100}}
   let wp_paths = Tokenizer::from_str(wp_json)
     .get_model()
     .save("_build/model_save_wordpiece")
