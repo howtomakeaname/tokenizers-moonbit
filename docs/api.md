@@ -504,7 +504,10 @@ summary with token count and exposed attribute names.
 `Trainer` exposes copy-returning configuration getters such as `kind`,
 `unk_token`, `min_frequency`, `special_tokens`, `special_added_tokens`,
 `vocab_size`, `show_progress`, and model-specific knobs for WordPiece, BPE and
-Unigram trainers. Binding layers can also use lower-snake constructor aliases:
+Unigram trainers. Common fields also expose HF-style `get_*` aliases:
+`get_unk_token`, `get_min_frequency`, `get_special_tokens`,
+`get_special_added_tokens`, `get_vocab_size`, and `get_show_progress`.
+Binding layers can also use lower-snake constructor aliases:
 `wordlevel_trainer`, `wordpiece_trainer`, `bpe_trainer`, and
 `unigram_trainer`. The default `vocab_size` caps match HF across typed
 constructors, lower-snake aliases, model-level training helpers, and tokenizer
