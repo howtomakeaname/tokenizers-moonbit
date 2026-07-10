@@ -163,3 +163,37 @@ test "unigram alpha=0.0 behaves like Viterbi" {
   @test.assert_eq(unigram_surfaces(toks), ["a", "b"])
   @test.assert_eq(unigram_ids(toks), [0, 1])
 }
+
+///|
+test "unigram alpha sampling produces valid tokens" {
+  // Create a model with alpha > 0 to enable sampling
+  let v : Map[String, (Int, Double)] = {}
+  let vr : Array[String?] = []
+  v["hello"] = (0, -1.0)
+  v["world"] = (1, -2.0)
+  v["he"] = (2, -3.0)
+  v["llo"] = (3, -4.0)
+  set_vocab_r(vr, 0, "hello")
+  set_vocab_r(vr, 1, "world")
+  set_vocab_r(vr, 2, "he")
+  set_vocab_r(vr, 3, "llo")
+  let model = Unigram(UnigramModel::{
+    vocab: v,
+    vocab_r: vr,
+    unk_id: None,
+    byte_fallback: false,
+    fuse_unk: true,
+    alpha: Some(0.5),
+    nbest_size: None,
+    cache: {},
+    cache_capacity: None,
+  })
+  // Should produce valid tokens (either "hello" or "he"+"llo")
+  let toks = model.tokenize("hello")
+  @test.assert_eq(toks.length() > 0, true)
+  // Verify all tokens have valid ids
+  for t in toks {
+    @test.assert_eq(t.id >= 0, true)
+    @test.assert_eq(t.value.length() > 0, true)
+  }
+}

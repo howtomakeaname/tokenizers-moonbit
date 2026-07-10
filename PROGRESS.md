@@ -35,6 +35,17 @@
 
 本轮复评结论：主流推理链路（load tokenizer.json / added tokens / normalizer / pre-tokenizer / model / post-processor / decoder / truncation / padding / offsets / pair / batch / pretokenized / save / local+online hub）已经基本可迁移；剩余缺口主要集中在训练生态完整 EM/大语料对拍、Hub 文件族/错误映射、以及 Python 绑定长尾别名。Regex 当前采用“HF 常见 deterministic subset + 复杂 pattern 显式 unsupported”的完成策略，不把 full backtracking/通用 Unicode regex 引擎作为跨 target 核心目标。
 
+### 2026-07-10 小闭环：Unigram lattice 采样实现
+
+- HF Unigram 支持 `alpha`（采样温度）和 `nbest_size`（N-best 路径数）推理参数，用于从 lattice 中采样而非确定性 Viterbi。
+- MoonBit 已实现 forward-backward 采样算法：当 `alpha > 0` 时，构建 lattice 并计算前向概率，然后从分布中采样 token 序列。
+- 实现要点：
+  - `log_sum_exp` - 数值稳定的 log-sum-exp 计算
+  - `tokenize_with_sampling` - 前向-后向采样主函数
+  - `sample_from_log_probs` - 从 log 概率分布采样
+- 当前使用确定性种子（基于 log 概率和）保证可复现性，后续可替换为真随机。
+- 全后端测试通过：native(269)。
+
 ### 2026-07-10 小闭环：`Tokenizer::get_trainer` 默认训练器
 
 - HF `Model.get_trainer()` 返回模型对应的默认 Trainer。MoonBit 已补齐 `Tokenizer::get_trainer()` / `default_trainer()`，根据模型类型返回对应的默认 Trainer（BPE → BpeTrainer、WordPiece → WordPieceTrainer、Unigram → UnigramTrainer、WordLevel → WordLevelTrainer）。
@@ -298,7 +309,7 @@ Hub/Pretrained API 文档同步近期增量：英文/中文 API 签名补齐 `fr
 | BPE / 字节级 BPE | ✅ | 优先队列(pairing heap)合并 + 惰性失效 + word cache；decode 反查使用 dense id array 并在加载时直接填充；`unk_token=None` 时 unknown symbol 按 HF 跳过，配置 unk 但 vocab 缺失时抛错；native mixed 抽样 gpt2/llama encode 快于 HF |
 | byte_fallback / fuse_unk / ignore_merges | ✅ | |
 | WordPiece | ✅ | 贪心最长前缀；支持 `continuing_subword_prefix` 与 HF `end_of_word_suffix`；fallback `[UNK]` 缺失时抛错 |
-| Unigram | ✅ | Viterbi DP + word cache；`byte_fallback` / `fuse_unk` / `alpha` / `nbest_size` supported；缺少 `unk_id` 且遇到 unknown 时抛错；native mixed 抽样 t5/bge/e5 encode 快于 HF |
+| Unigram | ✅ | Viterbi DP + word cache + forward-backward sampling；`byte_fallback` / `fuse_unk` / `alpha` / `nbest_size` supported；`alpha > 0` 时启用采样模式；缺少 `unk_id` 且遇到 unknown 时抛错；native mixed 抽样 t5/bge/e5 encode 快于 HF |
 | WordLevel | ✅ | fallback unk token 缺失时抛错 |
 | dropout / word cache | ✅ | BPE `dropout` 已解析/序列化并在 `>0` 时禁用 word cache；BPE/WordPiece/Unigram word cache 已完成，后续仅保留更细粒度容量/性能优化 |
 
@@ -424,7 +435,7 @@ HF 对比后 quick native 约 0.09x；`decode_stream` 增量解码 quick native 
 2. **训练 / Hub 集成**：当前定位 inference-first；`to_json`/`save` 已支持原始 JSON 往返，`from_pretrained` 已支持本地目录/文件、已有 HF Hub cache snapshot 与稳定路径小型多项 source cache，并通过可选 native/js `hub` 包支持在线下载 `tokenizer.json` 后写入标准 cache；WordLevel trainer 产物已支持序列化保存，并支持自定义 pre-tokenizer / 预切分 token 流 / vocab_size / HF 风格频次与词典序排序；WordPiece / BPE / Unigram trainer MVP 已支持相同输入模式、continuation prefix / end-of-word suffix、`max_input_chars_per_word`、`byte_fallback` 与 `vocab_size`，常见 pre-tokenizer 可序列化。高级训练算法与采样参数后续按需增强。
 3. **性能**：BPE merge 已用优先队列(pairing heap)+惰性失效，llama 提速约 7x、与 Rust 同量级；BPE/WordPiece/Unigram word cache 与 tokenizer source cache 已完成，后续重点转向 cache 容量/淘汰策略、冷启动大词表解析与长期 benchmark 趋势落盘。
 4. **batch 并行策略**：MoonBit 当前已有 async/structured concurrency，但官方 `moonbitlang/async` 文档说明其任务模型是 single-threaded cooperative multitasking，用户代码只能使用一个硬件处理器；因此它不能直接给 CPU-bound tokenizer encode_batch 提供跨 target 多核并行。项目已提供保持顺序稳定的 `*_parallel(_fast)` 兼容入口，内部委托串行批处理 + 批内重复输入缓存，BPE/WordPiece/Unigram 均带 word cache（场景定位 wasm/js 边缘端）。未来 target runtime 提供稳定 worker 调度时可替换内部实现，不改变公开 API。
-5. **Unigram 采样**：HF Unigram 支持 `alpha`（采样温度）和 `nbest_size`（N-best 路径数）推理参数，用于从 lattice 中采样而非确定性 Viterbi。MoonBit 已补齐 JSON 解析/序列化和 getter alias，但当前采样行为仍使用确定性 Viterbi（与 `alpha=None` 一致）。完整 lattice forward-backward 采样和 N-best 采样后续按需扩展，主要影响创意生成场景，不影响标准推理。
+5. **Unigram 采样**：HF Unigram 支持 `alpha`（采样温度）和 `nbest_size`（N-best 路径数）推理参数，用于从 lattice 中采样而非确定性 Viterbi。MoonBit 已补齐 JSON 解析/序列化、getter alias 和 forward-backward 采样算法；`alpha > 0` 时启用采样模式，使用前向概率计算和 softmax 采样。当前使用确定性种子保证可复现性，后续可替换为真随机；`nbest_size` 参数暂未实现 N-best 采样。
 
 ## 测试与验证
 

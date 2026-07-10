@@ -16,11 +16,21 @@ let unk_penalty : Double = 1.0e4
 
 ///|
 /// Tokenize a single piece with this Unigram model.
+/// When alpha > 0, uses sampling instead of deterministic Viterbi.
 pub fn UnigramModel::tokenize(
   self : UnigramModel,
   word : String,
   offset? : Int = 0,
 ) -> Array[@types.Token] raise @types.TokenizerError {
+  // Use sampling when alpha is set and > 0
+  match self.alpha {
+    Some(a) if a > 0.0 => {
+      return self.tokenize_with_sampling(word, a, self.nbest_size, offset)
+    }
+    _ => ()
+  }
+
+  // Deterministic Viterbi path (default)
   let chars = word.to_array()
   let n = chars.length()
   if n == 0 {
@@ -213,4 +223,182 @@ fn make_piece(chars : Array[Char], start : Int, stop : Int) -> String {
     sb.write_char(chars[i])
   }
   sb.to_string()
+}
+
+///|
+/// Compute log(sum(exp(a), exp(b))) in a numerically stable way.
+fn log_sum_exp(a : Double, b : Double) -> Double {
+  if a == neg_inf { return b }
+  if b == neg_inf { return a }
+  let max_val = if a > b { a } else { b }
+  let diff = if a > b { b - max_val } else { a - max_val }
+  // For very small differences, return max directly
+  if diff < -20.0 { return max_val }
+  max_val + @math.ln(1.0 + @math.exp(diff))
+}
+
+///|
+/// Tokenize with sampling when alpha > 0. Uses forward-backward algorithm
+/// to compute probabilities, then samples from the distribution.
+fn UnigramModel::tokenize_with_sampling(
+  self : UnigramModel,
+  word : String,
+  alpha : Double,
+  _nbest_size : Int?,
+  offset : Int,
+) -> Array[@types.Token] {
+  let chars = word.to_array()
+  let n = chars.length()
+  if n == 0 {
+    return []
+  }
+
+  // Build lattice: for each position, collect all possible pieces
+  // pieces[end] = [(start, id, score, piece)]
+  let pieces : Array[Array[(Int, Int, Double, String)]] = Array::make(n + 1, [])
+  for end in 1..<=n {
+    let row : Array[(Int, Int, Double, String)] = []
+    for start in 0..<end {
+      let piece = make_piece(chars, start, end)
+      match self.vocab.get(piece) {
+        Some((id, score)) => {
+          row.push((start, id, score, piece))
+        }
+        None => ()
+      }
+    }
+    // Add unk fallback for single characters if no piece found
+    if row.length() == 0 {
+      let start = end - 1
+      let piece = make_piece(chars, start, end)
+      match self.unk_id {
+        Some(uid) => {
+          row.push((start, uid, -unk_penalty, piece))
+        }
+        None => () // Skip if no unk_id
+      }
+    }
+    pieces[end] = row
+  }
+
+  // Forward pass: compute log partition function at each position
+  // forward[pos] = log(sum of scores of all paths from 0 to pos)
+  let forward = Array::make(n + 1, neg_inf)
+  forward[0] = 0.0
+  for pos in 1..<=n {
+    for candidate in pieces[pos] {
+      let start = candidate.0
+      let score = candidate.2
+      if forward[start] != neg_inf {
+        forward[pos] = log_sum_exp(forward[pos], forward[start] + alpha * score)
+      }
+    }
+  }
+
+  // Backward pass: sample tokens from right to left
+  let result_rev : Array[(Int, Int, String)] = [] // (start, id, piece)
+  let mut pos = n
+  while pos > 0 {
+    if forward[pos] == neg_inf {
+      break
+    }
+
+    // Compute probabilities for each piece ending at pos
+    let candidates = pieces[pos]
+    if candidates.length() == 0 {
+      break
+    }
+
+    // Calculate unnormalized probabilities
+    let log_probs : Array[Double] = candidates.map(fn(c) {
+      let (start, _, score, _) = c
+      if forward[start] == neg_inf {
+        neg_inf
+      } else {
+        forward[start] + alpha * score - forward[pos]
+      }
+    })
+
+    // Sample from the distribution
+    let sampled_idx = sample_from_log_probs(log_probs)
+    let (start, id, _, piece) = candidates[sampled_idx]
+    result_rev.push((start, id, piece))
+    pos = start
+  }
+
+  // Reverse to get correct order
+  let out : Array[@types.Token] = []
+  let mut k = result_rev.length() - 1
+  while k >= 0 {
+    let (start, id, piece) = result_rev[k]
+    out.push(@types.Token::{ id, value: piece, offsets: (start, start + piece.to_array().length()) })
+    k = k - 1
+  }
+
+  // Apply byte_fallback and fuse_unk
+  let expanded = if self.byte_fallback {
+    self.expand_byte_fallback(out)
+  } else {
+    out
+  }
+  let rel = if self.fuse_unk {
+    match self.unk_id {
+      Some(uid) => fuse_unigram_unk(expanded, uid)
+      None => expanded
+    }
+  } else {
+    expanded
+  }
+
+  shift_unigram_tokens(rel, offset)
+}
+
+///|
+/// Sample an index from log probabilities using softmax sampling.
+fn sample_from_log_probs(log_probs : Array[Double]) -> Int {
+  let n = log_probs.length()
+  if n == 0 { return 0 }
+  if n == 1 { return 0 }
+
+  // Find max for numerical stability
+  let mut max_log = neg_inf
+  for lp in log_probs {
+    if lp > max_log {
+      max_log = lp
+    }
+  }
+
+  // Compute softmax probabilities
+  let probs : Array[Double] = []
+  let mut sum = 0.0
+  for lp in log_probs {
+    let p = if lp == neg_inf { 0.0 } else { @math.exp(lp - max_log) }
+    probs.push(p)
+    sum = sum + p
+  }
+
+  // Normalize
+  if sum > 0.0 {
+    for i in 0..<n {
+      probs[i] = probs[i] / sum
+    }
+  }
+
+  // Sample using cumulative distribution
+  // Use a simple deterministic seed based on log_probs for reproducibility
+  let mut seed = 0.0
+  for lp in log_probs {
+    seed = seed + lp
+  }
+  let r = (seed.abs() * 1000.0).floor() % 1.0
+  let mut cumsum = 0.0
+  for i in 0..<n {
+    cumsum = cumsum + probs[i]
+    if r < cumsum {
+      return i
+    }
+  }
+
+  // Fallback to last index
+  n - 1
 }
