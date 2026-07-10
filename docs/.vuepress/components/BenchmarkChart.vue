@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, shallowRef } from 'vue'
-import { withBase } from 'vuepress/client'
+import { onMounted, onUnmounted, ref, shallowRef, nextTick } from 'vue'
 
 const props = defineProps<{
   src: string
@@ -13,20 +12,44 @@ const chart = shallowRef<any>(null)
 const loading = ref(true)
 const error = ref('')
 
+// Get base path from current URL
+function getBase(): string {
+  if (typeof window === 'undefined') return ''
+  const path = window.location.pathname
+  // Find the base path (e.g., /tokenizers-moonbit/)
+  const match = path.match(/^(\/[^/]+\/)/)
+  return match ? match[1] : ''
+}
+
 async function initChart() {
-  if (!container.value) return
+  // Wait for DOM to be ready
+  await nextTick()
+
+  if (!container.value) {
+    console.error('BenchmarkChart: container not found')
+    return
+  }
 
   try {
+    console.log('BenchmarkChart: loading echarts...')
     const echarts = await import('echarts')
+    console.log('BenchmarkChart: echarts loaded, initializing chart...')
+
     chart.value = echarts.init(container.value)
 
-    const resp = await fetch(withBase(props.src))
+    const url = getBase() + props.src.replace(/^\//, '')
+    console.log('BenchmarkChart: fetching', url)
+    const resp = await fetch(url)
     if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`)
+
     const option = await resp.json()
+    console.log('BenchmarkChart: setting option', option)
 
     chart.value.setOption(option)
     loading.value = false
+    console.log('BenchmarkChart: chart initialized successfully')
   } catch (err) {
+    console.error('BenchmarkChart error:', err)
     error.value = err instanceof Error ? err.message : String(err)
     loading.value = false
   }
