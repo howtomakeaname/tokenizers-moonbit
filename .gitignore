@@ -3,6 +3,12 @@
 target/
 .mooncakes/
 
+# VuePress documentation site
+node_modules/
+/docs/.vuepress/.cache/
+/docs/.vuepress/.temp/
+/gh-pages-deploy/
+
 # OS / editor
 .DS_Store
 *.swp

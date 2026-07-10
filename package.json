@@ -1,0 +1,19 @@
+{
+  "name": "tokenizers-moonbit-docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.10.0",
+  "scripts": {
+    "docs:dev": "vuepress dev docs --clean-temp",
+    "docs:build": "vuepress build docs --dest gh-pages-deploy --clean-temp --clean-cache && node scripts/ensure-nojekyll.mjs",
+    "docs:check": "pnpm docs:build"
+  },
+  "devDependencies": {
+    "@vuepress/bundler-vite": "2.0.0-rc.30",
+    "mermaid": "^11.14.0",
+    "typescript": "^5.9.3",
+    "vuepress": "2.0.0-rc.30",
+    "vuepress-theme-plume": "1.0.0-rc.204"
+  }
+}

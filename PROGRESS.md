@@ -158,6 +158,8 @@ Root truncation/padding JSON strictness 小闭环：root `truncation` / `padding
 
 High-level encode post-processing parity 小闭环：`Tokenizer::encode` / pair / batch / fast / pre-tokenized / mixed `EncodeInput` 在 `add_special_tokens=false` 时不再绕过 configured post-processor，而是按 HF 语义仅移除由 post-processor 注入的 special tokens，同时保留 Template/BERT `type_ids`、句对 `sequence_ids` 与 ByteLevel/RoBERTa offset trimming；显式 `post_process(false)` 与高层 encode 路径已补一致性测试。
 
+main/docs 文档站小闭环：VuePress 2 + `vuepress-theme-plume` 文档站源码已落到主分支现有 `docs/` 目录，不再依赖单独 `docs-site` 或 `gh-pages` 源码分支；新增分层指南、概念、兼容矩阵、迁移、参考、性能与开发页面，包含 Mermaid pipeline/迁移/benchmark/docs workflow 图和多张支持表；Pages 已切到 GitHub Actions workflow，`pnpm@11.10.0` + `pnpm-lock.yaml` / `pnpm-workspace.yaml` 管理依赖，workflow 使用 Node `24.11.0` 并将 `docs/` 构建到 `gh-pages-deploy/` artifact。
+
 Trainer 通用 getter alias 小闭环：`get_unk_token` / `get_min_frequency` / `get_special_tokens` / `get_special_added_tokens` / `get_vocab_size` / `get_show_progress` 已补齐，均委托现有 property-style getter 并保持数组/AddedToken 返回副本，便于 Python binding 统一暴露 `get_*` 配置属性。
 
 Trainer model-specific getter alias 小闭环：WordPiece/BPE/Unigram 特有 knobs 已补对应 `get_*` alias，覆盖 `get_continuing_subword_prefix` / `get_end_of_word_suffix` / `get_initial_alphabet` / `get_limit_alphabet` / `get_max_token_length` / `get_max_input_chars_per_word` / `get_fuse_unk` / `get_byte_fallback` / `get_shrinking_factor` / `get_max_piece_length` / `get_n_sub_iterations` / `get_seed_size` / `get_progress_format`，数组返回继续保持 copy-return 语义。
