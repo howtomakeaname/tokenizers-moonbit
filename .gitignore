@@ -15,6 +15,9 @@ node_modules/
 .idea/
 .vscode/
 
+# CI-generated benchmark reports (regenerated during docs build)
+/reports/
+
 # Large test fixtures downloaded locally (real tokenizer.json files) and the
 # expected outputs generated from them. Both are regenerable (see README).
 tests/data/*.full.json
