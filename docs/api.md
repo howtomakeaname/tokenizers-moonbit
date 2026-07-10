@@ -506,7 +506,10 @@ summary with token count and exposed attribute names.
 `vocab_size`, `show_progress`, and model-specific knobs for WordPiece, BPE and
 Unigram trainers. Common fields also expose HF-style `get_*` aliases:
 `get_unk_token`, `get_min_frequency`, `get_special_tokens`,
-`get_special_added_tokens`, `get_vocab_size`, and `get_show_progress`.
+`get_special_added_tokens`, `get_vocab_size`, and `get_show_progress`; the
+model-specific knobs expose matching `get_*` aliases as well, including prefix,
+suffix, alphabet, max-length, byte-fallback/fuse-unk, shrinking, seed, and
+progress-format fields.
 Binding layers can also use lower-snake constructor aliases:
 `wordlevel_trainer`, `wordpiece_trainer`, `bpe_trainer`, and
 `unigram_trainer`. The default `vocab_size` caps match HF across typed

@@ -482,7 +482,8 @@ unsupported-component 错误，不返回有损 state。
 `show_progress`，以及 WordPiece、BPE、Unigram trainer 的模型特有 knobs。
 通用字段也提供 HF 风格 `get_*` alias：`get_unk_token`、`get_min_frequency`、
 `get_special_tokens`、`get_special_added_tokens`、`get_vocab_size` 与
-`get_show_progress`。
+`get_show_progress`；模型特有 knobs 也提供对应 `get_*` alias，覆盖 prefix/suffix、
+alphabet、max length、byte-fallback/fuse-unk、shrinking、seed 与 progress-format 字段。
 binding 层也可以使用 lower-snake constructor alias：`wordlevel_trainer`、
 `wordpiece_trainer`、`bpe_trainer`、`unigram_trainer`。默认 `vocab_size` cap
 已在 typed constructor、lower-snake alias、model-level 训练 helper 与 tokenizer
