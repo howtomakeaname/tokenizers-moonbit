@@ -40,7 +40,8 @@ fn Tokenizer::save_pretrained(
   WordLevel/WordPiece JSON 必须包含 `model.unk_token`；BPE JSON 必须包含
   `model.merges`；WordPiece JSON 还必须包含 `model.continuing_subword_prefix`
   与 `model.max_input_chars_per_word`。缺失或类型错误的必填字段会抛
-  `TokenizerError`。
+  `TokenizerError`；BPE/Unigram 的布尔 knobs 与 BPE `dropout` 若类型错误也会
+  被拒绝，而不是静默回落到默认值。
 - `from_pretrained_cached` 可显式传入本地 Hub cache 根目录和 revision，对齐
   HF `local_files_only=True` 的离线使用方式。
 - `from_pretrained_downloaded` 用于网络调用方桥接：传入已下载的 `tokenizer.json`
