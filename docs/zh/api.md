@@ -203,6 +203,35 @@ fn Normalizer::set_content(self : Normalizer, val : String) -> Normalizer
 对应 HF Python `Normalizer` 属性 setter，MoonBit 提供 `set_*` 方法返回新 Normalizer。
 每个 setter 仅修改对应归一化器变体的字段，其他变体返回原 Normalizer。
 
+#### Normalizer 构建器方法
+
+```moonbit
+fn Normalizer::nfc() -> Normalizer
+fn Normalizer::nfd() -> Normalizer
+fn Normalizer::nfkc() -> Normalizer
+fn Normalizer::nfkd() -> Normalizer
+fn Normalizer::byte_level() -> Normalizer
+fn Normalizer::lowercase_normalizer() -> Normalizer
+fn Normalizer::strip(left : Bool, right : Bool) -> Normalizer
+fn Normalizer::strip_left() -> Normalizer  // strip(left=true, right=false)
+fn Normalizer::strip_right() -> Normalizer  // strip(left=false, right=true)
+fn Normalizer::strip_accents_normalizer() -> Normalizer
+fn Normalizer::prepend_normalizer(content : String) -> Normalizer
+fn Normalizer::nmt() -> Normalizer
+fn Normalizer::precompiled(charsmap : String) -> Normalizer
+fn Normalizer::replace(pattern : String, content : String) -> Normalizer
+fn Normalizer::replace_regex(pattern : String, content : String) -> Normalizer
+fn Normalizer::bert_normalizer(
+  clean_text? : Bool = true, handle_chinese_chars? : Bool = true,
+  strip_accents? : Bool? = None, lowercase? : Bool = true,
+) -> Normalizer
+fn Normalizer::sequence(normalizers : Array[Normalizer]) -> Normalizer
+```
+
+构建器方法创建 Normalizer 实例。`nfc()` / `nfd()` / `nfkc()` / `nfkd()` 创建 Unicode
+归一化形式。`strip()` 创建 Strip 归一化器。`bert_normalizer()` 创建带可配置标志的
+BertNormalizer。`sequence()` 链接多个归一化器。
+
 #### Normalizer getter 别名
 
 ```moonbit
@@ -528,6 +557,29 @@ fn Decoder::byte_fallback() -> Decoder
 fn Decoder::ctc(
   pad_token? : String = "<pad>", word_delimiter_token? : String = "|", cleanup? : Bool = true,
 ) -> Decoder
+#### PreTokenizer 构建器方法
+
+```moonbit
+fn PreTokenizer::whitespace() -> PreTokenizer
+fn PreTokenizer::whitespace_split() -> PreTokenizer
+fn PreTokenizer::bert_pre_tokenizer() -> PreTokenizer
+fn PreTokenizer::byte_level(add_prefix_space? : Bool = true) -> PreTokenizer
+fn PreTokenizer::metaspace(replacement? : Char = '▁', prepend_scheme? : String = "always") -> PreTokenizer
+fn PreTokenizer::punctuation(behavior? : SplitBehavior = Isolated) -> PreTokenizer
+fn PreTokenizer::digits(individual_digits? : Bool = false) -> PreTokenizer
+fn PreTokenizer::delimiter(delimiter : Char) -> PreTokenizer
+fn PreTokenizer::fixed_length(length : Int) -> PreTokenizer
+fn PreTokenizer::unicode_scripts() -> PreTokenizer
+fn PreTokenizer::char_delimiter_split(delimiter : Char) -> PreTokenizer
+fn PreTokenizer::split(pattern : String, behavior? : SplitBehavior = Removed, invert? : Bool = false, regex? : Bool = false) -> PreTokenizer
+fn PreTokenizer::sequence(pre_tokenizers : Array[PreTokenizer]) -> PreTokenizer
+```
+
+构建器方法创建 PreTokenizer 实例。`whitespace()` 按空白分割。
+`byte_level()` 创建 GPT-2 风格字节级预分词器。`metaspace()` 创建 SentencePiece
+风格的 metaspace 预分词器。`split()` 创建带可配置行为的 Split 预分词器。
+`sequence()` 链接多个预分词器。
+
 #### PreTokenizer getter 别名
 
 ```moonbit
@@ -734,6 +786,26 @@ fn Trainer::set_progress_format(self : Trainer, val : String) -> Trainer
 保持不可变语义。每个 setter 仅修改对应训练器变体的字段，其他变体返回原 Trainer。
 适用于多个变体的 setter（如 `set_unk_token` 支持所有四种训练器类型）会处理所有匹配变体。
 每个 setter 都有 `*_alias` 别名，保持与 Python binding 迁移模式一致。
+
+#### Decoder 构建器方法
+
+```moonbit
+fn Decoder::byte_level(add_prefix_space? : Bool = true, trim_offsets? : Bool = true, use_regex? : Bool = true) -> Decoder
+fn Decoder::wordpiece(prefix? : String = "##", cleanup? : Bool = true) -> Decoder
+fn Decoder::metaspace(replacement? : Char = '▁', prepend_scheme? : String = "always", split? : Bool = true) -> Decoder
+fn Decoder::bpe_decoder(suffix? : String = "</w>") -> Decoder
+fn Decoder::strip(content : Char, start : Int, stop : Int) -> Decoder
+fn Decoder::fuse() -> Decoder
+fn Decoder::replace(pattern : String, content : String) -> Decoder
+fn Decoder::replace_regex(pattern : String, content : String) -> Decoder
+fn Decoder::byte_fallback() -> Decoder
+fn Decoder::ctc(pad_token? : String = "<pad>", word_delimiter_token? : String = "|", cleanup? : Bool = true) -> Decoder
+fn Decoder::sequence(decoders : Array[Decoder]) -> Decoder
+```
+
+构建器方法创建 Decoder 实例。`byte_level()` 创建 GPT-2 风格字节级解码器。
+`wordpiece()` 创建 WordPiece 解码器。`metaspace()` 创建 SentencePiece 风格的
+metaspace 解码器。`ctc()` 创建语音模型的 CTC 解码器。`sequence()` 链接多个解码器。
 
 #### Decoder getter 别名
 

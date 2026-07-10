@@ -224,6 +224,36 @@ methods that return a new Normalizer, preserving immutability. Each setter only
 modifies the relevant normalizer variant's field; other variants return the
 original Normalizer unchanged.
 
+#### Normalizer builder methods
+
+```moonbit
+fn Normalizer::nfc() -> Normalizer
+fn Normalizer::nfd() -> Normalizer
+fn Normalizer::nfkc() -> Normalizer
+fn Normalizer::nfkd() -> Normalizer
+fn Normalizer::byte_level() -> Normalizer
+fn Normalizer::lowercase_normalizer() -> Normalizer
+fn Normalizer::strip(left : Bool, right : Bool) -> Normalizer
+fn Normalizer::strip_left() -> Normalizer  // strip(left=true, right=false)
+fn Normalizer::strip_right() -> Normalizer  // strip(left=false, right=true)
+fn Normalizer::strip_accents_normalizer() -> Normalizer
+fn Normalizer::prepend_normalizer(content : String) -> Normalizer
+fn Normalizer::nmt() -> Normalizer
+fn Normalizer::precompiled(charsmap : String) -> Normalizer
+fn Normalizer::replace(pattern : String, content : String) -> Normalizer
+fn Normalizer::replace_regex(pattern : String, content : String) -> Normalizer
+fn Normalizer::bert_normalizer(
+  clean_text? : Bool = true, handle_chinese_chars? : Bool = true,
+  strip_accents? : Bool? = None, lowercase? : Bool = true,
+) -> Normalizer
+fn Normalizer::sequence(normalizers : Array[Normalizer]) -> Normalizer
+```
+
+Builder methods create Normalizer instances. `nfc()` / `nfd()` / `nfkc()` / `nfkd()`
+create Unicode normalization forms. `strip()` creates a Strip normalizer.
+`bert_normalizer()` creates a BertNormalizer with configurable flags.
+`sequence()` chains multiple normalizers.
+
 #### Normalizer getter aliases
 
 ```moonbit
@@ -533,6 +563,30 @@ fn Decoder::byte_fallback() -> Decoder
 fn Decoder::ctc(
   pad_token? : String = "<pad>", word_delimiter_token? : String = "|", cleanup? : Bool = true,
 ) -> Decoder
+#### PreTokenizer builder methods
+
+```moonbit
+fn PreTokenizer::whitespace() -> PreTokenizer
+fn PreTokenizer::whitespace_split() -> PreTokenizer
+fn PreTokenizer::bert_pre_tokenizer() -> PreTokenizer
+fn PreTokenizer::byte_level(add_prefix_space? : Bool = true) -> PreTokenizer
+fn PreTokenizer::metaspace(replacement? : Char = '▁', prepend_scheme? : String = "always") -> PreTokenizer
+fn PreTokenizer::punctuation(behavior? : SplitBehavior = Isolated) -> PreTokenizer
+fn PreTokenizer::digits(individual_digits? : Bool = false) -> PreTokenizer
+fn PreTokenizer::delimiter(delimiter : Char) -> PreTokenizer
+fn PreTokenizer::fixed_length(length : Int) -> PreTokenizer
+fn PreTokenizer::unicode_scripts() -> PreTokenizer
+fn PreTokenizer::char_delimiter_split(delimiter : Char) -> PreTokenizer
+fn PreTokenizer::split(pattern : String, behavior? : SplitBehavior = Removed, invert? : Bool = false, regex? : Bool = false) -> PreTokenizer
+fn PreTokenizer::sequence(pre_tokenizers : Array[PreTokenizer]) -> PreTokenizer
+```
+
+Builder methods create PreTokenizer instances. `whitespace()` splits on
+whitespace. `byte_level()` creates GPT-2 style byte-level pre-tokenizer.
+`metaspace()` creates SentencePiece-style metaspace pre-tokenizer.
+`split()` creates a Split pre-tokenizer with configurable behavior.
+`sequence()` chains multiple pre-tokenizers.
+
 #### PreTokenizer getter aliases
 
 ```moonbit
@@ -746,6 +800,27 @@ modifies the relevant trainer variant's field; other variants return the
 original Trainer unchanged. Setters that apply to multiple variants (e.g.
 `set_unk_token` for all four trainer types) handle all matching variants.
 Each setter has a `*_alias` companion for Python binding migration consistency.
+
+#### Decoder builder methods
+
+```moonbit
+fn Decoder::byte_level(add_prefix_space? : Bool = true, trim_offsets? : Bool = true, use_regex? : Bool = true) -> Decoder
+fn Decoder::wordpiece(prefix? : String = "##", cleanup? : Bool = true) -> Decoder
+fn Decoder::metaspace(replacement? : Char = '▁', prepend_scheme? : String = "always", split? : Bool = true) -> Decoder
+fn Decoder::bpe_decoder(suffix? : String = "</w>") -> Decoder
+fn Decoder::strip(content : Char, start : Int, stop : Int) -> Decoder
+fn Decoder::fuse() -> Decoder
+fn Decoder::replace(pattern : String, content : String) -> Decoder
+fn Decoder::replace_regex(pattern : String, content : String) -> Decoder
+fn Decoder::byte_fallback() -> Decoder
+fn Decoder::ctc(pad_token? : String = "<pad>", word_delimiter_token? : String = "|", cleanup? : Bool = true) -> Decoder
+fn Decoder::sequence(decoders : Array[Decoder]) -> Decoder
+```
+
+Builder methods create Decoder instances. `byte_level()` creates GPT-2 style
+byte-level decoder. `wordpiece()` creates WordPiece decoder. `metaspace()`
+creates SentencePiece-style metaspace decoder. `ctc()` creates CTC decoder
+for speech models. `sequence()` chains multiple decoders.
 
 #### Decoder getter aliases
 
