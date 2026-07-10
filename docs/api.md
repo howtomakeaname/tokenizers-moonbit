@@ -30,6 +30,10 @@ fn Tokenizer::save_pretrained(
 ```
 
 - `from_str` parses `tokenizer.json` text; it does no file IO and works on all backends.
+  WordLevel and WordPiece JSON must include `model.unk_token`; BPE JSON must
+  include `model.merges`; WordPiece JSON must include
+  `model.continuing_subword_prefix` and `model.max_input_chars_per_word`.
+  Missing or wrong-typed required fields raise `TokenizerError`.
   A small multi-entry parsed-JSON cache keeps repeated or alternating stable
   tokenizer payloads hot while still returning fresh tokenizer state.
 - `from_buffer` parses UTF-8 bytes, and `from_file` reads via `moonbitlang/x/fs`

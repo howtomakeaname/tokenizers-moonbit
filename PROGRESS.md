@@ -144,7 +144,7 @@ PostProcessor Sequence pair 小闭环：`Sequence` 中只做 ByteLevel offset tr
 
 Unknown-token fallback parity 小闭环：Unigram 在缺少 `unk_id` 且实际遇到 unknown 时改为抛 `VocabError("Encountered an unknown token but `unk_id` is missing")`，不再返回 `-1`；WordLevel/WordPiece 在 fallback token 未出现在 vocab 时按 HF 抛 `VocabError`；BPE 在 `unk_token=None` 时跳过未知 symbol，配置了 `unk_token` 但 vocab 缺失时抛错。`Model::tokenize`、`PreTokenizedString::to_encoding` 与 tokenizer encode/fast/batch/pair/pretokenized/async 兼容入口均已显式传播 `TokenizerError`，benchmark 通过 non-raising `must_encode*` wrapper 保持 `b.bench` callback 合约。
 
-WordLevel/WordPiece JSON strictness 小闭环：HF `Tokenizer.from_str` 要求 WordLevel / WordPiece `model.unk_token` 字段显式存在；MoonBit 已改为加载缺字段时抛 `ParseError`，直接内存构造器 `Model::wordlevel` / `Model::wordpiece` 仍保留 HF Python constructor 默认值，兼顾 JSON parity 与 programmatic API 便利性。
+Tokenizer JSON strictness 小闭环：HF `Tokenizer.from_str` 要求 WordLevel / WordPiece `model.unk_token`、BPE `model.merges`、WordPiece `model.continuing_subword_prefix` 与 `model.max_input_chars_per_word` 字段显式存在；MoonBit 已改为加载缺字段或错误类型时抛 `ParseError` / `VocabError`，直接内存构造器 `Model::wordlevel` / `Model::wordpiece` 仍保留 HF Python constructor 默认值，兼顾 JSON parity 与 programmatic API 便利性。
 
 Trainer 通用 getter alias 小闭环：`get_unk_token` / `get_min_frequency` / `get_special_tokens` / `get_special_added_tokens` / `get_vocab_size` / `get_show_progress` 已补齐，均委托现有 property-style getter 并保持数组/AddedToken 返回副本，便于 Python binding 统一暴露 `get_*` 配置属性。
 
