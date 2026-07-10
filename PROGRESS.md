@@ -35,6 +35,11 @@
 
 本轮复评结论：主流推理链路（load tokenizer.json / added tokens / normalizer / pre-tokenizer / model / post-processor / decoder / truncation / padding / offsets / pair / batch / pretokenized / save / local+online hub）已经基本可迁移；剩余缺口主要集中在训练生态完整 EM/大语料对拍、Hub 文件族/错误映射、以及 Python 绑定长尾别名。Regex 当前采用“HF 常见 deterministic subset + 复杂 pattern 显式 unsupported”的完成策略，不把 full backtracking/通用 Unicode regex 引擎作为跨 target 核心目标。
 
+### 2026-07-10 小闭环：`Tokenizer::get_trainer` 默认训练器
+
+- HF `Model.get_trainer()` 返回模型对应的默认 Trainer。MoonBit 已补齐 `Tokenizer::get_trainer()` / `default_trainer()`，根据模型类型返回对应的默认 Trainer（BPE → BpeTrainer、WordPiece → WordPieceTrainer、Unigram → UnigramTrainer、WordLevel → WordLevelTrainer）。
+- 全后端测试通过：native(268)。
+
 ### 2026-07-10 小闭环：BPE `get_word_count` + Decoder Strip `left`/`right` 别名
 
 - **BPE `get_word_count`**：HF `BpeTrainer.get_word_count()` 返回训练后唯一词数。MoonBit 已补齐 `BPEModel.word_count : Int?` 字段，训练时记录唯一词数，JSON/文件加载时为 `None`；新增 `Model::get_word_count()` getter，BPE 返回 `Some(count)`，其它模型返回 `None`。

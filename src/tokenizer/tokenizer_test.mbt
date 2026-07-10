@@ -4978,3 +4978,35 @@ test "Trainer unigram preserves AddedToken metadata and advanced knobs" {
     ["mo", "on", "<extra>"],
   )
 }
+
+///|
+test "tokenizer get_trainer returns appropriate trainer for model type" {
+  // BPE model
+  let bpe_json = "{\"model\":{\"type\":\"BPE\",\"vocab\":{\"a\":0,\"b\":1},\"merges\":[]}}"
+  let bpe_tok = Tokenizer::from_str(bpe_json)
+  let bpe_trainer = bpe_tok.get_trainer()
+  @test.assert_eq(bpe_trainer.kind(), "BpeTrainer")
+  @test.assert_eq(bpe_trainer.vocab_size(), Some(30000))
+
+  // WordPiece model
+  let wp_json = "{\"model\":{\"type\":\"WordPiece\",\"vocab\":{\"[UNK]\":0,\"a\":1},\"unk_token\":\"[UNK]\",\"continuing_subword_prefix\":\"##\",\"max_input_chars_per_word\":100}}"
+  let wp_tok = Tokenizer::from_str(wp_json)
+  let wp_trainer = wp_tok.get_trainer()
+  @test.assert_eq(wp_trainer.kind(), "WordPieceTrainer")
+
+  // Unigram model
+  let uni_json = "{\"model\":{\"type\":\"Unigram\",\"vocab\":[[\"a\",0.0],[\"b\",-1.0]]}}"
+  let uni_tok = Tokenizer::from_str(uni_json)
+  let uni_trainer = uni_tok.get_trainer()
+  @test.assert_eq(uni_trainer.kind(), "UnigramTrainer")
+
+  // WordLevel model
+  let wl_json = "{\"model\":{\"type\":\"WordLevel\",\"vocab\":{\"a\":0,\"b\":1},\"unk_token\":\"<unk>\"}}"
+  let wl_tok = Tokenizer::from_str(wl_json)
+  let wl_trainer = wl_tok.get_trainer()
+  @test.assert_eq(wl_trainer.kind(), "WordLevelTrainer")
+
+  // default_trainer alias
+  let trainer2 = bpe_tok.default_trainer()
+  @test.assert_eq(trainer2.kind(), "BpeTrainer")
+}

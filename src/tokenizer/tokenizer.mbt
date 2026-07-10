@@ -2207,3 +2207,22 @@ pub fn Tokenizer::convert_ids_to_tokens(
 ) -> Array[String?] {
   ids.map(id => self.id_to_token(id))
 }
+
+///|
+/// Return a default Trainer appropriate for this tokenizer's model type (HF
+/// `Model.get_trainer`). The returned trainer has default settings; callers
+/// can override specific fields with builder methods before training.
+pub fn Tokenizer::get_trainer(self : Tokenizer) -> Trainer {
+  match self.model {
+    @model.BPE(_) => Trainer::bpe()
+    @model.WordPiece(_) => Trainer::wordpiece()
+    @model.Unigram(_) => Trainer::unigram()
+    @model.WordLevel(_) => Trainer::wordlevel()
+  }
+}
+
+///|
+/// Alias for `Tokenizer::get_trainer` with HF-style naming.
+pub fn Tokenizer::default_trainer(self : Tokenizer) -> Trainer {
+  self.get_trainer()
+}

@@ -381,6 +381,7 @@ pub fn Tokenizer::decode_ids_batch(Self, Array[Array[Int]], skip_special_tokens?
 pub fn Tokenizer::decode_stream(Self, skip_special_tokens? : Bool) -> DecodeStream
 pub fn Tokenizer::decode_with_hooks(Self, Array[Int], TokenizerComponentHooks, skip_special_tokens? : Bool) -> String
 pub fn Tokenizer::decoder(Self) -> @decoder.Decoder?
+pub fn Tokenizer::default_trainer(Self) -> Trainer
 pub fn Tokenizer::disable_encode_special_tokens(Self) -> Self
 pub fn Tokenizer::enable_encode_special_tokens(Self) -> Self
 pub fn Tokenizer::enable_padding(Self, length? : Int?, direction? : PaddingDirection, pad_id? : Int, pad_type_id? : Int, pad_token? : String, pad_to_multiple_of? : Int?) -> Self
@@ -466,6 +467,7 @@ pub fn Tokenizer::get_padding(Self) -> PaddingParams?
 pub fn Tokenizer::get_post_processor(Self) -> @processor.PostProcessor?
 pub fn Tokenizer::get_pre_tokenizer(Self) -> @pretokenizer.PreTokenizer?
 pub fn Tokenizer::get_state(Self) -> TokenizerState raise @types.TokenizerError
+pub fn Tokenizer::get_trainer(Self) -> Trainer
 pub fn Tokenizer::get_truncation(Self) -> TruncationParams?
 pub fn Tokenizer::get_vocab(Self, with_added_tokens? : Bool) -> Map[String, Int]
 pub fn Tokenizer::get_vocab_size(Self, with_added_tokens? : Bool) -> Int
