@@ -24,9 +24,8 @@ pub fn UnigramModel::tokenize(
 ) -> Array[@types.Token] raise @types.TokenizerError {
   // Use sampling when alpha is set and > 0
   match self.alpha {
-    Some(a) if a > 0.0 => {
+    Some(a) if a > 0.0 =>
       return self.tokenize_with_sampling(word, a, self.nbest_size, offset)
-    }
     _ => ()
   }
 
@@ -228,12 +227,18 @@ fn make_piece(chars : Array[Char], start : Int, stop : Int) -> String {
 ///|
 /// Compute log(sum(exp(a), exp(b))) in a numerically stable way.
 fn log_sum_exp(a : Double, b : Double) -> Double {
-  if a == neg_inf { return b }
-  if b == neg_inf { return a }
+  if a == neg_inf {
+    return b
+  }
+  if b == neg_inf {
+    return a
+  }
   let max_val = if a > b { a } else { b }
   let diff = if a > b { b - max_val } else { a - max_val }
   // For very small differences, return max directly
-  if diff < -20.0 { return max_val }
+  if diff < -20.0 {
+    return max_val
+  }
   max_val + @math.ln(1.0 + @math.exp(diff))
 }
 
@@ -261,9 +266,7 @@ fn UnigramModel::tokenize_with_sampling(
     for start in 0..<end {
       let piece = make_piece(chars, start, end)
       match self.vocab.get(piece) {
-        Some((id, score)) => {
-          row.push((start, id, score, piece))
-        }
+        Some((id, score)) => row.push((start, id, score, piece))
         None => ()
       }
     }
@@ -272,9 +275,7 @@ fn UnigramModel::tokenize_with_sampling(
       let start = end - 1
       let piece = make_piece(chars, start, end)
       match self.unk_id {
-        Some(uid) => {
-          row.push((start, uid, -unk_penalty, piece))
-        }
+        Some(uid) => row.push((start, uid, -unk_penalty, piece))
         None => () // Skip if no unk_id
       }
     }
@@ -331,7 +332,11 @@ fn UnigramModel::tokenize_with_sampling(
   let mut k = result_rev.length() - 1
   while k >= 0 {
     let (start, id, piece) = result_rev[k]
-    out.push(@types.Token::{ id, value: piece, offsets: (start, start + piece.to_array().length()) })
+    out.push(@types.Token::{
+      id,
+      value: piece,
+      offsets: (start, start + piece.to_array().length()),
+    })
     k = k - 1
   }
 
@@ -357,8 +362,12 @@ fn UnigramModel::tokenize_with_sampling(
 /// Sample an index from log probabilities using softmax sampling.
 fn sample_from_log_probs(log_probs : Array[Double]) -> Int {
   let n = log_probs.length()
-  if n == 0 { return 0 }
-  if n == 1 { return 0 }
+  if n == 0 {
+    return 0
+  }
+  if n == 1 {
+    return 0
+  }
 
   // Find max for numerical stability
   let mut max_log = neg_inf
