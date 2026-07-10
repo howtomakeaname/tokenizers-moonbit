@@ -1,5 +1,7 @@
 import { defineClientConfig } from 'vuepress/client'
 import { defineMermaidConfig } from '@vuepress/plugin-markdown-chart/client'
+import BenchmarkSnapshot from './components/BenchmarkSnapshot.vue'
+import BenchmarkChart from './components/BenchmarkChart.vue'
 import './styles/index.css'
 
 const lightTheme = {
@@ -57,7 +59,9 @@ const darkTheme = {
 }
 
 export default defineClientConfig({
-  enhance() {
+  enhance({ app }) {
+    app.component('BenchmarkSnapshot', BenchmarkSnapshot)
+    app.component('BenchmarkChart', BenchmarkChart)
     defineMermaidConfig({
       theme: 'base',
       themeVariables: (isDarkMode) => (isDarkMode ? darkTheme : lightTheme),

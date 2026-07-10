@@ -13,37 +13,13 @@ createTime: 2026/07/10 00:00:00
 
 ## 图表
 
-### Moon/HF 比率（按用例）
+<BenchmarkChart src="/benchmarks/charts/ratio-bar.json" title="Moon/HF 比率（按用例）" :height="350" />
 
-按 Moon/HF 比率排序的前 15 个用例。越低越好；低于 1.0（绿色）表示 MoonBit 快于 HF。
+<BenchmarkChart src="/benchmarks/charts/scatter.json" title="Moon µs vs HF µs 散点图" :height="400" />
 
-::: echarts Moon/HF 比率
-:charts{path="ratio-bar.json"}
-:::
+<BenchmarkChart src="/benchmarks/charts/summary.json" title="性能分布" :height="350" />
 
-### Moon µs vs HF µs 散点图
-
-每个点代表一个基准测试用例。对角线以下的点表示 MoonBit 在该用例上快于 HF。
-
-::: echarts Moon vs HF 性能
-:charts{path="scatter.json"}
-:::
-
-### 性能分布
-
-按判定类别的基准测试结果分布。
-
-::: echarts 性能概览
-:charts{path="summary.json"}
-:::
-
-### 按模型平均比率
-
-每个模型在所有基准测试用例上的平均 Moon/HF 比率。
-
-::: echarts 模型平均比率
-:charts{path="model-bar.json"}
-:::
+<BenchmarkChart src="/benchmarks/charts/model-bar.json" title="按模型平均比率" :height="350" />
 
 ## 流程
 

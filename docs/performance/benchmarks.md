@@ -14,39 +14,13 @@ Benchmarks compare MoonBit encode/decode/load performance against Python
 
 ## Charts
 
-### Moon/HF Ratio by Case
+<BenchmarkChart src="/benchmarks/charts/ratio-bar.json" title="Moon/HF Ratio by Case" :height="350" />
 
-Top 15 cases sorted by Moon/HF ratio. Lower is better; values below 1.0 (green)
-indicate MoonBit is faster than HF.
+<BenchmarkChart src="/benchmarks/charts/scatter.json" title="Moon µs vs HF µs" :height="400" />
 
-::: echarts Moon/HF Ratio
-:charts{path="ratio-bar.json"}
-:::
+<BenchmarkChart src="/benchmarks/charts/summary.json" title="Performance Distribution" :height="350" />
 
-### Moon µs vs HF µs Scatter
-
-Each point represents one benchmark case. Points below the diagonal line mean
-MoonBit is faster than HF for that case.
-
-::: echarts Moon vs HF Performance
-:charts{path="scatter.json"}
-:::
-
-### Performance Distribution
-
-Distribution of benchmark results by verdict category.
-
-::: echarts Performance Summary
-:charts{path="summary.json"}
-:::
-
-### Average Ratio by Model
-
-Average Moon/HF ratio across all benchmark cases for each model.
-
-::: echarts Model Average Ratio
-:charts{path="model-bar.json"}
-:::
+<BenchmarkChart src="/benchmarks/charts/model-bar.json" title="Average Ratio by Model" :height="350" />
 
 ## Pipeline
 
