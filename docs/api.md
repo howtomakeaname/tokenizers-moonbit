@@ -331,6 +331,40 @@ Each `step` returns a new stream plus `Some(chunk)` when the buffered ids decode
 to a valid text extension, or `None` for incomplete byte-fallback / decoder
 context.
 
+## Property-style getters
+
+```moonbit
+fn Tokenizer::normalizer(self : Tokenizer) -> Normalizer?
+fn Tokenizer::pre_tokenizer(self : Tokenizer) -> PreTokenizer?
+fn Tokenizer::model(self : Tokenizer) -> Model
+fn Tokenizer::post_processor(self : Tokenizer) -> PostProcessor?
+fn Tokenizer::decoder(self : Tokenizer) -> Decoder?
+fn Tokenizer::truncation(self : Tokenizer) -> TruncationParams?
+fn Tokenizer::padding(self : Tokenizer) -> PaddingParams?
+fn Tokenizer::encode_special_tokens(self : Tokenizer) -> Bool
+fn Tokenizer::vocab_size(self : Tokenizer) -> Int
+fn Tokenizer::vocab(self : Tokenizer) -> Map[String, Int]
+fn Tokenizer::added_tokens_decoder(self : Tokenizer) -> Map[Int, AddedToken]
+fn Tokenizer::added_tokens(self : Tokenizer) -> Array[AddedToken]
+fn Tokenizer::added_tokens_count(self : Tokenizer) -> Int
+fn Tokenizer::all_special_tokens(self : Tokenizer) -> Array[String]
+fn Tokenizer::all_special_ids(self : Tokenizer) -> Array[Int]
+fn Tokenizer::get_trainer(self : Tokenizer) -> Trainer
+fn Tokenizer::default_trainer(self : Tokenizer) -> Trainer
+fn Tokenizer::to_json(self : Tokenizer) -> String raise TokenizerError
+```
+
+Property-style getters are convenience aliases for the corresponding `get_*`
+methods, returning the same values. `normalizer()`, `pre_tokenizer()`,
+`model()`, `post_processor()`, `decoder()` access tokenizer components.
+`truncation()` and `padding()` return current configuration.
+`encode_special_tokens()` reports the special-token encoding switch.
+`vocab_size()` and `vocab()` are aliases for `get_vocab_size()` and `get_vocab()`.
+`added_tokens_decoder()` returns the `id -> AddedToken` map.
+`get_trainer()` and `default_trainer()` return a trainer configured with the
+tokenizer's current settings. `to_json()` serializes the tokenizer to JSON
+string (alias for `to_str()`).
+
 ## Configuration builders
 
 ```moonbit
@@ -543,15 +577,41 @@ stable HF-style configuration summary.
 Low-level `Token` and `Split` values also expose `__str__()` as their surface
 value and `__repr__()` as a compact escaped diagnostic summary.
 
+## Cache control
+
+```moonbit
+fn Tokenizer::clear_cache(self : Tokenizer) -> Tokenizer
+fn Tokenizer::resize_cache(self : Tokenizer, capacity : Int) -> Tokenizer
+fn Tokenizer::cache_size(self : Tokenizer) -> Int
+```
+
+BPE, WordPiece, and Unigram models maintain an internal word-to-tokens cache
+that speeds up repeated encoding of the same strings. `clear_cache` empties the
+cache and returns a new Tokenizer; `resize_cache` sets a maximum capacity
+(evicting oldest entries when exceeded); `cache_size` reports the current number
+of cached entries. Setting capacity to `0` disables caching; `None` (the
+default) keeps an unbounded cache.
+
 ## Vocabulary
 
 ```moonbit
 fn Tokenizer::token_to_id(self : Tokenizer, token : String) -> Int?
 fn Tokenizer::id_to_token(self : Tokenizer, id : Int) -> String?
 fn Tokenizer::get_vocab_size(self : Tokenizer) -> Int
+fn Tokenizer::vocab_size(self : Tokenizer) -> Int
+fn Tokenizer::get_vocab(self : Tokenizer) -> Map[String, Int]
+fn Tokenizer::vocab(self : Tokenizer) -> Map[String, Int]
+fn Tokenizer::convert_token_to_id(self : Tokenizer, token : String) -> Int?
+fn Tokenizer::convert_id_to_token(self : Tokenizer, id : Int) -> String?
+fn Tokenizer::convert_tokens_to_ids(self : Tokenizer, tokens : Array[String]) -> Array[Int?]
+fn Tokenizer::convert_ids_to_tokens(self : Tokenizer, ids : Array[Int]) -> Array[String?]
 ```
 
 Lookups consult the added/special vocabulary first, then the model vocabulary.
+`vocab_size` and `vocab` are property-style aliases for `get_vocab_size` and
+`get_vocab`. `convert_token_to_id` / `convert_id_to_token` are HF-style
+aliases for `token_to_id` / `id_to_token`. `convert_tokens_to_ids` and
+`convert_ids_to_tokens` are batch variants that map arrays of tokens/ids.
 
 ## Low-level migration API
 

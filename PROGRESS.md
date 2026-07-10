@@ -35,6 +35,13 @@
 
 本轮复评结论：主流推理链路（load tokenizer.json / added tokens / normalizer / pre-tokenizer / model / post-processor / decoder / truncation / padding / offsets / pair / batch / pretokenized / save / local+online hub）已经基本可迁移；剩余缺口主要集中在训练生态完整 EM/大语料对拍、Hub 文件族/错误映射、以及 Python 绑定长尾别名。Regex 当前采用“HF 常见 deterministic subset + 复杂 pattern 显式 unsupported”的完成策略，不把 full backtracking/通用 Unicode regex 引擎作为跨 target 核心目标。
 
+### 2026-07-11 小闭环：API 文档补齐（缓存控制 / 属性 getter / 词表别名）
+
+- 补齐缓存控制 API 文档：`clear_cache` / `resize_cache` / `cache_size`。
+- 补齐属性风格 getter 文档：`normalizer()` / `pre_tokenizer()` / `model()` / `post_processor()` / `decoder()` / `truncation()` / `padding()` / `encode_special_tokens()` / `vocab_size()` / `vocab()` / `added_tokens_decoder()` / `added_tokens()` / `all_special_tokens()` / `all_special_ids()` / `get_trainer()` / `default_trainer()` / `to_json()`。
+- 补齐词表别名文档：`convert_token_to_id` / `convert_id_to_token` / `convert_tokens_to_ids` / `convert_ids_to_tokens`。
+- 中英文文档同步更新。
+
 ### 2026-07-11 小闭环：Decoder setter 别名（Python binding 兼容）
 
 - HF Python `Decoder` 类暴露属性 setter（如 `decoder.add_prefix_space = True`），允许修改解码器属性。
