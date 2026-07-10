@@ -1241,6 +1241,16 @@ to a typed MoonBit component yet. Hooks can be passed per call or attached to a
 tokenizer. They are intentionally excluded from tokenizer JSON/state; use typed
 components for serialized round-trips.
 
+## Unicode script coverage
+
+The deterministic regex subset covers the following Unicode letter scripts
+(matching HF Rust regex engine coverage): Latin, Greek, Cyrillic, Armenian,
+Hebrew, Arabic, Devanagari, Bengali, Gurmukhi, Gujarati, Oriya, Tamil,
+Telugu, Kannada, Malayalam, Sinhala, Thai, Lao, Tibetan, Myanmar, Georgian,
+Khmer, Hiragana, Katakana, CJK Unified Ideographs, and Hangul Syllables.
+Complex unknown patterns are explicitly rejected at load time as
+`Unsupported`.
+
 ## Component compatibility notes
 
 - `Normalizer::Replace`, `Decoder::Replace`, and regex `PreTokenizer::Split`

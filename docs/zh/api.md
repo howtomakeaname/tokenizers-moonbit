@@ -1172,6 +1172,15 @@ state wrapper 保持一致，便于 binding/pickle shim 构造状态。
 这些 hook 可按单次调用传入，也可挂到 tokenizer 上；它们有意不写入 tokenizer
 JSON/state，序列化往返仍应使用 typed 组件。
 
+## Unicode 脚本覆盖
+
+确定性正则子集覆盖以下 Unicode 字母脚本（匹配 HF Rust 正则引擎覆盖范围）：
+拉丁文、希腊文、西里尔文、亚美尼亚文、希伯来文、阿拉伯文、天城文（梵文/印地语）、
+孟加拉文、古尔穆基文（旁遮普语）、古吉拉特文、奥里亚文、泰米尔文、泰卢固文、
+卡纳达文、马拉雅拉姆文、僧伽罗文、泰文、老挝文、藏文、缅甸文、格鲁吉亚文、
+高棉文、平假名、片假名、CJK 统一汉字、韩文音节。
+复杂未知模式在加载期显式报 `Unsupported`。
+
 ## 组件兼容性说明
 
 - `Normalizer::Replace`、`Decoder::Replace` 与正则 `PreTokenizer::Split`
