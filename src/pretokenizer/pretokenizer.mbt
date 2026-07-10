@@ -66,6 +66,245 @@ pub fn PreTokenizer::kind(self : PreTokenizer) -> String {
 }
 
 ///|
+
+///|
+/// Set add_prefix_space. Returns a new PreTokenizer; only ByteLevel supports it.
+pub fn PreTokenizer::set_add_prefix_space(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  match self {
+    ByteLevel(use_regex~, trim_offsets~, ..) =>
+      ByteLevel(add_prefix_space=val, use_regex~, trim_offsets~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for add_prefix_space.
+pub fn PreTokenizer::set_add_prefix_space_alias(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  self.set_add_prefix_space(val)
+}
+
+///|
+/// Set use_regex. Returns a new PreTokenizer; only ByteLevel supports it.
+pub fn PreTokenizer::set_use_regex(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  match self {
+    ByteLevel(add_prefix_space~, trim_offsets~, ..) =>
+      ByteLevel(add_prefix_space~, use_regex=val, trim_offsets~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for use_regex.
+pub fn PreTokenizer::set_use_regex_alias(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  self.set_use_regex(val)
+}
+
+///|
+/// Set trim_offsets. Returns a new PreTokenizer; only ByteLevel supports it.
+pub fn PreTokenizer::set_trim_offsets(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  match self {
+    ByteLevel(add_prefix_space~, use_regex~, ..) =>
+      ByteLevel(add_prefix_space~, use_regex~, trim_offsets=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for trim_offsets.
+pub fn PreTokenizer::set_trim_offsets_alias(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  self.set_trim_offsets(val)
+}
+
+///|
+/// Set replacement. Returns a new PreTokenizer; only Metaspace supports it.
+pub fn PreTokenizer::set_replacement(
+  self : PreTokenizer,
+  val : Char,
+) -> PreTokenizer {
+  match self {
+    Metaspace(prepend_scheme~, split~, ..) =>
+      Metaspace(replacement=val, prepend_scheme~, split~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for replacement.
+pub fn PreTokenizer::set_replacement_alias(
+  self : PreTokenizer,
+  val : Char,
+) -> PreTokenizer {
+  self.set_replacement(val)
+}
+
+///|
+/// Set prepend_scheme. Returns a new PreTokenizer; only Metaspace supports it.
+pub fn PreTokenizer::set_prepend_scheme(
+  self : PreTokenizer,
+  val : String,
+) -> PreTokenizer {
+  match self {
+    Metaspace(replacement~, split~, ..) =>
+      Metaspace(replacement~, prepend_scheme=val, split~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for prepend_scheme.
+pub fn PreTokenizer::set_prepend_scheme_alias(
+  self : PreTokenizer,
+  val : String,
+) -> PreTokenizer {
+  self.set_prepend_scheme(val)
+}
+
+///|
+/// Set split. Returns a new PreTokenizer; only Metaspace supports it.
+pub fn PreTokenizer::set_split_enabled(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  match self {
+    Metaspace(replacement~, prepend_scheme~, ..) =>
+      Metaspace(replacement~, prepend_scheme~, split=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for split.
+pub fn PreTokenizer::set_split_alias(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  self.set_split_enabled(val)
+}
+
+///|
+/// Set delimiter. Returns a new PreTokenizer; only CharDelimiterSplit supports it.
+pub fn PreTokenizer::set_delimiter(
+  self : PreTokenizer,
+  val : Char,
+) -> PreTokenizer {
+  match self {
+    Delimiter(..) => Delimiter(delimiter=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for delimiter.
+pub fn PreTokenizer::set_delimiter_alias(
+  self : PreTokenizer,
+  val : Char,
+) -> PreTokenizer {
+  self.set_delimiter(val)
+}
+
+///|
+/// Set individual_digits. Returns a new PreTokenizer; only Digits supports it.
+pub fn PreTokenizer::set_individual_digits(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  match self {
+    Digits(..) => Digits(individual_digits=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for individual_digits.
+pub fn PreTokenizer::set_individual_digits_alias(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  self.set_individual_digits(val)
+}
+
+///|
+/// Set length. Returns a new PreTokenizer; only FixedLength supports it.
+pub fn PreTokenizer::set_length(self : PreTokenizer, val : Int) -> PreTokenizer {
+  match self {
+    FixedLength(..) => FixedLength(length=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for length.
+pub fn PreTokenizer::set_length_alias(
+  self : PreTokenizer,
+  val : Int,
+) -> PreTokenizer {
+  self.set_length(val)
+}
+
+///|
+/// Set behavior. Returns a new PreTokenizer; only Split/Punctuation support it.
+pub fn PreTokenizer::set_behavior(
+  self : PreTokenizer,
+  val : SplitBehavior,
+) -> PreTokenizer {
+  match self {
+    Split(pattern~, invert~, regex~, ..) =>
+      Split(pattern~, behavior=val, invert~, regex~)
+    Punctuation(..) => Punctuation(behavior=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for behavior.
+pub fn PreTokenizer::set_behavior_alias(
+  self : PreTokenizer,
+  val : SplitBehavior,
+) -> PreTokenizer {
+  self.set_behavior(val)
+}
+
+///|
+/// Set invert. Returns a new PreTokenizer; only Split supports it.
+pub fn PreTokenizer::set_invert(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  match self {
+    Split(pattern~, behavior~, regex~, ..) =>
+      Split(pattern~, behavior~, invert=val, regex~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for invert.
+pub fn PreTokenizer::set_invert_alias(
+  self : PreTokenizer,
+  val : Bool,
+) -> PreTokenizer {
+  self.set_invert(val)
+}
+
+///|
 pub fn PreTokenizer::get_state(
   self : PreTokenizer,
 ) -> PreTokenizerState raise @types.TokenizerError {

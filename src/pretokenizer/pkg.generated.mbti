@@ -98,6 +98,28 @@ pub fn PreTokenizer::punctuation(behavior? : SplitBehavior) -> Self
 pub fn PreTokenizer::regex(Self) -> Bool?
 pub fn PreTokenizer::replacement(Self) -> Char?
 pub fn PreTokenizer::sequence(Array[Self]) -> Self
+pub fn PreTokenizer::set_add_prefix_space(Self, Bool) -> Self
+pub fn PreTokenizer::set_add_prefix_space_alias(Self, Bool) -> Self
+pub fn PreTokenizer::set_behavior(Self, SplitBehavior) -> Self
+pub fn PreTokenizer::set_behavior_alias(Self, SplitBehavior) -> Self
+pub fn PreTokenizer::set_delimiter(Self, Char) -> Self
+pub fn PreTokenizer::set_delimiter_alias(Self, Char) -> Self
+pub fn PreTokenizer::set_individual_digits(Self, Bool) -> Self
+pub fn PreTokenizer::set_individual_digits_alias(Self, Bool) -> Self
+pub fn PreTokenizer::set_invert(Self, Bool) -> Self
+pub fn PreTokenizer::set_invert_alias(Self, Bool) -> Self
+pub fn PreTokenizer::set_length(Self, Int) -> Self
+pub fn PreTokenizer::set_length_alias(Self, Int) -> Self
+pub fn PreTokenizer::set_prepend_scheme(Self, String) -> Self
+pub fn PreTokenizer::set_prepend_scheme_alias(Self, String) -> Self
+pub fn PreTokenizer::set_replacement(Self, Char) -> Self
+pub fn PreTokenizer::set_replacement_alias(Self, Char) -> Self
+pub fn PreTokenizer::set_split_alias(Self, Bool) -> Self
+pub fn PreTokenizer::set_split_enabled(Self, Bool) -> Self
+pub fn PreTokenizer::set_trim_offsets(Self, Bool) -> Self
+pub fn PreTokenizer::set_trim_offsets_alias(Self, Bool) -> Self
+pub fn PreTokenizer::set_use_regex(Self, Bool) -> Self
+pub fn PreTokenizer::set_use_regex_alias(Self, Bool) -> Self
 pub fn PreTokenizer::split(String, SplitBehavior, invert? : Bool, regex? : Bool) -> Self
 pub fn PreTokenizer::split_enabled(Self) -> Bool?
 pub fn PreTokenizer::to_json(Self) -> String?

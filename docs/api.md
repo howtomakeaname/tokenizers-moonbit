@@ -170,6 +170,28 @@ methods that return a new Normalizer, preserving immutability. Each setter only
 modifies the relevant normalizer variant's field; other variants return the
 original Normalizer unchanged.
 
+#### PreTokenizer setter aliases (Python binding compatibility)
+
+```moonbit
+fn PreTokenizer::set_add_prefix_space(self : PreTokenizer, val : Bool) -> PreTokenizer
+fn PreTokenizer::set_use_regex(self : PreTokenizer, val : Bool) -> PreTokenizer
+fn PreTokenizer::set_trim_offsets(self : PreTokenizer, val : Bool) -> PreTokenizer
+fn PreTokenizer::set_replacement(self : PreTokenizer, val : Char) -> PreTokenizer
+fn PreTokenizer::set_prepend_scheme(self : PreTokenizer, val : String) -> PreTokenizer
+fn PreTokenizer::set_split_enabled(self : PreTokenizer, val : Bool) -> PreTokenizer
+fn PreTokenizer::set_delimiter(self : PreTokenizer, val : Char) -> PreTokenizer
+fn PreTokenizer::set_individual_digits(self : PreTokenizer, val : Bool) -> PreTokenizer
+fn PreTokenizer::set_length(self : PreTokenizer, val : Int) -> PreTokenizer
+fn PreTokenizer::set_behavior(self : PreTokenizer, val : SplitBehavior) -> PreTokenizer
+fn PreTokenizer::set_invert(self : PreTokenizer, val : Bool) -> PreTokenizer
+```
+
+Corresponding to HF Python `PreTokenizer` property setters, MoonBit provides `set_*`
+methods that return a new PreTokenizer, preserving immutability. Each setter only
+modifies the relevant pre-tokenizer variant's field; other variants return the
+original PreTokenizer unchanged.
+
+
 ### Optional Hub downloader (`@hub`, native/js)
 
 ```moonbit

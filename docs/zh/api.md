@@ -152,6 +152,26 @@ fn Normalizer::set_content(self : Normalizer, val : String) -> Normalizer
 对应 HF Python `Normalizer` 属性 setter，MoonBit 提供 `set_*` 方法返回新 Normalizer。
 每个 setter 仅修改对应归一化器变体的字段，其他变体返回原 Normalizer。
 
+#### PreTokenizer setter 别名（Python binding 兼容）
+
+```moonbit
+fn PreTokenizer::set_add_prefix_space(self : PreTokenizer, val : Bool) -> PreTokenizer
+fn PreTokenizer::set_use_regex(self : PreTokenizer, val : Bool) -> PreTokenizer
+fn PreTokenizer::set_trim_offsets(self : PreTokenizer, val : Bool) -> PreTokenizer
+fn PreTokenizer::set_replacement(self : PreTokenizer, val : Char) -> PreTokenizer
+fn PreTokenizer::set_prepend_scheme(self : PreTokenizer, val : String) -> PreTokenizer
+fn PreTokenizer::set_split_enabled(self : PreTokenizer, val : Bool) -> PreTokenizer
+fn PreTokenizer::set_delimiter(self : PreTokenizer, val : Char) -> PreTokenizer
+fn PreTokenizer::set_individual_digits(self : PreTokenizer, val : Bool) -> PreTokenizer
+fn PreTokenizer::set_length(self : PreTokenizer, val : Int) -> PreTokenizer
+fn PreTokenizer::set_behavior(self : PreTokenizer, val : SplitBehavior) -> PreTokenizer
+fn PreTokenizer::set_invert(self : PreTokenizer, val : Bool) -> PreTokenizer
+```
+
+对应 HF Python `PreTokenizer` 属性 setter，MoonBit 提供 `set_*` 方法返回新 PreTokenizer。
+每个 setter 仅修改对应预分词器变体的字段，其他变体返回原 PreTokenizer。
+
+
 ### 可选 Hub 下载器（`@hub`，native/js）
 
 ```moonbit

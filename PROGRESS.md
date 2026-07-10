@@ -35,6 +35,23 @@
 
 本轮复评结论：主流推理链路（load tokenizer.json / added tokens / normalizer / pre-tokenizer / model / post-processor / decoder / truncation / padding / offsets / pair / batch / pretokenized / save / local+online hub）已经基本可迁移；剩余缺口主要集中在训练生态完整 EM/大语料对拍、Hub 文件族/错误映射、以及 Python 绑定长尾别名。Regex 当前采用“HF 常见 deterministic subset + 复杂 pattern 显式 unsupported”的完成策略，不把 full backtracking/通用 Unicode regex 引擎作为跨 target 核心目标。
 
+### 2026-07-11 小闭环：PreTokenizer setter 别名（Python binding 兼容）
+
+- HF Python `PreTokenizer` 类暴露属性 setter（如 `pre_tokenizer.individual_digits = True`），允许修改预分词器属性。
+- MoonBit 已补齐 `PreTokenizer::set_*` setter 方法，返回新 PreTokenizer，保持不可变语义。
+- 已补 setter：
+  - `set_add_prefix_space` / `set_use_regex` / `set_trim_offsets`（ByteLevel）
+  - `set_replacement` / `set_prepend_scheme` / `set_split_enabled`（Metaspace）
+  - `set_delimiter`（Delimiter）
+  - `set_individual_digits`（Digits）
+  - `set_length`（FixedLength）
+  - `set_behavior`（Split/Punctuation）
+  - `set_invert`（Split）
+- 每个 setter 都有 `*_alias` 别名。
+- setter 仅修改对应预分词器变体的字段，其他变体返回原 PreTokenizer。
+- 新增 `pretok_setter_wbtest.mbt` 覆盖所有 setter 的基本功能测试。
+- 全后端测试通过：native(300)/js(300)/wasm(277)/wasm-gc(277)。
+
 ### 2026-07-11 小闭环：Normalizer setter 别名（Python binding 兼容）
 
 - HF Python `Normalizer` 类暴露属性 setter（如 `normalizer.left = True`），允许修改归一化器属性。
