@@ -47,6 +47,9 @@ fn Tokenizer::save_pretrained(
   `unk_id` 允许缺失/null，但会拒绝非 number 值。
   `added_tokens` 条目遵循 HF 严格 schema：`id`、`content`、`single_word`、
   `lstrip`、`rstrip`、`normalized`、`special` 必须存在且类型正确。
+  root `truncation` / `padding` 对象也按 HF tokenizer JSON schema 解析：
+  必填 number/string enum 字段缺失、类型错误或使用 Python-style lowercase alias
+  时会被拒绝；`truncation.direction` 仍可省略并默认 `Right`。
 - `from_pretrained_cached` 可显式传入本地 Hub cache 根目录和 revision，对齐
   HF `local_files_only=True` 的离线使用方式。
 - `from_pretrained_downloaded` 用于网络调用方桥接：传入已下载的 `tokenizer.json`

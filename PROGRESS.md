@@ -154,6 +154,8 @@ Tokenizer JSON optional int strictness 小闭环：Unigram `unk_id` 继续允许
 
 AddedToken JSON strictness 小闭环：`added_tokens` 条目已按 HF schema 严格要求 `id` / `content` / `single_word` / `lstrip` / `rstrip` / `normalized` / `special` 字段存在且类型正确；缺字段或错类型会抛 `ParseError`，现有手写 fixture 已补齐完整字段。
 
+Root truncation/padding JSON strictness 小闭环：root `truncation` / `padding` 已按 HF tokenizer JSON schema 收紧必填字段和 enum 大小写，`max_length` / `stride`、`strategy`、padding `direction` / `pad_id` / `pad_type_id` / `pad_token` 等缺失或错类型会抛 `ParseError`；`padding.strategy` 固定长度只接受 `{"Fixed": n}`，顶层 `length` 继续按 HF 行为忽略；`truncation.direction` 可省略并默认 `Right`。
+
 Trainer 通用 getter alias 小闭环：`get_unk_token` / `get_min_frequency` / `get_special_tokens` / `get_special_added_tokens` / `get_vocab_size` / `get_show_progress` 已补齐，均委托现有 property-style getter 并保持数组/AddedToken 返回副本，便于 Python binding 统一暴露 `get_*` 配置属性。
 
 Trainer model-specific getter alias 小闭环：WordPiece/BPE/Unigram 特有 knobs 已补对应 `get_*` alias，覆盖 `get_continuing_subword_prefix` / `get_end_of_word_suffix` / `get_initial_alphabet` / `get_limit_alphabet` / `get_max_token_length` / `get_max_input_chars_per_word` / `get_fuse_unk` / `get_byte_fallback` / `get_shrinking_factor` / `get_max_piece_length` / `get_n_sub_iterations` / `get_seed_size` / `get_progress_format`，数组返回继续保持 copy-return 语义。

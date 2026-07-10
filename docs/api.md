@@ -42,6 +42,10 @@ fn Tokenizer::save_pretrained(
   `added_tokens` entries follow HF's strict schema: `id`, `content`,
   `single_word`, `lstrip`, `rstrip`, `normalized`, and `special` must be present
   with the expected JSON types.
+  Root `truncation` and `padding` objects also follow HF tokenizer JSON schema:
+  required numeric/string enum fields are rejected when missing, wrong-typed, or
+  using Python-style lowercase aliases; `truncation.direction` remains optional
+  and defaults to `Right`.
   A small multi-entry parsed-JSON cache keeps repeated or alternating stable
   tokenizer payloads hot while still returning fresh tokenizer state.
 - `from_buffer` parses UTF-8 bytes, and `from_file` reads via `moonbitlang/x/fs`
