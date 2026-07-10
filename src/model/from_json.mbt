@@ -117,7 +117,12 @@ fn split_legacy_merge(s : String) -> (String, String) {
 ///|
 fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
   let (vocab, vocab_r) = parse_vocab(obj)
-  let ignore_merges = @types.get_bool(obj, "ignore_merges", default=false)
+  let ignore_merges = get_bool_strict(
+    obj,
+    "ignore_merges",
+    default=false,
+    "BPE model",
+  )
   let merges = parse_merges(obj)
   let dropout = parse_bpe_dropout(obj)
   {
@@ -129,8 +134,13 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
       obj, "continuing_subword_prefix",
     ),
     end_of_word_suffix: @types.get_str_opt(obj, "end_of_word_suffix"),
-    fuse_unk: @types.get_bool(obj, "fuse_unk", default=false),
-    byte_fallback: @types.get_bool(obj, "byte_fallback", default=false),
+    fuse_unk: get_bool_strict(obj, "fuse_unk", default=false, "BPE model"),
+    byte_fallback: get_bool_strict(
+      obj,
+      "byte_fallback",
+      default=false,
+      "BPE model",
+    ),
     ignore_merges,
     dropout,
     dropout_rng_state: 1,
@@ -140,10 +150,33 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
 }
 
 ///|
-fn parse_bpe_dropout(obj : Map[String, Json]) -> Double? {
+fn parse_bpe_dropout(
+  obj : Map[String, Json],
+) -> Double? raise @types.TokenizerError {
   match obj.get("dropout") {
     Some(Number(n, ..)) => if n > 0.0 { Some(n) } else { None }
+    Some(Null) => None
+    Some(_) =>
+      raise @types.ParseError(
+        "BPE model: missing or non-number \"dropout\" field",
+      )
     _ => None
+  }
+}
+
+///|
+fn get_bool_strict(
+  obj : Map[String, Json],
+  key : String,
+  default~ : Bool,
+  ctx : String,
+) -> Bool raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(True) => true
+    Some(False) => false
+    Some(_) =>
+      raise @types.ParseError("\{ctx}: missing or non-bool \"\{key}\" field")
+    None => default
   }
 }
 
@@ -230,8 +263,13 @@ fn parse_unigram(
     vocab,
     vocab_r,
     unk_id: @types.get_int_opt(obj, "unk_id"),
-    byte_fallback: @types.get_bool(obj, "byte_fallback", default=false),
-    fuse_unk: @types.get_bool(obj, "fuse_unk", default=true),
+    byte_fallback: get_bool_strict(
+      obj,
+      "byte_fallback",
+      default=false,
+      "Unigram model",
+    ),
+    fuse_unk: get_bool_strict(obj, "fuse_unk", default=true, "Unigram model"),
     cache: {},
     cache_capacity: None,
   }

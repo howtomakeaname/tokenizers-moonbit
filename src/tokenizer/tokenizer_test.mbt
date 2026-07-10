@@ -2151,6 +2151,50 @@ test "from_str rejects missing BPE and WordPiece required model fields" {
 }
 
 ///|
+test "from_str rejects wrong typed model config fields" {
+  let bpe_bad_bool =
+    #|{"version":"1.0",
+    #| "model":{"type":"BPE","vocab":{"a":0},"merges":[],"ignore_merges":"true"}}
+  let mut bpe_bool_raised = false
+  try Tokenizer::from_str(bpe_bad_bool) |> ignore catch {
+    @types.ParseError(msg) => bpe_bool_raised = msg.contains("ignore_merges")
+    _ => ()
+  }
+  @test.assert_eq(bpe_bool_raised, true)
+
+  let bpe_bad_dropout =
+    #|{"version":"1.0",
+    #| "model":{"type":"BPE","vocab":{"a":0},"merges":[],"dropout":"0.1"}}
+  let mut bpe_dropout_raised = false
+  try Tokenizer::from_str(bpe_bad_dropout) |> ignore catch {
+    @types.ParseError(msg) => bpe_dropout_raised = msg.contains("dropout")
+    _ => ()
+  }
+  @test.assert_eq(bpe_dropout_raised, true)
+
+  let unigram_bad_byte_fallback =
+    #|{"version":"1.0",
+    #| "model":{"type":"Unigram","vocab":[["a",0.0]],"byte_fallback":"false"}}
+  let mut unigram_bool_raised = false
+  try Tokenizer::from_str(unigram_bad_byte_fallback) |> ignore catch {
+    @types.ParseError(msg) =>
+      unigram_bool_raised = msg.contains("byte_fallback")
+    _ => ()
+  }
+  @test.assert_eq(unigram_bool_raised, true)
+
+  let unigram_bad_fuse_unk =
+    #|{"version":"1.0",
+    #| "model":{"type":"Unigram","vocab":[["a",0.0]],"fuse_unk":"true"}}
+  let mut unigram_fuse_raised = false
+  try Tokenizer::from_str(unigram_bad_fuse_unk) |> ignore catch {
+    @types.ParseError(msg) => unigram_fuse_raised = msg.contains("fuse_unk")
+    _ => ()
+  }
+  @test.assert_eq(unigram_fuse_raised, true)
+}
+
+///|
 test "from_str rejects unsupported Split regex" {
   for pattern in ["\\\\p{L}{2,4}(?=x)", "(.)\\\\1", "foo.*bar", "[A-Z]{5,}"] {
     let json = "{\"version\":\"1.0\",\"pre_tokenizer\":{\"type\":\"Split\",\"pattern\":{\"Regex\":\"" +
