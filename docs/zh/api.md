@@ -1270,6 +1270,57 @@ interop constructor 和 replacement-array setter 会校验公开 parallel arrays
 MoonBit helper。非法 direction 字符串会抛错；`truncate_hf` 在 `stride >= max_len`
 时也会抛错，对齐 HF 公开 wrapper 边界。
 
+## 截断与填充参数
+
+### TruncationParams（`@tokenizer`）
+
+```moonbit
+pub(all) enum TruncationDirection { Left; Right }
+pub(all) enum TruncationStrategy { LongestFirst; OnlyFirst; OnlySecond }
+pub(all) struct TruncationParams {
+  max_length : Int
+  stride : Int
+  direction : TruncationDirection
+  strategy : TruncationStrategy
+}
+fn TruncationParams::new(max_length : Int) -> TruncationParams  // stride 0, Right
+fn TruncationParams::with_stride(self : TruncationParams, stride : Int) -> TruncationParams
+fn TruncationParams::with_direction(self : TruncationParams, direction : TruncationDirection) -> TruncationParams
+fn TruncationParams::with_direction_hf(self : TruncationParams, direction : String) -> TruncationParams raise TokenizerError
+fn TruncationParams::with_strategy(self : TruncationParams, strategy : TruncationStrategy) -> TruncationParams
+fn TruncationParams::with_strategy_hf(self : TruncationParams, strategy : String) -> TruncationParams raise TokenizerError
+fn TruncationParams::direction_string(self : TruncationParams) -> String
+fn TruncationParams::get_direction_string(self : TruncationParams) -> String
+fn TruncationParams::strategy_string(self : TruncationParams) -> String
+fn TruncationParams::get_strategy_string(self : TruncationParams) -> String
+```
+
+### PaddingParams（`@tokenizer`）
+
+```moonbit
+pub(all) enum PaddingStrategy { BatchLongest; Fixed(Int) }
+pub(all) enum PaddingDirection { Left; Right }
+pub(all) struct PaddingParams {
+  strategy : PaddingStrategy
+  direction : PaddingDirection
+  pad_id : Int
+  pad_type_id : Int
+  pad_token : String
+  pad_to_multiple_of : Int?
+}
+fn PaddingParams::new(
+  strategy : PaddingStrategy, pad_id~ : Int = 0, pad_token~ : String = "[PAD]",
+) -> PaddingParams
+fn PaddingParams::fixed(length : Int, pad_id~ : Int = 0, pad_token~ : String = "[PAD]") -> PaddingParams
+fn PaddingParams::batch_longest(pad_id~ : Int = 0, pad_token~ : String = "[PAD]") -> PaddingParams
+fn PaddingParams::with_direction(self : PaddingParams, direction : PaddingDirection) -> PaddingParams
+fn PaddingParams::with_direction_hf(self : PaddingParams, direction : String) -> PaddingParams raise TokenizerError
+fn PaddingParams::with_pad_type_id(self : PaddingParams, pad_type_id : Int) -> PaddingParams
+fn PaddingParams::with_pad_to_multiple_of(self : PaddingParams, pad_to_multiple_of : Int?) -> PaddingParams
+fn PaddingParams::direction_string(self : PaddingParams) -> String
+fn PaddingParams::get_direction_string(self : PaddingParams) -> String
+```
+
 ## TokenizerError
 
 ```moonbit
