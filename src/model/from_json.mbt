@@ -222,6 +222,19 @@ fn get_required_int(
 }
 
 ///|
+fn get_optional_int_strict(
+  obj : Map[String, Json],
+  key : String,
+  ctx : String,
+) -> Int? raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(Number(n, ..)) => Some(n.to_int())
+    Some(Null) | None => None
+    Some(_) => raise @types.ParseError("\{ctx}: non-number \"\{key}\" field")
+  }
+}
+
+///|
 fn parse_wordlevel(
   obj : Map[String, Json],
 ) -> WordLevelModel raise @types.TokenizerError {
@@ -279,7 +292,7 @@ fn parse_unigram(
   {
     vocab,
     vocab_r,
-    unk_id: @types.get_int_opt(obj, "unk_id"),
+    unk_id: get_optional_int_strict(obj, "unk_id", "Unigram model"),
     byte_fallback: get_bool_strict(
       obj,
       "byte_fallback",

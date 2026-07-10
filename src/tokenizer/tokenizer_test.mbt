@@ -2249,6 +2249,25 @@ test "from_str rejects wrong typed optional model string fields" {
 }
 
 ///|
+test "from_str rejects wrong typed Unigram unk_id" {
+  let bad_unk_id =
+    #|{"version":"1.0",
+    #| "model":{"type":"Unigram","vocab":[["a",0.0]],"unk_id":"0"}}
+  let mut bad_unk_id_raised = false
+  try Tokenizer::from_str(bad_unk_id) |> ignore catch {
+    @types.ParseError(msg) => bad_unk_id_raised = msg.contains("unk_id")
+    _ => ()
+  }
+  @test.assert_eq(bad_unk_id_raised, true)
+
+  let null_unk_id =
+    #|{"version":"1.0",
+    #| "model":{"type":"Unigram","vocab":[["a",0.0]],"unk_id":null}}
+  let tok = Tokenizer::from_str(null_unk_id)
+  @test.assert_eq(tok.get_model().unk_id(), None)
+}
+
+///|
 test "from_str rejects unsupported Split regex" {
   for pattern in ["\\\\p{L}{2,4}(?=x)", "(.)\\\\1", "foo.*bar", "[A-Z]{5,}"] {
     let json = "{\"version\":\"1.0\",\"pre_tokenizer\":{\"type\":\"Split\",\"pattern\":{\"Regex\":\"" +
