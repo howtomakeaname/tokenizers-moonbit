@@ -2195,6 +2195,60 @@ test "from_str rejects wrong typed model config fields" {
 }
 
 ///|
+test "from_str rejects wrong typed optional model string fields" {
+  let bpe_bad_unk =
+    #|{"version":"1.0",
+    #| "model":{"type":"BPE","vocab":{"a":0},"merges":[],"unk_token":123}}
+  let mut bpe_unk_raised = false
+  try Tokenizer::from_str(bpe_bad_unk) |> ignore catch {
+    @types.ParseError(msg) => bpe_unk_raised = msg.contains("unk_token")
+    _ => ()
+  }
+  @test.assert_eq(bpe_unk_raised, true)
+
+  let bpe_bad_prefix =
+    #|{"version":"1.0",
+    #| "model":{"type":"BPE","vocab":{"a":0},"merges":[],"continuing_subword_prefix":123}}
+  let mut bpe_prefix_raised = false
+  try Tokenizer::from_str(bpe_bad_prefix) |> ignore catch {
+    @types.ParseError(msg) =>
+      bpe_prefix_raised = msg.contains("continuing_subword_prefix")
+    _ => ()
+  }
+  @test.assert_eq(bpe_prefix_raised, true)
+
+  let bpe_bad_suffix =
+    #|{"version":"1.0",
+    #| "model":{"type":"BPE","vocab":{"a":0},"merges":[],"end_of_word_suffix":false}}
+  let mut bpe_suffix_raised = false
+  try Tokenizer::from_str(bpe_bad_suffix) |> ignore catch {
+    @types.ParseError(msg) =>
+      bpe_suffix_raised = msg.contains("end_of_word_suffix")
+    _ => ()
+  }
+  @test.assert_eq(bpe_suffix_raised, true)
+
+  let wordpiece_bad_suffix =
+    #|{"version":"1.0",
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0},"unk_token":"[UNK]","continuing_subword_prefix":"##","max_input_chars_per_word":100,"end_of_word_suffix":false}}
+  let mut wordpiece_suffix_raised = false
+  try Tokenizer::from_str(wordpiece_bad_suffix) |> ignore catch {
+    @types.ParseError(msg) =>
+      wordpiece_suffix_raised = msg.contains("end_of_word_suffix")
+    _ => ()
+  }
+  @test.assert_eq(wordpiece_suffix_raised, true)
+
+  let bpe_null_optionals =
+    #|{"version":"1.0",
+    #| "model":{"type":"BPE","vocab":{"a":0},"merges":[],"unk_token":null,"continuing_subword_prefix":null,"end_of_word_suffix":null}}
+  let tok = Tokenizer::from_str(bpe_null_optionals)
+  @test.assert_eq(tok.get_model().unk_token(), None)
+  @test.assert_eq(tok.get_model().continuing_subword_prefix(), None)
+  @test.assert_eq(tok.get_model().end_of_word_suffix(), None)
+}
+
+///|
 test "from_str rejects unsupported Split regex" {
   for pattern in ["\\\\p{L}{2,4}(?=x)", "(.)\\\\1", "foo.*bar", "[A-Z]{5,}"] {
     let json = "{\"version\":\"1.0\",\"pre_tokenizer\":{\"type\":\"Split\",\"pattern\":{\"Regex\":\"" +

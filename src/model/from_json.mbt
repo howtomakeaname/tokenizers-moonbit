@@ -129,11 +129,13 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
     vocab,
     vocab_r,
     merges,
-    unk_token: @types.get_str_opt(obj, "unk_token"),
-    continuing_subword_prefix: @types.get_str_opt(
-      obj, "continuing_subword_prefix",
+    unk_token: get_optional_string_strict(obj, "unk_token", "BPE model"),
+    continuing_subword_prefix: get_optional_string_strict(
+      obj, "continuing_subword_prefix", "BPE model",
     ),
-    end_of_word_suffix: @types.get_str_opt(obj, "end_of_word_suffix"),
+    end_of_word_suffix: get_optional_string_strict(
+      obj, "end_of_word_suffix", "BPE model",
+    ),
     fuse_unk: get_bool_strict(obj, "fuse_unk", default=false, "BPE model"),
     byte_fallback: get_bool_strict(
       obj,
@@ -177,6 +179,19 @@ fn get_bool_strict(
     Some(_) =>
       raise @types.ParseError("\{ctx}: missing or non-bool \"\{key}\" field")
     None => default
+  }
+}
+
+///|
+fn get_optional_string_strict(
+  obj : Map[String, Json],
+  key : String,
+  ctx : String,
+) -> String? raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(String(s)) => Some(s)
+    Some(Null) | None => None
+    Some(_) => raise @types.ParseError("\{ctx}: non-string \"\{key}\" field")
   }
 }
 
@@ -230,7 +245,9 @@ fn parse_wordpiece(
     continuing_subword_prefix: get_required_string(
       obj, "continuing_subword_prefix", "WordPiece model",
     ),
-    end_of_word_suffix: @types.get_str_opt(obj, "end_of_word_suffix"),
+    end_of_word_suffix: get_optional_string_strict(
+      obj, "end_of_word_suffix", "WordPiece model",
+    ),
     max_input_chars_per_word: get_required_int(
       obj, "max_input_chars_per_word", "WordPiece model",
     ),
