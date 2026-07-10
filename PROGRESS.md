@@ -35,6 +35,20 @@
 
 本轮复评结论：主流推理链路（load tokenizer.json / added tokens / normalizer / pre-tokenizer / model / post-processor / decoder / truncation / padding / offsets / pair / batch / pretokenized / save / local+online hub）已经基本可迁移；剩余缺口主要集中在训练生态完整 EM/大语料对拍、Hub 文件族/错误映射、以及 Python 绑定长尾别名。Regex 当前采用“HF 常见 deterministic subset + 复杂 pattern 显式 unsupported”的完成策略，不把 full backtracking/通用 Unicode regex 引擎作为跨 target 核心目标。
 
+### 2026-07-11 小闭环：Model setter 别名（Python binding 兼容）
+
+- HF Python `Model` 类暴露属性 setter（如 `model.dropout = 0.5`），允许修改模型属性。
+- MoonBit 已补齐 `Model::set_*` setter 方法，返回新 Model 而非原地修改，保持不可变语义。
+- 已补 setter：
+  - `set_unk_token` / `set_dropout` / `set_continuing_subword_prefix` / `set_end_of_word_suffix`
+  - `set_byte_fallback` / `set_fuse_unk` / `set_ignore_merges`
+  - `set_max_input_chars_per_word`（WordPiece）
+  - `set_alpha` / `set_nbest_size`（Unigram）
+- 每个 setter 都有 `*_alias` 别名，保持与 Python binding 迁移模式一致。
+- setter 仅修改对应模型变体的字段，其他变体返回原 Model（如 `set_dropout` 对 Unigram 无操作）。
+- 新增 `model_setter_wbtest.mbt` 覆盖所有 setter 的基本功能测试。
+- 全后端测试通过：native(281)/js(281)/wasm(258)/wasm-gc(258)。
+
 ### 2026-07-10 小闭环：Unigram lattice 采样实现
 
 - HF Unigram 支持 `alpha`（采样温度）和 `nbest_size`（N-best 路径数）推理参数，用于从 lattice 中采样而非确定性 Viterbi。

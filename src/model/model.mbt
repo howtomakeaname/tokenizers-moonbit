@@ -331,6 +331,164 @@ pub fn Model::get_word_count(self : Model) -> Int? {
 }
 
 ///|
+
+///|
+/// Set the unk_token for models that support it (BPE, WordPiece, WordLevel).
+/// Returns a new Model; Unigram models are unchanged (they use unk_id).
+pub fn Model::set_unk_token(self : Model, token : String) -> Model {
+  match self {
+    BPE(m) => BPE({ ..m, unk_token: Some(token) })
+    WordPiece(m) => WordPiece({ ..m, unk_token: token })
+    WordLevel(m) => WordLevel({ ..m, unk_token: token })
+    Unigram(m) => Unigram(m)
+  }
+}
+
+///|
+/// Python/property-style setter alias for unk_token.
+pub fn Model::set_unk_token_alias(self : Model, token : String) -> Model {
+  self.set_unk_token(token)
+}
+
+///|
+/// Set the BPE dropout probability. Returns a new Model; non-BPE models unchanged.
+pub fn Model::set_dropout(self : Model, dropout : Double?) -> Model {
+  match self {
+    BPE(m) => BPE({ ..m, dropout: dropout })
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for dropout.
+pub fn Model::set_dropout_alias(self : Model, dropout : Double?) -> Model {
+  self.set_dropout(dropout)
+}
+
+///|
+/// Set the continuing_subword_prefix. Returns a new Model; only BPE/WordPiece support it.
+pub fn Model::set_continuing_subword_prefix(self : Model, prefix : String?) -> Model {
+  match self {
+    BPE(m) => BPE({ ..m, continuing_subword_prefix: prefix })
+    WordPiece(m) => WordPiece({ ..m, continuing_subword_prefix: prefix.unwrap_or(m.continuing_subword_prefix) })
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for continuing_subword_prefix.
+pub fn Model::set_continuing_subword_prefix_alias(self : Model, prefix : String?) -> Model {
+  self.set_continuing_subword_prefix(prefix)
+}
+
+///|
+/// Set the end_of_word_suffix. Returns a new Model; only BPE/WordPiece support it.
+pub fn Model::set_end_of_word_suffix(self : Model, suffix : String?) -> Model {
+  match self {
+    BPE(m) => BPE({ ..m, end_of_word_suffix: suffix })
+    WordPiece(m) => WordPiece({ ..m, end_of_word_suffix: suffix })
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for end_of_word_suffix.
+pub fn Model::set_end_of_word_suffix_alias(self : Model, suffix : String?) -> Model {
+  self.set_end_of_word_suffix(suffix)
+}
+
+///|
+/// Set byte_fallback. Returns a new Model; only BPE/Unigram support it.
+pub fn Model::set_byte_fallback(self : Model, val : Bool) -> Model {
+  match self {
+    BPE(m) => BPE({ ..m, byte_fallback: val })
+    Unigram(m) => Unigram({ ..m, byte_fallback: val })
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for byte_fallback.
+pub fn Model::set_byte_fallback_alias(self : Model, val : Bool) -> Model {
+  self.set_byte_fallback(val)
+}
+
+///|
+/// Set fuse_unk. Returns a new Model; only BPE/Unigram support it.
+pub fn Model::set_fuse_unk(self : Model, val : Bool) -> Model {
+  match self {
+    BPE(m) => BPE({ ..m, fuse_unk: val })
+    Unigram(m) => Unigram({ ..m, fuse_unk: val })
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for fuse_unk.
+pub fn Model::set_fuse_unk_alias(self : Model, val : Bool) -> Model {
+  self.set_fuse_unk(val)
+}
+
+///|
+/// Set ignore_merges. Returns a new Model; only BPE supports it.
+pub fn Model::set_ignore_merges(self : Model, val : Bool) -> Model {
+  match self {
+    BPE(m) => BPE({ ..m, ignore_merges: val })
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for ignore_merges.
+pub fn Model::set_ignore_merges_alias(self : Model, val : Bool) -> Model {
+  self.set_ignore_merges(val)
+}
+
+///|
+/// Set max_input_chars_per_word. Returns a new Model; only WordPiece supports it.
+pub fn Model::set_max_input_chars_per_word(self : Model, val : Int) -> Model {
+  match self {
+    WordPiece(m) => WordPiece({ ..m, max_input_chars_per_word: val })
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for max_input_chars_per_word.
+pub fn Model::set_max_input_chars_per_word_alias(self : Model, val : Int) -> Model {
+  self.set_max_input_chars_per_word(val)
+}
+
+///|
+/// Set alpha (sampling temperature) for Unigram models. Returns a new Model; non-Unigram unchanged.
+pub fn Model::set_alpha(self : Model, alpha : Double?) -> Model {
+  match self {
+    Unigram(m) => Unigram({ ..m, alpha: alpha })
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for alpha.
+pub fn Model::set_alpha_alias(self : Model, alpha : Double?) -> Model {
+  self.set_alpha(alpha)
+}
+
+///|
+/// Set nbest_size for Unigram models. Returns a new Model; non-Unigram unchanged.
+pub fn Model::set_nbest_size(self : Model, nbest_size : Int?) -> Model {
+  match self {
+    Unigram(m) => Unigram({ ..m, nbest_size: nbest_size })
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for nbest_size.
+pub fn Model::set_nbest_size_alias(self : Model, nbest_size : Int?) -> Model {
+  self.set_nbest_size(nbest_size)
+}
+
 /// Look up a token surface by id (decode direction).
 pub fn Model::id_to_token(self : Model, id : Int) -> String? {
   match self {

@@ -79,6 +79,26 @@ pub fn Model::max_input_chars_per_word(Self) -> Int?
 pub fn Model::nbest_size(Self) -> Int?
 pub fn Model::resize_cache(Self, Int) -> Unit
 pub fn Model::save(Self, String, prefix? : String) -> Array[String] raise @types.TokenizerError
+pub fn Model::set_alpha(Self, Double?) -> Self
+pub fn Model::set_alpha_alias(Self, Double?) -> Self
+pub fn Model::set_byte_fallback(Self, Bool) -> Self
+pub fn Model::set_byte_fallback_alias(Self, Bool) -> Self
+pub fn Model::set_continuing_subword_prefix(Self, String?) -> Self
+pub fn Model::set_continuing_subword_prefix_alias(Self, String?) -> Self
+pub fn Model::set_dropout(Self, Double?) -> Self
+pub fn Model::set_dropout_alias(Self, Double?) -> Self
+pub fn Model::set_end_of_word_suffix(Self, String?) -> Self
+pub fn Model::set_end_of_word_suffix_alias(Self, String?) -> Self
+pub fn Model::set_fuse_unk(Self, Bool) -> Self
+pub fn Model::set_fuse_unk_alias(Self, Bool) -> Self
+pub fn Model::set_ignore_merges(Self, Bool) -> Self
+pub fn Model::set_ignore_merges_alias(Self, Bool) -> Self
+pub fn Model::set_max_input_chars_per_word(Self, Int) -> Self
+pub fn Model::set_max_input_chars_per_word_alias(Self, Int) -> Self
+pub fn Model::set_nbest_size(Self, Int?) -> Self
+pub fn Model::set_nbest_size_alias(Self, Int?) -> Self
+pub fn Model::set_unk_token(Self, String) -> Self
+pub fn Model::set_unk_token_alias(Self, String) -> Self
 pub fn Model::to_json(Self) -> String?
 pub fn Model::token_to_id(Self, String) -> Int?
 pub fn Model::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
