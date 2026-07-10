@@ -533,6 +533,51 @@ fn Decoder::byte_fallback() -> Decoder
 fn Decoder::ctc(
   pad_token? : String = "<pad>", word_delimiter_token? : String = "|", cleanup? : Bool = true,
 ) -> Decoder
+#### PreTokenizer getter aliases
+
+```moonbit
+fn PreTokenizer::kind(self : PreTokenizer) -> String
+fn PreTokenizer::add_prefix_space(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_add_prefix_space(self : PreTokenizer) -> Bool?
+fn PreTokenizer::use_regex(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_use_regex(self : PreTokenizer) -> Bool?
+fn PreTokenizer::trim_offsets(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_trim_offsets(self : PreTokenizer) -> Bool?
+fn PreTokenizer::replacement(self : PreTokenizer) -> Char?
+fn PreTokenizer::get_replacement(self : PreTokenizer) -> Char?
+fn PreTokenizer::prepend_scheme(self : PreTokenizer) -> String?
+fn PreTokenizer::get_prepend_scheme(self : PreTokenizer) -> String?
+fn PreTokenizer::split_enabled(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_split(self : PreTokenizer) -> Bool?
+fn PreTokenizer::delimiter(self : PreTokenizer) -> Char?
+fn PreTokenizer::get_delimiter(self : PreTokenizer) -> Char?
+fn PreTokenizer::individual_digits(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_individual_digits(self : PreTokenizer) -> Bool?
+fn PreTokenizer::length(self : PreTokenizer) -> Int?
+fn PreTokenizer::get_length(self : PreTokenizer) -> Int?
+fn PreTokenizer::behavior(self : PreTokenizer) -> SplitBehavior?
+fn PreTokenizer::get_behavior(self : PreTokenizer) -> SplitBehavior?
+fn PreTokenizer::invert(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_invert(self : PreTokenizer) -> Bool?
+fn PreTokenizer::pattern(self : PreTokenizer) -> String?
+fn PreTokenizer::get_pattern(self : PreTokenizer) -> String?
+fn PreTokenizer::pre_tokenizers(self : PreTokenizer) -> Array[PreTokenizer]
+fn PreTokenizer::get_pre_tokenizers(self : PreTokenizer) -> Array[PreTokenizer]
+fn PreTokenizer::alphabet(self : PreTokenizer) -> Array[Char]
+fn PreTokenizer::byte_level_alphabet(self : PreTokenizer) -> Array[Char]
+fn PreTokenizer::pre_tokenize_str(self : PreTokenizer, text : String) -> Array[(String, (Int, Int))]
+fn PreTokenizer::get_state(self : PreTokenizer) -> PreTokenizerState
+fn PreTokenizer::from_state(state : PreTokenizerState) -> PreTokenizer raise TokenizerError
+fn PreTokenizer::to_json(self : PreTokenizer) -> String?
+fn PreTokenizer::from_json(j : Json) -> PreTokenizer raise TokenizerError
+```
+
+Property-style getters return the pre-tokenizer's configuration. `kind()` returns
+the type string. `alphabet()` returns the character set. `pre_tokenize_str()`
+returns HF-style `(value, offsets)` tuples. `pre_tokenizers()` returns children
+for Sequence pre-tokenizers. `get_state()` / `from_state()` provide state
+round-trip.
+
 #### Decoder setter aliases (Python binding compatibility)
 
 ```moonbit
@@ -586,6 +631,91 @@ fn PostProcessor::template_from_strings(
   single : String, pair : String, special_tokens : Map[String, SpecialToken],
 ) -> PostProcessor raise TokenizerError
 fn PostProcessor::sequence(steps : Array[PostProcessor]) -> PostProcessor
+#### PostProcessor getter aliases
+
+```moonbit
+fn PostProcessor::kind(self : PostProcessor) -> String
+fn PostProcessor::sep(self : PostProcessor) -> (String, Int)?
+fn PostProcessor::get_sep(self : PostProcessor) -> (String, Int)?
+fn PostProcessor::cls(self : PostProcessor) -> (String, Int)?
+fn PostProcessor::get_cls(self : PostProcessor) -> (String, Int)?
+fn PostProcessor::trim_offsets(self : PostProcessor) -> Bool?
+fn PostProcessor::get_trim_offsets(self : PostProcessor) -> Bool?
+fn PostProcessor::add_prefix_space(self : PostProcessor) -> Bool?
+fn PostProcessor::get_add_prefix_space(self : PostProcessor) -> Bool?
+fn PostProcessor::use_regex(self : PostProcessor) -> Bool?
+fn PostProcessor::get_use_regex(self : PostProcessor) -> Bool?
+fn PostProcessor::single_pieces(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::single(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::pair_pieces(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::pair(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::special_tokens(self : PostProcessor) -> Map[String, SpecialToken]
+fn PostProcessor::processors(self : PostProcessor) -> Array[PostProcessor]
+fn PostProcessor::get_processors(self : PostProcessor) -> Array[PostProcessor]
+fn PostProcessor::num_special_tokens_to_add(self : PostProcessor, is_pair : Bool) -> Int
+fn PostProcessor::get_state(self : PostProcessor) -> PostProcessorState
+fn PostProcessor::from_state(state : PostProcessorState) -> PostProcessor raise TokenizerError
+fn PostProcessor::to_json(self : PostProcessor) -> String?
+fn PostProcessor::from_json(j : Json) -> PostProcessor raise TokenizerError
+```
+
+Property-style getters return the post-processor's configuration. `kind()` returns
+the type string. `single()` / `pair()` return template pieces. `processors()`
+returns children for Sequence post-processors. `num_special_tokens_to_add()`
+reports how many special tokens would be injected. `get_state()` / `from_state()`
+provide state round-trip.
+
+#### Trainer getter aliases
+
+```moonbit
+fn Trainer::kind(self : Trainer) -> String
+fn Trainer::unk_token(self : Trainer) -> String?
+fn Trainer::get_unk_token(self : Trainer) -> String?
+fn Trainer::min_frequency(self : Trainer) -> Int
+fn Trainer::get_min_frequency(self : Trainer) -> Int
+fn Trainer::special_tokens(self : Trainer) -> Array[String]
+fn Trainer::get_special_tokens(self : Trainer) -> Array[String]
+fn Trainer::special_added_tokens(self : Trainer) -> Array[AddedToken]
+fn Trainer::get_special_added_tokens(self : Trainer) -> Array[AddedToken]
+fn Trainer::vocab_size(self : Trainer) -> Int?
+fn Trainer::get_vocab_size(self : Trainer) -> Int?
+fn Trainer::show_progress(self : Trainer) -> Bool
+fn Trainer::get_show_progress(self : Trainer) -> Bool
+fn Trainer::continuing_subword_prefix(self : Trainer) -> String?
+fn Trainer::get_continuing_subword_prefix(self : Trainer) -> String?
+fn Trainer::end_of_word_suffix(self : Trainer) -> String?
+fn Trainer::get_end_of_word_suffix(self : Trainer) -> String?
+fn Trainer::max_input_chars_per_word(self : Trainer) -> Int?
+fn Trainer::get_max_input_chars_per_word(self : Trainer) -> Int?
+fn Trainer::max_token_length(self : Trainer) -> Int?
+fn Trainer::get_max_token_length(self : Trainer) -> Int?
+fn Trainer::initial_alphabet(self : Trainer) -> Array[String]
+fn Trainer::get_initial_alphabet(self : Trainer) -> Array[String]
+fn Trainer::limit_alphabet(self : Trainer) -> Int?
+fn Trainer::get_limit_alphabet(self : Trainer) -> Int?
+fn Trainer::fuse_unk(self : Trainer) -> Bool?
+fn Trainer::get_fuse_unk(self : Trainer) -> Bool?
+fn Trainer::byte_fallback(self : Trainer) -> Bool?
+fn Trainer::get_byte_fallback(self : Trainer) -> Bool?
+fn Trainer::shrinking_factor(self : Trainer) -> Double?
+fn Trainer::get_shrinking_factor(self : Trainer) -> Double?
+fn Trainer::max_piece_length(self : Trainer) -> Int?
+fn Trainer::get_max_piece_length(self : Trainer) -> Int?
+fn Trainer::n_sub_iterations(self : Trainer) -> Int?
+fn Trainer::get_n_sub_iterations(self : Trainer) -> Int?
+fn Trainer::seed_size(self : Trainer) -> Int?
+fn Trainer::get_seed_size(self : Trainer) -> Int?
+fn Trainer::progress_format(self : Trainer) -> String?
+fn Trainer::get_progress_format(self : Trainer) -> String?
+fn Trainer::get_state(self : Trainer) -> TrainerState
+fn Trainer::from_state(state : TrainerState) -> Trainer raise TokenizerError
+```
+
+Property-style getters return the trainer's configuration. `kind()` returns
+the trainer type string (`"WordLevel"`, `"WordPiece"`, `"BPE"`, `"Unigram"`).
+`get_state()` / `from_state()` provide state round-trip for Python binding/pickle
+interop.
+
 #### Trainer setter aliases (Python binding compatibility)
 
 ```moonbit
@@ -616,6 +746,54 @@ modifies the relevant trainer variant's field; other variants return the
 original Trainer unchanged. Setters that apply to multiple variants (e.g.
 `set_unk_token` for all four trainer types) handle all matching variants.
 Each setter has a `*_alias` companion for Python binding migration consistency.
+
+#### Decoder getter aliases
+
+```moonbit
+fn Decoder::kind(self : Decoder) -> String
+fn Decoder::add_prefix_space(self : Decoder) -> Bool?
+fn Decoder::get_add_prefix_space(self : Decoder) -> Bool?
+fn Decoder::trim_offsets(self : Decoder) -> Bool?
+fn Decoder::get_trim_offsets(self : Decoder) -> Bool?
+fn Decoder::use_regex(self : Decoder) -> Bool?
+fn Decoder::get_use_regex(self : Decoder) -> Bool?
+fn Decoder::prefix(self : Decoder) -> String?
+fn Decoder::get_prefix(self : Decoder) -> String?
+fn Decoder::cleanup(self : Decoder) -> Bool?
+fn Decoder::get_cleanup(self : Decoder) -> Bool?
+fn Decoder::replacement(self : Decoder) -> Char?
+fn Decoder::get_replacement(self : Decoder) -> Char?
+fn Decoder::prepend_scheme(self : Decoder) -> String?
+fn Decoder::get_prepend_scheme(self : Decoder) -> String?
+fn Decoder::split_enabled(self : Decoder) -> Bool?
+fn Decoder::get_split(self : Decoder) -> Bool?
+fn Decoder::suffix(self : Decoder) -> String?
+fn Decoder::get_suffix(self : Decoder) -> String?
+fn Decoder::content(self : Decoder) -> String?
+fn Decoder::get_content(self : Decoder) -> String?
+fn Decoder::start(self : Decoder) -> Int?
+fn Decoder::get_start(self : Decoder) -> Int?
+fn Decoder::stop(self : Decoder) -> Int?
+fn Decoder::get_stop(self : Decoder) -> Int?
+fn Decoder::left(self : Decoder) -> Int?
+fn Decoder::get_left(self : Decoder) -> Int?
+fn Decoder::right(self : Decoder) -> Int?
+fn Decoder::get_right(self : Decoder) -> Int?
+fn Decoder::pad_token(self : Decoder) -> String?
+fn Decoder::get_pad_token(self : Decoder) -> String?
+fn Decoder::word_delimiter_token(self : Decoder) -> String?
+fn Decoder::get_word_delimiter_token(self : Decoder) -> String?
+fn Decoder::decoders(self : Decoder) -> Array[Decoder]
+fn Decoder::get_decoders(self : Decoder) -> Array[Decoder]
+fn Decoder::get_state(self : Decoder) -> DecoderState
+fn Decoder::from_state(state : DecoderState) -> Decoder raise TokenizerError
+fn Decoder::to_json(self : Decoder) -> String?
+fn Decoder::from_json(j : Json) -> Decoder raise TokenizerError
+```
+
+Property-style getters return the decoder's configuration. `kind()` returns
+the type string. `decoders()` returns children for Sequence decoders.
+`get_state()` / `from_state()` provide state round-trip.
 
 #### PostProcessor setter aliases (Python binding compatibility)
 

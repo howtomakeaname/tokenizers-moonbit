@@ -528,6 +528,50 @@ fn Decoder::byte_fallback() -> Decoder
 fn Decoder::ctc(
   pad_token? : String = "<pad>", word_delimiter_token? : String = "|", cleanup? : Bool = true,
 ) -> Decoder
+#### PreTokenizer getter 别名
+
+```moonbit
+fn PreTokenizer::kind(self : PreTokenizer) -> String
+fn PreTokenizer::add_prefix_space(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_add_prefix_space(self : PreTokenizer) -> Bool?
+fn PreTokenizer::use_regex(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_use_regex(self : PreTokenizer) -> Bool?
+fn PreTokenizer::trim_offsets(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_trim_offsets(self : PreTokenizer) -> Bool?
+fn PreTokenizer::replacement(self : PreTokenizer) -> Char?
+fn PreTokenizer::get_replacement(self : PreTokenizer) -> Char?
+fn PreTokenizer::prepend_scheme(self : PreTokenizer) -> String?
+fn PreTokenizer::get_prepend_scheme(self : PreTokenizer) -> String?
+fn PreTokenizer::split_enabled(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_split(self : PreTokenizer) -> Bool?
+fn PreTokenizer::delimiter(self : PreTokenizer) -> Char?
+fn PreTokenizer::get_delimiter(self : PreTokenizer) -> Char?
+fn PreTokenizer::individual_digits(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_individual_digits(self : PreTokenizer) -> Bool?
+fn PreTokenizer::length(self : PreTokenizer) -> Int?
+fn PreTokenizer::get_length(self : PreTokenizer) -> Int?
+fn PreTokenizer::behavior(self : PreTokenizer) -> SplitBehavior?
+fn PreTokenizer::get_behavior(self : PreTokenizer) -> SplitBehavior?
+fn PreTokenizer::invert(self : PreTokenizer) -> Bool?
+fn PreTokenizer::get_invert(self : PreTokenizer) -> Bool?
+fn PreTokenizer::pattern(self : PreTokenizer) -> String?
+fn PreTokenizer::get_pattern(self : PreTokenizer) -> String?
+fn PreTokenizer::pre_tokenizers(self : PreTokenizer) -> Array[PreTokenizer]
+fn PreTokenizer::get_pre_tokenizers(self : PreTokenizer) -> Array[PreTokenizer]
+fn PreTokenizer::alphabet(self : PreTokenizer) -> Array[Char]
+fn PreTokenizer::byte_level_alphabet(self : PreTokenizer) -> Array[Char]
+fn PreTokenizer::pre_tokenize_str(self : PreTokenizer, text : String) -> Array[(String, (Int, Int))]
+fn PreTokenizer::get_state(self : PreTokenizer) -> PreTokenizerState
+fn PreTokenizer::from_state(state : PreTokenizerState) -> PreTokenizer raise TokenizerError
+fn PreTokenizer::to_json(self : PreTokenizer) -> String?
+fn PreTokenizer::from_json(j : Json) -> PreTokenizer raise TokenizerError
+```
+
+属性风格 getter 返回预分词器配置。`kind()` 返回类型字符串。
+`alphabet()` 返回字符集。`pre_tokenize_str()` 返回 HF 风格 `(value, offsets)` 元组。
+`pre_tokenizers()` 返回 Sequence 预分词器的子项。
+`get_state()` / `from_state()` 提供状态往返。
+
 #### Decoder setter 别名（Python binding 兼容）
 
 ```moonbit
@@ -579,6 +623,89 @@ fn PostProcessor::template_from_strings(
   single : String, pair : String, special_tokens : Map[String, SpecialToken],
 ) -> PostProcessor raise TokenizerError
 fn PostProcessor::sequence(steps : Array[PostProcessor]) -> PostProcessor
+#### PostProcessor getter 别名
+
+```moonbit
+fn PostProcessor::kind(self : PostProcessor) -> String
+fn PostProcessor::sep(self : PostProcessor) -> (String, Int)?
+fn PostProcessor::get_sep(self : PostProcessor) -> (String, Int)?
+fn PostProcessor::cls(self : PostProcessor) -> (String, Int)?
+fn PostProcessor::get_cls(self : PostProcessor) -> (String, Int)?
+fn PostProcessor::trim_offsets(self : PostProcessor) -> Bool?
+fn PostProcessor::get_trim_offsets(self : PostProcessor) -> Bool?
+fn PostProcessor::add_prefix_space(self : PostProcessor) -> Bool?
+fn PostProcessor::get_add_prefix_space(self : PostProcessor) -> Bool?
+fn PostProcessor::use_regex(self : PostProcessor) -> Bool?
+fn PostProcessor::get_use_regex(self : PostProcessor) -> Bool?
+fn PostProcessor::single_pieces(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::single(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::pair_pieces(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::pair(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::special_tokens(self : PostProcessor) -> Map[String, SpecialToken]
+fn PostProcessor::processors(self : PostProcessor) -> Array[PostProcessor]
+fn PostProcessor::get_processors(self : PostProcessor) -> Array[PostProcessor]
+fn PostProcessor::num_special_tokens_to_add(self : PostProcessor, is_pair : Bool) -> Int
+fn PostProcessor::get_state(self : PostProcessor) -> PostProcessorState
+fn PostProcessor::from_state(state : PostProcessorState) -> PostProcessor raise TokenizerError
+fn PostProcessor::to_json(self : PostProcessor) -> String?
+fn PostProcessor::from_json(j : Json) -> PostProcessor raise TokenizerError
+```
+
+属性风格 getter 返回后处理器配置。`kind()` 返回类型字符串。
+`single()` / `pair()` 返回模板 piece。`processors()` 返回 Sequence 后处理器的子项。
+`num_special_tokens_to_add()` 报告会注入多少特殊 token。
+`get_state()` / `from_state()` 提供状态往返。
+
+#### Trainer getter 别名
+
+```moonbit
+fn Trainer::kind(self : Trainer) -> String
+fn Trainer::unk_token(self : Trainer) -> String?
+fn Trainer::get_unk_token(self : Trainer) -> String?
+fn Trainer::min_frequency(self : Trainer) -> Int
+fn Trainer::get_min_frequency(self : Trainer) -> Int
+fn Trainer::special_tokens(self : Trainer) -> Array[String]
+fn Trainer::get_special_tokens(self : Trainer) -> Array[String]
+fn Trainer::special_added_tokens(self : Trainer) -> Array[AddedToken]
+fn Trainer::get_special_added_tokens(self : Trainer) -> Array[AddedToken]
+fn Trainer::vocab_size(self : Trainer) -> Int?
+fn Trainer::get_vocab_size(self : Trainer) -> Int?
+fn Trainer::show_progress(self : Trainer) -> Bool
+fn Trainer::get_show_progress(self : Trainer) -> Bool
+fn Trainer::continuing_subword_prefix(self : Trainer) -> String?
+fn Trainer::get_continuing_subword_prefix(self : Trainer) -> String?
+fn Trainer::end_of_word_suffix(self : Trainer) -> String?
+fn Trainer::get_end_of_word_suffix(self : Trainer) -> String?
+fn Trainer::max_input_chars_per_word(self : Trainer) -> Int?
+fn Trainer::get_max_input_chars_per_word(self : Trainer) -> Int?
+fn Trainer::max_token_length(self : Trainer) -> Int?
+fn Trainer::get_max_token_length(self : Trainer) -> Int?
+fn Trainer::initial_alphabet(self : Trainer) -> Array[String]
+fn Trainer::get_initial_alphabet(self : Trainer) -> Array[String]
+fn Trainer::limit_alphabet(self : Trainer) -> Int?
+fn Trainer::get_limit_alphabet(self : Trainer) -> Int?
+fn Trainer::fuse_unk(self : Trainer) -> Bool?
+fn Trainer::get_fuse_unk(self : Trainer) -> Bool?
+fn Trainer::byte_fallback(self : Trainer) -> Bool?
+fn Trainer::get_byte_fallback(self : Trainer) -> Bool?
+fn Trainer::shrinking_factor(self : Trainer) -> Double?
+fn Trainer::get_shrinking_factor(self : Trainer) -> Double?
+fn Trainer::max_piece_length(self : Trainer) -> Int?
+fn Trainer::get_max_piece_length(self : Trainer) -> Int?
+fn Trainer::n_sub_iterations(self : Trainer) -> Int?
+fn Trainer::get_n_sub_iterations(self : Trainer) -> Int?
+fn Trainer::seed_size(self : Trainer) -> Int?
+fn Trainer::get_seed_size(self : Trainer) -> Int?
+fn Trainer::progress_format(self : Trainer) -> String?
+fn Trainer::get_progress_format(self : Trainer) -> String?
+fn Trainer::get_state(self : Trainer) -> TrainerState
+fn Trainer::from_state(state : TrainerState) -> Trainer raise TokenizerError
+```
+
+属性风格 getter 返回训练器配置。`kind()` 返回训练器类型字符串
+（`"WordLevel"`、`"WordPiece"`、`"BPE"`、`"Unigram"`）。
+`get_state()` / `from_state()` 提供状态往返，用于 Python binding/pickle 互操作。
+
 #### Trainer setter 别名（Python binding 兼容）
 
 ```moonbit
@@ -607,6 +734,54 @@ fn Trainer::set_progress_format(self : Trainer, val : String) -> Trainer
 保持不可变语义。每个 setter 仅修改对应训练器变体的字段，其他变体返回原 Trainer。
 适用于多个变体的 setter（如 `set_unk_token` 支持所有四种训练器类型）会处理所有匹配变体。
 每个 setter 都有 `*_alias` 别名，保持与 Python binding 迁移模式一致。
+
+#### Decoder getter 别名
+
+```moonbit
+fn Decoder::kind(self : Decoder) -> String
+fn Decoder::add_prefix_space(self : Decoder) -> Bool?
+fn Decoder::get_add_prefix_space(self : Decoder) -> Bool?
+fn Decoder::trim_offsets(self : Decoder) -> Bool?
+fn Decoder::get_trim_offsets(self : Decoder) -> Bool?
+fn Decoder::use_regex(self : Decoder) -> Bool?
+fn Decoder::get_use_regex(self : Decoder) -> Bool?
+fn Decoder::prefix(self : Decoder) -> String?
+fn Decoder::get_prefix(self : Decoder) -> String?
+fn Decoder::cleanup(self : Decoder) -> Bool?
+fn Decoder::get_cleanup(self : Decoder) -> Bool?
+fn Decoder::replacement(self : Decoder) -> Char?
+fn Decoder::get_replacement(self : Decoder) -> Char?
+fn Decoder::prepend_scheme(self : Decoder) -> String?
+fn Decoder::get_prepend_scheme(self : Decoder) -> String?
+fn Decoder::split_enabled(self : Decoder) -> Bool?
+fn Decoder::get_split(self : Decoder) -> Bool?
+fn Decoder::suffix(self : Decoder) -> String?
+fn Decoder::get_suffix(self : Decoder) -> String?
+fn Decoder::content(self : Decoder) -> String?
+fn Decoder::get_content(self : Decoder) -> String?
+fn Decoder::start(self : Decoder) -> Int?
+fn Decoder::get_start(self : Decoder) -> Int?
+fn Decoder::stop(self : Decoder) -> Int?
+fn Decoder::get_stop(self : Decoder) -> Int?
+fn Decoder::left(self : Decoder) -> Int?
+fn Decoder::get_left(self : Decoder) -> Int?
+fn Decoder::right(self : Decoder) -> Int?
+fn Decoder::get_right(self : Decoder) -> Int?
+fn Decoder::pad_token(self : Decoder) -> String?
+fn Decoder::get_pad_token(self : Decoder) -> String?
+fn Decoder::word_delimiter_token(self : Decoder) -> String?
+fn Decoder::get_word_delimiter_token(self : Decoder) -> String?
+fn Decoder::decoders(self : Decoder) -> Array[Decoder]
+fn Decoder::get_decoders(self : Decoder) -> Array[Decoder]
+fn Decoder::get_state(self : Decoder) -> DecoderState
+fn Decoder::from_state(state : DecoderState) -> Decoder raise TokenizerError
+fn Decoder::to_json(self : Decoder) -> String?
+fn Decoder::from_json(j : Json) -> Decoder raise TokenizerError
+```
+
+属性风格 getter 返回解码器配置。`kind()` 返回类型字符串。
+`decoders()` 返回 Sequence 解码器的子项。
+`get_state()` / `from_state()` 提供状态往返。
 
 #### PostProcessor setter 别名（Python binding 兼容）
 
