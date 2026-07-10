@@ -148,6 +148,8 @@ Tokenizer JSON strictness 小闭环：HF `Tokenizer.from_str` 要求 WordLevel /
 
 Tokenizer JSON typed-field strictness 小闭环：BPE `ignore_merges` / `fuse_unk` / `byte_fallback`、Unigram `byte_fallback` / `fuse_unk` 必须是 bool，BPE `dropout` 必须是 number；错误类型现在按 HF 解析语义抛 `ParseError`，不再静默回落默认值。
 
+Tokenizer JSON optional string strictness 小闭环：BPE `unk_token` / `continuing_subword_prefix` / `end_of_word_suffix` 与 WordPiece `end_of_word_suffix` 继续允许缺失或 `null` 表示 `None`，但若字段存在且类型不是 string/null 会按 HF 解析语义抛 `ParseError`，不再静默当作缺省值。
+
 Trainer 通用 getter alias 小闭环：`get_unk_token` / `get_min_frequency` / `get_special_tokens` / `get_special_added_tokens` / `get_vocab_size` / `get_show_progress` 已补齐，均委托现有 property-style getter 并保持数组/AddedToken 返回副本，便于 Python binding 统一暴露 `get_*` 配置属性。
 
 Trainer model-specific getter alias 小闭环：WordPiece/BPE/Unigram 特有 knobs 已补对应 `get_*` alias，覆盖 `get_continuing_subword_prefix` / `get_end_of_word_suffix` / `get_initial_alphabet` / `get_limit_alphabet` / `get_max_token_length` / `get_max_input_chars_per_word` / `get_fuse_unk` / `get_byte_fallback` / `get_shrinking_factor` / `get_max_piece_length` / `get_n_sub_iterations` / `get_seed_size` / `get_progress_format`，数组返回继续保持 copy-return 语义。
