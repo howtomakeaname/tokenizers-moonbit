@@ -1159,7 +1159,17 @@ test "post_process applies or skips configured post processor" {
   @test.assert_eq(pair.sequence_ids(), [None, Some(0), None, Some(1), None])
   let plain = tok.post_process(a, pair=Some(b), add_special_tokens=false)
   @test.assert_eq(plain.tokens, ["hello", "world"])
+  @test.assert_eq(plain.type_ids, [0, 1])
   @test.assert_eq(plain.sequence_ids(), [Some(0), Some(1)])
+  let high_level_plain = tok.encode_pair(
+    "hello",
+    "world",
+    add_special_tokens=false,
+  )
+  @test.assert_eq(high_level_plain.tokens, ["hello", "world"])
+  @test.assert_eq(high_level_plain.type_ids, [0, 1])
+  @test.assert_eq(high_level_plain.special_tokens_mask, [0, 0])
+  @test.assert_eq(high_level_plain.sequence_ids(), [Some(0), Some(1)])
 }
 
 ///|
@@ -1173,8 +1183,9 @@ test "post_process false keeps HF processor metadata without specials" {
     #|   "pair":"<s>:3 $A:2 </s>:3 $B:4 </s>:4",
     #|   "special_tokens":{"<s>":{"id":"<s>","ids":[2],"tokens":["<s>"]},"</s>":{"id":"</s>","ids":[3],"tokens":["</s>"]}}}}
   let template_tok = Tokenizer::from_str(template_json)
-  let template_a = template_tok.encode("hello", add_special_tokens=false)
-  let template_b = template_tok.encode("world", add_special_tokens=false)
+  let template_raw_tok = template_tok.set_post_processor(None)
+  let template_a = template_raw_tok.encode("hello", add_special_tokens=false)
+  let template_b = template_raw_tok.encode("world", add_special_tokens=false)
   let template_processed = template_tok.post_process(
     template_a,
     pair=Some(template_b),
@@ -1184,6 +1195,19 @@ test "post_process false keeps HF processor metadata without specials" {
   @test.assert_eq(template_processed.type_ids, [2, 4])
   @test.assert_eq(template_processed.special_tokens_mask, [0, 0])
   @test.assert_eq(template_processed.sequence_ids(), [Some(0), Some(1)])
+  let template_single = template_tok.encode("hello", add_special_tokens=false)
+  @test.assert_eq(template_single.tokens, ["hello"])
+  @test.assert_eq(template_single.type_ids, [2])
+  @test.assert_eq(template_single.special_tokens_mask, [0])
+  let template_pair = template_tok.encode_pair(
+    "hello",
+    "world",
+    add_special_tokens=false,
+  )
+  @test.assert_eq(template_pair.tokens, ["hello", "world"])
+  @test.assert_eq(template_pair.type_ids, [2, 4])
+  @test.assert_eq(template_pair.special_tokens_mask, [0, 0])
+  @test.assert_eq(template_pair.sequence_ids(), [Some(0), Some(1)])
 
   let byte_json =
     #|{"version":"1.0",
@@ -1191,12 +1215,17 @@ test "post_process false keeps HF processor metadata without specials" {
     #| "model":{"type":"WordLevel","vocab":{"a":0,"\u0120":1,"\u0120b":2,"[UNK]":3},"unk_token":"[UNK]"},
     #| "post_processor":{"type":"ByteLevel","trim_offsets":true}}
   let byte_tok = Tokenizer::from_str(byte_json)
-  let byte_raw = byte_tok.encode("a  b", add_special_tokens=false)
+  let byte_raw_tok = byte_tok.set_post_processor(None)
+  let byte_raw = byte_raw_tok.encode("a  b", add_special_tokens=false)
   @test.assert_eq(byte_raw.offsets, [(0, 1), (1, 2), (2, 4)])
   let byte_processed = byte_tok.post_process(byte_raw, add_special_tokens=false)
   @test.assert_eq(byte_processed.tokens, ["a", "\u{0120}", "\u{0120}b"])
   @test.assert_eq(byte_processed.offsets, [(0, 1), (2, 2), (3, 4)])
   @test.assert_eq(byte_processed.special_tokens_mask, [0, 0, 0])
+  let byte_high_level = byte_tok.encode("a  b", add_special_tokens=false)
+  @test.assert_eq(byte_high_level.tokens, ["a", "\u{0120}", "\u{0120}b"])
+  @test.assert_eq(byte_high_level.offsets, [(0, 1), (2, 2), (3, 4)])
+  @test.assert_eq(byte_high_level.special_tokens_mask, [0, 0, 0])
 
   let roberta_json =
     #|{"version":"1.0",
@@ -1204,7 +1233,8 @@ test "post_process false keeps HF processor metadata without specials" {
     #| "model":{"type":"WordLevel","vocab":{"a":0,"\u0120":1,"\u0120b":2,"</s>":4,"<s>":5,"[UNK]":3},"unk_token":"[UNK]"},
     #| "post_processor":{"type":"RobertaProcessing","sep":["</s>",4],"cls":["<s>",5],"trim_offsets":true,"add_prefix_space":false}}
   let roberta_tok = Tokenizer::from_str(roberta_json)
-  let roberta_raw = roberta_tok.encode("a  b", add_special_tokens=false)
+  let roberta_raw_tok = roberta_tok.set_post_processor(None)
+  let roberta_raw = roberta_raw_tok.encode("a  b", add_special_tokens=false)
   let roberta_processed = roberta_tok.post_process(
     roberta_raw,
     add_special_tokens=false,
@@ -1213,6 +1243,16 @@ test "post_process false keeps HF processor metadata without specials" {
   @test.assert_eq(roberta_processed.offsets, [(0, 1), (2, 2), (3, 4)])
   @test.assert_eq(roberta_processed.special_tokens_mask, [0, 0, 0])
   @test.assert_eq(roberta_processed.sequence_ids(), [Some(0), Some(0), Some(0)])
+  let roberta_pair = roberta_tok.encode_pair(
+    "a",
+    " b",
+    add_special_tokens=false,
+  )
+  @test.assert_eq(roberta_pair.tokens, ["a", "\u{0120}b"])
+  @test.assert_eq(roberta_pair.type_ids, [0, 0])
+  @test.assert_eq(roberta_pair.offsets, [(0, 1), (0, 2)])
+  @test.assert_eq(roberta_pair.special_tokens_mask, [0, 0])
+  @test.assert_eq(roberta_pair.sequence_ids(), [Some(0), Some(1)])
 
   let sequence_json =
     #|{"version":"1.0",
@@ -1220,7 +1260,8 @@ test "post_process false keeps HF processor metadata without specials" {
     #| "model":{"type":"WordLevel","vocab":{"a":0,"\u0120":1,"\u0120b":2,"[UNK]":3,"[SEP]":4,"[CLS]":5},"unk_token":"[UNK]"},
     #| "post_processor":{"type":"Sequence","processors":[{"type":"ByteLevel","trim_offsets":true},{"type":"BertProcessing","sep":["[SEP]",4],"cls":["[CLS]",5]}]}}
   let sequence_tok = Tokenizer::from_str(sequence_json)
-  let sequence_raw = sequence_tok.encode("a  b", add_special_tokens=false)
+  let sequence_raw_tok = sequence_tok.set_post_processor(None)
+  let sequence_raw = sequence_raw_tok.encode("a  b", add_special_tokens=false)
   let sequence_processed = sequence_tok.post_process(
     sequence_raw,
     add_special_tokens=false,
@@ -1228,6 +1269,13 @@ test "post_process false keeps HF processor metadata without specials" {
   @test.assert_eq(sequence_processed.tokens, ["a", "\u{0120}", "\u{0120}b"])
   @test.assert_eq(sequence_processed.offsets, [(0, 1), (2, 2), (3, 4)])
   @test.assert_eq(sequence_processed.special_tokens_mask, [0, 0, 0])
+  let sequence_high_level = sequence_tok.encode(
+    "a  b",
+    add_special_tokens=false,
+  )
+  @test.assert_eq(sequence_high_level.tokens, ["a", "\u{0120}", "\u{0120}b"])
+  @test.assert_eq(sequence_high_level.offsets, [(0, 1), (2, 2), (3, 4)])
+  @test.assert_eq(sequence_high_level.special_tokens_mask, [0, 0, 0])
 }
 
 ///|
@@ -1599,6 +1647,29 @@ test "encode_batch_fast matches cached batch behavior with zero offsets" {
   for i in 0..<pair_regular.length() {
     assert_fast_encoding_matches(pair_regular[i], pair_fast[i])
   }
+  let regular_false = tok.encode_batch(
+    ["hello world", "hello"],
+    add_special_tokens=false,
+  )
+  let fast_false = tok.encode_batch_fast(
+    ["hello world", "hello"],
+    add_special_tokens=false,
+  )
+  @test.assert_eq(regular_false[0].tokens, ["hello", "world"])
+  @test.assert_eq(regular_false[0].special_tokens_mask, [0, 0])
+  @test.assert_eq(regular_false[1].tokens, ["hello", "[PAD]"])
+  @test.assert_eq(regular_false[1].attention_mask, [1, 0])
+  for i in 0..<regular_false.length() {
+    assert_fast_encoding_matches(regular_false[i], fast_false[i])
+  }
+  let pair_false = tok.encode_pair_batch(
+    [("hello", "world"), ("moon", "hello")],
+    add_special_tokens=false,
+  )
+  @test.assert_eq(pair_false[0].tokens, ["hello", "world"])
+  @test.assert_eq(pair_false[0].type_ids, [0, 1])
+  @test.assert_eq(pair_false[0].special_tokens_mask, [0, 0])
+  @test.assert_eq(pair_false[0].sequence_ids(), [Some(0), Some(1)])
 }
 
 ///|
@@ -1654,6 +1725,31 @@ test "EncodeInput unified API dispatches raw pretokenized pair and fast batch" {
       TextInputSequence::text("HELLO"),
       pair=Some(TextInputSequence::pretokenized(["moon", "world"])),
       add_special_tokens=true,
+    ),
+  )
+  let mixed_without_specials = tok.encode_input(
+    EncodeInput::mixed_pair(
+      TextInputSequence::text("HELLO"),
+      TextInputSequence::pretokenized(["moon", "world"]),
+    ),
+    add_special_tokens=false,
+  )
+  @test.assert_eq(mixed_without_specials.tokens, ["hello", "moon", "world"])
+  @test.assert_eq(mixed_without_specials.type_ids, [0, 1, 1])
+  @test.assert_eq(mixed_without_specials.special_tokens_mask, [0, 0, 0])
+  @test.assert_eq(mixed_without_specials.sequence_ids(), [
+    Some(0),
+    Some(1),
+    Some(1),
+  ])
+  assert_fast_encoding_matches(
+    mixed_without_specials,
+    tok.encode_input_fast(
+      EncodeInput::mixed_pair(
+        TextInputSequence::text("HELLO"),
+        TextInputSequence::pretokenized(["moon", "world"]),
+      ),
+      add_special_tokens=false,
     ),
   )
   let batch = [

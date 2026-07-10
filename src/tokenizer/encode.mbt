@@ -423,14 +423,7 @@ fn Tokenizer::process_pair_raw(
     Some(tp) => truncate_pair_raw(a, Some(b), tp)
     None => (a, Some(b))
   }
-  if add_special_tokens {
-    match self.post_processor {
-      Some(pp) => pp.process(a, b)
-      None => concat_encodings(a, b.unwrap())
-    }
-  } else {
-    concat_encodings(a, b.unwrap())
-  }
+  self.apply_post_processor_pair(a, b.unwrap(), add_special_tokens~)
 }
 
 ///|
@@ -458,7 +451,8 @@ pub fn Tokenizer::encode(
   add_special_tokens? : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   // Special tokens present in the text are always recognized as single tokens;
-  // add_special_tokens only controls whether the post-processor template runs.
+  // add_special_tokens only controls whether post-processors inject new
+  // specials. Non-special post-processing effects still run, matching HF.
   self.finalize_padding(
     self.process_single_raw(
       self.encode_raw(text, keep_special=true),
@@ -673,13 +667,31 @@ fn Tokenizer::process_single_raw(
   add_special_tokens~ : Bool,
 ) -> @types.Encoding {
   let raw = self.truncate_single_raw(raw, add_special_tokens~)
-  if add_special_tokens {
-    match self.post_processor {
-      Some(pp) => pp.process(raw, None)
-      None => raw
-    }
-  } else {
-    raw
+  self.apply_post_processor_single(raw, add_special_tokens~)
+}
+
+///|
+fn Tokenizer::apply_post_processor_single(
+  self : Tokenizer,
+  raw : @types.Encoding,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  match self.post_processor {
+    Some(pp) => pp.process(raw, None, add_special_tokens~)
+    None => raw
+  }
+}
+
+///|
+fn Tokenizer::apply_post_processor_pair(
+  self : Tokenizer,
+  a : @types.Encoding,
+  b : @types.Encoding,
+  add_special_tokens~ : Bool,
+) -> @types.Encoding {
+  match self.post_processor {
+    Some(pp) => pp.process(a, Some(b), add_special_tokens~)
+    None => concat_encodings(a, b)
   }
 }
 
@@ -1236,15 +1248,7 @@ fn Tokenizer::encode_pair_unpadded(
     Some(tp) => truncate_pair_raw(a, Some(b), tp)
     None => (a, Some(b))
   }
-  let processed = if add_special_tokens {
-    match self.post_processor {
-      Some(pp) => pp.process(a, b)
-      None => concat_encodings(a, b.unwrap())
-    }
-  } else {
-    concat_encodings(a, b.unwrap())
-  }
-  processed
+  self.apply_post_processor_pair(a, b.unwrap(), add_special_tokens~)
 }
 
 ///|
@@ -1260,14 +1264,7 @@ fn Tokenizer::encode_pair_unpadded_fast(
     Some(tp) => truncate_pair_raw(a, Some(b), tp)
     None => (a, Some(b))
   }
-  if add_special_tokens {
-    match self.post_processor {
-      Some(pp) => pp.process(a, b)
-      None => concat_encodings(a, b.unwrap())
-    }
-  } else {
-    concat_encodings(a, b.unwrap())
-  }
+  self.apply_post_processor_pair(a, b.unwrap(), add_special_tokens~)
 }
 
 ///|
@@ -1283,14 +1280,7 @@ fn Tokenizer::encode_pretokenized_pair_unpadded(
     Some(tp) => truncate_pair_raw(a, Some(b), tp)
     None => (a, Some(b))
   }
-  if add_special_tokens {
-    match self.post_processor {
-      Some(pp) => pp.process(a, b)
-      None => concat_encodings(a, b.unwrap())
-    }
-  } else {
-    concat_encodings(a, b.unwrap())
-  }
+  self.apply_post_processor_pair(a, b.unwrap(), add_special_tokens~)
 }
 
 ///|
@@ -1306,14 +1296,7 @@ fn Tokenizer::encode_pretokenized_pair_unpadded_fast(
     Some(tp) => truncate_pair_raw(a, Some(b), tp)
     None => (a, Some(b))
   }
-  if add_special_tokens {
-    match self.post_processor {
-      Some(pp) => pp.process(a, b)
-      None => concat_encodings(a, b.unwrap())
-    }
-  } else {
-    concat_encodings(a, b.unwrap())
-  }
+  self.apply_post_processor_pair(a, b.unwrap(), add_special_tokens~)
 }
 
 ///|
