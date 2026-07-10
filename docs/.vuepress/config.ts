@@ -51,6 +51,9 @@ export default defineUserConfig({
     search: {
       provider: 'local',
     },
+    markdown: {
+      mermaid: true,
+    },
     locales: {
       '/zh/': {
         navbar: zhNavbar,
@@ -60,11 +63,6 @@ export default defineUserConfig({
         editLinkText: '在 GitHub 上编辑此页',
         lastUpdatedText: '最后更新',
         contributorsText: '贡献者',
-      },
-    },
-    plugins: {
-      markdownChart: {
-        mermaid: true,
       },
     },
   }),
