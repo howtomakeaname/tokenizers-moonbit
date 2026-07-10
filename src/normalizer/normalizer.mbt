@@ -342,6 +342,133 @@ pub fn Normalizer::sequence(normalizers : Array[Normalizer]) -> Normalizer {
 }
 
 ///|
+
+///|
+/// Set left (strip from start). Returns a new Normalizer; only Strip supports it.
+pub fn Normalizer::set_left(self : Normalizer, val : Bool) -> Normalizer {
+  match self {
+    Strip(right~, ..) => Strip(left=val, right~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for left.
+pub fn Normalizer::set_left_alias(self : Normalizer, val : Bool) -> Normalizer {
+  self.set_left(val)
+}
+
+///|
+/// Set right (strip from end). Returns a new Normalizer; only Strip supports it.
+pub fn Normalizer::set_right(self : Normalizer, val : Bool) -> Normalizer {
+  match self {
+    Strip(left~, ..) => Strip(left~, right=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for right.
+pub fn Normalizer::set_right_alias(self : Normalizer, val : Bool) -> Normalizer {
+  self.set_right(val)
+}
+
+///|
+/// Set clean_text. Returns a new Normalizer; only BertNormalizer supports it.
+pub fn Normalizer::set_clean_text(self : Normalizer, val : Bool) -> Normalizer {
+  match self {
+    BertNormalizer(handle_chinese_chars~, strip_accents~, lowercase~, ..) =>
+      BertNormalizer(clean_text=val, handle_chinese_chars~, strip_accents~, lowercase~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for clean_text.
+pub fn Normalizer::set_clean_text_alias(self : Normalizer, val : Bool) -> Normalizer {
+  self.set_clean_text(val)
+}
+
+///|
+/// Set handle_chinese_chars. Returns a new Normalizer; only BertNormalizer supports it.
+pub fn Normalizer::set_handle_chinese_chars(self : Normalizer, val : Bool) -> Normalizer {
+  match self {
+    BertNormalizer(clean_text~, strip_accents~, lowercase~, ..) =>
+      BertNormalizer(clean_text~, handle_chinese_chars=val, strip_accents~, lowercase~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for handle_chinese_chars.
+pub fn Normalizer::set_handle_chinese_chars_alias(self : Normalizer, val : Bool) -> Normalizer {
+  self.set_handle_chinese_chars(val)
+}
+
+///|
+/// Set strip_accents. Returns a new Normalizer; only BertNormalizer supports it.
+pub fn Normalizer::set_strip_accents(self : Normalizer, val : Bool?) -> Normalizer {
+  match self {
+    BertNormalizer(clean_text~, handle_chinese_chars~, lowercase~, ..) =>
+      BertNormalizer(clean_text~, handle_chinese_chars~, strip_accents=val, lowercase~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for strip_accents.
+pub fn Normalizer::set_strip_accents_alias(self : Normalizer, val : Bool?) -> Normalizer {
+  self.set_strip_accents(val)
+}
+
+///|
+/// Set lowercase. Returns a new Normalizer; only BertNormalizer supports it.
+pub fn Normalizer::set_lowercase(self : Normalizer, val : Bool) -> Normalizer {
+  match self {
+    BertNormalizer(clean_text~, handle_chinese_chars~, strip_accents~, ..) =>
+      BertNormalizer(clean_text~, handle_chinese_chars~, strip_accents~, lowercase=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for lowercase.
+pub fn Normalizer::set_lowercase_alias(self : Normalizer, val : Bool) -> Normalizer {
+  self.set_lowercase(val)
+}
+
+///|
+/// Set prepend string. Returns a new Normalizer; only Prepend supports it.
+pub fn Normalizer::set_prepend(self : Normalizer, val : String) -> Normalizer {
+  match self {
+    Prepend(..) => Prepend(prepend=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for prepend.
+pub fn Normalizer::set_prepend_alias(self : Normalizer, val : String) -> Normalizer {
+  self.set_prepend(val)
+}
+
+///|
+/// Set content for Replace/ReplaceString. Returns a new Normalizer.
+pub fn Normalizer::set_content(self : Normalizer, val : String) -> Normalizer {
+  match self {
+    Replace(pattern~, ..) => Replace(pattern~, content=val)
+    ReplaceString(pattern~, ..) => ReplaceString(pattern~, content=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for content.
+pub fn Normalizer::set_content_alias(self : Normalizer, val : String) -> Normalizer {
+  self.set_content(val)
+}
+
+
 pub fn Normalizer::get_state(
   self : Normalizer,
 ) -> NormalizerState raise @types.TokenizerError {

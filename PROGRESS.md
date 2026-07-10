@@ -35,6 +35,20 @@
 
 本轮复评结论：主流推理链路（load tokenizer.json / added tokens / normalizer / pre-tokenizer / model / post-processor / decoder / truncation / padding / offsets / pair / batch / pretokenized / save / local+online hub）已经基本可迁移；剩余缺口主要集中在训练生态完整 EM/大语料对拍、Hub 文件族/错误映射、以及 Python 绑定长尾别名。Regex 当前采用“HF 常见 deterministic subset + 复杂 pattern 显式 unsupported”的完成策略，不把 full backtracking/通用 Unicode regex 引擎作为跨 target 核心目标。
 
+### 2026-07-11 小闭环：Normalizer setter 别名（Python binding 兼容）
+
+- HF Python `Normalizer` 类暴露属性 setter（如 `normalizer.left = True`），允许修改归一化器属性。
+- MoonBit 已补齐 `Normalizer::set_*` setter 方法，返回新 Normalizer，保持不可变语义。
+- 已补 setter：
+  - `set_left` / `set_right`（Strip）
+  - `set_clean_text` / `set_handle_chinese_chars` / `set_strip_accents` / `set_lowercase`（BertNormalizer）
+  - `set_prepend`（Prepend）
+  - `set_content`（Replace/ReplaceString）
+- 每个 setter 都有 `*_alias` 别名。
+- setter 仅修改对应归一化器变体的字段，其他变体返回原 Normalizer。
+- 新增 `normalizer_setter_wbtest.mbt` 覆盖所有 setter 的基本功能测试。
+- 全后端测试通过：native(290)/js(290)/wasm(267)/wasm-gc(267)。
+
 ### 2026-07-11 小闭环：Model setter 别名（Python binding 兼容）
 
 - HF Python `Model` 类暴露属性 setter（如 `model.dropout = 0.5`），允许修改模型属性。

@@ -136,6 +136,22 @@ fn Model::set_nbest_size(self : Model, nbest_size : Int?) -> Model
 原 Model（如 `set_dropout` 对 Unigram 无操作）。每个 setter 都有 `*_alias` 别名保持
 与 Python binding 迁移模式一致。
 
+#### Normalizer setter 别名（Python binding 兼容）
+
+```moonbit
+fn Normalizer::set_left(self : Normalizer, val : Bool) -> Normalizer
+fn Normalizer::set_right(self : Normalizer, val : Bool) -> Normalizer
+fn Normalizer::set_clean_text(self : Normalizer, val : Bool) -> Normalizer
+fn Normalizer::set_handle_chinese_chars(self : Normalizer, val : Bool) -> Normalizer
+fn Normalizer::set_strip_accents(self : Normalizer, val : Bool?) -> Normalizer
+fn Normalizer::set_lowercase(self : Normalizer, val : Bool) -> Normalizer
+fn Normalizer::set_prepend(self : Normalizer, val : String) -> Normalizer
+fn Normalizer::set_content(self : Normalizer, val : String) -> Normalizer
+```
+
+对应 HF Python `Normalizer` 属性 setter，MoonBit 提供 `set_*` 方法返回新 Normalizer。
+每个 setter 仅修改对应归一化器变体的字段，其他变体返回原 Normalizer。
+
 ### 可选 Hub 下载器（`@hub`，native/js）
 
 ```moonbit

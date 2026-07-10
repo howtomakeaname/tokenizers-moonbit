@@ -152,6 +152,24 @@ Each setter only modifies the relevant model variant's field; other variants ret
 the original Model unchanged (e.g. `set_dropout` is a no-op on Unigram). Each
 setter has a `*_alias` companion for Python binding migration consistency.
 
+#### Normalizer setter aliases (Python binding compatibility)
+
+```moonbit
+fn Normalizer::set_left(self : Normalizer, val : Bool) -> Normalizer
+fn Normalizer::set_right(self : Normalizer, val : Bool) -> Normalizer
+fn Normalizer::set_clean_text(self : Normalizer, val : Bool) -> Normalizer
+fn Normalizer::set_handle_chinese_chars(self : Normalizer, val : Bool) -> Normalizer
+fn Normalizer::set_strip_accents(self : Normalizer, val : Bool?) -> Normalizer
+fn Normalizer::set_lowercase(self : Normalizer, val : Bool) -> Normalizer
+fn Normalizer::set_prepend(self : Normalizer, val : String) -> Normalizer
+fn Normalizer::set_content(self : Normalizer, val : String) -> Normalizer
+```
+
+Corresponding to HF Python `Normalizer` property setters, MoonBit provides `set_*`
+methods that return a new Normalizer, preserving immutability. Each setter only
+modifies the relevant normalizer variant's field; other variants return the
+original Normalizer unchanged.
+
 ### Optional Hub downloader (`@hub`, native/js)
 
 ```moonbit
