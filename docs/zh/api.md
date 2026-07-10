@@ -116,6 +116,26 @@ vocab，再建立 dense id lookup 表。
 artifact loader 的命名 alias，用于对齐 HF model class methods；Unigram 仍只暴露
 JSON artifact loader，因为 HF 没有对应的 file-class helper。
 
+#### Model setter 别名（Python binding 兼容）
+
+```moonbit
+fn Model::set_unk_token(self : Model, token : String) -> Model
+fn Model::set_dropout(self : Model, dropout : Double?) -> Model
+fn Model::set_continuing_subword_prefix(self : Model, prefix : String?) -> Model
+fn Model::set_end_of_word_suffix(self : Model, suffix : String?) -> Model
+fn Model::set_byte_fallback(self : Model, val : Bool) -> Model
+fn Model::set_fuse_unk(self : Model, val : Bool) -> Model
+fn Model::set_ignore_merges(self : Model, val : Bool) -> Model
+fn Model::set_max_input_chars_per_word(self : Model, val : Int) -> Model
+fn Model::set_alpha(self : Model, alpha : Double?) -> Model
+fn Model::set_nbest_size(self : Model, nbest_size : Int?) -> Model
+```
+
+对应 HF Python `Model` 属性 setter（如 `model.dropout = 0.5`），MoonBit 提供 `set_*`
+方法返回新 Model，保持不可变语义。每个 setter 仅修改对应模型变体的字段，其他变体返回
+原 Model（如 `set_dropout` 对 Unigram 无操作）。每个 setter 都有 `*_alias` 别名保持
+与 Python binding 迁移模式一致。
+
 ### 可选 Hub 下载器（`@hub`，native/js）
 
 ```moonbit

@@ -131,6 +131,27 @@ same BPE/WordPiece/WordLevel artifact loaders, matching HF model class methods;
 Unigram intentionally only exposes the JSON artifact loader because HF has no
 matching file-class helper.
 
+#### Model setter aliases (Python binding compatibility)
+
+```moonbit
+fn Model::set_unk_token(self : Model, token : String) -> Model
+fn Model::set_dropout(self : Model, dropout : Double?) -> Model
+fn Model::set_continuing_subword_prefix(self : Model, prefix : String?) -> Model
+fn Model::set_end_of_word_suffix(self : Model, suffix : String?) -> Model
+fn Model::set_byte_fallback(self : Model, val : Bool) -> Model
+fn Model::set_fuse_unk(self : Model, val : Bool) -> Model
+fn Model::set_ignore_merges(self : Model, val : Bool) -> Model
+fn Model::set_max_input_chars_per_word(self : Model, val : Int) -> Model
+fn Model::set_alpha(self : Model, alpha : Double?) -> Model
+fn Model::set_nbest_size(self : Model, nbest_size : Int?) -> Model
+```
+
+Corresponding to HF Python `Model` property setters (e.g. `model.dropout = 0.5`),
+MoonBit provides `set_*` methods that return a new Model, preserving immutability.
+Each setter only modifies the relevant model variant's field; other variants return
+the original Model unchanged (e.g. `set_dropout` is a no-op on Unigram). Each
+setter has a `*_alias` companion for Python binding migration consistency.
+
 ### Optional Hub downloader (`@hub`, native/js)
 
 ```moonbit
