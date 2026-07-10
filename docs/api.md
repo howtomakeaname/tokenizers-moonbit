@@ -38,6 +38,7 @@ fn Tokenizer::save_pretrained(
   falling back to defaults. BPE optional string fields (`unk_token`,
   `continuing_subword_prefix`, `end_of_word_suffix`) and WordPiece
   `end_of_word_suffix` accept missing/null values but reject wrong JSON types.
+  Unigram `unk_id` accepts missing/null values but rejects non-number values.
   A small multi-entry parsed-JSON cache keeps repeated or alternating stable
   tokenizer payloads hot while still returning fresh tokenizer state.
 - `from_buffer` parses UTF-8 bytes, and `from_file` reads via `moonbitlang/x/fs`
