@@ -116,6 +116,52 @@ vocab，再建立 dense id lookup 表。
 artifact loader 的命名 alias，用于对齐 HF model class methods；Unigram 仍只暴露
 JSON artifact loader，因为 HF 没有对应的 file-class helper。
 
+#### Model getter 别名与状态 API
+
+```moonbit
+fn Model::kind(self : Model) -> String
+fn Model::unk_token(self : Model) -> String?
+fn Model::get_unk_token(self : Model) -> String?
+fn Model::unk_id(self : Model) -> Int?
+fn Model::get_unk_id(self : Model) -> Int?
+fn Model::continuing_subword_prefix(self : Model) -> String?
+fn Model::get_continuing_subword_prefix(self : Model) -> String?
+fn Model::end_of_word_suffix(self : Model) -> String?
+fn Model::get_end_of_word_suffix(self : Model) -> String?
+fn Model::max_input_chars_per_word(self : Model) -> Int?
+fn Model::get_max_input_chars_per_word(self : Model) -> Int?
+fn Model::byte_fallback(self : Model) -> Bool?
+fn Model::get_byte_fallback(self : Model) -> Bool?
+fn Model::fuse_unk(self : Model) -> Bool?
+fn Model::get_fuse_unk(self : Model) -> Bool?
+fn Model::ignore_merges(self : Model) -> Bool?
+fn Model::get_ignore_merges(self : Model) -> Bool?
+fn Model::dropout(self : Model) -> Double?
+fn Model::get_dropout(self : Model) -> Double?
+fn Model::alpha(self : Model) -> Double?
+fn Model::get_alpha(self : Model) -> Double?
+fn Model::nbest_size(self : Model) -> Int?
+fn Model::get_nbest_size(self : Model) -> Int?
+fn Model::vocab_size(self : Model) -> Int
+fn Model::get_vocab_size(self : Model) -> Int
+fn Model::vocab(self : Model) -> Map[String, Int]
+fn Model::get_vocab(self : Model) -> Map[String, Int]
+fn Model::token_to_id(self : Model, token : String) -> Int?
+fn Model::id_to_token(self : Model, id : Int) -> String?
+fn Model::to_json(self : Model) -> String?
+fn Model::get_state(self : Model) -> ModelState
+fn Model::from_state(state : ModelState) -> Model raise TokenizerError
+fn Model::clear_cache(self : Model) -> Unit
+fn Model::resize_cache(self : Model, capacity : Int) -> Unit
+fn Model::cache_size(self : Model) -> Int
+```
+
+属性风格 getter 返回模型配置。`kind()` 返回模型类型字符串
+（`"BPE"`、`"WordPiece"`、`"Unigram"`、`"WordLevel"`）。
+`vocab_size()` 和 `vocab()` 访问词表。`token_to_id()` 和 `id_to_token()` 查询 token。
+`to_json()` 序列化模型。`get_state()` / `from_state()` 提供状态往返。
+缓存控制方法管理内部 word-to-tokens 缓存。
+
 #### Model setter 别名（Python binding 兼容）
 
 ```moonbit
@@ -156,6 +202,40 @@ fn Normalizer::set_content(self : Normalizer, val : String) -> Normalizer
 
 对应 HF Python `Normalizer` 属性 setter，MoonBit 提供 `set_*` 方法返回新 Normalizer。
 每个 setter 仅修改对应归一化器变体的字段，其他变体返回原 Normalizer。
+
+#### Normalizer getter 别名
+
+```moonbit
+fn Normalizer::kind(self : Normalizer) -> String
+fn Normalizer::left(self : Normalizer) -> Bool?
+fn Normalizer::get_strip_left(self : Normalizer) -> Bool?
+fn Normalizer::right(self : Normalizer) -> Bool?
+fn Normalizer::get_strip_right(self : Normalizer) -> Bool?
+fn Normalizer::pattern(self : Normalizer) -> String?
+fn Normalizer::content(self : Normalizer) -> String?
+fn Normalizer::prepend(self : Normalizer) -> String?
+fn Normalizer::clean_text(self : Normalizer) -> Bool?
+fn Normalizer::get_clean_text(self : Normalizer) -> Bool?
+fn Normalizer::handle_chinese_chars(self : Normalizer) -> Bool?
+fn Normalizer::get_handle_chinese_chars(self : Normalizer) -> Bool?
+fn Normalizer::strip_accents(self : Normalizer) -> Bool?
+fn Normalizer::get_strip_accents(self : Normalizer) -> Bool?
+fn Normalizer::lowercase(self : Normalizer) -> Bool?
+fn Normalizer::get_lowercase(self : Normalizer) -> Bool?
+fn Normalizer::normalizers(self : Normalizer) -> Array[Normalizer]
+fn Normalizer::get_normalizers(self : Normalizer) -> Array[Normalizer]
+fn Normalizer::get_state(self : Normalizer) -> NormalizerState
+fn Normalizer::from_state(state : NormalizerState) -> Normalizer raise TokenizerError
+fn Normalizer::to_json(self : Normalizer) -> String?
+fn Normalizer::from_json(j : Json) -> Normalizer raise TokenizerError
+fn Normalizer::normalize_str(self : Normalizer, input : String) -> String raise TokenizerError
+```
+
+属性风格 getter 返回归一化器配置。`kind()` 返回类型字符串。
+`left()` / `right()` 是 HF `Strip.left` / `Strip.right` 别名。
+`normalizers()` 返回 Sequence 归一化器的子项。
+`normalize_str()` 是 `normalize()` 的 HF 风格别名。
+`get_state()` / `from_state()` 提供状态往返。
 
 #### PreTokenizer setter 别名（Python binding 兼容）
 
@@ -319,6 +399,27 @@ fn Tokenizer::get_trainer(self : Tokenizer) -> Trainer
 fn Tokenizer::default_trainer(self : Tokenizer) -> Trainer
 fn Tokenizer::to_json(self : Tokenizer) -> String raise TokenizerError
 ```
+
+## 状态 API 与组件钩子
+
+```moonbit
+fn Tokenizer::get_state(self : Tokenizer) -> TokenizerState raise TokenizerError
+fn Tokenizer::from_state(state : TokenizerState) -> Tokenizer raise TokenizerError
+fn Tokenizer::with_component_hooks(self : Tokenizer, hooks : TokenizerComponentHooks) -> Tokenizer
+fn Tokenizer::get_component_hooks(self : Tokenizer) -> TokenizerComponentHooks
+fn Tokenizer::component_hooks(self : Tokenizer) -> TokenizerComponentHooks
+fn Tokenizer::clear_component_hooks(self : Tokenizer) -> Tokenizer
+fn Tokenizer::get_added_tokens(self : Tokenizer) -> Array[AddedToken]
+fn Tokenizer::added_tokens(self : Tokenizer) -> Array[AddedToken]
+fn Tokenizer::get_added_tokens_count(self : Tokenizer, special_only? : Bool = false) -> Int
+fn Tokenizer::added_tokens_count(self : Tokenizer, special_only? : Bool = false) -> Int
+```
+
+`get_state` / `from_state` 提供 JSON 状态往返，用于 Python binding/pickle 互操作。
+`with_component_hooks` 附加自定义 normalize/pre-tokenize/decode 回调；
+`clear_component_hooks` 移除钩子。`get_added_tokens` 返回按 id 排序的所有 added tokens；
+`get_added_tokens_count` 返回数量，支持 `special_only` 过滤。
+`added_tokens` 和 `added_tokens_count` 是属性风格别名。
 
 属性风格 getter 是对应 `get_*` 方法的便捷别名，返回相同值。
 `normalizer()`、`pre_tokenizer()`、`model()`、`post_processor()`、`decoder()`

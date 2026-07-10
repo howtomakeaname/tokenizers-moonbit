@@ -131,6 +131,53 @@ same BPE/WordPiece/WordLevel artifact loaders, matching HF model class methods;
 Unigram intentionally only exposes the JSON artifact loader because HF has no
 matching file-class helper.
 
+#### Model getter aliases and state API
+
+```moonbit
+fn Model::kind(self : Model) -> String
+fn Model::unk_token(self : Model) -> String?
+fn Model::get_unk_token(self : Model) -> String?
+fn Model::unk_id(self : Model) -> Int?
+fn Model::get_unk_id(self : Model) -> Int?
+fn Model::continuing_subword_prefix(self : Model) -> String?
+fn Model::get_continuing_subword_prefix(self : Model) -> String?
+fn Model::end_of_word_suffix(self : Model) -> String?
+fn Model::get_end_of_word_suffix(self : Model) -> String?
+fn Model::max_input_chars_per_word(self : Model) -> Int?
+fn Model::get_max_input_chars_per_word(self : Model) -> Int?
+fn Model::byte_fallback(self : Model) -> Bool?
+fn Model::get_byte_fallback(self : Model) -> Bool?
+fn Model::fuse_unk(self : Model) -> Bool?
+fn Model::get_fuse_unk(self : Model) -> Bool?
+fn Model::ignore_merges(self : Model) -> Bool?
+fn Model::get_ignore_merges(self : Model) -> Bool?
+fn Model::dropout(self : Model) -> Double?
+fn Model::get_dropout(self : Model) -> Double?
+fn Model::alpha(self : Model) -> Double?
+fn Model::get_alpha(self : Model) -> Double?
+fn Model::nbest_size(self : Model) -> Int?
+fn Model::get_nbest_size(self : Model) -> Int?
+fn Model::vocab_size(self : Model) -> Int
+fn Model::get_vocab_size(self : Model) -> Int
+fn Model::vocab(self : Model) -> Map[String, Int]
+fn Model::get_vocab(self : Model) -> Map[String, Int]
+fn Model::token_to_id(self : Model, token : String) -> Int?
+fn Model::id_to_token(self : Model, id : Int) -> String?
+fn Model::to_json(self : Model) -> String?
+fn Model::get_state(self : Model) -> ModelState
+fn Model::from_state(state : ModelState) -> Model raise TokenizerError
+fn Model::clear_cache(self : Model) -> Unit
+fn Model::resize_cache(self : Model, capacity : Int) -> Unit
+fn Model::cache_size(self : Model) -> Int
+```
+
+Property-style getters return the model's configuration. `kind()` returns the
+model type string (`"BPE"`, `"WordPiece"`, `"Unigram"`, `"WordLevel"`).
+`vocab_size()` and `vocab()` access the vocabulary. `token_to_id()` and
+`id_to_token()` look up tokens. `to_json()` serializes the model.
+`get_state()` / `from_state()` provide state round-trip. Cache control methods
+manage the internal word-to-tokens cache.
+
 #### Model setter aliases (Python binding compatibility)
 
 ```moonbit
@@ -176,6 +223,40 @@ Corresponding to HF Python `Normalizer` property setters, MoonBit provides `set_
 methods that return a new Normalizer, preserving immutability. Each setter only
 modifies the relevant normalizer variant's field; other variants return the
 original Normalizer unchanged.
+
+#### Normalizer getter aliases
+
+```moonbit
+fn Normalizer::kind(self : Normalizer) -> String
+fn Normalizer::left(self : Normalizer) -> Bool?
+fn Normalizer::get_strip_left(self : Normalizer) -> Bool?
+fn Normalizer::right(self : Normalizer) -> Bool?
+fn Normalizer::get_strip_right(self : Normalizer) -> Bool?
+fn Normalizer::pattern(self : Normalizer) -> String?
+fn Normalizer::content(self : Normalizer) -> String?
+fn Normalizer::prepend(self : Normalizer) -> String?
+fn Normalizer::clean_text(self : Normalizer) -> Bool?
+fn Normalizer::get_clean_text(self : Normalizer) -> Bool?
+fn Normalizer::handle_chinese_chars(self : Normalizer) -> Bool?
+fn Normalizer::get_handle_chinese_chars(self : Normalizer) -> Bool?
+fn Normalizer::strip_accents(self : Normalizer) -> Bool?
+fn Normalizer::get_strip_accents(self : Normalizer) -> Bool?
+fn Normalizer::lowercase(self : Normalizer) -> Bool?
+fn Normalizer::get_lowercase(self : Normalizer) -> Bool?
+fn Normalizer::normalizers(self : Normalizer) -> Array[Normalizer]
+fn Normalizer::get_normalizers(self : Normalizer) -> Array[Normalizer]
+fn Normalizer::get_state(self : Normalizer) -> NormalizerState
+fn Normalizer::from_state(state : NormalizerState) -> Normalizer raise TokenizerError
+fn Normalizer::to_json(self : Normalizer) -> String?
+fn Normalizer::from_json(j : Json) -> Normalizer raise TokenizerError
+fn Normalizer::normalize_str(self : Normalizer, input : String) -> String raise TokenizerError
+```
+
+Property-style getters return the normalizer's configuration. `kind()` returns
+the normalizer type string. `left()` / `right()` are HF `Strip.left` / `Strip.right`
+aliases. `normalizers()` returns children for Sequence normalizers.
+`normalize_str()` is an HF-style alias for `normalize()`.
+`get_state()` / `from_state()` provide state round-trip.
 
 #### PreTokenizer setter aliases (Python binding compatibility)
 
@@ -353,6 +434,28 @@ fn Tokenizer::get_trainer(self : Tokenizer) -> Trainer
 fn Tokenizer::default_trainer(self : Tokenizer) -> Trainer
 fn Tokenizer::to_json(self : Tokenizer) -> String raise TokenizerError
 ```
+
+## State API and component hooks
+
+```moonbit
+fn Tokenizer::get_state(self : Tokenizer) -> TokenizerState raise TokenizerError
+fn Tokenizer::from_state(state : TokenizerState) -> Tokenizer raise TokenizerError
+fn Tokenizer::with_component_hooks(self : Tokenizer, hooks : TokenizerComponentHooks) -> Tokenizer
+fn Tokenizer::get_component_hooks(self : Tokenizer) -> TokenizerComponentHooks
+fn Tokenizer::component_hooks(self : Tokenizer) -> TokenizerComponentHooks
+fn Tokenizer::clear_component_hooks(self : Tokenizer) -> Tokenizer
+fn Tokenizer::get_added_tokens(self : Tokenizer) -> Array[AddedToken]
+fn Tokenizer::added_tokens(self : Tokenizer) -> Array[AddedToken]
+fn Tokenizer::get_added_tokens_count(self : Tokenizer, special_only? : Bool = false) -> Int
+fn Tokenizer::added_tokens_count(self : Tokenizer, special_only? : Bool = false) -> Int
+```
+
+`get_state` / `from_state` provide JSON-backed state round-trip for Python
+binding/pickle interop. `with_component_hooks` attaches per-encode callbacks
+for custom normalize/pre-tokenize/decode; `clear_component_hooks` removes
+them. `get_added_tokens` returns all added tokens sorted by id;
+`get_added_tokens_count` returns the count, with optional `special_only`
+filter. `added_tokens` and `added_tokens_count` are property-style aliases.
 
 Property-style getters are convenience aliases for the corresponding `get_*`
 methods, returning the same values. `normalizer()`, `pre_tokenizer()`,
