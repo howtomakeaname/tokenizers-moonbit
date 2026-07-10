@@ -148,6 +148,19 @@ fn parse_bpe_dropout(obj : Map[String, Json]) -> Double? {
 }
 
 ///|
+fn get_required_string(
+  obj : Map[String, Json],
+  key : String,
+  ctx : String,
+) -> String raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(String(s)) => s
+    _ =>
+      raise @types.ParseError("\{ctx}: missing or non-string \"\{key}\" field")
+  }
+}
+
+///|
 fn parse_wordlevel(
   obj : Map[String, Json],
 ) -> WordLevelModel raise @types.TokenizerError {
@@ -155,7 +168,7 @@ fn parse_wordlevel(
   {
     vocab,
     vocab_r,
-    unk_token: @types.get_str(obj, "unk_token", default="<unk>"),
+    unk_token: get_required_string(obj, "unk_token", "WordLevel model"),
   }
 }
 
@@ -167,7 +180,7 @@ fn parse_wordpiece(
   {
     vocab,
     vocab_r,
-    unk_token: @types.get_str(obj, "unk_token", default="[UNK]"),
+    unk_token: get_required_string(obj, "unk_token", "WordPiece model"),
     continuing_subword_prefix: @types.get_str(
       obj,
       "continuing_subword_prefix",

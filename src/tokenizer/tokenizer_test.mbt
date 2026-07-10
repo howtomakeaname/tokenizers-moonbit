@@ -2082,6 +2082,29 @@ test "from_str rejects non-object root" {
 }
 
 ///|
+test "from_str requires WordLevel and WordPiece unk_token fields" {
+  let wordlevel_missing_unk =
+    #|{"version":"1.0",
+    #| "model":{"type":"WordLevel","vocab":{"<unk>":0}}}
+  let mut wordlevel_raised = false
+  try Tokenizer::from_str(wordlevel_missing_unk) |> ignore catch {
+    @types.ParseError(msg) => wordlevel_raised = msg.contains("unk_token")
+    _ => ()
+  }
+  @test.assert_eq(wordlevel_raised, true)
+
+  let wordpiece_missing_unk =
+    #|{"version":"1.0",
+    #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"hello":1}}}
+  let mut wordpiece_raised = false
+  try Tokenizer::from_str(wordpiece_missing_unk) |> ignore catch {
+    @types.ParseError(msg) => wordpiece_raised = msg.contains("unk_token")
+    _ => ()
+  }
+  @test.assert_eq(wordpiece_raised, true)
+}
+
+///|
 test "from_str rejects unsupported Split regex" {
   for pattern in ["\\\\p{L}{2,4}(?=x)", "(.)\\\\1", "foo.*bar", "[A-Z]{5,}"] {
     let json = "{\"version\":\"1.0\",\"pre_tokenizer\":{\"type\":\"Split\",\"pattern\":{\"Regex\":\"" +
@@ -3343,15 +3366,24 @@ test "Trainer exposes HF-style configuration getters" {
   )
   @test.assert_eq(wordlevel.kind(), "WordLevelTrainer")
   @test.assert_eq(wordlevel.unk_token(), Some("[UNK]"))
+  @test.assert_eq(wordlevel.get_unk_token(), Some("[UNK]"))
   @test.assert_eq(wordlevel.min_frequency(), 2)
+  @test.assert_eq(wordlevel.get_min_frequency(), 2)
   @test.assert_eq(wordlevel.special_tokens(), ["[PAD]"])
+  @test.assert_eq(wordlevel.get_special_tokens(), ["[PAD]"])
   @test.assert_eq(wordlevel.special_added_tokens()[0].content(), "[MASK]")
+  @test.assert_eq(wordlevel.get_special_added_tokens()[0].content(), "[MASK]")
   @test.assert_eq(wordlevel.vocab_size(), Some(8))
+  @test.assert_eq(wordlevel.get_vocab_size(), Some(8))
   @test.assert_eq(wordlevel.show_progress(), false)
+  @test.assert_eq(wordlevel.get_show_progress(), false)
 
   let specials = wordlevel.special_tokens()
   specials.push("[CLS]")
   @test.assert_eq(wordlevel.special_tokens(), ["[PAD]"])
+  let getter_specials = wordlevel.get_special_tokens()
+  getter_specials.push("[SEP]")
+  @test.assert_eq(wordlevel.get_special_tokens(), ["[PAD]"])
 
   let wordpiece = Trainer::wordpiece(
     continuing_subword_prefix="@@",

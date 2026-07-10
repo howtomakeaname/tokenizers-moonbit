@@ -366,6 +366,11 @@ pub fn Trainer::unk_token(self : Trainer) -> String? {
 }
 
 ///|
+pub fn Trainer::get_unk_token(self : Trainer) -> String? {
+  self.unk_token()
+}
+
+///|
 pub fn Trainer::min_frequency(self : Trainer) -> Int {
   match self {
     WordLevelTrainer(min_frequency~, ..) => min_frequency
@@ -376,13 +381,28 @@ pub fn Trainer::min_frequency(self : Trainer) -> Int {
 }
 
 ///|
+pub fn Trainer::get_min_frequency(self : Trainer) -> Int {
+  self.min_frequency()
+}
+
+///|
 pub fn Trainer::special_tokens(self : Trainer) -> Array[String] {
   trainer_special_tokens(self)
 }
 
 ///|
+pub fn Trainer::get_special_tokens(self : Trainer) -> Array[String] {
+  self.special_tokens()
+}
+
+///|
 pub fn Trainer::special_added_tokens(self : Trainer) -> Array[AddedToken] {
   trainer_special_added_tokens(self)
+}
+
+///|
+pub fn Trainer::get_special_added_tokens(self : Trainer) -> Array[AddedToken] {
+  self.special_added_tokens()
 }
 
 ///|
@@ -396,6 +416,11 @@ pub fn Trainer::vocab_size(self : Trainer) -> Int? {
 }
 
 ///|
+pub fn Trainer::get_vocab_size(self : Trainer) -> Int? {
+  self.vocab_size()
+}
+
+///|
 pub fn Trainer::show_progress(self : Trainer) -> Bool {
   match self {
     WordLevelTrainer(show_progress~, ..) => show_progress
@@ -403,6 +428,11 @@ pub fn Trainer::show_progress(self : Trainer) -> Bool {
     BpeTrainer(show_progress~, ..) => show_progress
     UnigramTrainer(show_progress~, ..) => show_progress
   }
+}
+
+///|
+pub fn Trainer::get_show_progress(self : Trainer) -> Bool {
+  self.show_progress()
 }
 
 ///|
