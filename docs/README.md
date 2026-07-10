@@ -4,10 +4,20 @@ home: true
 config:
   - type: hero
     index: 0
+    effect: tint-plate
+    effectConfig:
+      light:
+        r: { value: 228, offset: 18 }
+        g: { value: 238, offset: 16 }
+        b: { value: 232, offset: 20 }
+      dark:
+        r: { value: 20, offset: 18 }
+        g: { value: 42, offset: 18 }
+        b: { value: 38, offset: 20 }
     hero:
       name: tokenizers-moonbit
-      tagline: HuggingFace-compatible tokenizers for every MoonBit backend.
-      text: A pure MoonBit runtime for loading tokenizer.json and running encode/decode across wasm, wasm-gc, js and native.
+      tagline: HuggingFace-compatible tokenizers for MoonBit.
+      text: Load tokenizer.json, encode and decode with one pure MoonBit runtime across wasm, wasm-gc, js and native.
       actions:
         - text: Get Started
           link: /guide/getting-started.html

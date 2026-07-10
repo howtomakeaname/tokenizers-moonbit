@@ -38,3 +38,14 @@ The `Pages` workflow runs on pushes to `main` that touch docs or site tooling:
 3. Run `pnpm install --frozen-lockfile`.
 4. Build `docs/` into `gh-pages-deploy/`.
 5. Deploy the artifact through GitHub Pages.
+
+## Bilingual Updates
+
+English pages under `docs/` and Chinese pages under `docs/zh/` should stay
+structurally aligned. When a change adds or updates user-facing behavior, API
+surface, compatibility notes, migration guidance, performance claims or docs
+site navigation, update both languages in the same change.
+
+If a page intentionally has no translated counterpart, document that exception
+in the change description. Otherwise, every main English page should have the
+matching `/zh/` page at the same relative path.

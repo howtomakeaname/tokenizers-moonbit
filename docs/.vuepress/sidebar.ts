@@ -81,16 +81,80 @@ export const enSidebar: ThemeSidebarMulti = {
 }
 
 export const zhSidebar: ThemeSidebarMulti = {
-  '/zh/': [
+  '/zh/guide/': [
     {
-      text: '中文',
+      text: '指南',
       items: [
-        { text: '概览', link: '/zh/' },
-        { text: '使用指南', link: '/zh/usage.html' },
-        { text: 'API', link: '/zh/api.html' },
-        { text: '组件与限制', link: '/zh/components.html' },
-        { text: '迁移', link: '/zh/migration-from-hf.html' },
-        { text: 'Benchmarks', link: '/zh/benchmarks.html' },
+        { text: '快速开始', link: '/zh/guide/getting-started.html' },
+        { text: '加载 Tokenizer', link: '/zh/guide/loading.html' },
+        { text: '编码与解码', link: '/zh/guide/encoding-decoding.html' },
+        { text: '截断与 Padding', link: '/zh/guide/truncation-padding.html' },
+        { text: 'Added Tokens', link: '/zh/guide/added-tokens.html' },
+        { text: 'Hub 与离线缓存', link: '/zh/guide/pretrained-and-hub.html' },
+      ],
+    },
+  ],
+  '/zh/concepts/': [
+    {
+      text: '概念',
+      items: [
+        { text: 'Pipeline', link: '/zh/concepts/pipeline.html' },
+        { text: 'Offsets', link: '/zh/concepts/offsets.html' },
+        { text: 'Backend Model', link: '/zh/concepts/backends.html' },
+        { text: 'Regex 策略', link: '/zh/concepts/regex-support.html' },
+      ],
+    },
+  ],
+  '/zh/compatibility/': [
+    {
+      text: '兼容性',
+      items: [
+        { text: '概览', link: '/zh/compatibility/overview.html' },
+        { text: '组件矩阵', link: '/zh/compatibility/components.html' },
+        { text: '已验证模型', link: '/zh/compatibility/verified-models.html' },
+        { text: '限制', link: '/zh/compatibility/limitations.html' },
+      ],
+    },
+  ],
+  '/zh/migration/': [
+    {
+      text: '迁移',
+      items: [
+        { text: '从 HuggingFace 迁移', link: '/zh/migration/from-huggingface.html' },
+        { text: 'API 映射', link: '/zh/migration/api-mapping.html' },
+        { text: '差异', link: '/zh/migration/differences.html' },
+      ],
+    },
+  ],
+  '/zh/reference/': [
+    {
+      text: '参考',
+      items: [
+        { text: '概览', link: '/zh/reference/' },
+        { text: 'Tokenizer', link: '/zh/reference/tokenizer.html' },
+        { text: '组件', link: '/zh/reference/components.html' },
+        { text: '类型与错误', link: '/zh/reference/types-and-errors.html' },
+        { text: 'Hub', link: '/zh/reference/hub.html' },
+        { text: 'Trainer', link: '/zh/reference/trainer.html' },
+      ],
+    },
+  ],
+  '/zh/performance/': [
+    {
+      text: '性能',
+      items: [
+        { text: 'Benchmarks', link: '/zh/performance/benchmarks.html' },
+        { text: '方法论', link: '/zh/performance/methodology.html' },
+      ],
+    },
+  ],
+  '/zh/development/': [
+    {
+      text: '开发',
+      items: [
+        { text: '状态', link: '/zh/development/status.html' },
+        { text: '测试', link: '/zh/development/testing.html' },
+        { text: '文档工作流', link: '/zh/development/docs-workflow.html' },
       ],
     },
   ],

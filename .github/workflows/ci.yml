@@ -176,4 +176,13 @@ jobs:
         run: python scripts/fetch_models.py gpt2 bert llama Qwen2.5 phi4_mini qwen3_coder
 
       - name: Run MoonBit vs HF benchmark smoke
-        run: python scripts/bench_compare.py --target native --quick --corpus mixed
+        run: |
+          mkdir -p reports
+          python scripts/bench_compare.py --target native --quick --corpus mixed \
+            --json-out reports/bench-native-mixed.json
+
+      - name: Upload benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-native-mixed
+          path: reports/bench-native-mixed.json

@@ -28,3 +28,14 @@ Benchmark work follows three rules:
 python3 scripts/bench_compare.py --target native --corpus all \
   --fail-above 1.10 --json-out reports/bench-native-all.json
 ```
+
+For the documentation site, convert a raw benchmark report into the static
+snapshot consumed by the performance page:
+
+```bash
+node scripts/update-docs-benchmarks.mjs reports/bench-native-all.json
+```
+
+CI keeps the raw `reports/bench-native-mixed.json` as an artifact, while Pages
+uses `docs/.vuepress/public/benchmarks/latest.json` for the rendered chart and
+table.
