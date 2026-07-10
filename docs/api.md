@@ -239,6 +239,21 @@ methods that return a new Normalizer, preserving immutability. Each setter only
 modifies the relevant normalizer variant's field; other variants return the
 original Normalizer unchanged.
 
+#### Normalizer additional getters
+
+```moonbit
+fn Normalizer::pattern_kind(self : Normalizer) -> PatternKind?
+fn Normalizer::get_pattern_kind(self : PatternKind) -> PatternKind?
+fn Normalizer::get_pattern(self : Normalizer) -> String?
+fn Normalizer::get_content(self : Normalizer) -> String?
+fn Normalizer::get_prepend(self : Normalizer) -> String?
+fn Normalizer::get_item(self : Normalizer, index : Int) -> Normalizer?
+```
+
+Additional getter aliases for Normalizer. `pattern_kind()` returns the pattern
+kind for Replace normalizers. `get_item()` returns the child normalizer at the
+given index for Sequence normalizers.
+
 #### Normalizer builder methods
 
 ```moonbit
@@ -578,6 +593,18 @@ fn Decoder::byte_fallback() -> Decoder
 fn Decoder::ctc(
   pad_token? : String = "<pad>", word_delimiter_token? : String = "|", cleanup? : Bool = true,
 ) -> Decoder
+#### PreTokenizer additional getters
+
+```moonbit
+fn PreTokenizer::regex(self : PreTokenizer) -> String?
+fn PreTokenizer::get_regex(self : PreTokenizer) -> String?
+fn PreTokenizer::get_item(self : PreTokenizer, index : Int) -> PreTokenizer?
+```
+
+Additional getter aliases for PreTokenizer. `regex()` returns the regex pattern
+for Split pre-tokenizers. `get_item()` returns the child pre-tokenizer at the
+given index for Sequence pre-tokenizers.
+
 #### PreTokenizer builder methods
 
 ```moonbit
@@ -700,6 +727,24 @@ fn PostProcessor::template_from_strings(
   single : String, pair : String, special_tokens : Map[String, SpecialToken],
 ) -> PostProcessor raise TokenizerError
 fn PostProcessor::sequence(steps : Array[PostProcessor]) -> PostProcessor
+#### PostProcessor additional getters
+
+```moonbit
+fn PostProcessor::get_single(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::get_single_pieces(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::get_pair(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::get_pair_pieces(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::get_special_tokens(self : PostProcessor) -> Map[String, SpecialToken]
+fn PostProcessor::added_tokens(self : PostProcessor) -> Map[String, SpecialToken]
+fn PostProcessor::get_item(self : PostProcessor, index : Int) -> PostProcessor?
+```
+
+Additional getter aliases for PostProcessor. `get_single()` / `get_pair()`
+return template pieces. `get_special_tokens()` returns the special tokens map.
+`added_tokens()` is an alias for `get_special_tokens()`.
+`get_item()` returns the child post-processor at the given index for Sequence
+post-processors.
+
 #### PostProcessor getter aliases
 
 ```moonbit
@@ -849,6 +894,20 @@ modifies the relevant trainer variant's field; other variants return the
 original Trainer unchanged. Setters that apply to multiple variants (e.g.
 `set_unk_token` for all four trainer types) handle all matching variants.
 Each setter has a `*_alias` companion for Python binding migration consistency.
+
+#### Decoder additional getters
+
+```moonbit
+fn Decoder::pattern_kind(self : Decoder) -> PatternKind?
+fn Decoder::get_pattern_kind(self : Decoder) -> PatternKind?
+fn Decoder::pattern(self : Decoder) -> String?
+fn Decoder::get_pattern(self : Decoder) -> String?
+fn Decoder::get_item(self : Decoder, index : Int) -> Decoder?
+```
+
+Additional getter aliases for Decoder. `pattern_kind()` returns the pattern
+kind for Replace decoders. `pattern()` returns the regex pattern.
+`get_item()` returns the child decoder at the given index for Sequence decoders.
 
 #### Decoder builder methods
 

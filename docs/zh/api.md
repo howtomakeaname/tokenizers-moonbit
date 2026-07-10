@@ -217,6 +217,20 @@ fn Normalizer::set_content(self : Normalizer, val : String) -> Normalizer
 对应 HF Python `Normalizer` 属性 setter，MoonBit 提供 `set_*` 方法返回新 Normalizer。
 每个 setter 仅修改对应归一化器变体的字段，其他变体返回原 Normalizer。
 
+#### Normalizer 附加 getter
+
+```moonbit
+fn Normalizer::pattern_kind(self : Normalizer) -> PatternKind?
+fn Normalizer::get_pattern_kind(self : PatternKind) -> PatternKind?
+fn Normalizer::get_pattern(self : Normalizer) -> String?
+fn Normalizer::get_content(self : Normalizer) -> String?
+fn Normalizer::get_prepend(self : Normalizer) -> String?
+fn Normalizer::get_item(self : Normalizer, index : Int) -> Normalizer?
+```
+
+Normalizer 的附加 getter 别名。`pattern_kind()` 返回 Replace 归一化器的模式类型。
+`get_item()` 返回 Sequence 归一化器指定索引的子归一化器。
+
 #### Normalizer 构建器方法
 
 ```moonbit
@@ -571,6 +585,17 @@ fn Decoder::byte_fallback() -> Decoder
 fn Decoder::ctc(
   pad_token? : String = "<pad>", word_delimiter_token? : String = "|", cleanup? : Bool = true,
 ) -> Decoder
+#### PreTokenizer 附加 getter
+
+```moonbit
+fn PreTokenizer::regex(self : PreTokenizer) -> String?
+fn PreTokenizer::get_regex(self : PreTokenizer) -> String?
+fn PreTokenizer::get_item(self : PreTokenizer, index : Int) -> PreTokenizer?
+```
+
+PreTokenizer 的附加 getter 别名。`regex()` 返回 Split 预分词器的正则模式。
+`get_item()` 返回 Sequence 预分词器指定索引的子预分词器。
+
 #### PreTokenizer 构建器方法
 
 ```moonbit
@@ -689,6 +714,22 @@ fn PostProcessor::template_from_strings(
   single : String, pair : String, special_tokens : Map[String, SpecialToken],
 ) -> PostProcessor raise TokenizerError
 fn PostProcessor::sequence(steps : Array[PostProcessor]) -> PostProcessor
+#### PostProcessor 附加 getter
+
+```moonbit
+fn PostProcessor::get_single(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::get_single_pieces(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::get_pair(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::get_pair_pieces(self : PostProcessor) -> Array[Piece]
+fn PostProcessor::get_special_tokens(self : PostProcessor) -> Map[String, SpecialToken]
+fn PostProcessor::added_tokens(self : PostProcessor) -> Map[String, SpecialToken]
+fn PostProcessor::get_item(self : PostProcessor, index : Int) -> PostProcessor?
+```
+
+PostProcessor 的附加 getter 别名。`get_single()` / `get_pair()` 返回模板 piece。
+`get_special_tokens()` 返回特殊 token 映射。`added_tokens()` 是 `get_special_tokens()` 的别名。
+`get_item()` 返回 Sequence 后处理器指定索引的子后处理器。
+
 #### PostProcessor getter 别名
 
 ```moonbit
@@ -833,6 +874,19 @@ fn Trainer::set_progress_format(self : Trainer, val : String) -> Trainer
 保持不可变语义。每个 setter 仅修改对应训练器变体的字段，其他变体返回原 Trainer。
 适用于多个变体的 setter（如 `set_unk_token` 支持所有四种训练器类型）会处理所有匹配变体。
 每个 setter 都有 `*_alias` 别名，保持与 Python binding 迁移模式一致。
+
+#### Decoder 附加 getter
+
+```moonbit
+fn Decoder::pattern_kind(self : Decoder) -> PatternKind?
+fn Decoder::get_pattern_kind(self : Decoder) -> PatternKind?
+fn Decoder::pattern(self : Decoder) -> String?
+fn Decoder::get_pattern(self : Decoder) -> String?
+fn Decoder::get_item(self : Decoder, index : Int) -> Decoder?
+```
+
+Decoder 的附加 getter 别名。`pattern_kind()` 返回 Replace 解码器的模式类型。
+`pattern()` 返回正则模式。`get_item()` 返回 Sequence 解码器指定索引的子解码器。
 
 #### Decoder 构建器方法
 
