@@ -3,7 +3,7 @@ let unicode_ws_added_token_json : String =
   #|{
   #|  "version": "1.0",
   #|  "added_tokens": [
-  #|    {"id": 3, "content": "[MASK]", "special": true, "lstrip": true, "rstrip": true, "normalized": false}
+  #|    {"id": 3, "content": "[MASK]", "special": true, "single_word": false, "lstrip": true, "rstrip": true, "normalized": false}
   #|  ],
   #|  "pre_tokenizer": {"type": "WhitespaceSplit"},
   #|  "model": {

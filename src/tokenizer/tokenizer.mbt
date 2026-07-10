@@ -1859,22 +1859,65 @@ fn parse_added_tokens(
   }
   for entry in arr {
     let obj = @types.as_object(entry, "added_token")
+    let special = get_added_bool(obj, "special")
     out.push({
-      id: @types.get_int(obj, "id", default=-1),
-      content: @types.get_str(obj, "content", default=""),
-      single_word: @types.get_bool(obj, "single_word", default=false),
-      lstrip: @types.get_bool(obj, "lstrip", default=false),
-      rstrip: @types.get_bool(obj, "rstrip", default=false),
-      // special tokens default to non-normalized; others default normalized.
-      normalized: @types.get_bool(
-        obj,
-        "normalized",
-        default=!@types.get_bool(obj, "special", default=false),
-      ),
-      special: @types.get_bool(obj, "special", default=false),
+      id: get_added_int(obj, "id"),
+      content: get_added_string(obj, "content"),
+      single_word: get_added_bool(obj, "single_word"),
+      lstrip: get_added_bool(obj, "lstrip"),
+      rstrip: get_added_bool(obj, "rstrip"),
+      normalized: get_added_bool(obj, "normalized"),
+      special,
     })
   }
   out
+}
+
+///|
+fn get_added_int(
+  obj : Map[String, Json],
+  key : String,
+) -> Int raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(Number(n, ..)) => n.to_int()
+    _ =>
+      raise @types.ParseError(
+        "added_token: missing or non-number \"\{key}\" field",
+      )
+  }
+}
+
+///|
+fn get_added_string(
+  obj : Map[String, Json],
+  key : String,
+) -> String raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(String(s)) => s
+    _ =>
+      raise @types.ParseError(
+        "added_token: missing or non-string \"\{key}\" field",
+      )
+  }
+}
+
+///|
+fn get_added_bool(
+  obj : Map[String, Json],
+  key : String,
+) -> Bool raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(True) => true
+    Some(False) => false
+    Some(_) =>
+      raise @types.ParseError(
+        "added_token: missing or non-bool \"\{key}\" field",
+      )
+    None =>
+      raise @types.ParseError(
+        "added_token: missing or non-bool \"\{key}\" field",
+      )
+  }
 }
 
 ///|

@@ -5,9 +5,9 @@
 let av_bpe : String =
   #|{
   #|  "added_tokens": [
-  #|    {"id": 5, "content": "<s>", "special": true},
-  #|    {"id": 6, "content": "</s>", "special": true},
-  #|    {"id": 7, "content": "[MASK]", "special": true, "lstrip": true, "rstrip": true}
+  #|    {"id": 5, "content": "<s>", "special": true, "single_word": false, "lstrip": false, "rstrip": false, "normalized": false},
+  #|    {"id": 6, "content": "</s>", "special": true, "single_word": false, "lstrip": false, "rstrip": false, "normalized": false},
+  #|    {"id": 7, "content": "[MASK]", "special": true, "single_word": false, "lstrip": true, "rstrip": true, "normalized": false}
   #|  ],
   #|  "model": {
   #|    "type": "BPE",
@@ -86,7 +86,7 @@ test "decode skips special added tokens" {
 test "pretokenized encode still extracts added tokens inside words" {
   let json =
     #|{"version":"1.0",
-    #| "added_tokens":[{"id":3,"content":"[MASK]","special":true,"normalized":false}],
+    #| "added_tokens":[{"id":3,"content":"[MASK]","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],
     #| "normalizer":{"type":"Lowercase"},
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"hello":0,"world":1,"[UNK]":2,"[MASK]":3},"unk_token":"[UNK]"}}
@@ -106,7 +106,7 @@ test "pretokenized encode still extracts added tokens inside words" {
 test "pretokenized added token offsets survive batch and byte conversion" {
   let json =
     #|{"version":"1.0",
-    #| "added_tokens":[{"id":4,"content":"[MASK]","special":true,"lstrip":true,"rstrip":true,"normalized":false}],
+    #| "added_tokens":[{"id":4,"content":"[MASK]","special":true,"single_word":false,"lstrip":true,"rstrip":true,"normalized":false}],
     #| "padding":{"strategy":"BatchLongest","direction":"Right","pad_id":3,"pad_type_id":0,"pad_token":"[PAD]"},
     #| "normalizer":{"type":"Lowercase"},
     #| "model":{"type":"WordLevel","vocab":{"我":0,"hello":1,"world":2,"[PAD]":3,"[MASK]":4,"[UNK]":5},"unk_token":"[UNK]"}}

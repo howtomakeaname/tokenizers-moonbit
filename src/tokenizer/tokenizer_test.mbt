@@ -85,7 +85,7 @@ test "BPE dropout parses serializes disables cache and skips merges" {
 test "get_vocab can include added tokens" {
   let json =
     #|{"version":"1.0",
-    #| "added_tokens":[{"id":3,"content":"<extra>","special":true}],
+    #| "added_tokens":[{"id":3,"content":"<extra>","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],
     #| "model":{"type":"BPE","vocab":{"a":0,"b":1,"ab":2},"merges":[["a","b"]]}}
   let tok = Tokenizer::from_str(json)
   @test.assert_eq(tok.get_vocab_size(with_added_tokens=false), 3)
@@ -102,7 +102,7 @@ test "Tokenizer exposes Python property-style component and config aliases" {
     #|{"version":"1.0",
     #| "normalizer":{"type":"Lowercase"},
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
-    #| "added_tokens":[{"id":3,"content":"<extra>","special":true},{"id":4,"content":"<plain>","special":false}],
+    #| "added_tokens":[{"id":3,"content":"<extra>","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false},{"id":4,"content":"<plain>","special":false,"single_word":false,"lstrip":false,"rstrip":false,"normalized":true}],
     #| "model":{"type":"WordLevel","vocab":{"hello":0,"[PAD]":1,"[UNK]":2,"<extra>":3},"unk_token":"[UNK]"},
     #| "decoder":{"type":"WordPiece","prefix":"##","cleanup":false}}
   let tok = Tokenizer::from_str(json)
@@ -1114,7 +1114,7 @@ test "add_tokens and add_special_tokens extend the added vocabulary" {
 test "special token encode switch and added-token introspection match HF" {
   let json =
     #|{"version":"1.0",
-    #| "added_tokens":[{"id":3,"content":"[MASK]","special":true,"normalized":false}],
+    #| "added_tokens":[{"id":3,"content":"[MASK]","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"hello":0,"[MASK]":1,"[UNK]":2},"unk_token":"[UNK]"},
     #| "post_processor":{"type":"BertProcessing","sep":["[SEP]",4],"cls":["[CLS]",5]}}
@@ -1441,7 +1441,7 @@ test "decode_stream emits chunks matching full decode" {
 test "decode_stream respects special-token skipping" {
   let json =
     #|{"version":"1.0",
-    #| "added_tokens":[{"id":1,"content":"[MASK]","special":true,"normalized":false}],
+    #| "added_tokens":[{"id":1,"content":"[MASK]","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],
     #| "model":{"type":"WordLevel","vocab":{"hello":0,"[MASK]":1},"unk_token":"hello"}}
   let tok = Tokenizer::from_str(json)
   let mut stream = tok.decode_stream(skip_special_tokens=true)
@@ -1513,7 +1513,7 @@ fn assert_fast_encoding_matches(
 test "encode_fast keeps encoding metadata and zeros offsets" {
   let json =
     #|{"version":"1.0",
-    #| "added_tokens":[{"id":5,"content":"[MASK]","special":true,"normalized":false}],
+    #| "added_tokens":[{"id":5,"content":"[MASK]","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],
     #| "normalizer":{"type":"Lowercase"},
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"[CLS]":0,"[SEP]":1,"hello":2,"moon":3,"world":4,"[MASK]":5,"[PAD]":6,"[UNK]":7},"unk_token":"[UNK]"},
@@ -1967,7 +1967,7 @@ test "from_str loads root truncation and padding config" {
 test "from_str decodes optional components and added tokens" {
   let json =
     #|{"version":"1.0",
-    #| "added_tokens":[{"id":0,"content":"[UNK]","special":true}],
+    #| "added_tokens":[{"id":0,"content":"[UNK]","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],
     #| "normalizer":{"type":"Lowercase"},
     #| "pre_tokenizer":{"type":"Whitespace"},
     #| "model":{"type":"WordPiece","vocab":{"[UNK]":0,"foo":1},"unk_token":"[UNK]","continuing_subword_prefix":"##","max_input_chars_per_word":100},
@@ -2268,6 +2268,69 @@ test "from_str rejects wrong typed Unigram unk_id" {
 }
 
 ///|
+test "from_str requires strict added token fields" {
+  fn added_json(entry : String) -> String {
+    "{\"version\":\"1.0\",\"added_tokens\":[" +
+    entry +
+    "],\"model\":{\"type\":\"WordLevel\",\"vocab\":{\"[UNK]\":0,\"x\":1},\"unk_token\":\"[UNK]\"}}"
+  }
+  for
+    case in [
+      (
+        "missing id", "{\"content\":\"x\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":true,\"special\":false}",
+        "id",
+      ),
+      (
+        "missing content", "{\"id\":1,\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":true,\"special\":false}",
+        "content",
+      ),
+      (
+        "missing normalized", "{\"id\":1,\"content\":\"x\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"special\":false}",
+        "normalized",
+      ),
+      (
+        "missing special", "{\"id\":1,\"content\":\"x\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":true}",
+        "special",
+      ),
+      (
+        "bad id", "{\"id\":\"1\",\"content\":\"x\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":true,\"special\":false}",
+        "id",
+      ),
+      (
+        "bad content", "{\"id\":1,\"content\":1,\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":true,\"special\":false}",
+        "content",
+      ),
+      (
+        "bad single_word", "{\"id\":1,\"content\":\"x\",\"single_word\":\"false\",\"lstrip\":false,\"rstrip\":false,\"normalized\":true,\"special\":false}",
+        "single_word",
+      ),
+      (
+        "bad lstrip", "{\"id\":1,\"content\":\"x\",\"single_word\":false,\"lstrip\":\"false\",\"rstrip\":false,\"normalized\":true,\"special\":false}",
+        "lstrip",
+      ),
+      (
+        "bad rstrip", "{\"id\":1,\"content\":\"x\",\"single_word\":false,\"lstrip\":false,\"rstrip\":\"false\",\"normalized\":true,\"special\":false}",
+        "rstrip",
+      ),
+      (
+        "bad normalized", "{\"id\":1,\"content\":\"x\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":\"true\",\"special\":false}",
+        "normalized",
+      ),
+      (
+        "bad special", "{\"id\":1,\"content\":\"x\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":true,\"special\":\"false\"}",
+        "special",
+      ),
+    ] {
+    let mut raised = false
+    try Tokenizer::from_str(added_json(case.1)) |> ignore catch {
+      @types.ParseError(msg) => raised = msg.contains(case.2)
+      _ => ()
+    }
+    @test.assert_eq((case.0, raised), (case.0, true))
+  }
+}
+
+///|
 test "from_str rejects unsupported Split regex" {
   for pattern in ["\\\\p{L}{2,4}(?=x)", "(.)\\\\1", "foo.*bar", "[A-Z]{5,}"] {
     let json = "{\"version\":\"1.0\",\"pre_tokenizer\":{\"type\":\"Split\",\"pattern\":{\"Regex\":\"" +
@@ -2331,7 +2394,7 @@ test "from_str supports legacy string merges format" {
 test "to_json round-trips loaded tokenizer behavior" {
   let json =
     #|{"version":"1.0",
-    #| "added_tokens":[{"id":4,"content":"[SPECIAL]","special":true}],
+    #| "added_tokens":[{"id":4,"content":"[SPECIAL]","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],
     #| "normalizer":{"type":"Lowercase"},
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[UNK]":2,"[PAD]":3,"[SPECIAL]":4},"unk_token":"[UNK]"},
@@ -2393,7 +2456,7 @@ test "HF mutating config aliases mirror builder APIs" {
 test "encode special token aliases switch added-token extraction" {
   let json =
     #|{"version":"1.0",
-    #| "added_tokens":[{"id":2,"content":"[SPECIAL]","special":true}],
+    #| "added_tokens":[{"id":2,"content":"[SPECIAL]","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],
     #| "model":{"type":"WordLevel","vocab":{"[SPECIAL]":0,"[UNK]":1},"unk_token":"[UNK]"}}
   let tok = Tokenizer::from_str(json)
   @test.assert_eq(tok.encode("[SPECIAL]", add_special_tokens=false).ids, [2])
