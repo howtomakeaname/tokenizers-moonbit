@@ -88,6 +88,22 @@ pub fn Normalizer::replace(String, String) -> Self
 pub fn Normalizer::replace_regex(String, String) -> Self
 pub fn Normalizer::right(Self) -> Bool?
 pub fn Normalizer::sequence(Array[Self]) -> Self
+pub fn Normalizer::set_clean_text(Self, Bool) -> Self
+pub fn Normalizer::set_clean_text_alias(Self, Bool) -> Self
+pub fn Normalizer::set_content(Self, String) -> Self
+pub fn Normalizer::set_content_alias(Self, String) -> Self
+pub fn Normalizer::set_handle_chinese_chars(Self, Bool) -> Self
+pub fn Normalizer::set_handle_chinese_chars_alias(Self, Bool) -> Self
+pub fn Normalizer::set_left(Self, Bool) -> Self
+pub fn Normalizer::set_left_alias(Self, Bool) -> Self
+pub fn Normalizer::set_lowercase(Self, Bool) -> Self
+pub fn Normalizer::set_lowercase_alias(Self, Bool) -> Self
+pub fn Normalizer::set_prepend(Self, String) -> Self
+pub fn Normalizer::set_prepend_alias(Self, String) -> Self
+pub fn Normalizer::set_right(Self, Bool) -> Self
+pub fn Normalizer::set_right_alias(Self, Bool) -> Self
+pub fn Normalizer::set_strip_accents(Self, Bool?) -> Self
+pub fn Normalizer::set_strip_accents_alias(Self, Bool?) -> Self
 pub fn Normalizer::strip(left? : Bool, right? : Bool) -> Self
 pub fn Normalizer::strip_accents(Self) -> Bool?
 pub fn Normalizer::strip_accents_normalizer() -> Self
