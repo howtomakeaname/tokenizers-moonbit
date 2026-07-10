@@ -65,6 +65,16 @@
 - 新增 `post_processor_wbtest.mbt` 覆盖所有 setter 的基本功能测试。
 - 全后端测试通过：native(344)/js(344)/wasm(321)/wasm-gc(321)。
 
+### 2026-07-11 小闭环：Unigram N-best 采样（SentencePiece 兼容）
+
+- HF SentencePiece 的 Unigram 模型支持 `nbest_size` 参数用于 N-best 路径采样。
+- MoonBit 已补齐 N-best 采样实现：当 `alpha > 0` 且 `nbest_size > 0` 时，使用 beam search
+  枚举最多 `nbest_size` 条完整分词路径，计算得分后使用 `alpha` 作为温度的 softmax 采样。
+- 当 `nbest_size` 未设置（或 `<= 0`）时，回退到前向-后向算法对完整分布采样。
+- 新增 `sample_nbest` 和 `sample_forward_backward` 函数分离两种采样策略。
+- 新增测试覆盖 N-best 采样模式。
+- 全后端测试通过：native(345)/js(345)/wasm(322)/wasm-gc(322)。
+
 ### 2026-07-11 小闭环：PreTokenizer setter 别名（Python binding 兼容）
 
 - HF Python `PreTokenizer` 类暴露属性 setter（如 `pre_tokenizer.individual_digits = True`），允许修改预分词器属性。

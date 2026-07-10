@@ -245,11 +245,13 @@ fn log_sum_exp(a : Double, b : Double) -> Double {
 ///|
 /// Tokenize with sampling when alpha > 0. Uses forward-backward algorithm
 /// to compute probabilities, then samples from the distribution.
+/// When nbest_size > 0, enumerates N-best paths via beam search and samples
+/// from them (SentencePiece N-best mode). Otherwise uses forward-backward.
 fn UnigramModel::tokenize_with_sampling(
   self : UnigramModel,
   word : String,
   alpha : Double,
-  _nbest_size : Int?,
+  nbest_size : Int?,
   offset : Int,
 ) -> Array[@types.Token] {
   let chars = word.to_array()
@@ -282,49 +284,14 @@ fn UnigramModel::tokenize_with_sampling(
     pieces[end] = row
   }
 
-  // Forward pass: compute log partition function at each position
-  // forward[pos] = log(sum of scores of all paths from 0 to pos)
-  let forward = Array::make(n + 1, neg_inf)
-  forward[0] = 0.0
-  for pos in 1..<=n {
-    for candidate in pieces[pos] {
-      let start = candidate.0
-      let score = candidate.2
-      if forward[start] != neg_inf {
-        forward[pos] = log_sum_exp(forward[pos], forward[start] + alpha * score)
-      }
-    }
-  }
-
-  // Backward pass: sample tokens from right to left
-  let result_rev : Array[(Int, Int, String)] = [] // (start, id, piece)
-  let mut pos = n
-  while pos > 0 {
-    if forward[pos] == neg_inf {
-      break
-    }
-
-    // Compute probabilities for each piece ending at pos
-    let candidates = pieces[pos]
-    if candidates.length() == 0 {
-      break
-    }
-
-    // Calculate unnormalized probabilities
-    let log_probs : Array[Double] = candidates.map(fn(c) {
-      let (start, _, score, _) = c
-      if forward[start] == neg_inf {
-        neg_inf
-      } else {
-        forward[start] + alpha * score - forward[pos]
-      }
-    })
-
-    // Sample from the distribution
-    let sampled_idx = sample_from_log_probs(log_probs)
-    let (start, id, _, piece) = candidates[sampled_idx]
-    result_rev.push((start, id, piece))
-    pos = start
+  // Choose sampling strategy based on nbest_size
+  let result_rev : Array[(Int, Int, String)] = match nbest_size {
+    Some(nb) if nb > 0 =>
+      // N-best mode: enumerate top-N paths via beam search, then sample
+      sample_nbest(pieces, n, nb, alpha)
+    _ =>
+      // Forward-backward mode: sample from full distribution
+      sample_forward_backward(pieces, n, alpha)
   }
 
   // Reverse to get correct order
@@ -356,6 +323,123 @@ fn UnigramModel::tokenize_with_sampling(
   }
 
   shift_unigram_tokens(rel, offset)
+}
+
+///|
+/// N-best sampling via beam search over the lattice.
+/// Enumerates up to `nbest_size` complete paths, scores them, and samples
+/// using softmax with `alpha` as temperature.
+fn sample_nbest(
+  pieces : Array[Array[(Int, Int, Double, String)]],
+  n : Int,
+  nbest_size : Int,
+  alpha : Double,
+) -> Array[(Int, Int, String)] {
+  // Beam search: at each position, keep top-N partial paths
+  // paths[end] = [(score, path)] where path = [(start, id, piece), ...]
+  let beams : Array[Array[(Double, Array[(Int, Int, String)])]] = Array::make(
+    n + 1,
+    [],
+  )
+  beams[0] = [(0.0, [])]
+
+  for end in 1..<=n {
+    let candidates : Array[(Double, Array[(Int, Int, String)])] = []
+    for cand in pieces[end] {
+      let start = cand.0
+      let id = cand.1
+      let score = cand.2
+      let piece = cand.3
+      for beam_item in beams[start] {
+        let prev_score = beam_item.0
+        let prev_path = beam_item.1
+        let new_score = prev_score + score
+        let new_path : Array[(Int, Int, String)] = []
+        for item in prev_path {
+          new_path.push(item)
+        }
+        new_path.push((start, id, piece))
+        candidates.push((new_score, new_path))
+      }
+    }
+    // Keep top-N candidates by score
+    candidates.sort_by(fn(a, b) { b.0.compare(a.0) })
+    let keep = if candidates.length() > nbest_size {
+      nbest_size
+    } else {
+      candidates.length()
+    }
+    let beam : Array[(Double, Array[(Int, Int, String)])] = []
+    for i in 0..<keep {
+      beam.push(candidates[i])
+    }
+    beams[end] = beam
+  }
+
+  // Sample from the N-best complete paths
+  let final_paths = beams[n]
+  if final_paths.length() == 0 {
+    return []
+  }
+  if final_paths.length() == 1 {
+    return final_paths[0].1
+  }
+
+  // Compute softmax probabilities with temperature alpha
+  let log_scores : Array[Double] = final_paths.map(fn(p) { p.0 * alpha })
+  let idx = sample_from_log_probs(log_scores)
+  return final_paths[idx].1
+}
+
+///|
+/// Forward-backward sampling: sample from the full distribution at each position.
+fn sample_forward_backward(
+  pieces : Array[Array[(Int, Int, Double, String)]],
+  n : Int,
+  alpha : Double,
+) -> Array[(Int, Int, String)] {
+  // Forward pass: compute log partition function at each position
+  let forward = Array::make(n + 1, neg_inf)
+  forward[0] = 0.0
+  for pos in 1..<=n {
+    for candidate in pieces[pos] {
+      let start = candidate.0
+      let score = candidate.2
+      if forward[start] != neg_inf {
+        forward[pos] = log_sum_exp(forward[pos], forward[start] + alpha * score)
+      }
+    }
+  }
+
+  // Backward pass: sample tokens from right to left
+  let result_rev : Array[(Int, Int, String)] = []
+  let mut pos = n
+  while pos > 0 {
+    if forward[pos] == neg_inf {
+      break
+    }
+
+    let candidates = pieces[pos]
+    if candidates.length() == 0 {
+      break
+    }
+
+    let log_probs : Array[Double] = candidates.map(fn(c) {
+      let (start, _, score, _) = c
+      if forward[start] == neg_inf {
+        neg_inf
+      } else {
+        forward[start] + alpha * score - forward[pos]
+      }
+    })
+
+    let sampled_idx = sample_from_log_probs(log_probs)
+    let (start, id, _, piece) = candidates[sampled_idx]
+    result_rev.push((start, id, piece))
+    pos = start
+  }
+
+  result_rev
 }
 
 ///|

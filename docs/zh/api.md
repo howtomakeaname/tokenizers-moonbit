@@ -136,6 +136,11 @@ fn Model::set_nbest_size(self : Model, nbest_size : Int?) -> Model
 原 Model（如 `set_dropout` 对 Unigram 无操作）。每个 setter 都有 `*_alias` 别名保持
 与 Python binding 迁移模式一致。
 
+当 Unigram 模型设置 `alpha > 0` 且 `nbest_size > 0` 时，分词器使用 N-best 路径采样
+（SentencePiece 模式）：通过 beam search 枚举最多 `nbest_size` 条完整分词路径，
+计算得分后使用 `alpha` 作为温度的 softmax 采样。当 `nbest_size` 未设置（或 `<= 0`）时，
+回退到前向-后向算法对完整分布采样。
+
 #### Normalizer setter 别名（Python binding 兼容）
 
 ```moonbit

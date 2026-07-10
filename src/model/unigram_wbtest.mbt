@@ -197,3 +197,44 @@ test "unigram alpha sampling produces valid tokens" {
     @test.assert_eq(t.value.length() > 0, true)
   }
 }
+
+///|
+test "unigram nbest_size sampling produces valid tokens" {
+  // Create a model with alpha > 0 and nbest_size > 0 to enable N-best sampling
+  let v : Map[String, (Int, Double)] = {}
+  let vr : Array[String?] = []
+  v["hello"] = (0, -1.0)
+  v["world"] = (1, -2.0)
+  v["he"] = (2, -3.0)
+  v["llo"] = (3, -4.0)
+  v["hell"] = (4, -5.0)
+  v["o"] = (5, -6.0)
+  set_vocab_r(vr, 0, "hello")
+  set_vocab_r(vr, 1, "world")
+  set_vocab_r(vr, 2, "he")
+  set_vocab_r(vr, 3, "llo")
+  set_vocab_r(vr, 4, "hell")
+  set_vocab_r(vr, 5, "o")
+  let model = Unigram(UnigramModel::{
+    vocab: v,
+    vocab_r: vr,
+    unk_id: None,
+    byte_fallback: false,
+    fuse_unk: true,
+    alpha: Some(0.5),
+    nbest_size: Some(3),
+    cache: {},
+    cache_capacity: None,
+  })
+  // Should produce valid tokens (N-best mode)
+  let toks = model.tokenize("hello")
+  @test.assert_eq(toks.length() > 0, true)
+  // Verify all tokens have valid ids and cover the full input
+  let mut total_len = 0
+  for t in toks {
+    @test.assert_eq(t.id >= 0, true)
+    @test.assert_eq(t.value.length() > 0, true)
+    total_len = total_len + t.value.length()
+  }
+  @test.assert_eq(total_len, 5) // "hello" = 5 chars
+}

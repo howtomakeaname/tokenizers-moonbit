@@ -152,6 +152,13 @@ Each setter only modifies the relevant model variant's field; other variants ret
 the original Model unchanged (e.g. `set_dropout` is a no-op on Unigram). Each
 setter has a `*_alias` companion for Python binding migration consistency.
 
+When `alpha > 0` and `nbest_size > 0` are set on an Unigram model, the tokenizer
+uses N-best path sampling (SentencePiece mode): it enumerates up to `nbest_size`
+complete tokenization paths via beam search over the lattice, scores them, and
+samples using softmax with `alpha` as temperature. When `nbest_size` is not set
+(or `<= 0`), it falls back to forward-backward sampling over the full
+distribution.
+
 #### Normalizer setter aliases (Python binding compatibility)
 
 ```moonbit
