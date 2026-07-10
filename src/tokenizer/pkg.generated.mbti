@@ -146,6 +146,7 @@ pub fn NormalizedString::append(Self, String) -> Self
 pub fn NormalizedString::as_tuple(Self) -> (String, String)
 pub fn NormalizedString::clear(Self) -> Self
 pub fn NormalizedString::filter(Self, (Char) -> Bool) -> Self
+pub fn NormalizedString::for_each(Self, (Char) -> Unit) -> Unit
 pub fn NormalizedString::from_state(NormalizedStringState) -> Self
 pub fn NormalizedString::from_tuple((String, String)) -> Self
 pub fn NormalizedString::get(Self) -> String

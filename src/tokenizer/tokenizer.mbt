@@ -412,6 +412,19 @@ pub fn NormalizedString::map(
 }
 
 ///|
+/// Iterate over each character of the normalized string (HF
+/// `NormalizedString.for_each`). Useful for side effects like counting or
+/// logging; returns `Unit`.
+pub fn NormalizedString::for_each(
+  self : NormalizedString,
+  f : (Char) -> Unit,
+) -> Unit {
+  for c in self.normalized {
+    f(c)
+  }
+}
+
+///|
 pub fn NormalizedString::split(
   self : NormalizedString,
   pattern : String,
