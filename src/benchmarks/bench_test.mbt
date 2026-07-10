@@ -448,7 +448,7 @@ fn bench_encode_pretokenized_pair_batch_case(
 fn pretokenized_added_fixture() -> @tokenizer.Tokenizer raise {
   let json =
     #|{"version":"1.0",
-    #| "added_tokens":[{"id":8,"content":"[MASK]","special":true,"lstrip":true,"rstrip":true,"normalized":false}],
+    #| "added_tokens":[{"id":8,"content":"[MASK]","single_word":false,"lstrip":true,"rstrip":true,"normalized":false,"special":true}],
     #| "normalizer":{"type":"Lowercase"},
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"the":0,"quick":1,"brown":2,"fox":3,"jumps":4,"over":5,"moonbit":6,"tokenizers":7,"[MASK]":8,"[UNK]":9},"unk_token":"[UNK]"}}
@@ -645,7 +645,7 @@ fn bench_tokenizer_post_process_case(
 ) -> Unit raise {
   let json =
     #|{"version":"1.0",
-    #| "added_tokens":[{"id":5,"content":"[MASK]","special":true,"normalized":false}],
+    #| "added_tokens":[{"id":5,"content":"[MASK]","single_word":false,"lstrip":false,"rstrip":false,"normalized":false,"special":true}],
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"hello":0,"world":1,"moon":2,"[SEP]":3,"[CLS]":4,"[MASK]":5,"[UNK]":6},"unk_token":"[UNK]"},
     #| "post_processor":{"type":"BertProcessing","sep":["[SEP]",3],"cls":["[CLS]",4]}}
