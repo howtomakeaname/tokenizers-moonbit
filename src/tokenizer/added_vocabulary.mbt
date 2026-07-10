@@ -312,6 +312,39 @@ pub fn AddedToken::with_special(
 }
 
 ///|
+/// Set content. Returns a new AddedToken.
+pub fn AddedToken::set_content(
+  self : AddedToken,
+  content : String,
+) -> AddedToken {
+  { ..self, content, }
+}
+
+///|
+/// Python/property-style setter alias for content.
+pub fn AddedToken::set_content_alias(
+  self : AddedToken,
+  content : String,
+) -> AddedToken {
+  self.set_content(content)
+}
+
+///|
+/// Set special flag. Returns a new AddedToken.
+pub fn AddedToken::set_special(self : AddedToken, special : Bool) -> AddedToken {
+  { ..self, special, }
+}
+
+///|
+/// Python/property-style setter alias for special.
+pub fn AddedToken::set_special_alias(
+  self : AddedToken,
+  special : Bool,
+) -> AddedToken {
+  self.set_special(special)
+}
+
+///|
 /// Per-token configuration parsed from tokenizer.json "added_tokens".
 struct AddedTokenInfo {
   id : Int

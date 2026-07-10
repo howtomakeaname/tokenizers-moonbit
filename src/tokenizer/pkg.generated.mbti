@@ -92,6 +92,10 @@ pub fn AddedToken::lstrip(Self) -> Bool
 pub fn AddedToken::new(String, single_word? : Bool, lstrip? : Bool, rstrip? : Bool, normalized? : Bool?, special? : Bool) -> Self
 pub fn AddedToken::normalized(Self) -> Bool
 pub fn AddedToken::rstrip(Self) -> Bool
+pub fn AddedToken::set_content(Self, String) -> Self
+pub fn AddedToken::set_content_alias(Self, String) -> Self
+pub fn AddedToken::set_special(Self, Bool) -> Self
+pub fn AddedToken::set_special_alias(Self, Bool) -> Self
 pub fn AddedToken::single_word(Self) -> Bool
 pub fn AddedToken::special(String) -> Self
 pub fn AddedToken::with_lstrip(Self, Bool) -> Self
