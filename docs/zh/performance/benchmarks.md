@@ -14,45 +14,82 @@ createTime: 2026/07/10 00:00:00
 ::: echarts Moon/HF 比率
 ```json
 {
-  "tooltip": { "trigger": "axis", "axisPointer": { "type": "shadow" } },
-  "grid": { "left": "3%", "right": "4%", "bottom": "3%", "containLabel": true },
-  "xAxis": { "type": "value", "name": "Moon/HF Ratio", "min": 0, "max": 1.5, "splitLine": { "lineStyle": { "type": "dashed" } } },
-  "yAxis": { "type": "category", "data": ["llama-encode", "gpt2-encode", "bert-encode", "gpt2-decode", "bert-decode", "llama-decode"], "axisLabel": { "fontSize": 11 } },
+  "title": { "text": "MoonBit vs HuggingFace tokenizers", "subtext": "Moon/HF 比率 - 越低越快", "left": "center" },
+  "tooltip": { "trigger": "axis", "axisPointer": { "type": "shadow" }, "formatter": "{b}: {c}x" },
+  "grid": { "left": "3%", "right": "10%", "bottom": "3%", "containLabel": true },
+  "xAxis": { "type": "value", "name": "Moon/HF 比率", "min": 0, "max": 1.0, "splitLine": { "lineStyle": { "type": "dashed" } }, "axisLabel": { "formatter": "{value}x" } },
+  "yAxis": { "type": "category", "data": ["llama-encode", "gpt2-decode", "bert-decode", "llama-decode", "gpt2-encode", "bert-encode", "Qwen2.5-encode", "t5-encode", "bge-encode"], "axisLabel": { "fontSize": 11 } },
   "series": [{
     "type": "bar",
     "data": [
       { "value": 0.28, "itemStyle": { "color": "#22c55e" } },
+      { "value": 0.13, "itemStyle": { "color": "#22c55e" } },
+      { "value": 0.17, "itemStyle": { "color": "#22c55e" } },
+      { "value": 0.35, "itemStyle": { "color": "#22c55e" } },
       { "value": 0.43, "itemStyle": { "color": "#22c55e" } },
       { "value": 0.53, "itemStyle": { "color": "#22c55e" } },
-      { "value": 0.50, "itemStyle": { "color": "#22c55e" } },
-      { "value": 0.13, "itemStyle": { "color": "#22c55e" } },
-      { "value": 0.17, "itemStyle": { "color": "#22c55e" } }
+      { "value": 0.58, "itemStyle": { "color": "#22c55e" } },
+      { "value": 0.39, "itemStyle": { "color": "#22c55e" } },
+      { "value": 0.42, "itemStyle": { "color": "#22c55e" } }
     ],
-    "label": { "show": true, "position": "right", "formatter": "{c}x", "fontSize": 11 },
-    "markLine": { "silent": true, "data": [{ "xAxis": 1, "lineStyle": { "color": "#9ca3af", "type": "dashed" } }], "label": { "formatter": "1.0x" } }
+    "label": { "show": true, "position": "right", "formatter": "{c}x", "fontSize": 11, "fontWeight": "bold" },
+    "markLine": { "silent": true, "data": [{ "xAxis": 1, "lineStyle": { "color": "#ef4444", "type": "dashed", "width": 2 } }], "label": { "formatter": "1.0x (HF 基线)", "position": "end" } },
+    "markPoint": { "data": [{ "type": "max", "label": { "formatter": "最慢: {c}x" } }] }
   }]
 }
 ```
 :::
 
-### 性能分布
+### 性能概览
 
-::: echarts 性能概览
+::: echarts 性能分布
 ```json
 {
-  "tooltip": { "trigger": "item", "formatter": "{b}: {c} ({d}%)" },
+  "title": { "text": "基准测试结果分布", "left": "center" },
+  "tooltip": { "trigger": "item", "formatter": "{b}: {c} 个用例 ({d}%)" },
   "legend": { "bottom": "5%", "left": "center" },
   "series": [{
     "type": "pie",
     "radius": ["40%", "70%"],
     "avoidLabelOverlap": true,
     "itemStyle": { "borderRadius": 6, "borderColor": "#fff", "borderWidth": 2 },
-    "label": { "show": true, "formatter": "{b}\n{c}" },
+    "label": { "show": true, "formatter": "{b}\n{c} 个用例", "fontSize": 12 },
+    "emphasis": { "label": { "show": true, "fontSize": 14, "fontWeight": "bold" } },
     "data": [
-      { "value": 35, "name": "Faster (< 0.9x)", "itemStyle": { "color": "#22c55e" } },
-      { "value": 4, "name": "Same Range", "itemStyle": { "color": "#f59e0b" } },
-      { "value": 0, "name": "Slower (> 1.1x)", "itemStyle": { "color": "#ef4444" } }
+      { "value": 35, "name": "更快 (< 0.9x)", "itemStyle": { "color": "#22c55e" } },
+      { "value": 4, "name": "同级 (0.9-1.1x)", "itemStyle": { "color": "#f59e0b" } },
+      { "value": 0, "name": "更慢 (> 1.1x)", "itemStyle": { "color": "#ef4444" } }
     ]
+  }]
+}
+```
+:::
+
+### 关键性能指标
+
+::: echarts 性能亮点
+```json
+{
+  "title": { "text": "MoonBit 性能亮点", "left": "center" },
+  "tooltip": { "trigger": "axis", "axisPointer": { "type": "shadow" } },
+  "grid": { "left": "3%", "right": "4%", "bottom": "3%", "containLabel": true },
+  "xAxis": { "type": "value", "name": "加速倍数", "min": 0, "max": 8, "splitLine": { "lineStyle": { "type": "dashed" } }, "axisLabel": { "formatter": "{value}x 快" } },
+  "yAxis": { "type": "category", "data": ["bert-decode", "llama-encode", "gpt2-decode", "llama-decode", "t5-encode", "bge-encode", "gpt2-encode", "Qwen2.5-encode", "bert-encode"], "axisLabel": { "fontSize": 11 } },
+  "series": [{
+    "type": "bar",
+    "data": [
+      { "value": 5.88, "itemStyle": { "color": "#22c55e" } },
+      { "value": 3.57, "itemStyle": { "color": "#22c55e" } },
+      { "value": 7.69, "itemStyle": { "color": "#22c55e" } },
+      { "value": 2.86, "itemStyle": { "color": "#22c55e" } },
+      { "value": 2.56, "itemStyle": { "color": "#22c55e" } },
+      { "value": 2.38, "itemStyle": { "color": "#22c55e" } },
+      { "value": 2.33, "itemStyle": { "color": "#22c55e" } },
+      { "value": 1.72, "itemStyle": { "color": "#22c55e" } },
+      { "value": 1.89, "itemStyle": { "color": "#22c55e" } }
+    ],
+    "label": { "show": true, "position": "right", "formatter": "{c}x 快", "fontSize": 11, "fontWeight": "bold" },
+    "markLine": { "silent": true, "data": [{ "xAxis": 1, "lineStyle": { "color": "#9ca3af", "type": "dashed" } }], "label": { "formatter": "1x (相同速度)" } }
   }]
 }
 ```
