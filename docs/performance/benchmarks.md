@@ -8,10 +8,6 @@ createTime: 2026/07/10 00:00:00
 Benchmarks compare MoonBit encode/decode/load performance against Python
 `tokenizers` on the same corpora.
 
-## Summary
-
-<BenchmarkSnapshot locale="en" />
-
 ## Charts
 
 ### Moon/HF Ratio by Case

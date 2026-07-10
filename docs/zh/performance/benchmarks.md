@@ -7,10 +7,6 @@ createTime: 2026/07/10 00:00:00
 
 基准测试会在相同语料上比较 MoonBit 与 Python `tokenizers` 的编码、解码和加载性能。
 
-## 概览
-
-<BenchmarkSnapshot locale="zh" />
-
 ## 图表
 
 ### Moon/HF 比率（按用例）
