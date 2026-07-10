@@ -178,6 +178,21 @@ model type string (`"BPE"`, `"WordPiece"`, `"Unigram"`, `"WordLevel"`).
 `get_state()` / `from_state()` provide state round-trip. Cache control methods
 manage the internal word-to-tokens cache.
 
+#### Model low-level methods
+
+```moonbit
+fn Model::tokenize(self : Model, word : String, offset? : Int = 0) -> Array[Token] raise TokenizerError
+fn Model::get_word_count(self : Model) -> Int?
+fn Model::_clear_cache(self : Model) -> Unit  // alias for clear_cache
+fn Model::_resize_cache(self : Model, capacity : Int) -> Unit  // alias for resize_cache
+```
+
+`tokenize()` is a low-level method that tokenizes a single pre-tokenized word
+into tokens. `offset` is the character offset of the word within the original
+text. `get_word_count()` returns the BPE word count (None for other models).
+`_clear_cache()` and `_resize_cache()` are Python binding aliases for the
+cache control methods.
+
 #### Model setter aliases (Python binding compatibility)
 
 ```moonbit

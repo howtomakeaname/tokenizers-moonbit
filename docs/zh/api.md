@@ -162,6 +162,20 @@ fn Model::cache_size(self : Model) -> Int
 `to_json()` 序列化模型。`get_state()` / `from_state()` 提供状态往返。
 缓存控制方法管理内部 word-to-tokens 缓存。
 
+#### Model 低层方法
+
+```moonbit
+fn Model::tokenize(self : Model, word : String, offset? : Int = 0) -> Array[Token] raise TokenizerError
+fn Model::get_word_count(self : Model) -> Int?
+fn Model::_clear_cache(self : Model) -> Unit  // clear_cache 别名
+fn Model::_resize_cache(self : Model, capacity : Int) -> Unit  // resize_cache 别名
+```
+
+`tokenize()` 是低层方法，将单个预分词后的单词分词为 token。
+`offset` 是单词在原始文本中的字符偏移。`get_word_count()` 返回 BPE 词数
+（其他模型返回 None）。`_clear_cache()` 和 `_resize_cache()` 是缓存控制方法的
+Python binding 别名。
+
 #### Model setter 别名（Python binding 兼容）
 
 ```moonbit
