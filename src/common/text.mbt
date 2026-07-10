@@ -44,36 +44,109 @@ pub fn is_word_char(c : Char) -> Bool {
 /// pulling in a full Unicode property table.
 pub fn is_unicode_letter(c : Char) -> Bool {
   let u = c.to_int()
+  // Basic Latin + Latin Extended (covers most European scripts)
   if (u >= 0x41 && u <= 0x5A) || (u >= 0x61 && u <= 0x7A) {
     return true
   }
   if (u >= 0xC0 && u <= 0x24F) && u != 0xD7 && u != 0xF7 {
     return true
   }
+  // Greek and Coptic
   if u >= 0x370 && u <= 0x3FF {
     return true
   }
+  // Cyrillic
   if u >= 0x400 && u <= 0x4FF {
     return true
   }
+  // Armenian
+  if u >= 0x530 && u <= 0x58F {
+    return true
+  }
+  // Hebrew
   if u >= 0x590 && u <= 0x5FF {
     return true
   }
+  // Arabic
   if u >= 0x620 && u <= 0x64A {
     return true
   }
+  // Devanagari (Hindi, Sanskrit)
   if u >= 0x0900 && u <= 0x097F {
     return true
   }
+  // Bengali
+  if u >= 0x0980 && u <= 0x09FF {
+    return true
+  }
+  // Gurmukhi (Punjabi)
+  if u >= 0x0A00 && u <= 0x0A7F {
+    return true
+  }
+  // Gujarati
+  if u >= 0x0A80 && u <= 0x0AFF {
+    return true
+  }
+  // Oriya
+  if u >= 0x0B00 && u <= 0x0B7F {
+    return true
+  }
+  // Tamil
+  if u >= 0x0B80 && u <= 0x0BFF {
+    return true
+  }
+  // Telugu
+  if u >= 0x0C00 && u <= 0x0C7F {
+    return true
+  }
+  // Kannada
+  if u >= 0x0C80 && u <= 0x0CFF {
+    return true
+  }
+  // Malayalam
+  if u >= 0x0D00 && u <= 0x0D7F {
+    return true
+  }
+  // Sinhala
+  if u >= 0x0D80 && u <= 0x0DFF {
+    return true
+  }
+  // Thai
+  if u >= 0x0E00 && u <= 0x0E7F {
+    return true
+  }
+  // Lao
+  if u >= 0x0E80 && u <= 0x0EFF {
+    return true
+  }
+  // Tibetan
+  if u >= 0x0F00 && u <= 0x0FFF {
+    return true
+  }
+  // Myanmar
+  if u >= 0x1000 && u <= 0x109F {
+    return true
+  }
+  // Georgian
+  if u >= 0x10A0 && u <= 0x10FF {
+    return true
+  }
+  // Khmer
+  if u >= 0x1780 && u <= 0x17FF {
+    return true
+  }
+  // Hiragana + Katakana (Japanese)
   if u >= 0x3040 && u <= 0x30FF {
     return true
   }
+  // CJK Unified Ideographs (Extension A + Main)
   if u >= 0x3400 && u <= 0x4DBF {
     return true
   }
   if u >= 0x4E00 && u <= 0x9FFF {
     return true
   }
+  // Hangul Syllables (Korean)
   if u >= 0xAC00 && u <= 0xD7A3 {
     return true
   }
