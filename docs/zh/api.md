@@ -708,6 +708,39 @@ fn PostProcessor::from_json(j : Json) -> PostProcessor raise TokenizerError
 `num_special_tokens_to_add()` 报告会注入多少特殊 token。
 `get_state()` / `from_state()` 提供状态往返。
 
+#### Trainer 构建器方法
+
+```moonbit
+fn Trainer::wordlevel(
+  unk_token? : String = "<unk>", min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = None,
+) -> Trainer
+fn Trainer::wordpiece(
+  unk_token? : String = "[UNK]", continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = None,
+  max_input_chars_per_word? : Int = 100,
+) -> Trainer
+fn Trainer::bpe(
+  unk_token? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = None,
+  continuing_subword_prefix? : String? = None, end_of_word_suffix? : String? = None,
+) -> Trainer
+fn Trainer::unigram(
+  unk_token? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = None,
+) -> Trainer
+fn Trainer::wordlevel_trainer(...) -> Trainer  // wordlevel 别名
+fn Trainer::wordpiece_trainer(...) -> Trainer  // wordpiece 别名
+fn Trainer::bpe_trainer(...) -> Trainer  // bpe 别名
+fn Trainer::unigram_trainer(...) -> Trainer  // unigram 别名
+```
+
+构建器方法为每种模型类型创建 Trainer 实例。`wordlevel()` 创建 WordLevel 训练器。
+`wordpiece()` 创建带 continuation prefix 和 end-of-word suffix 的 WordPiece 训练器。
+`bpe()` 创建 BPE 训练器。`unigram()` 创建 Unigram 训练器。
+每个方法都有 `*_trainer` 别名，保持 HF Python 命名一致性。
+
 #### Trainer getter 别名
 
 ```moonbit

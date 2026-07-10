@@ -719,6 +719,40 @@ returns children for Sequence post-processors. `num_special_tokens_to_add()`
 reports how many special tokens would be injected. `get_state()` / `from_state()`
 provide state round-trip.
 
+#### Trainer builder methods
+
+```moonbit
+fn Trainer::wordlevel(
+  unk_token? : String = "<unk>", min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = None,
+) -> Trainer
+fn Trainer::wordpiece(
+  unk_token? : String = "[UNK]", continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = None,
+  max_input_chars_per_word? : Int = 100,
+) -> Trainer
+fn Trainer::bpe(
+  unk_token? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = None,
+  continuing_subword_prefix? : String? = None, end_of_word_suffix? : String? = None,
+) -> Trainer
+fn Trainer::unigram(
+  unk_token? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = None,
+) -> Trainer
+fn Trainer::wordlevel_trainer(...) -> Trainer  // alias for wordlevel
+fn Trainer::wordpiece_trainer(...) -> Trainer  // alias for wordpiece
+fn Trainer::bpe_trainer(...) -> Trainer  // alias for bpe
+fn Trainer::unigram_trainer(...) -> Trainer  // alias for unigram
+```
+
+Builder methods create Trainer instances for each model type. `wordlevel()`
+creates a WordLevel trainer. `wordpiece()` creates a WordPiece trainer with
+continuation prefix and end-of-word suffix. `bpe()` creates a BPE trainer.
+`unigram()` creates a Unigram trainer. Each has a `*_trainer` alias for
+HF Python naming consistency.
+
 #### Trainer getter aliases
 
 ```moonbit
