@@ -561,8 +561,21 @@ pub fn Trainer::continuing_subword_prefix(Self) -> String?
 pub fn Trainer::end_of_word_suffix(Self) -> String?
 pub fn Trainer::from_state(TrainerState) -> Self raise @types.TokenizerError
 pub fn Trainer::fuse_unk(Self) -> Bool?
+pub fn Trainer::get_byte_fallback(Self) -> Bool?
+pub fn Trainer::get_continuing_subword_prefix(Self) -> String?
+pub fn Trainer::get_end_of_word_suffix(Self) -> String?
+pub fn Trainer::get_fuse_unk(Self) -> Bool?
+pub fn Trainer::get_initial_alphabet(Self) -> Array[String]
+pub fn Trainer::get_limit_alphabet(Self) -> Int?
+pub fn Trainer::get_max_input_chars_per_word(Self) -> Int?
+pub fn Trainer::get_max_piece_length(Self) -> Int?
+pub fn Trainer::get_max_token_length(Self) -> Int?
 pub fn Trainer::get_min_frequency(Self) -> Int
+pub fn Trainer::get_n_sub_iterations(Self) -> Int?
+pub fn Trainer::get_progress_format(Self) -> String?
+pub fn Trainer::get_seed_size(Self) -> Int?
 pub fn Trainer::get_show_progress(Self) -> Bool
+pub fn Trainer::get_shrinking_factor(Self) -> Double?
 pub fn Trainer::get_special_added_tokens(Self) -> Array[AddedToken]
 pub fn Trainer::get_special_tokens(Self) -> Array[String]
 pub fn Trainer::get_state(Self) -> TrainerState

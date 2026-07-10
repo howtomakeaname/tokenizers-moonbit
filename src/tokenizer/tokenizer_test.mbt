@@ -3395,11 +3395,17 @@ test "Trainer exposes HF-style configuration getters" {
   )
   @test.assert_eq(wordpiece.kind(), "WordPieceTrainer")
   @test.assert_eq(wordpiece.continuing_subword_prefix(), Some("@@"))
+  @test.assert_eq(wordpiece.get_continuing_subword_prefix(), Some("@@"))
   @test.assert_eq(wordpiece.end_of_word_suffix(), Some("</w>"))
+  @test.assert_eq(wordpiece.get_end_of_word_suffix(), Some("</w>"))
   @test.assert_eq(wordpiece.initial_alphabet(), ["z"])
+  @test.assert_eq(wordpiece.get_initial_alphabet(), ["z"])
   @test.assert_eq(wordpiece.limit_alphabet(), Some(16))
+  @test.assert_eq(wordpiece.get_limit_alphabet(), Some(16))
   @test.assert_eq(wordpiece.max_input_chars_per_word(), Some(42))
+  @test.assert_eq(wordpiece.get_max_input_chars_per_word(), Some(42))
   @test.assert_eq(wordpiece.max_token_length(), Some(6))
+  @test.assert_eq(wordpiece.get_max_token_length(), Some(6))
 
   let bpe = Trainer::bpe(
     unk_token=None,
@@ -3414,12 +3420,19 @@ test "Trainer exposes HF-style configuration getters" {
   @test.assert_eq(bpe.kind(), "BpeTrainer")
   @test.assert_eq(bpe.unk_token(), None)
   @test.assert_eq(bpe.continuing_subword_prefix(), Some("@@"))
+  @test.assert_eq(bpe.get_continuing_subword_prefix(), Some("@@"))
   @test.assert_eq(bpe.end_of_word_suffix(), Some("</w>"))
+  @test.assert_eq(bpe.get_end_of_word_suffix(), Some("</w>"))
   @test.assert_eq(bpe.fuse_unk(), Some(true))
+  @test.assert_eq(bpe.get_fuse_unk(), Some(true))
   @test.assert_eq(bpe.initial_alphabet(), ["x"])
+  @test.assert_eq(bpe.get_initial_alphabet(), ["x"])
   @test.assert_eq(bpe.limit_alphabet(), Some(9))
+  @test.assert_eq(bpe.get_limit_alphabet(), Some(9))
   @test.assert_eq(bpe.max_token_length(), Some(5))
+  @test.assert_eq(bpe.get_max_token_length(), Some(5))
   @test.assert_eq(bpe.progress_format(), Some("json"))
+  @test.assert_eq(bpe.get_progress_format(), Some("json"))
 
   let unigram = Trainer::unigram(
     unk_piece=Some("<UNK>"),
@@ -3434,15 +3447,28 @@ test "Trainer exposes HF-style configuration getters" {
   @test.assert_eq(unigram.kind(), "UnigramTrainer")
   @test.assert_eq(unigram.unk_token(), Some("<UNK>"))
   @test.assert_eq(unigram.byte_fallback(), Some(true))
+  @test.assert_eq(unigram.get_byte_fallback(), Some(true))
   @test.assert_eq(unigram.fuse_unk(), Some(false))
+  @test.assert_eq(unigram.get_fuse_unk(), Some(false))
   @test.assert_eq(unigram.shrinking_factor(), Some(0.5))
+  @test.assert_eq(unigram.get_shrinking_factor(), Some(0.5))
   @test.assert_eq(unigram.max_piece_length(), Some(4))
+  @test.assert_eq(unigram.get_max_piece_length(), Some(4))
   @test.assert_eq(unigram.initial_alphabet(), ["z", "xy"])
+  @test.assert_eq(unigram.get_initial_alphabet(), ["z", "xy"])
   @test.assert_eq(unigram.n_sub_iterations(), Some(3))
+  @test.assert_eq(unigram.get_n_sub_iterations(), Some(3))
   @test.assert_eq(unigram.seed_size(), Some(128))
+  @test.assert_eq(unigram.get_seed_size(), Some(128))
   @test.assert_eq(unigram.continuing_subword_prefix(), None)
+  @test.assert_eq(unigram.get_continuing_subword_prefix(), None)
   @test.assert_eq(unigram.progress_format(), None)
+  @test.assert_eq(unigram.get_progress_format(), None)
   @test.assert_eq(Trainer::unigram().seed_size(), Some(1000000))
+
+  let initial = unigram.get_initial_alphabet()
+  initial.push("mutated")
+  @test.assert_eq(unigram.get_initial_alphabet(), ["z", "xy"])
 }
 
 ///|

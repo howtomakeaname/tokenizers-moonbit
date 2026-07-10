@@ -446,12 +446,22 @@ pub fn Trainer::continuing_subword_prefix(self : Trainer) -> String? {
 }
 
 ///|
+pub fn Trainer::get_continuing_subword_prefix(self : Trainer) -> String? {
+  self.continuing_subword_prefix()
+}
+
+///|
 pub fn Trainer::end_of_word_suffix(self : Trainer) -> String? {
   match self {
     WordPieceTrainer(end_of_word_suffix~, ..) => end_of_word_suffix
     BpeTrainer(end_of_word_suffix~, ..) => end_of_word_suffix
     _ => None
   }
+}
+
+///|
+pub fn Trainer::get_end_of_word_suffix(self : Trainer) -> String? {
+  self.end_of_word_suffix()
 }
 
 ///|
@@ -465,12 +475,22 @@ pub fn Trainer::initial_alphabet(self : Trainer) -> Array[String] {
 }
 
 ///|
+pub fn Trainer::get_initial_alphabet(self : Trainer) -> Array[String] {
+  self.initial_alphabet()
+}
+
+///|
 pub fn Trainer::limit_alphabet(self : Trainer) -> Int? {
   match self {
     WordPieceTrainer(limit_alphabet~, ..) => limit_alphabet
     BpeTrainer(limit_alphabet~, ..) => limit_alphabet
     _ => None
   }
+}
+
+///|
+pub fn Trainer::get_limit_alphabet(self : Trainer) -> Int? {
+  self.limit_alphabet()
 }
 
 ///|
@@ -483,12 +503,22 @@ pub fn Trainer::max_token_length(self : Trainer) -> Int? {
 }
 
 ///|
+pub fn Trainer::get_max_token_length(self : Trainer) -> Int? {
+  self.max_token_length()
+}
+
+///|
 pub fn Trainer::max_input_chars_per_word(self : Trainer) -> Int? {
   match self {
     WordPieceTrainer(max_input_chars_per_word~, ..) =>
       Some(max_input_chars_per_word)
     _ => None
   }
+}
+
+///|
+pub fn Trainer::get_max_input_chars_per_word(self : Trainer) -> Int? {
+  self.max_input_chars_per_word()
 }
 
 ///|
@@ -501,11 +531,21 @@ pub fn Trainer::fuse_unk(self : Trainer) -> Bool? {
 }
 
 ///|
+pub fn Trainer::get_fuse_unk(self : Trainer) -> Bool? {
+  self.fuse_unk()
+}
+
+///|
 pub fn Trainer::byte_fallback(self : Trainer) -> Bool? {
   match self {
     UnigramTrainer(byte_fallback~, ..) => Some(byte_fallback)
     _ => None
   }
+}
+
+///|
+pub fn Trainer::get_byte_fallback(self : Trainer) -> Bool? {
+  self.byte_fallback()
 }
 
 ///|
@@ -517,11 +557,21 @@ pub fn Trainer::shrinking_factor(self : Trainer) -> Double? {
 }
 
 ///|
+pub fn Trainer::get_shrinking_factor(self : Trainer) -> Double? {
+  self.shrinking_factor()
+}
+
+///|
 pub fn Trainer::max_piece_length(self : Trainer) -> Int? {
   match self {
     UnigramTrainer(max_piece_length~, ..) => max_piece_length
     _ => None
   }
+}
+
+///|
+pub fn Trainer::get_max_piece_length(self : Trainer) -> Int? {
+  self.max_piece_length()
 }
 
 ///|
@@ -533,6 +583,11 @@ pub fn Trainer::n_sub_iterations(self : Trainer) -> Int? {
 }
 
 ///|
+pub fn Trainer::get_n_sub_iterations(self : Trainer) -> Int? {
+  self.n_sub_iterations()
+}
+
+///|
 pub fn Trainer::seed_size(self : Trainer) -> Int? {
   match self {
     UnigramTrainer(seed_size~, ..) => Some(seed_size)
@@ -541,11 +596,21 @@ pub fn Trainer::seed_size(self : Trainer) -> Int? {
 }
 
 ///|
+pub fn Trainer::get_seed_size(self : Trainer) -> Int? {
+  self.seed_size()
+}
+
+///|
 pub fn Trainer::progress_format(self : Trainer) -> String? {
   match self {
     BpeTrainer(progress_format~, ..) => Some(progress_format)
     _ => None
   }
+}
+
+///|
+pub fn Trainer::get_progress_format(self : Trainer) -> String? {
+  self.progress_format()
 }
 
 ///|
