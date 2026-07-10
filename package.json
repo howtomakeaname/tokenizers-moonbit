@@ -7,7 +7,9 @@
   "scripts": {
     "docs:dev": "vuepress dev docs --clean-temp",
     "docs:build": "vuepress build docs --dest gh-pages-deploy --clean-temp --clean-cache && node scripts/ensure-nojekyll.mjs",
-    "docs:check": "pnpm docs:build"
+    "docs:check": "pnpm docs:build",
+    "docs:benchmarks": "node scripts/update-docs-benchmarks.mjs reports/bench-native-mixed.json",
+    "docs:charts": "node scripts/gen-bench-charts.mjs reports/bench-native-mixed.json"
   },
   "devDependencies": {
     "@vuepress/bundler-vite": "2.0.0-rc.30",
@@ -17,5 +19,8 @@
     "vue": "^3.5.39",
     "vuepress": "2.0.0-rc.30",
     "vuepress-theme-plume": "1.0.0-rc.204"
+  },
+  "dependencies": {
+    "echarts": "^6.1.0"
   }
 }

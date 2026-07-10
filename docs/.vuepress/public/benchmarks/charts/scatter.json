@@ -1,0 +1,104 @@
+{
+  "tooltip": {
+    "trigger": "item"
+  },
+  "grid": {
+    "left": "10%",
+    "right": "10%",
+    "bottom": "15%",
+    "top": "10%"
+  },
+  "xAxis": {
+    "type": "value",
+    "name": "HF µs/op",
+    "nameLocation": "middle",
+    "nameGap": 30,
+    "min": 0
+  },
+  "yAxis": {
+    "type": "value",
+    "name": "Moon µs/op",
+    "nameLocation": "middle",
+    "nameGap": 40,
+    "min": 0
+  },
+  "series": [
+    {
+      "type": "scatter",
+      "data": [
+        {
+          "value": [
+            13.1,
+            12.4
+          ],
+          "name": "gpt2-encode-mixed",
+          "itemStyle": {
+            "color": "#f59e0b"
+          }
+        },
+        {
+          "value": [
+            9.8,
+            10.5
+          ],
+          "name": "bert-encode-mixed",
+          "itemStyle": {
+            "color": "#f59e0b"
+          }
+        },
+        {
+          "value": [
+            13.2,
+            16.7
+          ],
+          "name": "llama-encode-mixed",
+          "itemStyle": {
+            "color": "#ef4444"
+          }
+        }
+      ],
+      "symbolSize": 10,
+      "markLine": {
+        "silent": true,
+        "data": [
+          {
+            "type": "line",
+            "lineStyle": {
+              "color": "#9ca3af",
+              "type": "dashed"
+            },
+            "label": {
+              "formatter": "y = x"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "line",
+      "data": [
+        [
+          0,
+          0
+        ],
+        [
+          18.37,
+          18.37
+        ]
+      ],
+      "lineStyle": {
+        "color": "#9ca3af",
+        "type": "dashed",
+        "width": 1
+      },
+      "symbol": "none",
+      "silent": true,
+      "tooltip": {
+        "show": false
+      }
+    }
+  ],
+  "visualMap": {
+    "show": false
+  }
+}

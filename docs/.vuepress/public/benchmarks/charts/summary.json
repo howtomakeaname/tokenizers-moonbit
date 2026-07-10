@@ -1,0 +1,52 @@
+{
+  "tooltip": {
+    "trigger": "item",
+    "formatter": "{b}: {c} ({d}%)"
+  },
+  "legend": {
+    "bottom": "5%",
+    "left": "center"
+  },
+  "series": [
+    {
+      "type": "pie",
+      "radius": [
+        "40%",
+        "70%"
+      ],
+      "avoidLabelOverlap": true,
+      "itemStyle": {
+        "borderRadius": 6,
+        "borderColor": "#fff",
+        "borderWidth": 2
+      },
+      "label": {
+        "show": true,
+        "formatter": "{b}\n{c}"
+      },
+      "data": [
+        {
+          "value": 0,
+          "name": "Faster",
+          "itemStyle": {
+            "color": "#22c55e"
+          }
+        },
+        {
+          "value": 2,
+          "name": "Same Range",
+          "itemStyle": {
+            "color": "#f59e0b"
+          }
+        },
+        {
+          "value": 1,
+          "name": "Slower",
+          "itemStyle": {
+            "color": "#ef4444"
+          }
+        }
+      ]
+    }
+  ]
+}

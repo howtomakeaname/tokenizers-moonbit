@@ -12,6 +12,7 @@ on:
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - scripts/ensure-nojekyll.mjs
+      - scripts/update-docs-benchmarks.mjs
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -47,6 +48,24 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Prepare benchmark snapshot
+        shell: bash
+        run: |
+          set +e
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          export PATH="$HOME/.moon/bin:$PATH"
+          moon update
+          python -m pip install --upgrade pip tokenizers numpy
+          python scripts/bench_compare.py --target native --quick --corpus mixed \
+            --json-out reports/bench-native-mixed.json
+          status=$?
+          if [ "$status" -eq 0 ]; then
+            node scripts/update-docs-benchmarks.mjs reports/bench-native-mixed.json
+            node scripts/gen-bench-charts.mjs reports/bench-native-mixed.json
+          else
+            echo "Benchmark snapshot generation failed; using checked-in fallback JSON."
+          fi
 
       - name: Build site
         run: pnpm docs:build

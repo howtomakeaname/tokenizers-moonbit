@@ -53,8 +53,14 @@ export default defineUserConfig({
     },
     markdown: {
       mermaid: true,
+      echarts: true,
     },
     locales: {
+      '/': {
+        navbar: enNavbar,
+        sidebar: enSidebar,
+        selectLanguageName: 'English',
+      },
       '/zh/': {
         navbar: zhNavbar,
         sidebar: zhSidebar,

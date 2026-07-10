@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-07-10T08:40:47.313Z",
+  "target": "native",
+  "corpora": [
+    "mixed"
+  ],
+  "models": [
+    "gpt2",
+    "bert",
+    "llama"
+  ],
+  "fail_above": null,
+  "passed": true,
+  "rows": [
+    {
+      "name": "gpt2-encode-mixed",
+      "moon_us": 12.4,
+      "hf_us": 13.1,
+      "ratio": 0.946,
+      "verdict": "same-range"
+    },
+    {
+      "name": "bert-encode-mixed",
+      "moon_us": 10.5,
+      "hf_us": 9.8,
+      "ratio": 1.071,
+      "verdict": "same-range"
+    },
+    {
+      "name": "llama-encode-mixed",
+      "moon_us": 16.7,
+      "hf_us": 13.2,
+      "ratio": 1.265,
+      "verdict": "slower"
+    }
+  ],
+  "optimization_focus": [],
+  "failures": [],
+  "skipped_hf_baselines": []
+}
