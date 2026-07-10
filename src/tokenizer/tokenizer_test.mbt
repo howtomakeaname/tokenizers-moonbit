@@ -5010,3 +5010,8 @@ test "tokenizer get_trainer returns appropriate trainer for model type" {
   let trainer2 = bpe_tok.default_trainer()
   @test.assert_eq(trainer2.kind(), "BpeTrainer")
 }
+
+///|
+test "simple test" {
+  @test.assert_eq(1 + 1, 2)
+}

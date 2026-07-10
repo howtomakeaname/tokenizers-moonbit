@@ -42,6 +42,21 @@
 - 补齐词表别名文档：`convert_token_to_id` / `convert_id_to_token` / `convert_tokens_to_ids` / `convert_ids_to_tokens`。
 - 中英文文档同步更新。
 
+### 2026-07-11 小闭环：Trainer setter 别名（Python binding 兼容）
+
+- HF Python `Trainer` 类暴露属性 setter（如 `trainer.vocab_size = 1000`），允许修改训练器属性。
+- MoonBit 已补齐 `Trainer::set_*` setter 方法，返回新 Trainer，保持不可变语义。
+- 已补 setter（19 个）：
+  - `set_unk_token` / `set_min_frequency` / `set_special_tokens` / `set_special_added_tokens` / `set_vocab_size` / `set_show_progress`（所有变体）
+  - `set_continuing_subword_prefix` / `set_end_of_word_suffix` / `set_max_input_chars_per_word` / `set_max_token_length` / `set_initial_alphabet` / `set_limit_alphabet`（WordPiece/BPE）
+  - `set_fuse_unk`（BPE/Unigram）
+  - `set_byte_fallback` / `set_shrinking_factor` / `set_max_piece_length` / `set_n_sub_iterations` / `set_seed_size`（Unigram）
+  - `set_progress_format`（BPE）
+- 每个 setter 都有 `*_alias` 别名。
+- setter 仅修改对应训练器变体的字段，其他变体返回原 Trainer。
+- 新增 `trainer_test.mbt` 覆盖所有 setter 的基本功能测试。
+- 全后端测试通过：native(384)/js(384)/wasm(361)/wasm-gc(361)。
+
 ### 2026-07-11 小闭环：Decoder setter 别名（Python binding 兼容）
 
 - HF Python `Decoder` 类暴露属性 setter（如 `decoder.add_prefix_space = True`），允许修改解码器属性。

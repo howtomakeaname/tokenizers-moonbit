@@ -483,6 +483,37 @@ fn PostProcessor::template_from_strings(
   single : String, pair : String, special_tokens : Map[String, SpecialToken],
 ) -> PostProcessor raise TokenizerError
 fn PostProcessor::sequence(steps : Array[PostProcessor]) -> PostProcessor
+#### Trainer setter aliases (Python binding compatibility)
+
+```moonbit
+fn Trainer::set_unk_token(self : Trainer, val : String?) -> Trainer
+fn Trainer::set_min_frequency(self : Trainer, val : Int) -> Trainer
+fn Trainer::set_special_tokens(self : Trainer, val : Array[String]) -> Trainer
+fn Trainer::set_special_added_tokens(self : Trainer, val : Array[AddedToken]) -> Trainer
+fn Trainer::set_vocab_size(self : Trainer, val : Int?) -> Trainer
+fn Trainer::set_show_progress(self : Trainer, val : Bool) -> Trainer
+fn Trainer::set_continuing_subword_prefix(self : Trainer, val : String?) -> Trainer
+fn Trainer::set_end_of_word_suffix(self : Trainer, val : String?) -> Trainer
+fn Trainer::set_max_input_chars_per_word(self : Trainer, val : Int) -> Trainer
+fn Trainer::set_max_token_length(self : Trainer, val : Int?) -> Trainer
+fn Trainer::set_initial_alphabet(self : Trainer, val : Array[String]) -> Trainer
+fn Trainer::set_limit_alphabet(self : Trainer, val : Int?) -> Trainer
+fn Trainer::set_fuse_unk(self : Trainer, val : Bool) -> Trainer
+fn Trainer::set_byte_fallback(self : Trainer, val : Bool) -> Trainer
+fn Trainer::set_shrinking_factor(self : Trainer, val : Double) -> Trainer
+fn Trainer::set_max_piece_length(self : Trainer, val : Int?) -> Trainer
+fn Trainer::set_n_sub_iterations(self : Trainer, val : Int) -> Trainer
+fn Trainer::set_seed_size(self : Trainer, val : Int) -> Trainer
+fn Trainer::set_progress_format(self : Trainer, val : String) -> Trainer
+```
+
+Corresponding to HF Python `Trainer` property setters, MoonBit provides `set_*`
+methods that return a new Trainer, preserving immutability. Each setter only
+modifies the relevant trainer variant's field; other variants return the
+original Trainer unchanged. Setters that apply to multiple variants (e.g.
+`set_unk_token` for all four trainer types) handle all matching variants.
+Each setter has a `*_alias` companion for Python binding migration consistency.
+
 #### PostProcessor setter aliases (Python binding compatibility)
 
 ```moonbit

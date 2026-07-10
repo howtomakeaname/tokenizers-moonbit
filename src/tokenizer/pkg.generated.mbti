@@ -598,6 +598,44 @@ pub fn Trainer::min_frequency(Self) -> Int
 pub fn Trainer::n_sub_iterations(Self) -> Int?
 pub fn Trainer::progress_format(Self) -> String?
 pub fn Trainer::seed_size(Self) -> Int?
+pub fn Trainer::set_byte_fallback(Self, Bool) -> Self
+pub fn Trainer::set_byte_fallback_alias(Self, Bool) -> Self
+pub fn Trainer::set_continuing_subword_prefix(Self, String?) -> Self
+pub fn Trainer::set_continuing_subword_prefix_alias(Self, String?) -> Self
+pub fn Trainer::set_end_of_word_suffix(Self, String?) -> Self
+pub fn Trainer::set_end_of_word_suffix_alias(Self, String?) -> Self
+pub fn Trainer::set_fuse_unk(Self, Bool) -> Self
+pub fn Trainer::set_fuse_unk_alias(Self, Bool) -> Self
+pub fn Trainer::set_initial_alphabet(Self, Array[String]) -> Self
+pub fn Trainer::set_initial_alphabet_alias(Self, Array[String]) -> Self
+pub fn Trainer::set_limit_alphabet(Self, Int?) -> Self
+pub fn Trainer::set_limit_alphabet_alias(Self, Int?) -> Self
+pub fn Trainer::set_max_input_chars_per_word(Self, Int) -> Self
+pub fn Trainer::set_max_input_chars_per_word_alias(Self, Int) -> Self
+pub fn Trainer::set_max_piece_length(Self, Int?) -> Self
+pub fn Trainer::set_max_piece_length_alias(Self, Int?) -> Self
+pub fn Trainer::set_max_token_length(Self, Int?) -> Self
+pub fn Trainer::set_max_token_length_alias(Self, Int?) -> Self
+pub fn Trainer::set_min_frequency(Self, Int) -> Self
+pub fn Trainer::set_min_frequency_alias(Self, Int) -> Self
+pub fn Trainer::set_n_sub_iterations(Self, Int) -> Self
+pub fn Trainer::set_n_sub_iterations_alias(Self, Int) -> Self
+pub fn Trainer::set_progress_format(Self, String) -> Self
+pub fn Trainer::set_progress_format_alias(Self, String) -> Self
+pub fn Trainer::set_seed_size(Self, Int) -> Self
+pub fn Trainer::set_seed_size_alias(Self, Int) -> Self
+pub fn Trainer::set_show_progress(Self, Bool) -> Self
+pub fn Trainer::set_show_progress_alias(Self, Bool) -> Self
+pub fn Trainer::set_shrinking_factor(Self, Double) -> Self
+pub fn Trainer::set_shrinking_factor_alias(Self, Double) -> Self
+pub fn Trainer::set_special_added_tokens(Self, Array[AddedToken]) -> Self
+pub fn Trainer::set_special_added_tokens_alias(Self, Array[AddedToken]) -> Self
+pub fn Trainer::set_special_tokens(Self, Array[String]) -> Self
+pub fn Trainer::set_special_tokens_alias(Self, Array[String]) -> Self
+pub fn Trainer::set_unk_token(Self, String?) -> Self
+pub fn Trainer::set_unk_token_alias(Self, String?) -> Self
+pub fn Trainer::set_vocab_size(Self, Int?) -> Self
+pub fn Trainer::set_vocab_size_alias(Self, Int?) -> Self
 pub fn Trainer::show_progress(Self) -> Bool
 pub fn Trainer::shrinking_factor(Self) -> Double?
 pub fn Trainer::special_added_tokens(Self) -> Array[AddedToken]
