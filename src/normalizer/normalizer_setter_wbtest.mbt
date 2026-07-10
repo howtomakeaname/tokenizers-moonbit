@@ -27,8 +27,10 @@ test "Normalizer::set_left on non-Strip returns self" {
 ///|
 test "Normalizer::set_clean_text for BertNormalizer" {
   let n = BertNormalizer(
-    clean_text=true, handle_chinese_chars=true,
-    strip_accents=Some(false), lowercase=false,
+    clean_text=true,
+    handle_chinese_chars=true,
+    strip_accents=Some(false),
+    lowercase=false,
   )
   @test.assert_eq(n.clean_text(), Some(true))
   let n2 = n.set_clean_text(false)
@@ -39,8 +41,10 @@ test "Normalizer::set_clean_text for BertNormalizer" {
 ///|
 test "Normalizer::set_handle_chinese_chars for BertNormalizer" {
   let n = BertNormalizer(
-    clean_text=true, handle_chinese_chars=true,
-    strip_accents=None, lowercase=true,
+    clean_text=true,
+    handle_chinese_chars=true,
+    strip_accents=None,
+    lowercase=true,
   )
   @test.assert_eq(n.handle_chinese_chars(), Some(true))
   let n2 = n.set_handle_chinese_chars(false)
@@ -51,8 +55,10 @@ test "Normalizer::set_handle_chinese_chars for BertNormalizer" {
 ///|
 test "Normalizer::set_strip_accents for BertNormalizer" {
   let n = BertNormalizer(
-    clean_text=true, handle_chinese_chars=true,
-    strip_accents=None, lowercase=false,
+    clean_text=true,
+    handle_chinese_chars=true,
+    strip_accents=None,
+    lowercase=false,
   )
   @test.assert_eq(n.strip_accents(), None)
   let n2 = n.set_strip_accents(Some(true))
@@ -62,8 +68,10 @@ test "Normalizer::set_strip_accents for BertNormalizer" {
 ///|
 test "Normalizer::set_lowercase for BertNormalizer" {
   let n = BertNormalizer(
-    clean_text=true, handle_chinese_chars=false,
-    strip_accents=None, lowercase=false,
+    clean_text=true,
+    handle_chinese_chars=false,
+    strip_accents=None,
+    lowercase=false,
   )
   @test.assert_eq(n.lowercase(), Some(false))
   let n2 = n.set_lowercase(true)
