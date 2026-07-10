@@ -19,6 +19,8 @@ fn mk_unigram(
     unk_id,
     byte_fallback,
     fuse_unk,
+    alpha: None,
+    nbest_size: None,
     cache: {},
     cache_capacity: None,
   })
@@ -103,4 +105,61 @@ test "unigram byte_fallback does not bypass missing unk_id" {
     _ => ()
   }
   @test.assert_eq(raised, true)
+}
+
+///|
+test "unigram alpha/nbest_size default to None" {
+  let model = mk_unigram([("a", 0.0), ("b", -1.0)], None, false, true)
+  @test.assert_eq(model.alpha(), None)
+  @test.assert_eq(model.get_alpha(), None)
+  @test.assert_eq(model.nbest_size(), None)
+  @test.assert_eq(model.get_nbest_size(), None)
+}
+
+///|
+test "unigram alpha/nbest_size JSON round-trip" {
+  // Create a model with alpha and nbest_size set
+  let v : Map[String, (Int, Double)] = {}
+  let vr : Array[String?] = []
+  v["a"] = (0, 0.0)
+  v["b"] = (1, -1.0)
+  set_vocab_r(vr, 0, "a")
+  set_vocab_r(vr, 1, "b")
+  let model = Unigram(UnigramModel::{
+    vocab: v,
+    vocab_r: vr,
+    unk_id: None,
+    byte_fallback: false,
+    fuse_unk: true,
+    alpha: Some(0.5),
+    nbest_size: Some(10),
+    cache: {},
+    cache_capacity: None,
+  })
+  // Verify getters
+  @test.assert_eq(model.alpha(), Some(0.5))
+  @test.assert_eq(model.get_alpha(), Some(0.5))
+  @test.assert_eq(model.nbest_size(), Some(10))
+  @test.assert_eq(model.get_nbest_size(), Some(10))
+  // Serialize to JSON
+  let json = model.to_json().unwrap()
+  @test.assert_eq(json.contains("\"alpha\":0.5"), true)
+  @test.assert_eq(json.contains("\"nbest_size\":10"), true)
+}
+
+///|
+test "unigram alpha/nbest_size not serialized when None" {
+  let model = mk_unigram([("a", 0.0)], None, false, true)
+  let json = model.to_json().unwrap()
+  @test.assert_eq(json.contains("alpha"), false)
+  @test.assert_eq(json.contains("nbest_size"), false)
+}
+
+///|
+test "unigram alpha=0.0 behaves like Viterbi" {
+  // alpha=0.0 should be treated as deterministic (same as None)
+  let model = mk_unigram([("a", 0.0), ("b", -1.0)], None, false, true)
+  let toks = model.tokenize("ab")
+  @test.assert_eq(unigram_surfaces(toks), ["a", "b"])
+  @test.assert_eq(unigram_ids(toks), [0, 1])
 }

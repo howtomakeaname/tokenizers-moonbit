@@ -235,6 +235,19 @@ fn get_optional_int_strict(
 }
 
 ///|
+fn get_optional_number_strict(
+  obj : Map[String, Json],
+  key : String,
+  ctx : String,
+) -> Double? raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(Number(n, ..)) => Some(n)
+    Some(Null) | None => None
+    Some(_) => raise @types.ParseError("\{ctx}: non-number \"\{key}\" field")
+  }
+}
+
+///|
 fn parse_wordlevel(
   obj : Map[String, Json],
 ) -> WordLevelModel raise @types.TokenizerError {
@@ -300,6 +313,8 @@ fn parse_unigram(
       "Unigram model",
     ),
     fuse_unk: get_bool_strict(obj, "fuse_unk", default=true, "Unigram model"),
+    alpha: get_optional_number_strict(obj, "alpha", "Unigram model"),
+    nbest_size: get_optional_int_strict(obj, "nbest_size", "Unigram model"),
     cache: {},
     cache_capacity: None,
   }

@@ -873,6 +873,8 @@ pub fn Model::train_unigram_from_tokens(
     unk_id,
     byte_fallback,
     fuse_unk,
+    alpha: None,
+    nbest_size: None,
     cache: {},
     cache_capacity: None,
   })

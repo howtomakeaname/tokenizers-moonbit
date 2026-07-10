@@ -69,6 +69,12 @@ pub struct UnigramModel {
   unk_id : Int?
   byte_fallback : Bool
   fuse_unk : Bool
+  // Sampling temperature: when set (> 0), use sampling instead of Viterbi.
+  // None or 0.0 means deterministic Viterbi (default HF behavior).
+  alpha : Double?
+  // N-best paths for sampling: when set (> 0) with alpha, sample from top-N paths.
+  // None or 0 means sample from full lattice when alpha is set.
+  nbest_size : Int?
   cache : Map[String, Array[@types.Token]]
   mut cache_capacity : Int?
 }
@@ -280,6 +286,34 @@ pub fn Model::dropout(self : Model) -> Double? {
 ///|
 pub fn Model::get_dropout(self : Model) -> Double? {
   self.dropout()
+}
+
+///|
+/// Unigram sampling temperature. None or 0.0 means deterministic Viterbi.
+pub fn Model::alpha(self : Model) -> Double? {
+  match self {
+    Unigram(m) => m.alpha
+    _ => None
+  }
+}
+
+///|
+pub fn Model::get_alpha(self : Model) -> Double? {
+  self.alpha()
+}
+
+///|
+/// Unigram N-best size for sampling. None or 0 means sample from full lattice.
+pub fn Model::nbest_size(self : Model) -> Int? {
+  match self {
+    Unigram(m) => m.nbest_size
+    _ => None
+  }
+}
+
+///|
+pub fn Model::get_nbest_size(self : Model) -> Int? {
+  self.nbest_size()
 }
 
 ///|
@@ -800,6 +834,20 @@ fn unigram_to_json(m : UnigramModel) -> String {
   }
   if !m.fuse_unk {
     sb.write_string(",\"fuse_unk\":false")
+  }
+  match m.alpha {
+    Some(a) => {
+      sb.write_string(",\"alpha\":")
+      write_unigram_score(sb, a)
+    }
+    None => ()
+  }
+  match m.nbest_size {
+    Some(n) => {
+      sb.write_string(",\"nbest_size\":")
+      sb.write_string(n.to_string())
+    }
+    None => ()
   }
   sb.write_char('}')
   sb.to_string()

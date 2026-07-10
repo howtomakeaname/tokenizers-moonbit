@@ -40,6 +40,7 @@ pub fn Model::__setstate__(ModelState) -> Self raise @types.TokenizerError
 pub fn Model::__str__(Self) -> String raise @types.TokenizerError
 pub fn Model::_clear_cache(Self) -> Unit
 pub fn Model::_resize_cache(Self, Int) -> Unit
+pub fn Model::alpha(Self) -> Double?
 pub fn Model::bpe_from_file(String, String, unk_token? : String?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?) -> Self raise @types.TokenizerError
 pub fn Model::bpe_read_file(String, String, unk_token? : String?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?) -> Self raise @types.TokenizerError
 pub fn Model::byte_fallback(Self) -> Bool?
@@ -55,6 +56,7 @@ pub fn Model::from_unigram_file(String) -> Self raise @types.TokenizerError
 pub fn Model::from_wordlevel_file(String, unk_token? : String) -> Self raise @types.TokenizerError
 pub fn Model::from_wordpiece_file(String, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int) -> Self raise @types.TokenizerError
 pub fn Model::fuse_unk(Self) -> Bool?
+pub fn Model::get_alpha(Self) -> Double?
 pub fn Model::get_byte_fallback(Self) -> Bool?
 pub fn Model::get_continuing_subword_prefix(Self) -> String?
 pub fn Model::get_dropout(Self) -> Double?
@@ -62,6 +64,7 @@ pub fn Model::get_end_of_word_suffix(Self) -> String?
 pub fn Model::get_fuse_unk(Self) -> Bool?
 pub fn Model::get_ignore_merges(Self) -> Bool?
 pub fn Model::get_max_input_chars_per_word(Self) -> Int?
+pub fn Model::get_nbest_size(Self) -> Int?
 pub fn Model::get_state(Self) -> ModelState raise @types.TokenizerError
 pub fn Model::get_unk_id(Self) -> Int?
 pub fn Model::get_unk_token(Self) -> String?
@@ -71,6 +74,7 @@ pub fn Model::id_to_token(Self, Int) -> String?
 pub fn Model::ignore_merges(Self) -> Bool?
 pub fn Model::kind(Self) -> String
 pub fn Model::max_input_chars_per_word(Self) -> Int?
+pub fn Model::nbest_size(Self) -> Int?
 pub fn Model::resize_cache(Self, Int) -> Unit
 pub fn Model::save(Self, String, prefix? : String) -> Array[String] raise @types.TokenizerError
 pub fn Model::to_json(Self) -> String?
@@ -106,6 +110,8 @@ pub struct UnigramModel {
   unk_id : Int?
   byte_fallback : Bool
   fuse_unk : Bool
+  alpha : Double?
+  nbest_size : Int?
   cache : Map[String, Array[@types.Token]]
   mut cache_capacity : Int?
 }
