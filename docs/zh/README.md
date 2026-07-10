@@ -13,11 +13,11 @@ createTime: 2026/07/10 00:00:00
 
 | 主题 | 链接 | 内容 |
 |---|---|---|
-| 英文指南 | [Get Started](/tokenizers-moonbit/guide/getting-started/) | 结构化指南与图表 |
-| 中文使用指南 | [Usage](/tokenizers-moonbit/zh/usage/) | 加载、编码、padding/truncation |
-| 中文 API | [API](/tokenizers-moonbit/zh/api/) | 完整签名说明 |
-| 组件与限制 | [Components](/tokenizers-moonbit/zh/components/) | 支持矩阵和已知边界 |
-| 迁移指南 | [Migration](/tokenizers-moonbit/zh/migration-from-hf/) | 从 HuggingFace 迁移 |
+| 英文指南 | [Get Started](/tokenizers-moonbit/guide/getting-started.html) | 结构化指南与图表 |
+| 中文使用指南 | [Usage](/tokenizers-moonbit/zh/usage.html) | 加载、编码、padding/truncation |
+| 中文 API | [API](/tokenizers-moonbit/zh/api.html) | 完整签名说明 |
+| 组件与限制 | [Components](/tokenizers-moonbit/zh/components.html) | 支持矩阵和已知边界 |
+| 迁移指南 | [Migration](/tokenizers-moonbit/zh/migration-from-hf.html) | 从 HuggingFace 迁移 |
 
 ## 核心能力
 

@@ -1,6 +1,6 @@
 import type { ThemeSidebarMulti } from 'vuepress-theme-plume'
 
-export const sidebar: ThemeSidebarMulti = {
+export const enSidebar: ThemeSidebarMulti = {
   '/guide/': [
     {
       text: 'Guide',
@@ -78,6 +78,9 @@ export const sidebar: ThemeSidebarMulti = {
       ],
     },
   ],
+}
+
+export const zhSidebar: ThemeSidebarMulti = {
   '/zh/': [
     {
       text: '中文',

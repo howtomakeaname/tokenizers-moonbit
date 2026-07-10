@@ -1,8 +1,8 @@
 import { defineUserConfig } from 'vuepress'
 import { viteBundler } from '@vuepress/bundler-vite'
 import { plumeTheme } from 'vuepress-theme-plume'
-import { navbar } from './navbar.js'
-import { sidebar } from './sidebar.js'
+import { enNavbar, zhNavbar } from './navbar.js'
+import { enSidebar, zhSidebar } from './sidebar.js'
 
 export default defineUserConfig({
   lang: 'en-US',
@@ -32,8 +32,8 @@ export default defineUserConfig({
   theme: plumeTheme({
     logo: false,
     appearance: true,
-    navbar,
-    sidebar,
+    navbar: enNavbar,
+    sidebar: enSidebar,
     sidebarScrollbar: true,
     outline: [2, 3],
     docsRepo: 'https://github.com/howtomakeaname/tokenizers-moonbit',
@@ -50,6 +50,17 @@ export default defineUserConfig({
     ],
     search: {
       provider: 'local',
+    },
+    locales: {
+      '/zh/': {
+        navbar: zhNavbar,
+        sidebar: zhSidebar,
+        selectLanguageText: '选择语言',
+        selectLanguageName: '简体中文',
+        editLinkText: '在 GitHub 上编辑此页',
+        lastUpdatedText: '最后更新',
+        contributorsText: '贡献者',
+      },
     },
     plugins: {
       markdownChart: {

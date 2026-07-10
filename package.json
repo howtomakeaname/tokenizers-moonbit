@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@vuepress/bundler-vite": "2.0.0-rc.30",
+    "@vuepress/plugin-markdown-chart": "2.0.0-rc.131",
     "mermaid": "^11.14.0",
     "typescript": "^5.9.3",
     "vue": "^3.5.39",

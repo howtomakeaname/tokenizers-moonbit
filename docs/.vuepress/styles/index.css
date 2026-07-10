@@ -1,0 +1,93 @@
+.mermaid-wrapper {
+  margin: 1rem 0 1.5rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  background: var(--vp-c-bg-soft);
+  overflow: auto;
+}
+
+.mermaid-content {
+  display: flex;
+  justify-content: center;
+  min-width: 100%;
+  padding: 1rem;
+}
+
+.mermaid-content svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-actions {
+  margin-top: 1rem;
+}
+
+.mermaid-content .node rect,
+.mermaid-content .node polygon,
+.mermaid-content .node circle,
+.mermaid-content .node ellipse {
+  fill: #dff5ec !important;
+  stroke: #2c8f6b !important;
+}
+
+.mermaid-content .cluster rect {
+  fill: #f8fbfa !important;
+  stroke: #8bb7a4 !important;
+}
+
+.mermaid-content .edgePath .path {
+  stroke: #4d6f64 !important;
+}
+
+.mermaid-content .edgeLabel,
+.mermaid-content .label,
+.mermaid-content .nodeLabel,
+.mermaid-content .cluster-label,
+.mermaid-content .labelText {
+  color: #1d2f2a !important;
+}
+
+.mermaid-content text,
+.mermaid-content tspan {
+  fill: #1d2f2a !important;
+}
+
+.mermaid-content .edgeLabel rect,
+.mermaid-content .labelBkg {
+  fill: #ffffff !important;
+}
+
+[data-theme="dark"] .mermaid-content .node rect,
+[data-theme="dark"] .mermaid-content .node polygon,
+[data-theme="dark"] .mermaid-content .node circle,
+[data-theme="dark"] .mermaid-content .node ellipse {
+  fill: #12352a !important;
+  stroke: #6fd3a7 !important;
+}
+
+[data-theme="dark"] .mermaid-content .cluster rect {
+  fill: #101a17 !important;
+  stroke: #4d8f74 !important;
+}
+
+[data-theme="dark"] .mermaid-content .edgePath .path {
+  stroke: #9bb8ad !important;
+}
+
+[data-theme="dark"] .mermaid-content .edgeLabel,
+[data-theme="dark"] .mermaid-content .label,
+[data-theme="dark"] .mermaid-content .nodeLabel,
+[data-theme="dark"] .mermaid-content .cluster-label,
+[data-theme="dark"] .mermaid-content .labelText {
+  color: #e0eee8 !important;
+}
+
+[data-theme="dark"] .mermaid-content text,
+[data-theme="dark"] .mermaid-content tspan {
+  fill: #e0eee8 !important;
+}
+
+[data-theme="dark"] .mermaid-content .edgeLabel rect,
+[data-theme="dark"] .mermaid-content .labelBkg {
+  fill: #0f1412 !important;
+}
