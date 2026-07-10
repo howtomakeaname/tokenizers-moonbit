@@ -14,13 +14,54 @@ Benchmarks compare MoonBit encode/decode/load performance against Python
 
 ## Charts
 
-<BenchmarkChart src="/benchmarks/charts/ratio-bar.json" title="Moon/HF Ratio by Case" :height="350" />
+### Moon/HF Ratio by Case
 
-<BenchmarkChart src="/benchmarks/charts/scatter.json" title="Moon µs vs HF µs" :height="400" />
+::: echarts Moon/HF Ratio
+```json
+{
+  "tooltip": { "trigger": "axis", "axisPointer": { "type": "shadow" } },
+  "grid": { "left": "3%", "right": "4%", "bottom": "3%", "containLabel": true },
+  "xAxis": { "type": "value", "name": "Moon/HF Ratio", "min": 0, "max": 1.5, "splitLine": { "lineStyle": { "type": "dashed" } } },
+  "yAxis": { "type": "category", "data": ["llama-encode", "gpt2-encode", "bert-encode", "gpt2-decode", "bert-decode", "llama-decode"], "axisLabel": { "fontSize": 11 } },
+  "series": [{
+    "type": "bar",
+    "data": [
+      { "value": 0.28, "itemStyle": { "color": "#22c55e" } },
+      { "value": 0.43, "itemStyle": { "color": "#22c55e" } },
+      { "value": 0.53, "itemStyle": { "color": "#22c55e" } },
+      { "value": 0.50, "itemStyle": { "color": "#22c55e" } },
+      { "value": 0.13, "itemStyle": { "color": "#22c55e" } },
+      { "value": 0.17, "itemStyle": { "color": "#22c55e" } }
+    ],
+    "label": { "show": true, "position": "right", "formatter": "{c}x", "fontSize": 11 },
+    "markLine": { "silent": true, "data": [{ "xAxis": 1, "lineStyle": { "color": "#9ca3af", "type": "dashed" } }], "label": { "formatter": "1.0x" } }
+  }]
+}
+```
+:::
 
-<BenchmarkChart src="/benchmarks/charts/summary.json" title="Performance Distribution" :height="350" />
+### Performance Distribution
 
-<BenchmarkChart src="/benchmarks/charts/model-bar.json" title="Average Ratio by Model" :height="350" />
+::: echarts Performance Summary
+```json
+{
+  "tooltip": { "trigger": "item", "formatter": "{b}: {c} ({d}%)" },
+  "legend": { "bottom": "5%", "left": "center" },
+  "series": [{
+    "type": "pie",
+    "radius": ["40%", "70%"],
+    "avoidLabelOverlap": true,
+    "itemStyle": { "borderRadius": 6, "borderColor": "#fff", "borderWidth": 2 },
+    "label": { "show": true, "formatter": "{b}\n{c}" },
+    "data": [
+      { "value": 35, "name": "Faster (< 0.9x)", "itemStyle": { "color": "#22c55e" } },
+      { "value": 4, "name": "Same Range", "itemStyle": { "color": "#f59e0b" } },
+      { "value": 0, "name": "Slower (> 1.1x)", "itemStyle": { "color": "#ef4444" } }
+    ]
+  }]
+}
+```
+:::
 
 ## Pipeline
 
