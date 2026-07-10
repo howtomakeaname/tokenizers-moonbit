@@ -354,7 +354,7 @@ pub fn Model::set_unk_token_alias(self : Model, token : String) -> Model {
 /// Set the BPE dropout probability. Returns a new Model; non-BPE models unchanged.
 pub fn Model::set_dropout(self : Model, dropout : Double?) -> Model {
   match self {
-    BPE(m) => BPE({ ..m, dropout: dropout })
+    BPE(m) => BPE({ ..m, dropout, })
     _ => self
   }
 }
@@ -367,17 +367,27 @@ pub fn Model::set_dropout_alias(self : Model, dropout : Double?) -> Model {
 
 ///|
 /// Set the continuing_subword_prefix. Returns a new Model; only BPE/WordPiece support it.
-pub fn Model::set_continuing_subword_prefix(self : Model, prefix : String?) -> Model {
+pub fn Model::set_continuing_subword_prefix(
+  self : Model,
+  prefix : String?,
+) -> Model {
   match self {
     BPE(m) => BPE({ ..m, continuing_subword_prefix: prefix })
-    WordPiece(m) => WordPiece({ ..m, continuing_subword_prefix: prefix.unwrap_or(m.continuing_subword_prefix) })
+    WordPiece(m) =>
+      WordPiece({
+        ..m,
+        continuing_subword_prefix: prefix.unwrap_or(m.continuing_subword_prefix),
+      })
     _ => self
   }
 }
 
 ///|
 /// Python/property-style setter alias for continuing_subword_prefix.
-pub fn Model::set_continuing_subword_prefix_alias(self : Model, prefix : String?) -> Model {
+pub fn Model::set_continuing_subword_prefix_alias(
+  self : Model,
+  prefix : String?,
+) -> Model {
   self.set_continuing_subword_prefix(prefix)
 }
 
@@ -393,7 +403,10 @@ pub fn Model::set_end_of_word_suffix(self : Model, suffix : String?) -> Model {
 
 ///|
 /// Python/property-style setter alias for end_of_word_suffix.
-pub fn Model::set_end_of_word_suffix_alias(self : Model, suffix : String?) -> Model {
+pub fn Model::set_end_of_word_suffix_alias(
+  self : Model,
+  suffix : String?,
+) -> Model {
   self.set_end_of_word_suffix(suffix)
 }
 
@@ -455,7 +468,10 @@ pub fn Model::set_max_input_chars_per_word(self : Model, val : Int) -> Model {
 
 ///|
 /// Python/property-style setter alias for max_input_chars_per_word.
-pub fn Model::set_max_input_chars_per_word_alias(self : Model, val : Int) -> Model {
+pub fn Model::set_max_input_chars_per_word_alias(
+  self : Model,
+  val : Int,
+) -> Model {
   self.set_max_input_chars_per_word(val)
 }
 
@@ -463,7 +479,7 @@ pub fn Model::set_max_input_chars_per_word_alias(self : Model, val : Int) -> Mod
 /// Set alpha (sampling temperature) for Unigram models. Returns a new Model; non-Unigram unchanged.
 pub fn Model::set_alpha(self : Model, alpha : Double?) -> Model {
   match self {
-    Unigram(m) => Unigram({ ..m, alpha: alpha })
+    Unigram(m) => Unigram({ ..m, alpha, })
     _ => self
   }
 }
@@ -478,7 +494,7 @@ pub fn Model::set_alpha_alias(self : Model, alpha : Double?) -> Model {
 /// Set nbest_size for Unigram models. Returns a new Model; non-Unigram unchanged.
 pub fn Model::set_nbest_size(self : Model, nbest_size : Int?) -> Model {
   match self {
-    Unigram(m) => Unigram({ ..m, nbest_size: nbest_size })
+    Unigram(m) => Unigram({ ..m, nbest_size, })
     _ => self
   }
 }
@@ -489,6 +505,7 @@ pub fn Model::set_nbest_size_alias(self : Model, nbest_size : Int?) -> Model {
   self.set_nbest_size(nbest_size)
 }
 
+///|
 /// Look up a token surface by id (decode direction).
 pub fn Model::id_to_token(self : Model, id : Int) -> String? {
   match self {

@@ -22,9 +22,14 @@ test "Model::set_unk_token for WordPiece" {
   set_vocab_r(vr, 1, "world")
   set_vocab_r(vr, 2, "[UNK]")
   let m = WordPiece(WordPieceModel::{
-    vocab: v, vocab_r: vr, unk_token: "[UNK]",
-    continuing_subword_prefix: "##", end_of_word_suffix: None,
-    max_input_chars_per_word: 100, cache: {}, cache_capacity: None,
+    vocab: v,
+    vocab_r: vr,
+    unk_token: "[UNK]",
+    continuing_subword_prefix: "##",
+    end_of_word_suffix: None,
+    max_input_chars_per_word: 100,
+    cache: {},
+    cache_capacity: None,
   })
   @test.assert_eq(m.unk_token(), Some("[UNK]"))
   let m2 = m.set_unk_token("<unk>")
@@ -46,9 +51,15 @@ test "Model::set_dropout for non-BPE returns self" {
   let vr : Array[String?] = []
   set_vocab_r(vr, 0, "a")
   let m = Unigram(UnigramModel::{
-    vocab: { "a": (0, -1.0) }, vocab_r: vr, unk_id: None,
-    byte_fallback: false, fuse_unk: false,
-    alpha: None, nbest_size: None, cache: {}, cache_capacity: None,
+    vocab: { "a": (0, -1.0) },
+    vocab_r: vr,
+    unk_id: None,
+    byte_fallback: false,
+    fuse_unk: false,
+    alpha: None,
+    nbest_size: None,
+    cache: {},
+    cache_capacity: None,
   })
   // set_dropout on Unigram should be a no-op
   let m2 = m.set_dropout(Some(0.5))
@@ -100,9 +111,15 @@ test "Model::set_alpha for Unigram" {
   let vr : Array[String?] = []
   set_vocab_r(vr, 0, "a")
   let m = Unigram(UnigramModel::{
-    vocab: { "a": (0, -1.0) }, vocab_r: vr, unk_id: None,
-    byte_fallback: false, fuse_unk: false,
-    alpha: None, nbest_size: None, cache: {}, cache_capacity: None,
+    vocab: { "a": (0, -1.0) },
+    vocab_r: vr,
+    unk_id: None,
+    byte_fallback: false,
+    fuse_unk: false,
+    alpha: None,
+    nbest_size: None,
+    cache: {},
+    cache_capacity: None,
   })
   @test.assert_eq(m.alpha(), None)
   let m2 = m.set_alpha(Some(0.5))
@@ -114,9 +131,15 @@ test "Model::set_nbest_size for Unigram" {
   let vr : Array[String?] = []
   set_vocab_r(vr, 0, "a")
   let m = Unigram(UnigramModel::{
-    vocab: { "a": (0, -1.0) }, vocab_r: vr, unk_id: None,
-    byte_fallback: false, fuse_unk: false,
-    alpha: None, nbest_size: None, cache: {}, cache_capacity: None,
+    vocab: { "a": (0, -1.0) },
+    vocab_r: vr,
+    unk_id: None,
+    byte_fallback: false,
+    fuse_unk: false,
+    alpha: None,
+    nbest_size: None,
+    cache: {},
+    cache_capacity: None,
   })
   @test.assert_eq(m.nbest_size(), None)
   let m2 = m.set_nbest_size(Some(10))
@@ -129,9 +152,14 @@ test "Model::set_max_input_chars_per_word for WordPiece" {
   let vr : Array[String?] = []
   set_vocab_r(vr, 0, "a")
   let m = WordPiece(WordPieceModel::{
-    vocab: v, vocab_r: vr, unk_token: "[UNK]",
-    continuing_subword_prefix: "##", end_of_word_suffix: None,
-    max_input_chars_per_word: 100, cache: {}, cache_capacity: None,
+    vocab: v,
+    vocab_r: vr,
+    unk_token: "[UNK]",
+    continuing_subword_prefix: "##",
+    end_of_word_suffix: None,
+    max_input_chars_per_word: 100,
+    cache: {},
+    cache_capacity: None,
   })
   @test.assert_eq(m.max_input_chars_per_word(), Some(100))
   let m2 = m.set_max_input_chars_per_word(200)
