@@ -26,3 +26,4 @@ tests/data/parity/
 
 # Local-only docs (submission docs, drafts) — not version-controlled
 docs/.ignore/
+GOAL.md

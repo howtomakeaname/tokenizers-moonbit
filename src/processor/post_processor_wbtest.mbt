@@ -333,3 +333,117 @@ test "post-processors expose JSON state and string aliases" {
   @test.assert_eq(parsed.trim_offsets(), Some(false))
   @test.assert_eq(parsed.add_prefix_space(), Some(false))
 }
+
+///|
+
+///|
+test "PostProcessor set_trim_offsets" {
+  let roberta = PostProcessor::roberta(("</s>", 2), ("<s>", 0))
+  let roberta2 = roberta.set_trim_offsets(false)
+  @test.assert_eq(roberta2.get_trim_offsets(), Some(false))
+
+  let byte_level = PostProcessor::byte_level()
+  let byte_level2 = byte_level.set_trim_offsets(false)
+  @test.assert_eq(byte_level2.get_trim_offsets(), Some(false))
+
+  // Non-matching variant returns self
+  let bert = PostProcessor::bert(("[SEP]", 102), ("[CLS]", 101))
+  @test.assert_eq(bert.set_trim_offsets(true).to_json(), bert.to_json())
+}
+
+///|
+test "PostProcessor set_trim_offsets_alias" {
+  let roberta = PostProcessor::roberta(("</s>", 2), ("<s>", 0))
+  let roberta2 = roberta.set_trim_offsets_alias(false)
+  @test.assert_eq(roberta2.get_trim_offsets(), Some(false))
+}
+
+///|
+test "PostProcessor set_add_prefix_space" {
+  let roberta = PostProcessor::roberta(("</s>", 2), ("<s>", 0))
+  let roberta2 = roberta.set_add_prefix_space(false)
+  @test.assert_eq(roberta2.get_add_prefix_space(), Some(false))
+
+  let byte_level = PostProcessor::byte_level()
+  let byte_level2 = byte_level.set_add_prefix_space(false)
+  @test.assert_eq(byte_level2.get_add_prefix_space(), Some(false))
+
+  // Non-matching variant returns self
+  let bert = PostProcessor::bert(("[SEP]", 102), ("[CLS]", 101))
+  @test.assert_eq(bert.set_add_prefix_space(true).to_json(), bert.to_json())
+}
+
+///|
+test "PostProcessor set_add_prefix_space_alias" {
+  let byte_level = PostProcessor::byte_level()
+  let byte_level2 = byte_level.set_add_prefix_space_alias(false)
+  @test.assert_eq(byte_level2.get_add_prefix_space(), Some(false))
+}
+
+///|
+test "PostProcessor set_use_regex" {
+  let byte_level = PostProcessor::byte_level()
+  let byte_level2 = byte_level.set_use_regex(false)
+  @test.assert_eq(byte_level2.get_use_regex(), Some(false))
+
+  // Non-matching variant returns self
+  let bert = PostProcessor::bert(("[SEP]", 102), ("[CLS]", 101))
+  @test.assert_eq(bert.set_use_regex(true).to_json(), bert.to_json())
+}
+
+///|
+test "PostProcessor set_use_regex_alias" {
+  let byte_level = PostProcessor::byte_level()
+  let byte_level2 = byte_level.set_use_regex_alias(false)
+  @test.assert_eq(byte_level2.get_use_regex(), Some(false))
+}
+
+///|
+test "PostProcessor set_sep" {
+  let bert = PostProcessor::bert(("[SEP]", 102), ("[CLS]", 101))
+  let bert2 = bert.set_sep(("[SEP]", 202))
+  @test.assert_eq(bert2.get_sep(), Some(("[SEP]", 202)))
+
+  let roberta = PostProcessor::roberta(("</s>", 2), ("<s>", 0))
+  let roberta2 = roberta.set_sep(("[SEP]", 102))
+  @test.assert_eq(roberta2.get_sep(), Some(("[SEP]", 102)))
+
+  // Non-matching variant returns self
+  let byte_level = PostProcessor::byte_level()
+  @test.assert_eq(
+    byte_level.set_sep(("[SEP]", 102)).to_json(),
+    byte_level.to_json(),
+  )
+}
+
+///|
+test "PostProcessor set_sep_alias" {
+  let bert = PostProcessor::bert(("[SEP]", 102), ("[CLS]", 101))
+  let bert2 = bert.set_sep_alias(("[SEP]", 202))
+  @test.assert_eq(bert2.get_sep(), Some(("[SEP]", 202)))
+}
+
+///|
+test "PostProcessor set_cls" {
+  let bert = PostProcessor::bert(("[SEP]", 102), ("[CLS]", 101))
+  let bert2 = bert.set_cls(("[CLS]", 201))
+  @test.assert_eq(bert2.get_cls(), Some(("[CLS]", 201)))
+
+  let roberta = PostProcessor::roberta(("</s>", 2), ("<s>", 0))
+  let roberta2 = roberta.set_cls(("[CLS]", 101))
+  @test.assert_eq(roberta2.get_cls(), Some(("[CLS]", 101)))
+
+  // Non-matching variant returns self
+  let byte_level = PostProcessor::byte_level()
+  @test.assert_eq(
+    byte_level.set_cls(("[CLS]", 101)).to_json(),
+    byte_level.to_json(),
+  )
+}
+
+///|
+test "PostProcessor set_cls_alias" {
+  let roberta = PostProcessor::roberta(("</s>", 2), ("<s>", 0))
+  let roberta2 = roberta.set_cls(("[CLS]", 101))
+  @test.assert_eq(roberta2.get_cls(), Some(("[CLS]", 101)))
+}

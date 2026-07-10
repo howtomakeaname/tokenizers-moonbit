@@ -389,6 +389,34 @@ fn Decoder::byte_fallback() -> Decoder
 fn Decoder::ctc(
   pad_token? : String = "<pad>", word_delimiter_token? : String = "|", cleanup? : Bool = true,
 ) -> Decoder
+#### Decoder setter aliases (Python binding compatibility)
+
+```moonbit
+fn Decoder::set_add_prefix_space(self : Decoder, val : Bool) -> Decoder
+fn Decoder::set_trim_offsets(self : Decoder, val : Bool) -> Decoder
+fn Decoder::set_use_regex(self : Decoder, val : Bool) -> Decoder
+fn Decoder::set_prefix(self : Decoder, val : String) -> Decoder
+fn Decoder::set_cleanup(self : Decoder, val : Bool) -> Decoder
+fn Decoder::set_replacement(self : Decoder, val : Char) -> Decoder
+fn Decoder::set_prepend_scheme(self : Decoder, val : String) -> Decoder
+fn Decoder::set_split_enabled(self : Decoder, val : Bool) -> Decoder
+fn Decoder::set_suffix(self : Decoder, val : String) -> Decoder
+fn Decoder::set_content(self : Decoder, val : String) -> Decoder
+fn Decoder::set_start(self : Decoder, val : Int) -> Decoder
+fn Decoder::set_stop(self : Decoder, val : Int) -> Decoder
+fn Decoder::set_left(self : Decoder, val : Int) -> Decoder
+fn Decoder::set_right(self : Decoder, val : Int) -> Decoder
+fn Decoder::set_pad_token(self : Decoder, val : String) -> Decoder
+fn Decoder::set_word_delimiter_token(self : Decoder, val : String) -> Decoder
+```
+
+Corresponding to HF Python `Decoder` property setters, MoonBit provides `set_*`
+methods that return a new Decoder, preserving immutability. Each setter only
+modifies the relevant decoder variant's field; other variants return the
+original Decoder unchanged. Setters that apply to multiple variants (e.g.
+`set_cleanup` for WordPiece and CTC, `set_content` for Replace and
+ReplaceString) handle all matching variants.
+
 
 fn PostProcessor::bert(sep : (String, Int), cls : (String, Int)) -> PostProcessor
 fn PostProcessor::bert_processing(sep : (String, Int), cls : (String, Int)) -> PostProcessor
@@ -414,6 +442,23 @@ fn PostProcessor::template_from_strings(
   single : String, pair : String, special_tokens : Map[String, SpecialToken],
 ) -> PostProcessor raise TokenizerError
 fn PostProcessor::sequence(steps : Array[PostProcessor]) -> PostProcessor
+#### PostProcessor setter aliases (Python binding compatibility)
+
+```moonbit
+fn PostProcessor::set_trim_offsets(self : PostProcessor, val : Bool) -> PostProcessor
+fn PostProcessor::set_add_prefix_space(self : PostProcessor, val : Bool) -> PostProcessor
+fn PostProcessor::set_use_regex(self : PostProcessor, val : Bool) -> PostProcessor
+fn PostProcessor::set_sep(self : PostProcessor, val : (String, Int)) -> PostProcessor
+fn PostProcessor::set_cls(self : PostProcessor, val : (String, Int)) -> PostProcessor
+```
+
+Corresponding to HF Python `PostProcessor` property setters, MoonBit provides
+`set_*` methods that return a new PostProcessor, preserving immutability. Each
+setter only modifies the relevant post-processor variant's field; other variants
+return the original PostProcessor unchanged. Setters that apply to multiple
+variants (e.g. `set_sep` for BertProcessing and RobertaProcessing) handle all
+matching variants.
+
 ```
 
 Builders return a tokenizer and can be chained:

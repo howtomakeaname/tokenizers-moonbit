@@ -375,6 +375,263 @@ pub fn Decoder::__getitem__(self : Decoder, index : Int) -> Decoder? {
 }
 
 ///|
+/// Set add_prefix_space. Returns a new Decoder; only ByteLevel supports it.
+pub fn Decoder::set_add_prefix_space(self : Decoder, val : Bool) -> Decoder {
+  match self {
+    ByteLevel(trim_offsets~, use_regex~, ..) =>
+      ByteLevel(add_prefix_space=val, trim_offsets~, use_regex~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for add_prefix_space.
+pub fn Decoder::set_add_prefix_space_alias(
+  self : Decoder,
+  val : Bool,
+) -> Decoder {
+  self.set_add_prefix_space(val)
+}
+
+///|
+/// Set trim_offsets. Returns a new Decoder; only ByteLevel supports it.
+pub fn Decoder::set_trim_offsets(self : Decoder, val : Bool) -> Decoder {
+  match self {
+    ByteLevel(add_prefix_space~, use_regex~, ..) =>
+      ByteLevel(add_prefix_space~, trim_offsets=val, use_regex~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for trim_offsets.
+pub fn Decoder::set_trim_offsets_alias(self : Decoder, val : Bool) -> Decoder {
+  self.set_trim_offsets(val)
+}
+
+///|
+/// Set use_regex. Returns a new Decoder; only ByteLevel supports it.
+pub fn Decoder::set_use_regex(self : Decoder, val : Bool) -> Decoder {
+  match self {
+    ByteLevel(add_prefix_space~, trim_offsets~, ..) =>
+      ByteLevel(add_prefix_space~, trim_offsets~, use_regex=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for use_regex.
+pub fn Decoder::set_use_regex_alias(self : Decoder, val : Bool) -> Decoder {
+  self.set_use_regex(val)
+}
+
+///|
+/// Set prefix. Returns a new Decoder; only WordPiece supports it.
+pub fn Decoder::set_prefix(self : Decoder, val : String) -> Decoder {
+  match self {
+    WordPiece(cleanup~, ..) => WordPiece(prefix=val, cleanup~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for prefix.
+pub fn Decoder::set_prefix_alias(self : Decoder, val : String) -> Decoder {
+  self.set_prefix(val)
+}
+
+///|
+/// Set cleanup. Returns a new Decoder; WordPiece and CTC support it.
+pub fn Decoder::set_cleanup(self : Decoder, val : Bool) -> Decoder {
+  match self {
+    WordPiece(prefix~, ..) => WordPiece(prefix~, cleanup=val)
+    CTC(pad_token~, word_delimiter_token~, ..) =>
+      CTC(pad_token~, word_delimiter_token~, cleanup=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for cleanup.
+pub fn Decoder::set_cleanup_alias(self : Decoder, val : Bool) -> Decoder {
+  self.set_cleanup(val)
+}
+
+///|
+/// Set replacement. Returns a new Decoder; only Metaspace supports it.
+pub fn Decoder::set_replacement(self : Decoder, val : Char) -> Decoder {
+  match self {
+    Metaspace(prepend_scheme~, split~, ..) =>
+      Metaspace(replacement=val, prepend_scheme~, split~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for replacement.
+pub fn Decoder::set_replacement_alias(self : Decoder, val : Char) -> Decoder {
+  self.set_replacement(val)
+}
+
+///|
+/// Set prepend_scheme. Returns a new Decoder; only Metaspace supports it.
+pub fn Decoder::set_prepend_scheme(self : Decoder, val : String) -> Decoder {
+  match self {
+    Metaspace(replacement~, split~, ..) =>
+      Metaspace(replacement~, prepend_scheme=val, split~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for prepend_scheme.
+pub fn Decoder::set_prepend_scheme_alias(
+  self : Decoder,
+  val : String,
+) -> Decoder {
+  self.set_prepend_scheme(val)
+}
+
+///|
+/// Set split (split_enabled). Returns a new Decoder; only Metaspace supports it.
+pub fn Decoder::set_split_enabled(self : Decoder, val : Bool) -> Decoder {
+  match self {
+    Metaspace(replacement~, prepend_scheme~, ..) =>
+      Metaspace(replacement~, prepend_scheme~, split=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for split_enabled.
+pub fn Decoder::set_split_enabled_alias(self : Decoder, val : Bool) -> Decoder {
+  self.set_split_enabled(val)
+}
+
+///|
+/// Set suffix. Returns a new Decoder; only BPEDecoder supports it.
+pub fn Decoder::set_suffix(self : Decoder, val : String) -> Decoder {
+  match self {
+    BPEDecoder(_) => BPEDecoder(suffix=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for suffix.
+pub fn Decoder::set_suffix_alias(self : Decoder, val : String) -> Decoder {
+  self.set_suffix(val)
+}
+
+///|
+/// Set content. Returns a new Decoder; Replace and ReplaceString support it.
+pub fn Decoder::set_content(self : Decoder, val : String) -> Decoder {
+  match self {
+    Replace(pattern~, ..) => Replace(pattern~, content=val)
+    ReplaceString(pattern~, ..) => ReplaceString(pattern~, content=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for content.
+pub fn Decoder::set_content_alias(self : Decoder, val : String) -> Decoder {
+  self.set_content(val)
+}
+
+///|
+/// Set start. Returns a new Decoder; only Strip supports it.
+pub fn Decoder::set_start(self : Decoder, val : Int) -> Decoder {
+  match self {
+    Strip(content~, stop~, ..) => Strip(content~, start=val, stop~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for start.
+pub fn Decoder::set_start_alias(self : Decoder, val : Int) -> Decoder {
+  self.set_start(val)
+}
+
+///|
+/// Set stop. Returns a new Decoder; only Strip supports it.
+pub fn Decoder::set_stop(self : Decoder, val : Int) -> Decoder {
+  match self {
+    Strip(content~, start~, ..) => Strip(content~, start~, stop=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for stop.
+pub fn Decoder::set_stop_alias(self : Decoder, val : Int) -> Decoder {
+  self.set_stop(val)
+}
+
+///|
+/// Set left (alias for start). Returns a new Decoder; only Strip supports it.
+pub fn Decoder::set_left(self : Decoder, val : Int) -> Decoder {
+  self.set_start(val)
+}
+
+///|
+/// Python/property-style setter alias for left.
+pub fn Decoder::set_left_alias(self : Decoder, val : Int) -> Decoder {
+  self.set_left(val)
+}
+
+///|
+/// Set right (alias for stop). Returns a new Decoder; only Strip supports it.
+pub fn Decoder::set_right(self : Decoder, val : Int) -> Decoder {
+  self.set_stop(val)
+}
+
+///|
+/// Python/property-style setter alias for right.
+pub fn Decoder::set_right_alias(self : Decoder, val : Int) -> Decoder {
+  self.set_right(val)
+}
+
+///|
+/// Set pad_token. Returns a new Decoder; only CTC supports it.
+pub fn Decoder::set_pad_token(self : Decoder, val : String) -> Decoder {
+  match self {
+    CTC(word_delimiter_token~, cleanup~, ..) =>
+      CTC(pad_token=val, word_delimiter_token~, cleanup~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for pad_token.
+pub fn Decoder::set_pad_token_alias(self : Decoder, val : String) -> Decoder {
+  self.set_pad_token(val)
+}
+
+///|
+/// Set word_delimiter_token. Returns a new Decoder; only CTC supports it.
+pub fn Decoder::set_word_delimiter_token(
+  self : Decoder,
+  val : String,
+) -> Decoder {
+  match self {
+    CTC(pad_token~, cleanup~, ..) =>
+      CTC(pad_token~, word_delimiter_token=val, cleanup~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for word_delimiter_token.
+pub fn Decoder::set_word_delimiter_token_alias(
+  self : Decoder,
+  val : String,
+) -> Decoder {
+  self.set_word_delimiter_token(val)
+}
+
+///|
 pub fn Decoder::replace(pattern : String, content : String) -> Decoder {
   ReplaceString(pattern~, content~)
 }

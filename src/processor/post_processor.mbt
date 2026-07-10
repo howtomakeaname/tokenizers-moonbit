@@ -329,6 +329,124 @@ pub fn PostProcessor::get_use_regex(self : PostProcessor) -> Bool? {
 }
 
 ///|
+
+///|
+/// Set trim_offsets. Returns a new PostProcessor; only RobertaProcessing and ByteLevel support it.
+pub fn PostProcessor::set_trim_offsets(
+  self : PostProcessor,
+  val : Bool,
+) -> PostProcessor {
+  match self {
+    RobertaProcessing(sep~, cls~, add_prefix_space~, ..) =>
+      RobertaProcessing(sep~, cls~, trim_offsets=val, add_prefix_space~)
+    ByteLevel(add_prefix_space~, use_regex~, ..) =>
+      ByteLevel(add_prefix_space~, trim_offsets=val, use_regex~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for trim_offsets.
+pub fn PostProcessor::set_trim_offsets_alias(
+  self : PostProcessor,
+  val : Bool,
+) -> PostProcessor {
+  self.set_trim_offsets(val)
+}
+
+///|
+/// Set add_prefix_space. Returns a new PostProcessor; only RobertaProcessing and ByteLevel support it.
+pub fn PostProcessor::set_add_prefix_space(
+  self : PostProcessor,
+  val : Bool,
+) -> PostProcessor {
+  match self {
+    RobertaProcessing(sep~, cls~, trim_offsets~, ..) =>
+      RobertaProcessing(sep~, cls~, trim_offsets~, add_prefix_space=val)
+    ByteLevel(trim_offsets~, use_regex~, ..) =>
+      ByteLevel(add_prefix_space=val, trim_offsets~, use_regex~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for add_prefix_space.
+pub fn PostProcessor::set_add_prefix_space_alias(
+  self : PostProcessor,
+  val : Bool,
+) -> PostProcessor {
+  self.set_add_prefix_space(val)
+}
+
+///|
+/// Set use_regex. Returns a new PostProcessor; only ByteLevel supports it.
+pub fn PostProcessor::set_use_regex(
+  self : PostProcessor,
+  val : Bool,
+) -> PostProcessor {
+  match self {
+    ByteLevel(add_prefix_space~, trim_offsets~, ..) =>
+      ByteLevel(add_prefix_space~, trim_offsets~, use_regex=val)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for use_regex.
+pub fn PostProcessor::set_use_regex_alias(
+  self : PostProcessor,
+  val : Bool,
+) -> PostProcessor {
+  self.set_use_regex(val)
+}
+
+///|
+/// Set sep. Returns a new PostProcessor; only BertProcessing and RobertaProcessing support it.
+pub fn PostProcessor::set_sep(
+  self : PostProcessor,
+  val : (String, Int),
+) -> PostProcessor {
+  match self {
+    BertProcessing(cls~, ..) => BertProcessing(sep=val, cls~)
+    RobertaProcessing(cls~, trim_offsets~, add_prefix_space~, ..) =>
+      RobertaProcessing(sep=val, cls~, trim_offsets~, add_prefix_space~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for sep.
+pub fn PostProcessor::set_sep_alias(
+  self : PostProcessor,
+  val : (String, Int),
+) -> PostProcessor {
+  self.set_sep(val)
+}
+
+///|
+/// Set cls. Returns a new PostProcessor; only BertProcessing and RobertaProcessing support it.
+pub fn PostProcessor::set_cls(
+  self : PostProcessor,
+  val : (String, Int),
+) -> PostProcessor {
+  match self {
+    BertProcessing(sep~, ..) => BertProcessing(sep~, cls=val)
+    RobertaProcessing(sep~, trim_offsets~, add_prefix_space~, ..) =>
+      RobertaProcessing(sep~, cls=val, trim_offsets~, add_prefix_space~)
+    _ => self
+  }
+}
+
+///|
+/// Python/property-style setter alias for cls.
+pub fn PostProcessor::set_cls_alias(
+  self : PostProcessor,
+  val : (String, Int),
+) -> PostProcessor {
+  self.set_cls(val)
+}
+
+///|
 pub fn PostProcessor::single_pieces(self : PostProcessor) -> Array[Piece] {
   match self {
     TemplateProcessing(single~, ..) => single.copy()

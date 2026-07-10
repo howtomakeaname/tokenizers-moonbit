@@ -742,3 +742,287 @@ test "Strip decoder accepts left/right JSON aliases" {
   @test.assert_eq(strip.left(), Some(1))
   @test.assert_eq(strip.right(), Some(2))
 }
+
+///|
+test "Decoder set_add_prefix_space" {
+  let d = Decoder::byte_level()
+  let d2 = d.set_add_prefix_space(false)
+  @test.assert_eq(d2.get_add_prefix_space(), Some(false))
+  let d3 = d2.set_add_prefix_space(true)
+  @test.assert_eq(d3.get_add_prefix_space(), Some(true))
+  // Non-matching variant returns self (compare via JSON)
+  let wp = Decoder::wordpiece()
+  @test.assert_eq(wp.set_add_prefix_space(false).to_json(), wp.to_json())
+}
+
+///|
+test "Decoder set_add_prefix_space_alias" {
+  let d = Decoder::byte_level()
+  let d2 = d.set_add_prefix_space_alias(false)
+  @test.assert_eq(d2.get_add_prefix_space(), Some(false))
+}
+
+///|
+test "Decoder set_trim_offsets" {
+  let d = Decoder::byte_level()
+  let d2 = d.set_trim_offsets(false)
+  @test.assert_eq(d2.get_trim_offsets(), Some(false))
+  // Non-matching variant returns self
+  let wp = Decoder::wordpiece()
+  @test.assert_eq(wp.set_trim_offsets(false).to_json(), wp.to_json())
+}
+
+///|
+test "Decoder set_trim_offsets_alias" {
+  let d = Decoder::byte_level()
+  let d2 = d.set_trim_offsets_alias(false)
+  @test.assert_eq(d2.get_trim_offsets(), Some(false))
+}
+
+///|
+test "Decoder set_use_regex" {
+  let d = Decoder::byte_level()
+  let d2 = d.set_use_regex(false)
+  @test.assert_eq(d2.get_use_regex(), Some(false))
+  // Non-matching variant returns self
+  let wp = Decoder::wordpiece()
+  @test.assert_eq(wp.set_use_regex(false).to_json(), wp.to_json())
+}
+
+///|
+test "Decoder set_use_regex_alias" {
+  let d = Decoder::byte_level()
+  let d2 = d.set_use_regex_alias(false)
+  @test.assert_eq(d2.get_use_regex(), Some(false))
+}
+
+///|
+test "Decoder set_prefix" {
+  let d = Decoder::wordpiece()
+  let d2 = d.set_prefix("## ")
+  @test.assert_eq(d2.get_prefix(), Some("## "))
+  // Non-matching variant returns self
+  let bl = Decoder::byte_level()
+  @test.assert_eq(bl.set_prefix("## ").to_json(), bl.to_json())
+}
+
+///|
+test "Decoder set_prefix_alias" {
+  let d = Decoder::wordpiece()
+  let d2 = d.set_prefix_alias("## ")
+  @test.assert_eq(d2.get_prefix(), Some("## "))
+}
+
+///|
+test "Decoder set_cleanup WordPiece" {
+  let d = Decoder::wordpiece()
+  let d2 = d.set_cleanup(false)
+  @test.assert_eq(d2.get_cleanup(), Some(false))
+}
+
+///|
+test "Decoder set_cleanup CTC" {
+  let d = Decoder::ctc()
+  let d2 = d.set_cleanup(false)
+  @test.assert_eq(d2.get_cleanup(), Some(false))
+}
+
+///|
+test "Decoder set_cleanup_alias" {
+  let d = Decoder::wordpiece()
+  let d2 = d.set_cleanup_alias(false)
+  @test.assert_eq(d2.get_cleanup(), Some(false))
+}
+
+///|
+test "Decoder set_replacement" {
+  let d = Decoder::metaspace()
+  let d2 = d.set_replacement('-')
+  @test.assert_eq(d2.get_replacement(), Some('-'))
+  // Non-matching variant returns self
+  let bl = Decoder::byte_level()
+  @test.assert_eq(bl.set_replacement('-').to_json(), bl.to_json())
+}
+
+///|
+test "Decoder set_replacement_alias" {
+  let d = Decoder::metaspace()
+  let d2 = d.set_replacement_alias('-')
+  @test.assert_eq(d2.get_replacement(), Some('-'))
+}
+
+///|
+test "Decoder set_prepend_scheme" {
+  let d = Decoder::metaspace()
+  let d2 = d.set_prepend_scheme("never")
+  @test.assert_eq(d2.get_prepend_scheme(), Some("never"))
+  // Non-matching variant returns self
+  let bl = Decoder::byte_level()
+  @test.assert_eq(bl.set_prepend_scheme("never").to_json(), bl.to_json())
+}
+
+///|
+test "Decoder set_prepend_scheme_alias" {
+  let d = Decoder::metaspace()
+  let d2 = d.set_prepend_scheme_alias("never")
+  @test.assert_eq(d2.get_prepend_scheme(), Some("never"))
+}
+
+///|
+test "Decoder set_split_enabled" {
+  let d = Decoder::metaspace()
+  let d2 = d.set_split_enabled(false)
+  @test.assert_eq(d2.get_split(), Some(false))
+  let d3 = d2.set_split_enabled(true)
+  @test.assert_eq(d3.get_split(), Some(true))
+  // Non-matching variant returns self
+  let bl = Decoder::byte_level()
+  @test.assert_eq(bl.set_split_enabled(false).to_json(), bl.to_json())
+}
+
+///|
+test "Decoder set_split_enabled_alias" {
+  let d = Decoder::metaspace()
+  let d2 = d.set_split_enabled_alias(false)
+  @test.assert_eq(d2.get_split(), Some(false))
+}
+
+///|
+test "Decoder set_suffix" {
+  let d = Decoder::bpe_decoder()
+  let d2 = d.set_suffix("</end>")
+  @test.assert_eq(d2.get_suffix(), Some("</end>"))
+  // Non-matching variant returns self
+  let bl = Decoder::byte_level()
+  @test.assert_eq(bl.set_suffix("</end>").to_json(), bl.to_json())
+}
+
+///|
+test "Decoder set_suffix_alias" {
+  let d = Decoder::bpe_decoder()
+  let d2 = d.set_suffix_alias("</end>")
+  @test.assert_eq(d2.get_suffix(), Some("</end>"))
+}
+
+///|
+test "Decoder set_content on ReplaceString" {
+  let d = Decoder::replace("▁", " ")
+  let d2 = d.set_content("-")
+  @test.assert_eq(d2.get_content(), Some("-"))
+  @test.assert_eq(d2.get_pattern(), Some("▁"))
+}
+
+///|
+test "Decoder set_content on Replace" {
+  let d = Decoder::replace_regex("▁", " ")
+  let d2 = d.set_content("-")
+  @test.assert_eq(d2.get_content(), Some("-"))
+  @test.assert_eq(d2.get_pattern(), Some("▁"))
+}
+
+///|
+test "Decoder set_content_alias" {
+  let d = Decoder::replace("▁", " ")
+  let d2 = d.set_content_alias("-")
+  @test.assert_eq(d2.get_content(), Some("-"))
+}
+
+///|
+test "Decoder set_start" {
+  let d = Decoder::strip(' ', 1, 1)
+  let d2 = d.set_start(3)
+  @test.assert_eq(d2.get_start(), Some(3))
+  @test.assert_eq(d2.get_stop(), Some(1))
+  // Non-matching variant returns self
+  let bl = Decoder::byte_level()
+  @test.assert_eq(bl.set_start(3).to_json(), bl.to_json())
+}
+
+///|
+test "Decoder set_start_alias" {
+  let d = Decoder::strip(' ', 1, 1)
+  let d2 = d.set_start_alias(3)
+  @test.assert_eq(d2.get_start(), Some(3))
+}
+
+///|
+test "Decoder set_stop" {
+  let d = Decoder::strip(' ', 1, 1)
+  let d2 = d.set_stop(5)
+  @test.assert_eq(d2.get_stop(), Some(5))
+  @test.assert_eq(d2.get_start(), Some(1))
+  // Non-matching variant returns self
+  let bl = Decoder::byte_level()
+  @test.assert_eq(bl.set_stop(5).to_json(), bl.to_json())
+}
+
+///|
+test "Decoder set_stop_alias" {
+  let d = Decoder::strip(' ', 1, 1)
+  let d2 = d.set_stop_alias(5)
+  @test.assert_eq(d2.get_stop(), Some(5))
+}
+
+///|
+test "Decoder set_left" {
+  let d = Decoder::strip(' ', 1, 1)
+  let d2 = d.set_left(3)
+  @test.assert_eq(d2.get_left(), Some(3))
+  @test.assert_eq(d2.get_start(), Some(3))
+}
+
+///|
+test "Decoder set_left_alias" {
+  let d = Decoder::strip(' ', 1, 1)
+  let d2 = d.set_left_alias(3)
+  @test.assert_eq(d2.get_left(), Some(3))
+}
+
+///|
+test "Decoder set_right" {
+  let d = Decoder::strip(' ', 1, 1)
+  let d2 = d.set_right(5)
+  @test.assert_eq(d2.get_right(), Some(5))
+  @test.assert_eq(d2.get_stop(), Some(5))
+}
+
+///|
+test "Decoder set_right_alias" {
+  let d = Decoder::strip(' ', 1, 1)
+  let d2 = d.set_right_alias(5)
+  @test.assert_eq(d2.get_right(), Some(5))
+}
+
+///|
+test "Decoder set_pad_token" {
+  let d = Decoder::ctc()
+  let d2 = d.set_pad_token("<pad>")
+  @test.assert_eq(d2.get_pad_token(), Some("<pad>"))
+  // Non-matching variant returns self
+  let bl = Decoder::byte_level()
+  @test.assert_eq(bl.set_pad_token("<pad>").to_json(), bl.to_json())
+}
+
+///|
+test "Decoder set_pad_token_alias" {
+  let d = Decoder::ctc()
+  let d2 = d.set_pad_token_alias("<pad>")
+  @test.assert_eq(d2.get_pad_token(), Some("<pad>"))
+}
+
+///|
+test "Decoder set_word_delimiter_token" {
+  let d = Decoder::ctc()
+  let d2 = d.set_word_delimiter_token(" ")
+  @test.assert_eq(d2.get_word_delimiter_token(), Some(" "))
+  // Non-matching variant returns self
+  let bl = Decoder::byte_level()
+  @test.assert_eq(bl.set_word_delimiter_token(" ").to_json(), bl.to_json())
+}
+
+///|
+test "Decoder set_word_delimiter_token_alias" {
+  let d = Decoder::ctc()
+  let d2 = d.set_word_delimiter_token_alias(" ")
+  @test.assert_eq(d2.get_word_delimiter_token(), Some(" "))
+}

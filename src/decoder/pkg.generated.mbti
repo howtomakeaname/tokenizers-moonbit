@@ -78,6 +78,38 @@ pub fn Decoder::replace_regex(String, String) -> Self
 pub fn Decoder::replacement(Self) -> Char?
 pub fn Decoder::right(Self) -> Int?
 pub fn Decoder::sequence(Array[Self]) -> Self
+pub fn Decoder::set_add_prefix_space(Self, Bool) -> Self
+pub fn Decoder::set_add_prefix_space_alias(Self, Bool) -> Self
+pub fn Decoder::set_cleanup(Self, Bool) -> Self
+pub fn Decoder::set_cleanup_alias(Self, Bool) -> Self
+pub fn Decoder::set_content(Self, String) -> Self
+pub fn Decoder::set_content_alias(Self, String) -> Self
+pub fn Decoder::set_left(Self, Int) -> Self
+pub fn Decoder::set_left_alias(Self, Int) -> Self
+pub fn Decoder::set_pad_token(Self, String) -> Self
+pub fn Decoder::set_pad_token_alias(Self, String) -> Self
+pub fn Decoder::set_prefix(Self, String) -> Self
+pub fn Decoder::set_prefix_alias(Self, String) -> Self
+pub fn Decoder::set_prepend_scheme(Self, String) -> Self
+pub fn Decoder::set_prepend_scheme_alias(Self, String) -> Self
+pub fn Decoder::set_replacement(Self, Char) -> Self
+pub fn Decoder::set_replacement_alias(Self, Char) -> Self
+pub fn Decoder::set_right(Self, Int) -> Self
+pub fn Decoder::set_right_alias(Self, Int) -> Self
+pub fn Decoder::set_split_enabled(Self, Bool) -> Self
+pub fn Decoder::set_split_enabled_alias(Self, Bool) -> Self
+pub fn Decoder::set_start(Self, Int) -> Self
+pub fn Decoder::set_start_alias(Self, Int) -> Self
+pub fn Decoder::set_stop(Self, Int) -> Self
+pub fn Decoder::set_stop_alias(Self, Int) -> Self
+pub fn Decoder::set_suffix(Self, String) -> Self
+pub fn Decoder::set_suffix_alias(Self, String) -> Self
+pub fn Decoder::set_trim_offsets(Self, Bool) -> Self
+pub fn Decoder::set_trim_offsets_alias(Self, Bool) -> Self
+pub fn Decoder::set_use_regex(Self, Bool) -> Self
+pub fn Decoder::set_use_regex_alias(Self, Bool) -> Self
+pub fn Decoder::set_word_delimiter_token(Self, String) -> Self
+pub fn Decoder::set_word_delimiter_token_alias(Self, String) -> Self
 pub fn Decoder::split_enabled(Self) -> Bool?
 pub fn Decoder::start(Self) -> Int?
 pub fn Decoder::stop(Self) -> Int?

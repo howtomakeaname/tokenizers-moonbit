@@ -390,6 +390,32 @@ fn Decoder::byte_fallback() -> Decoder
 fn Decoder::ctc(
   pad_token? : String = "<pad>", word_delimiter_token? : String = "|", cleanup? : Bool = true,
 ) -> Decoder
+#### Decoder setter 别名（Python binding 兼容）
+
+```moonbit
+fn Decoder::set_add_prefix_space(self : Decoder, val : Bool) -> Decoder
+fn Decoder::set_trim_offsets(self : Decoder, val : Bool) -> Decoder
+fn Decoder::set_use_regex(self : Decoder, val : Bool) -> Decoder
+fn Decoder::set_prefix(self : Decoder, val : String) -> Decoder
+fn Decoder::set_cleanup(self : Decoder, val : Bool) -> Decoder
+fn Decoder::set_replacement(self : Decoder, val : Char) -> Decoder
+fn Decoder::set_prepend_scheme(self : Decoder, val : String) -> Decoder
+fn Decoder::set_split_enabled(self : Decoder, val : Bool) -> Decoder
+fn Decoder::set_suffix(self : Decoder, val : String) -> Decoder
+fn Decoder::set_content(self : Decoder, val : String) -> Decoder
+fn Decoder::set_start(self : Decoder, val : Int) -> Decoder
+fn Decoder::set_stop(self : Decoder, val : Int) -> Decoder
+fn Decoder::set_left(self : Decoder, val : Int) -> Decoder
+fn Decoder::set_right(self : Decoder, val : Int) -> Decoder
+fn Decoder::set_pad_token(self : Decoder, val : String) -> Decoder
+fn Decoder::set_word_delimiter_token(self : Decoder, val : String) -> Decoder
+```
+
+对应 HF Python `Decoder` 属性 setter，MoonBit 提供 `set_*` 方法返回新 Decoder，
+保持不可变语义。每个 setter 仅修改对应解码器变体的字段，其他变体返回原 Decoder。
+适用于多个变体的 setter（如 `set_cleanup` 同时支持 WordPiece 和 CTC，
+`set_content` 同时支持 Replace 和 ReplaceString）会处理所有匹配变体。
+
 
 fn PostProcessor::bert(sep : (String, Int), cls : (String, Int)) -> PostProcessor
 fn PostProcessor::bert_processing(sep : (String, Int), cls : (String, Int)) -> PostProcessor
@@ -415,6 +441,21 @@ fn PostProcessor::template_from_strings(
   single : String, pair : String, special_tokens : Map[String, SpecialToken],
 ) -> PostProcessor raise TokenizerError
 fn PostProcessor::sequence(steps : Array[PostProcessor]) -> PostProcessor
+#### PostProcessor setter 别名（Python binding 兼容）
+
+```moonbit
+fn PostProcessor::set_trim_offsets(self : PostProcessor, val : Bool) -> PostProcessor
+fn PostProcessor::set_add_prefix_space(self : PostProcessor, val : Bool) -> PostProcessor
+fn PostProcessor::set_use_regex(self : PostProcessor, val : Bool) -> PostProcessor
+fn PostProcessor::set_sep(self : PostProcessor, val : (String, Int)) -> PostProcessor
+fn PostProcessor::set_cls(self : PostProcessor, val : (String, Int)) -> PostProcessor
+```
+
+对应 HF Python `PostProcessor` 属性 setter，MoonBit 提供 `set_*` 方法返回新
+PostProcessor，保持不可变语义。每个 setter 仅修改对应后处理器变体的字段，其他变体
+返回原 PostProcessor。适用于多个变体的 setter（如 `set_sep` 同时支持 BertProcessing
+和 RobertaProcessing）会处理所有匹配变体。
+
 ```
 
 Decoder / PostProcessor builder 用于在测试或合成 pipeline 中直接构造常见 HF 配置。

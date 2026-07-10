@@ -70,6 +70,16 @@ pub fn PostProcessor::roberta((String, Int), (String, Int), trim_offsets? : Bool
 pub fn PostProcessor::roberta_processing((String, Int), (String, Int), trim_offsets? : Bool, add_prefix_space? : Bool) -> Self
 pub fn PostProcessor::sep(Self) -> (String, Int)?
 pub fn PostProcessor::sequence(Array[Self]) -> Self
+pub fn PostProcessor::set_add_prefix_space(Self, Bool) -> Self
+pub fn PostProcessor::set_add_prefix_space_alias(Self, Bool) -> Self
+pub fn PostProcessor::set_cls(Self, (String, Int)) -> Self
+pub fn PostProcessor::set_cls_alias(Self, (String, Int)) -> Self
+pub fn PostProcessor::set_sep(Self, (String, Int)) -> Self
+pub fn PostProcessor::set_sep_alias(Self, (String, Int)) -> Self
+pub fn PostProcessor::set_trim_offsets(Self, Bool) -> Self
+pub fn PostProcessor::set_trim_offsets_alias(Self, Bool) -> Self
+pub fn PostProcessor::set_use_regex(Self, Bool) -> Self
+pub fn PostProcessor::set_use_regex_alias(Self, Bool) -> Self
 pub fn PostProcessor::single(Self) -> Array[Piece]
 pub fn PostProcessor::single_pieces(Self) -> Array[Piece]
 pub fn PostProcessor::special_tokens(Self) -> Map[String, SpecialToken]
