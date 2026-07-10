@@ -25,6 +25,7 @@ pub struct BPEModel {
   mut dropout_rng_state : Int
   cache : Map[String, Array[@types.Token]]
   mut cache_capacity : Int?
+  word_count : Int?
 }
 pub fn BPEModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
 
@@ -70,6 +71,7 @@ pub fn Model::get_unk_id(Self) -> Int?
 pub fn Model::get_unk_token(Self) -> String?
 pub fn Model::get_vocab(Self) -> Map[String, Int]
 pub fn Model::get_vocab_size(Self) -> Int
+pub fn Model::get_word_count(Self) -> Int?
 pub fn Model::id_to_token(Self, Int) -> String?
 pub fn Model::ignore_merges(Self) -> Bool?
 pub fn Model::kind(Self) -> String

@@ -257,6 +257,30 @@ pub fn Decoder::get_stop(self : Decoder) -> Int? {
 }
 
 ///|
+/// HF Python alias: `left` maps to `start` for Strip.
+pub fn Decoder::left(self : Decoder) -> Int? {
+  self.start()
+}
+
+///|
+/// HF Python getter alias for `left`.
+pub fn Decoder::get_left(self : Decoder) -> Int? {
+  self.left()
+}
+
+///|
+/// HF Python alias: `right` maps to `stop` for Strip.
+pub fn Decoder::right(self : Decoder) -> Int? {
+  self.stop()
+}
+
+///|
+/// HF Python getter alias for `right`.
+pub fn Decoder::get_right(self : Decoder) -> Int? {
+  self.right()
+}
+
+///|
 pub fn Decoder::pattern(self : Decoder) -> String? {
   match self {
     Replace(pattern~, ..) => Some(pattern)
@@ -643,8 +667,14 @@ pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
     "Strip" =>
       Strip(
         content=@types.get_char(obj, "content", default=' '),
-        start=@types.get_int(obj, "start", default=0),
-        stop=@types.get_int(obj, "stop", default=0),
+        start=match @types.get_int_opt(obj, "left") {
+          Some(v) => v
+          None => @types.get_int(obj, "start", default=0)
+        },
+        stop=match @types.get_int_opt(obj, "right") {
+          Some(v) => v
+          None => @types.get_int(obj, "stop", default=0)
+        },
       )
     "Replace" => {
       let (pattern, pattern_kind) = parse_pattern(obj)

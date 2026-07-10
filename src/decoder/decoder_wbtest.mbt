@@ -562,6 +562,11 @@ test "decoders expose HF-style configuration getters" {
   @test.assert_eq(strip.get_start(), Some(1))
   @test.assert_eq(strip.stop(), Some(2))
   @test.assert_eq(strip.get_stop(), Some(2))
+  // HF Python aliases: left -> start, right -> stop
+  @test.assert_eq(strip.left(), Some(1))
+  @test.assert_eq(strip.get_left(), Some(1))
+  @test.assert_eq(strip.right(), Some(2))
+  @test.assert_eq(strip.get_right(), Some(2))
 
   let replace = Decoder::replace("▁", " ")
   @test.assert_eq(replace.kind(), "Replace")
@@ -607,6 +612,11 @@ test "decoders expose HF-style configuration getters" {
   @test.assert_eq(Decoder::Fuse.kind(), "Fuse")
   @test.assert_eq(Decoder::byte_fallback().kind(), "ByteFallback")
   @test.assert_eq(Decoder::Fuse.pattern(), None)
+  // left/right are None on non-Strip decoders
+  @test.assert_eq(Decoder::Fuse.left(), None)
+  @test.assert_eq(Decoder::Fuse.get_left(), None)
+  @test.assert_eq(Decoder::Fuse.right(), None)
+  @test.assert_eq(Decoder::Fuse.get_right(), None)
 }
 
 ///|
@@ -717,4 +727,18 @@ test "decoders expose JSON state and string aliases" {
     Decoder::__setstate__(metaspace.__getstate__()).to_json(),
     metaspace.to_json(),
   )
+}
+
+///|
+test "Strip decoder accepts left/right JSON aliases" {
+  let strip = Decoder::from_state(
+    DecoderState::new(
+      "{\"type\":\"Strip\",\"content\":\" \",\"left\":1,\"right\":2}",
+    ),
+  )
+  @test.assert_eq(strip.kind(), "Strip")
+  @test.assert_eq(strip.start(), Some(1))
+  @test.assert_eq(strip.stop(), Some(2))
+  @test.assert_eq(strip.left(), Some(1))
+  @test.assert_eq(strip.right(), Some(2))
 }

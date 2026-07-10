@@ -148,6 +148,7 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
     dropout_rng_state: 1,
     cache: {},
     cache_capacity: None,
+    word_count: None,
   }
 }
 

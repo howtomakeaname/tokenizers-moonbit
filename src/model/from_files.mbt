@@ -30,6 +30,7 @@ pub fn Model::from_bpe_files(
     dropout_rng_state: 1,
     cache: {},
     cache_capacity: None,
+    word_count: None,
   })
 }
 

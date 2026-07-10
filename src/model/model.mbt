@@ -36,6 +36,9 @@ pub struct BPEModel {
   cache : Map[String, Array[@types.Token]]
   // None keeps the historical unbounded cache; Some(0) disables caching.
   mut cache_capacity : Int?
+  // Number of unique words seen during BPE training (HF BpeTrainer.get_word_count).
+  // None for models loaded from files or constructed directly.
+  word_count : Int?
 }
 
 ///|
@@ -314,6 +317,17 @@ pub fn Model::nbest_size(self : Model) -> Int? {
 ///|
 pub fn Model::get_nbest_size(self : Model) -> Int? {
   self.nbest_size()
+}
+
+///|
+/// Return the number of unique words seen during BPE training (HF
+/// `BpeTrainer.get_word_count`). Returns `None` for non-BPE models or models
+/// loaded from files.
+pub fn Model::get_word_count(self : Model) -> Int? {
+  match self {
+    BPE(m) => m.word_count
+    _ => None
+  }
 }
 
 ///|

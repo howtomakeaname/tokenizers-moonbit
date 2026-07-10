@@ -451,6 +451,7 @@ pub fn Model::train_bpe_from_tokens(
     dropout_rng_state: 1,
     cache: {},
     cache_capacity: normalize_bpe_cache_capacity(cache_capacity),
+    word_count: Some(word_counts.length()),
   })
 }
 
