@@ -1362,6 +1362,71 @@ string directions and keyword order while delegating to the typed MoonBit
 helpers. They raise on invalid direction strings; `truncate_hf` also raises
 when `stride >= max_len`, matching HF's public wrapper boundary.
 
+### Encoding methods
+
+```moonbit
+fn Encoding::ids(self : Encoding) -> Array[Int]
+fn Encoding::type_ids(self : Encoding) -> Array[Int]
+fn Encoding::tokens(self : Encoding) -> Array[String]
+fn Encoding::offsets(self : Encoding) -> Array[(Int, Int)]
+fn Encoding::special_tokens_mask(self : Encoding) -> Array[Int]
+fn Encoding::attention_mask(self : Encoding) -> Array[Int]
+fn Encoding::sequence_ids(self : Encoding) -> Array[Int?]
+fn Encoding::word_ids(self : Encoding) -> Array[Int?]
+fn Encoding::words(self : Encoding) -> Array[Int?]  // deprecated alias for word_ids
+fn Encoding::overflowing(self : Encoding) -> Array[Encoding]
+fn Encoding::n_sequences(self : Encoding) -> Int
+fn Encoding::len(self : Encoding) -> Int
+fn Encoding::is_empty(self : Encoding) -> Bool
+fn Encoding::empty() -> Encoding
+
+fn Encoding::char_to_token(self : Encoding, pos : Int, sequence_id? : Int) -> Int?
+fn Encoding::char_to_token_by_sequence_index(self : Encoding, pos : Int, sequence_index? : Int = 0) -> Int?
+fn Encoding::char_to_word(self : Encoding, pos : Int, sequence_id? : Int) -> Int?
+fn Encoding::char_to_word_by_sequence_index(self : Encoding, pos : Int, sequence_index? : Int = 0) -> Int?
+fn Encoding::token_to_chars(self : Encoding, token : Int) -> (Int, (Int, Int))?
+fn Encoding::token_to_char_offsets(self : Encoding, token : Int) -> (Int, Int)?
+fn Encoding::token_to_word(self : Encoding, token : Int) -> (Int, Int)?
+fn Encoding::token_to_word_index(self : Encoding, token : Int) -> Int?
+fn Encoding::token_to_sequence(self : Encoding, token : Int) -> Int?
+fn Encoding::token_to_offsets(self : Encoding, token : Int) -> (Int, Int)?
+fn Encoding::word_to_tokens(self : Encoding, word : Int, sequence_id? : Int) -> (Int, Int)?
+fn Encoding::word_to_tokens_by_sequence_index(self : Encoding, word : Int, sequence_index? : Int = 0) -> (Int, Int)?
+fn Encoding::word_to_chars(self : Encoding, word : Int, sequence_id? : Int) -> (Int, Int)?
+fn Encoding::word_to_chars_by_sequence_index(self : Encoding, word : Int, sequence_index? : Int = 0) -> (Int, Int)?
+fn Encoding::word_to_offsets(self : Encoding, word : Int, sequence_id? : Int) -> (Int, Int)?
+
+fn Encoding::from_state(state : EncodingState) -> Encoding raise TokenizerError
+fn Encoding::get_state(self : Encoding) -> EncodingState
+fn Encoding::from_tuple(tuple : ...) -> Encoding raise TokenizerError
+fn Encoding::as_tuple(self : Encoding) -> (...)
+fn Encoding::from_buffers(buffers : EncodingBuffers, ...) -> Encoding raise TokenizerError
+fn Encoding::as_buffers(self : Encoding) -> EncodingBuffers
+fn Encoding::get_buffers(self : Encoding) -> EncodingBuffers
+
+fn Encoding::with_type_ids(self : Encoding, type_ids : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::with_special_tokens_mask(self : Encoding, mask : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::with_attention_mask(self : Encoding, mask : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::with_word_ids(self : Encoding, word_ids : Array[Int?]) -> Encoding raise TokenizerError
+fn Encoding::with_sequence_id(self : Encoding, sequence_id : Int) -> Encoding raise TokenizerError
+fn Encoding::set_sequence_id(self : Encoding, sequence_id : Int) -> Encoding raise TokenizerError
+fn Encoding::with_overflowing(self : Encoding, overflowing : Array[Encoding]) -> Encoding raise TokenizerError
+
+fn Encoding::truncate(self : Encoding, max_len : Int, stride? : Int = 0, direction? : TruncationDirection = Right) -> Encoding raise TokenizerError
+fn Encoding::truncate_hf(self : Encoding, max_len : Int, stride? : Int = 0, direction? : String = "right") -> Encoding raise TokenizerError
+fn Encoding::pad(self : Encoding, length : Int, ...) -> Encoding raise TokenizerError
+fn Encoding::pad_hf(self : Encoding, length : Int, direction? : String = "right", ...) -> Encoding raise TokenizerError
+fn Encoding::merge(encodings : Array[Encoding], growing_offsets? : Bool = true) -> Encoding
+fn Encoding::merge_with(self : Encoding, other : Encoding, growing_offsets? : Bool = true) -> Encoding
+
+fn Encoding::from_tokens(tokens : Array[Token], type_id? : Int) -> Encoding
+```
+
+Property-style accessors return arrays (copies) for HF compatibility.
+`char_to_token` / `char_to_word` / `token_to_chars` / `word_to_tokens` etc.
+provide bidirectional index mapping. `truncate_hf` / `pad_hf` accept HF-style
+string direction. `merge` / `merge_with` combine encodings.
+
 ### TruncationParams (`@tokenizer`)
 
 ```moonbit
