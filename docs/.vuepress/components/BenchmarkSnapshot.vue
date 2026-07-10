@@ -109,13 +109,25 @@ function formatNumber(value: number, digits = 2) {
   return value.toFixed(digits)
 }
 
+// Get base path from current URL
+function getBase(): string {
+  if (typeof window === 'undefined') return ''
+  const path = window.location.pathname
+  const match = path.match(/^(\/[^/]+\/)/)
+  return match ? match[1] : ''
+}
+
 onMounted(async () => {
   try {
-    const response = await fetch(withBase(props.src), { cache: 'no-store' })
+    const url = getBase() + props.src.replace(/^\//, '')
+    console.log('BenchmarkSnapshot: fetching', url)
+    const response = await fetch(url, { cache: 'no-store' })
     if (!response.ok)
       throw new Error(`${response.status} ${response.statusText}`)
     report.value = await response.json()
+    console.log('BenchmarkSnapshot: loaded', report.value)
   } catch (err) {
+    console.error('BenchmarkSnapshot error:', err)
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
     loading.value = false
