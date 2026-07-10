@@ -221,6 +221,11 @@ Fast encode 变体（`encode_fast`、`encode_batch_fast`、
 `async_encode_fast`、`async_encode_batch`、`async_encode_batch_fast`、
 `async_decode`、`async_decode_batch`）在所有 target 上委托同一套确定性同步实现。
 
+高层 encode API 的 `add_special_tokens=false` 遵循 HF 语义：跳过由
+post-processor 注入的 special token，但 post-processor 仍会执行非 special-token
+效果，例如 Template/BERT `type_ids`、句对 `sequence_ids` 与 ByteLevel/RoBERTa
+offset trimming。
+
 所有 `encode_*_with_byte_offsets` 变体返回 HF 风格 UTF-8 byte offsets。
 pre-tokenized 输入会跳过 tokenizer 的 pre-tokenizer 阶段，但 normalizer、model、
 post-processor、truncation 与 padding 仍会执行；offsets 按“归一化后的词用单个 ASCII

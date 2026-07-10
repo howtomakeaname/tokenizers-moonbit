@@ -100,8 +100,11 @@ let pair = tok.encode_pair("question", "context")
 let text = tok.decode(enc.ids, skip_special_tokens=true)
 ```
 
-`encode(text, add_special_tokens=false)` skips the post-processor template.
-Special tokens already present in the text are still recognized.
+`encode(text, add_special_tokens=false)` still runs the configured
+post-processor, but omits special tokens the post-processor would inject.
+Non-special effects remain, including Template/BERT type ids, sequence ids and
+ByteLevel/RoBERTa offset trimming. Special tokens already present in the text
+are still recognized.
 
 ## Migrating from HuggingFace
 

@@ -53,6 +53,11 @@ loaded back with `from_pretrained(dir)`.
 | `tok.encode_batch([words, ...], is_pretokenized=True)` | `tok.encode_pretokenized_batch([words, ...])` |
 | `tok.encode_batch([(words_a, words_b), ...], is_pretokenized=True)` | `tok.encode_pretokenized_pair_batch([(words_a, words_b), ...])` |
 
+`add_special_tokens=false` / `False` only suppresses special tokens injected by
+the configured post-processor. Non-special post-processing effects still run,
+including Template/BERT `type_ids`, pair `sequence_ids`, and ByteLevel/RoBERTa
+offset trimming.
+
 Pre-tokenized migration keeps HF's added-token extraction semantics: a special
 or added token embedded inside an input word is still split out before the
 ordinary span is passed to the model, while the configured pre-tokenizer itself

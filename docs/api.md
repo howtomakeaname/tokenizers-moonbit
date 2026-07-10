@@ -245,6 +245,11 @@ WordLevel/WordPiece/BPE/Unigram unknown-token fallback configuration. Async-comp
 `async_encode_batch_fast`, `async_decode`, `async_decode_batch`) delegate to the
 same deterministic synchronous implementation on every target.
 
+For high-level encode APIs, `add_special_tokens=false` follows HF semantics: it
+omits special tokens injected by the configured post-processor, but the
+post-processor still applies non-special effects such as Template/BERT
+`type_ids`, pair `sequence_ids`, and ByteLevel/RoBERTa offset trimming.
+
 All `encode_*_with_byte_offsets` variants return HF-style UTF-8 byte offsets.
 For pre-tokenized inputs, offsets are measured against a synthetic normalized
 text formed by joining normalized words with one ASCII space; the tokenizer's
