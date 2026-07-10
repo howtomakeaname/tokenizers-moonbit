@@ -1955,12 +1955,96 @@ test "from_str loads root truncation and padding config" {
   let json =
     #|{"version":"1.0",
     #| "truncation":{"direction":"Right","max_length":2,"stride":0,"strategy":"LongestFirst"},
-    #| "padding":{"strategy":"Fixed","length":4,"direction":"Right","pad_id":9,"pad_type_id":0,"pad_token":"[PAD]"},
+    #| "padding":{"strategy":{"Fixed":4},"direction":"Right","pad_id":9,"pad_type_id":0,"pad_token":"[PAD]"},
     #| "model":{"type":"BPE","vocab":{"a":0,"b":1,"c":2,"d":3,"[PAD]":9},"merges":[]}}
   let tok = Tokenizer::from_str(json)
   let enc = tok.encode("abcd", add_special_tokens=false)
   @test.assert_eq(enc.ids, [0, 1, 9, 9])
   @test.assert_eq(enc.attention_mask, [1, 1, 0, 0])
+}
+
+///|
+test "from_str rejects invalid root truncation and padding config" {
+  fn with_root_config(root_config : String) -> String {
+    "{\"version\":\"1.0\"," +
+    root_config +
+    ",\"model\":{\"type\":\"WordLevel\",\"vocab\":{\"[UNK]\":0,\"a\":1,\"[PAD]\":2},\"unk_token\":\"[UNK]\"}}"
+  }
+  for
+    case in [
+      (
+        "truncation missing max_length", "\"truncation\":{\"stride\":0,\"strategy\":\"LongestFirst\"}",
+        "max_length",
+      ),
+      (
+        "truncation bad stride", "\"truncation\":{\"max_length\":4,\"stride\":\"0\",\"strategy\":\"LongestFirst\"}",
+        "stride",
+      ),
+      (
+        "truncation bad strategy", "\"truncation\":{\"max_length\":4,\"stride\":0,\"strategy\":\"FirstOnly\"}",
+        "strategy",
+      ),
+      (
+        "truncation lowercase strategy", "\"truncation\":{\"max_length\":4,\"stride\":0,\"strategy\":\"longest_first\"}",
+        "strategy",
+      ),
+      (
+        "truncation bad direction", "\"truncation\":{\"max_length\":4,\"stride\":0,\"strategy\":\"LongestFirst\",\"direction\":\"Middle\"}",
+        "direction",
+      ),
+      (
+        "truncation lowercase direction", "\"truncation\":{\"max_length\":4,\"stride\":0,\"strategy\":\"LongestFirst\",\"direction\":\"right\"}",
+        "direction",
+      ),
+      (
+        "padding missing strategy", "\"padding\":{\"direction\":\"Right\",\"pad_id\":2,\"pad_type_id\":0,\"pad_token\":\"[PAD]\"}",
+        "strategy",
+      ),
+      (
+        "padding fixed string strategy", "\"padding\":{\"strategy\":\"Fixed\",\"length\":4,\"direction\":\"Right\",\"pad_id\":2,\"pad_type_id\":0,\"pad_token\":\"[PAD]\"}",
+        "strategy",
+      ),
+      (
+        "padding bad direction", "\"padding\":{\"strategy\":\"BatchLongest\",\"direction\":\"Middle\",\"pad_id\":2,\"pad_type_id\":0,\"pad_token\":\"[PAD]\"}",
+        "direction",
+      ),
+      (
+        "padding lowercase direction", "\"padding\":{\"strategy\":\"BatchLongest\",\"direction\":\"right\",\"pad_id\":2,\"pad_type_id\":0,\"pad_token\":\"[PAD]\"}",
+        "direction",
+      ),
+      (
+        "padding missing pad_id", "\"padding\":{\"strategy\":\"BatchLongest\",\"direction\":\"Right\",\"pad_type_id\":0,\"pad_token\":\"[PAD]\"}",
+        "pad_id",
+      ),
+      (
+        "padding bad pad_to_multiple_of", "\"padding\":{\"strategy\":\"BatchLongest\",\"direction\":\"Right\",\"pad_id\":2,\"pad_type_id\":0,\"pad_token\":\"[PAD]\",\"pad_to_multiple_of\":\"8\"}",
+        "pad_to_multiple_of",
+      ),
+    ] {
+    let mut raised = false
+    try Tokenizer::from_str(with_root_config(case.1)) |> ignore catch {
+      @types.ParseError(msg) => raised = msg.contains(case.2)
+      _ => ()
+    }
+    @test.assert_eq((case.0, raised), (case.0, true))
+  }
+
+  let missing_direction = Tokenizer::from_str(
+      with_root_config(
+        "\"truncation\":{\"max_length\":4,\"stride\":0,\"strategy\":\"LongestFirst\"}",
+      ),
+    )
+    .truncation()
+    .unwrap()
+  @test.assert_eq(missing_direction.direction(), Right)
+  let ignores_top_level_length = Tokenizer::from_str(
+      with_root_config(
+        "\"padding\":{\"strategy\":{\"Fixed\":4},\"length\":\"ignored\",\"direction\":\"Right\",\"pad_id\":2,\"pad_type_id\":0,\"pad_token\":\"[PAD]\"}",
+      ),
+    )
+    .padding()
+    .unwrap()
+  @test.assert_eq(ignores_top_level_length.strategy(), Fixed(4))
 }
 
 ///|
@@ -2399,7 +2483,7 @@ test "to_json round-trips loaded tokenizer behavior" {
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"hello":0,"moon":1,"[UNK]":2,"[PAD]":3,"[SPECIAL]":4},"unk_token":"[UNK]"},
     #| "truncation":{"direction":"Right","max_length":3,"stride":0,"strategy":"LongestFirst"},
-    #| "padding":{"strategy":"Fixed","length":5,"direction":"Right","pad_id":3,"pad_type_id":0,"pad_token":"[PAD]"}}
+    #| "padding":{"strategy":{"Fixed":5},"direction":"Right","pad_id":3,"pad_type_id":0,"pad_token":"[PAD]"}}
   let tok = Tokenizer::from_str(json)
   let out = tok.to_json()
   @test.assert_eq(out, json)

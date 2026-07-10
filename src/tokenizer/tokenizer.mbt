@@ -1923,20 +1923,108 @@ fn get_added_bool(
 ///|
 fn parse_truncation(j : Json) -> TruncationParams raise @types.TokenizerError {
   let obj = @types.as_object(j, "truncation")
-  let direction = match @types.get_str(obj, "direction", default="Right") {
-    "Left" | "left" => TruncationDirection::Left
-    _ => TruncationDirection::Right
+  let direction = match
+    get_tokenizer_string(
+      obj,
+      "direction",
+      required=false,
+      default="Right",
+      "truncation",
+    ) {
+    "Left" => TruncationDirection::Left
+    "Right" => TruncationDirection::Right
+    other => raise @types.ParseError("invalid truncation direction: \{other}")
   }
-  let strategy = match @types.get_str(obj, "strategy", default="LongestFirst") {
-    "OnlyFirst" | "only_first" => TruncationStrategy::OnlyFirst
-    "OnlySecond" | "only_second" => TruncationStrategy::OnlySecond
-    _ => TruncationStrategy::LongestFirst
+  let strategy = match
+    get_tokenizer_string(
+      obj,
+      "strategy",
+      required=true,
+      default="",
+      "truncation",
+    ) {
+    "LongestFirst" => TruncationStrategy::LongestFirst
+    "OnlyFirst" => TruncationStrategy::OnlyFirst
+    "OnlySecond" => TruncationStrategy::OnlySecond
+    other => raise @types.ParseError("invalid truncation strategy: \{other}")
   }
   {
-    max_length: @types.get_int(obj, "max_length", default=0),
-    stride: @types.get_int(obj, "stride", default=0),
+    max_length: get_tokenizer_int(
+      obj,
+      "max_length",
+      required=true,
+      default=0,
+      "truncation",
+    ),
+    stride: get_tokenizer_int(
+      obj,
+      "stride",
+      required=true,
+      default=0,
+      "truncation",
+    ),
     direction,
     strategy,
+  }
+}
+
+///|
+fn get_tokenizer_string(
+  obj : Map[String, Json],
+  key : String,
+  required~ : Bool,
+  default~ : String,
+  ctx : String,
+) -> String raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(String(s)) => s
+    Some(Null) | None =>
+      if required {
+        raise @types.ParseError(
+          "\{ctx}: missing or non-string \"\{key}\" field",
+        )
+      } else {
+        default
+      }
+    _ =>
+      raise @types.ParseError("\{ctx}: missing or non-string \"\{key}\" field")
+  }
+}
+
+///|
+fn get_tokenizer_int(
+  obj : Map[String, Json],
+  key : String,
+  required~ : Bool,
+  default~ : Int,
+  ctx : String,
+) -> Int raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(Number(n, ..)) => n.to_int()
+    Some(Null) | None =>
+      if required {
+        raise @types.ParseError(
+          "\{ctx}: missing or non-number \"\{key}\" field",
+        )
+      } else {
+        default
+      }
+    _ =>
+      raise @types.ParseError("\{ctx}: missing or non-number \"\{key}\" field")
+  }
+}
+
+///|
+fn get_tokenizer_int_opt(
+  obj : Map[String, Json],
+  key : String,
+  ctx : String,
+) -> Int? raise @types.TokenizerError {
+  match obj.get(key) {
+    Some(Number(n, ..)) => Some(n.to_int())
+    Some(Null) | None => None
+    _ =>
+      raise @types.ParseError("\{ctx}: missing or non-number \"\{key}\" field")
   }
 }
 
@@ -1964,15 +2052,17 @@ fn parse_truncation_strategy_hf(
 }
 
 ///|
-fn parse_padding_strategy(obj : Map[String, Json]) -> PaddingStrategy {
+fn parse_padding_strategy(
+  obj : Map[String, Json],
+) -> PaddingStrategy raise @types.TokenizerError {
   match obj.get("strategy") {
-    Some(String("Fixed")) => Fixed(@types.get_int(obj, "length", default=0))
+    Some(String("BatchLongest")) => BatchLongest
     Some(Object(o)) =>
       match o.get("Fixed") {
         Some(Number(n, ..)) => Fixed(n.to_int())
-        _ => BatchLongest
+        _ => raise @types.ParseError("padding: invalid strategy")
       }
-    _ => BatchLongest
+    _ => raise @types.ParseError("padding: missing or invalid strategy")
   }
 }
 
@@ -1990,17 +2080,39 @@ fn parse_padding_direction_hf(
 ///|
 fn parse_padding(j : Json) -> PaddingParams raise @types.TokenizerError {
   let obj = @types.as_object(j, "padding")
-  let direction = match @types.get_str(obj, "direction", default="Right") {
-    "Left" | "left" => PaddingDirection::Left
-    _ => PaddingDirection::Right
+  let direction = match
+    get_tokenizer_string(obj, "direction", required=true, default="", "padding") {
+    "Left" => PaddingDirection::Left
+    "Right" => PaddingDirection::Right
+    other => raise @types.ParseError("invalid padding direction: \{other}")
   }
   {
     strategy: parse_padding_strategy(obj),
     direction,
-    pad_id: @types.get_int(obj, "pad_id", default=0),
-    pad_type_id: @types.get_int(obj, "pad_type_id", default=0),
-    pad_token: @types.get_str(obj, "pad_token", default="[PAD]"),
-    pad_to_multiple_of: @types.get_int_opt(obj, "pad_to_multiple_of"),
+    pad_id: get_tokenizer_int(
+      obj,
+      "pad_id",
+      required=true,
+      default=0,
+      "padding",
+    ),
+    pad_type_id: get_tokenizer_int(
+      obj,
+      "pad_type_id",
+      required=true,
+      default=0,
+      "padding",
+    ),
+    pad_token: get_tokenizer_string(
+      obj,
+      "pad_token",
+      required=true,
+      default="",
+      "padding",
+    ),
+    pad_to_multiple_of: get_tokenizer_int_opt(
+      obj, "pad_to_multiple_of", "padding",
+    ),
   }
 }
 
