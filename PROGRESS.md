@@ -813,3 +813,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `normalize.mbt`（160 行）- 核心 normalize + normalize_str + byte_level + NMT
   - `normalize_precompiled.mbt`（1161 行）- precompiled normalize + strip_accents + bert_clean_text + bert_pad_chinese + to_lowercase + strip + replace_all
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：model.mbt 模块化拆分
+
+- 拆分 `model.mbt`（1198 行）为：
+  - `model.mbt`（728 行）- Model struct + getters + cache + vocabulary methods
+  - `model_serialization.mbt`（470 行）- to_json, save, artifact helpers, JSON serialization（bpe_to_json, wordlevel_to_json, wordpiece_to_json, unigram_to_json, vocab/merges serialization）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
