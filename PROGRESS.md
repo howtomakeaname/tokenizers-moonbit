@@ -686,3 +686,13 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 - `moon publish` 成功发布 `howtomakeaname/tokenizers-moonbit@0.2.0`
 - Server status: 200 OK
 - 版本包含：模块化重构 + API 文档完善 + Unicode 扩展 + Python binding 别名
+
+### 2026-07-12 小闭环：Hub 缓存类型文档补齐
+
+- 补齐 Hub 缓存类型文档：
+  - `PretrainedCacheMetadata`：缓存路径、revision、ETag + `cache_exists` / `etag_matches` / `is_fresh` 方法
+  - `PretrainedCachePaths`：HF Hub 缓存布局具体路径
+  - `PretrainedDownloadResumeMetadata`：中断下载跟踪
+  - `PretrainedResolutionHint`：离线解析失败诊断信息
+  - `from_pretrained_cache_metadata` / `from_pretrained_cache_paths` / `from_pretrained_resolution_hint` 函数
+- 中英文文档同步更新。
