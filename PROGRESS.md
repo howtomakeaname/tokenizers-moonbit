@@ -719,3 +719,19 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `encode_pretokenized_batch_with_byte_offsets` / `encode_pretokenized_pair_batch_with_byte_offsets`
 - 说明 UTF-8 byte offset 语义和预分词输入行为。
 - 中英文文档同步更新。
+
+### 2026-07-12 小闭环：Token 与 Split 类型文档补齐
+
+- 补齐 Token 类型文档：
+  - 结构体定义（id / value / offsets）
+  - 构造方法：`new` / `from_tuple` / `from_state`
+  - 访问器：`id` / `value` / `offsets`（属性风格别名）
+  - 互操作：`as_tuple` / `get_state` / `__getstate__` / `__setstate__`
+  - 显示：`__str__` / `__repr__`
+- 补齐 Split 类型文档：
+  - 结构体定义（value / offsets）
+  - 构造方法：`new` / `from_tuple` / `from_state`
+  - 访问器：`value` / `offsets`（属性风格别名）
+  - 互操作：`as_tuple` / `get_state` / `__getstate__` / `__setstate__`
+  - 显示：`__str__` / `__repr__`
+- 中英文文档同步更新。
