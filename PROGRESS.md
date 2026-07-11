@@ -641,3 +641,20 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `TextInputSequence` 枚举（`Text` / `PreTokenized`）及其辅助方法
   - 说明统一编码输入类型用于 `encode_input`、`encode_plus`、`batch_encode_plus` 等
 - 中英文文档同步更新。
+
+### 2026-07-11 小闭环：NormalizedString / PreTokenizedString API 签名文档
+
+- 补齐 `NormalizedString` 完整 API 签名文档（31 个方法）：
+  - 构造：`new` / `from_state` / `from_tuple` / `as_tuple`
+  - 字符串访问：`get` / `normalized` / `original` / `to_string` / `len` / `is_empty`
+  - 归一化：`normalize`
+  - 变换：`clear` / `lowercase` / `uppercase` / `lstrip` / `rstrip` / `strip`
+  - Unicode 归一化：`nfc` / `nfd` / `nfkc` / `nfkd`
+  - 操作：`replace` / `prepend` / `append` / `slice` / `filter` / `map` / `for_each`
+  - 分词：`split` / `split_regex`
+- 补齐 `PreTokenizedString` 完整 API 签名文档（16 个方法）：
+  - 构造：`new` / `from_splits` / `from_state` / `from_tuple` / `as_tuple`
+  - 访问：`original` / `len` / `is_empty` / `splits` / `get_item`
+  - 操作：`normalize` / `split`
+  - 编码转换：`to_encoding` / `into_encoding`
+- 中英文文档同步更新。
