@@ -904,3 +904,14 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `normalizer.mbt`（515 行）- Normalizer struct + getters + setter aliases + builder methods（nfc, nfd, nfkc, nfkd, byte_level 等）
   - `normalizer_json.mbt`（370 行）- JSON serialization helpers（get_state, from_state, __getstate__, __setstate__, to_json, from_json, parsing helpers）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：缺失的 Tokenizer:: 方法签名文档补齐
+
+- 补齐 Loading 部分缺失的 `Tokenizer::` 前缀方法签名：
+  - `Tokenizer::from_file`
+  - `Tokenizer::from_pretrained`
+  - `Tokenizer::from_pretrained_cached`
+  - `Tokenizer::from_pretrained_downloaded`
+  - `Tokenizer::save_model`
+  - `Tokenizer::__str__` / `Tokenizer::__repr__`
+- 中英文文档同步更新。
