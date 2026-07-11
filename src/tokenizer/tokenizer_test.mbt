@@ -5068,3 +5068,58 @@ test "AddedToken setter aliases delegate to with_* methods" {
   @test.assert_eq(with_norm.normalized(), false)
   @test.assert_eq(with_norm.set_normalized_alias(false).normalized(), false)
 }
+
+///|
+test "Encoding with_ids, with_tokens, with_offsets and set_* aliases" {
+  let json =
+    #|{"version":"1.0","pre_tokenizer":{"type":"WhitespaceSplit"},"model":{"type":"WordLevel","vocab":{"hello":0,"world":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode("hello world", add_special_tokens=false)
+  @test.assert_eq(enc.ids(), [0, 1])
+  @test.assert_eq(enc.tokens(), ["hello", "world"])
+
+  // with_ids
+  let with_new_ids = enc.with_ids([2, 2])
+  @test.assert_eq(with_new_ids.ids(), [2, 2])
+  @test.assert_eq(with_new_ids.tokens(), ["hello", "world"]) // tokens unchanged
+
+  // set_ids alias
+  let set_new_ids = enc.set_ids([2, 2])
+  @test.assert_eq(set_new_ids.ids(), [2, 2])
+
+  // with_tokens
+  let with_new_tokens = enc.with_tokens(["a", "b"])
+  @test.assert_eq(with_new_tokens.tokens(), ["a", "b"])
+  @test.assert_eq(with_new_tokens.ids(), [0, 1]) // ids unchanged
+
+  // set_tokens alias
+  let set_new_tokens = enc.set_tokens(["a", "b"])
+  @test.assert_eq(set_new_tokens.tokens(), ["a", "b"])
+
+  // with_offsets
+  let with_new_offsets = enc.with_offsets([(0, 3), (4, 8)])
+  @test.assert_eq(with_new_offsets.offsets(), [(0, 3), (4, 8)])
+
+  // set_offsets alias
+  let set_new_offsets = enc.set_offsets([(0, 3), (4, 8)])
+  @test.assert_eq(set_new_offsets.offsets(), [(0, 3), (4, 8)])
+
+  // length mismatch raises error
+  let mut raised_ids = false
+  try enc.with_ids([1]) |> ignore catch {
+    _ => raised_ids = true
+  }
+  @test.assert_eq(raised_ids, true)
+
+  let mut raised_tokens = false
+  try enc.with_tokens(["a"]) |> ignore catch {
+    _ => raised_tokens = true
+  }
+  @test.assert_eq(raised_tokens, true)
+
+  let mut raised_offsets = false
+  try enc.with_offsets([(0, 1)]) |> ignore catch {
+    _ => raised_offsets = true
+  }
+  @test.assert_eq(raised_offsets, true)
+}

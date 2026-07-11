@@ -512,6 +512,70 @@ pub fn Encoding::take_overflowing(
 }
 
 ///|
+/// Return a new Encoding with updated ids, preserving all other fields.
+/// Raises TokenizerError if the new ids length doesn't match the original.
+/// This enables programmatic construction and patching of encodings.
+pub fn Encoding::with_ids(
+  self : Encoding,
+  ids : Array[Int],
+) -> Encoding raise TokenizerError {
+  validate_encoding_length("ids", ids.length(), self.ids.length())
+  { ..self, ids: ids.copy() }
+}
+
+///|
+/// Python binding alias for `with_ids`. Returns a new Encoding with the
+/// updated token ids, preserving immutability.
+pub fn Encoding::set_ids(
+  self : Encoding,
+  ids : Array[Int],
+) -> Encoding raise TokenizerError {
+  self.with_ids(ids)
+}
+
+///|
+/// Return a new Encoding with updated token strings, preserving all other fields.
+/// Raises TokenizerError if the new tokens length doesn't match the original.
+pub fn Encoding::with_tokens(
+  self : Encoding,
+  tokens : Array[String],
+) -> Encoding raise TokenizerError {
+  validate_encoding_length("tokens", tokens.length(), self.ids.length())
+  { ..self, tokens: tokens.copy() }
+}
+
+///|
+/// Python binding alias for `with_tokens`. Returns a new Encoding with the
+/// updated token strings, preserving immutability.
+pub fn Encoding::set_tokens(
+  self : Encoding,
+  tokens : Array[String],
+) -> Encoding raise TokenizerError {
+  self.with_tokens(tokens)
+}
+
+///|
+/// Return a new Encoding with updated offsets, preserving all other fields.
+/// Raises TokenizerError if the new offsets length doesn't match the original.
+pub fn Encoding::with_offsets(
+  self : Encoding,
+  offsets : Array[(Int, Int)],
+) -> Encoding raise TokenizerError {
+  validate_encoding_length("offsets", offsets.length(), self.ids.length())
+  { ..self, offsets: offsets.copy() }
+}
+
+///|
+/// Python binding alias for `with_offsets`. Returns a new Encoding with the
+/// updated offsets, preserving immutability.
+pub fn Encoding::set_offsets(
+  self : Encoding,
+  offsets : Array[(Int, Int)],
+) -> Encoding raise TokenizerError {
+  self.with_offsets(offsets)
+}
+
+///|
 /// Truncate this encoding and keep overflow windows, matching HF's public
 /// `Encoding.truncate(max_len, stride, direction)` shape. MoonBit returns the
 /// updated value instead of mutating in place.

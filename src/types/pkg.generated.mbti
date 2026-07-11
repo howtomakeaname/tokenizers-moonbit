@@ -94,9 +94,12 @@ pub fn Encoding::pad(Self, Int, pad_id? : Int, pad_type_id? : Int, pad_token? : 
 pub fn Encoding::pad_hf(Self, Int, direction? : String, pad_id? : Int, pad_type_id? : Int, pad_token? : String) -> Self raise TokenizerError
 pub fn Encoding::sequence_ids(Self) -> Array[Int?]
 pub fn Encoding::set_attention_mask(Self, Array[Int]) -> Self raise TokenizerError
+pub fn Encoding::set_ids(Self, Array[Int]) -> Self raise TokenizerError
+pub fn Encoding::set_offsets(Self, Array[(Int, Int)]) -> Self raise TokenizerError
 pub fn Encoding::set_overflowing(Self, Array[Self]) -> Self
 pub fn Encoding::set_sequence_id(Self, Int) -> Self raise TokenizerError
 pub fn Encoding::set_special_tokens_mask(Self, Array[Int]) -> Self raise TokenizerError
+pub fn Encoding::set_tokens(Self, Array[String]) -> Self raise TokenizerError
 pub fn Encoding::set_type_ids(Self, Array[Int]) -> Self raise TokenizerError
 pub fn Encoding::set_word_ids(Self, Array[Int?]) -> Self raise TokenizerError
 pub fn Encoding::special_tokens_mask(Self) -> Array[Int]
@@ -112,9 +115,12 @@ pub fn Encoding::truncate(Self, Int, stride? : Int, direction? : EncodingDirecti
 pub fn Encoding::truncate_hf(Self, Int, stride? : Int, direction? : String) -> Self raise TokenizerError
 pub fn Encoding::type_ids(Self) -> Array[Int]
 pub fn Encoding::with_attention_mask(Self, Array[Int]) -> Self raise TokenizerError
+pub fn Encoding::with_ids(Self, Array[Int]) -> Self raise TokenizerError
+pub fn Encoding::with_offsets(Self, Array[(Int, Int)]) -> Self raise TokenizerError
 pub fn Encoding::with_overflowing(Self, Array[Self]) -> Self
 pub fn Encoding::with_sequence_id(Self, Int) -> Self raise TokenizerError
 pub fn Encoding::with_special_tokens_mask(Self, Array[Int]) -> Self raise TokenizerError
+pub fn Encoding::with_tokens(Self, Array[String]) -> Self raise TokenizerError
 pub fn Encoding::with_type_ids(Self, Array[Int]) -> Self raise TokenizerError
 pub fn Encoding::with_word_ids(Self, Array[Int?]) -> Self raise TokenizerError
 pub fn Encoding::word_ids(Self) -> Array[Int?]

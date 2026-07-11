@@ -442,6 +442,39 @@ fn Tokenizer::decode_stream(
 ) -> DecodeStream
 
 fn DecodeStream::step(self : DecodeStream, id : Int) -> (DecodeStream, String?)
+
+fn Tokenizer::encode_plus(
+  self : Tokenizer, text : String, pair? : String? = None,
+  add_special_tokens? : Bool = true,
+) -> Encoding raise TokenizerError
+
+fn Tokenizer::batch_encode_plus(
+  self : Tokenizer, inputs : Array[EncodeInput], add_special_tokens? : Bool = true,
+) -> Array[Encoding] raise TokenizerError
+
+fn Tokenizer::decode_ids(
+  self : Tokenizer, ids : Array[Int], skip_special_tokens? : Bool = true,
+) -> String
+
+fn Tokenizer::batch_decode(
+  self : Tokenizer, batch : Array[Array[Int]], skip_special_tokens? : Bool = true,
+) -> Array[String]
+
+fn Tokenizer::async_encode(
+  self : Tokenizer, input : EncodeInput, add_special_tokens? : Bool = true,
+) -> Encoding raise TokenizerError
+
+fn Tokenizer::async_encode_batch(
+  self : Tokenizer, inputs : Array[EncodeInput], add_special_tokens? : Bool = true,
+) -> Array[Encoding] raise TokenizerError
+
+fn Tokenizer::async_decode(
+  self : Tokenizer, ids : Array[Int], skip_special_tokens? : Bool = true,
+) -> String
+
+fn Tokenizer::async_decode_batch(
+  self : Tokenizer, batch : Array[Array[Int]], skip_special_tokens? : Bool = true,
+) -> Array[String]
 ```
 
 Fast encode variants (`encode_fast`, `encode_batch_fast`,
@@ -1562,6 +1595,12 @@ fn Encoding::with_word_ids(self : Encoding, word_ids : Array[Int?]) -> Encoding 
 fn Encoding::set_word_ids(self : Encoding, word_ids : Array[Int?]) -> Encoding raise TokenizerError
 fn Encoding::with_sequence_id(self : Encoding, sequence_id : Int) -> Encoding raise TokenizerError
 fn Encoding::set_sequence_id(self : Encoding, sequence_id : Int) -> Encoding raise TokenizerError
+fn Encoding::with_ids(self : Encoding, ids : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::set_ids(self : Encoding, ids : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::with_tokens(self : Encoding, tokens : Array[String]) -> Encoding raise TokenizerError
+fn Encoding::set_tokens(self : Encoding, tokens : Array[String]) -> Encoding raise TokenizerError
+fn Encoding::with_offsets(self : Encoding, offsets : Array[(Int, Int)]) -> Encoding raise TokenizerError
+fn Encoding::set_offsets(self : Encoding, offsets : Array[(Int, Int)]) -> Encoding raise TokenizerError
 fn Encoding::with_overflowing(self : Encoding, overflowing : Array[Encoding]) -> Encoding raise TokenizerError
 fn Encoding::set_overflowing(self : Encoding, overflowing : Array[Encoding]) -> Encoding raise TokenizerError
 
