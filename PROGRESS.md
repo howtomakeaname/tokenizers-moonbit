@@ -841,3 +841,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `encode.mbt`（758 行）- EncodeInput types + single encode functions + fast variants + pretokenized encode
   - `encode_batch.mbt`（559 行）- batch encode functions（batch, fast, parallel, pretokenized batch, pair batch, pair encode, encode_plus）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：decoder.mbt 模块化拆分
+
+- 拆分 `decoder.mbt`（970 行）为：
+  - `decoder.mbt`（705 行）- Decoder struct + getters + setters + builder methods
+  - `decoder_json.mbt`（265 行）- JSON serialization helpers（to_json, from_json, bytelevel_to_json, wordpiece_to_json, metaspace_to_json 等）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
