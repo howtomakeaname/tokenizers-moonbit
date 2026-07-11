@@ -890,3 +890,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `trainer_setters.mbt`（716 行）- common setters（unk_token, min_frequency, special_tokens, special_added_tokens, vocab_size, show_progress）
   - `trainer_setters_model_specific.mbt`（459 行）- model-specific setters（continuing_subword_prefix, end_of_word_suffix, max_input_chars_per_word, max_token_length, initial_alphabet, limit_alphabet）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：from_file.mbt 模块化拆分
+
+- 拆分 `from_file.mbt`（1057 行）为：
+  - `from_file.mbt`（624 行）- Structs + core from_file/save/from_pretrained + cache functions
+  - `from_file_helpers.mbt`（433 行）- Validation + internal helpers（is_valid_hub_identifier, validate_hub_model_id, validate_hub_revision, build_pretrained_cache_paths, path manipulation helpers）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
