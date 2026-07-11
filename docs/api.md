@@ -651,6 +651,42 @@ omits special tokens injected by the configured post-processor, but the
 post-processor still applies non-special effects such as Template/BERT
 `type_ids`, pair `sequence_ids`, and ByteLevel/RoBERTa offset trimming.
 
+### Byte-offset encode variants
+
+```moonbit
+fn Tokenizer::encode_with_byte_offsets(
+  self : Tokenizer, text : String, add_special_tokens? : Bool = true,
+) -> Encoding raise TokenizerError
+
+fn Tokenizer::encode_pair_with_byte_offsets(
+  self : Tokenizer, text_a : String, text_b : String, add_special_tokens? : Bool = true,
+) -> Encoding raise TokenizerError
+
+fn Tokenizer::encode_batch_with_byte_offsets(
+  self : Tokenizer, texts : Array[String], add_special_tokens? : Bool = true,
+) -> Array[Encoding] raise TokenizerError
+
+fn Tokenizer::encode_pair_batch_with_byte_offsets(
+  self : Tokenizer, pairs : Array[(String, String)], add_special_tokens? : Bool = true,
+) -> Array[Encoding] raise TokenizerError
+
+fn Tokenizer::encode_pretokenized_with_byte_offsets(
+  self : Tokenizer, words : Array[String], add_special_tokens? : Bool = true,
+) -> Encoding raise TokenizerError
+
+fn Tokenizer::encode_pretokenized_pair_with_byte_offsets(
+  self : Tokenizer, words_a : Array[String], words_b : Array[String], add_special_tokens? : Bool = true,
+) -> Encoding raise TokenizerError
+
+fn Tokenizer::encode_pretokenized_batch_with_byte_offsets(
+  self : Tokenizer, batch : Array[Array[String]], add_special_tokens? : Bool = true,
+) -> Array[Encoding] raise TokenizerError
+
+fn Tokenizer::encode_pretokenized_pair_batch_with_byte_offsets(
+  self : Tokenizer, batch : Array[(Array[String], Array[String])], add_special_tokens? : Bool = true,
+) -> Array[Encoding] raise TokenizerError
+```
+
 All `encode_*_with_byte_offsets` variants return HF-style UTF-8 byte offsets.
 For pre-tokenized inputs, offsets are measured against a synthetic normalized
 text formed by joining normalized words with one ASCII space; the tokenizer's
