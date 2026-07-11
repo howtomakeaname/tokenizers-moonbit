@@ -150,6 +150,62 @@ pub fn is_unicode_letter(c : Char) -> Bool {
   if u >= 0xAC00 && u <= 0xD7A3 {
     return true
   }
+  // Ethiopic (Amharic, Tigrinya)
+  if u >= 0x1200 && u <= 0x137F {
+    return true
+  }
+  // Ethiopic Supplement
+  if u >= 0x1380 && u <= 0x139F {
+    return true
+  }
+  // Cherokee
+  if u >= 0x13A0 && u <= 0x13FF {
+    return true
+  }
+  // Canadian Aboriginal Syllabics
+  if u >= 0x1400 && u <= 0x167F {
+    return true
+  }
+  // Ogham (Old Irish)
+  if u >= 0x1680 && u <= 0x169F {
+    return true
+  }
+  // Runic (Norse, Germanic)
+  if u >= 0x16A0 && u <= 0x16FF {
+    return true
+  }
+  // Latin Extended Additional (Vietnamese, etc.)
+  if u >= 0x1E00 && u <= 0x1EFF {
+    return true
+  }
+  // Greek Extended
+  if u >= 0x1F00 && u <= 0x1FFF {
+    return true
+  }
+  // CJK Unified Ideographs Extension B
+  if u >= 0x20000 && u <= 0x2A6DF {
+    return true
+  }
+  // CJK Unified Ideographs Extension C + D
+  if u >= 0x2A700 && u <= 0x2B73F {
+    return true
+  }
+  // CJK Compatibility Ideographs
+  if u >= 0xF900 && u <= 0xFAFF {
+    return true
+  }
+  // Hangul Jamo (Korean consonants/vowels)
+  if u >= 0x1100 && u <= 0x11FF {
+    return true
+  }
+  // Hangul Jamo Extended-A
+  if u >= 0xA960 && u <= 0xA97F {
+    return true
+  }
+  // Hangul Jamo Extended-B
+  if u >= 0xD7B0 && u <= 0xD7FF {
+    return true
+  }
   false
 }
 

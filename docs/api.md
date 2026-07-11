@@ -1368,10 +1368,13 @@ components for serialized round-trips.
 ## Unicode script coverage
 
 The deterministic regex subset covers the following Unicode letter scripts
-(matching HF Rust regex engine coverage): Latin, Greek, Cyrillic, Armenian,
-Hebrew, Arabic, Devanagari, Bengali, Gurmukhi, Gujarati, Oriya, Tamil,
-Telugu, Kannada, Malayalam, Sinhala, Thai, Lao, Tibetan, Myanmar, Georgian,
-Khmer, Hiragana, Katakana, CJK Unified Ideographs, and Hangul Syllables.
+(matching HF Rust regex engine coverage): Latin, Latin Extended Additional,
+Greek, Greek Extended, Cyrillic, Armenian, Hebrew, Arabic, Devanagari, Bengali,
+Gurmukhi, Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam, Sinhala, Thai,
+Lao, Tibetan, Myanmar, Georgian, Khmer, Ethiopic, Cherokee, Canadian Aboriginal
+Syllabics, Ogham, Runic, Hiragana, Katakana, CJK Unified Ideographs (including
+Extension A, Extension B, Extension C/D), CJK Compatibility Ideographs,
+Hangul Syllables, and Hangul Jamo (including Extended-A/B).
 The `\p{S}` symbol class covers currency, math, technical, dingbat, emoji, and
 miscellaneous mathematical symbol blocks (including 0x27C0-0x27EF and 0x2980-0x29FF).
 The `\p{N}` / `\d` digit class covers 18 Unicode digit ranges: ASCII,
