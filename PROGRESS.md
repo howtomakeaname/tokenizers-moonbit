@@ -785,3 +785,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `split_regex.mbt`（953 行）- 核心 regex 匹配（Regex struct, simple_split_regex_matches, is_simple_*_regex_pattern, run_matches helpers）
   - `regex_literal.mbt`（726 行）- literal 匹配（literal_matches, regex_literal_spec, literal_alternation_matches, word boundary matching, is_decimal_number）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：trainer_setters.mbt 模块化拆分
+
+- 拆分 `trainer_setters.mbt`（1522 行）为：
+  - `trainer_setters.mbt`（1175 行）- 通用 setters（unk_token, min_frequency, special_tokens, special_added_tokens, vocab_size, show_progress, continuing_subword_prefix, end_of_word_suffix, max_input_chars_per_word, max_token_length, initial_alphabet, limit_alphabet）
+  - `trainer_setters_model.mbt`（347 行）- BPE/Unigram 特有 setters（fuse_unk, byte_fallback, shrinking_factor, max_piece_length, n_sub_iterations, seed_size, progress_format）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
