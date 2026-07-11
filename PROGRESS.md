@@ -834,3 +834,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `encoding.mbt`（938 行）- Encoding struct + constructors + with_*/set_* + truncate/pad/merge + getter methods
   - `encoding_mapping.mbt`（261 行）- token/word/char mapping methods（token_to_sequence, token_to_chars, token_to_offsets, token_to_word, word_to_tokens, word_to_chars, char_to_token, char_to_word）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：encode.mbt 模块化拆分
+
+- 拆分 `encode.mbt`（1317 行）为：
+  - `encode.mbt`（758 行）- EncodeInput types + single encode functions + fast variants + pretokenized encode
+  - `encode_batch.mbt`（559 行）- batch encode functions（batch, fast, parallel, pretokenized batch, pair batch, pair encode, encode_plus）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
