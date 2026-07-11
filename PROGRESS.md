@@ -827,3 +827,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `post_processor.mbt`（863 行）- Piece + SpecialToken structs, PostProcessor struct, getters, builder methods, JSON serialization helpers
   - `post_processor_json.mbt`（330 行）- added_tokens, num_special_tokens_to_add, from_json, template/bert/roberta parsing helpers
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：encoding.mbt 模块化拆分
+
+- 拆分 `encoding.mbt`（1199 行）为：
+  - `encoding.mbt`（938 行）- Encoding struct + constructors + with_*/set_* + truncate/pad/merge + getter methods
+  - `encoding_mapping.mbt`（261 行）- token/word/char mapping methods（token_to_sequence, token_to_chars, token_to_offsets, token_to_word, word_to_tokens, word_to_chars, char_to_token, char_to_word）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
