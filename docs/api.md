@@ -1267,6 +1267,42 @@ These are useful when building only the model component.
 
 ## Low-level migration API
 
+### NormalizedString
+
+```moonbit
+fn NormalizedString::new(s : String) -> NormalizedString
+fn NormalizedString::from_state(state : NormalizedStringState) -> NormalizedString
+fn NormalizedString::from_tuple(t : (String, String)) -> NormalizedString
+fn NormalizedString::as_tuple(self : NormalizedString) -> (String, String)
+fn NormalizedString::get_original(self : NormalizedString) -> String
+fn NormalizedString::original(self : NormalizedString) -> String
+fn NormalizedString::get(self : NormalizedString) -> String
+fn NormalizedString::normalized(self : NormalizedString) -> String
+fn NormalizedString::to_string(self : NormalizedString) -> String
+fn NormalizedString::len(self : NormalizedString) -> Int
+fn NormalizedString::is_empty(self : NormalizedString) -> Bool
+fn NormalizedString::normalize(self : NormalizedString, normalizer : Normalizer) -> NormalizedString
+fn NormalizedString::append(self : NormalizedString, other : NormalizedString) -> NormalizedString
+fn NormalizedString::clear(self : NormalizedString) -> NormalizedString
+fn NormalizedString::lowercase(self : NormalizedString) -> NormalizedString
+fn NormalizedString::uppercase(self : NormalizedString) -> NormalizedString
+fn NormalizedString::lstrip(self : NormalizedString) -> NormalizedString
+fn NormalizedString::rstrip(self : NormalizedString) -> NormalizedString
+fn NormalizedString::strip(self : NormalizedString) -> NormalizedString
+fn NormalizedString::nfc(self : NormalizedString) -> NormalizedString
+fn NormalizedString::nfd(self : NormalizedString) -> NormalizedString
+fn NormalizedString::nfkc(self : NormalizedString) -> NormalizedString
+fn NormalizedString::nfkd(self : NormalizedString) -> NormalizedString
+fn NormalizedString::replace(self : NormalizedString, pattern : String, content : String) -> NormalizedString
+fn NormalizedString::prepend(self : NormalizedString, s : String) -> NormalizedString
+fn NormalizedString::slice(self : NormalizedString, start : Int, stop : Int?) -> NormalizedString?
+fn NormalizedString::filter(self : NormalizedString, pred : (Char) -> Bool) -> NormalizedString
+fn NormalizedString::map(self : NormalizedString, f : (Char) -> Char) -> NormalizedString
+fn NormalizedString::for_each(self : NormalizedString, f : (Char) -> Unit) -> Unit
+fn NormalizedString::split(self : NormalizedString, pattern : String) -> Array[NormalizedString]
+fn NormalizedString::split_regex(self : NormalizedString, pattern : String) -> Array[NormalizedString]
+```
+
 `NormalizedString` exposes HF-style helpers for thin binding layers:
 `get` / `normalized` / `to_string`, `get_original` / `original`, `len` /
 `__len__`, `is_empty`, state/tuple round-trips, `normalize`, `replace`,
@@ -1274,6 +1310,31 @@ These are useful when building only the model component.
 `strip`, `nfc`, `nfd`, `nfkc`, `nfkd`, `slice`, `map`, `filter`, literal
 `split`, supported deterministic `split_regex`, single-index `get_item` /
 `__getitem__`, and `__str__` / `__repr__` display aliases.
+
+### PreTokenizedString
+
+```moonbit
+fn PreTokenizedString::new(text : String) -> PreTokenizedString
+fn PreTokenizedString::from_splits(splits : Array[Split]) -> PreTokenizedString
+fn PreTokenizedString::from_state(state : PreTokenizedStringState) -> PreTokenizedString
+fn PreTokenizedString::from_tuple(t : (String, Array[Split])) -> PreTokenizedString
+fn PreTokenizedString::as_tuple(self : PreTokenizedString) -> (String, Array[Split])
+fn PreTokenizedString::get_original(self : PreTokenizedString) -> String
+fn PreTokenizedString::original(self : PreTokenizedString) -> String
+fn PreTokenizedString::len(self : PreTokenizedString) -> Int
+fn PreTokenizedString::is_empty(self : PreTokenizedString) -> Bool
+fn PreTokenizedString::get_splits(self : PreTokenizedString) -> Array[Split]
+fn PreTokenizedString::splits(self : PreTokenizedString) -> Array[Split]
+fn PreTokenizedString::get_item(self : PreTokenizedString, index : Int) -> Split?
+fn PreTokenizedString::normalize(self : PreTokenizedString, normalizer : Normalizer) -> PreTokenizedString
+fn PreTokenizedString::split(self : PreTokenizedString, pre_tokenizer : PreTokenizer) -> PreTokenizedString
+fn PreTokenizedString::to_encoding(
+  self : PreTokenizedString, type_id? : Int = 0,
+) -> Encoding raise TokenizerError
+fn PreTokenizedString::into_encoding(
+  self : PreTokenizedString, type_id? : Int = 0,
+) -> Encoding raise TokenizerError
+```
 
 `PreTokenizedString` provides `get_splits` / `splits`, single-index
 `get_item` / `__getitem__`, `normalize`, pre-tokenizer `split`, state/tuple
