@@ -820,3 +820,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `model.mbt`（728 行）- Model struct + getters + cache + vocabulary methods
   - `model_serialization.mbt`（470 行）- to_json, save, artifact helpers, JSON serialization（bpe_to_json, wordlevel_to_json, wordpiece_to_json, unigram_to_json, vocab/merges serialization）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：post_processor.mbt 模块化拆分
+
+- 拆分 `post_processor.mbt`（1193 行）为：
+  - `post_processor.mbt`（863 行）- Piece + SpecialToken structs, PostProcessor struct, getters, builder methods, JSON serialization helpers
+  - `post_processor_json.mbt`（330 行）- added_tokens, num_special_tokens_to_add, from_json, template/bert/roberta parsing helpers
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
