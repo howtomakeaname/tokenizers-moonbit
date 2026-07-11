@@ -709,3 +709,13 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `plan_tokenizer_json_request` / `plan_hub_file_request` / `head_tokenizer_json_request` 函数
   - `decide_tokenizer_json_response` / `decide_tokenizer_json_head_response` 函数
 - 中英文文档同步更新。
+
+### 2026-07-12 小闭环：byte-offset 编码变体文档补齐
+
+- 补齐 byte-offset 编码变体文档（8 个函数）：
+  - `encode_with_byte_offsets` / `encode_pair_with_byte_offsets`
+  - `encode_batch_with_byte_offsets` / `encode_pair_batch_with_byte_offsets`
+  - `encode_pretokenized_with_byte_offsets` / `encode_pretokenized_pair_with_byte_offsets`
+  - `encode_pretokenized_batch_with_byte_offsets` / `encode_pretokenized_pair_batch_with_byte_offsets`
+- 说明 UTF-8 byte offset 语义和预分词输入行为。
+- 中英文文档同步更新。
