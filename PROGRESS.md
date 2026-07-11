@@ -735,3 +735,18 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - 互操作：`as_tuple` / `get_state` / `__getstate__` / `__setstate__`
   - 显示：`__str__` / `__repr__`
 - 中英文文档同步更新。
+
+### 2026-07-12 小闭环：AddedToken/TruncationParams/PaddingParams 访问器文档补齐
+
+- 补齐 AddedToken 访问器文档：
+  - 属性风格 getter：`content` / `single_word` / `lstrip` / `rstrip` / `normalized` / `is_special`
+  - 互操作：`from_tuple` / `as_tuple` / `from_state` / `get_state` / `__getstate__` / `__setstate__`
+  - 显示：`__str__` / `__repr__`
+  - setter 别名：`set_special` / `set_special_alias`
+- 补齐 TruncationParams 访问器文档：
+  - 互操作：`from_state` / `from_tuple` / `as_tuple` / `get_state` / `__getstate__` / `__setstate__`
+  - getter：`max_length` / `stride` / `direction` / `strategy` + `get_*` 别名
+- 补齐 PaddingParams 访问器文档：
+  - 互操作：`from_state` / `from_tuple` / `as_tuple` / `get_state` / `__getstate__` / `__setstate__`
+  - getter：`strategy` / `direction` / `pad_id` / `pad_type_id` / `pad_token` / `pad_to_multiple_of` + `get_*` 别名
+- 中英文文档同步更新。
