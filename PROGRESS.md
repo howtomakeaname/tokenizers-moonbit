@@ -585,3 +585,14 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - 独立模型训练：`Model::train_wordlevel` / `Model::train_wordpiece` / `Model::train_bpe` / `Model::train_unigram`（含 `*_from_tokens` 变体）。
 - 补齐 Python pickle 兼容别名文档：`Tokenizer::__getstate__` / `__setstate__`。
 - 中英文文档同步更新。
+
+### 2026-07-11 小闭环：Encoding Python binding setter 别名
+
+- 补齐 Encoding 类型的 Python binding 兼容 setter 别名：
+  - `set_type_ids` → 委托给 `with_type_ids`
+  - `set_special_tokens_mask` → 委托给 `with_special_tokens_mask`
+  - `set_attention_mask` → 委托给 `with_attention_mask`
+  - `set_word_ids` → 委托给 `with_word_ids`
+  - `set_overflowing` → 委托给 `with_overflowing`
+- 添加对应测试（385 个测试，从 384 增加到 385）。
+- 中英文文档同步更新。
