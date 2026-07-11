@@ -5043,3 +5043,28 @@ test "Encoding setter aliases delegate to with_* methods" {
   let with_overflow = enc.set_overflowing([])
   @test.assert_eq(with_overflow.overflowing(), [])
 }
+
+///|
+test "AddedToken setter aliases delegate to with_* methods" {
+  let token = AddedToken::new("[PAD]")
+
+  // set_single_word
+  let with_sw = token.set_single_word(true)
+  @test.assert_eq(with_sw.single_word(), true)
+  @test.assert_eq(with_sw.set_single_word_alias(true).single_word(), true)
+
+  // set_lstrip
+  let with_ls = token.set_lstrip(true)
+  @test.assert_eq(with_ls.lstrip(), true)
+  @test.assert_eq(with_ls.set_lstrip_alias(true).lstrip(), true)
+
+  // set_rstrip
+  let with_rs = token.set_rstrip(true)
+  @test.assert_eq(with_rs.rstrip(), true)
+  @test.assert_eq(with_rs.set_rstrip_alias(true).rstrip(), true)
+
+  // set_normalized
+  let with_norm = token.set_normalized(false)
+  @test.assert_eq(with_norm.normalized(), false)
+  @test.assert_eq(with_norm.set_normalized_alias(false).normalized(), false)
+}

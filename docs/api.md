@@ -1037,9 +1037,17 @@ fn AddedToken::new(
 ) -> AddedToken
 fn AddedToken::special(content : String) -> AddedToken
 fn AddedToken::with_single_word(self : AddedToken, single_word : Bool) -> AddedToken
+fn AddedToken::set_single_word(self : AddedToken, single_word : Bool) -> AddedToken
+fn AddedToken::set_single_word_alias(self : AddedToken, single_word : Bool) -> AddedToken
 fn AddedToken::with_lstrip(self : AddedToken, lstrip : Bool) -> AddedToken
+fn AddedToken::set_lstrip(self : AddedToken, lstrip : Bool) -> AddedToken
+fn AddedToken::set_lstrip_alias(self : AddedToken, lstrip : Bool) -> AddedToken
 fn AddedToken::with_rstrip(self : AddedToken, rstrip : Bool) -> AddedToken
+fn AddedToken::set_rstrip(self : AddedToken, rstrip : Bool) -> AddedToken
+fn AddedToken::set_rstrip_alias(self : AddedToken, rstrip : Bool) -> AddedToken
 fn AddedToken::with_normalized(self : AddedToken, normalized : Bool) -> AddedToken
+fn AddedToken::set_normalized(self : AddedToken, normalized : Bool) -> AddedToken
+fn AddedToken::set_normalized_alias(self : AddedToken, normalized : Bool) -> AddedToken
 fn AddedToken::with_special(self : AddedToken, special : Bool) -> AddedToken
 
 fn Tokenizer::add_tokens(self : Tokenizer, tokens : Array[AddedToken]) -> Tokenizer

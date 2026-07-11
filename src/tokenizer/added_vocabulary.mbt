@@ -345,6 +345,76 @@ pub fn AddedToken::set_special_alias(
 }
 
 ///|
+/// Python binding alias for `with_single_word`. Returns a new AddedToken with
+/// the updated single_word flag, preserving immutability.
+pub fn AddedToken::set_single_word(
+  self : AddedToken,
+  single_word : Bool,
+) -> AddedToken {
+  self.with_single_word(single_word)
+}
+
+///|
+/// Python binding alias for `set_single_word`.
+pub fn AddedToken::set_single_word_alias(
+  self : AddedToken,
+  single_word : Bool,
+) -> AddedToken {
+  self.set_single_word(single_word)
+}
+
+///|
+/// Python binding alias for `with_lstrip`. Returns a new AddedToken with the
+/// updated lstrip flag, preserving immutability.
+pub fn AddedToken::set_lstrip(self : AddedToken, lstrip : Bool) -> AddedToken {
+  self.with_lstrip(lstrip)
+}
+
+///|
+/// Python binding alias for `set_lstrip`.
+pub fn AddedToken::set_lstrip_alias(
+  self : AddedToken,
+  lstrip : Bool,
+) -> AddedToken {
+  self.set_lstrip(lstrip)
+}
+
+///|
+/// Python binding alias for `with_rstrip`. Returns a new AddedToken with the
+/// updated rstrip flag, preserving immutability.
+pub fn AddedToken::set_rstrip(self : AddedToken, rstrip : Bool) -> AddedToken {
+  self.with_rstrip(rstrip)
+}
+
+///|
+/// Python binding alias for `set_rstrip`.
+pub fn AddedToken::set_rstrip_alias(
+  self : AddedToken,
+  rstrip : Bool,
+) -> AddedToken {
+  self.set_rstrip(rstrip)
+}
+
+///|
+/// Python binding alias for `with_normalized`. Returns a new AddedToken with
+/// the updated normalized flag, preserving immutability.
+pub fn AddedToken::set_normalized(
+  self : AddedToken,
+  normalized : Bool,
+) -> AddedToken {
+  self.with_normalized(normalized)
+}
+
+///|
+/// Python binding alias for `set_normalized`.
+pub fn AddedToken::set_normalized_alias(
+  self : AddedToken,
+  normalized : Bool,
+) -> AddedToken {
+  self.set_normalized(normalized)
+}
+
+///|
 /// Per-token configuration parsed from tokenizer.json "added_tokens".
 struct AddedTokenInfo {
   id : Int

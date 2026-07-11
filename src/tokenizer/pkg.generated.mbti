@@ -94,6 +94,14 @@ pub fn AddedToken::normalized(Self) -> Bool
 pub fn AddedToken::rstrip(Self) -> Bool
 pub fn AddedToken::set_content(Self, String) -> Self
 pub fn AddedToken::set_content_alias(Self, String) -> Self
+pub fn AddedToken::set_lstrip(Self, Bool) -> Self
+pub fn AddedToken::set_lstrip_alias(Self, Bool) -> Self
+pub fn AddedToken::set_normalized(Self, Bool) -> Self
+pub fn AddedToken::set_normalized_alias(Self, Bool) -> Self
+pub fn AddedToken::set_rstrip(Self, Bool) -> Self
+pub fn AddedToken::set_rstrip_alias(Self, Bool) -> Self
+pub fn AddedToken::set_single_word(Self, Bool) -> Self
+pub fn AddedToken::set_single_word_alias(Self, Bool) -> Self
 pub fn AddedToken::set_special(Self, Bool) -> Self
 pub fn AddedToken::set_special_alias(Self, Bool) -> Self
 pub fn AddedToken::single_word(Self) -> Bool
