@@ -862,3 +862,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `trainer.mbt`（718 行）- WordLevel + WordPiece + BPE training functions
   - `trainer_unigram.mbt`（415 行）- Unigram training functions + helper functions
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：tokenizer.mbt 模块化拆分
+
+- 拆分 `tokenizer.mbt`（1185 行）为：
+  - `tokenizer.mbt`（775 行）- Tokenizer struct + TokenizerState + TokenizerComponentHooks + core methods + configuration builders
+  - `tokenizer_tokens.mbt`（410 行）- Added token management + post_process + add_tokens methods + helper functions
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
