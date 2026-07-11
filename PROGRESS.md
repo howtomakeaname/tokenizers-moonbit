@@ -757,3 +757,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `from_file.mbt`（1057 行）- 核心 from_pretrained/save/cache-write/validation
   - `pretrained_cache.mbt`（642 行）- cache metadata/paths/ref/resume/validation
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：encode.mbt 模块化拆分
+
+- 拆分 `encode.mbt`（1764 行）为：
+  - `encode.mbt`（1317 行）- 公开 encode API + 核心 encode 函数
+  - `encode_helpers.mbt`（447 行）- byte offset 转换 + 内部 helper
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
