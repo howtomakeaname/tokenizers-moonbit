@@ -5015,3 +5015,31 @@ test "tokenizer get_trainer returns appropriate trainer for model type" {
 test "simple test" {
   @test.assert_eq(1 + 1, 2)
 }
+
+///|
+test "Encoding setter aliases delegate to with_* methods" {
+  let json =
+    #|{"version":"1.0","pre_tokenizer":{"type":"WhitespaceSplit"},"model":{"type":"WordLevel","vocab":{"hello":0,"world":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(json)
+  let enc = tok.encode("hello world", add_special_tokens=false)
+
+  // set_type_ids
+  let with_types = enc.set_type_ids([1, 2])
+  @test.assert_eq(with_types.type_ids(), [1, 2])
+
+  // set_special_tokens_mask
+  let with_mask = enc.set_special_tokens_mask([1, 0])
+  @test.assert_eq(with_mask.special_tokens_mask(), [1, 0])
+
+  // set_attention_mask
+  let with_attn = enc.set_attention_mask([0, 1])
+  @test.assert_eq(with_attn.attention_mask(), [0, 1])
+
+  // set_word_ids
+  let with_words = enc.set_word_ids([Some(0), Some(1)])
+  @test.assert_eq(with_words.word_ids(), [Some(0), Some(1)])
+
+  // set_overflowing
+  let with_overflow = enc.set_overflowing([])
+  @test.assert_eq(with_overflow.overflowing(), [])
+}

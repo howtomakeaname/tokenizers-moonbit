@@ -447,6 +447,56 @@ pub fn Encoding::set_sequence_id(
 }
 
 ///|
+/// Python binding alias for `with_type_ids`. Returns a new Encoding with the
+/// updated type ids, preserving immutability.
+pub fn Encoding::set_type_ids(
+  self : Encoding,
+  type_ids : Array[Int],
+) -> Encoding raise TokenizerError {
+  self.with_type_ids(type_ids)
+}
+
+///|
+/// Python binding alias for `with_special_tokens_mask`. Returns a new Encoding
+/// with the updated special tokens mask, preserving immutability.
+pub fn Encoding::set_special_tokens_mask(
+  self : Encoding,
+  special_tokens_mask : Array[Int],
+) -> Encoding raise TokenizerError {
+  self.with_special_tokens_mask(special_tokens_mask)
+}
+
+///|
+/// Python binding alias for `with_attention_mask`. Returns a new Encoding
+/// with the updated attention mask, preserving immutability.
+pub fn Encoding::set_attention_mask(
+  self : Encoding,
+  attention_mask : Array[Int],
+) -> Encoding raise TokenizerError {
+  self.with_attention_mask(attention_mask)
+}
+
+///|
+/// Python binding alias for `with_word_ids`. Returns a new Encoding with the
+/// updated word ids, preserving immutability.
+pub fn Encoding::set_word_ids(
+  self : Encoding,
+  word_ids : Array[Int?],
+) -> Encoding raise TokenizerError {
+  self.with_word_ids(word_ids)
+}
+
+///|
+/// Python binding alias for `with_overflowing`. Returns a new Encoding with
+/// the updated overflowing encodings, preserving immutability.
+pub fn Encoding::set_overflowing(
+  self : Encoding,
+  overflowing : Array[Encoding],
+) -> Encoding {
+  self.with_overflowing(overflowing)
+}
+
+///|
 pub fn Encoding::with_overflowing(
   self : Encoding,
   overflowing : Array[Encoding],

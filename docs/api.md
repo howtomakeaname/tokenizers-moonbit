@@ -1542,12 +1542,17 @@ fn Encoding::as_buffers(self : Encoding) -> EncodingBuffers
 fn Encoding::get_buffers(self : Encoding) -> EncodingBuffers
 
 fn Encoding::with_type_ids(self : Encoding, type_ids : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::set_type_ids(self : Encoding, type_ids : Array[Int]) -> Encoding raise TokenizerError
 fn Encoding::with_special_tokens_mask(self : Encoding, mask : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::set_special_tokens_mask(self : Encoding, mask : Array[Int]) -> Encoding raise TokenizerError
 fn Encoding::with_attention_mask(self : Encoding, mask : Array[Int]) -> Encoding raise TokenizerError
+fn Encoding::set_attention_mask(self : Encoding, mask : Array[Int]) -> Encoding raise TokenizerError
 fn Encoding::with_word_ids(self : Encoding, word_ids : Array[Int?]) -> Encoding raise TokenizerError
+fn Encoding::set_word_ids(self : Encoding, word_ids : Array[Int?]) -> Encoding raise TokenizerError
 fn Encoding::with_sequence_id(self : Encoding, sequence_id : Int) -> Encoding raise TokenizerError
 fn Encoding::set_sequence_id(self : Encoding, sequence_id : Int) -> Encoding raise TokenizerError
 fn Encoding::with_overflowing(self : Encoding, overflowing : Array[Encoding]) -> Encoding raise TokenizerError
+fn Encoding::set_overflowing(self : Encoding, overflowing : Array[Encoding]) -> Encoding raise TokenizerError
 
 fn Encoding::truncate(self : Encoding, max_len : Int, stride? : Int = 0, direction? : TruncationDirection = Right) -> Encoding raise TokenizerError
 fn Encoding::truncate_hf(self : Encoding, max_len : Int, stride? : Int = 0, direction? : String = "right") -> Encoding raise TokenizerError
