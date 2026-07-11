@@ -1248,6 +1248,8 @@ The deterministic regex subset covers the following Unicode letter scripts
 Hebrew, Arabic, Devanagari, Bengali, Gurmukhi, Gujarati, Oriya, Tamil,
 Telugu, Kannada, Malayalam, Sinhala, Thai, Lao, Tibetan, Myanmar, Georgian,
 Khmer, Hiragana, Katakana, CJK Unified Ideographs, and Hangul Syllables.
+The `\p{S}` symbol class covers currency, math, technical, dingbat, emoji, and
+miscellaneous mathematical symbol blocks (including 0x27C0-0x27EF and 0x2980-0x29FF).
 The `\p{N}` / `\d` digit class covers 18 Unicode digit ranges: ASCII,
 Arabic-Indic, Extended Arabic-Indic, Devanagari, Bengali, Gurmukhi,
 Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam, Thai, Lao, Tibetan,
