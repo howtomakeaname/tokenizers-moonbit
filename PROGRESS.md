@@ -658,3 +658,25 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - 操作：`normalize` / `split`
   - 编码转换：`to_encoding` / `into_encoding`
 - 中英文文档同步更新。
+
+### 2026-07-11 小闭环：模块化重构 + 版本升级 0.2.0
+
+**模块化拆分**（无功能变更，全后端验证通过）：
+
+- `trainer.mbt`（3177 行）拆分为：
+  - `trainer.mbt`（614 行）- enum + state + builders + getters
+  - `trainer_setters.mbt`（1522 行）- setter methods + aliases
+  - `trainer_state.mbt`（116 行）- state serialization
+  - `trainer_training.mbt`（923 行）- tokenizer training methods
+- `tokenizer.mbt`（2241 行）拆分为：
+  - `tokenizer.mbt`（1659 行）- Tokenizer struct + methods
+  - `normalized_string.mbt`（363 行）- NormalizedString type
+  - `pretokenized_string.mbt`（219 行）- PreTokenizedString type
+- `types.mbt`（1552 行）拆分为：
+  - `encoding.mbt`（1199 行）- Encoding struct + methods
+  - `token_split.mbt`（217 行）- Token + Split types
+  - `errors.mbt`（136 行）- TokenizerError type
+
+**版本升级**：0.1.0 → 0.2.0
+
+**测试验证**：387/387 native, 387/387 js, 364/364 wasm, 364/364 wasm-gc
