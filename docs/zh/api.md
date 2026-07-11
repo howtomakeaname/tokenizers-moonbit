@@ -1811,6 +1811,61 @@ fn EncodeInput::mixed_pair(a : TextInputSequence, b : TextInputSequence) -> Enco
 async/fast 变体。`TextInputSequence` 区分原始文本和预分词词数组。`EncodeInput` 封装
 单输入或对输入，允许调用者在对编码中混合原始文本和预分词序列。
 
+## Token 与 Split（`@types`）
+
+```moonbit
+pub struct Token {
+  id : Int
+  value : String
+  offsets : (Int, Int)
+}
+
+fn Token::new(id : Int, value : String, offsets? : (Int, Int) = (0, 0)) -> Token
+fn Token::from_tuple(t : (Int, String, (Int, Int))) -> Token
+fn Token::from_state(state : TokenState) -> Token
+fn Token::as_tuple(self : Token) -> (Int, String, (Int, Int))
+fn Token::get_state(self : Token) -> TokenState
+fn Token::__getstate__(self : Token) -> TokenState
+fn Token::__setstate__(state : TokenState) -> Token
+fn Token::__str__(self : Token) -> String
+fn Token::__repr__(self : Token) -> String
+fn Token::get_id(self : Token) -> Int
+fn Token::id(self : Token) -> Int
+fn Token::get_value(self : Token) -> String
+fn Token::value(self : Token) -> String
+fn Token::get_offsets(self : Token) -> (Int, Int)
+fn Token::offsets(self : Token) -> (Int, Int)
+```
+
+`Token` 表示模型输出的 token，包含词表 id、表面值和半开区间 char offsets。
+`id()` / `value()` / `offsets()` 是属性风格别名。`from_tuple` / `as_tuple`
+支持 HF 风格 `(id, value, offsets)` 互操作。`__getstate__` / `__setstate__`
+支持 Python pickle。
+
+```moonbit
+pub struct Split {
+  value : String
+  offsets : (Int, Int)
+}
+
+fn Split::new(value : String, offsets? : (Int, Int) = (0, 0)) -> Split
+fn Split::from_tuple(t : (String, (Int, Int))) -> Split
+fn Split::from_state(state : SplitState) -> Split
+fn Split::as_tuple(self : Split) -> (String, (Int, Int))
+fn Split::get_state(self : Split) -> SplitState
+fn Split::__getstate__(self : Split) -> SplitState
+fn Split::__setstate__(state : SplitState) -> Split
+fn Split::__str__(self : Split) -> String
+fn Split::__repr__(self : Split) -> String
+fn Split::get_value(self : Split) -> String
+fn Split::value(self : Split) -> String
+fn Split::get_offsets(self : Split) -> (Int, Int)
+fn Split::offsets(self : Split) -> (Int, Int)
+```
+
+`Split` 表示预分词产生的中间片段：一个子串加上它在原始（归一化后）文本中占据的
+char offsets。`value()` / `offsets()` 是属性风格别名。
+
 ## TokenizerError
 
 ```moonbit

@@ -1953,6 +1953,62 @@ distinguishes raw text from pre-tokenized word arrays. `EncodeInput` wraps
 single or pair inputs, letting callers mix raw text and pre-tokenized
 sequences in pair encoding.
 
+### Token and Split (`@types`)
+
+```moonbit
+pub struct Token {
+  id : Int
+  value : String
+  offsets : (Int, Int)
+}
+
+fn Token::new(id : Int, value : String, offsets? : (Int, Int) = (0, 0)) -> Token
+fn Token::from_tuple(t : (Int, String, (Int, Int))) -> Token
+fn Token::from_state(state : TokenState) -> Token
+fn Token::as_tuple(self : Token) -> (Int, String, (Int, Int))
+fn Token::get_state(self : Token) -> TokenState
+fn Token::__getstate__(self : Token) -> TokenState
+fn Token::__setstate__(state : TokenState) -> Token
+fn Token::__str__(self : Token) -> String
+fn Token::__repr__(self : Token) -> String
+fn Token::get_id(self : Token) -> Int
+fn Token::id(self : Token) -> Int
+fn Token::get_value(self : Token) -> String
+fn Token::value(self : Token) -> String
+fn Token::get_offsets(self : Token) -> (Int, Int)
+fn Token::offsets(self : Token) -> (Int, Int)
+```
+
+`Token` represents a model output token with its vocabulary id, surface value,
+and half-open char offsets. `id()` / `value()` / `offsets()` are property-style
+aliases. `from_tuple` / `as_tuple` support HF-style `(id, value, offsets)`
+interop. `__getstate__` / `__setstate__` support Python pickle.
+
+```moonbit
+pub struct Split {
+  value : String
+  offsets : (Int, Int)
+}
+
+fn Split::new(value : String, offsets? : (Int, Int) = (0, 0)) -> Split
+fn Split::from_tuple(t : (String, (Int, Int))) -> Split
+fn Split::from_state(state : SplitState) -> Split
+fn Split::as_tuple(self : Split) -> (String, (Int, Int))
+fn Split::get_state(self : Split) -> SplitState
+fn Split::__getstate__(self : Split) -> SplitState
+fn Split::__setstate__(state : SplitState) -> Split
+fn Split::__str__(self : Split) -> String
+fn Split::__repr__(self : Split) -> String
+fn Split::get_value(self : Split) -> String
+fn Split::value(self : Split) -> String
+fn Split::get_offsets(self : Split) -> (Int, Int)
+fn Split::offsets(self : Split) -> (Int, Int)
+```
+
+`Split` represents an intermediate piece produced by pre-tokenization: a
+substring plus the char offsets it occupies in the original (normalized) text.
+`value()` / `offsets()` are property-style aliases.
+
 ### TokenizerError (`@types`)
 
 ```moonbit
