@@ -848,3 +848,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `decoder.mbt`（705 行）- Decoder struct + getters + setters + builder methods
   - `decoder_json.mbt`（265 行）- JSON serialization helpers（to_json, from_json, bytelevel_to_json, wordpiece_to_json, metaspace_to_json 等）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：pretokenizer.mbt 模块化拆分
+
+- 拆分 `pretokenizer.mbt`（1003 行）为：
+  - `pretokenizer.mbt`（687 行）- PreTokenizer struct + getters + setters + builder methods + SplitBehavior helpers
+  - `pretokenizer_json.mbt`（316 行）- JSON serialization helpers（to_json, from_json, bytelevel_to_json, metaspace_to_json, split_to_json 等）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
