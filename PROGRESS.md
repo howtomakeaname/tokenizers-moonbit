@@ -696,3 +696,16 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `PretrainedResolutionHint`：离线解析失败诊断信息
   - `from_pretrained_cache_metadata` / `from_pretrained_cache_paths` / `from_pretrained_resolution_hint` 函数
 - 中英文文档同步更新。
+
+### 2026-07-12 小闭环：Hub 协议类型文档补齐
+
+- 补齐 Hub 协议类型文档：
+  - `HubTransferAction` 枚举（UseCached/Replace/AppendRange/Retry/Reject）
+  - `HubRequestPlan` 结构体（确定性请求规划）
+  - `HubResponseMetadata` 结构体（HEAD/GET 响应解析）
+  - `HubResponseDecision` 结构体（action + 诊断信息）
+  - `HubHeadResult` 结构体（HEAD 预检结果）
+  - `hub_http_status_diagnostic` / `tokenizer_json_url` / `hub_file_url` 函数
+  - `plan_tokenizer_json_request` / `plan_hub_file_request` / `head_tokenizer_json_request` 函数
+  - `decide_tokenizer_json_response` / `decide_tokenizer_json_head_response` 函数
+- 中英文文档同步更新。
