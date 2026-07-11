@@ -1335,10 +1335,41 @@ fn is_regex_escaped_literal(c : Char) -> Bool {
 ///|
 pub fn is_decimal_number(c : Char) -> Bool {
   let u = c.to_int()
-  (u >= 0x30 && u <= 0x39) ||
+  // ASCII digits
+  (u >= 0x0030 && u <= 0x0039) ||
+  // Arabic-Indic
   (u >= 0x0660 && u <= 0x0669) ||
+  // Extended Arabic-Indic
   (u >= 0x06F0 && u <= 0x06F9) ||
+  // Devanagari
   (u >= 0x0966 && u <= 0x096F) ||
+  // Bengali
+  (u >= 0x09E6 && u <= 0x09EF) ||
+  // Gurmukhi
+  (u >= 0x0A66 && u <= 0x0A6F) ||
+  // Gujarati
+  (u >= 0x0AE6 && u <= 0x0AEF) ||
+  // Oriya
+  (u >= 0x0B66 && u <= 0x0B6F) ||
+  // Tamil
+  (u >= 0x0BE6 && u <= 0x0BEF) ||
+  // Telugu
+  (u >= 0x0C66 && u <= 0x0C6F) ||
+  // Kannada
+  (u >= 0x0CE6 && u <= 0x0CEF) ||
+  // Malayalam
+  (u >= 0x0D66 && u <= 0x0D7F) ||
+  // Thai
+  (u >= 0x0E50 && u <= 0x0E59) ||
+  // Lao
+  (u >= 0x0ED0 && u <= 0x0ED9) ||
+  // Tibetan
+  (u >= 0x0F20 && u <= 0x0F29) ||
+  // Myanmar
+  (u >= 0x1040 && u <= 0x1049) ||
+  // Khmer
+  (u >= 0x17E0 && u <= 0x17E9) ||
+  // Fullwidth
   (u >= 0xFF10 && u <= 0xFF19)
 }
 
