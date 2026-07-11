@@ -771,3 +771,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `decode.mbt`（1219 行）- 核心 decode 函数（decode_chain, byte_fallback, CTC, wordpiece, BPE, metaspace）
   - `decode_replace.mbt`（579 行）- Replace regex decode 函数
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：hub.mbt 模块化拆分
+
+- 拆分 `hub.mbt`（1866 行）为：
+  - `hub.mbt`（1276 行）- 核心 Hub 逻辑（download options, response metadata, request planning, response decisions, apply_* functions, stream downloads）
+  - `hub_helpers.mbt`（590 行）- URL helpers, validation, HTTP utilities
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
