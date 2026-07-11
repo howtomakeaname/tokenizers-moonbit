@@ -1277,6 +1277,24 @@ fn AddedToken::with_normalized(self : AddedToken, normalized : Bool) -> AddedTok
 fn AddedToken::set_normalized(self : AddedToken, normalized : Bool) -> AddedToken
 fn AddedToken::set_normalized_alias(self : AddedToken, normalized : Bool) -> AddedToken
 fn AddedToken::with_special(self : AddedToken, special : Bool) -> AddedToken
+fn AddedToken::set_special(self : AddedToken, special : Bool) -> AddedToken
+fn AddedToken::set_special_alias(self : AddedToken, special : Bool) -> AddedToken
+
+fn AddedToken::content(self : AddedToken) -> String
+fn AddedToken::single_word(self : AddedToken) -> Bool
+fn AddedToken::lstrip(self : AddedToken) -> Bool
+fn AddedToken::rstrip(self : AddedToken) -> Bool
+fn AddedToken::normalized(self : AddedToken) -> Bool
+fn AddedToken::is_special(self : AddedToken) -> Bool
+
+fn AddedToken::from_tuple(t : (String, Bool, Bool, Bool, Bool?, Bool)) -> AddedToken
+fn AddedToken::as_tuple(self : AddedToken) -> (String, Bool, Bool, Bool, Bool?, Bool)
+fn AddedToken::from_state(state : AddedTokenState) -> AddedToken
+fn AddedToken::get_state(self : AddedToken) -> AddedTokenState
+fn AddedToken::__getstate__(self : AddedToken) -> AddedTokenState
+fn AddedToken::__setstate__(state : AddedTokenState) -> AddedToken
+fn AddedToken::__str__(self : AddedToken) -> String
+fn AddedToken::__repr__(self : AddedToken) -> String
 
 fn Tokenizer::add_tokens(self : Tokenizer, tokens : Array[AddedToken]) -> Tokenizer
 fn Tokenizer::add_tokens_with_count(self : Tokenizer, tokens : Array[AddedToken]) -> (Tokenizer, Int)
@@ -1896,6 +1914,20 @@ fn TruncationParams::direction_string(self : TruncationParams) -> String
 fn TruncationParams::get_direction_string(self : TruncationParams) -> String
 fn TruncationParams::strategy_string(self : TruncationParams) -> String
 fn TruncationParams::get_strategy_string(self : TruncationParams) -> String
+fn TruncationParams::from_state(state : TruncationParamsState) -> TruncationParams
+fn TruncationParams::from_tuple(t : (Int, Int, TruncationDirection, TruncationStrategy)) -> TruncationParams
+fn TruncationParams::as_tuple(self : TruncationParams) -> (Int, Int, TruncationDirection, TruncationStrategy)
+fn TruncationParams::get_state(self : TruncationParams) -> TruncationParamsState
+fn TruncationParams::__getstate__(self : TruncationParams) -> TruncationParamsState
+fn TruncationParams::__setstate__(state : TruncationParamsState) -> TruncationParams
+fn TruncationParams::max_length(self : TruncationParams) -> Int
+fn TruncationParams::get_max_length(self : TruncationParams) -> Int
+fn TruncationParams::stride(self : TruncationParams) -> Int
+fn TruncationParams::get_stride(self : TruncationParams) -> Int
+fn TruncationParams::direction(self : TruncationParams) -> TruncationDirection
+fn TruncationParams::get_direction(self : TruncationParams) -> TruncationDirection
+fn TruncationParams::strategy(self : TruncationParams) -> TruncationStrategy
+fn TruncationParams::get_strategy(self : TruncationParams) -> TruncationStrategy
 ```
 
 ### PaddingParams (`@tokenizer`)
@@ -1922,6 +1954,24 @@ fn PaddingParams::with_pad_type_id(self : PaddingParams, pad_type_id : Int) -> P
 fn PaddingParams::with_pad_to_multiple_of(self : PaddingParams, pad_to_multiple_of : Int?) -> PaddingParams
 fn PaddingParams::direction_string(self : PaddingParams) -> String
 fn PaddingParams::get_direction_string(self : PaddingParams) -> String
+fn PaddingParams::from_state(state : PaddingParamsState) -> PaddingParams
+fn PaddingParams::from_tuple(t : (PaddingStrategy, PaddingDirection, Int, Int, String, Int?)) -> PaddingParams
+fn PaddingParams::as_tuple(self : PaddingParams) -> (PaddingStrategy, PaddingDirection, Int, Int, String, Int?)
+fn PaddingParams::get_state(self : PaddingParams) -> PaddingParamsState
+fn PaddingParams::__getstate__(self : PaddingParams) -> PaddingParamsState
+fn PaddingParams::__setstate__(state : PaddingParamsState) -> PaddingParams
+fn PaddingParams::strategy(self : PaddingParams) -> PaddingStrategy
+fn PaddingParams::get_strategy(self : PaddingParams) -> PaddingStrategy
+fn PaddingParams::direction(self : PaddingParams) -> PaddingDirection
+fn PaddingParams::get_direction(self : PaddingParams) -> PaddingDirection
+fn PaddingParams::pad_id(self : PaddingParams) -> Int
+fn PaddingParams::get_pad_id(self : PaddingParams) -> Int
+fn PaddingParams::pad_type_id(self : PaddingParams) -> Int
+fn PaddingParams::get_pad_type_id(self : PaddingParams) -> Int
+fn PaddingParams::pad_token(self : PaddingParams) -> String
+fn PaddingParams::get_pad_token(self : PaddingParams) -> String
+fn PaddingParams::pad_to_multiple_of(self : PaddingParams) -> Int?
+fn PaddingParams::get_pad_to_multiple_of(self : PaddingParams) -> Int?
 ```
 
 ### EncodeInput (`@tokenizer`)
