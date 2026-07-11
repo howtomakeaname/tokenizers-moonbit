@@ -1568,6 +1568,33 @@ fn PaddingParams::direction_string(self : PaddingParams) -> String
 fn PaddingParams::get_direction_string(self : PaddingParams) -> String
 ```
 
+## EncodeInput (`@tokenizer`)
+
+```moonbit
+pub enum TextInputSequence {
+  Text(String)
+  PreTokenized(Array[String])
+}
+
+pub enum EncodeInput {
+  SingleInput(TextInputSequence)
+  PairInput(TextInputSequence, TextInputSequence)
+}
+
+fn TextInputSequence::text(text : String) -> TextInputSequence
+fn TextInputSequence::pretokenized(words : Array[String]) -> TextInputSequence
+
+fn EncodeInput::single(text : String) -> EncodeInput
+fn EncodeInput::single_pretokenized(words : Array[String]) -> EncodeInput
+fn EncodeInput::pair(text_a : String, text_b : String) -> EncodeInput
+fn EncodeInput::pair_pretokenized(words_a : Array[String], words_b : Array[String]) -> EncodeInput
+fn EncodeInput::mixed_pair(a : TextInputSequence, b : TextInputSequence) -> EncodeInput
+```
+
+统一编码输入类型，用于 `encode_input`、`encode_plus`、`batch_encode_plus` 及其
+async/fast 变体。`TextInputSequence` 区分原始文本和预分词词数组。`EncodeInput` 封装
+单输入或对输入，允许调用者在对编码中混合原始文本和预分词序列。
+
 ## TokenizerError
 
 ```moonbit
