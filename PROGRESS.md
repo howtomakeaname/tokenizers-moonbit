@@ -876,3 +876,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `hub.mbt`（799 行）- HubDownloadOptions + HubResponseMetadata/Decision + request planning + response decisions + apply_* functions
   - `hub_stream.mbt`（477 行）- Stream download functions（apply_hub_file_download_result, apply_tokenizer_json_download_result/chunks/bytes, write_stream helpers）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：regex_pattern.mbt 模块化拆分
+
+- 拆分 `regex_pattern.mbt`（1180 行）为：
+  - `regex_pattern.mbt`（314 行）- bounded regex pattern recognition
+  - `regex_pattern_quantified.mbt`（866 行）- ranged/exact/min/anchored regex pattern recognition + helper functions
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
