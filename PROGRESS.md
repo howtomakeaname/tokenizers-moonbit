@@ -883,3 +883,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `regex_pattern.mbt`（314 行）- bounded regex pattern recognition
   - `regex_pattern_quantified.mbt`（866 行）- ranged/exact/min/anchored regex pattern recognition + helper functions
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：trainer_setters.mbt 模块化拆分
+
+- 拆分 `trainer_setters.mbt`（1175 行）为：
+  - `trainer_setters.mbt`（716 行）- common setters（unk_token, min_frequency, special_tokens, special_added_tokens, vocab_size, show_progress）
+  - `trainer_setters_model_specific.mbt`（459 行）- model-specific setters（continuing_subword_prefix, end_of_word_suffix, max_input_chars_per_word, max_token_length, initial_alphabet, limit_alphabet）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
