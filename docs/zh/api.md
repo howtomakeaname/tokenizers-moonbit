@@ -422,7 +422,85 @@ cache 根目录、`HF_TOKEN` 或显式 bearer token、通过 `HF_TOKEN_PATH` / `
 `hub_file_url` 与 `plan_hub_file_request` 为 `tokenizer_config.json`、
 `special_tokens_map.json`、`added_tokens.json` 等 tokenizer 邻近 sidecar 文件暴露同一套
 URL revision 编码与请求 headers；sidecar request plan 不附带 tokenizer cache/range
-metadata。`apply_hub_file_download_result` 可把完整 sidecar response body 作为 raw
+metadata。### Hub 协议类型（`@hub`）
+
+```moonbit
+pub enum HubTransferAction {
+  UseCachedTokenizer       // 304: 缓存仍然有效
+  ReplaceCachedTokenizer   // 200: 下载完整 body
+  AppendRangeToCachedTokenizer  // 206: 恢复部分下载
+  RetryWithoutRange        // 416/不匹配: 不带 Range 重试
+  RejectResponse           // 非成功状态
+}
+
+pub struct HubRequestPlan {
+  url : String
+  headers : Map[String, String]
+  cache_paths : PretrainedCachePaths?
+  cache_metadata : PretrainedCacheMetadata?
+  resume_metadata : PretrainedDownloadResumeMetadata?
+  range_start : Int?
+  conditional_etag : String?
+}
+
+pub struct HubResponseMetadata {
+  status : Int
+  resolved_revision : String?
+  etag : String?
+  content_length : Int?
+  content_range_start : Int?
+  content_range_end : Int?
+  content_range_total : Int?
+  accept_ranges : Bool
+}
+
+pub struct HubResponseDecision {
+  action : HubTransferAction
+  resolved_revision : String?
+  etag : String?
+  expected_size : Int?
+  range_start : Int?
+  message : String
+}
+
+pub struct HubHeadResult {
+  metadata : HubResponseMetadata
+  decision : HubResponseDecision
+  final_url : String
+}
+
+fn HubResponseMetadata::new(status : Int, ...) -> HubResponseMetadata
+fn HubResponseMetadata::from_headers(headers : Map[String, String], ...) -> HubResponseMetadata
+fn HubResponseDecision::can_use_cache(self : HubResponseDecision) -> Bool
+fn HubResponseDecision::should_write_full_body(self : HubResponseDecision) -> Bool
+fn HubResponseDecision::should_append_range(self : HubResponseDecision) -> Bool
+fn HubResponseDecision::should_retry_without_range(self : HubResponseDecision) -> Bool
+
+fn hub_http_status_diagnostic(status : Int) -> String
+fn tokenizer_json_url(model_id : String, revision? : String = "main") -> String
+fn hub_file_url(model_id : String, filename : String, revision? : String = "main") -> String
+fn plan_tokenizer_json_request(model_id : String, ...) -> HubRequestPlan
+fn plan_hub_file_request(model_id : String, filename : String, ...) -> HubRequestPlan
+fn head_tokenizer_json_request(model_id : String, ...) -> HubRequestPlan
+fn decide_tokenizer_json_response(plan : HubRequestPlan, metadata : HubResponseMetadata) -> HubResponseDecision
+fn decide_tokenizer_json_head_response(plan : HubRequestPlan, metadata : HubResponseMetadata) -> HubResponseDecision
+```
+
+`HubTransferAction` 枚举可能的缓存更新决策：`UseCachedTokenizer`（304 或 HEAD 匹配）、
+`ReplaceCachedTokenizer`（完整下载）、`AppendRangeToCachedTokenizer`（206 恢复）、
+`RetryWithoutRange`（416/不匹配）、`RejectResponse`（非成功状态）。
+
+`HubRequestPlan` 组合 URL、auth headers、缓存 metadata 和恢复状态，用于确定性请求规划
+而不执行 IO。
+
+`HubResponseMetadata` 从 HEAD/GET 响应中提取 status、revision、ETag、content length
+和 Range headers。
+
+`HubResponseDecision` 将 action 与诊断消息、resolved revision、ETag 和 size 信息配对。
+
+`hub_http_status_diagnostic` 为 401/403/404/429/5xx 返回人类可读的诊断信息。
+
+`apply_hub_file_download_result` 可把完整 sidecar response body 作为 raw
 snapshot 内容写入 cache，`download_hub_file` 可对 tokenizer 邻近 sidecar 做简单
 2xx-only GET。`from_pretrained` 自动下载 sidecar、ETag/Range/resume 决策和内容解析
 仍不属于这些 helper 的范围。

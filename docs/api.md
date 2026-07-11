@@ -457,6 +457,86 @@ where `huggingface.co` is slow, pass a mirror endpoint, for example:
 and request headers for tokenizer-adjacent sidecar files such as
 `tokenizer_config.json`, `special_tokens_map.json`, or `added_tokens.json`;
 sidecar plans intentionally do not attach tokenizer cache/range metadata.
+### Hub protocol types (`@hub`)
+
+```moonbit
+pub enum HubTransferAction {
+  UseCachedTokenizer       // 304: cache is fresh
+  ReplaceCachedTokenizer   // 200: download full body
+  AppendRangeToCachedTokenizer  // 206: resume partial download
+  RetryWithoutRange        // 416/mismatch: retry without Range
+  RejectResponse           // non-success status
+}
+
+pub struct HubRequestPlan {
+  url : String
+  headers : Map[String, String]
+  cache_paths : PretrainedCachePaths?
+  cache_metadata : PretrainedCacheMetadata?
+  resume_metadata : PretrainedDownloadResumeMetadata?
+  range_start : Int?
+  conditional_etag : String?
+}
+
+pub struct HubResponseMetadata {
+  status : Int
+  resolved_revision : String?
+  etag : String?
+  content_length : Int?
+  content_range_start : Int?
+  content_range_end : Int?
+  content_range_total : Int?
+  accept_ranges : Bool
+}
+
+pub struct HubResponseDecision {
+  action : HubTransferAction
+  resolved_revision : String?
+  etag : String?
+  expected_size : Int?
+  range_start : Int?
+  message : String
+}
+
+pub struct HubHeadResult {
+  metadata : HubResponseMetadata
+  decision : HubResponseDecision
+  final_url : String
+}
+
+fn HubResponseMetadata::new(status : Int, ...) -> HubResponseMetadata
+fn HubResponseMetadata::from_headers(headers : Map[String, String], ...) -> HubResponseMetadata
+fn HubResponseDecision::can_use_cache(self : HubResponseDecision) -> Bool
+fn HubResponseDecision::should_write_full_body(self : HubResponseDecision) -> Bool
+fn HubResponseDecision::should_append_range(self : HubResponseDecision) -> Bool
+fn HubResponseDecision::should_retry_without_range(self : HubResponseDecision) -> Bool
+
+fn hub_http_status_diagnostic(status : Int) -> String
+fn tokenizer_json_url(model_id : String, revision? : String = "main") -> String
+fn hub_file_url(model_id : String, filename : String, revision? : String = "main") -> String
+fn plan_tokenizer_json_request(model_id : String, ...) -> HubRequestPlan
+fn plan_hub_file_request(model_id : String, filename : String, ...) -> HubRequestPlan
+fn head_tokenizer_json_request(model_id : String, ...) -> HubRequestPlan
+fn decide_tokenizer_json_response(plan : HubRequestPlan, metadata : HubResponseMetadata) -> HubResponseDecision
+fn decide_tokenizer_json_head_response(plan : HubRequestPlan, metadata : HubResponseMetadata) -> HubResponseDecision
+```
+
+`HubTransferAction` enumerates the possible cache update decisions:
+`UseCachedTokenizer` (304 or HEAD match), `ReplaceCachedTokenizer` (full download),
+`AppendRangeToCachedTokenizer` (206 resume), `RetryWithoutRange` (416/mismatch),
+and `RejectResponse` (non-success).
+
+`HubRequestPlan` combines URL, auth headers, cache metadata, and resume state
+for deterministic request planning without performing IO.
+
+`HubResponseMetadata` extracts status, revision, ETag, content length, and
+Range headers from HEAD/GET responses.
+
+`HubResponseDecision` pairs the action with diagnostic message, resolved
+revision, ETag, and size information.
+
+`hub_http_status_diagnostic` returns human-readable diagnostics for 401/403/404/429/5xx.
+
 `apply_hub_file_download_result` can cache a complete sidecar response body as
 raw snapshot content, and `download_hub_file` can perform a simple 2xx-only GET
 for a tokenizer-adjacent sidecar. Sidecar auto-download from
