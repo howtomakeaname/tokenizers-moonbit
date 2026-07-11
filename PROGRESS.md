@@ -680,3 +680,9 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 **版本升级**：0.1.0 → 0.2.0
 
 **测试验证**：387/387 native, 387/387 js, 364/364 wasm, 364/364 wasm-gc
+
+### 2026-07-11 小闭环：moon publish 0.2.0
+
+- `moon publish` 成功发布 `howtomakeaname/tokenizers-moonbit@0.2.0`
+- Server status: 200 OK
+- 版本包含：模块化重构 + API 文档完善 + Unicode 扩展 + Python binding 别名
