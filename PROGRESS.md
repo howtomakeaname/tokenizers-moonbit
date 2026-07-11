@@ -576,3 +576,12 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 - 新增组件变体：在对应包的 enum 加变体 → from_json 加 "type" 分派 → 实现行为 → 加对拍测试。
 - 新增模型对拍：在 `scripts/fetch_models.py` 加模型 URL，下载 tokenizer.json 到 `tests/data/<name>.full.json`，用 `scripts/gen_parity.py` 生成期望，并把模型名加入 `src/tokenizer/parity_test.mbt`。
 - 每完成一个可验证单元就 commit（conventional commits，scope 用包名）。
+
+### 2026-07-11 小闭环：API 文档补齐（训练 API / Python pickle 别名）
+
+- 补齐训练 API 文档：
+  - Tokenizer 级别：`train` / `train_from_iterator` / `train_from_files`。
+  - 便捷训练辅助：`train_wordlevel` / `train_wordpiece` / `train_bpe` / `train_unigram`（含 `*_with_pretokenizer` 和 `*_from_tokens` 变体）。
+  - 独立模型训练：`Model::train_wordlevel` / `Model::train_wordpiece` / `Model::train_bpe` / `Model::train_unigram`（含 `*_from_tokens` 变体）。
+- 补齐 Python pickle 兼容别名文档：`Tokenizer::__getstate__` / `__setstate__`。
+- 中英文文档同步更新。
