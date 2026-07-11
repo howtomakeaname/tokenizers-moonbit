@@ -606,3 +606,17 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `set_normalized` / `set_normalized_alias` → 委托给 `with_normalized`
 - 添加对应测试（386 个测试，从 385 增加到 386）。
 - 中英文文档同步更新。
+
+### 2026-07-11 小闭环：Unicode 字母脚本覆盖扩展
+
+- 扩展 `is_unicode_letter` 函数，新增 15 个 Unicode 字母范围：
+  - Ethiopic（阿姆哈拉语/提格里尼亚语）+ Supplement
+  - Cherokee（切罗基语）
+  - Canadian Aboriginal Syllabics（加拿大原住民音节文字）
+  - Ogham（古爱尔兰语）和 Runic（古北欧语/日耳曼语）
+  - Latin Extended Additional（越南语等）
+  - Greek Extended
+  - CJK Extension B、Extension C/D、CJK Compatibility Ideographs
+  - Hangul Jamo（韩文辅音/元音）+ Extended-A/B
+- 全后端测试通过：native(386)/js(386)。
+- 中英文文档同步更新 Unicode 脚本覆盖列表。
