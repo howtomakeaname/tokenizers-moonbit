@@ -806,3 +806,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `tokenizer.mbt`（1186 行）- 核心 Tokenizer 方法 + 配置 builders
   - `tokenizer_json.mbt`（473 行）- JSON 解析 helpers（truncation_to_json, padding_to_json, parse_added_tokens, parse_truncation, parse_padding 等）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：normalize.mbt 模块化拆分
+
+- 拆分 `normalize.mbt`（1321 行）为：
+  - `normalize.mbt`（160 行）- 核心 normalize + normalize_str + byte_level + NMT
+  - `normalize_precompiled.mbt`（1161 行）- precompiled normalize + strip_accents + bert_clean_text + bert_pad_chinese + to_lowercase + strip + replace_all
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
