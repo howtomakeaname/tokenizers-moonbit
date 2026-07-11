@@ -778,3 +778,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `hub.mbt`（1276 行）- 核心 Hub 逻辑（download options, response metadata, request planning, response decisions, apply_* functions, stream downloads）
   - `hub_helpers.mbt`（590 行）- URL helpers, validation, HTTP utilities
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：split_regex.mbt 模块化拆分
+
+- 拆分 `split_regex.mbt`（1679 行）为：
+  - `split_regex.mbt`（953 行）- 核心 regex 匹配（Regex struct, simple_split_regex_matches, is_simple_*_regex_pattern, run_matches helpers）
+  - `regex_literal.mbt`（726 行）- literal 匹配（literal_matches, regex_literal_spec, literal_alternation_matches, word boundary matching, is_decimal_number）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
