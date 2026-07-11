@@ -799,3 +799,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `text.mbt`（297 行）- 字符分类（is_ascii_*, is_unicode_*, is_word_char, is_unicode_punctuation, is_unicode_symbol 等）
   - `regex_pattern.mbt`（1179 行）- regex 模式识别（bounded_regex_kind, is_bounded_regex_pattern, ranged_regex_kind, is_ranged_regex_pattern, exact_regex_kind, is_exact_regex_pattern, min_regex_kind, is_min_regex_pattern, anchored_regex_kind, is_anchored_regex_pattern, helper 函数）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：tokenizer.mbt 模块化拆分
+
+- 拆分 `tokenizer.mbt`（1659 行）为：
+  - `tokenizer.mbt`（1186 行）- 核心 Tokenizer 方法 + 配置 builders
+  - `tokenizer_json.mbt`（473 行）- JSON 解析 helpers（truncation_to_json, padding_to_json, parse_added_tokens, parse_truncation, parse_padding 等）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
