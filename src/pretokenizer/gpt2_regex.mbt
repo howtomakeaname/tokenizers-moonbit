@@ -5,8 +5,10 @@
 //
 // MoonBit's core regex does not support \p{L}/\p{N}, so we hand-write an
 // equivalent scanner over code points. `is_letter`/`is_number` use coarse
-// Unicode ranges covering the common scripts (Latin, CJK, Greek, Cyrillic,
-// Hiragana/Katakana, Hangul, digits). Rare scripts are TODO.
+// Unicode ranges covering 26 scripts: Latin, Greek, Cyrillic, Armenian,
+// Hebrew, Arabic, Devanagari, Bengali, Gurmukhi, Gujarati, Oriya, Tamil,
+// Telugu, Kannada, Malayalam, Sinhala, Thai, Lao, Tibetan, Myanmar,
+// Georgian, Khmer, Hiragana, Katakana, CJK, and Hangul.
 
 ///|
 /// Split text into GPT-2 pre-tokens (as raw substrings, before byte-level map).
