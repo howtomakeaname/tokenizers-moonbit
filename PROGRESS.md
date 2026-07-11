@@ -869,3 +869,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `tokenizer.mbt`（775 行）- Tokenizer struct + TokenizerState + TokenizerComponentHooks + core methods + configuration builders
   - `tokenizer_tokens.mbt`（410 行）- Added token management + post_process + add_tokens methods + helper functions
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：hub.mbt 模块化拆分
+
+- 拆分 `hub.mbt`（1276 行）为：
+  - `hub.mbt`（799 行）- HubDownloadOptions + HubResponseMetadata/Decision + request planning + response decisions + apply_* functions
+  - `hub_stream.mbt`（477 行）- Stream download functions（apply_hub_file_download_result, apply_tokenizer_json_download_result/chunks/bytes, write_stream helpers）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
