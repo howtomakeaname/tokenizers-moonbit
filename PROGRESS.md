@@ -750,3 +750,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - 互操作：`from_state` / `from_tuple` / `as_tuple` / `get_state` / `__getstate__` / `__setstate__`
   - getter：`strategy` / `direction` / `pad_id` / `pad_type_id` / `pad_token` / `pad_to_multiple_of` + `get_*` 别名
 - 中英文文档同步更新。
+
+### 2026-07-12 小闭环：from_file.mbt 模块化拆分
+
+- 拆分 `from_file.mbt`（1697 行）为：
+  - `from_file.mbt`（1057 行）- 核心 from_pretrained/save/cache-write/validation
+  - `pretrained_cache.mbt`（642 行）- cache metadata/paths/ref/resume/validation
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
