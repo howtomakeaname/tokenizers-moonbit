@@ -897,3 +897,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `from_file.mbt`（624 行）- Structs + core from_file/save/from_pretrained + cache functions
   - `from_file_helpers.mbt`（433 行）- Validation + internal helpers（is_valid_hub_identifier, validate_hub_model_id, validate_hub_revision, build_pretrained_cache_paths, path manipulation helpers）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：normalizer.mbt 模块化拆分
+
+- 拆分 `normalizer.mbt`（885 行）为：
+  - `normalizer.mbt`（515 行）- Normalizer struct + getters + setter aliases + builder methods（nfc, nfd, nfkc, nfkd, byte_level 等）
+  - `normalizer_json.mbt`（370 行）- JSON serialization helpers（get_state, from_state, __getstate__, __setstate__, to_json, from_json, parsing helpers）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
