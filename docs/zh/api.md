@@ -462,6 +462,8 @@ fn Tokenizer::to_json(self : Tokenizer) -> String raise TokenizerError
 ```moonbit
 fn Tokenizer::get_state(self : Tokenizer) -> TokenizerState raise TokenizerError
 fn Tokenizer::from_state(state : TokenizerState) -> Tokenizer raise TokenizerError
+fn Tokenizer::__getstate__(self : Tokenizer) -> TokenizerState raise TokenizerError
+fn Tokenizer::__setstate__(state : TokenizerState) -> Tokenizer raise TokenizerError
 fn Tokenizer::with_component_hooks(self : Tokenizer, hooks : TokenizerComponentHooks) -> Tokenizer
 fn Tokenizer::get_component_hooks(self : Tokenizer) -> TokenizerComponentHooks
 fn Tokenizer::component_hooks(self : Tokenizer) -> TokenizerComponentHooks
@@ -473,6 +475,7 @@ fn Tokenizer::added_tokens_count(self : Tokenizer, special_only? : Bool = false)
 ```
 
 `get_state` / `from_state` 提供 JSON 状态往返，用于 Python binding/pickle 互操作。
+`__getstate__` 和 `__setstate__` 是 Python pickle 兼容别名，分别委托给 `get_state` 和 `from_state`。
 `with_component_hooks` 附加自定义 normalize/pre-tokenize/decode 回调；
 `clear_component_hooks` 移除钩子。`get_added_tokens` 返回按 id 排序的所有 added tokens；
 `get_added_tokens_count` 返回数量，支持 `special_only` 过滤。
@@ -1057,6 +1060,114 @@ fn Tokenizer::convert_ids_to_tokens(self : Tokenizer, ids : Array[Int]) -> Array
 `convert_token_to_id` / `convert_id_to_token` 是 `token_to_id` / `id_to_token` 的
 HF 风格别名。`convert_tokens_to_ids` 和 `convert_ids_to_tokens` 是批量变体，
 映射 token/id 数组。
+
+
+## 训练
+
+```moonbit
+fn Tokenizer::train(
+  self : Tokenizer, texts : Array[String], trainer : Trainer,
+) -> Tokenizer
+fn Tokenizer::train_from_iterator(
+  self : Tokenizer, texts : Array[String], trainer : Trainer, length? : Int? = None,
+) -> Tokenizer
+fn Tokenizer::train_from_files(
+  self : Tokenizer, files : Array[String], trainer : Trainer,
+) -> Tokenizer raise TokenizerError
+```
+
+`train` 是 `train_from_iterator` 的便捷别名。`train_from_iterator` 接受文本数组作为
+MoonBit 各后端的确定性迭代器表示；HF 的 `length` 进度提示被接受为空操作。`train_from_files`
+从本地文件逐行读取后委托给 `train_from_iterator`。三个方法均返回包含训练后模型、合并后
+special tokens 和更新词表的新 `Tokenizer`。
+
+### 便捷训练辅助方法
+
+```moonbit
+fn Tokenizer::train_wordlevel(
+  texts : Array[String],
+  unk_token? : String = "[UNK]", min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  show_progress? : Bool = true,
+) -> Tokenizer
+fn Tokenizer::train_wordpiece(
+  texts : Array[String],
+  unk_token? : String = "[UNK]", continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  max_input_chars_per_word? : Int = 100, max_token_length? : Int? = None,
+  initial_alphabet? : Array[String] = [], limit_alphabet? : Int? = None,
+  show_progress? : Bool = true,
+) -> Tokenizer
+fn Tokenizer::train_bpe(
+  texts : Array[String],
+  unk_token? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  continuing_subword_prefix? : String? = None, end_of_word_suffix? : String? = None,
+  fuse_unk? : Bool = false, initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None, max_token_length? : Int? = None,
+  show_progress? : Bool = true,
+) -> Tokenizer
+fn Tokenizer::train_unigram(
+  texts : Array[String],
+  unk_token? : String? = None, min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(8000),
+  byte_fallback? : Bool = false, fuse_unk? : Bool = true,
+  max_piece_length? : Int? = None, initial_alphabet? : Array[String] = [],
+  shrinking_factor? : Double = 0.75, n_sub_iterations? : Int = 2,
+  show_progress? : Bool = true, seed_size? : Int = 1000000,
+) -> Tokenizer
+```
+
+便捷训练方法，内部自动创建 trainer 并运行完整的 tokenizer 级别训练流程。`train_wordlevel`
+创建 WordLevel tokenizer。`train_wordpiece` 创建 WordPiece tokenizer。`train_bpe` 创建
+BPE tokenizer。`train_unigram` 创建带 N-best 采样的 Unigram tokenizer。默认使用空白预分词。
+
+每个方法均有 `*_with_pretokenizer` 变体（接受自定义 `PreTokenizer`）和 `*_from_tokens`
+变体（接受预分词后的 `Array[Array[String]]`）。
+
+### 独立模型训练
+
+```moonbit
+fn Model::train_wordlevel(
+  texts : Array[String],
+  unk_token? : String = "[UNK]", min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  show_progress? : Bool = true,
+) -> Model
+fn Model::train_wordpiece(
+  texts : Array[String],
+  unk_token? : String = "[UNK]", continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  max_input_chars_per_word? : Int = 100, max_token_length? : Int? = None,
+  initial_alphabet? : Array[String] = [], limit_alphabet? : Int? = None,
+  show_progress? : Bool = true,
+) -> Model
+fn Model::train_bpe(
+  texts : Array[String],
+  unk_token? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  continuing_subword_prefix? : String? = None, end_of_word_suffix? : String? = None,
+  fuse_unk? : Bool = false, initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None, max_token_length? : Int? = None,
+  byte_fallback? : Bool = false, ignore_merges? : Bool = false,
+  dropout? : Double? = None, cache_capacity? : Int? = None,
+  show_progress? : Bool = true,
+) -> Model
+fn Model::train_unigram(
+  texts : Array[String],
+  unk_token? : String? = None, min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(8000),
+  byte_fallback? : Bool = false, fuse_unk? : Bool = true,
+  max_piece_length? : Int? = None, initial_alphabet? : Array[String] = [],
+  shrinking_factor? : Double = 0.75, n_sub_iterations? : Int = 2,
+  show_progress? : Bool = true, seed_size? : Int = 1000000,
+) -> Model
+```
+
+模型级别训练辅助方法，返回独立的 `Model` 而非完整 tokenizer pipeline。每个方法均有
+`*_from_tokens` 变体用于预分词输入。适用于仅需构建模型组件的场景。
 
 ## 低层迁移 API
 

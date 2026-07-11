@@ -500,6 +500,8 @@ fn Tokenizer::to_json(self : Tokenizer) -> String raise TokenizerError
 ```moonbit
 fn Tokenizer::get_state(self : Tokenizer) -> TokenizerState raise TokenizerError
 fn Tokenizer::from_state(state : TokenizerState) -> Tokenizer raise TokenizerError
+fn Tokenizer::__getstate__(self : Tokenizer) -> TokenizerState raise TokenizerError
+fn Tokenizer::__setstate__(state : TokenizerState) -> Tokenizer raise TokenizerError
 fn Tokenizer::with_component_hooks(self : Tokenizer, hooks : TokenizerComponentHooks) -> Tokenizer
 fn Tokenizer::get_component_hooks(self : Tokenizer) -> TokenizerComponentHooks
 fn Tokenizer::component_hooks(self : Tokenizer) -> TokenizerComponentHooks
@@ -511,7 +513,8 @@ fn Tokenizer::added_tokens_count(self : Tokenizer, special_only? : Bool = false)
 ```
 
 `get_state` / `from_state` provide JSON-backed state round-trip for Python
-binding/pickle interop. `with_component_hooks` attaches per-encode callbacks
+binding/pickle interop. `__getstate__` and `__setstate__` are Python pickle
+compatibility aliases that delegate to `get_state` and `from_state`. `with_component_hooks` attaches per-encode callbacks
 for custom normalize/pre-tokenize/decode; `clear_component_hooks` removes
 them. `get_added_tokens` returns all added tokens sorted by id;
 `get_added_tokens_count` returns the count, with optional `special_only`
@@ -1107,6 +1110,119 @@ Lookups consult the added/special vocabulary first, then the model vocabulary.
 `get_vocab`. `convert_token_to_id` / `convert_id_to_token` are HF-style
 aliases for `token_to_id` / `id_to_token`. `convert_tokens_to_ids` and
 `convert_ids_to_tokens` are batch variants that map arrays of tokens/ids.
+
+
+## Training
+
+```moonbit
+fn Tokenizer::train(
+  self : Tokenizer, texts : Array[String], trainer : Trainer,
+) -> Tokenizer
+fn Tokenizer::train_from_iterator(
+  self : Tokenizer, texts : Array[String], trainer : Trainer, length? : Int? = None,
+) -> Tokenizer
+fn Tokenizer::train_from_files(
+  self : Tokenizer, files : Array[String], trainer : Trainer,
+) -> Tokenizer raise TokenizerError
+```
+
+`train` is a convenience alias for `train_from_iterator`. `train_from_iterator`
+accepts text arrays as the deterministic iterator representation across MoonBit
+backends; the HF `length` progress hint is accepted as a no-op. `train_from_files`
+reads lines from local files before delegating to `train_from_iterator`. All
+three return a new `Tokenizer` with the trained model, merged special tokens and
+updated vocabulary.
+
+### Convenience training helpers
+
+```moonbit
+fn Tokenizer::train_wordlevel(
+  texts : Array[String],
+  unk_token? : String = "[UNK]", min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  show_progress? : Bool = true,
+) -> Tokenizer
+fn Tokenizer::train_wordpiece(
+  texts : Array[String],
+  unk_token? : String = "[UNK]", continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  max_input_chars_per_word? : Int = 100, max_token_length? : Int? = None,
+  initial_alphabet? : Array[String] = [], limit_alphabet? : Int? = None,
+  show_progress? : Bool = true,
+) -> Tokenizer
+fn Tokenizer::train_bpe(
+  texts : Array[String],
+  unk_token? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  continuing_subword_prefix? : String? = None, end_of_word_suffix? : String? = None,
+  fuse_unk? : Bool = false, initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None, max_token_length? : Int? = None,
+  show_progress? : Bool = true,
+) -> Tokenizer
+fn Tokenizer::train_unigram(
+  texts : Array[String],
+  unk_token? : String? = None, min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(8000),
+  byte_fallback? : Bool = false, fuse_unk? : Bool = true,
+  max_piece_length? : Int? = None, initial_alphabet? : Array[String] = [],
+  shrinking_factor? : Double = 0.75, n_sub_iterations? : Int = 2,
+  show_progress? : Bool = true, seed_size? : Int = 1000000,
+) -> Tokenizer
+```
+
+Convenience training methods that create a trainer internally and run the
+full tokenizer-level training pipeline. `train_wordlevel` creates a WordLevel
+tokenizer. `train_wordpiece` creates a WordPiece tokenizer. `train_bpe` creates
+a BPE tokenizer. `train_unigram` creates a Unigram tokenizer with N-best
+sampling via `seed_size`. All use whitespace pre-tokenization by default.
+
+Each also has a `*_with_pretokenizer` variant accepting a custom `PreTokenizer`
+and a `*_from_tokens` variant accepting pre-tokenized `Array[Array[String]]`.
+
+### Standalone model training
+
+```moonbit
+fn Model::train_wordlevel(
+  texts : Array[String],
+  unk_token? : String = "[UNK]", min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  show_progress? : Bool = true,
+) -> Model
+fn Model::train_wordpiece(
+  texts : Array[String],
+  unk_token? : String = "[UNK]", continuing_subword_prefix? : String = "##",
+  end_of_word_suffix? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  max_input_chars_per_word? : Int = 100, max_token_length? : Int? = None,
+  initial_alphabet? : Array[String] = [], limit_alphabet? : Int? = None,
+  show_progress? : Bool = true,
+) -> Model
+fn Model::train_bpe(
+  texts : Array[String],
+  unk_token? : String? = None, min_frequency? : Int = 0,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(30000),
+  continuing_subword_prefix? : String? = None, end_of_word_suffix? : String? = None,
+  fuse_unk? : Bool = false, initial_alphabet? : Array[String] = [],
+  limit_alphabet? : Int? = None, max_token_length? : Int? = None,
+  byte_fallback? : Bool = false, ignore_merges? : Bool = false,
+  dropout? : Double? = None, cache_capacity? : Int? = None,
+  show_progress? : Bool = true,
+) -> Model
+fn Model::train_unigram(
+  texts : Array[String],
+  unk_token? : String? = None, min_frequency? : Int = 1,
+  special_tokens? : Array[String] = [], vocab_size? : Int? = Some(8000),
+  byte_fallback? : Bool = false, fuse_unk? : Bool = true,
+  max_piece_length? : Int? = None, initial_alphabet? : Array[String] = [],
+  shrinking_factor? : Double = 0.75, n_sub_iterations? : Int = 2,
+  show_progress? : Bool = true, seed_size? : Int = 1000000,
+) -> Model
+```
+
+Model-level training helpers that return a standalone `Model` without a full
+tokenizer pipeline. Each has a `*_from_tokens` variant for pre-tokenized input.
+These are useful when building only the model component.
 
 ## Low-level migration API
 
