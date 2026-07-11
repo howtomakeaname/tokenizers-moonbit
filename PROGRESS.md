@@ -792,3 +792,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `trainer_setters.mbt`（1175 行）- 通用 setters（unk_token, min_frequency, special_tokens, special_added_tokens, vocab_size, show_progress, continuing_subword_prefix, end_of_word_suffix, max_input_chars_per_word, max_token_length, initial_alphabet, limit_alphabet）
   - `trainer_setters_model.mbt`（347 行）- BPE/Unigram 特有 setters（fuse_unk, byte_fallback, shrinking_factor, max_piece_length, n_sub_iterations, seed_size, progress_format）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：text.mbt 模块化拆分
+
+- 拆分 `text.mbt`（1476 行）为：
+  - `text.mbt`（297 行）- 字符分类（is_ascii_*, is_unicode_*, is_word_char, is_unicode_punctuation, is_unicode_symbol 等）
+  - `regex_pattern.mbt`（1179 行）- regex 模式识别（bounded_regex_kind, is_bounded_regex_pattern, ranged_regex_kind, is_ranged_regex_pattern, exact_regex_kind, is_exact_regex_pattern, min_regex_kind, is_min_regex_pattern, anchored_regex_kind, is_anchored_regex_pattern, helper 函数）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
