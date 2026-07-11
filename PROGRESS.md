@@ -620,3 +620,16 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - Hangul Jamo（韩文辅音/元音）+ Extended-A/B
 - 全后端测试通过：native(386)/js(386)。
 - 中英文文档同步更新 Unicode 脚本覆盖列表。
+
+### 2026-07-11 小闭环：Encoding 编程构造 API 与编码/解码别名文档
+
+- 补齐 Encoding 类型的编程构造 API：
+  - `with_ids` / `set_ids` → 更新 token ids（带长度校验）
+  - `with_tokens` / `set_tokens` → 更新 token 字符串（带长度校验）
+  - `with_offsets` / `set_offsets` → 更新 offsets（带长度校验）
+- 补齐编码/解码 API 文档：
+  - `encode_plus` / `batch_encode_plus` → HF 风格统一编码 API
+  - `decode_ids` / `batch_decode` → 解码 API 别名
+  - `async_encode` / `async_encode_batch` / `async_decode` / `async_decode_batch` → async 兼容别名
+- 添加对应测试（387 个测试，从 386 增加到 387）。
+- 中英文文档同步更新。
