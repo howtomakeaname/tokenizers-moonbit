@@ -1362,6 +1362,22 @@ string directions and keyword order while delegating to the typed MoonBit
 helpers. They raise on invalid direction strings; `truncate_hf` also raises
 when `stride >= max_len`, matching HF's public wrapper boundary.
 
+#### Encoding getter aliases
+
+```moonbit
+fn Encoding::get_n_sequences(self : Encoding) -> Int
+fn Encoding::get_char_token(self : Encoding, pos : Int, sequence_id? : Int) -> Int?
+fn Encoding::get_char_word(self : Encoding, pos : Int, sequence_id? : Int) -> Int?
+fn Encoding::get_token_chars(self : Encoding, token : Int) -> (Int, (Int, Int))?
+fn Encoding::get_token_sequence(self : Encoding, token : Int) -> Int?
+fn Encoding::get_token_word(self : Encoding, token : Int) -> (Int, Int)?
+fn Encoding::get_word_chars(self : Encoding, word : Int, sequence_id? : Int) -> (Int, Int)?
+fn Encoding::get_word_tokens(self : Encoding, word : Int, sequence_id? : Int) -> (Int, Int)?
+```
+
+`get_*` aliases for HF Python binding compatibility. These return the same
+values as their non-`get_` counterparts.
+
 ### Encoding methods
 
 ```moonbit

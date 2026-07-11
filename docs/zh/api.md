@@ -1270,6 +1270,21 @@ interop constructor 和 replacement-array setter 会校验公开 parallel arrays
 MoonBit helper。非法 direction 字符串会抛错；`truncate_hf` 在 `stride >= max_len`
 时也会抛错，对齐 HF 公开 wrapper 边界。
 
+#### Encoding getter 别名
+
+```moonbit
+fn Encoding::get_n_sequences(self : Encoding) -> Int
+fn Encoding::get_char_token(self : Encoding, pos : Int, sequence_id? : Int) -> Int?
+fn Encoding::get_char_word(self : Encoding, pos : Int, sequence_id? : Int) -> Int?
+fn Encoding::get_token_chars(self : Encoding, token : Int) -> (Int, (Int, Int))?
+fn Encoding::get_token_sequence(self : Encoding, token : Int) -> Int?
+fn Encoding::get_token_word(self : Encoding, token : Int) -> (Int, Int)?
+fn Encoding::get_word_chars(self : Encoding, word : Int, sequence_id? : Int) -> (Int, Int)?
+fn Encoding::get_word_tokens(self : Encoding, word : Int, sequence_id? : Int) -> (Int, Int)?
+```
+
+`get_*` 别名用于 HF Python binding 兼容。返回值与对应的非 `get_` 方法相同。
+
 ### Encoding 方法
 
 ```moonbit
