@@ -210,6 +210,8 @@ pub fn is_unicode_symbol(c : Char) -> Bool {
   (u >= 0x2460 && u <= 0x24FF) ||
   (u >= 0x2500 && u <= 0x25FF) ||
   (u >= 0x2600 && u <= 0x27BF) ||
+  (u >= 0x27C0 && u <= 0x27EF) ||
+  (u >= 0x2980 && u <= 0x29FF) ||
   (u >= 0x2B00 && u <= 0x2BFF) ||
   (u >= 0x1F000 && u <= 0x1FAFF) ||
   (u >= 0xFFE0 && u <= 0xFFE6)
