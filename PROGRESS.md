@@ -633,3 +633,11 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `async_encode` / `async_encode_batch` / `async_decode` / `async_decode_batch` → async 兼容别名
 - 添加对应测试（387 个测试，从 386 增加到 387）。
 - 中英文文档同步更新。
+
+### 2026-07-11 小闭环：EncodeInput 类型文档补齐
+
+- 补齐 `EncodeInput` 和 `TextInputSequence` 类型文档：
+  - `EncodeInput` 枚举（`SingleInput` / `PairInput`）及其构造别名
+  - `TextInputSequence` 枚举（`Text` / `PreTokenized`）及其辅助方法
+  - 说明统一编码输入类型用于 `encode_input`、`encode_plus`、`batch_encode_plus` 等
+- 中英文文档同步更新。
