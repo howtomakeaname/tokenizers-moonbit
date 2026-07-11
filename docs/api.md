@@ -11,8 +11,13 @@ Chinese version: [`docs/zh/api.md`](./zh/api.md)
 fn Tokenizer::from_str(json : String) -> Tokenizer raise TokenizerError
 fn Tokenizer::from_buffer(buffer : Bytes) -> Tokenizer raise TokenizerError
 fn from_file(path : String) -> Tokenizer raise TokenizerError
+fn Tokenizer::from_file(path : String) -> Tokenizer raise TokenizerError
 fn from_pretrained(path_or_model_id : String) -> Tokenizer raise TokenizerError
+fn Tokenizer::from_pretrained(path_or_model_id : String) -> Tokenizer raise TokenizerError
 fn from_pretrained_cached(
+  model_id : String, revision? : String = "main", cache_dir? : String? = None,
+) -> Tokenizer raise TokenizerError
+fn Tokenizer::from_pretrained_cached(
   model_id : String, revision? : String = "main", cache_dir? : String? = None,
 ) -> Tokenizer raise TokenizerError
 fn from_pretrained_downloaded(
@@ -21,12 +26,23 @@ fn from_pretrained_downloaded(
   tokenizer_config_json? : String? = None, special_tokens_map_json? : String? = None,
   etag? : String? = None,
 ) -> Tokenizer raise TokenizerError
+fn Tokenizer::from_pretrained_downloaded(
+  model_id : String, tokenizer_json : String, revision? : String = "main",
+  resolved_revision? : String? = None, cache_dir? : String? = None,
+  tokenizer_config_json? : String? = None, special_tokens_map_json? : String? = None,
+  etag? : String? = None,
+) -> Tokenizer raise TokenizerError
 fn Tokenizer::to_str(self : Tokenizer, pretty? : Bool = false) -> String raise TokenizerError
+fn Tokenizer::__str__(self : Tokenizer) -> String raise TokenizerError
+fn Tokenizer::__repr__(self : Tokenizer) -> String raise TokenizerError
 fn Tokenizer::save(self : Tokenizer, path : String, pretty? : Bool = true) -> Unit raise TokenizerError
 fn Tokenizer::save_pretrained(
   self : Tokenizer, dir : String, pretty? : Bool = false,
   save_model? : Bool = false, model_prefix? : String = "",
 ) -> String raise TokenizerError
+fn Tokenizer::save_model(
+  self : Tokenizer, dir : String, prefix? : String = "",
+) -> Array[String] raise TokenizerError
 ```
 
 - `from_str` parses `tokenizer.json` text; it does no file IO and works on all backends.
