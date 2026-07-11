@@ -1248,8 +1248,11 @@ The deterministic regex subset covers the following Unicode letter scripts
 Hebrew, Arabic, Devanagari, Bengali, Gurmukhi, Gujarati, Oriya, Tamil,
 Telugu, Kannada, Malayalam, Sinhala, Thai, Lao, Tibetan, Myanmar, Georgian,
 Khmer, Hiragana, Katakana, CJK Unified Ideographs, and Hangul Syllables.
-Complex unknown patterns are explicitly rejected at load time as
-`Unsupported`.
+The `\p{N}` / `\d` digit class covers 18 Unicode digit ranges: ASCII,
+Arabic-Indic, Extended Arabic-Indic, Devanagari, Bengali, Gurmukhi,
+Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam, Thai, Lao, Tibetan,
+Myanmar, Khmer, and Fullwidth. Complex unknown patterns are explicitly
+rejected at load time as `Unsupported`.
 
 ## Component compatibility notes
 
