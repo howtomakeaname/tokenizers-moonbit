@@ -596,3 +596,13 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `set_overflowing` → 委托给 `with_overflowing`
 - 添加对应测试（385 个测试，从 384 增加到 385）。
 - 中英文文档同步更新。
+
+### 2026-07-11 小闭环：AddedToken Python binding setter 别名
+
+- 补齐 AddedToken 类型的 Python binding 兼容 setter 别名：
+  - `set_single_word` / `set_single_word_alias` → 委托给 `with_single_word`
+  - `set_lstrip` / `set_lstrip_alias` → 委托给 `with_lstrip`
+  - `set_rstrip` / `set_rstrip_alias` → 委托给 `with_rstrip`
+  - `set_normalized` / `set_normalized_alias` → 委托给 `with_normalized`
+- 添加对应测试（386 个测试，从 385 增加到 386）。
+- 中英文文档同步更新。
