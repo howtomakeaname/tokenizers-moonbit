@@ -340,6 +340,85 @@ modifies the relevant pre-tokenizer variant's field; other variants return the
 original PreTokenizer unchanged.
 
 
+### Hub cache types (`@tokenizer`)
+
+```moonbit
+pub struct PretrainedCacheMetadata {
+  tokenizer_json_path : String
+  tokenizer_config_path : String?
+  special_tokens_map_path : String?
+  revision : String
+  resolved_revision : String
+  etag : String?
+}
+
+fn PretrainedCacheMetadata::cache_exists(self : PretrainedCacheMetadata) -> Bool
+fn PretrainedCacheMetadata::etag_matches(self : PretrainedCacheMetadata, expected_etag : String?) -> Bool
+fn PretrainedCacheMetadata::is_fresh(
+  self : PretrainedCacheMetadata, resolved_revision? : String? = None,
+  etag? : String? = None, require_tokenizer_config? : Bool = false,
+  require_special_tokens_map? : Bool = false,
+) -> Bool
+
+pub struct PretrainedCachePaths {
+  repo_cache_dir : String
+  refs_dir : String
+  ref_path : String
+  snapshot_dir : String
+  tokenizer_json_path : String
+  tokenizer_config_path : String
+  special_tokens_map_path : String
+  etag_path : String
+  resume_path : String
+}
+
+pub struct PretrainedDownloadResumeMetadata {
+  resume_path : String
+  incomplete_path : String
+  etag : String?
+  expected_size : Int?
+  downloaded_size : Int
+}
+
+pub struct PretrainedResolutionHint {
+  model_id : String
+  revision : String
+  cache_dir : String?
+  repo_cache_dir : String?
+  ref_path : String?
+  resolved_revision : String?
+  snapshot_dir : String?
+  tokenizer_json_path : String?
+  cache_exists : Bool
+  message : String
+}
+
+fn Tokenizer::from_pretrained_cache_metadata(
+  self : Tokenizer, model_id : String, ...,
+) -> PretrainedCacheMetadata?
+fn Tokenizer::from_pretrained_cache_paths(
+  self : Tokenizer, model_id : String, ...,
+) -> PretrainedCachePaths
+fn Tokenizer::from_pretrained_resolution_hint(
+  self : Tokenizer, path : String, ...,
+) -> PretrainedResolutionHint
+fn Tokenizer::from_pretrained_download_resume_metadata(
+  self : Tokenizer, model_id : String, ...,
+) -> PretrainedDownloadResumeMetadata?
+```
+
+`PretrainedCacheMetadata` holds resolved cache paths, revision and ETag for
+offline freshness checks. `cache_exists` checks if the tokenizer JSON file
+exists on disk. `etag_matches` compares cached ETag against an expected value.
+`is_fresh` validates cache freshness using available offline signals.
+
+`PretrainedCachePaths` exposes concrete paths for the HF Hub cache layout,
+useful for HEAD checks, ref updates, or resumable downloads.
+
+`PretrainedDownloadResumeMetadata` tracks interrupted downloads for Range/ETag
+resume coordination. `PretrainedResolutionHint` provides diagnostic information
+for offline resolution failures, including private/gated repo guidance.
+
 ### Optional Hub downloader (`@hub`, native/js)
 
 ```moonbit

@@ -314,6 +314,83 @@ fn PreTokenizer::set_invert(self : PreTokenizer, val : Bool) -> PreTokenizer
 每个 setter 仅修改对应预分词器变体的字段，其他变体返回原 PreTokenizer。
 
 
+### Hub 缓存类型（`@tokenizer`）
+
+```moonbit
+pub struct PretrainedCacheMetadata {
+  tokenizer_json_path : String
+  tokenizer_config_path : String?
+  special_tokens_map_path : String?
+  revision : String
+  resolved_revision : String
+  etag : String?
+}
+
+fn PretrainedCacheMetadata::cache_exists(self : PretrainedCacheMetadata) -> Bool
+fn PretrainedCacheMetadata::etag_matches(self : PretrainedCacheMetadata, expected_etag : String?) -> Bool
+fn PretrainedCacheMetadata::is_fresh(
+  self : PretrainedCacheMetadata, resolved_revision? : String? = None,
+  etag? : String? = None, require_tokenizer_config? : Bool = false,
+  require_special_tokens_map? : Bool = false,
+) -> Bool
+
+pub struct PretrainedCachePaths {
+  repo_cache_dir : String
+  refs_dir : String
+  ref_path : String
+  snapshot_dir : String
+  tokenizer_json_path : String
+  tokenizer_config_path : String
+  special_tokens_map_path : String
+  etag_path : String
+  resume_path : String
+}
+
+pub struct PretrainedDownloadResumeMetadata {
+  resume_path : String
+  incomplete_path : String
+  etag : String?
+  expected_size : Int?
+  downloaded_size : Int
+}
+
+pub struct PretrainedResolutionHint {
+  model_id : String
+  revision : String
+  cache_dir : String?
+  repo_cache_dir : String?
+  ref_path : String?
+  resolved_revision : String?
+  snapshot_dir : String?
+  tokenizer_json_path : String?
+  cache_exists : Bool
+  message : String
+}
+
+fn Tokenizer::from_pretrained_cache_metadata(
+  self : Tokenizer, model_id : String, ...,
+) -> PretrainedCacheMetadata?
+fn Tokenizer::from_pretrained_cache_paths(
+  self : Tokenizer, model_id : String, ...,
+) -> PretrainedCachePaths
+fn Tokenizer::from_pretrained_resolution_hint(
+  self : Tokenizer, path : String, ...,
+) -> PretrainedResolutionHint
+fn Tokenizer::from_pretrained_download_resume_metadata(
+  self : Tokenizer, model_id : String, ...,
+) -> PretrainedDownloadResumeMetadata?
+```
+
+`PretrainedCacheMetadata` 持有已解析的缓存路径、revision 和 ETag，用于离线 freshness
+检查。`cache_exists` 检查 tokenizer JSON 文件是否存在于磁盘上。`etag_matches` 比较缓存的
+ETag 与期望值。`is_fresh` 使用可用的离线信号验证缓存 freshness。
+
+`PretrainedCachePaths` 暴露 HF Hub 缓存布局的具体路径，可用于 HEAD 检查、ref 更新或
+可恢复下载。
+
+`PretrainedDownloadResumeMetadata` 跟踪中断的下载以协调 Range/ETag 恢复。
+`PretrainedResolutionHint` 提供离线解析失败的诊断信息，包括 private/gated repo 指引。
+
 ### 可选 Hub 下载器（`@hub`，native/js）
 
 ```moonbit
