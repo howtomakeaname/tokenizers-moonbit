@@ -764,3 +764,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `encode.mbt`（1317 行）- 公开 encode API + 核心 encode 函数
   - `encode_helpers.mbt`（447 行）- byte offset 转换 + 内部 helper
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：decoder/decode.mbt 模块化拆分
+
+- 拆分 `decoder/decode.mbt`（1798 行）为：
+  - `decode.mbt`（1219 行）- 核心 decode 函数（decode_chain, byte_fallback, CTC, wordpiece, BPE, metaspace）
+  - `decode_replace.mbt`（579 行）- Replace regex decode 函数
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
