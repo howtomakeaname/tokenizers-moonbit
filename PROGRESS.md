@@ -922,3 +922,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `pre_tokenize.mbt`（408 行）- Core pre_tokenize + split functions
   - `pre_tokenize_patterns.mbt`（502 行）- Whitespace/BERT/punctuation/unicode_scripts/digits/metaspace pattern functions
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：encoding.mbt 模块化拆分
+
+- 拆分 `encoding.mbt`（937 行）为：
+  - `encoding.mbt`（790 行）- Encoding struct + constructors + validation + with_*/set_* methods + truncate/pad/merge
+  - `encoding_getters.mbt`（147 行）- Getter methods（len, ids, type_ids, tokens, offsets, special_tokens_mask, attention_mask, overflowing, sequence_ids, word_ids）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
