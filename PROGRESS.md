@@ -929,3 +929,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `encoding.mbt`（790 行）- Encoding struct + constructors + validation + with_*/set_* methods + truncate/pad/merge
   - `encoding_getters.mbt`（147 行）- Getter methods（len, ids, type_ids, tokens, offsets, special_tokens_mask, attention_mask, overflowing, sequence_ids, word_ids）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：model.mbt 模块化拆分
+
+- 拆分 `model.mbt`（728 行）为：
+  - `model.mbt`（509 行）- Model struct + getters + state API + setters
+  - `model_vocab.mbt`（219 行）- Vocabulary methods + cache control
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
