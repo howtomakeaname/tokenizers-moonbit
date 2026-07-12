@@ -980,3 +980,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `hub.mbt`（535 行）- HubDownloadOptions + HubResponseMetadata/Decision + request planning + response decisions
   - `hub_apply.mbt`（264 行）- Response apply functions（cache_matches_head_metadata, apply_tokenizer_json_response, combine_range_size, validate_range_response, refresh_ref_from_decision, cached_snapshot_exists 等）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：normalize_precompiled.mbt 模块化拆分
+
+- 拆分 `normalize_precompiled.mbt`（1162 行）为：
+  - `normalize_precompiled.mbt`（142 行）- Precompiled normalize functions（precompiled_normalize, precompiled_map_normalize, precompiled_transform, precompiled_common_prefix_search, precompiled_ascii_fast）
+  - `normalize_utils.mbt`（1020 行）- Strip accents, BERT clean text, to_lowercase, strip, replace_all, accent_map, helper functions
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
