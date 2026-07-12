@@ -964,3 +964,12 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `regex_pattern_quantified.mbt`（811 行）- Pattern recognition + helper functions（ranged_regex_kind, exact_regex_kind, min_regex_kind, anchored_regex_kind 等）
   - `regex_pattern_utils.mbt`（56 行）- Utility functions（bounded_regex_kind_pred, is_unicode_whitespace, char_string）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：缺失的训练方法变体文档补齐
+
+- 补齐训练方法变体文档：
+  - `train_wordlevel_with_pretokenizer` / `train_wordlevel_from_tokens`
+  - `train_wordpiece_with_pretokenizer` / `train_wordpiece_from_tokens`
+  - `train_bpe_with_pretokenizer` / `train_bpe_from_tokens`
+  - `train_unigram_with_pretokenizer` / `train_unigram_from_tokens`
+- 中英文文档同步更新。
