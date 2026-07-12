@@ -957,3 +957,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `split_regex.mbt`（614 行）- Regex struct + public API + simple_split_regex_matches
   - `split_regex_pattern.mbt`（339 行）- Pattern recognition functions（is_simple_space_regex_pattern, is_simple_punctuation_symbol_regex_pattern, is_simple_number_regex_pattern 等）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：regex_pattern_quantified.mbt 模块化拆分
+
+- 拆分 `regex_pattern_quantified.mbt`（867 行）为：
+  - `regex_pattern_quantified.mbt`（811 行）- Pattern recognition + helper functions（ranged_regex_kind, exact_regex_kind, min_regex_kind, anchored_regex_kind 等）
+  - `regex_pattern_utils.mbt`（56 行）- Utility functions（bounded_regex_kind_pred, is_unicode_whitespace, char_string）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
