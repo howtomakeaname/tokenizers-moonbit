@@ -987,3 +987,16 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `normalize_precompiled.mbt`（142 行）- Precompiled normalize functions（precompiled_normalize, precompiled_map_normalize, precompiled_transform, precompiled_common_prefix_search, precompiled_ascii_fast）
   - `normalize_utils.mbt`（1020 行）- Strip accents, BERT clean text, to_lowercase, strip, replace_all, accent_map, helper functions
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：Hub 文件族自动下载
+
+- 新增 `@hub.download_tokenizer_with_sidecars` 异步函数，自动下载 tokenizer.json 及其标准 sidecar 文件（`tokenizer_config.json`、`special_tokens_map.json`）。
+- 实现 HF 兼容的文件族自动下载工作流：
+  1. 下载 tokenizer.json（必需）
+  2. 缓存到 HF 风格的本地快照
+  3. 尝试下载并缓存 sidecar 文件（可选，失败静默忽略）
+  4. 跳过本地缓存中已存在的文件
+- sidecar 文件下载失败不影响 tokenizer 加载，保持向后兼容。
+- 复用现有 Hub 基础设施（`download_hub_file`、`cache_pretrained_aux_file`）。
+- 中英文文档同步更新。
+- 全后端测试通过：native(387)/js(387)/wasm(364)/wasm-gc(364)。

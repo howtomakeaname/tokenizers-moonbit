@@ -1968,3 +1968,18 @@ pub(all) suberror TokenizerError {
   VocabError(String)
 }
 ```
+
+### Hub：文件族自动下载
+
+```moonbit
+async fn @hub.download_tokenizer_with_sidecars(
+  model_id : String, options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> Tokenizer raise TokenizerError
+```
+
+从 Hub 下载 `tokenizer.json` 及其标准 sidecar 文件（`tokenizer_config.json`、
+`special_tokens_map.json`），将它们缓存到 HF 兼容的本地快照中，并返回加载好的
+Tokenizer。这模拟了 Python `AutoTokenizer.from_pretrained` 的工作流程，其中 hub
+客户端会自动获取完整的文件族。
+
+sidecar 文件下载失败会被静默忽略，因为它们是可选的。本地缓存中已存在的文件会被跳过。

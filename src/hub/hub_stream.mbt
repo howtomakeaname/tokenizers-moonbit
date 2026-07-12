@@ -476,3 +476,72 @@ pub async fn head_tokenizer_json(
 }
 
 ///|
+
+///|
+/// Standard sidecar files that HuggingFace tokenizers automatically downloads
+/// alongside `tokenizer.json`. These are optional and download failures are
+/// silently ignored.
+fn hub_tokenizer_sidecar_files() -> Array[String] {
+  ["tokenizer_config.json", "special_tokens_map.json"]
+}
+
+///|
+/// Download `tokenizer.json` and its standard sidecar files from the Hub,
+/// cache them in an HF-compatible local snapshot, and return the loaded
+/// Tokenizer. Sidecar file download failures are silently ignored since they
+/// are optional.
+///
+/// This function mirrors the Python `AutoTokenizer.from_pretrained` workflow
+/// where the hub client fetches the full file family automatically.
+pub async fn download_tokenizer_with_sidecars(
+  model_id : String,
+  options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> @tokenizer.Tokenizer raise @types.TokenizerError {
+  // 1. Download tokenizer.json (required)
+  let result = download_tokenizer_json(model_id, options~)
+  let tokenizer_json = result.content
+
+  // 2. Cache tokenizer.json and load the tokenizer
+  let tok = @tokenizer.Tokenizer::from_pretrained_downloaded(
+    model_id,
+    tokenizer_json,
+    revision=options.revision,
+    resolved_revision=result.resolved_revision,
+    cache_dir=options.cache_dir,
+    etag=result.etag,
+  )
+
+  // 3. Attempt to download and cache sidecar files (optional, failures ignored)
+  let sidecars = hub_tokenizer_sidecar_files()
+  for filename in sidecars {
+    // Skip if already in local cache
+    let existing = @tokenizer.Tokenizer::from_pretrained_aux_file(
+      model_id,
+      filename,
+      revision=options.revision,
+      cache_dir=options.cache_dir,
+    )
+    if existing != None {
+      continue
+    }
+    // Attempt download; silently ignore failures
+    let file_result = download_hub_file(model_id, filename, options~) catch {
+      _ => continue
+    }
+    // Cache the downloaded sidecar file (ignore failures)
+    ignore(
+      @tokenizer.Tokenizer::cache_pretrained_aux_file(
+        model_id,
+        filename,
+        file_result.content,
+        revision=options.revision,
+        resolved_revision=result.resolved_revision,
+        cache_dir=options.cache_dir,
+      ) catch {
+        _ => ""
+      },
+    )
+  }
+
+  tok
+}

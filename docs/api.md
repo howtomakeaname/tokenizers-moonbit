@@ -2111,3 +2111,20 @@ pub(all) suberror TokenizerError {
   VocabError(String)            // malformed vocab / merges
 }
 ```
+
+### Hub: File Family Auto-Download
+
+```moonbit
+async fn @hub.download_tokenizer_with_sidecars(
+  model_id : String, options? : HubDownloadOptions = HubDownloadOptions::new(),
+) -> Tokenizer raise TokenizerError
+```
+
+Download `tokenizer.json` and its standard sidecar files (`tokenizer_config.json`,
+`special_tokens_map.json`) from the Hub, cache them in an HF-compatible local
+snapshot, and return the loaded Tokenizer. This mirrors the Python
+`AutoTokenizer.from_pretrained` workflow where the hub client fetches the full
+file family automatically.
+
+Sidecar file download failures are silently ignored since they are optional.
+Files already present in the local cache are skipped.
