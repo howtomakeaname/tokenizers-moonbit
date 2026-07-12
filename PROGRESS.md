@@ -915,3 +915,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `Tokenizer::save_model`
   - `Tokenizer::__str__` / `Tokenizer::__repr__`
 - 中英文文档同步更新。
+
+### 2026-07-12 小闭环：pre_tokenize.mbt 模块化拆分
+
+- 拆分 `pre_tokenize.mbt`（910 行）为：
+  - `pre_tokenize.mbt`（408 行）- Core pre_tokenize + split functions
+  - `pre_tokenize_patterns.mbt`（502 行）- Whitespace/BERT/punctuation/unicode_scripts/digits/metaspace pattern functions
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
