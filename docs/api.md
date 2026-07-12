@@ -1450,6 +1450,33 @@ sampling via `seed_size`. All use whitespace pre-tokenization by default.
 Each also has a `*_with_pretokenizer` variant accepting a custom `PreTokenizer`
 and a `*_from_tokens` variant accepting pre-tokenized `Array[Array[String]]`.
 
+```moonbit
+fn Tokenizer::train_wordlevel_with_pretokenizer(
+  texts : Array[String], pre_tokenizer : PreTokenizer, ...
+) -> Tokenizer
+fn Tokenizer::train_wordlevel_from_tokens(
+  tokens : Array[Array[String]], ...
+) -> Tokenizer
+fn Tokenizer::train_wordpiece_with_pretokenizer(
+  texts : Array[String], pre_tokenizer : PreTokenizer, ...
+) -> Tokenizer
+fn Tokenizer::train_wordpiece_from_tokens(
+  tokens : Array[Array[String]], ...
+) -> Tokenizer
+fn Tokenizer::train_bpe_with_pretokenizer(
+  texts : Array[String], pre_tokenizer : PreTokenizer, ...
+) -> Tokenizer
+fn Tokenizer::train_bpe_from_tokens(
+  tokens : Array[Array[String]], ...
+) -> Tokenizer
+fn Tokenizer::train_unigram_with_pretokenizer(
+  texts : Array[String], pre_tokenizer : PreTokenizer, ...
+) -> Tokenizer
+fn Tokenizer::train_unigram_from_tokens(
+  tokens : Array[Array[String]], ...
+) -> Tokenizer
+```
+
 ### Standalone model training
 
 ```moonbit
