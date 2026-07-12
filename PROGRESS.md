@@ -936,3 +936,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `model.mbt`（509 行）- Model struct + getters + state API + setters
   - `model_vocab.mbt`（219 行）- Vocabulary methods + cache control
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：trainer_training.mbt 模块化拆分
+
+- 拆分 `trainer_training.mbt`（924 行）为：
+  - `trainer_training.mbt`（469 行）- JSON serialization helpers + core train/train_from_iterator/train_from_files + training helpers
+  - `trainer_training_convenience.mbt`（455 行）- Convenience training methods（train_wordlevel/wordpiece/bpe/unigram + _with_pretokenizer + _from_tokens）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
