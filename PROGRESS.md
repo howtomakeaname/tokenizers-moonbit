@@ -943,3 +943,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `trainer_training.mbt`（469 行）- JSON serialization helpers + core train/train_from_iterator/train_from_files + training helpers
   - `trainer_training_convenience.mbt`（455 行）- Convenience training methods（train_wordlevel/wordpiece/bpe/unigram + _with_pretokenizer + _from_tokens）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：added_vocabulary.mbt 模块化拆分
+
+- 拆分 `added_vocabulary.mbt`（765 行）为：
+  - `added_vocabulary.mbt`（475 行）- CharTrie + AddedToken struct + getters + setters + builders + setter aliases
+  - `added_vocabulary_impl.mbt`（290 行）- AddedVocabulary implementation（new_with_normalizer, id_to_token, token_to_id, get_vocab, is_special_token, split_with, extract_stage1/stage2, helper functions）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
