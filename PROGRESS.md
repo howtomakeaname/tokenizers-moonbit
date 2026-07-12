@@ -973,3 +973,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `train_bpe_with_pretokenizer` / `train_bpe_from_tokens`
   - `train_unigram_with_pretokenizer` / `train_unigram_from_tokens`
 - 中英文文档同步更新。
+
+### 2026-07-12 小闭环：hub.mbt 模块化拆分
+
+- 拆分 `hub.mbt`（799 行）为：
+  - `hub.mbt`（535 行）- HubDownloadOptions + HubResponseMetadata/Decision + request planning + response decisions
+  - `hub_apply.mbt`（264 行）- Response apply functions（cache_matches_head_metadata, apply_tokenizer_json_response, combine_range_size, validate_range_response, refresh_ref_from_decision, cached_snapshot_exists 等）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
