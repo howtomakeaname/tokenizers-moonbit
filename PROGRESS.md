@@ -950,3 +950,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - `added_vocabulary.mbt`（475 行）- CharTrie + AddedToken struct + getters + setters + builders + setter aliases
   - `added_vocabulary_impl.mbt`（290 行）- AddedVocabulary implementation（new_with_normalizer, id_to_token, token_to_id, get_vocab, is_special_token, split_with, extract_stage1/stage2, helper functions）
 - 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
+
+### 2026-07-12 小闭环：split_regex.mbt 模块化拆分
+
+- 拆分 `split_regex.mbt`（953 行）为：
+  - `split_regex.mbt`（614 行）- Regex struct + public API + simple_split_regex_matches
+  - `split_regex_pattern.mbt`（339 行）- Pattern recognition functions（is_simple_space_regex_pattern, is_simple_punctuation_symbol_regex_pattern, is_simple_number_regex_pattern 等）
+- 无功能变更，全后端验证通过：native(387)/js(387)/wasm(364)/wasm-gc(364)
