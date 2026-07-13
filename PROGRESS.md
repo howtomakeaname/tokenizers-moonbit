@@ -27,7 +27,7 @@
 | R8 | 文档 + 迁移指南 | ✅ |
 | R9 | HF 无缝迁移缺口收敛（API / offsets / charsmap / save / pretrained） | ✅（Hub 下载已由可选 native/js `hub` 包承接）|
 | R10 | 架构治理与模块化（公共库 / 测试与基准分层 / HF 风格组件边界） | ✅（A0–A5 全部完成）|
-| R11 | HF tokenizers 全量兼容缺口收敛（低频 API / 高级训练 / 正则与并行） | 🚧 排期中（`encode_fast`、迁移序列化 API、缓存控制 API、BPE dropout、模型文件级保存、HF config alias、Tokenizer set_* property alias、EncodeInput、Token/Regex/Encoding/Tokenizer state API、Tokenizer train pipeline MVP、高级 trainer knobs 与 Trainer state、Hub tokenizer.json 下载/metadata/离线校验/诊断 hint/ref/resume 元数据/条件请求计划/响应决策/HEAD 预检/流式落盘、固定 aux 读取与通用 sidecar 请求规划、batch parallel 兼容入口、NormalizedString/PreTokenizedString 低层 API 与 binding alias、async 兼容入口、regex literal 策略、错误分类 helper、Python binding alias 第三十七批、Hub env/local-only 闭环已完成） |
+| R11 | HF tokenizers 全量兼容缺口收敛（低频 API / 高级训练 / 正则与并行） | 🚧 排期中（`encode_fast`、迁移序列化 API、缓存控制 API、BPE dropout、模型文件级保存、HF config alias、Tokenizer set_* property alias、EncodeInput、Token/Regex/Encoding/Tokenizer state API、Tokenizer train pipeline MVP、高级 trainer knobs 与 Trainer state、Hub tokenizer.json 下载/metadata/离线校验/诊断 hint/ref/resume 元数据/条件请求计划/响应决策/HEAD 预检/流式落盘、固定 aux 读取与通用 sidecar 请求规划、**Hub 文件族自动下载已完成**、batch parallel 兼容入口、NormalizedString/PreTokenizedString 低层 API 与 binding alias、async 兼容入口、regex literal 策略、错误分类 helper、Python binding alias 第三十七批、Hub env/local-only 闭环已完成） |
 
 ## R11：对齐 HuggingFace tokenizers 的剩余缺口排期（2026-06-12 复评）
 
@@ -1000,3 +1000,50 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 - 复用现有 Hub 基础设施（`download_hub_file`、`cache_pretrained_aux_file`）。
 - 中英文文档同步更新。
 - 全后端测试通过：native(387)/js(387)/wasm(364)/wasm-gc(364)。
+
+### 2026-07-13 小闭环：Hub 文件族自动下载功能完善与版本发布
+
+**功能改进：**
+- 新增 `@hub.download_tokenizer_with_sidecars` 异步函数，实现 HF 兼容的文件族自动下载工作流。
+- 自动下载 tokenizer.json 及其标准 sidecar 文件（`tokenizer_config.json`、`special_tokens_map.json`）。
+- sidecar 文件下载失败静默忽略，保持向后兼容；跳过本地缓存中已存在的文件。
+- 复用现有 Hub 基础设施（`download_hub_file`、`cache_pretrained_aux_file`）。
+
+**文档更新：**
+- 英文文档 `docs/api.md` 新增「Hub: File Family Auto-Download」章节。
+- 中文文档 `docs/zh/api.md` 新增「Hub：文件族自动下载」章节。
+
+**版本发布：**
+- 版本从 0.2.0 升级到 **0.3.0**。
+- 已成功发布到 mooncakes，下载验证通过（3次并行下载测试）。
+- 24个核心API函数可正常访问验证通过。
+
+**CI 验证：**
+- GitHub Actions 8个job全部通过：
+  - MoonBit (wasm-gc) ✅
+  - MoonBit (wasm) ✅
+  - MoonBit (js) ✅
+  - MoonBit (native) ✅
+  - Python scripts ✅
+  - Release gates ✅
+  - Optional parity smoke ✅
+  - HF comparison benchmark smoke ✅
+
+**全后端测试：**
+- native: 387 tests ✅
+- js: 387 tests ✅
+- wasm: 364 tests ✅
+- wasm-gc: 364 tests ✅
+
+**代码质量：**
+- `moon fmt --check` 通过
+- `moon check --deny-warn` 通过
+- `moon info` 通过
+
+### R11 进度更新（2026-07-13）
+
+| 优先级 | 缺口 | 当前状态 | 备注 |
+|---|---|---|---|
+| P3 | 完整 Hub 生态 | 🚧 进展中 | 文件族自动下载已完成；后续继续补 sidecar 内容解析和更完善的错误映射 |
+| P1 | 高级 trainer 参数补齐 | 🚧 第十四批完成 | 需要大语料与 HF trainer 对拍（需要外部数据集） |
+| P3 | Python binding 兼容层 | 🚧 第三十七批完成 | 需要继续补低频属性和方法 alias |
