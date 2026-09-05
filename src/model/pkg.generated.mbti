@@ -161,4 +161,3 @@ pub fn WordPieceModel::tokenize(Self, String, offset? : Int) -> Array[@types.Tok
 // Type aliases
 
 // Traits
-

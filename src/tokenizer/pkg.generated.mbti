@@ -733,4 +733,3 @@ pub(all) enum TruncationStrategy {
 // Type aliases
 
 // Traits
-
