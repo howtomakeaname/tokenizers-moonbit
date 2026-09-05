@@ -164,7 +164,13 @@ pub fn Tokenizer::decode_stream(
   self : Tokenizer,
   skip_special_tokens? : Bool = true,
 ) -> DecodeStream {
-  { tokenizer: self, skip_special_tokens, ids: [], prefix: "", prefix_index: 0 }
+  {
+    tokenizer: self,
+    skip_special_tokens,
+    ids: [],
+    prefix: "",
+    prefix_index: 0,
+  }
 }
 
 ///|

@@ -20,20 +20,20 @@ pub fn Token::new(
   value : String,
   offsets? : (Int, Int) = (0, 0),
 ) -> Token {
-  { id, value, offsets }
+  { id, value, offsets, }
 }
 
 ///|
 /// Build a token from the common HF-style tuple representation
 /// `(id, value, offsets)`.
 pub fn Token::from_tuple(t : (Int, String, (Int, Int))) -> Token {
-  { id: t.0, value: t.1, offsets: t.2 }
+  { id: t.0, value: t.1, offsets: t.2, }
 }
 
 ///|
 /// Restore a token from a state snapshot.
 pub fn Token::from_state(state : TokenState) -> Token {
-  { id: state.id, value: state.value, offsets: state.offsets }
+  { id: state.id, value: state.value, offsets: state.offsets, }
 }
 
 ///|
@@ -45,7 +45,7 @@ pub fn Token::as_tuple(self : Token) -> (Int, String, (Int, Int)) {
 ///|
 /// Return a Python-binding-friendly token state snapshot.
 pub fn Token::get_state(self : Token) -> TokenState {
-  { id: self.id, value: self.value, offsets: self.offsets }
+  { id: self.id, value: self.value, offsets: self.offsets, }
 }
 
 ///|
@@ -133,19 +133,19 @@ pub(all) struct SplitState {
 ///|
 /// Build a split from its value and half-open offsets.
 pub fn Split::new(value : String, offsets? : (Int, Int) = (0, 0)) -> Split {
-  { value, offsets }
+  { value, offsets, }
 }
 
 ///|
 /// Build a split from the common tuple representation `(value, offsets)`.
 pub fn Split::from_tuple(t : (String, (Int, Int))) -> Split {
-  { value: t.0, offsets: t.1 }
+  { value: t.0, offsets: t.1, }
 }
 
 ///|
 /// Restore a split from a state snapshot.
 pub fn Split::from_state(state : SplitState) -> Split {
-  { value: state.value, offsets: state.offsets }
+  { value: state.value, offsets: state.offsets, }
 }
 
 ///|
@@ -157,7 +157,7 @@ pub fn Split::as_tuple(self : Split) -> (String, (Int, Int)) {
 ///|
 /// Return a Python-binding-friendly split state snapshot.
 pub fn Split::get_state(self : Split) -> SplitState {
-  { value: self.value, offsets: self.offsets }
+  { value: self.value, offsets: self.offsets, }
 }
 
 ///|

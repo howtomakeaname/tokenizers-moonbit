@@ -10,7 +10,7 @@ pub fn literal_matches(chars : Array[Char], pattern : String) -> Array[Span]? {
   let mut i = 0
   while i < n {
     if i + m <= n && chars_match_at(chars, i, pat) {
-      out.push({ start: i, stop: i + m })
+      out.push({ start: i, stop: i + m, })
       i = i + m
     } else {
       i = i + 1
@@ -291,7 +291,7 @@ fn literal_alternation_matches(
     }
     match matched_len {
       Some(m) => {
-        out.push({ start: i, stop: i + m })
+        out.push({ start: i, stop: i + m, })
         i = i + m
       }
       None => i = i + 1
@@ -318,7 +318,7 @@ fn literal_alternation_matches_anchored(
         (!anchored_end || m == n) &&
         chars_match_at(chars, 0, pat) &&
         literal_word_boundaries_match(chars, 0, m, word_start, word_end) {
-        return [{ start: 0, stop: m }]
+        return [{ start: 0, stop: m, }]
       }
     }
     return []
@@ -331,7 +331,7 @@ fn literal_alternation_matches_anchored(
         i + m == n &&
         chars_match_at(chars, i, pat) &&
         literal_word_boundaries_match(chars, i, n, word_start, word_end) {
-        return [{ start: i, stop: n }]
+        return [{ start: i, stop: n, }]
       }
     }
     i = i + 1
@@ -432,7 +432,7 @@ fn run_matches(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] {
       while i < n && pred(chars[i]) {
         i = i + 1
       }
-      out.push({ start, stop: i })
+      out.push({ start, stop: i, })
     } else {
       i = i + 1
     }
@@ -456,7 +456,7 @@ fn run_matches_min(
         i = i + 1
       }
       if i - start >= min_run {
-        out.push({ start, stop: i })
+        out.push({ start, stop: i, })
       }
     } else {
       i = i + 1
@@ -487,7 +487,7 @@ fn run_matches_exact(
       let full_stop = start + run / exact_run * exact_run
       let mut j = start
       while j < full_stop {
-        out.push({ start: j, stop: j + exact_run })
+        out.push({ start: j, stop: j + exact_run, })
         j = j + exact_run
       }
     } else {
@@ -517,7 +517,7 @@ fn run_matches_bounded(
         i = i + 1
         count = count + 1
       }
-      out.push({ start, stop: i })
+      out.push({ start, stop: i, })
     } else {
       i = i + 1
     }
@@ -551,7 +551,7 @@ fn run_matches_ranged(
         if stop - j < take {
           take = stop - j
         }
-        out.push({ start: j, stop: j + take })
+        out.push({ start: j, stop: j + take, })
         j = j + take
       }
     } else {
@@ -643,7 +643,7 @@ fn leading_run_match(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] 
     i = i + 1
   }
   if i > 0 {
-    out.push({ start: 0, stop: i })
+    out.push({ start: 0, stop: i, })
   }
   out
 }
@@ -659,7 +659,7 @@ fn trailing_run_match(
     i = i - 1
   }
   if i < chars.length() {
-    out.push({ start: i, stop: chars.length() })
+    out.push({ start: i, stop: chars.length(), })
   }
   out
 }
@@ -677,7 +677,7 @@ fn number_run_matches(chars : Array[Char], max_digits~ : Int) -> Array[Span] {
         i = i + 1
         count = count + 1
       }
-      out.push({ start, stop: i })
+      out.push({ start, stop: i, })
     } else {
       i = i + 1
     }
@@ -706,7 +706,7 @@ fn number_exact_matches(
       let full_stop = start + run / exact_digits * exact_digits
       let mut j = start
       while j < full_stop {
-        out.push({ start: j, stop: j + exact_digits })
+        out.push({ start: j, stop: j + exact_digits, })
         j = j + exact_digits
       }
     } else {

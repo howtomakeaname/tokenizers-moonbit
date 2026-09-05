@@ -325,7 +325,7 @@ fn parse_special_tokens(
         }
       _ => ()
     }
-    out[key] = { id, ids, tokens }
+    out[key] = { id, ids, tokens, }
   }
   out
 }

@@ -19,7 +19,7 @@ priv struct CharTrie {
 ///|
 fn CharTrie::new() -> CharTrie {
   // node 0 is the root.
-  { children: [Map([])], terminal: [None] }
+  { children: [Map([])], terminal: [None], }
 }
 
 ///|
@@ -107,7 +107,7 @@ pub fn AddedToken::new(
     Some(v) => v
     None => !special
   }
-  { content, single_word, lstrip, rstrip, normalized, special }
+  { content, single_word, lstrip, rstrip, normalized, special, }
 }
 
 ///|

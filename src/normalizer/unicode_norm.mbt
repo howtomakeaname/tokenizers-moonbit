@@ -13,20 +13,20 @@
 // cp -> decomposition (fully recursive)
 
 ///|
-let canon_decomp : Ref[Map[Int, Array[Int]]?] = { val: None }
+let canon_decomp : Ref[Map[Int, Array[Int]]?] = { val: None, }
 
 ///|
-let compat_decomp : Ref[Map[Int, Array[Int]]?] = { val: None }
+let compat_decomp : Ref[Map[Int, Array[Int]]?] = { val: None, }
 
 // cp -> combining class (absent => 0)
 
 ///|
-let ccc_table : Ref[Map[Int, Int]?] = { val: None }
+let ccc_table : Ref[Map[Int, Int]?] = { val: None, }
 
 // (a,b) packed as a*0x110000+b -> composed cp
 
 ///|
-let comp_table : Ref[Map[Int, Int]?] = { val: None }
+let comp_table : Ref[Map[Int, Int]?] = { val: None, }
 
 ///|
 fn parse_decomp(raw : String) -> Map[Int, Array[Int]] {

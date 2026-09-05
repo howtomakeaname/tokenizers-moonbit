@@ -228,7 +228,7 @@ fn attach_single_overflowing(
   if windows.is_empty() {
     enc
   } else {
-    { ..enc, overflowing: windows }
+    { ..enc, overflowing: windows, }
   }
 }
 

@@ -31,7 +31,7 @@ fn is_combining_mark(cp : Int) -> Bool {
 // Lazily-built map: code point -> accent-stripped form.
 
 ///|
-let accent_map_cache : Ref[Map[Int, String]?] = { val: None }
+let accent_map_cache : Ref[Map[Int, String]?] = { val: None, }
 
 ///|
 fn accent_map() -> Map[Int, String] {

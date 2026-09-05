@@ -275,7 +275,7 @@ fn pad_encoding(
   })
   let n = enc.ids.length()
   if n >= target_len {
-    return { ..enc, overflowing: padded_windows }
+    return { ..enc, overflowing: padded_windows, }
   }
   let pad = target_len - n
   let pad_ids = Array::make(pad, params.pad_id)

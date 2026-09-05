@@ -2,7 +2,7 @@
 pub fn Normalizer::get_state(
   self : Normalizer,
 ) -> NormalizerState raise @types.TokenizerError {
-  { json: self.state_json() }
+  { json: self.state_json(), }
 }
 
 ///|
@@ -290,7 +290,7 @@ fn parse_precompiled_charsmap(
   for i in (4 + trie_size)..<bytes.length() {
     normalized.push(bytes[i])
   }
-  { trie, normalized }
+  { trie, normalized, }
 }
 
 ///|

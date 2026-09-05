@@ -386,7 +386,7 @@ pub fn Encoding::with_type_ids(
   type_ids : Array[Int],
 ) -> Encoding raise TokenizerError {
   validate_encoding_length("type_ids", type_ids.length(), self.ids.length())
-  { ..self, type_ids: type_ids.copy() }
+  { ..self, type_ids: type_ids.copy(), }
 }
 
 ///|
@@ -399,7 +399,7 @@ pub fn Encoding::with_special_tokens_mask(
     special_tokens_mask.length(),
     self.ids.length(),
   )
-  { ..self, special_tokens_mask: special_tokens_mask.copy() }
+  { ..self, special_tokens_mask: special_tokens_mask.copy(), }
 }
 
 ///|
@@ -412,7 +412,7 @@ pub fn Encoding::with_attention_mask(
     attention_mask.length(),
     self.ids.length(),
   )
-  { ..self, attention_mask: attention_mask.copy() }
+  { ..self, attention_mask: attention_mask.copy(), }
 }
 
 ///|
@@ -421,7 +421,7 @@ pub fn Encoding::with_word_ids(
   word_ids : Array[Int?],
 ) -> Encoding raise TokenizerError {
   validate_encoding_length("word_ids", word_ids.length(), self.ids.length())
-  { ..self, word_ids: word_ids.copy() }
+  { ..self, word_ids: word_ids.copy(), }
 }
 
 ///|
@@ -432,7 +432,7 @@ pub fn Encoding::with_sequence_id(
   if sequence_id < 0 {
     raise ParseError("sequence_id must be non-negative")
   }
-  { ..self, sequence_ids: Array::make(self.ids.length(), Some(sequence_id)) }
+  { ..self, sequence_ids: Array::make(self.ids.length(), Some(sequence_id)), }
 }
 
 ///|
@@ -501,14 +501,14 @@ pub fn Encoding::with_overflowing(
   self : Encoding,
   overflowing : Array[Encoding],
 ) -> Encoding {
-  { ..self, overflowing: overflowing.copy() }
+  { ..self, overflowing: overflowing.copy(), }
 }
 
 ///|
 pub fn Encoding::take_overflowing(
   self : Encoding,
 ) -> (Encoding, Array[Encoding]) {
-  ({ ..self, overflowing: [] }, self.overflowing.copy())
+  ({ ..self, overflowing: [], }, self.overflowing.copy())
 }
 
 ///|
@@ -520,7 +520,7 @@ pub fn Encoding::with_ids(
   ids : Array[Int],
 ) -> Encoding raise TokenizerError {
   validate_encoding_length("ids", ids.length(), self.ids.length())
-  { ..self, ids: ids.copy() }
+  { ..self, ids: ids.copy(), }
 }
 
 ///|
@@ -541,7 +541,7 @@ pub fn Encoding::with_tokens(
   tokens : Array[String],
 ) -> Encoding raise TokenizerError {
   validate_encoding_length("tokens", tokens.length(), self.ids.length())
-  { ..self, tokens: tokens.copy() }
+  { ..self, tokens: tokens.copy(), }
 }
 
 ///|
@@ -562,7 +562,7 @@ pub fn Encoding::with_offsets(
   offsets : Array[(Int, Int)],
 ) -> Encoding raise TokenizerError {
   validate_encoding_length("offsets", offsets.length(), self.ids.length())
-  { ..self, offsets: offsets.copy() }
+  { ..self, offsets: offsets.copy(), }
 }
 
 ///|
@@ -590,7 +590,7 @@ pub fn Encoding::truncate(
     return self
   }
   if max_len <= 0 {
-    return { ..encoding_slice(self, 0, 0), overflowing: [self] }
+    return { ..encoding_slice(self, 0, 0), overflowing: [self], }
   }
   let step = if max_len - stride > 0 { max_len - stride } else { max_len }
   let ranges : Array[(Int, Int)] = []
@@ -626,7 +626,7 @@ pub fn Encoding::truncate(
   for i in 1..<ranges.length() {
     overflow.push(encoding_slice(self, ranges[i].0, ranges[i].1))
   }
-  { ..main, overflowing: overflow }
+  { ..main, overflowing: overflow, }
 }
 
 ///|
@@ -657,7 +657,7 @@ pub fn Encoding::pad(
   let padded_overflow = self.overflowing.map(e => {
     e.pad(target_length, pad_id~, pad_type_id~, pad_token~, direction~)
   })
-  let base = { ..self, overflowing: padded_overflow }
+  let base = { ..self, overflowing: padded_overflow, }
   let n = base.ids.length()
   if n >= target_length {
     return base

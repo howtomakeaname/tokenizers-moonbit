@@ -115,7 +115,7 @@ pub fn Model::kind(self : Model) -> String {
 
 ///|
 pub fn Model::get_state(self : Model) -> ModelState raise @types.TokenizerError {
-  { json: self.state_json() }
+  { json: self.state_json(), }
 }
 
 ///|
@@ -337,9 +337,9 @@ pub fn Model::get_word_count(self : Model) -> Int? {
 /// Returns a new Model; Unigram models are unchanged (they use unk_id).
 pub fn Model::set_unk_token(self : Model, token : String) -> Model {
   match self {
-    BPE(m) => BPE({ ..m, unk_token: Some(token) })
-    WordPiece(m) => WordPiece({ ..m, unk_token: token })
-    WordLevel(m) => WordLevel({ ..m, unk_token: token })
+    BPE(m) => BPE({ ..m, unk_token: Some(token), })
+    WordPiece(m) => WordPiece({ ..m, unk_token: token, })
+    WordLevel(m) => WordLevel({ ..m, unk_token: token, })
     Unigram(m) => Unigram(m)
   }
 }
@@ -372,7 +372,7 @@ pub fn Model::set_continuing_subword_prefix(
   prefix : String?,
 ) -> Model {
   match self {
-    BPE(m) => BPE({ ..m, continuing_subword_prefix: prefix })
+    BPE(m) => BPE({ ..m, continuing_subword_prefix: prefix, })
     WordPiece(m) =>
       WordPiece({
         ..m,
@@ -395,8 +395,8 @@ pub fn Model::set_continuing_subword_prefix_alias(
 /// Set the end_of_word_suffix. Returns a new Model; only BPE/WordPiece support it.
 pub fn Model::set_end_of_word_suffix(self : Model, suffix : String?) -> Model {
   match self {
-    BPE(m) => BPE({ ..m, end_of_word_suffix: suffix })
-    WordPiece(m) => WordPiece({ ..m, end_of_word_suffix: suffix })
+    BPE(m) => BPE({ ..m, end_of_word_suffix: suffix, })
+    WordPiece(m) => WordPiece({ ..m, end_of_word_suffix: suffix, })
     _ => self
   }
 }
@@ -414,8 +414,8 @@ pub fn Model::set_end_of_word_suffix_alias(
 /// Set byte_fallback. Returns a new Model; only BPE/Unigram support it.
 pub fn Model::set_byte_fallback(self : Model, val : Bool) -> Model {
   match self {
-    BPE(m) => BPE({ ..m, byte_fallback: val })
-    Unigram(m) => Unigram({ ..m, byte_fallback: val })
+    BPE(m) => BPE({ ..m, byte_fallback: val, })
+    Unigram(m) => Unigram({ ..m, byte_fallback: val, })
     _ => self
   }
 }
@@ -430,8 +430,8 @@ pub fn Model::set_byte_fallback_alias(self : Model, val : Bool) -> Model {
 /// Set fuse_unk. Returns a new Model; only BPE/Unigram support it.
 pub fn Model::set_fuse_unk(self : Model, val : Bool) -> Model {
   match self {
-    BPE(m) => BPE({ ..m, fuse_unk: val })
-    Unigram(m) => Unigram({ ..m, fuse_unk: val })
+    BPE(m) => BPE({ ..m, fuse_unk: val, })
+    Unigram(m) => Unigram({ ..m, fuse_unk: val, })
     _ => self
   }
 }
@@ -446,7 +446,7 @@ pub fn Model::set_fuse_unk_alias(self : Model, val : Bool) -> Model {
 /// Set ignore_merges. Returns a new Model; only BPE supports it.
 pub fn Model::set_ignore_merges(self : Model, val : Bool) -> Model {
   match self {
-    BPE(m) => BPE({ ..m, ignore_merges: val })
+    BPE(m) => BPE({ ..m, ignore_merges: val, })
     _ => self
   }
 }
@@ -461,7 +461,7 @@ pub fn Model::set_ignore_merges_alias(self : Model, val : Bool) -> Model {
 /// Set max_input_chars_per_word. Returns a new Model; only WordPiece supports it.
 pub fn Model::set_max_input_chars_per_word(self : Model, val : Int) -> Model {
   match self {
-    WordPiece(m) => WordPiece({ ..m, max_input_chars_per_word: val })
+    WordPiece(m) => WordPiece({ ..m, max_input_chars_per_word: val, })
     _ => self
   }
 }

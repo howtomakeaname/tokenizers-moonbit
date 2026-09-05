@@ -152,7 +152,7 @@ pub fn Model::from_wordlevel_file(
     "vocab": read_vocab_json(vocab_path, "WordLevel vocab"),
   }
   let (vocab, vocab_r) = parse_vocab(obj)
-  WordLevel(WordLevelModel::{ vocab, vocab_r, unk_token })
+  WordLevel(WordLevelModel::{ vocab, vocab_r, unk_token, })
 }
 
 ///|

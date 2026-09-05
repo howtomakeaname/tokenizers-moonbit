@@ -308,7 +308,7 @@ pub fn PreTokenizer::set_invert_alias(
 pub fn PreTokenizer::get_state(
   self : PreTokenizer,
 ) -> PreTokenizerState raise @types.TokenizerError {
-  { json: self.state_json() }
+  { json: self.state_json(), }
 }
 
 ///|

@@ -14,7 +14,7 @@ pub struct NormalizedStringState {
 
 ///|
 pub fn NormalizedString::new(s : String) -> NormalizedString {
-  { original: s, normalized: s }
+  { original: s, normalized: s, }
 }
 
 ///|
@@ -22,13 +22,13 @@ pub fn NormalizedString::new(s : String) -> NormalizedString {
 pub fn NormalizedString::from_state(
   state : NormalizedStringState,
 ) -> NormalizedString {
-  { original: state.original, normalized: state.normalized }
+  { original: state.original, normalized: state.normalized, }
 }
 
 ///|
 /// Build from the compact tuple representation `(original, normalized)`.
 pub fn NormalizedString::from_tuple(t : (String, String)) -> NormalizedString {
-  { original: t.0, normalized: t.1 }
+  { original: t.0, normalized: t.1, }
 }
 
 ///|
@@ -42,7 +42,7 @@ pub fn NormalizedString::as_tuple(self : NormalizedString) -> (String, String) {
 pub fn NormalizedString::get_state(
   self : NormalizedString,
 ) -> NormalizedStringState {
-  { original: self.original, normalized: self.normalized }
+  { original: self.original, normalized: self.normalized, }
 }
 
 ///|
@@ -140,7 +140,7 @@ pub fn NormalizedString::get_item(
   let normalized = @common.char_string(chars[index])
   // This immutable migration wrapper does not track per-char original offsets
   // yet, so the item keeps the parent original and exposes a one-char current view.
-  Some({ original: self.original, normalized })
+  Some({ original: self.original, normalized, })
 }
 
 ///|
@@ -162,7 +162,7 @@ pub fn NormalizedString::normalize(
   self : NormalizedString,
   normalizer : @normalizer.Normalizer,
 ) -> NormalizedString {
-  { ..self, normalized: normalizer.normalize(self.normalized) }
+  { ..self, normalized: normalizer.normalize(self.normalized), }
 }
 
 ///|
@@ -171,13 +171,13 @@ pub fn NormalizedString::append(
   self : NormalizedString,
   suffix : String,
 ) -> NormalizedString {
-  { ..self, normalized: self.normalized + suffix }
+  { ..self, normalized: self.normalized + suffix, }
 }
 
 ///|
 /// Clear the current normalized string while preserving the original snapshot.
 pub fn NormalizedString::clear(self : NormalizedString) -> NormalizedString {
-  { ..self, normalized: "" }
+  { ..self, normalized: "", }
 }
 
 ///|
@@ -189,7 +189,7 @@ pub fn NormalizedString::lowercase(self : NormalizedString) -> NormalizedString 
 ///|
 /// HF-style uppercase convenience alias.
 pub fn NormalizedString::uppercase(self : NormalizedString) -> NormalizedString {
-  { ..self, normalized: self.normalized.to_upper() }
+  { ..self, normalized: self.normalized.to_upper(), }
 }
 
 ///|
@@ -251,7 +251,7 @@ pub fn NormalizedString::prepend(
   self : NormalizedString,
   prefix : String,
 ) -> NormalizedString {
-  { ..self, normalized: prefix + self.normalized }
+  { ..self, normalized: prefix + self.normalized, }
 }
 
 ///|
@@ -267,7 +267,7 @@ pub fn NormalizedString::slice(
   for i in a..<b {
     sb.write_char(chars[i])
   }
-  { original: self.original, normalized: sb.to_string() }
+  { original: self.original, normalized: sb.to_string(), }
 }
 
 ///|
@@ -281,7 +281,7 @@ pub fn NormalizedString::filter(
       sb.write_char(c)
     }
   }
-  { ..self, normalized: sb.to_string() }
+  { ..self, normalized: sb.to_string(), }
 }
 
 ///|
@@ -293,7 +293,7 @@ pub fn NormalizedString::map(
   for c in self.normalized {
     sb.write_string(f(c))
   }
-  { ..self, normalized: sb.to_string() }
+  { ..self, normalized: sb.to_string(), }
 }
 
 ///|

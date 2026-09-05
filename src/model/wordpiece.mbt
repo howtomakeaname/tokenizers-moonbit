@@ -24,7 +24,7 @@ pub fn WordPieceModel::tokenize(
   if n > self.max_input_chars_per_word {
     let unk_id = self.require_unk_id()
     let rel = [
-      @types.Token::{ id: unk_id, value: self.unk_token, offsets: (0, n) },
+      @types.Token::{ id: unk_id, value: self.unk_token, offsets: (0, n), },
     ]
     put_token_cache(self.cache, self.cache_capacity, word, rel)
     return shift_wordpiece_tokens(rel, offset)
@@ -69,7 +69,7 @@ pub fn WordPieceModel::tokenize(
   if is_bad {
     let unk_id = self.require_unk_id()
     let rel = [
-      @types.Token::{ id: unk_id, value: self.unk_token, offsets: (0, n) },
+      @types.Token::{ id: unk_id, value: self.unk_token, offsets: (0, n), },
     ]
     put_token_cache(self.cache, self.cache_capacity, word, rel)
     shift_wordpiece_tokens(rel, offset)

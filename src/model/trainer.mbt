@@ -78,7 +78,7 @@ pub fn Model::train_wordlevel_from_tokens(
       add_token(item.0)
     }
   }
-  WordLevel({ vocab, vocab_r, unk_token })
+  WordLevel({ vocab, vocab_r, unk_token, })
 }
 
 ///|

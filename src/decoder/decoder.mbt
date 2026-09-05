@@ -52,7 +52,7 @@ pub fn Decoder::kind(self : Decoder) -> String {
 pub fn Decoder::get_state(
   self : Decoder,
 ) -> DecoderState raise @types.TokenizerError {
-  { json: self.state_json() }
+  { json: self.state_json(), }
 }
 
 ///|

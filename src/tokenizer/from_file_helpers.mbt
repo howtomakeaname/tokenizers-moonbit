@@ -182,7 +182,7 @@ fn parse_resume_metadata(
       None => ()
     }
   }
-  Some({ resume_path, incomplete_path, etag, expected_size, downloaded_size })
+  Some({ resume_path, incomplete_path, etag, expected_size, downloaded_size, })
 }
 
 ///|

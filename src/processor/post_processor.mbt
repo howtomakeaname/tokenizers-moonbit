@@ -95,7 +95,7 @@ pub fn SpecialToken::new(
   ids : Array[Int],
   tokens : Array[String],
 ) -> SpecialToken {
-  { id, ids: ids.copy(), tokens: tokens.copy() }
+  { id, ids: ids.copy(), tokens: tokens.copy(), }
 }
 
 ///|
@@ -205,7 +205,7 @@ pub fn PostProcessor::kind(self : PostProcessor) -> String {
 pub fn PostProcessor::get_state(
   self : PostProcessor,
 ) -> PostProcessorState raise @types.TokenizerError {
-  { json: self.state_json() }
+  { json: self.state_json(), }
 }
 
 ///|

@@ -65,7 +65,7 @@ pub fn HubDownloadOptions::with_stream_chunk_size(
   self : HubDownloadOptions,
   stream_chunk_size : Int,
 ) -> HubDownloadOptions {
-  { ..self, stream_chunk_size: positive_stream_chunk_size(stream_chunk_size) }
+  { ..self, stream_chunk_size: positive_stream_chunk_size(stream_chunk_size), }
 }
 
 ///|

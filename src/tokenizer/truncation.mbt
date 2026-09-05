@@ -35,7 +35,7 @@ pub(all) struct TruncationParamsState {
 ///|
 /// Default truncation: right direction, no stride.
 pub fn TruncationParams::new(max_length : Int) -> TruncationParams {
-  { max_length, stride: 0, direction: Right, strategy: LongestFirst }
+  { max_length, stride: 0, direction: Right, strategy: LongestFirst, }
 }
 
 ///|
@@ -54,7 +54,7 @@ pub fn TruncationParams::from_state(
 pub fn TruncationParams::from_tuple(
   t : (Int, Int, TruncationDirection, TruncationStrategy),
 ) -> TruncationParams {
-  { max_length: t.0, stride: t.1, direction: t.2, strategy: t.3 }
+  { max_length: t.0, stride: t.1, direction: t.2, strategy: t.3, }
 }
 
 ///|
@@ -269,7 +269,7 @@ fn truncate_encoding(
   if max <= 0 {
     // HF: the whole encoding becomes an overflow window of an empty main.
     let window = slice_encoding(enc, 0, n)
-    return { ..slice_encoding(enc, 0, 0), overflowing: [window] }
+    return { ..slice_encoding(enc, 0, 0), overflowing: [window], }
   }
   if params.stride >= max {
     raise @types.ParseError(
@@ -312,7 +312,7 @@ fn truncate_encoding(
     let (start, stop) = ranges[i]
     windows.push(slice_encoding(enc, start, stop))
   }
-  { ..main, overflowing: windows }
+  { ..main, overflowing: windows, }
 }
 
 ///|

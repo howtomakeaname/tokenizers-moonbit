@@ -268,12 +268,12 @@ test "post-processors expose num_special_tokens_to_add alias" {
 test "post-processor process can skip special token insertion" {
   let bert = PostProcessor::bert(("[SEP]", 2), ("[CLS]", 1))
   let a = @types.Encoding::from_tokens([
-    { id: 3, value: "hello", offsets: (0, 5) },
+    { id: 3, value: "hello", offsets: (0, 5), },
   ]).with_sequence_id(0) catch {
     _ => abort("set sequence id for a failed")
   }
   let b = @types.Encoding::from_tokens([
-    { id: 4, value: "world", offsets: (0, 5) },
+    { id: 4, value: "world", offsets: (0, 5), },
   ]).with_sequence_id(1) catch {
     _ => abort("set sequence id for b failed")
   }
