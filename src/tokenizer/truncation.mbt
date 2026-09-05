@@ -254,65 +254,41 @@ fn slice_encoding(
 }
 
 ///|
-/// Truncate `enc` to `params.max_length`, mirroring HF `Encoding::truncate`:
-/// the first generated range becomes the main encoding and every following
-/// range becomes an overflow window (for both `Right` and `Left` directions).
+/// Truncate `enc` to `params.max_length`. With `stride > 0`, the trimmed tail
+/// is emitted as overflow windows (each overlapping the previous by `stride`).
 fn truncate_encoding(
   enc : @types.Encoding,
   params : TruncationParams,
-) -> @types.Encoding raise @types.TokenizerError {
+) -> @types.Encoding {
   let n = enc.ids.length()
   if n <= params.max_length {
     return enc
   }
   let max = params.max_length
   if max <= 0 {
-    // HF: the whole encoding becomes an overflow window of an empty main.
-    let window = slice_encoding(enc, 0, n)
-    return { ..slice_encoding(enc, 0, 0), overflowing: [window] }
+    return slice_encoding(enc, 0, 0)
   }
-  if params.stride >= max {
-    raise @types.ParseError(
-      "truncation stride \{params.stride} must be strictly less than the effective max_length \{max}",
-    )
-  }
-  // HF walks fixed-size ranges with step `max - stride`; for `Left` it walks
-  // stops backward from the end, so the removed head becomes the windows.
-  let offset = max - params.stride
-  let ranges : Array[(Int, Int)] = []
   match params.direction {
     Right => {
-      let mut end = false
-      let mut start = 0
-      while !end && start < n {
+      let main = slice_encoding(enc, 0, max)
+      // Overflow windows over the trimmed region, with stride overlap.
+      let windows : Array[@types.Encoding] = []
+      let step = if max - params.stride > 0 { max - params.stride } else { max }
+      let mut start = step
+      while start < n {
         let stop = if start + max < n { start + max } else { n }
-        end = stop == n
-        ranges.push((start, stop))
-        start = start + offset
-      }
-    }
-    Left => {
-      let mut end = false
-      let mut stop_idx = n - 1
-      while !end && stop_idx >= 0 {
-        let stop = stop_idx + 1
-        let start = if stop - max > 0 { stop - max } else { 0 }
-        if start < stop {
-          end = start == 0
-          ranges.push((start, stop))
+        windows.push(slice_encoding(enc, start, stop))
+        if stop == n {
+          break
         }
-        stop_idx = stop_idx - offset
+        start = start + step
       }
+      { ..main, overflowing: windows }
     }
+    Left =>
+      // Keep the last `max` tokens.
+      slice_encoding(enc, n - max, n)
   }
-  let first = ranges[0]
-  let main = slice_encoding(enc, first.0, first.1)
-  let windows : Array[@types.Encoding] = []
-  for i in 1..<ranges.length() {
-    let (start, stop) = ranges[i]
-    windows.push(slice_encoding(enc, start, stop))
-  }
-  { ..main, overflowing: windows }
 }
 
 ///|
@@ -322,7 +298,7 @@ fn truncate_pair_raw(
   a : @types.Encoding,
   b : @types.Encoding?,
   params : TruncationParams,
-) -> (@types.Encoding, @types.Encoding?) raise @types.TokenizerError {
+) -> (@types.Encoding, @types.Encoding?) {
   let len_a = a.ids.length()
   let len_b = match b {
     Some(x) => x.ids.length()
@@ -369,7 +345,7 @@ fn truncate_to_len(
   enc : @types.Encoding,
   max_length : Int,
   params : TruncationParams,
-) -> @types.Encoding raise @types.TokenizerError {
+) -> @types.Encoding {
   truncate_encoding(enc, { ..params, max_length, })
 }
 

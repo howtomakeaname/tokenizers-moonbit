@@ -79,19 +79,8 @@ let tok = @tokenizer.Tokenizer::from_str(json)
 let enc = tok.encode(long_text)
 ```
 
-`TruncationParams` 包含 `max_length`、`stride`、`direction`。`enc.overflowing`
-与 HuggingFace 语义一致（已对拍 Python `tokenizers` 0.22.2）：
-
-- 主编码保留第一个窗口，其余窗口全部写入 `enc.overflowing`：`stride = 0` 时
-  为顺序切块，`stride > 0` 时相邻窗口重叠 `stride` 个 token。
-- `direction = Left` 时主编码保留末尾 `max_length` 个 token，被移除的头部
-  成为溢出窗口。
-- 后处理器同样作用于每个窗口：template/BERT 窗口带 `[CLS]`/`[SEP]`，固定
-  长度 padding 也会把窗口 pad 到同一目标长度。
-- 编码 **pair** 时目前 `enc.overflowing` 为空；HF 在该场景产生窗口叉积，
-  尚未复刻。
-- `stride >= max_length` 在执行截断时报错，与 HF 的
-  `stride must be strictly less than the effective max length` 校验一致。
+`TruncationParams` 包含 `max_length`、`stride`、`direction`。`stride > 0` 时，
+溢出窗口写入 `enc.overflowing`。
 
 ## Padding
 

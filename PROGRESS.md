@@ -1047,19 +1047,3 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 | P3 | 完整 Hub 生态 | 🚧 进展中 | 文件族自动下载已完成；后续继续补 sidecar 内容解析和更完善的错误映射 |
 | P1 | 高级 trainer 参数补齐 | 🚧 第十四批完成 | 需要大语料与 HF trainer 对拍（需要外部数据集） |
 | P3 | Python binding 兼容层 | 🚧 第三十七批完成 | 需要继续补低频属性和方法 alias |
-
-### 2026-09-06 修复：单序列 truncation overflow 窗口全链路丢失
-
-用户视角复评（consumer 项目按 README 从零调用发布版 0.3.0 + 与 Python tokenizers 0.22.2 对拍）发现：`encode` 返回的 `enc.overflowing` 恒为空，而 HF 在相同配置下返回窗口（gpt2 stride=8 → 24 个；bert stride=8 → 15 个），滑窗推理场景静默错配。
-
-- 根因（三处独立丢失点）：`src/processor/process.mbt` 中 `build(out)` 被 `apply_template`（TemplateProcessing）与 `bert_like`（Bert/Roberta）共用且硬编码 `overflowing: []`；`merge_plain`（ByteLevel）同样丢弃；`src/tokenizer/padding.mbt` 的 `pad_encoding` 两个方向分支丢弃窗口。截断生成本身（`truncate_encoding`）是正确的。
-- 对拍确认的 HF 语义（Python 0.22.2 实测）：主编码保留第一个窗口，其余全部进入 `overflowing`；`stride=0` 为顺序切块、`stride>0` 相邻窗口重叠 `stride`；`direction=Left` 时被移除头部成为窗口且按离主编码从近到远排序（HF `Encoding::truncate` 用 `rev().step_by(offset)` 生成区间）；后处理器作用于每个窗口（template/BERT 窗口带 `[CLS]`/`[SEP]`，`add_special_tokens=false` 时窗口无 special）；Fixed padding 将窗口 pad 到同一目标长度（HF `Encoding::pad` 先 pad 全部 overflowing）；`stride >= 有效 max_length` 报错。
-- 修复：
-  - `process.mbt`：新增 `attach_single_overflowing`；`apply_template` 单序列分支对每个窗口递归套模板；`bert_like` 同样处理；`merge_plain` 单序列分支透传 byte-level 已处理过的窗口；pair 分支保持空 `overflowing`（HF 为窗口叉积，未复刻，显式记录为已知缺口而非近似）。
-  - `padding.mbt`：`pad_encoding` 先按 HF `Encoding::pad` 顺序 pad 全部窗口，再 pad 主编码。
-  - `truncation.mbt`：`truncate_encoding` 重写为精确镜像 HF `Encoding::truncate`：`max<=0` 时整体编码成为空主编码的溢出窗口；`stride >= max` 抛 `ParseError`（对齐 HF config/panic 校验，覆盖单序列与 pair per-side 路径）；`Left` 方向补齐头部窗口；`Right` 区间生成与 HF 逐区间等价。`truncate_single_raw` / `truncate_pair_raw` / `process_single_raw` / `process_pair_raw` 透传 raise。
-  - 公共 API 变更：`Tokenizer::post_process` 现在声明 `raise @types.TokenizerError`（内部执行截断校验，与 `encode` 一致）；`moon info` 已更新。
-  - `src/benchmarks/bench_test.mbt`：post-process bench 内改用 try/catch abort 适配新签名。
-- 新增 `src/tokenizer/truncation_overflowing_test.mbt`（10 个测试）：全部期望值先用等价 WordLevel tokenizer 在 Python `tokenizers` 0.22.2 实测取得，再固化为断言，覆盖 BertProcessing/Template/ByteLevel/无后处理、stride=0/2、Left 方向、`add_special_tokens=false`、Fixed padding 同步 pad、stride 校验报错、pair 空 overflowing 锁定。
-- 已知缺口（显式记录）：pair + truncation 的 HF 窗口叉积（例如 bert s0 pair 179 个窗口）未复刻，pair 结果 `overflowing` 为空；config 期 eager 校验（HF 在 `enable_truncation` 时报错）未做，MoonBit 在截断实际执行时报错。
-- 全后端测试通过：native(397)/js(397)/wasm(374)/wasm-gc(374)；`moon fmt --check` / `moon check --deny-warn` / `moon info` 通过。

@@ -104,21 +104,7 @@ let enc = tok.encode(long_text)   // capped to 128 tokens
 ```
 
 `TruncationParams` fields: `max_length`, `stride`, `direction` (`Left`/`Right`).
-
-`enc.overflowing` mirrors HuggingFace semantics (verified against Python
-`tokenizers` 0.22.2):
-
-- The main encoding keeps the first window; every following window lands in
-  `enc.overflowing` — for `stride = 0` these are the consecutive remaining
-  chunks, for `stride > 0` they overlap the previous window by `stride`.
-- With `direction = Left`, the main encoding keeps the last `max_length`
-  tokens and the removed head becomes the windows.
-- The post-processor runs on each window too: template/BERT windows carry
-  `[CLS]`/`[SEP]`, and fixed padding pads windows to the same target length.
-- Encoding a **pair** currently leaves `enc.overflowing` empty; HF produces a
-  window cross-product there that is not reproduced yet.
-- `stride >= max_length` raises an error when truncation runs, matching HF's
-  `stride must be strictly less than the effective max length` check.
+With `stride > 0`, trimmed tail windows are placed in `enc.overflowing`.
 
 ## Padding
 
