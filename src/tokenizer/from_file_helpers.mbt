@@ -4,7 +4,7 @@ pub fn is_valid_hub_identifier(value : String) -> Bool {
     return false
   }
   let mut segment_len = 0
-  let mut segment = StringBuilder::new()
+  let mut segment = StringBuilder()
   for c in value {
     if !is_hub_identifier_char(c) {
       return false
@@ -13,7 +13,7 @@ pub fn is_valid_hub_identifier(value : String) -> Bool {
       if !valid_hub_path_segment(segment.to_string()) {
         return false
       }
-      segment = StringBuilder::new()
+      segment = StringBuilder()
       segment_len = 0
     } else {
       segment.write_char(c)
@@ -137,7 +137,7 @@ fn resume_metadata_to_string(
   expected_size~ : Int?,
   downloaded_size~ : Int,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   match etag {
     Some(v) => sb.write_string("etag=" + escape_resume_value(v) + "\n")
     None => ()
@@ -239,7 +239,7 @@ fn escape_resume_value(s : String) -> String {
 
 ///|
 fn unescape_resume_value(s : String) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let chars = s.to_array()
   let mut i = 0
   while i < chars.length() {
@@ -262,7 +262,7 @@ fn unescape_resume_value(s : String) -> String {
 
 ///|
 fn string_slice(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }
@@ -271,7 +271,7 @@ fn string_slice(chars : Array[Char], start : Int, stop : Int) -> String {
 
 ///|
 fn replace_char(s : String, needle : Char, repl : String) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in s {
     if c == needle {
       sb.write_string(repl)
@@ -293,7 +293,7 @@ fn trim_ascii_ws(s : String) -> String {
   while stop > start && is_ascii_ws(chars[stop - 1]) {
     stop = stop - 1
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }
@@ -331,7 +331,7 @@ fn parent_dir(path : String) -> String? {
       if i == 0 {
         return Some("/")
       }
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       for j in 0..<i {
         sb.write_char(chars[j])
       }

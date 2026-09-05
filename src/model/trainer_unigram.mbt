@@ -408,7 +408,7 @@ fn is_train_space(c : Char) -> Bool {
 
 ///|
 fn slice_train(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }

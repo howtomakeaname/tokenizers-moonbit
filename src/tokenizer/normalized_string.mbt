@@ -70,7 +70,7 @@ pub fn NormalizedString::__str__(self : NormalizedString) -> String {
 ///|
 /// Python binding alias for `repr(normalized_string)`.
 pub fn NormalizedString::__repr__(self : NormalizedString) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("NormalizedString(original=")
   write_repr_string(sb, self.original)
   sb.write_string(", normalized=")
@@ -263,7 +263,7 @@ pub fn NormalizedString::slice(
   let chars = self.normalized.to_array()
   let a = clamp_int(start, 0, chars.length())
   let b = clamp_int(stop, a, chars.length())
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in a..<b {
     sb.write_char(chars[i])
   }
@@ -275,7 +275,7 @@ pub fn NormalizedString::filter(
   self : NormalizedString,
   keep : (Char) -> Bool,
 ) -> NormalizedString {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in self.normalized {
     if keep(c) {
       sb.write_char(c)
@@ -289,7 +289,7 @@ pub fn NormalizedString::map(
   self : NormalizedString,
   f : (Char) -> String,
 ) -> NormalizedString {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in self.normalized {
     sb.write_string(f(c))
   }

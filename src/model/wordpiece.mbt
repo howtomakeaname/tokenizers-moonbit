@@ -109,7 +109,7 @@ fn shift_wordpiece_tokens(
 
 ///|
 fn make_sub(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }

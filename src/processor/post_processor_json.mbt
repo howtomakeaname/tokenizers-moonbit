@@ -254,7 +254,7 @@ fn is_template_ws(c : Char) -> Bool {
 
 ///|
 fn slice_chars(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }

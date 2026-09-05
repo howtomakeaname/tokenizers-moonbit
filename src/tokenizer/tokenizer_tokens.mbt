@@ -318,7 +318,7 @@ fn max_vocab_id(vocab : Map[String, Int]) -> Int {
 
 ///|
 fn added_tokens_to_json(tokens : Array[AddedTokenInfo]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_char('[')
   for i in 0..<tokens.length() {
     if i > 0 {

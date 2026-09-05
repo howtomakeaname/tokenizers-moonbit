@@ -68,7 +68,7 @@ fn Tokenizer::decode_with_hooks_impl(
     Some(d) => d.decode(tokens)
     None => {
       // No decoder: join token surfaces directly.
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       for t in tokens {
         sb.write_string(t)
       }
@@ -235,7 +235,7 @@ pub fn DecodeStream::step(
 
 ///|
 fn ids_key(ids : Array[Int]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for id in ids {
     sb.write_string(id.to_string())
     sb.write_char(',')
@@ -273,7 +273,7 @@ fn starts_with_string(s : String, prefix : String) -> Bool {
 fn suffix_after_prefix(s : String, prefix : String) -> String {
   let chars = s.to_array()
   let start = prefix.to_array().length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<chars.length() {
     sb.write_char(chars[i])
   }

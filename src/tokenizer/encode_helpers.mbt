@@ -372,7 +372,7 @@ fn Tokenizer::pretokenized_offset_text(
   self : Tokenizer,
   words : Array[String],
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i, w in words {
     if i > 0 {
       sb.write_char(' ')
@@ -384,7 +384,7 @@ fn Tokenizer::pretokenized_offset_text(
 
 ///|
 fn pretokenized_cache_key(words : Array[String]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i, w in words {
     if i > 0 {
       sb.write_char('\u{0}')

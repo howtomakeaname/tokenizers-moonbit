@@ -248,11 +248,11 @@ fn read_model_artifact(path : String) -> String raise @types.TokenizerError {
 fn split_artifact_lines(content : String) -> Array[String] {
   let out : Array[String] = []
   let chars = content.to_array()
-  let mut sb = StringBuilder::new()
+  let mut sb = StringBuilder()
   for c in chars {
     if c == '\n' {
       out.push(sb.to_string())
-      sb = StringBuilder::new()
+      sb = StringBuilder()
     } else {
       sb.write_char(c)
     }

@@ -364,7 +364,7 @@ fn hook_force_moon(_text : String) -> String {
 
 ///|
 fn hook_pipe_decode(tokens : Array[String]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i, token in tokens {
     if i > 0 {
       sb.write_char('|')
@@ -404,7 +404,7 @@ fn hook_comma_pre_tokenize(
 
 ///|
 fn hook_string_slice(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }
@@ -1473,7 +1473,7 @@ test "decode_stream emits chunks matching full decode" {
   let tok = Tokenizer::from_str(json)
   let ids = [0, 1, 2]
   let mut stream = tok.decode_stream(skip_special_tokens=false)
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for id in ids {
     let (next, chunk) = stream.step(id)
     stream = next

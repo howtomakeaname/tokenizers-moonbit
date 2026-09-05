@@ -160,7 +160,7 @@ fn AddedVocabulary::split_with(
   // Flush the normal run [buf_start, upto) and move buf_start to `from`.
   fn flush(upto : Int, from : Int) -> Unit {
     if upto > buf_start {
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       for k in buf_start..<upto {
         sb.write_char(chars[k])
       }
@@ -283,7 +283,7 @@ fn char_str(c : Char) -> String {
 
 ///|
 fn char_range_string(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for k in start..<stop {
     sb.write_char(chars[k])
   }

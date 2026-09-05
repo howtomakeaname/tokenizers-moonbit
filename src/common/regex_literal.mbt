@@ -55,7 +55,7 @@ fn parse_regex_literal_body(chars : Array[Char]) -> String? {
   if chars.length() == 0 {
     return None
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut i = 0
   while i < chars.length() {
     let c = chars[i]
@@ -232,7 +232,7 @@ fn char_slice(chars : Array[Char], start : Int, stop : Int) -> Array[Char] {
 
 ///|
 fn chars_to_string(chars : Array[Char]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in chars {
     sb.write_char(c)
   }

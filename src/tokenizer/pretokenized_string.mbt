@@ -23,7 +23,7 @@ pub fn PreTokenizedString::new(text : String) -> PreTokenizedString {
 pub fn PreTokenizedString::from_splits(
   splits : Array[@types.Split],
 ) -> PreTokenizedString {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i, s in splits {
     if i > 0 {
       sb.write_char(' ')

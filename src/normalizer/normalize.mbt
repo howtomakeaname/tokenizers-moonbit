@@ -72,7 +72,7 @@ pub fn Normalizer::normalize_str(self : Normalizer, input : String) -> String {
 ///|
 fn byte_level_normalize(s : String) -> String {
   let bytes = @utf8.encode(s)
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in 0..<bytes.length() {
     sb.write_char(byte_to_visible_char(bytes[i].to_int()))
   }
@@ -106,7 +106,7 @@ fn is_byte_self_mapped(b : Int) -> Bool {
 
 ///|
 fn nmt_normalize(s : String) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in s {
     let u = c.to_int()
     if u == 0 || u == 0xFFFD || is_nmt_control_or_format(u) {

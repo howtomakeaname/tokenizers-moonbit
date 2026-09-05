@@ -334,7 +334,7 @@ pub fn is_cjk(c : Char) -> Bool {
 
 ///|
 fn substr(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for k in start..<stop {
     sb.write_char(chars[k])
   }

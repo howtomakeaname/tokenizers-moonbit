@@ -104,7 +104,7 @@ fn replace_to_json(
   content : String,
   pattern_kind : @common.PatternKind,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Replace\",\"pattern\":{")
   match pattern_kind {
     @common.StringPattern => sb.write_string("\"String\":")
@@ -119,7 +119,7 @@ fn replace_to_json(
 
 ///|
 fn prepend_to_json(prepend : String) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Prepend\",\"prepend\":")
   write_json_string(sb, prepend)
   sb.write_char('}')
@@ -133,7 +133,7 @@ fn bert_normalizer_to_json(
   strip_accents : Bool?,
   lowercase : Bool,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"BertNormalizer\",\"clean_text\":")
   sb.write_string(bool_json(clean_text))
   sb.write_string(",\"handle_chinese_chars\":")
@@ -158,7 +158,7 @@ fn normalizer_sequence_to_json(steps : Array[Normalizer]) -> String? {
       None => return None
     }
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Sequence\",\"normalizers\":[")
   for i, part in parts {
     if i > 0 {

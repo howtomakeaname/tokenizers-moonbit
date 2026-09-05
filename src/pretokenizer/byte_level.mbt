@@ -69,7 +69,7 @@ fn build_char_to_byte() -> Map[Char, Int] {
 pub fn byte_level_encode_str(s : String) -> String {
   // NOTE: String::to_bytes returns UTF-16; we need UTF-8 here.
   let bytes = @utf8.encode(s)
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let n = bytes.length()
   for i in 0..<n {
     let b = bytes[i].to_int()

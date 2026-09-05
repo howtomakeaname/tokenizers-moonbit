@@ -185,7 +185,7 @@ fn bpe_merge_surface(
 fn drop_prefix(s : String, prefix : String) -> String {
   let chars = s.to_array()
   let start = prefix.char_length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<chars.length() {
     sb.write_char(chars[i])
   }
@@ -370,7 +370,7 @@ fn byte_hex_token(b : Int) -> String {
   let digits = "0123456789ABCDEF"
   let hi = digits.to_array()[b / 16]
   let lo = digits.to_array()[b % 16]
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("<0x")
   sb.write_char(hi)
   sb.write_char(lo)
@@ -425,7 +425,7 @@ fn symbol_char_span(symbols : Array[Symbol], idx : Int, total : Int) -> Int {
 
 ///|
 fn make_surface(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }

@@ -69,7 +69,7 @@ pub fn Token::__str__(self : Token) -> String {
 ///|
 /// Python binding alias for `repr(token)`.
 pub fn Token::__repr__(self : Token) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("Token(id=")
   sb.write_string(self.id.to_string())
   sb.write_string(", value=")
@@ -181,7 +181,7 @@ pub fn Split::__str__(self : Split) -> String {
 ///|
 /// Python binding alias for `repr(split)`.
 pub fn Split::__repr__(self : Split) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("Split(value=")
   write_repr_string(sb, self.value)
   sb.write_string(", offsets=(")

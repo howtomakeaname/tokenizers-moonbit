@@ -157,7 +157,7 @@ pub fn normalize_unicode(
   canonical_order(decomposed)
   // 3. Optional composition.
   let result = if compose { canonical_compose(decomposed) } else { decomposed }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for cp in result {
     sb.write_char(cp.unsafe_to_char())
   }

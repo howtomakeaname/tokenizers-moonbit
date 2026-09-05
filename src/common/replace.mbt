@@ -18,7 +18,7 @@ pub fn replace_literal(
   if m == 1 {
     return replace_char_literal(src, pat[0], content)
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut i = 0
   while i < n {
     if i + m <= n && matches_at(src, i, pat) {
@@ -38,7 +38,7 @@ fn replace_char_literal(
   pattern : Char,
   content : String,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in src {
     if c == pattern {
       sb.write_string(content)
@@ -64,7 +64,7 @@ pub fn replace_leading_runs(
   if i == 0 {
     return s
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string(content)
   for k in i..<n {
     sb.write_char(chars[k])
@@ -86,7 +86,7 @@ pub fn replace_trailing_runs(
   if stop == chars.length() {
     return s
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for k in 0..<stop {
     sb.write_char(chars[k])
   }
@@ -102,7 +102,7 @@ pub fn replace_char_runs(
 ) -> String {
   let chars = s.to_array()
   let n = chars.length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut i = 0
   while i < n {
     if pred(chars[i]) {
@@ -130,7 +130,7 @@ pub fn replace_min_char_runs(
   }
   let chars = s.to_array()
   let n = chars.length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut i = 0
   while i < n {
     if pred(chars[i]) {
@@ -166,7 +166,7 @@ pub fn replace_bounded_char_runs(
   }
   let chars = s.to_array()
   let n = chars.length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut i = 0
   while i < n {
     if pred(chars[i]) {
@@ -196,7 +196,7 @@ pub fn replace_exact_char_runs(
   }
   let chars = s.to_array()
   let n = chars.length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut i = 0
   while i < n {
     if pred(chars[i]) {
@@ -237,7 +237,7 @@ pub fn replace_ranged_char_runs(
   }
   let chars = s.to_array()
   let n = chars.length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut i = 0
   while i < n {
     if pred(chars[i]) {
@@ -330,13 +330,13 @@ fn replace_spans(
   content : String,
 ) -> String {
   if spans.length() == 0 {
-    let sb = StringBuilder::new()
+    let sb = StringBuilder()
     for c in chars {
       sb.write_char(c)
     }
     return sb.to_string()
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut pos = 0
   for span in spans {
     if span.start < pos {
@@ -387,7 +387,7 @@ pub fn replace_space_runs(
 ) -> String {
   let chars = s.to_array()
   let n = chars.length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut i = 0
   while i < n {
     if chars[i] == ' ' {

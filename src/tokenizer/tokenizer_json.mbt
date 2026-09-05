@@ -3,7 +3,7 @@ fn truncation_to_json(params : TruncationParams?) -> String {
   match params {
     None => "null"
     Some(tp) => {
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       sb.write_string("{\"max_length\":")
       sb.write_string(tp.max_length.to_string())
       sb.write_string(",\"stride\":")
@@ -40,7 +40,7 @@ fn padding_to_json(params : PaddingParams?) -> String {
   match params {
     None => "null"
     Some(pp) => {
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       sb.write_string("{\"strategy\":")
       match pp.strategy {
         BatchLongest => write_json_string(sb, "BatchLongest")

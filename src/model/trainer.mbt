@@ -492,7 +492,7 @@ fn bpe_merged_token(
 fn string_drop_prefix(s : String, prefix : String) -> String {
   let chars = s.to_array()
   let start = prefix.char_length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<chars.length() {
     sb.write_char(chars[i])
   }

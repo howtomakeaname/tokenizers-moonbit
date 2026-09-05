@@ -37,7 +37,7 @@ fn bytelevel_to_json(
 
 ///|
 fn behavior_component_to_json(ty : String, behavior : SplitBehavior) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":")
   write_json_string(sb, ty)
   sb.write_string(",\"behavior\":")
@@ -52,7 +52,7 @@ fn metaspace_to_json(
   prepend_scheme : String,
   split : Bool,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Metaspace\",\"replacement\":")
   write_json_char(sb, replacement)
   sb.write_string(",\"prepend_scheme\":")
@@ -70,7 +70,7 @@ fn split_to_json(
   invert : Bool,
   regex : Bool,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Split\",\"pattern\":{")
   if regex {
     sb.write_string("\"Regex\":")
@@ -95,7 +95,7 @@ fn digits_to_json(individual_digits : Bool) -> String {
 
 ///|
 fn delimiter_to_json(delimiter : Char) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Delimiter\",\"delimiter\":")
   write_json_char(sb, delimiter)
   sb.write_char('}')
@@ -116,7 +116,7 @@ fn sequence_to_json(steps : Array[PreTokenizer]) -> String? {
       None => return None
     }
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Sequence\",\"pretokenizers\":[")
   for i, part in parts {
     if i > 0 {

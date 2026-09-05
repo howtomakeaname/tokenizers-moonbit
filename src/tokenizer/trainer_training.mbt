@@ -1,6 +1,6 @@
 ///|
 fn trainer_state_to_json(state : TrainerState) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":")
   write_json_string(sb, state.kind)
   sb.write_string(",\"unk_token\":")
@@ -429,12 +429,12 @@ fn Tokenizer::training_tokenize_text(
 fn split_training_lines(content : String) -> Array[String] {
   let out : Array[String] = []
   let chars = content.to_array()
-  let mut sb = StringBuilder::new()
+  let mut sb = StringBuilder()
   for c in chars {
     sb.write_char(c)
     if c == '\n' {
       out.push(sb.to_string())
-      sb = StringBuilder::new()
+      sb = StringBuilder()
     }
   }
   let tail = sb.to_string()
