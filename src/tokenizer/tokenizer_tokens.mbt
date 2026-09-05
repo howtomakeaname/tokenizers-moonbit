@@ -254,7 +254,7 @@ fn Tokenizer::add_tokens_impl(
   }
   let infos = self.added_vocabulary.to_infos()
   let existing = self.get_vocab(with_added_tokens=true)
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for kv in self.added_vocabulary.get_vocab().to_array() {
     seen[kv.0] = true
   }

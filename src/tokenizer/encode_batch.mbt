@@ -9,7 +9,7 @@ pub fn Tokenizer::encode_batch(
   }
   // Encode + truncate each; defer padding to a batch pass.
   let encs : Array[@types.Encoding] = []
-  let cache : Map[String, @types.Encoding] = {}
+  let cache : Map[String, @types.Encoding] = Map([])
   for t in texts {
     match cache.get(t) {
       Some(enc) => encs.push(copy_encoding(enc))
@@ -41,7 +41,7 @@ pub fn Tokenizer::encode_batch_fast(
     return []
   }
   let encs : Array[@types.Encoding] = []
-  let cache : Map[String, @types.Encoding] = {}
+  let cache : Map[String, @types.Encoding] = Map([])
   for t in texts {
     match cache.get(t) {
       Some(enc) => encs.push(copy_encoding(enc))
@@ -118,7 +118,7 @@ pub fn Tokenizer::encode_pretokenized_batch(
     return []
   }
   let encs : Array[@types.Encoding] = []
-  let cache : Map[String, @types.Encoding] = {}
+  let cache : Map[String, @types.Encoding] = Map([])
   for words in batch {
     let key = pretokenized_cache_key(words)
     match cache.get(key) {
@@ -150,7 +150,7 @@ pub fn Tokenizer::encode_pretokenized_batch_fast(
     return []
   }
   let encs : Array[@types.Encoding] = []
-  let cache : Map[String, @types.Encoding] = {}
+  let cache : Map[String, @types.Encoding] = Map([])
   for words in batch {
     let key = pretokenized_cache_key(words)
     match cache.get(key) {
@@ -221,7 +221,7 @@ pub fn Tokenizer::encode_pretokenized_pair_batch(
     return []
   }
   let encs : Array[@types.Encoding] = []
-  let cache : Map[(String, String), @types.Encoding] = {}
+  let cache : Map[(String, String), @types.Encoding] = Map([])
   for p in batch {
     let key = (pretokenized_cache_key(p.0), pretokenized_cache_key(p.1))
     match cache.get(key) {
@@ -254,7 +254,7 @@ pub fn Tokenizer::encode_pretokenized_pair_batch_fast(
     return []
   }
   let encs : Array[@types.Encoding] = []
-  let cache : Map[(String, String), @types.Encoding] = {}
+  let cache : Map[(String, String), @types.Encoding] = Map([])
   for p in batch {
     let key = (pretokenized_cache_key(p.0), pretokenized_cache_key(p.1))
     match cache.get(key) {
@@ -345,7 +345,7 @@ pub fn Tokenizer::encode_pair_batch(
     return []
   }
   let encs : Array[@types.Encoding] = []
-  let cache : Map[(String, String), @types.Encoding] = {}
+  let cache : Map[(String, String), @types.Encoding] = Map([])
   for p in pairs {
     match cache.get(p) {
       Some(enc) => encs.push(copy_encoding(enc))
@@ -373,7 +373,7 @@ pub fn Tokenizer::encode_pair_batch_fast(
     return []
   }
   let encs : Array[@types.Encoding] = []
-  let cache : Map[(String, String), @types.Encoding] = {}
+  let cache : Map[(String, String), @types.Encoding] = Map([])
   for p in pairs {
     match cache.get(p) {
       Some(enc) => encs.push(copy_encoding(enc))

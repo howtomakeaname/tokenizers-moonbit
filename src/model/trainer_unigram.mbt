@@ -66,11 +66,11 @@ pub fn Model::train_unigram_from_tokens(
     Some(piece) => Some(piece)
     None => unk_token
   }
-  let word_counts : Map[String, Int] = {}
+  let word_counts : Map[String, Int] = Map([])
   let word_order : Array[String] = []
-  let char_counts : Map[String, Int] = {}
+  let char_counts : Map[String, Int] = Map([])
   let char_order : Array[String] = []
-  let piece_counts : Map[String, Int] = {}
+  let piece_counts : Map[String, Int] = Map([])
   let piece_order : Array[String] = []
   for tokens in tokenized_texts {
     for tok in tokens {
@@ -82,7 +82,7 @@ pub fn Model::train_unigram_from_tokens(
     }
   }
 
-  let vocab : Map[String, (Int, Double)] = {}
+  let vocab : Map[String, (Int, Double)] = Map([])
   let vocab_r : Array[String?] = []
   fn add_token(tok : String, score : Double) -> Int? {
     if vocab.contains(tok) || !under_vocab_limit(vocab_r.length(), vocab_size) {

@@ -30,7 +30,7 @@ let comp_table : Ref[Map[Int, Int]?] = { val: None }
 
 ///|
 fn parse_decomp(raw : String) -> Map[Int, Array[Int]] {
-  let m : Map[Int, Array[Int]] = {}
+  let m : Map[Int, Array[Int]] = Map([])
   for line in raw.split("\n") {
     let s = line.to_owned()
     if s == "" {
@@ -85,7 +85,7 @@ fn ccc_map() -> Map[Int, Int] {
   match ccc_table.val {
     Some(m) => m
     None => {
-      let m : Map[Int, Int] = {}
+      let m : Map[Int, Int] = Map([])
       for line in ccc_raw().split("\n") {
         let s = line.to_owned()
         if s == "" {
@@ -109,7 +109,7 @@ fn comp_map() -> Map[Int, Int] {
   match comp_table.val {
     Some(m) => m
     None => {
-      let m : Map[Int, Int] = {}
+      let m : Map[Int, Int] = Map([])
       for line in composition_raw().split("\n") {
         let s = line.to_owned()
         if s == "" {

@@ -31,7 +31,7 @@ pub fn Model::from_json(j : Json) -> Model raise @types.TokenizerError {
 fn parse_vocab(
   obj : Map[String, Json],
 ) -> (Map[String, Int], Array[String?]) raise @types.TokenizerError {
-  let vocab : Map[String, Int] = {}
+  let vocab : Map[String, Int] = Map([])
   let vobj = match obj.get("vocab") {
     Some(Object(v)) => v
     _ => raise @types.VocabError("model.vocab must be an object")
@@ -75,7 +75,7 @@ fn set_vocab_r(vocab_r : Array[String?], id : Int, token : String) -> Unit {
 fn parse_merges(
   obj : Map[String, Json],
 ) -> Map[(String, String), Int] raise @types.TokenizerError {
-  let merges : Map[(String, String), Int] = {}
+  let merges : Map[(String, String), Int] = Map([])
   let marr = match obj.get("merges") {
     Some(Array(a)) => a
     None => raise @types.VocabError("model.merges must be an array")
@@ -288,7 +288,7 @@ fn parse_unigram(
   obj : Map[String, Json],
 ) -> UnigramModel raise @types.TokenizerError {
   // Unigram vocab is an array of [token, score] pairs; index is the id.
-  let vocab : Map[String, (Int, Double)] = {}
+  let vocab : Map[String, (Int, Double)] = Map([])
   let varr = match obj.get("vocab") {
     Some(Array(a)) => a
     _ => raise @types.VocabError("unigram model.vocab must be an array")

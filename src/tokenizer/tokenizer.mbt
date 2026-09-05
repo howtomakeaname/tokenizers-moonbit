@@ -116,7 +116,7 @@ fn TokenizerComponentHooks::overlay(
 /// change length reset offsets to the normalized string's char positions.
 
 ///|
-let from_str_parse_cache : Map[String, Json] = {}
+let from_str_parse_cache : Map[String, Json] = Map([])
 
 ///|
 let from_str_parse_cache_limit : Int = 4

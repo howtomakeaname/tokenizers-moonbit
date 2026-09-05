@@ -300,7 +300,7 @@ fn require_response_body(
 
 ///|
 fn headers_without_range(headers : Map[String, String]) -> Map[String, String] {
-  let out : Map[String, String] = {}
+  let out : Map[String, String] = Map([])
   for kv in headers.to_array() {
     let key_lower = kv.0.to_lower()
     if key_lower != "range" && key_lower != "if-range" {

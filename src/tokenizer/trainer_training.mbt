@@ -351,7 +351,7 @@ fn merge_training_special_tokens(
   a : Array[String],
   b : Array[String],
 ) -> Array[String] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let out : Array[String] = []
   fn add(tok : String) -> Unit {
     if !seen.contains(tok) {

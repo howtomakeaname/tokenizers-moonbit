@@ -38,7 +38,7 @@ fn accent_map() -> Map[Int, String] {
   match accent_map_cache.val {
     Some(m) => m
     None => {
-      let m : Map[Int, String] = {}
+      let m : Map[Int, String] = Map([])
       for e in accent_entries() {
         m[e.0] = e.1
       }

@@ -64,7 +64,7 @@ test "post-processors expose HF-style configuration getters" {
   @test.assert_eq(bytelevel.get_trim_offsets(), Some(false))
   @test.assert_eq(bytelevel.get_use_regex(), Some(false))
 
-  let specials : Map[String, SpecialToken] = {}
+  let specials : Map[String, SpecialToken] = Map([])
   specials["<s>"] = SpecialToken::new("<s>", [0], ["<s>"])
   specials["</s>"] = SpecialToken::new("</s>", [1], ["</s>"])
   let template = PostProcessor::template(
@@ -162,7 +162,7 @@ test "post-processors expose HF-style configuration getters" {
 
 ///|
 test "post-processor aggregate getters return copies" {
-  let specials : Map[String, SpecialToken] = {}
+  let specials : Map[String, SpecialToken] = Map([])
   specials["<multi>"] = SpecialToken::new("<multi>", [10, 11], ["<m>", "</m>"])
   let multi = specials["<multi>"]
   @test.assert_eq(multi.get_id(), "<multi>")
@@ -246,7 +246,7 @@ test "post-processors expose num_special_tokens_to_add alias" {
   @test.assert_eq(roberta.num_special_tokens_to_add(), 2)
   @test.assert_eq(roberta.num_special_tokens_to_add(is_pair=true), 4)
 
-  let specials : Map[String, SpecialToken] = {}
+  let specials : Map[String, SpecialToken] = Map([])
   specials["<multi>"] = SpecialToken::new("<multi>", [10, 11], ["<m>", "</m>"])
   let template = PostProcessor::template(
     [SpecialTokenRef(id="<multi>", type_id=0)],
@@ -284,7 +284,7 @@ test "post-processor process can skip special token insertion" {
   @test.assert_eq(plain.tokens, ["hello", "world"])
   @test.assert_eq(plain.sequence_ids(), [Some(0), Some(1)])
 
-  let specials : Map[String, SpecialToken] = {}
+  let specials : Map[String, SpecialToken] = Map([])
   specials["<s>"] = SpecialToken::new("<s>", [10], ["<s>"])
   specials["</s>"] = SpecialToken::new("</s>", [11], ["</s>"])
   let template = PostProcessor::template(
@@ -305,7 +305,7 @@ test "post-processor process can skip special token insertion" {
 
 ///|
 test "post-processors expose JSON state and string aliases" {
-  let specials : Map[String, SpecialToken] = {}
+  let specials : Map[String, SpecialToken] = Map([])
   specials["<s>"] = SpecialToken::new("<s>", [0], ["<s>"])
   specials["</s>"] = SpecialToken::new("</s>", [1], ["</s>"])
   let processor = PostProcessor::sequence([

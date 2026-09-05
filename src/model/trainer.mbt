@@ -43,7 +43,7 @@ pub fn Model::train_wordlevel_from_tokens(
   show_progress? : Bool = true,
 ) -> Model {
   ignore(show_progress)
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   let order : Array[String] = []
   for tokens in tokenized_texts {
     for tok in tokens {
@@ -57,7 +57,7 @@ pub fn Model::train_wordlevel_from_tokens(
     }
   }
 
-  let vocab : Map[String, Int] = {}
+  let vocab : Map[String, Int] = Map([])
   let vocab_r : Array[String?] = []
   fn add_token(tok : String) -> Unit {
     if vocab.contains(tok) {
@@ -172,9 +172,9 @@ pub fn Model::train_wordpiece_from_tokens(
   show_progress? : Bool = true,
 ) -> Model {
   ignore(show_progress)
-  let word_counts : Map[String, Int] = {}
+  let word_counts : Map[String, Int] = Map([])
   let word_order : Array[String] = []
-  let piece_counts : Map[String, Int] = {}
+  let piece_counts : Map[String, Int] = Map([])
   let piece_order : Array[String] = []
   for tokens in tokenized_texts {
     for tok in tokens {
@@ -185,7 +185,7 @@ pub fn Model::train_wordpiece_from_tokens(
     }
   }
 
-  let vocab : Map[String, Int] = {}
+  let vocab : Map[String, Int] = Map([])
   let vocab_r : Array[String?] = []
   fn add_token(tok : String) -> Unit {
     if vocab.contains(tok) || !under_vocab_limit(vocab.length(), vocab_size) {
@@ -362,9 +362,9 @@ pub fn Model::train_bpe_from_tokens(
   show_progress? : Bool = true,
 ) -> Model {
   ignore(show_progress)
-  let word_counts : Map[String, Int] = {}
+  let word_counts : Map[String, Int] = Map([])
   let word_order : Array[String] = []
-  let alphabet_counts : Map[String, Int] = {}
+  let alphabet_counts : Map[String, Int] = Map([])
   let alphabet_order : Array[String] = []
   for tokens in tokenized_texts {
     for tok in tokens {
@@ -375,7 +375,7 @@ pub fn Model::train_bpe_from_tokens(
     }
   }
 
-  let vocab : Map[String, Int] = {}
+  let vocab : Map[String, Int] = Map([])
   let vocab_r : Array[String?] = []
   fn add_token(tok : String) -> Bool {
     if vocab.contains(tok) || !under_vocab_limit(vocab.length(), vocab_size) {
@@ -417,7 +417,7 @@ pub fn Model::train_bpe_from_tokens(
     }
   }
 
-  let merges : Map[(String, String), Int] = {}
+  let merges : Map[(String, String), Int] = Map([])
   while under_vocab_limit(vocab.length(), vocab_size) {
     let pair = best_bpe_pair(
       words, freqs, min_frequency, max_token_length, continuing_subword_prefix,
@@ -514,7 +514,7 @@ fn limited_trainer_alphabet(
   initial_alphabet : Array[String],
   limit : Int?,
 ) -> Array[(String, Int)] {
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   let order : Array[String] = []
   for item in sorted_wordlevel_candidates(corpus_order, corpus_counts, 1) {
     counts[item.0] = item.1
@@ -627,7 +627,7 @@ fn best_bpe_pair(
   max_token_length : Int?,
   continuing_subword_prefix : String?,
 ) -> (String, String)? {
-  let counts : Map[(String, String), Int] = {}
+  let counts : Map[(String, String), Int] = Map([])
   let order : Array[(String, String)] = []
   for i, parts in words {
     if parts.length() < 2 {

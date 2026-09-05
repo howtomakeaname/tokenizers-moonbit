@@ -99,7 +99,7 @@ pub fn Tokenizer::decode_batch(
   skip_special_tokens? : Bool = true,
 ) -> Array[String] {
   let out : Array[String] = []
-  let cache : Map[String, String] = {}
+  let cache : Map[String, String] = Map([])
   for ids in batch {
     let key = ids_key(ids)
     match cache.get(key) {

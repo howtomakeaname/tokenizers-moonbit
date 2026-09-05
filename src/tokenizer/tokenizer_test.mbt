@@ -1388,7 +1388,7 @@ test "Encoding public manipulation APIs mirror HF style" {
 
 ///|
 test "template string constructor supports multi-id special token counting" {
-  let specials : Map[String, @processor.SpecialToken] = {}
+  let specials : Map[String, @processor.SpecialToken] = Map([])
   specials["<pair>"] = @processor.SpecialToken::new("<pair>", [8, 9], [
     "<p0>", "<p1>",
   ])
@@ -4670,7 +4670,7 @@ test "train_bpe respects vocab_size cap" {
 test "byte_level_alphabet exposes unique 256 byte symbols" {
   let alphabet = @pretokenizer.byte_level_alphabet()
   @test.assert_eq(alphabet.length(), 256)
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for piece in alphabet {
     seen[piece] = true
   }

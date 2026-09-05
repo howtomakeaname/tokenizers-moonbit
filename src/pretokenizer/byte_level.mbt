@@ -55,7 +55,7 @@ fn build_byte_to_char() -> Array[Char] {
 
 ///|
 fn build_char_to_byte() -> Map[Char, Int] {
-  let m : Map[Char, Int] = {}
+  let m : Map[Char, Int] = Map([])
   let table = build_byte_to_char()
   for b in 0..<256 {
     m[table[b]] = b

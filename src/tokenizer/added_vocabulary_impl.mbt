@@ -4,10 +4,10 @@ fn AddedVocabulary::new_with_normalizer(
   encode_special_tokens : Bool,
   normalizer : @normalizer.Normalizer?,
 ) -> AddedVocabulary {
-  let by_content : Map[String, AddedTokenInfo] = {}
-  let id_to_content : Map[Int, String] = {}
-  let id_to_token : Map[Int, AddedTokenInfo] = {}
-  let match_to_token : Map[String, AddedTokenInfo] = {}
+  let by_content : Map[String, AddedTokenInfo] = Map([])
+  let id_to_content : Map[Int, String] = Map([])
+  let id_to_token : Map[Int, AddedTokenInfo] = Map([])
+  let match_to_token : Map[String, AddedTokenInfo] = Map([])
   let non_normalized = CharTrie::new()
   let normalized = CharTrie::new()
   for t in tokens {
@@ -70,7 +70,7 @@ fn AddedVocabulary::token_to_id(self : AddedVocabulary, token : String) -> Int? 
 
 ///|
 fn AddedVocabulary::get_vocab(self : AddedVocabulary) -> Map[String, Int] {
-  let out : Map[String, Int] = {}
+  let out : Map[String, Int] = Map([])
   for kv in self.by_content.to_array() {
     out[kv.0] = kv.1.id
   }
@@ -90,7 +90,7 @@ fn AddedVocabulary::to_infos(self : AddedVocabulary) -> Array[AddedTokenInfo] {
 fn AddedVocabulary::get_added_tokens_decoder(
   self : AddedVocabulary,
 ) -> Map[Int, AddedToken] {
-  let out : Map[Int, AddedToken] = {}
+  let out : Map[Int, AddedToken] = Map([])
   for kv in self.id_to_token.to_array() {
     out[kv.0] = kv.1.to_added_token()
   }

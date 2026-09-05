@@ -208,7 +208,7 @@ fn read_vocab_json(
 fn read_bpe_merges_file(
   path : String,
 ) -> Map[(String, String), Int] raise @types.TokenizerError {
-  let merges : Map[(String, String), Int] = {}
+  let merges : Map[(String, String), Int] = Map([])
   let mut rank = 0
   for line in split_artifact_lines(read_model_artifact(path)) {
     let line = strip_trailing_cr(line)
@@ -225,7 +225,7 @@ fn read_bpe_merges_file(
 fn read_vocab_txt(
   path : String,
 ) -> (Map[String, Int], Array[String?]) raise @types.TokenizerError {
-  let vocab : Map[String, Int] = {}
+  let vocab : Map[String, Int] = Map([])
   let vocab_r : Array[String?] = []
   let mut id = 0
   for line in split_artifact_lines(read_model_artifact(path)) {

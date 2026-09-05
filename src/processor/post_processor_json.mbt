@@ -51,7 +51,7 @@ fn count_specials(
 fn copy_special_tokens(
   special_tokens : Map[String, SpecialToken],
 ) -> Map[String, SpecialToken] {
-  let out : Map[String, SpecialToken] = {}
+  let out : Map[String, SpecialToken] = Map([])
   for kv in special_tokens {
     let (key, st) = kv
     out[key] = SpecialToken::new(st.id, st.ids, st.tokens)
@@ -294,7 +294,7 @@ fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
 fn parse_special_tokens(
   obj : Map[String, Json],
 ) -> Map[String, SpecialToken] raise @types.TokenizerError {
-  let out : Map[String, SpecialToken] = {}
+  let out : Map[String, SpecialToken] = Map([])
   let sobj = match obj.get("special_tokens") {
     Some(Object(s)) => s
     _ => return out

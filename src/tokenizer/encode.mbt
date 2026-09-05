@@ -136,7 +136,7 @@ pub fn Tokenizer::encode_input_batch(
     return []
   }
   let encs : Array[@types.Encoding] = []
-  let cache : Map[String, @types.Encoding] = {}
+  let cache : Map[String, @types.Encoding] = Map([])
   for input in inputs {
     let key = encode_input_cache_key(input)
     match cache.get(key) {
@@ -175,7 +175,7 @@ pub fn Tokenizer::encode_input_batch_fast(
     return []
   }
   let encs : Array[@types.Encoding] = []
-  let cache : Map[String, @types.Encoding] = {}
+  let cache : Map[String, @types.Encoding] = Map([])
   for input in inputs {
     let key = encode_input_cache_key(input)
     match cache.get(key) {
