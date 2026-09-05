@@ -418,7 +418,7 @@ fn Tokenizer::process_pair_raw(
   a : @types.Encoding,
   b : @types.Encoding,
   add_special_tokens~ : Bool,
-) -> @types.Encoding {
+) -> @types.Encoding raise @types.TokenizerError {
   let (a, b) = match self.truncation_for_raw(pair=true, add_special_tokens~) {
     Some(tp) => truncate_pair_raw(a, Some(b), tp)
     None => (a, Some(b))
@@ -665,7 +665,7 @@ fn Tokenizer::process_single_raw(
   self : Tokenizer,
   raw : @types.Encoding,
   add_special_tokens~ : Bool,
-) -> @types.Encoding {
+) -> @types.Encoding raise @types.TokenizerError {
   let raw = self.truncate_single_raw(raw, add_special_tokens~)
   self.apply_post_processor_single(raw, add_special_tokens~)
 }
@@ -746,7 +746,7 @@ fn Tokenizer::truncate_single_raw(
   self : Tokenizer,
   raw : @types.Encoding,
   add_special_tokens~ : Bool,
-) -> @types.Encoding {
+) -> @types.Encoding raise @types.TokenizerError {
   match self.truncation_for_raw(pair=false, add_special_tokens~) {
     Some(tp) => truncate_encoding(raw, tp)
     None => raw

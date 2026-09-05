@@ -138,7 +138,19 @@ fn apply_template(
         }
     }
   }
-  build(out)
+  let result = build(out)
+  match b {
+    // HF applies the template to each truncated overflow window too, so a
+    // `[CLS] $A [SEP]` tokenizer yields `[CLS] ... [SEP]`-wrapped windows.
+    None => {
+      let windows = a.overflowing.map(w => {
+        apply_template(template, special_tokens, w, None)
+      })
+      attach_single_overflowing(result, windows)
+    }
+    // Pair overflow cross-product is not reproduced (see merge_plain).
+    Some(_) => result
+  }
 }
 
 // BERT/RoBERTa: [CLS] A [SEP] (B [SEP]).
@@ -167,7 +179,16 @@ fn bert_like(
     }
     None => ()
   }
-  build(out)
+  let result = build(out)
+  match b {
+    // Same single-sequence window treatment as TemplateProcessing.
+    None => {
+      let windows = a.overflowing.map(w => bert_like(w, None, cls, sep, roberta))
+      attach_single_overflowing(result, windows)
+    }
+    // Pair overflow cross-product is not reproduced (see merge_plain).
+    Some(_) => result
+  }
 }
 
 // No special tokens: concatenate a and optional b (type_id 0 / 1).
@@ -180,7 +201,35 @@ fn merge_plain(a : @types.Encoding, b : @types.Encoding?) -> @types.Encoding {
     Some(eb) => append_sequence_with_id(out, eb, 1, 1)
     None => ()
   }
-  build(out)
+  let merged = build(out)
+  match b {
+    // ByteLevel/Sequence have no special-token pieces; HF keeps the truncated
+    // overflow windows of the single sequence (offsets already adjusted by
+    // process_byte_level_offsets above).
+    None => attach_single_overflowing(merged, a.overflowing)
+    // HF pair overflow follows a cross-product window scheme that is not
+    // reproduced here; pair results keep an empty `overflowing` (documented).
+    Some(_) => merged
+  }
+}
+
+// Attach truncated overflow windows to a single-sequence post-processing
+// result. Mirrors HF: the post-processor runs on each overflow window, so
+// template/bert windows carry the specials and byte-level windows keep their
+// adjusted offsets. Pair overflow windows are intentionally not attached (see
+// merge_plain); HF produces a window cross-product there that would silently
+// mismatch if approximated.
+
+///|
+fn attach_single_overflowing(
+  enc : @types.Encoding,
+  windows : Array[@types.Encoding],
+) -> @types.Encoding {
+  if windows.is_empty() {
+    enc
+  } else {
+    { ..enc, overflowing: windows }
+  }
 }
 
 // ByteLevel post-processing mirrors HF's offset trimming: byte-level spaces

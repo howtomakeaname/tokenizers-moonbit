@@ -138,7 +138,7 @@ pub fn Tokenizer::post_process(
   encoding : @types.Encoding,
   pair? : @types.Encoding? = None,
   add_special_tokens? : Bool = true,
-) -> @types.Encoding {
+) -> @types.Encoding raise @types.TokenizerError {
   let is_pair = pair is Some(_)
   let (encoding, pair) = match
     self.truncation_for_raw(pair=is_pair, add_special_tokens~) {
