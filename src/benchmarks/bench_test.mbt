@@ -653,7 +653,14 @@ fn bench_tokenizer_post_process_case(
   let a = must_encode(tok, "hello [MASK]", add_special_tokens=false)
   let benc = must_encode(tok, "world moon", add_special_tokens=false)
   b.bench(name="tokenizer-post-process-\{case_name}", fn() {
-    b.keep(tok.post_process(a, pair=Some(benc), add_special_tokens=true))
+    let processed = tok.post_process(
+      a,
+      pair=Some(benc),
+      add_special_tokens=true,
+    ) catch {
+      e => abort("post_process should not raise in bench: \{e.message()}")
+    }
+    b.keep(processed)
   })
   b.bench(name="tokenizer-encode-special-switch-\{case_name}", fn() {
     let switched = tok.set_encode_special_tokens(true)

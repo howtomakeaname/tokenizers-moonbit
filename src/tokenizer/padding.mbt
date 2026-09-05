@@ -263,14 +263,19 @@ fn round_up(n : Int, multiple : Int) -> Int {
 
 ///|
 /// Pad a single encoding to `target_len` (no-op if already >= target).
+/// Overflow windows are padded first to the same target, matching HF
+/// `Encoding::pad`, which pads all overflowings before the main encoding.
 fn pad_encoding(
   enc : @types.Encoding,
   target_len : Int,
   params : PaddingParams,
 ) -> @types.Encoding {
+  let padded_windows = enc.overflowing.map(w => {
+    pad_encoding(w, target_len, params)
+  })
   let n = enc.ids.length()
   if n >= target_len {
-    return enc
+    return { ..enc, overflowing: padded_windows }
   }
   let pad = target_len - n
   let pad_ids = Array::make(pad, params.pad_id)
@@ -292,7 +297,7 @@ fn pad_encoding(
         attention_mask: concat(enc.attention_mask, pad_attn),
         sequence_ids: concat(enc.sequence_ids, pad_seq),
         word_ids: concat(enc.word_ids, pad_word),
-        overflowing: [],
+        overflowing: padded_windows,
       }
     Left =>
       {
@@ -304,7 +309,7 @@ fn pad_encoding(
         attention_mask: concat(pad_attn, enc.attention_mask),
         sequence_ids: concat(pad_seq, enc.sequence_ids),
         word_ids: concat(pad_word, enc.word_ids),
-        overflowing: [],
+        overflowing: padded_windows,
       }
   }
 }
