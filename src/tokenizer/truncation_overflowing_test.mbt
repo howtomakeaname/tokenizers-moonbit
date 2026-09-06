@@ -142,19 +142,28 @@ test "fixed padding pads overflow windows too" {
 }
 
 ///|
-/// HF rejects `stride >= effective max_length` (max minus added specials).
-test "stride at or above effective max_length raises" {
+/// HF validates at configuration time: `with_truncation`/`enable_truncation`
+/// reject `stride > max_length - num_special_tokens_to_add(single)` (with
+/// `stride > 0`), using the upstream message text. Verified against Python
+/// `tokenizers` 0.22.2 (bert max=4 stride=4 raises; max=4 stride=2 and
+/// stride=0 configs do not; stride == effective max_length does not raise).
+test "with_truncation rejects invalid stride at configuration time" {
   let tok = Tokenizer::from_str(overflowing_bert_json)
-  let bad = tok.with_truncation(Some(TruncationParams::new(4).with_stride(4)))
   let message = try {
-    let _ = bad.encode("a b c d e f g h")
+    let _ = tok.with_truncation(Some(TruncationParams::new(4).with_stride(4)))
     "no error"
   } catch {
     e => e.message()
   }
   @test.assert_eq(
-    message, "truncation stride 4 must be strictly less than the effective max_length 2",
+    message, "tokenizer stride set to 4, which is greater than or equal to its effective max length of 2 (= 4 original max length - 2 added special tokens), ",
   )
+  // stride == effective max_length is accepted, matching upstream.
+  let ok1 = tok.with_truncation(Some(TruncationParams::new(4).with_stride(2)))
+  @test.assert_eq(ok1.truncation().unwrap().get_stride(), 2)
+  // stride = 0 never raises, even when max_length <= added specials.
+  let ok2 = tok.with_truncation(Some(TruncationParams::new(1)))
+  @test.assert_eq(ok2.truncation().unwrap().get_max_length(), 1)
 }
 
 ///|

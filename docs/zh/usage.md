@@ -138,8 +138,11 @@ let enc = tok.encode(long_text)
 - 编码 **pair** 时产生 HuggingFace 0.22.x 的窗口叉积：每侧截断窗口与截断后
   主编码的全组合（除主 pair 本身），先按 a 侧窗口（各配主 b 与每个 b 窗口），
   再按主 a 配每个 b 窗口排列。
-- `stride >= max_length` 在执行截断时报错，与 HF 的
-  `stride must be strictly less than the effective max length` 校验一致。
+- 非法 stride 在配置期即被拒绝：`with_truncation` / `enable_truncation` 在
+  `stride > 0` 且 `stride > max_length - num_special_tokens_to_add(单序列)`
+  时抛错，消息文本与上游一致（`tokenizer stride set to ... effective max
+  length ...`）。`stride = 0` 与 `stride == 有效 max_length` 均被接受，与 HF
+  一致。pair 编码会在编码期按每侧预算再次校验（pair 模板注入的 special 更多）。
 
 ## Padding
 

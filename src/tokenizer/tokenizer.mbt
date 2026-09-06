@@ -489,10 +489,28 @@ pub fn Tokenizer::clear_component_hooks(self : Tokenizer) -> Tokenizer {
 
 ///|
 /// Enable/disable truncation (builder; mutates and returns self).
+///
+/// Mirrors HuggingFace `with_truncation`: configuration-time validation
+/// rejects `stride > max_length - num_special_tokens_to_add(single)` with
+/// `stride > 0` (the exact message matches the upstream check). Loading a
+/// `tokenizer.json` stays permissive — an invalid stored config surfaces at
+/// encode time instead, as upstream.
 pub fn Tokenizer::with_truncation(
   self : Tokenizer,
   params : TruncationParams?,
-) -> Tokenizer {
+) -> Tokenizer raise @types.TokenizerError {
+  match params {
+    Some(tp) => {
+      let n_added = self.num_special_tokens_to_add(is_pair=false)
+      let effective = tp.max_length - n_added
+      if tp.stride > 0 && effective < tp.stride {
+        raise @types.ParseError(
+          "tokenizer stride set to \{tp.stride}, which is greater than or equal to its effective max length of \{effective} (= \{tp.max_length} original max length - \{n_added} added special tokens), ",
+        )
+      }
+    }
+    None => ()
+  }
   self.truncation = params
   self.source_json = None
   self
@@ -503,7 +521,7 @@ pub fn Tokenizer::with_truncation(
 pub fn Tokenizer::set_truncation(
   self : Tokenizer,
   params : TruncationParams?,
-) -> Tokenizer {
+) -> Tokenizer raise @types.TokenizerError {
   self.with_truncation(params)
 }
 
@@ -518,7 +536,7 @@ pub fn Tokenizer::enable_truncation(
   stride? : Int = 0,
   strategy? : TruncationStrategy = LongestFirst,
   direction? : TruncationDirection = Right,
-) -> Tokenizer {
+) -> Tokenizer raise @types.TokenizerError {
   self.with_truncation(
     Some(
       TruncationParams::new(max_length)
@@ -549,7 +567,9 @@ pub fn Tokenizer::enable_truncation_hf(
 ///|
 /// HF-style mutating alias for clearing truncation configuration.
 pub fn Tokenizer::no_truncation(self : Tokenizer) -> Tokenizer {
-  self.with_truncation(None)
+  self.truncation = None
+  self.source_json = None
+  self
 }
 
 ///|

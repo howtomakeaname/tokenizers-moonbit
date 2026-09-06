@@ -170,8 +170,13 @@ let enc = tok.encode(long_text)   // capped to 128 tokens
   every combination of the per-side truncation windows plus the truncated
   mains except the main pair itself (a-windows against main-b and each
   b-window first, then main-a against each b-window).
-- `stride >= max_length` raises an error when truncation runs, matching HF's
-  `stride must be strictly less than the effective max length` check.
+- Invalid strides are rejected at configuration time: `with_truncation` /
+  `enable_truncation` raise when `stride > 0` and
+  `stride > max_length - num_special_tokens_to_add(single)`, with the same
+  message text as upstream (`tokenizer stride set to ... effective max
+  length ...`). `stride = 0` and `stride == effective max_length` are
+  accepted, matching HF. Pair encodes additionally re-check the per-side
+  budget at encode time (the pair template adds more special tokens).
 
 ## Padding
 

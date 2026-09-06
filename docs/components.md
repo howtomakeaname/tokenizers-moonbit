@@ -141,6 +141,11 @@ E5-small, MixedBread and SmolLM2.
   cross-product (per-side windows combined with the opposite mains and
   windows, main pair excluded); note that HuggingFace main-branch (0.23-dev)
   has since replaced that scheme with plain per-side truncation windows.
+  Configuration-time stride validation matches upstream: `with_truncation` /
+  `enable_truncation` raise when `stride > 0` and the stride exceeds
+  `max_length - num_special_tokens_to_add(single)`; loading a
+  `tokenizer.json` stays permissive and an invalid stored config surfaces at
+  encode time, as upstream.
 - **Batching:** single-threaded by design for wasm/js targets.
 - **Performance:** BPE merging uses a priority-queue heap with lazy stale
   removal plus word caching; WordPiece and Unigram also cache repeated words;
