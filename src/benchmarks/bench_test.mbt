@@ -34,7 +34,7 @@ fn corpus_mixed() -> String {
     #|MoonBit runs on wasm, js and native. 日本語のテキストも処理できます。
     #|Special tokens like <s> and punctuation: e.g., (a+b)*c == 42? Yes!
     #|
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for _ in 0..<8 {
     sb.write_string(unit)
   }
@@ -51,7 +51,7 @@ fn corpus_code() -> String {
     #|}
     #|// UTF-8, byte_fallback, snake_case, camelCase, HTTP/2, JSON.parse
     #|
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for _ in 0..<12 {
     sb.write_string(unit)
   }
@@ -63,7 +63,7 @@ fn corpus_code() -> String {
 ///|
 fn corpus_long_doc() -> String {
   let unit = corpus_mixed() + corpus_code()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for _ in 0..<8 {
     sb.write_string(unit)
   }
@@ -653,7 +653,14 @@ fn bench_tokenizer_post_process_case(
   let a = must_encode(tok, "hello [MASK]", add_special_tokens=false)
   let benc = must_encode(tok, "world moon", add_special_tokens=false)
   b.bench(name="tokenizer-post-process-\{case_name}", fn() {
-    b.keep(tok.post_process(a, pair=Some(benc), add_special_tokens=true))
+    let processed = tok.post_process(
+      a,
+      pair=Some(benc),
+      add_special_tokens=true,
+    ) catch {
+      e => abort("post_process should not raise in bench: \{e.message()}")
+    }
+    b.keep(processed)
   })
   b.bench(name="tokenizer-encode-special-switch-\{case_name}", fn() {
     let switched = tok.set_encode_special_tokens(true)
@@ -678,7 +685,7 @@ fn bench_precompiled_normalizer_case(b : @bench.T, case_name : String) -> Unit {
   let normalizer = @normalizer.Normalizer::Precompiled
   let ascii = "The\tquick brown\nfox jumps over MoonBit tokenizers. "
   let unicode = "ＡＢＣ\u{1680}１２３\u{2028}Ⅳ ① ㍿ ﬁ ﬂ Å ㎏ "
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for _ in 0..<64 {
     sb.write_string(ascii)
     sb.write_string(unicode)
@@ -697,7 +704,7 @@ fn bench_precompiled_binary_charsmap_case(b : @bench.T) -> Unit raise {
     "\"}"
   let normalizer = @normalizer.Normalizer::from_json(@json.parse(json))
   let text = "A plain ASCII payload with repeated A markers. "
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for _ in 0..<256 {
     sb.write_string(text)
   }

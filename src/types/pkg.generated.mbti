@@ -216,4 +216,3 @@ pub(all) enum TokenizerErrorKind {
 // Type aliases
 
 // Traits
-

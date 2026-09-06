@@ -494,7 +494,7 @@ pub fn Tokenizer::no_truncation(Self) -> Self
 pub fn Tokenizer::normalizer(Self) -> @normalizer.Normalizer?
 pub fn Tokenizer::num_special_tokens_to_add(Self, is_pair? : Bool) -> Int
 pub fn Tokenizer::padding(Self) -> PaddingParams?
-pub fn Tokenizer::post_process(Self, @types.Encoding, pair? : @types.Encoding?, add_special_tokens? : Bool) -> @types.Encoding
+pub fn Tokenizer::post_process(Self, @types.Encoding, pair? : @types.Encoding?, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
 pub fn Tokenizer::post_processor(Self) -> @processor.PostProcessor?
 pub fn Tokenizer::pre_tokenizer(Self) -> @pretokenizer.PreTokenizer?
 pub fn Tokenizer::resize_cache(Self, Int) -> Self
@@ -733,4 +733,3 @@ pub(all) enum TruncationStrategy {
 // Type aliases
 
 // Traits
-

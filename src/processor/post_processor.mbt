@@ -67,7 +67,7 @@ pub fn Piece::__str__(self : Piece) -> String {
 
 ///|
 pub fn Piece::__repr__(self : Piece) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("Piece(kind=")
   write_repr_string(sb, self.kind())
   sb.write_string(", id=")
@@ -95,7 +95,7 @@ pub fn SpecialToken::new(
   ids : Array[Int],
   tokens : Array[String],
 ) -> SpecialToken {
-  { id, ids: ids.copy(), tokens: tokens.copy() }
+  { id, ids: ids.copy(), tokens: tokens.copy(), }
 }
 
 ///|
@@ -149,7 +149,7 @@ pub fn SpecialToken::__str__(self : SpecialToken) -> String {
 
 ///|
 pub fn SpecialToken::__repr__(self : SpecialToken) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("SpecialToken(id=")
   write_repr_string(sb, self.id)
   sb.write_string(", ids=")
@@ -205,7 +205,7 @@ pub fn PostProcessor::kind(self : PostProcessor) -> String {
 pub fn PostProcessor::get_state(
   self : PostProcessor,
 ) -> PostProcessorState raise @types.TokenizerError {
-  { json: self.state_json() }
+  { json: self.state_json(), }
 }
 
 ///|
@@ -671,7 +671,7 @@ fn template_to_json(
   pair : Array[Piece],
   special_tokens : Map[String, SpecialToken],
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"TemplateProcessing\",\"single\":")
   write_pieces_json(sb, single)
   sb.write_string(",\"pair\":")
@@ -684,7 +684,7 @@ fn template_to_json(
 
 ///|
 fn bert_to_json(sep : (String, Int), cls : (String, Int)) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"BertProcessing\",\"sep\":")
   write_token_id_pair(sb, sep)
   sb.write_string(",\"cls\":")
@@ -700,7 +700,7 @@ fn roberta_to_json(
   trim_offsets : Bool,
   add_prefix_space : Bool,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"RobertaProcessing\",\"sep\":")
   write_token_id_pair(sb, sep)
   sb.write_string(",\"cls\":")
@@ -737,7 +737,7 @@ fn processor_sequence_to_json(steps : Array[PostProcessor]) -> String? {
       None => return None
     }
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Sequence\",\"processors\":[")
   for i, part in parts {
     if i > 0 {

@@ -1,6 +1,6 @@
 ///|
 fn strip_accents(s : String) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in s {
     let cp = c.to_int()
     if is_combining_mark(cp) {
@@ -31,14 +31,14 @@ fn is_combining_mark(cp : Int) -> Bool {
 // Lazily-built map: code point -> accent-stripped form.
 
 ///|
-let accent_map_cache : Ref[Map[Int, String]?] = { val: None }
+let accent_map_cache : Ref[Map[Int, String]?] = { val: None, }
 
 ///|
 fn accent_map() -> Map[Int, String] {
   match accent_map_cache.val {
     Some(m) => m
     None => {
-      let m : Map[Int, String] = {}
+      let m : Map[Int, String] = Map([])
       for e in accent_entries() {
         m[e.0] = e.1
       }
@@ -53,7 +53,7 @@ fn accent_map() -> Map[Int, String] {
 
 ///|
 fn bert_clean_text(s : String) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in s {
     let u = c.to_int()
     if u == 0 || u == 0xFFFD || is_control(c) {
@@ -72,7 +72,7 @@ fn bert_clean_text(s : String) -> String {
 
 ///|
 fn bert_pad_chinese(s : String) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in s {
     if is_chinese_char(c) {
       sb.write_char(' ')
@@ -106,7 +106,7 @@ fn is_chinese_char(c : Char) -> Bool {
 
 ///|
 fn to_lowercase(s : String) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in s {
     sb.write_char(c.to_ascii_lowercase())
   }
@@ -129,7 +129,7 @@ fn strip(s : String, left : Bool, right : Bool) -> String {
       stop = stop - 1
     }
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for k in start..<stop {
     sb.write_char(chars[k])
   }

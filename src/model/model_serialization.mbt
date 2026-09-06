@@ -40,7 +40,7 @@ fn save_bpe_artifacts(
 ) -> Array[String] raise @types.TokenizerError {
   let vocab_path = join_path(folder, prefix + "vocab.json")
   let merges_path = join_path(folder, prefix + "merges.txt")
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_char('{')
   write_vocab_json(sb, m.vocab_r)
   sb.write_char('}')
@@ -67,7 +67,7 @@ fn save_wordlevel_artifact(
   prefix : String,
 ) -> Array[String] raise @types.TokenizerError {
   let path = join_path(folder, prefix + "vocab.json")
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_char('{')
   write_vocab_json(sb, m.vocab_r)
   sb.write_char('}')
@@ -95,7 +95,7 @@ fn bpe_merges_txt(merges : Map[(String, String), Int]) -> String {
       ordered[rank] = Some(pair)
     }
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("#version: 0.2\n")
   for item in ordered {
     match item {
@@ -113,7 +113,7 @@ fn bpe_merges_txt(merges : Map[(String, String), Int]) -> String {
 
 ///|
 fn vocab_txt(vocab_r : Array[String?]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for tok in vocab_r {
     match tok {
       Some(t) => {
@@ -167,7 +167,7 @@ fn parent_dir(path : String) -> String? {
       if i == 0 {
         return Some("/")
       }
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       for j in 0..<i {
         sb.write_char(chars[j])
       }
@@ -199,7 +199,7 @@ fn artifact_prefix(prefix : String) -> String {
 
 ///|
 fn bpe_to_json(m : BPEModel) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"BPE\",\"vocab\":{")
   write_vocab_json(sb, m.vocab_r)
   sb.write_string("},\"merges\":")
@@ -248,7 +248,7 @@ fn bpe_to_json(m : BPEModel) -> String {
 
 ///|
 fn wordlevel_to_json(m : WordLevelModel) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"WordLevel\",\"vocab\":{")
   write_vocab_json(sb, m.vocab_r)
   sb.write_string("},\"unk_token\":")
@@ -259,7 +259,7 @@ fn wordlevel_to_json(m : WordLevelModel) -> String {
 
 ///|
 fn wordpiece_to_json(m : WordPieceModel) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"WordPiece\",\"unk_token\":")
   write_json_string(sb, m.unk_token)
   sb.write_string(",\"continuing_subword_prefix\":")
@@ -281,7 +281,7 @@ fn wordpiece_to_json(m : WordPieceModel) -> String {
 
 ///|
 fn unigram_to_json(m : UnigramModel) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Unigram\",\"vocab\":")
   write_unigram_vocab_json(sb, m)
   match m.unk_id {

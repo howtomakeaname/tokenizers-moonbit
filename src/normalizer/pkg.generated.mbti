@@ -124,4 +124,3 @@ pub(all) struct PrecompiledCharsMap {
 // Type aliases
 
 // Traits
-

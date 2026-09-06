@@ -37,7 +37,7 @@ fn bytelevel_to_json(
 
 ///|
 fn wordpiece_to_json(prefix : String, cleanup : Bool) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"WordPiece\",\"prefix\":")
   write_json_string(sb, prefix)
   sb.write_string(",\"cleanup\":")
@@ -52,7 +52,7 @@ fn metaspace_to_json(
   prepend_scheme : String,
   split : Bool,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Metaspace\",\"replacement\":")
   write_json_char(sb, replacement)
   sb.write_string(",\"prepend_scheme\":")
@@ -65,7 +65,7 @@ fn metaspace_to_json(
 
 ///|
 fn bpe_decoder_to_json(suffix : String) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"BPEDecoder\",\"suffix\":")
   write_json_string(sb, suffix)
   sb.write_char('}')
@@ -74,7 +74,7 @@ fn bpe_decoder_to_json(suffix : String) -> String {
 
 ///|
 fn strip_to_json(content : Char, start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Strip\",\"content\":")
   write_json_char(sb, content)
   sb.write_string(",\"start\":")
@@ -91,7 +91,7 @@ fn replace_to_json(
   content : String,
   pattern_kind : @common.PatternKind,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Replace\",\"pattern\":{")
   match pattern_kind {
     @common.StringPattern => sb.write_string("\"String\":")
@@ -110,7 +110,7 @@ fn ctc_to_json(
   word_delimiter_token : String,
   cleanup : Bool,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"CTC\",\"pad_token\":")
   write_json_string(sb, pad_token)
   sb.write_string(",\"word_delimiter_token\":")
@@ -130,7 +130,7 @@ fn decoder_sequence_to_json(steps : Array[Decoder]) -> String? {
       None => return None
     }
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\"type\":\"Sequence\",\"decoders\":[")
   for i, part in parts {
     if i > 0 {

@@ -36,7 +36,7 @@ pub fn Decoder::decode_chain(
 
 ///|
 fn join(tokens : Array[String]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for t in tokens {
     sb.write_string(t)
   }
@@ -109,7 +109,7 @@ fn decode_sentencepiece_sequence_fast(
   if pat.length() != 1 {
     return None
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let pending : Array[Int] = []
   fn flush_bytes() -> Unit {
     if pending.length() > 0 {
@@ -225,7 +225,7 @@ fn decode_wordpiece(
   prefix : String,
   cleanup : Bool,
 ) -> Array[String] {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i, t in tokens {
     if i == 0 {
       sb.write_string(t)
@@ -258,7 +258,7 @@ fn decode_metaspace(
 ) -> Array[String] {
   let out : Array[String] = []
   for i, t in tokens {
-    let sb = StringBuilder::new()
+    let sb = StringBuilder()
     for c in t {
       sb.write_char(if c == replacement { ' ' } else { c })
     }
@@ -279,7 +279,7 @@ fn decode_metaspace(
 fn drop_prefix(s : String, prefix : String) -> String {
   let pc = prefix.char_length()
   let chars = s.to_array()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in pc..<chars.length() {
     sb.write_char(chars[i])
   }
@@ -290,7 +290,7 @@ fn drop_prefix(s : String, prefix : String) -> String {
 fn drop_suffix(s : String, suffix : String) -> String {
   let sc = suffix.char_length()
   let chars = s.to_array()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in 0..<(chars.length() - sc) {
     sb.write_char(chars[i])
   }
@@ -313,7 +313,7 @@ fn strip_token(t : String, content : Char, start : Int, stop : Int) -> String {
     b = b - 1
     removed = removed + 1
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in a..<b {
     sb.write_char(chars[i])
   }
@@ -330,7 +330,7 @@ fn cleanup_text(s : String) -> String {
   // old twelve literal replace passes; this is the hot path for BERT decode.
   let chars = s.to_array()
   let n = chars.length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut i = 0
   while i < n {
     if chars[i] == ' ' && i + 1 < n && should_drop_cleanup_space(chars, i) {

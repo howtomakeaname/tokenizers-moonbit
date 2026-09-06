@@ -54,7 +54,7 @@ pub fn TokenizerComponentHooks::new(
   pre_tokenize? : ((String, Int) -> Array[@types.Split])? = None,
   decode? : ((Array[String]) -> String)? = None,
 ) -> TokenizerComponentHooks {
-  { normalize, pre_tokenize, decode }
+  { normalize, pre_tokenize, decode, }
 }
 
 ///|
@@ -116,7 +116,7 @@ fn TokenizerComponentHooks::overlay(
 /// change length reset offsets to the normalized string's char positions.
 
 ///|
-let from_str_parse_cache : Map[String, Json] = {}
+let from_str_parse_cache : Map[String, Json] = Map([])
 
 ///|
 let from_str_parse_cache_limit : Int = 4
@@ -332,7 +332,7 @@ pub fn Tokenizer::__repr__(
 pub fn Tokenizer::get_state(
   self : Tokenizer,
 ) -> TokenizerState raise @types.TokenizerError {
-  { json: self.to_json() }
+  { json: self.to_json(), }
 }
 
 ///|
@@ -403,7 +403,7 @@ pub fn Tokenizer::with_pre_tokenizer(
   self : Tokenizer,
   pre_tokenizer : @pretokenizer.PreTokenizer?,
 ) -> Tokenizer {
-  { ..self, pre_tokenizer, source_json: None }
+  { ..self, pre_tokenizer, source_json: None, }
 }
 
 ///|
@@ -421,7 +421,7 @@ pub fn Tokenizer::with_model(
   self : Tokenizer,
   model : @model.Model,
 ) -> Tokenizer {
-  { ..self, model, source_json: None }
+  { ..self, model, source_json: None, }
 }
 
 ///|
@@ -439,7 +439,7 @@ pub fn Tokenizer::with_post_processor(
   self : Tokenizer,
   post_processor : @processor.PostProcessor?,
 ) -> Tokenizer {
-  { ..self, post_processor, source_json: None }
+  { ..self, post_processor, source_json: None, }
 }
 
 ///|
@@ -457,7 +457,7 @@ pub fn Tokenizer::with_decoder(
   self : Tokenizer,
   decoder : @decoder.Decoder?,
 ) -> Tokenizer {
-  { ..self, decoder, source_json: None }
+  { ..self, decoder, source_json: None, }
 }
 
 ///|
@@ -478,7 +478,7 @@ pub fn Tokenizer::with_component_hooks(
   self : Tokenizer,
   hooks : TokenizerComponentHooks,
 ) -> Tokenizer {
-  { ..self, component_hooks: hooks }
+  { ..self, component_hooks: hooks, }
 }
 
 ///|

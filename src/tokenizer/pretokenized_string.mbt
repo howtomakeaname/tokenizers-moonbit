@@ -15,7 +15,7 @@ pub struct PreTokenizedStringState {
 pub fn PreTokenizedString::new(text : String) -> PreTokenizedString {
   {
     original: text,
-    splits: [{ value: text, offsets: (0, text.char_length()) }],
+    splits: [{ value: text, offsets: (0, text.char_length()), }],
   }
 }
 
@@ -23,14 +23,14 @@ pub fn PreTokenizedString::new(text : String) -> PreTokenizedString {
 pub fn PreTokenizedString::from_splits(
   splits : Array[@types.Split],
 ) -> PreTokenizedString {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i, s in splits {
     if i > 0 {
       sb.write_char(' ')
     }
     sb.write_string(s.value)
   }
-  { original: sb.to_string(), splits: splits.copy() }
+  { original: sb.to_string(), splits: splits.copy(), }
 }
 
 ///|
@@ -38,7 +38,7 @@ pub fn PreTokenizedString::from_splits(
 pub fn PreTokenizedString::from_state(
   state : PreTokenizedStringState,
 ) -> PreTokenizedString {
-  { original: state.original, splits: state.splits.copy() }
+  { original: state.original, splits: state.splits.copy(), }
 }
 
 ///|
@@ -46,7 +46,7 @@ pub fn PreTokenizedString::from_state(
 pub fn PreTokenizedString::from_tuple(
   t : (String, Array[@types.Split]),
 ) -> PreTokenizedString {
-  { original: t.0, splits: t.1.copy() }
+  { original: t.0, splits: t.1.copy(), }
 }
 
 ///|
@@ -62,7 +62,7 @@ pub fn PreTokenizedString::as_tuple(
 pub fn PreTokenizedString::get_state(
   self : PreTokenizedString,
 ) -> PreTokenizedStringState {
-  { original: self.original, splits: self.splits.copy() }
+  { original: self.original, splits: self.splits.copy(), }
 }
 
 ///|
@@ -160,7 +160,7 @@ pub fn PreTokenizedString::normalize(
       offsets: (s.offsets.0, s.offsets.0 + value.char_length()),
     })
   }
-  { ..self, splits: out }
+  { ..self, splits: out, }
 }
 
 ///|
@@ -174,7 +174,7 @@ pub fn PreTokenizedString::split(
       out.push(p)
     }
   }
-  { ..self, splits: out }
+  { ..self, splits: out, }
 }
 
 ///|

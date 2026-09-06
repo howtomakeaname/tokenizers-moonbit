@@ -49,7 +49,7 @@ pub fn is_unicode_whitespace(u : Int) -> Bool {
 ///|
 /// Build a one-character String.
 pub fn char_string(c : Char) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_char(c)
   sb.to_string()
 }

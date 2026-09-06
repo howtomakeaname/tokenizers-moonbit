@@ -216,7 +216,7 @@ fn match_contraction(chars : Array[Char], i : Int, n : Int) -> Int {
 
 ///|
 fn slice(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for k in start..<stop {
     sb.write_char(chars[k])
   }

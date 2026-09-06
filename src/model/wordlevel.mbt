@@ -10,7 +10,7 @@ pub fn WordLevelModel::tokenize(
   let span = word.char_length()
   match self.vocab.get(word) {
     Some(id) =>
-      [@types.Token::{ id, value: word, offsets: (offset, offset + span) }]
+      [@types.Token::{ id, value: word, offsets: (offset, offset + span), }]
     None =>
       match self.vocab.get(self.unk_token) {
         Some(uid) =>

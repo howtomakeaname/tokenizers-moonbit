@@ -9,7 +9,7 @@
 // `from_file` intentionally stays uncached for direct file round-trips.
 
 ///|
-let pretrained_source_cache : Map[String, String] = {}
+let pretrained_source_cache : Map[String, String] = Map([])
 
 ///|
 let pretrained_source_cache_limit : Int = 16

@@ -16,7 +16,7 @@ pub fn Decoder::decode(self : Decoder, tokens : Array[String]) -> String {
     _ => ()
   }
   let out = self.decode_chain(tokens)
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for t in out {
     sb.write_string(t)
   }
@@ -199,7 +199,7 @@ fn decode_replace_direct(
   if @common.is_simple_split_regex_pattern(pattern) {
     return decode_replace_simple_regex_direct(tokens, pattern, content)
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for t in tokens {
     sb.write_string(replace_all(t, pattern, content))
   }
@@ -212,7 +212,7 @@ fn decode_replace_simple_regex_direct(
   pattern : String,
   content : String,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for t in tokens {
     match @common.replace_simple_regex(t, pattern, content) {
       Some(out) => sb.write_string(out)
@@ -228,7 +228,7 @@ fn decode_replace_char_runs_direct(
   content : String,
   pred : (Char) -> Bool,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for t in tokens {
     let mut in_run = false
     for c in t {
@@ -254,7 +254,7 @@ fn decode_replace_ranged_char_runs_direct(
   min_run~ : Int,
   max_run~ : Int,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut run = 0
   let mut c0 = '\u{0}'
   let mut c1 = '\u{0}'
@@ -304,7 +304,7 @@ fn decode_replace_min_char_runs_direct(
   pred : (Char) -> Bool,
   min_run~ : Int,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut run = 0
   let mut c0 = '\u{0}'
   let mut c1 = '\u{0}'
@@ -350,7 +350,7 @@ fn decode_replace_punct_symbol_ranged_direct(
   min_run~ : Int,
   max_run~ : Int,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut run = 0
   let mut c0 = '\u{0}'
   let mut c1 = '\u{0}'
@@ -414,7 +414,7 @@ fn decode_replace_min_non_digit_direct(
   content : String,
   min_run~ : Int,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut run = 0
   let mut c0 = '\u{0}'
   let mut c1 = '\u{0}'
@@ -460,7 +460,7 @@ fn decode_replace_not_whitespace_letter_number_ranged_direct(
   min_run~ : Int,
   max_run~ : Int,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut run = 0
   let mut c0 = '\u{0}'
   let mut c1 = '\u{0}'
@@ -532,7 +532,7 @@ fn decode_replace_leading_runs_direct(
   content : String,
   pred : (Char) -> Bool,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for t in tokens {
     let chars = t.to_array()
     let n = chars.length()
@@ -558,7 +558,7 @@ fn decode_replace_trailing_runs_direct(
   content : String,
   pred : (Char) -> Bool,
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for t in tokens {
     let chars = t.to_array()
     let mut stop = chars.length()

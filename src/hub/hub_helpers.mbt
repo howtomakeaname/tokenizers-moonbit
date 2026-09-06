@@ -65,7 +65,7 @@ fn reject_local_files_only_direct_download(
 
 ///|
 fn encode_hub_revision_segment(revision : String) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in revision {
     match c {
       '/' => sb.write_string("%2F")
@@ -300,7 +300,7 @@ fn require_response_body(
 
 ///|
 fn headers_without_range(headers : Map[String, String]) -> Map[String, String] {
-  let out : Map[String, String] = {}
+  let out : Map[String, String] = Map([])
   for kv in headers.to_array() {
     let key_lower = kv.0.to_lower()
     if key_lower != "range" && key_lower != "if-range" {
@@ -382,7 +382,7 @@ fn trim_ascii_ws(s : String) -> String {
   while stop > start && is_ascii_ws(chars[stop - 1]) {
     stop = stop - 1
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }
@@ -583,7 +583,7 @@ fn trim_trailing_slash(s : String) -> String {
 
 ///|
 fn string_slice(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }

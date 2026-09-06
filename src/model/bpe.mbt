@@ -66,7 +66,7 @@ pub fn BPEModel::tokenize(
   if self.ignore_merges {
     match self.vocab.get(word) {
       Some(id) => {
-        let rel = [@types.Token::{ id, value: word, offsets: (0, n) }]
+        let rel = [@types.Token::{ id, value: word, offsets: (0, n), }]
         if use_cache {
           put_token_cache(self.cache, self.cache_capacity, word, rel)
         }
@@ -92,7 +92,7 @@ pub fn BPEModel::tokenize(
         None => ()
       }
     }
-    symbols.push({ value: s, prev: i - 1, next: i + 1, alive: true })
+    symbols.push({ value: s, prev: i - 1, next: i + 1, alive: true, })
   }
   symbols[n - 1].next = -1
 
@@ -107,7 +107,7 @@ pub fn BPEModel::tokenize(
       return
     }
     match self.merges.get((symbols[pos].value, symbols[r].value)) {
-      Some(rank) => heap.push({ rank, pos, right: r })
+      Some(rank) => heap.push({ rank, pos, right: r, })
       None => ()
     }
   }
@@ -185,7 +185,7 @@ fn bpe_merge_surface(
 fn drop_prefix(s : String, prefix : String) -> String {
   let chars = s.to_array()
   let start = prefix.char_length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<chars.length() {
     sb.write_char(chars[i])
   }
@@ -283,7 +283,7 @@ fn BPEModel::collect_tokens(
     let stop = offset + char_pos + span
     match self.lookup(sym.value) {
       Some(id) =>
-        raw.push(@types.Token::{ id, value: sym.value, offsets: (start, stop) })
+        raw.push(@types.Token::{ id, value: sym.value, offsets: (start, stop), })
       None => {
         // Try byte_fallback: encode the surface's bytes as <0xXX> tokens, but
         // only if every byte token exists in the vocab (HF semantics).
@@ -356,7 +356,7 @@ fn BPEModel::try_byte_fallback(
     let tok = byte_hex_token(bytes[i].to_int())
     match self.vocab.get(tok) {
       Some(id) =>
-        toks.push(@types.Token::{ id, value: tok, offsets: (start, stop) })
+        toks.push(@types.Token::{ id, value: tok, offsets: (start, stop), })
       None => return None
     }
   }
@@ -370,7 +370,7 @@ fn byte_hex_token(b : Int) -> String {
   let digits = "0123456789ABCDEF"
   let hi = digits.to_array()[b / 16]
   let lo = digits.to_array()[b % 16]
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("<0x")
   sb.write_char(hi)
   sb.write_char(lo)
@@ -425,7 +425,7 @@ fn symbol_char_span(symbols : Array[Symbol], idx : Int, total : Int) -> Int {
 
 ///|
 fn make_surface(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }

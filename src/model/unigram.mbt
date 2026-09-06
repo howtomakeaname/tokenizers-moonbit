@@ -106,7 +106,7 @@ pub fn UnigramModel::tokenize(
     } else {
       best_id[pos]
     }
-    rev.push(@types.Token::{ id, value: best_tok[pos], offsets: (start, pos) })
+    rev.push(@types.Token::{ id, value: best_tok[pos], offsets: (start, pos), })
     pos = start
   }
   // reverse into order
@@ -185,7 +185,7 @@ fn UnigramModel::try_byte_fallback(
   for i in 0..<bytes.length() {
     let tok = byte_hex_token(bytes[i].to_int())
     match self.vocab.get(tok) {
-      Some((id, _)) => toks.push(@types.Token::{ id, value: tok, offsets })
+      Some((id, _)) => toks.push(@types.Token::{ id, value: tok, offsets, })
       None => return None
     }
   }
@@ -217,7 +217,7 @@ fn fuse_unigram_unk(
 
 ///|
 fn make_piece(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }

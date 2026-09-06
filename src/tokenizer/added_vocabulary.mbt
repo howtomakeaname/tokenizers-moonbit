@@ -19,7 +19,7 @@ priv struct CharTrie {
 ///|
 fn CharTrie::new() -> CharTrie {
   // node 0 is the root.
-  { children: [Map([])], terminal: [None] }
+  { children: [Map([])], terminal: [None], }
 }
 
 ///|
@@ -107,7 +107,7 @@ pub fn AddedToken::new(
     Some(v) => v
     None => !special
   }
-  { content, single_word, lstrip, rstrip, normalized, special }
+  { content, single_word, lstrip, rstrip, normalized, special, }
 }
 
 ///|
@@ -188,7 +188,7 @@ pub fn AddedToken::__str__(self : AddedToken) -> String {
 ///|
 /// Python binding alias for `repr(added_token)`.
 pub fn AddedToken::__repr__(self : AddedToken) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("AddedToken(")
   write_repr_string(sb, self.content)
   sb.write_string(", rstrip=")

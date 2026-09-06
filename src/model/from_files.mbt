@@ -152,7 +152,7 @@ pub fn Model::from_wordlevel_file(
     "vocab": read_vocab_json(vocab_path, "WordLevel vocab"),
   }
   let (vocab, vocab_r) = parse_vocab(obj)
-  WordLevel(WordLevelModel::{ vocab, vocab_r, unk_token })
+  WordLevel(WordLevelModel::{ vocab, vocab_r, unk_token, })
 }
 
 ///|
@@ -208,7 +208,7 @@ fn read_vocab_json(
 fn read_bpe_merges_file(
   path : String,
 ) -> Map[(String, String), Int] raise @types.TokenizerError {
-  let merges : Map[(String, String), Int] = {}
+  let merges : Map[(String, String), Int] = Map([])
   let mut rank = 0
   for line in split_artifact_lines(read_model_artifact(path)) {
     let line = strip_trailing_cr(line)
@@ -225,7 +225,7 @@ fn read_bpe_merges_file(
 fn read_vocab_txt(
   path : String,
 ) -> (Map[String, Int], Array[String?]) raise @types.TokenizerError {
-  let vocab : Map[String, Int] = {}
+  let vocab : Map[String, Int] = Map([])
   let vocab_r : Array[String?] = []
   let mut id = 0
   for line in split_artifact_lines(read_model_artifact(path)) {
@@ -248,11 +248,11 @@ fn read_model_artifact(path : String) -> String raise @types.TokenizerError {
 fn split_artifact_lines(content : String) -> Array[String] {
   let out : Array[String] = []
   let chars = content.to_array()
-  let mut sb = StringBuilder::new()
+  let mut sb = StringBuilder()
   for c in chars {
     if c == '\n' {
       out.push(sb.to_string())
-      sb = StringBuilder::new()
+      sb = StringBuilder()
     } else {
       sb.write_char(c)
     }

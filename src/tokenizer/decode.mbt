@@ -68,7 +68,7 @@ fn Tokenizer::decode_with_hooks_impl(
     Some(d) => d.decode(tokens)
     None => {
       // No decoder: join token surfaces directly.
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       for t in tokens {
         sb.write_string(t)
       }
@@ -99,7 +99,7 @@ pub fn Tokenizer::decode_batch(
   skip_special_tokens? : Bool = true,
 ) -> Array[String] {
   let out : Array[String] = []
-  let cache : Map[String, String] = {}
+  let cache : Map[String, String] = Map([])
   for ids in batch {
     let key = ids_key(ids)
     match cache.get(key) {
@@ -164,7 +164,13 @@ pub fn Tokenizer::decode_stream(
   self : Tokenizer,
   skip_special_tokens? : Bool = true,
 ) -> DecodeStream {
-  { tokenizer: self, skip_special_tokens, ids: [], prefix: "", prefix_index: 0 }
+  {
+    tokenizer: self,
+    skip_special_tokens,
+    ids: [],
+    prefix: "",
+    prefix_index: 0,
+  }
 }
 
 ///|
@@ -235,7 +241,7 @@ pub fn DecodeStream::step(
 
 ///|
 fn ids_key(ids : Array[Int]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for id in ids {
     sb.write_string(id.to_string())
     sb.write_char(',')
@@ -273,7 +279,7 @@ fn starts_with_string(s : String, prefix : String) -> Bool {
 fn suffix_after_prefix(s : String, prefix : String) -> String {
   let chars = s.to_array()
   let start = prefix.to_array().length()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<chars.length() {
     sb.write_char(chars[i])
   }

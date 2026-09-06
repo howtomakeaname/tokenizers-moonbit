@@ -183,7 +183,7 @@ fn apply_split_matches(
         match pending_contiguous {
           Some(p) =>
             if p.stop == span.start {
-              pending_contiguous = Some({ start: p.start, stop: span.stop })
+              pending_contiguous = Some({ start: p.start, stop: span.stop, })
             } else {
               emit_span(p)
               pending_contiguous = Some(span)
@@ -206,7 +206,7 @@ fn apply_split_matches(
   }
   for m in matches {
     if cursor < m.start {
-      let gap = @common.Span::{ start: cursor, stop: m.start }
+      let gap = @common.Span::{ start: cursor, stop: m.start, }
       if invert {
         emit_delim(gap)
       } else {
@@ -221,7 +221,7 @@ fn apply_split_matches(
     cursor = m.stop
   }
   if cursor < chars.length() {
-    let tail = @common.Span::{ start: cursor, stop: chars.length() }
+    let tail = @common.Span::{ start: cursor, stop: chars.length(), }
     if invert {
       emit_delim(tail)
     } else {
@@ -299,7 +299,7 @@ fn pieces_to_splits(
   let mut cursor = base_offset
   for p in pieces {
     let len = p.char_length()
-    out.push({ value: p, offsets: (cursor, cursor + len) })
+    out.push({ value: p, offsets: (cursor, cursor + len), })
     cursor = cursor + len
   }
   out

@@ -52,7 +52,7 @@ pub fn Model::get_vocab(self : Model) -> Map[String, Int] {
     BPE(m) => m.vocab.copy()
     WordPiece(m) => m.vocab.copy()
     Unigram(m) => {
-      let out : Map[String, Int] = {}
+      let out : Map[String, Int] = Map([])
       for kv in m.vocab.to_array() {
         out[kv.0] = kv.1.0
       }

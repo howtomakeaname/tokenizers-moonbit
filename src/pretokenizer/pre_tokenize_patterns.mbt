@@ -64,7 +64,7 @@ fn apply_sequence(
   base_offset : Int,
 ) -> Array[@types.Split] {
   let mut current : Array[@types.Split] = [
-    { value: text, offsets: (base_offset, base_offset + text.char_length()) },
+    { value: text, offsets: (base_offset, base_offset + text.char_length()), },
   ]
   for step in steps {
     let next : Array[@types.Split] = []
@@ -334,7 +334,7 @@ pub fn is_cjk(c : Char) -> Bool {
 
 ///|
 fn substr(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for k in start..<stop {
     sb.write_char(chars[k])
   }
@@ -482,7 +482,7 @@ fn metaspace_pre_tokenize(
     }
     let value = substr(mapped, 0, n)
     let off_end = base_offset + (origin[n - 1] + 1)
-    return [{ value, offsets: (base_offset + origin[0], off_end) }]
+    return [{ value, offsets: (base_offset + origin[0], off_end), }]
   }
   // split=true: each piece starts at a replacement boundary.
   let out : Array[@types.Split] = []
@@ -497,7 +497,7 @@ fn metaspace_pre_tokenize(
     let off_start = base_offset + origin[start]
     let off_end = base_offset +
       (if i < n { origin[i] } else { origin[n - 1] + 1 })
-    out.push({ value, offsets: (off_start, off_end) })
+    out.push({ value, offsets: (off_start, off_end), })
   }
   out
 }

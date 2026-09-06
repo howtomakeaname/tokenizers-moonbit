@@ -113,4 +113,3 @@ pub(all) struct Span {
 // Type aliases
 
 // Traits
-

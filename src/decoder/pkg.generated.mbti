@@ -129,4 +129,3 @@ pub fn DecoderState::new(String) -> Self
 // Type aliases
 
 // Traits
-

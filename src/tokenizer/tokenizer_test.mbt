@@ -364,7 +364,7 @@ fn hook_force_moon(_text : String) -> String {
 
 ///|
 fn hook_pipe_decode(tokens : Array[String]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i, token in tokens {
     if i > 0 {
       sb.write_char('|')
@@ -404,7 +404,7 @@ fn hook_comma_pre_tokenize(
 
 ///|
 fn hook_string_slice(chars : Array[Char], start : Int, stop : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
   }
@@ -570,8 +570,8 @@ test "Encoding interop constructors validate parallel array lengths" {
 ///|
 test "Encoding setters validate replacement array lengths" {
   let enc = @types.Encoding::from_tokens([
-    { id: 1, value: "a", offsets: (0, 1) },
-    { id: 2, value: "b", offsets: (1, 2) },
+    { id: 1, value: "a", offsets: (0, 1), },
+    { id: 2, value: "b", offsets: (1, 2), },
   ])
   let mut raised_type_ids = false
   try enc.with_type_ids([0]) |> ignore catch {
@@ -1299,9 +1299,9 @@ test "post_process applies truncation and fixed padding like HF" {
 ///|
 test "Encoding public manipulation APIs mirror HF style" {
   let base = @types.Encoding::from_tokens([
-    { id: 1, value: "he", offsets: (0, 2) },
-    { id: 2, value: "llo", offsets: (2, 5) },
-    { id: 3, value: "!", offsets: (5, 6) },
+    { id: 1, value: "he", offsets: (0, 2), },
+    { id: 2, value: "llo", offsets: (2, 5), },
+    { id: 3, value: "!", offsets: (5, 6), },
   ])
   @test.assert_eq(base.ids, [1, 2, 3])
   @test.assert_eq(base.word_ids(), [Some(0), Some(1), Some(2)])
@@ -1354,30 +1354,30 @@ test "Encoding public manipulation APIs mirror HF style" {
   @test.assert_eq(bad_truncate_direction, true)
   @test.assert_eq(typed.truncate_hf(2, direction="left").ids, [2, 3])
   let merged = @types.Encoding::merge([
-    @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2) }]),
-    @types.Encoding::from_tokens([{ id: 11, value: "cd", offsets: (0, 2) }]),
+    @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2), }]),
+    @types.Encoding::from_tokens([{ id: 11, value: "cd", offsets: (0, 2), }]),
   ])
   @test.assert_eq(merged.ids, [10, 11])
   @test.assert_eq(merged.offsets, [(0, 2), (2, 4)])
   let merged_without_growing = @types.Encoding::merge(
     [
-      @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2) }]),
-      @types.Encoding::from_tokens([{ id: 11, value: "cd", offsets: (0, 2) }]),
+      @types.Encoding::from_tokens([{ id: 10, value: "ab", offsets: (0, 2), }]),
+      @types.Encoding::from_tokens([{ id: 11, value: "cd", offsets: (0, 2), }]),
     ],
     growing_offsets=false,
   )
   @test.assert_eq(merged_without_growing.offsets, [(0, 2), (0, 2)])
   @test.assert_eq(
-    @types.Encoding::from_tokens([{ id: 12, value: "xy", offsets: (0, 2) }]).merge_with(
-      @types.Encoding::from_tokens([{ id: 13, value: "zz", offsets: (0, 2) }]),
+    @types.Encoding::from_tokens([{ id: 12, value: "xy", offsets: (0, 2), }]).merge_with(
+      @types.Encoding::from_tokens([{ id: 13, value: "zz", offsets: (0, 2), }]),
     ).offsets,
     [(0, 2), (2, 4)],
   )
   let padded_before_merge = @types.Encoding::from_tokens([
-    { id: 14, value: "ab", offsets: (0, 2) },
+    { id: 14, value: "ab", offsets: (0, 2), },
   ]).pad(3, pad_id=0, pad_token="[PAD]")
   let merged_after_padding = padded_before_merge.merge_with(
-    @types.Encoding::from_tokens([{ id: 15, value: "cd", offsets: (0, 2) }]),
+    @types.Encoding::from_tokens([{ id: 15, value: "cd", offsets: (0, 2), }]),
   )
   @test.assert_eq(merged_after_padding.tokens, ["ab", "[PAD]", "[PAD]", "cd"])
   @test.assert_eq(merged_after_padding.offsets, [(0, 2), (0, 0), (0, 0), (0, 2)])
@@ -1388,7 +1388,7 @@ test "Encoding public manipulation APIs mirror HF style" {
 
 ///|
 test "template string constructor supports multi-id special token counting" {
-  let specials : Map[String, @processor.SpecialToken] = {}
+  let specials : Map[String, @processor.SpecialToken] = Map([])
   specials["<pair>"] = @processor.SpecialToken::new("<pair>", [8, 9], [
     "<p0>", "<p1>",
   ])
@@ -1473,7 +1473,7 @@ test "decode_stream emits chunks matching full decode" {
   let tok = Tokenizer::from_str(json)
   let ids = [0, 1, 2]
   let mut stream = tok.decode_stream(skip_special_tokens=false)
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for id in ids {
     let (next, chunk) = stream.step(id)
     stream = next
@@ -4670,7 +4670,7 @@ test "train_bpe respects vocab_size cap" {
 test "byte_level_alphabet exposes unique 256 byte symbols" {
   let alphabet = @pretokenizer.byte_level_alphabet()
   @test.assert_eq(alphabet.length(), 256)
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for piece in alphabet {
     seen[piece] = true
   }

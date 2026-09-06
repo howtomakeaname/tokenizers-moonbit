@@ -4,7 +4,7 @@ fn precompiled_normalize(s : String) -> String {
     Some(out) => return out
     None => ()
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let normalized = normalize_unicode(s, compat=true, compose=true)
   for c in normalized {
     if @common.is_unicode_whitespace(c.to_int()) {
@@ -19,7 +19,7 @@ fn precompiled_normalize(s : String) -> String {
 ///|
 fn precompiled_map_normalize(data : PrecompiledCharsMap, s : String) -> String {
   let chars = s.to_array()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut i = 0
   while i < chars.length() {
     match precompiled_transform(data, char_to_string(chars[i])) {
@@ -109,14 +109,14 @@ fn precompiled_offset(unit : Int) -> Int {
 
 ///|
 fn char_to_string(c : Char) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_char(c)
   sb.to_string()
 }
 
 ///|
 fn precompiled_ascii_fast(s : String) -> String? {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let mut changed = false
   for c in s {
     let u = c.to_int()

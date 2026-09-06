@@ -1013,7 +1013,7 @@ fn string_prefix(s : String, stop : Int) -> String {
   } else {
     stop
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in 0..<end {
     sb.write_char(chars[i])
   }
@@ -1030,7 +1030,7 @@ fn string_suffix(s : String, start : Int) -> String {
   } else {
     start
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i in begin..<chars.length() {
     sb.write_char(chars[i])
   }

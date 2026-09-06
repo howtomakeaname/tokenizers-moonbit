@@ -138,7 +138,7 @@ pub fn Tokenizer::post_process(
   encoding : @types.Encoding,
   pair? : @types.Encoding? = None,
   add_special_tokens? : Bool = true,
-) -> @types.Encoding {
+) -> @types.Encoding raise @types.TokenizerError {
   let is_pair = pair is Some(_)
   let (encoding, pair) = match
     self.truncation_for_raw(pair=is_pair, add_special_tokens~) {
@@ -254,7 +254,7 @@ fn Tokenizer::add_tokens_impl(
   }
   let infos = self.added_vocabulary.to_infos()
   let existing = self.get_vocab(with_added_tokens=true)
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for kv in self.added_vocabulary.get_vocab().to_array() {
     seen[kv.0] = true
   }
@@ -318,7 +318,7 @@ fn max_vocab_id(vocab : Map[String, Int]) -> Int {
 
 ///|
 fn added_tokens_to_json(tokens : Array[AddedTokenInfo]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_char('[')
   for i in 0..<tokens.length() {
     if i > 0 {

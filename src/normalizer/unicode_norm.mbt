@@ -13,24 +13,24 @@
 // cp -> decomposition (fully recursive)
 
 ///|
-let canon_decomp : Ref[Map[Int, Array[Int]]?] = { val: None }
+let canon_decomp : Ref[Map[Int, Array[Int]]?] = { val: None, }
 
 ///|
-let compat_decomp : Ref[Map[Int, Array[Int]]?] = { val: None }
+let compat_decomp : Ref[Map[Int, Array[Int]]?] = { val: None, }
 
 // cp -> combining class (absent => 0)
 
 ///|
-let ccc_table : Ref[Map[Int, Int]?] = { val: None }
+let ccc_table : Ref[Map[Int, Int]?] = { val: None, }
 
 // (a,b) packed as a*0x110000+b -> composed cp
 
 ///|
-let comp_table : Ref[Map[Int, Int]?] = { val: None }
+let comp_table : Ref[Map[Int, Int]?] = { val: None, }
 
 ///|
 fn parse_decomp(raw : String) -> Map[Int, Array[Int]] {
-  let m : Map[Int, Array[Int]] = {}
+  let m : Map[Int, Array[Int]] = Map([])
   for line in raw.split("\n") {
     let s = line.to_owned()
     if s == "" {
@@ -85,7 +85,7 @@ fn ccc_map() -> Map[Int, Int] {
   match ccc_table.val {
     Some(m) => m
     None => {
-      let m : Map[Int, Int] = {}
+      let m : Map[Int, Int] = Map([])
       for line in ccc_raw().split("\n") {
         let s = line.to_owned()
         if s == "" {
@@ -109,7 +109,7 @@ fn comp_map() -> Map[Int, Int] {
   match comp_table.val {
     Some(m) => m
     None => {
-      let m : Map[Int, Int] = {}
+      let m : Map[Int, Int] = Map([])
       for line in composition_raw().split("\n") {
         let s = line.to_owned()
         if s == "" {
@@ -157,7 +157,7 @@ pub fn normalize_unicode(
   canonical_order(decomposed)
   // 3. Optional composition.
   let result = if compose { canonical_compose(decomposed) } else { decomposed }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for cp in result {
     sb.write_char(cp.unsafe_to_char())
   }
