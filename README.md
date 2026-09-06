@@ -68,37 +68,71 @@ custom tokenizer definitions.
 Module name for Mooncakes publishing/imports: `howtomakeaname/tokenizers-moonbit`.
 
 ```bash
+moon new my-app && cd my-app
 moon add howtomakeaname/tokenizers-moonbit
 ```
 
-```moonbit
-// Load from a tokenizer.json string (backend-agnostic, no file IO):
-let tok = @tokenizer.Tokenizer::from_str(json_text)
+`moon add` records the dependency in `moon.mod`; you also declare the
+sub-package import in the `moon.pkg` of the package that uses it:
 
-// Or load from a file (uses moonbitlang/x/fs, available on all backends):
-let tok = @tokenizer.from_file("tokenizer.json")
-
-// Native/js only: download from HuggingFace Hub through the optional hub package:
-let tok = @hub.from_pretrained("bert-base-uncased")
-
-// Use a HuggingFace-compatible mirror when needed:
-let tok = @hub.from_pretrained(
-  "bert-base-uncased",
-  options=@hub.HubDownloadOptions::new(endpoint="https://hf-mirror.com"),
-)
-
-// Encode:
-let enc = tok.encode("Hello world")
-println(enc.ids)            // [Int]
-println(enc.tokens)         // [String]
-println(enc.attention_mask) // [Int]
-
-// Encode a pair (adds [CLS]/[SEP] etc. via the post-processor):
-let pair = tok.encode_pair("question", "context")
-
-// Decode:
-let text = tok.decode(enc.ids, skip_special_tokens=true)
+```text
+import {
+  "howtomakeaname/tokenizers-moonbit/tokenizer",
+}
 ```
+
+A complete runnable program (`load`/`encode` raise on bad input, so wrap the
+calls in `try`/`catch`):
+
+```moonbit
+fn main {
+  try {
+    // Load from a tokenizer.json string (backend-agnostic, no file IO):
+    // let tok = @tokenizer.Tokenizer::from_str(json_text)
+    // Or load from a file (uses moonbitlang/x/fs, available on all backends):
+    let tok = @tokenizer.from_file("tokenizer.json")
+
+    // Encode:
+    let enc = tok.encode("Hello world")
+    println(enc.ids)            // [Int]
+    println(enc.tokens)         // [String]
+    println(enc.attention_mask) // [Int]
+
+    // Decode:
+    let text = tok.decode(enc.ids, skip_special_tokens=true)
+    println(text)
+  } catch {
+    e => println("failed: \{e.message()}")
+  }
+}
+```
+
+Run it with `moon run cmd/main` (or your main package path).
+
+Native/js only: download from HuggingFace Hub through the optional `hub`
+package. Its entry points are `async` — import `moonbitlang/async` (pinned to
+the same version this library declares), declare `supported_targets =
+"+js+native"`, and use an `async fn main`:
+
+```moonbit
+async fn main {
+  try {
+    let tok = @hub.from_pretrained("bert-base-uncased")
+
+    // Use a HuggingFace-compatible mirror when needed:
+    let tok2 = @hub.from_pretrained(
+      "bert-base-uncased",
+      options=@hub.HubDownloadOptions::new(endpoint="https://hf-mirror.com"),
+    )
+    println(tok2.get_vocab_size())
+  } catch {
+    e => println("failed: \{e.message()}")
+  }
+}
+```
+
+See [docs/usage.md](./docs/usage.md) for the full details, including encode
+options, pairs, batches, truncation and padding.
 
 `encode(text, add_special_tokens=false)` still runs the configured
 post-processor, but omits special tokens the post-processor would inject.

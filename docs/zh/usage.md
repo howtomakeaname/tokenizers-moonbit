@@ -5,6 +5,23 @@ encode/decode。
 
 英文版：[`../usage.md`](../usage.md)
 
+## 安装
+
+```bash
+moon add howtomakeaname/tokenizers-moonbit
+```
+
+`moon add` 只会写入 `moon.mod`，还需要在使用方包的 `moon.pkg` 里声明子包导入
+（例如 `moon new` 项目的 `cmd/main/moon.pkg`）：
+
+```text
+import {
+  "howtomakeaname/tokenizers-moonbit/tokenizer",
+}
+```
+
+其他子包按同样方式导入（`.../types` 用于错误模式匹配、`.../hub` 用于 Hub 下载）。
+
 ## 加载
 
 ```moonbit
@@ -12,23 +29,53 @@ let tok = @tokenizer.Tokenizer::from_str(json_text)
 let tok = @tokenizer.from_file("tokenizer.json")
 ```
 
-JSON 非法或组件暂不支持时会抛出 `@types.TokenizerError`。
+JSON 非法或组件暂不支持时会抛出 `@types.TokenizerError`。会 raise 的调用必须放在
+`try`/`catch` 内（`fn main` 函数体不能直接调用），完整最小程序：
+
+```moonbit
+fn main {
+  try {
+    let tok = @tokenizer.from_file("tokenizer.json")
+    let enc = tok.encode("Hello world")
+    println(enc.ids)
+  } catch {
+    e => println("failed: \{e.message()}")
+  }
+}
+```
 
 ### HuggingFace Hub
 
 核心 `@tokenizer.from_pretrained` 保持同步、全后端可用：它只解析本地文件/目录或
-已有 HuggingFace Hub cache。native/js 应用如果需要在线下载，可使用可选 `@hub` 包：
+已有 HuggingFace Hub cache。native/js 应用如果需要在线下载，可使用可选 `@hub` 包。
+下载入口是 `async` 函数，需要 `async fn main` 和 `moonbitlang/async` 运行时：
 
 ```moonbit
-let tok = @hub.from_pretrained("bert-base-uncased")
+// moon.pkg 需额外导入：
+//   "howtomakeaname/tokenizers-moonbit/hub"
+//   "moonbitlang/async"
+// 并声明：supported_targets = "+js+native"
+async fn main {
+  try {
+    let tok = @hub.from_pretrained("bert-base-uncased")
+    println(tok.get_vocab_size())
 
-let opts = @hub.HubDownloadOptions::new(
-  revision="main",
-  cache_dir=Some(".hf-cache"),
-  endpoint="https://hf-mirror.com", // 可选镜像 URL
-)
-let tok2 = @hub.from_pretrained("org/model", options=opts)
+    let opts = @hub.HubDownloadOptions::new(
+      revision="main",
+      cache_dir=Some(".hf-cache"),
+      endpoint="https://hf-mirror.com", // 可选镜像 URL
+    )
+    let tok2 = @hub.from_pretrained("org/model", options=opts)
+    println(tok2.get_vocab_size())
+  } catch {
+    e => println("download failed: \{e.message()}")
+  }
+}
 ```
+
+`moonbitlang/async` 需固定为 `tokenizers-moonbit` 在其 `moon.mod` 里声明的同一
+版本（0.3.x 为 `moon add moonbitlang/async@0.19.2`）——裸 `moon add` 拉到的更新
+版本与本库类型不一致，无法通过编译。
 
 `@hub` 会下载 `tokenizer.json`、写入 HF 风格 cache，然后复用核心 loader。native 请求会使用
 接近 HuggingFace/tokenizers 客户端的 User-Agent 与标准 `Accept`/`Authorization` headers；
@@ -97,12 +144,16 @@ let enc = tok.encode(long_text)
 
 ```moonbit
 let tok = @tokenizer.Tokenizer::from_str(json)
-  .with_padding(Some(@tokenizer.PaddingParams::new(Fixed(64))))
+  .with_padding(Some(@tokenizer.PaddingParams::new(@tokenizer.Fixed(64))))
 
 let tok = @tokenizer.Tokenizer::from_str(json)
-  .with_padding(Some(@tokenizer.PaddingParams::new(BatchLongest)))
+  .with_padding(Some(@tokenizer.PaddingParams::new(@tokenizer.BatchLongest)))
 let batch = tok.encode_batch(texts)
 ```
+
+枚举变体跨包使用需要包限定（`@tokenizer.Fixed`、`@tokenizer.BatchLongest`）。
+`with_padding` / `with_truncation` 等 `with_*` 方法是**原地修改并返回同一个
+对象**，不返回副本，原 tokenizer 也会被改到。
 
 padding 位置的 `attention_mask = 0`，`special_tokens_mask = 1`。
 
@@ -113,3 +164,28 @@ tok.token_to_id("[CLS]")
 tok.id_to_token(101)
 tok.get_vocab_size()
 ```
+
+## 错误处理
+
+加载/编码失败会抛出 `@types.TokenizerError`（`suberror`，含
+`ParseError(String)`、`UnsupportedComponent(String)`、`VocabError(String)`
+三个变体）。用 `try`/`catch` 处理——`try` 块与每个 `catch` 分支必须产出同一
+类型：
+
+```moonbit
+fn load(json : String) -> String {
+  try {
+    let tok = @tokenizer.Tokenizer::from_str(json)
+    "loaded, vocab=\{tok.get_vocab_size()}"
+  } catch {
+    @types.ParseError(msg) => "bad json: \{msg}"
+    @types.UnsupportedComponent(c) => "unsupported: \{c}"
+    e => "error: \{e.message()}"
+  }
+}
+```
+
+要对错误变体做模式匹配，需额外导入 types 子包（`moon.pkg` 中加入
+`"howtomakeaname/tokenizers-moonbit/types"`）。不导入时可以整体捕获后调用
+`.message()` / `.kind()`；错误类型没有实现 `Show`，插值时请用 `e.message()`
+而不是 `e` 本身。
