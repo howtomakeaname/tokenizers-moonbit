@@ -88,8 +88,9 @@ let enc = tok.encode(long_text)
   成为溢出窗口。
 - 后处理器同样作用于每个窗口：template/BERT 窗口带 `[CLS]`/`[SEP]`，固定
   长度 padding 也会把窗口 pad 到同一目标长度。
-- 编码 **pair** 时目前 `enc.overflowing` 为空；HF 在该场景产生窗口叉积，
-  尚未复刻。
+- 编码 **pair** 时产生 HuggingFace 0.22.x 的窗口叉积：每侧截断窗口与截断后
+  主编码的全组合（除主 pair 本身），先按 a 侧窗口（各配主 b 与每个 b 窗口），
+  再按主 a 配每个 b 窗口排列。
 - `stride >= max_length` 在执行截断时报错，与 HF 的
   `stride must be strictly less than the effective max length` 校验一致。
 

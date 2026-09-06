@@ -691,7 +691,27 @@ fn Tokenizer::apply_post_processor_pair(
 ) -> @types.Encoding {
   match self.post_processor {
     Some(pp) => pp.process(a, Some(b), add_special_tokens~)
-    None => concat_encodings(a, b)
+    None => {
+      // No post-processor: HF's default merge produces the same pair
+      // overflow cross-product as the processor paths (verified against
+      // Python tokenizers 0.22.2).
+      let main = concat_encodings(a, b)
+      let windows : Array[@types.Encoding] = []
+      for wa in a.overflowing {
+        windows.push(concat_encodings(wa, b))
+        for wb in b.overflowing {
+          windows.push(concat_encodings(wa, wb))
+        }
+      }
+      for wb in b.overflowing {
+        windows.push(concat_encodings(a, wb))
+      }
+      if windows.is_empty() {
+        main
+      } else {
+        { ..main, overflowing: windows, }
+      }
+    }
   }
 }
 

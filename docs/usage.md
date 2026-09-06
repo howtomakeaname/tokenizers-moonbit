@@ -115,8 +115,10 @@ let enc = tok.encode(long_text)   // capped to 128 tokens
   tokens and the removed head becomes the windows.
 - The post-processor runs on each window too: template/BERT windows carry
   `[CLS]`/`[SEP]`, and fixed padding pads windows to the same target length.
-- Encoding a **pair** currently leaves `enc.overflowing` empty; HF produces a
-  window cross-product there that is not reproduced yet.
+- Encoding a **pair** produces the HuggingFace 0.22.x window cross-product:
+  every combination of the per-side truncation windows plus the truncated
+  mains except the main pair itself (a-windows against main-b and each
+  b-window first, then main-a against each b-window).
 - `stride >= max_length` raises an error when truncation runs, matching HF's
   `stride must be strictly less than the effective max length` check.
 

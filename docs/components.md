@@ -134,11 +134,13 @@ E5-small, MixedBread and SmolLM2.
   future work.
 - **Offsets:** char-based by default, relative to the original text. Optional
   byte-offset encode APIs are available for HuggingFace-style byte offsets.
-- **Truncation overflow windows:** single-sequence encode mirrors HF:
+- **Truncation overflow windows:** encode mirrors HF `tokenizers` 0.22.2:
   windows land in `enc.overflowing` for both directions and `stride = 0` /
   `stride > 0`, post-processors wrap each window, and fixed padding pads
-  windows to the same target. Pair encode leaves `enc.overflowing` empty;
-  HF builds a window cross-product there that is not reproduced yet.
+  windows to the same target. Pair encode builds the 0.22.x window
+  cross-product (per-side windows combined with the opposite mains and
+  windows, main pair excluded); note that HuggingFace main-branch (0.23-dev)
+  has since replaced that scheme with plain per-side truncation windows.
 - **Batching:** single-threaded by design for wasm/js targets.
 - **Performance:** BPE merging uses a priority-queue heap with lazy stale
   removal plus word caching; WordPiece and Unigram also cache repeated words;
