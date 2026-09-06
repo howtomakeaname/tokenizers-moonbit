@@ -1061,5 +1061,9 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - 公共 API 变更：`Tokenizer::post_process` 现在声明 `raise @types.TokenizerError`（内部执行截断校验，与 `encode` 一致）；`moon info` 已更新。
   - `src/benchmarks/bench_test.mbt`：post-process bench 内改用 try/catch abort 适配新签名。
 - 新增 `src/tokenizer/truncation_overflowing_test.mbt`（10 个测试）：全部期望值先用等价 WordLevel tokenizer 在 Python `tokenizers` 0.22.2 实测取得，再固化为断言，覆盖 BertProcessing/Template/ByteLevel/无后处理、stride=0/2、Left 方向、`add_special_tokens=false`、Fixed padding 同步 pad、stride 校验报错、pair 空 overflowing 锁定。
-- 已知缺口（显式记录）：pair + truncation 的 HF 窗口叉积（例如 bert s0 pair 179 个窗口）未复刻，pair 结果 `overflowing` 为空；config 期 eager 校验（HF 在 `enable_truncation` 时报错）未做，MoonBit 在截断实际执行时报错。
+- 2026-09-06（续）pair overflow 叉积已实现（以 Python `tokenizers` 0.22.2 为对齐基准）：
+  - 规则（三组受控 WordLevel 行为对比实验 + 三个真实模型实测对拍确认）：pair 截断后每侧经 `Encoding::truncate` 产生各自的窗口，post-process 组合所有 (a 部分, b 部分)——a 侧窗口 ∪ {截断后主 a} × b 侧窗口 ∪ {截断后主 b}，排除主 pair 本身；发射顺序为 a 侧窗口优先（每个先配主 b，再依次配每个 b 窗口），最后主 a 配每个 b 窗口。Template/Bert 组合套完整模板，ByteLevel/无后处理为纯拼接。
+  - 实测对齐：gpt2 pair stride=0 → 116、stride=4 → 424；bert pair stride=0 → 179（keep 7/6，|wa|×|wb|+|wa|+|wb| = 14×11+14+11）。数量与窗口 id 均与 Python 0.22.2 一致。
+  - 实现：`process.mbt` 新增 `pair_overflowing_windows`，`apply_template` / `bert_like` / `merge_plain` 改为纯构造，窗口附加统一收敛到 `PostProcessor::process`（Template/Bert/Roberta/ByteLevel/Sequence 五条分支 + tokenizer 无后处理 pair 路径）。
+  - 已知差异（显式记录）：HuggingFace 主分支 0.23-dev 已把 pair 截断/溢出改为每侧独立截断、不再产生叉积；本项目按用户确认以 0.22.2 stable 为准。config 期 eager stride 校验（HF 在 `enable_truncation` 时报错）仍未做，MoonBit 在截断实际执行时报错。
 - 全后端测试通过：native(397)/js(397)/wasm(374)/wasm-gc(374)；`moon fmt --check` / `moon check --deny-warn` / `moon info` 通过。

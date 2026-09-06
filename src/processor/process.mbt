@@ -18,9 +18,32 @@ pub fn PostProcessor::process(
         None => single
         Some(_) => pair
       }
-      apply_template(template, special_tokens, a, b)
+      let main = apply_template(template, special_tokens, a, b)
+      let windows = match b {
+        // HF runs the template on each truncated overflow window too, so a
+        // `[CLS] $A [SEP]` tokenizer yields `[CLS] ... [SEP]`-wrapped windows.
+        None =>
+          a.overflowing.map(w => {
+            apply_template(template, special_tokens, w, None)
+          })
+        Some(bb) =>
+          pair_overflowing_windows(a, bb, fn(x, y) {
+            apply_template(template, special_tokens, x, Some(y))
+          })
+      }
+      attach_overflowing(main, windows)
     }
-    BertProcessing(sep~, cls~) => bert_like(a, b, cls, sep, false)
+    BertProcessing(sep~, cls~) => {
+      let main = bert_like(a, b, cls, sep, false)
+      let windows = match b {
+        None => a.overflowing.map(w => bert_like(w, None, cls, sep, false))
+        Some(bb) =>
+          pair_overflowing_windows(a, bb, fn(x, y) {
+            bert_like(x, Some(y), cls, sep, false)
+          })
+      }
+      attach_overflowing(main, windows)
+    }
     RobertaProcessing(sep~, cls~, trim_offsets~, add_prefix_space~) => {
       let a = process_byte_level_offsets(a, trim_offsets, add_prefix_space)
       let b = match b {
@@ -28,7 +51,15 @@ pub fn PostProcessor::process(
           Some(process_byte_level_offsets(eb, trim_offsets, add_prefix_space))
         None => None
       }
-      bert_like(a, b, cls, sep, true)
+      let main = bert_like(a, b, cls, sep, true)
+      let windows = match b {
+        None => a.overflowing.map(w => bert_like(w, None, cls, sep, true))
+        Some(bb) =>
+          pair_overflowing_windows(a, bb, fn(x, y) {
+            bert_like(x, Some(y), cls, sep, true)
+          })
+      }
+      attach_overflowing(main, windows)
     }
     // ByteLevel post-processor adjusts byte-level whitespace offsets.
     ByteLevel(add_prefix_space~, trim_offsets~, ..) => {
@@ -38,7 +69,13 @@ pub fn PostProcessor::process(
           Some(process_byte_level_offsets(eb, trim_offsets, add_prefix_space))
         None => None
       }
-      merge_plain(a, b)
+      let main = merge_plain(a, b)
+      let windows = match b {
+        None => a.overflowing
+        Some(bb) =>
+          pair_overflowing_windows(a, bb, fn(x, y) { merge_plain(x, Some(y)) })
+      }
+      attach_overflowing(main, windows)
     }
     Sequence(steps) => {
       let mut acc = a
@@ -60,7 +97,13 @@ pub fn PostProcessor::process(
         }
       }
       match pair {
-        Some(_) => merge_plain(acc, pair)
+        Some(p) => {
+          let main = merge_plain(acc, Some(p))
+          let windows = pair_overflowing_windows(acc, p, fn(x, y) {
+            merge_plain(x, Some(y))
+          })
+          attach_overflowing(main, windows)
+        }
         None => acc
       }
     }
@@ -139,18 +182,7 @@ fn apply_template(
     }
   }
   let result = build(out)
-  match b {
-    // HF applies the template to each truncated overflow window too, so a
-    // `[CLS] $A [SEP]` tokenizer yields `[CLS] ... [SEP]`-wrapped windows.
-    None => {
-      let windows = a.overflowing.map(w => {
-        apply_template(template, special_tokens, w, None)
-      })
-      attach_single_overflowing(result, windows)
-    }
-    // Pair overflow cross-product is not reproduced (see merge_plain).
-    Some(_) => result
-  }
+  result
 }
 
 // BERT/RoBERTa: [CLS] A [SEP] (B [SEP]).
@@ -179,16 +211,7 @@ fn bert_like(
     }
     None => ()
   }
-  let result = build(out)
-  match b {
-    // Same single-sequence window treatment as TemplateProcessing.
-    None => {
-      let windows = a.overflowing.map(w => bert_like(w, None, cls, sep, roberta))
-      attach_single_overflowing(result, windows)
-    }
-    // Pair overflow cross-product is not reproduced (see merge_plain).
-    Some(_) => result
-  }
+  build(out)
 }
 
 // No special tokens: concatenate a and optional b (type_id 0 / 1).
@@ -201,27 +224,17 @@ fn merge_plain(a : @types.Encoding, b : @types.Encoding?) -> @types.Encoding {
     Some(eb) => append_sequence_with_id(out, eb, 1, 1)
     None => ()
   }
-  let merged = build(out)
-  match b {
-    // ByteLevel/Sequence have no special-token pieces; HF keeps the truncated
-    // overflow windows of the single sequence (offsets already adjusted by
-    // process_byte_level_offsets above).
-    None => attach_single_overflowing(merged, a.overflowing)
-    // HF pair overflow follows a cross-product window scheme that is not
-    // reproduced here; pair results keep an empty `overflowing` (documented).
-    Some(_) => merged
-  }
+  build(out)
 }
 
-// Attach truncated overflow windows to a single-sequence post-processing
-// result. Mirrors HF: the post-processor runs on each overflow window, so
-// template/bert windows carry the specials and byte-level windows keep their
-// adjusted offsets. Pair overflow windows are intentionally not attached (see
-// merge_plain); HF produces a window cross-product there that would silently
-// mismatch if approximated.
+// Overflow-window handling. Mirrors HuggingFace tokenizers 0.22.x: the
+// post-processor runs on each truncated overflow window, so template/bert
+// windows carry the specials (stripped later by
+// `remove_post_processor_specials` when `add_special_tokens=false`) and
+// byte-level windows keep their adjusted offsets.
 
 ///|
-fn attach_single_overflowing(
+fn attach_overflowing(
   enc : @types.Encoding,
   windows : Array[@types.Encoding],
 ) -> @types.Encoding {
@@ -230,6 +243,31 @@ fn attach_single_overflowing(
   } else {
     { ..enc, overflowing: windows, }
   }
+}
+
+///|
+/// Pair overflow combinations, mirroring HF 0.22.x: every pairing of an
+/// a-side part (per-side truncation windows plus the truncated main a) with
+/// a b-side part (same on the b side), except the truncated main pair
+/// itself, which is the returned main encoding. Emission order is
+/// a-windows first — each against main-b and then every b-window — followed
+/// by main-a against each b-window.
+fn pair_overflowing_windows(
+  a : @types.Encoding,
+  b : @types.Encoding,
+  combine : (@types.Encoding, @types.Encoding) -> @types.Encoding,
+) -> Array[@types.Encoding] {
+  let out : Array[@types.Encoding] = []
+  for wa in a.overflowing {
+    out.push(combine(wa, b))
+    for wb in b.overflowing {
+      out.push(combine(wa, wb))
+    }
+  }
+  for wb in b.overflowing {
+    out.push(combine(a, wb))
+  }
+  out
 }
 
 // ByteLevel post-processing mirrors HF's offset trimming: byte-level spaces

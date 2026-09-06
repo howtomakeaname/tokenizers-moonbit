@@ -96,10 +96,11 @@ E5-small、MixedBread、SmolLM2。
   bounded/ranged 量词热路径，再进入通用 span fallback，使对应 micro benchmark
   保持快于 HF；更复杂正则替换待补。
 - **Offsets：** 默认返回字符偏移；可通过 byte-offset encode API 对齐 HF byte offsets。
-- **截断溢出窗口：** 单序列 encode 与 HF 一致：两种方向、`stride = 0` /
-  `stride > 0` 的窗口均写入 `enc.overflowing`，后处理器包裹每个窗口，固定
-  padding 同步 pad 窗口。pair encode 目前 `enc.overflowing` 为空；HF 在该
-  场景构建窗口叉积，尚未复刻。
+- **截断溢出窗口：** encode 与 HF `tokenizers` 0.22.2 一致：两种方向、
+  `stride = 0` / `stride > 0` 的窗口均写入 `enc.overflowing`，后处理器包裹
+  每个窗口，固定 padding 同步 pad 窗口。pair encode 复刻 0.22.x 的窗口叉积
+  （每侧窗口与对侧主编码/窗口全组合，主 pair 除外）；注意 HuggingFace 主分支
+  （0.23-dev）已将该方案改为简单的每侧独立截断窗口。
 - **Batch：** `encode_batch` 为串行实现，适配 wasm/js 目标。
 - **性能：** BPE 合并使用优先队列与惰性失效，BPE / WordPiece / Unigram 均带
   repeated-word cache；加载时直接填充 dense 反向词表。重复或交替 `from_str`
