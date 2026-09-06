@@ -55,25 +55,67 @@ look-around、backreference、完整通用 Unicode regex 语义，仍不在当�
 Mooncakes 发布/依赖模块名：`howtomakeaname/tokenizers-moonbit`。
 
 ```bash
+moon new my-app && cd my-app
 moon add howtomakeaname/tokenizers-moonbit
 ```
 
+`moon add` 只会写入 `moon.mod`，还需要在使用方包的 `moon.pkg` 里声明子包导入：
+
+```text
+import {
+  "howtomakeaname/tokenizers-moonbit/tokenizer",
+}
+```
+
+完整可运行程序（`from_file`/`encode` 在输入非法时会 raise，需用 `try`/`catch`
+包裹；`fn main` 函数体不能直接调用会 raise 的函数）：
+
 ```moonbit
-let tok = @tokenizer.Tokenizer::from_str(json_text)
-// 或：let tok = @tokenizer.from_file("tokenizer.json")
-// native/js 可选：let tok = @hub.from_pretrained("bert-base-uncased")
-// 镜像：let tok = @hub.from_pretrained("bert-base-uncased", options=@hub.HubDownloadOptions::new(endpoint="https://hf-mirror.com"))
+fn main {
+  try {
+    // 从字符串加载（跨后端，无文件 IO）：
+    // let tok = @tokenizer.Tokenizer::from_str(json_text)
+    // 或从文件加载（使用 moonbitlang/x/fs，全后端可用）：
+    let tok = @tokenizer.from_file("tokenizer.json")
 
-let enc = tok.encode("Hello world")
-println(enc.ids)
-println(enc.tokens)
+    let enc = tok.encode("Hello world")
+    println(enc.ids)
+    println(enc.tokens)
 
-let pair = tok.encode_pair("question", "context")
-let text = tok.decode(enc.ids, skip_special_tokens=true)
+    let pair = tok.encode_pair("question", "context")
+    let text = tok.decode(enc.ids, skip_special_tokens=true)
+    println(text)
+  } catch {
+    e => println("failed: \{e.message()}")
+  }
+}
+```
+
+运行：`moon run cmd/main`。
+
+native/js 可选：通过 `hub` 包在线下载。其入口是 `async` 函数，需要导入
+`moonbitlang/async`（与本库声明的版本一致）、声明 `supported_targets =
+"+js+native"` 并使用 `async fn main`：
+
+```moonbit
+async fn main {
+  try {
+    let tok = @hub.from_pretrained("bert-base-uncased")
+    // 需要镜像时：
+    let tok2 = @hub.from_pretrained(
+      "bert-base-uncased",
+      options=@hub.HubDownloadOptions::new(endpoint="https://hf-mirror.com"),
+    )
+    println(tok2.get_vocab_size())
+  } catch {
+    e => println("failed: \{e.message()}")
+  }
+}
 ```
 
 `encode(text, add_special_tokens=false)` 会跳过 post-processor 模板；文本中已有的
-special token 仍会被识别。
+special token 仍会被识别。完整细节见
+[`docs/zh/usage.md`](./docs/zh/usage.md)。
 
 ## 测试
 
