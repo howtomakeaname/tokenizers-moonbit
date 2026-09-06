@@ -100,7 +100,10 @@ E5-small、MixedBread、SmolLM2。
   `stride = 0` / `stride > 0` 的窗口均写入 `enc.overflowing`，后处理器包裹
   每个窗口，固定 padding 同步 pad 窗口。pair encode 复刻 0.22.x 的窗口叉积
   （每侧窗口与对侧主编码/窗口全组合，主 pair 除外）；注意 HuggingFace 主分支
-  （0.23-dev）已将该方案改为简单的每侧独立截断窗口。
+  （0.23-dev）已将该方案改为简单的每侧独立截断窗口。配置期 stride 校验与上游
+  一致：`with_truncation` / `enable_truncation` 在 `stride > 0` 且超过
+  `max_length - num_special_tokens_to_add(单序列)` 时抛错；加载
+  `tokenizer.json` 保持宽松，非法存量配置在编码时报错，与上游一致。
 - **Batch：** `encode_batch` 为串行实现，适配 wasm/js 目标。
 - **性能：** BPE 合并使用优先队列与惰性失效，BPE / WordPiece / Unigram 均带
   repeated-word cache；加载时直接填充 dense 反向词表。重复或交替 `from_str`

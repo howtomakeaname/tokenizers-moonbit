@@ -1065,5 +1065,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - 规则（三组受控 WordLevel 行为对比实验 + 三个真实模型实测对拍确认）：pair 截断后每侧经 `Encoding::truncate` 产生各自的窗口，post-process 组合所有 (a 部分, b 部分)——a 侧窗口 ∪ {截断后主 a} × b 侧窗口 ∪ {截断后主 b}，排除主 pair 本身；发射顺序为 a 侧窗口优先（每个先配主 b，再依次配每个 b 窗口），最后主 a 配每个 b 窗口。Template/Bert 组合套完整模板，ByteLevel/无后处理为纯拼接。
   - 实测对齐：gpt2 pair stride=0 → 116、stride=4 → 424；bert pair stride=0 → 179（keep 7/6，|wa|×|wb|+|wa|+|wb| = 14×11+14+11）。数量与窗口 id 均与 Python 0.22.2 一致。
   - 实现：`process.mbt` 新增 `pair_overflowing_windows`，`apply_template` / `bert_like` / `merge_plain` 改为纯构造，窗口附加统一收敛到 `PostProcessor::process`（Template/Bert/Roberta/ByteLevel/Sequence 五条分支 + tokenizer 无后处理 pair 路径）。
-  - 已知差异（显式记录）：HuggingFace 主分支 0.23-dev 已把 pair 截断/溢出改为每侧独立截断、不再产生叉积；本项目按用户确认以 0.22.2 stable 为准。config 期 eager stride 校验（HF 在 `enable_truncation` 时报错）仍未做，MoonBit 在截断实际执行时报错。
+  - 已知差异（显式记录）：HuggingFace 主分支 0.23-dev 已把 pair 截断/溢出改为每侧独立截断、不再产生叉积；本项目按用户确认以 0.22.2 stable 为准。
+- 2026-09-06（续二）stride 配置期校验（eager validation，对齐 HF `with_truncation`）：
+  - HF 行为（0.22.2 实测 + 本地 checkout 源码确认）：Rust core 的 `with_truncation` 在配置期即校验 `effective_max_length < stride`（effective = max_length − num_special_tokens_to_add(单序列)）并报 `TruncationParamError`；0.22.2 实测边界：`stride = 0` 永不报错、`stride == effective` 不报错（严格大于才报）、pair 编码时每侧预算更小仍会在编码期失败（上游为 assert panic）。
+  - 实现：`Tokenizer::with_truncation` / `set_truncation` / `enable_truncation` 签名增加 `raise @types.TokenizerError`，配置期按 `stride > 0 && effective < stride` 抛 `ParseError`，消息文本逐字对齐上游（含尾部 `, ` 怪癖）；`no_truncation` 改为内联清空（签名不变）；`enable_truncation_hf` 原已 raise，自动获得校验；加载 `tokenizer.json` 保持宽松（直接赋值不走 `with_truncation`），非法存量配置在编码时报错，与上游一致；编码期 pair 每侧校验保留（原 `truncation stride ... must be strictly less than ...` 消息）。
+  - 公共 API 变更：上述三个方法签名加 raise（`moon info` 已更新）；`src/benchmarks` 无需改动（调用点已在 raising 上下文）。
+  - 测试：更新 `truncation_overflowing_test.mbt` 配置期用例（HF 精确消息 + stride==effective 接受 + stride=0/max_length<=added 接受）；全后端 native(398)/js(398)/wasm(375)/wasm-gc(375) 通过；消费方项目对拍 HF Python 三组边界行为一致。
 - 全后端测试通过：native(397)/js(397)/wasm(374)/wasm-gc(374)；`moon fmt --check` / `moon check --deny-warn` / `moon info` 通过。

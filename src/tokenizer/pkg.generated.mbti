@@ -399,7 +399,7 @@ pub fn Tokenizer::disable_encode_special_tokens(Self) -> Self
 pub fn Tokenizer::enable_encode_special_tokens(Self) -> Self
 pub fn Tokenizer::enable_padding(Self, length? : Int?, direction? : PaddingDirection, pad_id? : Int, pad_type_id? : Int, pad_token? : String, pad_to_multiple_of? : Int?) -> Self
 pub fn Tokenizer::enable_padding_hf(Self, length? : Int?, direction? : String, pad_id? : Int, pad_type_id? : Int, pad_token? : String, pad_to_multiple_of? : Int?) -> Self raise @types.TokenizerError
-pub fn Tokenizer::enable_truncation(Self, Int, stride? : Int, strategy? : TruncationStrategy, direction? : TruncationDirection) -> Self
+pub fn Tokenizer::enable_truncation(Self, Int, stride? : Int, strategy? : TruncationStrategy, direction? : TruncationDirection) -> Self raise @types.TokenizerError
 pub fn Tokenizer::enable_truncation_hf(Self, Int, stride? : Int, strategy? : String, direction? : String) -> Self raise @types.TokenizerError
 pub fn Tokenizer::encode(Self, String, add_special_tokens? : Bool) -> @types.Encoding raise @types.TokenizerError
 pub fn Tokenizer::encode_batch(Self, Array[String], add_special_tokens? : Bool) -> Array[@types.Encoding] raise @types.TokenizerError
@@ -508,7 +508,7 @@ pub fn Tokenizer::set_normalizer(Self, @normalizer.Normalizer?) -> Self
 pub fn Tokenizer::set_padding(Self, PaddingParams?) -> Self
 pub fn Tokenizer::set_post_processor(Self, @processor.PostProcessor?) -> Self
 pub fn Tokenizer::set_pre_tokenizer(Self, @pretokenizer.PreTokenizer?) -> Self
-pub fn Tokenizer::set_truncation(Self, TruncationParams?) -> Self
+pub fn Tokenizer::set_truncation(Self, TruncationParams?) -> Self raise @types.TokenizerError
 pub fn Tokenizer::to_json(Self) -> String raise @types.TokenizerError
 pub fn Tokenizer::to_str(Self, pretty? : Bool) -> String raise @types.TokenizerError
 pub fn Tokenizer::token_to_id(Self, String) -> Int?
@@ -539,7 +539,7 @@ pub fn Tokenizer::with_normalizer(Self, @normalizer.Normalizer?) -> Self
 pub fn Tokenizer::with_padding(Self, PaddingParams?) -> Self
 pub fn Tokenizer::with_post_processor(Self, @processor.PostProcessor?) -> Self
 pub fn Tokenizer::with_pre_tokenizer(Self, @pretokenizer.PreTokenizer?) -> Self
-pub fn Tokenizer::with_truncation(Self, TruncationParams?) -> Self
+pub fn Tokenizer::with_truncation(Self, TruncationParams?) -> Self raise @types.TokenizerError
 pub fn Tokenizer::write_pretrained_download_resume_metadata(String, revision? : String, resolved_revision? : String?, cache_dir? : String?, etag? : String?, expected_size? : Int?, downloaded_size? : Int) -> PretrainedDownloadResumeMetadata raise @types.TokenizerError
 pub fn Tokenizer::write_pretrained_ref_revision(String, String, revision? : String, cache_dir? : String?) -> String raise @types.TokenizerError
 
