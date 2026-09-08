@@ -1072,3 +1072,8 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - 公共 API 变更：上述三个方法签名加 raise（`moon info` 已更新）；`src/benchmarks` 无需改动（调用点已在 raising 上下文）。
   - 测试：更新 `truncation_overflowing_test.mbt` 配置期用例（HF 精确消息 + stride==effective 接受 + stride=0/max_length<=added 接受）；全后端 native(398)/js(398)/wasm(375)/wasm-gc(375) 通过；消费方项目对拍 HF Python 三组边界行为一致。
 - 全后端测试通过：native(397)/js(397)/wasm(374)/wasm-gc(374)；`moon fmt --check` / `moon check --deny-warn` / `moon info` 通过。
+### 2026-09-06 版本发布：0.4.0
+
+- 版本从 0.3.0 升级到 **0.4.0**（含 API 签名变化：`with_truncation` / `set_truncation` / `enable_truncation` 增加 `raise @types.TokenizerError`，按 semver 属 minor）。
+- 本版累计内容：truncation overflow 单序列全链路修复（PR #1）、pair overflow 0.22.x 窗口叉积（PR #3）、文档可运行化（PR #2）、stride 配置期校验（PR #4）、CI 工具链漂移修复（StringBuilder / Map 字面量 / formatter / .mbti 再生成）。
+- 发布前验证：`moon fmt --check` / `moon check --deny-warn` / `moon info` 通过；native(398)/js(398)/wasm(375)/wasm-gc(375) 全过；消费方项目端到端对拍通过。
