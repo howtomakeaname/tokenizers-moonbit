@@ -1,0 +1,6946 @@
+{
+  "tokenizers_version": "0.22.2",
+  "generated": "2026-09-20",
+  "introspection": {
+    "dir_decoders": [
+      "BPEDecoder",
+      "ByteFallback",
+      "ByteLevel",
+      "CTC",
+      "DecodeStream",
+      "Decoder",
+      "Fuse",
+      "Metaspace",
+      "Replace",
+      "Sequence",
+      "Strip",
+      "WordPiece",
+      "decoders"
+    ],
+    "defaults": {
+      "BPEDecoder": {
+        "suffix": "</w>"
+      },
+      "WordPiece": {
+        "cleanup": true,
+        "prefix": "##"
+      },
+      "Metaspace": {
+        "prepend_scheme": "always",
+        "replacement": "▁",
+        "split": true
+      },
+      "CTC": {
+        "cleanup": true,
+        "pad_token": "<pad>",
+        "word_delimiter_token": "|"
+      },
+      "ByteLevel": {},
+      "ByteFallback": {},
+      "Strip": {
+        "content": " ",
+        "start": 1,
+        "stop": 0
+      },
+      "Fuse": {}
+    }
+  },
+  "no_decoder": {
+    "decode_[0,1]": "a b",
+    "decode_[1,0]": "b a",
+    "decode_[0]": "a",
+    "decode_[]": "",
+    "eot_id": 5,
+    "decode_[0,eot,1]_skip=True": "a b",
+    "decode_[0,eot,1]_skip=False": "a <|eot|> b",
+    "decode_[eot]_skip=True": "",
+    "decode_[eot,0]_skip=True": "a",
+    "decode_[0,eot,eot,1]_skip=True": "a b",
+    "foo_id": 6,
+    "decode_[0,foo,1]_skip=True": "a <|foo|> b",
+    "encode_zzz_ids": [
+      2
+    ],
+    "encode_zzz_tokens": [
+      "[UNK]"
+    ],
+    "decode_[unk]_skip=True": "[UNK]",
+    "decode_encode_zzz_skip=True": "[UNK]",
+    "decode_['','a']_ids": " a",
+    "decode_['a','']_ids": "a ",
+    "has_no_decoder_method": false
+  },
+  "decoder_matrix_direct": {
+    "BPEDecoder(suffix=</w>)": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "▁hello▁world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab cd"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x▁"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁▁double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "WordPiece(prefix=##, cleanup=True)": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "helloworld"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "▁hello ▁world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h | i <pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "h h | i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "Ġhello Ġworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w> cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x ▁"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁▁double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "école"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": " a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a "
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "hello world"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©cole Ġworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41> <0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3> <0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a <0x41> b"
+      }
+    },
+    "WordPiece(prefix=##, cleanup=False)": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "helloworld"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "▁hello ▁world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h | i <pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "h h | i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "Ġhello Ġworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w> cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x ▁"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁▁double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "école"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": " a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a "
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "hello world"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello !"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©cole Ġworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41> <0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3> <0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a <0x41> b"
+      }
+    },
+    "Metaspace(▁, always)": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "hello world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x "
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "Metaspace(▁, first)": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "hello world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x "
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "Metaspace(▁, never)": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": " hello world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x "
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "  double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "CTC(pad=<pad>, delim=|, cleanup=True)": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "▁hello▁world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h i"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "h i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x▁"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁▁double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "CTC(pad=<pad>, delim=|, cleanup=False)": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "▁hello▁world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "h|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x▁"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁▁double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "ByteLevel()": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "▁hello▁world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": " hello world"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x▁"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁▁double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": " hello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": " !"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "  x"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": " hello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": " "
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "école world"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "ByteFallback()": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "▁hello▁world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x▁"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁▁double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "AB"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "é"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "aAb"
+      }
+    },
+    "Strip(content=' ', start=1, stop=0)": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "▁hello▁world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": " x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x▁"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁▁double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "Strip(content='▁', start=1, stop=1)": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "helloworld"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "<PanicException: slice index starts at 1 but ends at 0>"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "<PanicException: index out of bounds: the len is 0 but the index is 18446744073709551615>"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "<PanicException: index out of bounds: the len is 0 but the index is 18446744073709551615>"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "Replace(str ▁ -> ' ')": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": " hello world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x "
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "  double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "Replace(Regex l+ -> L)": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "heLo##worLd"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "▁heLo▁worLd"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠheLoĠworLd"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x▁"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁▁doubLe"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##coLe"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "heLoworLd"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "ĠheLo!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "ĠheLo"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "heLo"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coLeĠworLd"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "Sequence([Replace(▁,' '), Strip(' ',1,0)])": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "helloworld"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": " x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": " double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "Sequence([Strip('Ġ',1,0), ByteLevel])": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "▁hello▁world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "helloworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x▁"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁▁double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "hello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": " x"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "hello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": ""
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "écoleworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    },
+    "Fuse()": {
+      "A": {
+        "input": [
+          "hello",
+          "##world"
+        ],
+        "output": "hello##world"
+      },
+      "B": {
+        "input": [
+          "▁hello",
+          "▁world"
+        ],
+        "output": "▁hello▁world"
+      },
+      "C": {
+        "input": [
+          "h",
+          "|",
+          "i",
+          "<pad>"
+        ],
+        "output": "h|i<pad>"
+      },
+      "C2": {
+        "input": [
+          "h",
+          "h",
+          "|",
+          "i"
+        ],
+        "output": "hh|i"
+      },
+      "D": {
+        "input": [
+          "Ġhello",
+          "Ġworld"
+        ],
+        "output": "ĠhelloĠworld"
+      },
+      "E": {
+        "input": [
+          "ab</w>",
+          "cd</w>"
+        ],
+        "output": "ab</w>cd</w>"
+      },
+      "F": {
+        "input": [
+          "  x"
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "input": [
+          "x",
+          "▁"
+        ],
+        "output": "x▁"
+      },
+      "G2": {
+        "input": [
+          "▁▁double"
+        ],
+        "output": "▁▁double"
+      },
+      "H": {
+        "input": [
+          "é",
+          "##cole"
+        ],
+        "output": "é##cole"
+      },
+      "I1": {
+        "input": [
+          "",
+          "a"
+        ],
+        "output": "a"
+      },
+      "I2": {
+        "input": [
+          "a",
+          ""
+        ],
+        "output": "a"
+      },
+      "J": {
+        "input": [
+          "hello",
+          "world"
+        ],
+        "output": "helloworld"
+      },
+      "K": {
+        "input": [
+          "Ġhello",
+          "!"
+        ],
+        "output": "Ġhello!"
+      },
+      "K2": {
+        "input": [
+          "Ġ!"
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "input": [
+          "ĠĠx"
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "input": [
+          "Ġhello"
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "input": [
+          "hello"
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "input": [
+          "Ġ"
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "input": [
+          "Ã©cole",
+          "Ġworld"
+        ],
+        "output": "Ã©coleĠworld"
+      },
+      "M": {
+        "input": [
+          "<0x41>",
+          "<0x42>"
+        ],
+        "output": "<0x41><0x42>"
+      },
+      "M2": {
+        "input": [
+          "<0xC3>",
+          "<0xA9>"
+        ],
+        "output": "<0xC3><0xA9>"
+      },
+      "M3": {
+        "input": [
+          "a",
+          "<0x41>",
+          "b"
+        ],
+        "output": "a<0x41>b"
+      }
+    }
+  },
+  "decoder_matrix_full_tokenizer": {
+    "BPEDecoder(suffix=</w>)": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁hello▁world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab cd",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x▁",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "WordPiece(prefix=##, cleanup=True)": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁hello ▁world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h | i <pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "h h | i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "Ġhello Ġworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w> cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x ▁",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "école",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": " a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a ",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "hello world",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©cole Ġworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41> <0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3> <0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a <0x41> b",
+        "same_as_direct": true
+      }
+    },
+    "WordPiece(prefix=##, cleanup=False)": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁hello ▁world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h | i <pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "h h | i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "Ġhello Ġworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w> cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x ▁",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "école",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": " a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a ",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "hello world",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello !",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©cole Ġworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41> <0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3> <0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a <0x41> b",
+        "same_as_direct": true
+      }
+    },
+    "Metaspace(▁, always)": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "hello world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x ",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "Metaspace(▁, first)": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "hello world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x ",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "Metaspace(▁, never)": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": " hello world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x ",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "  double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "CTC(pad=<pad>, delim=|, cleanup=True)": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁hello▁world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h i",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "h i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x▁",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "CTC(pad=<pad>, delim=|, cleanup=False)": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁hello▁world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "h|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x▁",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "ByteLevel()": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁hello▁world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": " hello world",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x▁",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": " hello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": " !",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": " hello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": " ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "école world",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "ByteFallback()": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁hello▁world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x▁",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "AB",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "é",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "aAb",
+        "same_as_direct": true
+      }
+    },
+    "Strip(content=' ', start=1, stop=0)": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁hello▁world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": " x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x▁",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "Strip(content='▁', start=1, stop=1)": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "<PanicException: slice index starts at 1 but ends at 0>",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "<PanicException: index out of bounds: the len is 0 but the index is 18446744073709551615>",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "<PanicException: index out of bounds: the len is 0 but the index is 18446744073709551615>",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "Replace(str ▁ -> ' ')": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": " hello world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x ",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "  double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "Replace(Regex l+ -> L)": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "heLo##worLd",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁heLo▁worLd",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠheLoĠworLd",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x▁",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁doubLe",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##coLe",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "heLoworLd",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "ĠheLo!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "ĠheLo",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "heLo",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coLeĠworLd",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "Sequence([Replace(▁,' '), Strip(' ',1,0)])": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": " x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": " double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "Sequence([Strip('Ġ',1,0), ByteLevel])": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁hello▁world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x▁",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "hello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": " x",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "écoleworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "Fuse()": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello##world",
+        "same_as_direct": true
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁hello▁world",
+        "same_as_direct": true
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h|i<pad>",
+        "same_as_direct": true
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "hh|i",
+        "same_as_direct": true
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "ĠhelloĠworld",
+        "same_as_direct": true
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w>cd</w>",
+        "same_as_direct": true
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x",
+        "same_as_direct": true
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x▁",
+        "same_as_direct": true
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁double",
+        "same_as_direct": true
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é##cole",
+        "same_as_direct": true
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a",
+        "same_as_direct": true
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "helloworld",
+        "same_as_direct": true
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello!",
+        "same_as_direct": true
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!",
+        "same_as_direct": true
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx",
+        "same_as_direct": true
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello",
+        "same_as_direct": true
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello",
+        "same_as_direct": true
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ",
+        "same_as_direct": true
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©coleĠworld",
+        "same_as_direct": true
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41><0x42>",
+        "same_as_direct": true
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3><0xA9>",
+        "same_as_direct": true
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a<0x41>b",
+        "same_as_direct": true
+      }
+    },
+    "<no decoder> (expect tokens.join(' '))": {
+      "A": {
+        "ids": [
+          17,
+          4
+        ],
+        "output": "hello ##world"
+      },
+      "B": {
+        "ids": [
+          29,
+          30
+        ],
+        "output": "▁hello ▁world"
+      },
+      "C": {
+        "ids": [
+          16,
+          21,
+          18,
+          9
+        ],
+        "output": "h | i <pad>"
+      },
+      "C2": {
+        "ids": [
+          16,
+          16,
+          21,
+          18
+        ],
+        "output": "h h | i"
+      },
+      "D": {
+        "ids": [
+          25,
+          26
+        ],
+        "output": "Ġhello Ġworld"
+      },
+      "E": {
+        "ids": [
+          12,
+          14
+        ],
+        "output": "ab</w> cd</w>"
+      },
+      "F": {
+        "ids": [
+          1
+        ],
+        "output": "  x"
+      },
+      "G": {
+        "ids": [
+          20,
+          28
+        ],
+        "output": "x ▁"
+      },
+      "G2": {
+        "ids": [
+          31
+        ],
+        "output": "▁▁double"
+      },
+      "H": {
+        "ids": [
+          15,
+          3
+        ],
+        "output": "é ##cole"
+      },
+      "I1": {
+        "ids": [
+          0,
+          11
+        ],
+        "output": " a"
+      },
+      "I2": {
+        "ids": [
+          11,
+          0
+        ],
+        "output": "a "
+      },
+      "J": {
+        "ids": [
+          17,
+          19
+        ],
+        "output": "hello world"
+      },
+      "K": {
+        "ids": [
+          25,
+          2
+        ],
+        "output": "Ġhello !"
+      },
+      "K2": {
+        "ids": [
+          24
+        ],
+        "output": "Ġ!"
+      },
+      "K3": {
+        "ids": [
+          27
+        ],
+        "output": "ĠĠx"
+      },
+      "K4": {
+        "ids": [
+          25
+        ],
+        "output": "Ġhello"
+      },
+      "K5": {
+        "ids": [
+          17
+        ],
+        "output": "hello"
+      },
+      "K6": {
+        "ids": [
+          23
+        ],
+        "output": "Ġ"
+      },
+      "L": {
+        "ids": [
+          22,
+          26
+        ],
+        "output": "Ã©cole Ġworld"
+      },
+      "M": {
+        "ids": [
+          5,
+          6
+        ],
+        "output": "<0x41> <0x42>"
+      },
+      "M2": {
+        "ids": [
+          8,
+          7
+        ],
+        "output": "<0xC3> <0xA9>"
+      },
+      "M3": {
+        "ids": [
+          11,
+          5,
+          13
+        ],
+        "output": "a <0x41> b"
+      }
+    }
+  },
+  "full_vs_direct_mismatches": [],
+  "metaspace_prepend_scheme": {
+    "always": {
+      "first_token_is_▁hello": "hello world",
+      "first_token_plain": "hello world",
+      "second_token_plain": "helloworld",
+      "double_replacement": "double",
+      "empty_first": " world",
+      "trailing_replacement": "x "
+    },
+    "first": {
+      "first_token_is_▁hello": "hello world",
+      "first_token_plain": "hello world",
+      "second_token_plain": "helloworld",
+      "double_replacement": "double",
+      "empty_first": " world",
+      "trailing_replacement": "x "
+    },
+    "never": {
+      "first_token_is_▁hello": " hello world",
+      "first_token_plain": "hello world",
+      "second_token_plain": " helloworld",
+      "double_replacement": "  double",
+      "empty_first": " world",
+      "trailing_replacement": "x "
+    },
+    "has_split_attr": true,
+    "split_default": true,
+    "always_split=True": {
+      "▁hello▁world(1tok)": "helloworld",
+      "▁hello,▁world": "hello world"
+    },
+    "always_split=False": {
+      "▁hello▁world(1tok)": "helloworld",
+      "▁hello,▁world": "hello world"
+    }
+  },
+  "bytelevel": {
+    "single_leading_space_token": {
+      "input": [
+        "Ġhello"
+      ],
+      "output": " hello"
+    },
+    "plain_single": {
+      "input": [
+        "hello"
+      ],
+      "output": "hello"
+    },
+    "two_tokens": {
+      "input": [
+        "Ġhello",
+        "Ġworld"
+      ],
+      "output": " hello world"
+    },
+    "second_plain": {
+      "input": [
+        "hello",
+        "Ġworld"
+      ],
+      "output": "hello world"
+    },
+    "punct_after": {
+      "input": [
+        "Ġhello",
+        "!"
+      ],
+      "output": " hello!"
+    },
+    "punct_only_Ġ!": {
+      "input": [
+        "Ġ!"
+      ],
+      "output": " !"
+    },
+    "punct_only_!": {
+      "input": [
+        "!"
+      ],
+      "output": "!"
+    },
+    "double_space": {
+      "input": [
+        "ĠĠx"
+      ],
+      "output": "  x"
+    },
+    "bare_space_token": {
+      "input": [
+        "Ġ"
+      ],
+      "output": " "
+    },
+    "multibyte_é": {
+      "input": [
+        "Ã©cole",
+        "Ġworld"
+      ],
+      "output": "école world"
+    },
+    "mid_space": {
+      "input": [
+        "hello",
+        "Ġworld",
+        "!"
+      ],
+      "output": "hello world!"
+    },
+    "invalid_char_€": {
+      "input": [
+        "€"
+      ],
+      "output": "€"
+    },
+    "invalid_char_▁": {
+      "input": [
+        "▁hello"
+      ],
+      "output": "▁hello"
+    },
+    "ascii_del_": {
+      "input": [
+        "Ā"
+      ],
+      "output": "\u0000"
+    },
+    "_map_notes": {
+      "space_byte_0x20_maps_to": "Ġ",
+      "byte_0x00_maps_to": "Ā",
+      "newline_0x0A_maps_to": "Ċ",
+      "tab_0x09_maps_to": "ĉ",
+      "é_bytes": [
+        "0xc3",
+        "0xa9"
+      ]
+    }
+  },
+  "ctc_extra": {
+    "word_delim_only": {
+      "input": [
+        "|"
+      ],
+      "cleanup=True": " ",
+      "cleanup=False": "|"
+    },
+    "pad_between": {
+      "input": [
+        "h",
+        "<pad>",
+        "i"
+      ],
+      "cleanup=True": "hi",
+      "cleanup=False": "hi"
+    },
+    "repeat_h": {
+      "input": [
+        "h",
+        "h",
+        "i"
+      ],
+      "cleanup=True": "hi",
+      "cleanup=False": "hi"
+    },
+    "punct": {
+      "input": [
+        "h",
+        "!",
+        "i"
+      ],
+      "cleanup=True": "h!i",
+      "cleanup=False": "h!i"
+    },
+    "pad_only": {
+      "input": [
+        "<pad>",
+        "<pad>"
+      ],
+      "cleanup=True": "",
+      "cleanup=False": ""
+    },
+    "empty": {
+      "input": [
+        ""
+      ],
+      "cleanup=True": "",
+      "cleanup=False": ""
+    }
+  },
+  "wordpiece_extra": {
+    "plain_two": {
+      "input": [
+        "hello",
+        "world"
+      ],
+      "cleanup=True": "hello world",
+      "cleanup=False": "hello world"
+    },
+    "continuation_first": {
+      "input": [
+        "##world"
+      ],
+      "cleanup=True": "##world",
+      "cleanup=False": "##world"
+    },
+    "cleanup_punct": {
+      "input": [
+        "hello",
+        "!",
+        "world"
+      ],
+      "cleanup=True": "hello! world",
+      "cleanup=False": "hello ! world"
+    },
+    "cleanup_underscore": {
+      "input": [
+        "a",
+        "_",
+        "b"
+      ],
+      "cleanup=True": "a _ b",
+      "cleanup=False": "a _ b"
+    },
+    "empty_first": {
+      "input": [
+        "",
+        "world"
+      ],
+      "cleanup=True": " world",
+      "cleanup=False": " world"
+    },
+    "empty_continuation": {
+      "input": [
+        "hello",
+        "##"
+      ],
+      "cleanup=True": "hello",
+      "cleanup=False": "hello"
+    }
+  },
+  "round2": {
+    "bpe": {
+      "['ab','cd'] (no suffix anywhere)": "abcd",
+      "['ab','cd</w>'] (suffix on 2nd)": "abcd",
+      "['ab</w>','cd'] (suffix on 1st)": "ab cd",
+      "['</w>'] single": "",
+      "['ab</w>'] single": "ab",
+      "['ab</w>','</w>']": "ab ",
+      "custom suffix '_': ['a_','b']": "a b",
+      "custom suffix '_': ['a','b_']": "ab",
+      "['ab</w></w>'] double suffix": "ab"
+    },
+    "metaspace": {
+      "always": {
+        "['▁▁▁x'] (3 leading)": "x",
+        "[' x'] (literal space, no ▁)": " x",
+        "['  x'] (2 literal spaces)": "  x",
+        "['▁x▁y'] mid": "xy",
+        "['▁'] alone": "",
+        "['▁','▁world']": " world",
+        "['x',' y'] (2nd tok literal space)": "x y",
+        "['▁a','▁▁b'] mixed depth": "a  b"
+      },
+      "first": {
+        "['▁▁▁x'] (3 leading)": "x",
+        "[' x'] (literal space, no ▁)": " x",
+        "['  x'] (2 literal spaces)": "  x",
+        "['▁x▁y'] mid": "xy",
+        "['▁'] alone": "",
+        "['▁','▁world']": " world",
+        "['x',' y'] (2nd tok literal space)": "x y",
+        "['▁a','▁▁b'] mixed depth": "a  b"
+      },
+      "never": {
+        "['▁▁▁x'] (3 leading)": "   x",
+        "[' x'] (literal space, no ▁)": " x",
+        "['  x'] (2 literal spaces)": "  x",
+        "['▁x▁y'] mid": " x y",
+        "['▁'] alone": " ",
+        "['▁','▁world']": "  world",
+        "['x',' y'] (2nd tok literal space)": "x y",
+        "['▁a','▁▁b'] mixed depth": " a  b"
+      },
+      "custom_replacement_['_','always']": {
+        "['_hello','_world']": "hello world",
+        "['hello','_world']": "hello world"
+      },
+      "split_true_vs_false": {
+        "['▁hello▁world'] 1tok": {
+          "split=True": "helloworld",
+          "split=False": "helloworld",
+          "differ": false
+        },
+        "['▁hello','▁world']": {
+          "split=True": "hello world",
+          "split=False": "hello world",
+          "differ": false
+        },
+        "['▁a b']": {
+          "split=True": "a b",
+          "split=False": "a b",
+          "differ": false
+        },
+        "['▁ a','▁ b']": {
+          "split=True": " a  b",
+          "split=False": " a  b",
+          "differ": false
+        },
+        "['a▁','▁b']": {
+          "split=True": "a b",
+          "split=False": "a b",
+          "differ": false
+        }
+      }
+    },
+    "ctc": {
+      "['h','<pad>','h','i'] (dedup across pad?)": [
+        "hhi",
+        "hhi"
+      ],
+      "['h','|','h','i'] (dedup across delim?)": [
+        "h hi",
+        "h|hi"
+      ],
+      "['a','a','a']": [
+        "a",
+        "a"
+      ],
+      "['a',' ','b'] (space token)": [
+        "a b",
+        "a b"
+      ],
+      "['h','i'] (wordish pair)": [
+        "hi",
+        "hi"
+      ],
+      "['H','i'] (uppercase)": [
+        "Hi",
+        "Hi"
+      ],
+      "['1','2'] (digits)": [
+        "12",
+        "12"
+      ],
+      "['h','1'] (word,digit)": [
+        "h1",
+        "h1"
+      ],
+      "['!','h'] (punct first)": [
+        "!h",
+        "!h"
+      ],
+      "['h','!'] (punct last)": [
+        "h!",
+        "h!"
+      ],
+      "['h','!','h']": [
+        "h!h",
+        "h!h"
+      ],
+      "['h','.','i']": [
+        "h.i",
+        "h.i"
+      ],
+      "['h',',','i']": [
+        "h,i",
+        "h,i"
+      ],
+      "['h','?','i']": [
+        "h?i",
+        "h?i"
+      ],
+      "['h',';','i']": [
+        "h;i",
+        "h;i"
+      ],
+      "['h',':','i']": [
+        "h:i",
+        "h:i"
+      ],
+      "['h','\\'','i']": [
+        "h'i",
+        "h'i"
+      ],
+      "['h','\"','i']": [
+        "h\"i",
+        "h\"i"
+      ],
+      "['h','(','i']": [
+        "h(i",
+        "h(i"
+      ],
+      "['h',')','i']": [
+        "h)i",
+        "h)i"
+      ],
+      "['h','-','i']": [
+        "h-i",
+        "h-i"
+      ],
+      "['h','_','i']": [
+        "h_i",
+        "h_i"
+      ],
+      "['h','/','i']": [
+        "h/i",
+        "h/i"
+      ],
+      "['h','%','i']": [
+        "h%i",
+        "h%i"
+      ],
+      "['h','#','i']": [
+        "h#i",
+        "h#i"
+      ],
+      "['h','&','i']": [
+        "h&i",
+        "h&i"
+      ],
+      "['h','+','i']": [
+        "h+i",
+        "h+i"
+      ],
+      "['h','=','i']": [
+        "h=i",
+        "h=i"
+      ],
+      "['h','<','i']": [
+        "h<i",
+        "h<i"
+      ],
+      "['h','>','i']": [
+        "h>i",
+        "h>i"
+      ],
+      "['h','[','i']": [
+        "h[i",
+        "h[i"
+      ],
+      "['h','{','i']": [
+        "h{i",
+        "h{i"
+      ],
+      "['h','|*|','i'] (delim-like but not exact)": [
+        "h * i",
+        "h|*|i"
+      ],
+      "['ü','ö'] (non-ascii letters)": [
+        "üö",
+        "üö"
+      ],
+      "['你','好'] (CJK)": [
+        "你好",
+        "你好"
+      ],
+      "['。','好'] (CJK punct)": [
+        "。好",
+        "。好"
+      ],
+      "['h','—','i'] (em dash)": [
+        "h—i",
+        "h—i"
+      ],
+      "['h','…','i'] (ellipsis)": [
+        "h…i",
+        "h…i"
+      ],
+      "['h','’','i'] (curly quote)": [
+        "h’i",
+        "h’i"
+      ],
+      "custom delim '|': ['x','|','y'] cleanup=True": [
+        "x y",
+        null
+      ]
+    },
+    "wordpiece": {
+      "['a','!']": [
+        "a!",
+        "a !"
+      ],
+      "['a','?']": [
+        "a?",
+        "a ?"
+      ],
+      "['a',',']": [
+        "a,",
+        "a ,"
+      ],
+      "['a','.']": [
+        "a.",
+        "a ."
+      ],
+      "['a',';']": [
+        "a ;",
+        "a ;"
+      ],
+      "['a',':']": [
+        "a :",
+        "a :"
+      ],
+      "['a',\"'\"]": [
+        "a '",
+        "a '"
+      ],
+      "['a','\"']": [
+        "a \"",
+        "a \""
+      ],
+      "['a','(']": [
+        "a (",
+        "a ("
+      ],
+      "['a',')']": [
+        "a )",
+        "a )"
+      ],
+      "['a','[']": [
+        "a [",
+        "a ["
+      ],
+      "['a',']']": [
+        "a ]",
+        "a ]"
+      ],
+      "['a','{']": [
+        "a {",
+        "a {"
+      ],
+      "['a','}']": [
+        "a }",
+        "a }"
+      ],
+      "['a','-']": [
+        "a -",
+        "a -"
+      ],
+      "['a','_']": [
+        "a _",
+        "a _"
+      ],
+      "['a','/']": [
+        "a /",
+        "a /"
+      ],
+      "['a','\\\\']": [
+        "a \\",
+        "a \\"
+      ],
+      "['a','|']": [
+        "a |",
+        "a |"
+      ],
+      "['a','@']": [
+        "a @",
+        "a @"
+      ],
+      "['a','#']": [
+        "a #",
+        "a #"
+      ],
+      "['a','$']": [
+        "a $",
+        "a $"
+      ],
+      "['a','%']": [
+        "a %",
+        "a %"
+      ],
+      "['a','^']": [
+        "a ^",
+        "a ^"
+      ],
+      "['a','&']": [
+        "a &",
+        "a &"
+      ],
+      "['a','*']": [
+        "a *",
+        "a *"
+      ],
+      "['a','+']": [
+        "a +",
+        "a +"
+      ],
+      "['a','=']": [
+        "a =",
+        "a ="
+      ],
+      "['a','~']": [
+        "a ~",
+        "a ~"
+      ],
+      "['a','`']": [
+        "a `",
+        "a `"
+      ],
+      "['a','<']": [
+        "a <",
+        "a <"
+      ],
+      "['a','>']": [
+        "a >",
+        "a >"
+      ],
+      "['a','–']": [
+        "a –",
+        "a –"
+      ],
+      "['a','—']": [
+        "a —",
+        "a —"
+      ],
+      "['a','…']": [
+        "a …",
+        "a …"
+      ],
+      "['a','’']": [
+        "a ’",
+        "a ’"
+      ],
+      "['a','”']": [
+        "a ”",
+        "a ”"
+      ],
+      "['a','·']": [
+        "a ·",
+        "a ·"
+      ],
+      "['a','。']": [
+        "a 。",
+        "a 。"
+      ],
+      "['a','！']": [
+        "a ！",
+        "a ！"
+      ],
+      "['a','、']": [
+        "a 、",
+        "a 、"
+      ],
+      "['a','¡']": [
+        "a ¡",
+        "a ¡"
+      ],
+      "['a','¿']": [
+        "a ¿",
+        "a ¿"
+      ],
+      "['a','«']": [
+        "a «",
+        "a «"
+      ],
+      "['a','»']": [
+        "a »",
+        "a »"
+      ],
+      "['a','§']": [
+        "a §",
+        "a §"
+      ],
+      "['a','¶']": [
+        "a ¶",
+        "a ¶"
+      ],
+      "extras": {
+        "['hello','##!'] (punct continuation) T/F": [
+          "hello!",
+          "hello!"
+        ],
+        "['!','world'] (punct first) T/F": [
+          "! world",
+          "! world"
+        ],
+        "['a','!'] T/F": [
+          "a!",
+          "a !"
+        ],
+        "['a','!!','b'] T/F": [
+          "a!! b",
+          "a !! b"
+        ],
+        "['a','!b'] (punct-prefixed token) T/F": [
+          "a!b",
+          "a !b"
+        ],
+        "['a','a!b'] T/F": [
+          "a a!b",
+          "a a!b"
+        ],
+        "custom prefix '@@': ['x','@@y'] T": "xy"
+      }
+    },
+    "bytelevel_extra": {
+      "['Ġ€'] (valid+invalid)": "Ġ€",
+      "['ĉ'] (tab)": "\t",
+      "['Ċ'] (newline)": "\n",
+      "['ā'] (byte 0x01)": "\u0001",
+      "['ÿ'] (byte 0xFF, invalid utf8 alone)": "�",
+      "['Ā'] (byte 0x00)": "\u0000",
+      "['Ġ','x']": " x",
+      "['ĊĊ'] two newlines": "\n\n",
+      "['Ã','©'] split multibyte": "é",
+      "['Ð'] lone first byte of 2-byte seq": "�"
+    },
+    "bytefallback_extra": {
+      "['<0xZZ>'] invalid hex": "<0xZZ>",
+      "['<0xD8>'] surrogate byte": "�",
+      "['<0xFF>'] invalid utf8 byte": "�",
+      "['<0x41'] malformed": "<0x41",
+      "['<0x110>'] 3 hex digits": "<0x110>",
+      "['<0x41><0x42><0x43>']": "ABC",
+      "['<0xE9>'] single latin1 byte": "�"
+    },
+    "strip_extra": {
+      "Strip('▁',1,1) ['x'] (no ▁ present)": "x",
+      "Strip('▁',1,1) ['▁x']": "x",
+      "Strip('▁',1,1) ['x▁']": "x",
+      "Strip('a',1,0) ['axb'] (start mismatch)": "xb",
+      "Strip('b',0,1) ['axb'] (stop mismatch)": "ax",
+      "Strip('a',1,1) ['aba']": "b",
+      "Strip('a',2,0) ['aa']": "",
+      "Strip(' ',2,0) [' x'] (only 1 space)": "x",
+      "Strip(' ',2,0) ['  x']": "x",
+      "Strip(' ',0,1) ['x'] (no trailing space)": "x",
+      "Strip(' ',1,1) [''] (empty)": "<PanicException: index out of bounds: the len is 0 but the index is 18446744073709551615>",
+      "Strip(' ',0,1) [''] (empty, stop only)": "<PanicException: index out of bounds: the len is 0 but the index is 18446744073709551615>",
+      "Strip(' ',1,0) [''] (empty, start only)": "",
+      "Strip(' ',1,1) ['a b']": "a b",
+      "NOTE: Strip content must be length-1 string in 0.22.2 ('expected a string of length 1')": true
+    },
+    "replace_extra": {
+      "Replace('.','X') ['a.b'] (literal vs regex?)": "aXb",
+      "Replace('l','') ['hello'] (empty content)": "heo",
+      "Regex('l+o') ['hel','lo'] (cross-token match?)": "helL",
+      "Regex('o w') ['hello','world']": "helloworld",
+      "Replace('##','') ['hello','##world']": "helloworld"
+    }
+  },
+  "round3": {
+    "empty_token_list_decode": {
+      "BPEDecoder": "",
+      "WordPiece": "",
+      "Metaspace": "",
+      "CTC": "",
+      "ByteLevel": "",
+      "ByteFallback": "",
+      "Strip": "",
+      "Fuse": "",
+      "Replace": "",
+      "Sequence": ""
+    },
+    "bpe_midtoken_suffix": "a bc",
+    "bpe_suffix_every_occurrence_last_token": "xab",
+    "ctc_intoken": {
+      "['a<pad>b'] T": "ab",
+      "['a<pad>b'] F": "ab",
+      "['a|b'] T (in-token delim)": "a b",
+      "['a|b'] F": "a|b",
+      "['h','h'] adjacent dup T": "h",
+      "['h','h'] F": "h",
+      "['<pad>','<pad>'] T": ""
+    },
+    "wordpiece_contractions_T_F": {
+      "['a', \"'m\"]": [
+        "a'm",
+        "a 'm"
+      ],
+      "['a', \"'ve\"]": [
+        "a've",
+        "a 've"
+      ],
+      "['a', \"'s\"]": [
+        "a's",
+        "a 's"
+      ],
+      "['a', \"'re\"]": [
+        "a're",
+        "a 're"
+      ],
+      "['a', \"n't\"]": [
+        "an't",
+        "a n't"
+      ],
+      "['a', 'do not']": [
+        "a don't",
+        "a do not"
+      ],
+      "['a', \"'hello\"]": [
+        "a 'hello",
+        "a 'hello"
+      ],
+      "['a', \" ' \"]": [
+        "a '",
+        "a  ' "
+      ],
+      "['a', \"don't\"]": [
+        "a don't",
+        "a don't"
+      ],
+      "[' .', 'world']": [
+        ". world",
+        " . world"
+      ],
+      "['a', ' .']": [
+        "a .",
+        "a  ."
+      ],
+      "['hello', 'world', '.']": [
+        "hello world.",
+        "hello world ."
+      ]
+    },
+    "ctc_wordpiece_cleanup_T_F": {
+      "['a', \"'m\"]": [
+        "a'm",
+        "a'm"
+      ],
+      "['a', 'do not']": [
+        "ado not",
+        "ado not"
+      ],
+      "['a', ' .']": [
+        "a.",
+        "a ."
+      ],
+      "['hello', 'world', '.']": [
+        "helloworld.",
+        "helloworld."
+      ]
+    },
+    "metaspace_multichar_replacement": "<ValueError: expected a string of length 1>",
+    "metaspace_replacement_empty": "<ValueError: expected a string of length 1>",
+    "replace_all_occurrences": "l l ",
+    "replace_str_is_literal_proof": "aXbXc",
+    "full_tokenizer_special_before_decoder": {
+      "decode([a,eot,b]) skip=True": "a b",
+      "decode([a,eot,b]) skip=False": "a <|eot|> b"
+    },
+    "full_tokenizer_bpe_empty_ids": ""
+  }
+}

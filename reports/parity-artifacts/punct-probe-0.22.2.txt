@@ -1,0 +1,1014 @@
+# punct probe — tokenizers 0.22.2 (python 3.9.6)
+# unicodedata: 13.0.0
+
+======================================================================================================================
+PER-CHARACTER TABLE  (probe string is always a{ch}b)
+======================================================================================================================
+CP      CHR   CAT WS  BERT       P.ISO      P.REM      P.MRG        HF-RULE  OLD   NEW   FLAGS
+----------------------------------------------------------------------------------------------------------------------
+
+--- ASCII printable 0x21-0x7E (punct, symbols, digits, letters) ---
+U+0021  <!>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0022  <">  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0023  <#>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0024  <$>  Sc  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0025  <%>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0026  <&>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0027  <'>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0028  <(>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0029  <)>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+002A  <*>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+002B  <+>  Sm  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+002C  <,>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+002D  <->  Pd  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+002E  <.>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+002F  </>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0030  <0>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+0031  <1>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+0032  <2>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+0033  <3>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+0034  <4>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+0035  <5>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+0036  <6>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+0037  <7>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+0038  <8>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+0039  <9>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+003A  <:>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+003B  <;>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+003C  <<>  Sm  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+003D  <=>  Sm  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+003E  <>>  Sm  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+003F  <?>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0040  <@>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0041  <A>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0042  <B>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0043  <C>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0044  <D>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0045  <E>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0046  <F>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0047  <G>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0048  <H>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0049  <I>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+004A  <J>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+004B  <K>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+004C  <L>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+004D  <M>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+004E  <N>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+004F  <O>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0050  <P>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0051  <Q>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0052  <R>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0053  <S>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0054  <T>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0055  <U>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0056  <V>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0057  <W>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0058  <X>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+0059  <Y>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+005A  <Z>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+005B  <[>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+005C  <\>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+005D  <]>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+005E  <^>  Sk  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+005F  <_>  Pc  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0060  <`>  Sk  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+0061  <a>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0062  <b>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0063  <c>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0064  <d>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0065  <e>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0066  <f>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0067  <g>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0068  <h>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0069  <i>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+006A  <j>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+006B  <k>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+006C  <l>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+006D  <m>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+006E  <n>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+006F  <o>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0070  <p>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0071  <q>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0072  <r>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0073  <s>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0074  <t>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0075  <u>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0076  <v>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0077  <w>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0078  <x>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+0079  <y>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+007A  <z>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+007B  <{>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+007C  <|>  Sm  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+007D  <}>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+007E  <~>  Sm  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+
+--- General Punctuation block U+2000-206F (all) ---
+U+2000  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2001  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2002  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2003  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2004  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2005  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2006  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2007  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2008  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2009  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+200A  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+200B  <​>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+200C  <‌>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+200D  <‍>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+200E  <‎>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+200F  <‏>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2010  <‐>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2011  <‑>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2012  <‒>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2013  <–>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2014  <—>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2015  <―>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2016  <‖>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2017  <‗>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2018  <‘>  Pi  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2019  <’>  Pf  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+201A  <‚>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+201B  <‛>  Pi  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+201C  <“>  Pi  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+201D  <”>  Pf  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+201E  <„>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+201F  <‟>  Pi  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2020  <†>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2021  <‡>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2022  <•>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2023  <‣>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2024  <․>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2025  <‥>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2026  <…>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2027  <‧>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2028  < >  Zl  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2029  < >  Zp  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+202A  <‪>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+202B  <‫>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+202C  <‬>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+202D  <‭>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+202E  <‮>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+202F  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2030  <‰>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2031  <‱>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2032  <′>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2033  <″>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2034  <‴>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2035  <‵>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2036  <‶>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2037  <‷>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2038  <‸>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2039  <‹>  Pi  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+203A  <›>  Pf  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+203B  <※>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+203C  <‼>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+203D  <‽>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+203E  <‾>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+203F  <‿>  Pc  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2040  <⁀>  Pc  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2041  <⁁>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2042  <⁂>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2043  <⁃>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2044  <⁄>  Sm  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2045  <⁅>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2046  <⁆>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2047  <⁇>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2048  <⁈>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2049  <⁉>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+204A  <⁊>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+204B  <⁋>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+204C  <⁌>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+204D  <⁍>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+204E  <⁎>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+204F  <⁏>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2050  <⁐>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2051  <⁑>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2052  <⁒>  Sm  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2053  <⁓>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2054  <⁔>  Pc  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2055  <⁕>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2056  <⁖>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2057  <⁗>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2058  <⁘>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2059  <⁙>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+205A  <⁚>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+205B  <⁛>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+205C  <⁜>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+205D  <⁝>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+205E  <⁞>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+205F  < >  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+2060  <⁠>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2061  <⁡>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2062  <⁢>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2063  <⁣>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2064  <⁤>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2065  <⁥>  Cn  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2066  <⁦>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2067  <⁧>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2068  <⁨>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2069  <⁩>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+206A  <⁪>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+206B  <⁫>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+206C  <⁬>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+206D  <⁭>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+206E  <⁮>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+206F  <⁯>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+
+--- CJK Symbols and Punctuation U+3000-303F (all) ---
+U+3000  <　>  Zs  WS  wsremoved  inline     inline     inline       no       yes   no    *OLD
+U+3001  <、>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3002  <。>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3003  <〃>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3004  <〄>  So  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3005  <々>  Lm  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3006  <〆>  Lo  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3007  <〇>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3008  <〈>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3009  <〉>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+300A  <《>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+300B  <》>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+300C  <「>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+300D  <」>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+300E  <『>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+300F  <』>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3010  <【>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3011  <】>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3012  <〒>  So  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3013  <〓>  So  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3014  <〔>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3015  <〕>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3016  <〖>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3017  <〗>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3018  <〘>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3019  <〙>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+301A  <〚>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+301B  <〛>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+301C  <〜>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+301D  <〝>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+301E  <〞>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+301F  <〟>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3020  <〠>  So  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3021  <〡>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3022  <〢>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3023  <〣>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3024  <〤>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3025  <〥>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3026  <〦>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3027  <〧>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3028  <〨>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3029  <〩>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+302A  <〪>  Mn  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+302B  <〫>  Mn  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+302C  <〬>  Mn  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+302D  <〭>  Mn  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+302E  <〮>  Mc  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+302F  <〯>  Mc  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3030  <〰>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+3031  <〱>  Lm  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3032  <〲>  Lm  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3033  <〳>  Lm  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3034  <〴>  Lm  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3035  <〵>  Lm  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3036  <〶>  So  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3037  <〷>  So  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3038  <〸>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+3039  <〹>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+303A  <〺>  Nl  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+303B  <〻>  Lm  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+303C  <〼>  Lo  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+303D  <〽>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+303E  <〾>  So  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+U+303F  <〿>  So  --  inline     inline     inline     inline       no       yes   yes   *OLD *NEW
+
+--- Fullwidth Forms U+FF01-FF65 (all; includes halfwidth kana punct FF61-FF65) ---
+U+FF01  <！>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF02  <＂>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF03  <＃>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF04  <＄>  Sc  --  inline     inline     inline     inline       no       no    no    
+U+FF05  <％>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF06  <＆>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF07  <＇>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF08  <（>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF09  <）>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF0A  <＊>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF0B  <＋>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+FF0C  <，>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF0D  <－>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF0E  <．>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF0F  <／>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF10  <０>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+FF11  <１>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+FF12  <２>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+FF13  <３>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+FF14  <４>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+FF15  <５>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+FF16  <６>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+FF17  <７>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+FF18  <８>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+FF19  <９>  Nd  --  inline     inline     inline     inline       no       no    no    
+U+FF1A  <：>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF1B  <；>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF1C  <＜>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+FF1D  <＝>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+FF1E  <＞>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+FF1F  <？>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF20  <＠>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF21  <Ａ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF22  <Ｂ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF23  <Ｃ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF24  <Ｄ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF25  <Ｅ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF26  <Ｆ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF27  <Ｇ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF28  <Ｈ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF29  <Ｉ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF2A  <Ｊ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF2B  <Ｋ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF2C  <Ｌ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF2D  <Ｍ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF2E  <Ｎ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF2F  <Ｏ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF30  <Ｐ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF31  <Ｑ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF32  <Ｒ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF33  <Ｓ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF34  <Ｔ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF35  <Ｕ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF36  <Ｖ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF37  <Ｗ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF38  <Ｘ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF39  <Ｙ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF3A  <Ｚ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+FF3B  <［>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF3C  <＼>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF3D  <］>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF3E  <＾>  Sk  --  inline     inline     inline     inline       no       no    no    
+U+FF3F  <＿>  Pc  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF40  <｀>  Sk  --  inline     inline     inline     inline       no       no    no    
+U+FF41  <ａ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF42  <ｂ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF43  <ｃ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF44  <ｄ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF45  <ｅ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF46  <ｆ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF47  <ｇ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF48  <ｈ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF49  <ｉ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF4A  <ｊ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF4B  <ｋ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF4C  <ｌ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF4D  <ｍ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF4E  <ｎ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF4F  <ｏ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF50  <ｐ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF51  <ｑ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF52  <ｒ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF53  <ｓ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF54  <ｔ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF55  <ｕ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF56  <ｖ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF57  <ｗ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF58  <ｘ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF59  <ｙ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF5A  <ｚ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+FF5B  <｛>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF5C  <｜>  Sm  --  inline     inline     inline     inline       no       no    yes   *NEW
+U+FF5D  <｝>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF5E  <～>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+FF5F  <｟>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF60  <｠>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF61  <｡>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF62  <｢>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF63  <｣>  Pe  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF64  <､>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FF65  <･>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+
+--- misc notable / cross-block ---
+U+00A1  <¡>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+00A7  <§>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+00A9  <©>  So  --  inline     inline     inline     inline       no       no    no    
+U+00AB  <«>  Pi  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+00AD  <­>  Cf  --  inline     inline     inline     inline       no       no    no    
+U+00B0  <°>  So  --  inline     inline     inline     inline       no       no    no    
+U+00B4  <´>  Sk  --  inline     inline     inline     inline       no       no    no    
+U+00B6  <¶>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+00B7  <·>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+00B8  <¸>  Sk  --  inline     inline     inline     inline       no       no    no    
+U+00BB  <»>  Pf  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+00BF  <¿>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+037E  <;>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+0387  <·>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+055A  <՚>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+055C  <՜>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+055E  <՞>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+058A  <֊>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+05BE  <־>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+05C0  <׀>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+05C3  <׃>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+05C6  <׆>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+05F3  <׳>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+05F4  <״>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+061B  <؛>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+061F  <؟>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+066A  <٪>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+066B  <٫>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+066C  <٬>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+066D  <٭>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+06D4  <۔>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+0964  <।>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+0965  <॥>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+00D7  <×>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+00F7  <÷>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+2044  <⁄>  Sm  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2052  <⁒>  Sm  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2190  <←>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+2192  <→>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+2194  <↔>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+21D2  <⇒>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+2200  <∀>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+2202  <∂>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+2212  <−>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+2215  <∕>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+2216  <∖>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+221E  <∞>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+222B  <∫>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+2260  <≠>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+2264  <≤>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+2211  <∑>  Sm  --  inline     inline     inline     inline       no       no    no    
+U+00A2  <¢>  Sc  --  inline     inline     inline     inline       no       no    no    
+U+00A3  <£>  Sc  --  inline     inline     inline     inline       no       no    no    
+U+00A5  <¥>  Sc  --  inline     inline     inline     inline       no       no    no    
+U+20A1  <₡>  Sc  --  inline     inline     inline     inline       no       no    no    
+U+20AC  <€>  Sc  --  inline     inline     inline     inline       no       no    no    
+U+20B9  <₹>  Sc  --  inline     inline     inline     inline       no       no    no    
+U+20BE  <₾>  Sc  --  inline     inline     inline     inline       no       no    no    
+U+203C  <‼>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2047  <⁇>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2048  <⁈>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2049  <⁉>  Po  --  isolated   isolated   removed    mergedprev   PUNC     yes   yes   
+U+2605  <★>  So  --  inline     inline     inline     inline       no       no    no    
+U+2606  <☆>  So  --  inline     inline     inline     inline       no       no    no    
+U+2714  <✔>  So  --  inline     inline     inline     inline       no       no    no    
+U+2764  <❤>  So  --  inline     inline     inline     inline       no       no    no    
+U+1F600  <😀>  So  --  inline     inline     inline     inline       no       no    no    
+U+1F44D  <👍>  So  --  inline     inline     inline     inline       no       no    no    
+U+FE0F  <️>  Mn  --  inline     inline     inline     inline       no       no    no    
+U+20E3  <⃣>  Me  --  inline     inline     inline     inline       no       no    no    
+U+00AE  <®>  So  --  inline     inline     inline     inline       no       no    no    
+U+2122  <™>  So  --  inline     inline     inline     inline       no       no    no    
+U+200B  <​>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+200C  <‌>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+200D  <‍>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+2060  <⁠>  Cf  --  inline     inline     inline     inline       no       yes   no    *OLD
+U+FEFF  <﻿>  Cf  --  inline     inline     inline     inline       no       no    no    
+U+309B  <゛>  Sk  --  inline     inline     inline     inline       no       no    no    
+U+309C  <゜>  Sk  --  inline     inline     inline     inline       no       no    no    
+U+30FC  <ー>  Lm  --  inline     inline     inline     inline       no       no    no    
+U+FF70  <ｰ>  Lm  --  inline     inline     inline     inline       no       no    no    
+U+FF9E  <ﾞ>  Lm  --  inline     inline     inline     inline       no       no    no    
+U+FF9F  <ﾟ>  Lm  --  inline     inline     inline     inline       no       no    no    
+U+FF66  <ｦ>  Lo  --  inline     inline     inline     inline       no       no    no    
+U+FF71  <ｱ>  Lo  --  inline     inline     inline     inline       no       no    no    
+U+FF9D  <ﾝ>  Lo  --  inline     inline     inline     inline       no       no    no    
+U+00E9  <é>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+00FC  <ü>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+00F1  <ñ>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+6F22  <漢>  Lo  --  inline     inline     inline     inline       no       no    no    
+U+3042  <あ>  Lo  --  inline     inline     inline     inline       no       no    no    
+U+30A2  <ア>  Lo  --  inline     inline     inline     inline       no       no    no    
+U+30F3  <ン>  Lo  --  inline     inline     inline     inline       no       no    no    
+U+304C  <が>  Lo  --  inline     inline     inline     inline       no       no    no    
+U+AC00  <가>  Lo  --  inline     inline     inline     inline       no       no    no    
+U+D7A3  <힣>  Lo  --  inline     inline     inline     inline       no       no    no    
+U+00DF  <ß>  Ll  --  inline     inline     inline     inline       no       no    no    
+U+00C6  <Æ>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+03A9  <Ω>  Lu  --  inline     inline     inline     inline       no       no    no    
+U+2E00  <⸀>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E01  <⸁>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E02  <⸂>  Pi  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E03  <⸃>  Pf  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E14  <⸔>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E17  <⸗>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E18  <⸘>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E1A  <⸚>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E1B  <⸛>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E1E  <⸞>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E20  <⸠>  Pi  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E2E  <⸮>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E30  <⸰>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E31  <⸱>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E3A  <⸺>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E3B  <⸻>  Pd  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E3C  <⸼>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E3D  <⸽>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E42  <⹂>  Ps  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+2E55  <⹕>  Cn  --  inline     inline     inline     inline       no       no    no    
+U+2E56  <⹖>  Cn  --  inline     inline     inline     inline       no       no    no    
+U+FE10  <︐>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FE19  <︙>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FE30  <︰>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FE45  <﹅>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    yes   *OLD
+U+FE50  <﹐>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+FE54  <﹔>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+U+FE6B  <﹫>  Po  --  isolated   isolated   removed    mergedprev   PUNC     no    no    *OLD *NEW
+
+======================================================================================================================
+DERIVED EFFECTIVE CLASSIFICATION (tokenizers 0.22.2, empirical: Punctuation(isolated) == BertPreTokenizer isolation)
+======================================================================================================================
+
+A. Probed codepoints treated as punctuation-split (compressed ranges):
+   U+0021 .. U+002F   (15 cps)  EXCLAMATION MARK .. SOLIDUS
+   U+003A .. U+0040   (7 cps)  COLON .. COMMERCIAL AT
+   U+005B .. U+0060   (6 cps)  LEFT SQUARE BRACKET .. GRAVE ACCENT
+   U+007B .. U+007E   (4 cps)  LEFT CURLY BRACKET .. TILDE
+   U+00A1                    (INVERTED EXCLAMATION MARK)
+   U+00A7                    (SECTION SIGN)
+   U+00AB                    (LEFT-POINTING DOUBLE ANGLE QUOTATION MARK)
+   U+00B6 .. U+00B7   (2 cps)  PILCROW SIGN .. MIDDLE DOT
+   U+00BB                    (RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK)
+   U+00BF                    (INVERTED QUESTION MARK)
+   U+037E                    (GREEK QUESTION MARK)
+   U+0387                    (GREEK ANO TELEIA)
+   U+055A                    (ARMENIAN APOSTROPHE)
+   U+055C                    (ARMENIAN EXCLAMATION MARK)
+   U+055E                    (ARMENIAN QUESTION MARK)
+   U+058A                    (ARMENIAN HYPHEN)
+   U+05BE                    (HEBREW PUNCTUATION MAQAF)
+   U+05C0                    (HEBREW PUNCTUATION PASEQ)
+   U+05C3                    (HEBREW PUNCTUATION SOF PASUQ)
+   U+05C6                    (HEBREW PUNCTUATION NUN HAFUKHA)
+   U+05F3 .. U+05F4   (2 cps)  HEBREW PUNCTUATION GERESH .. HEBREW PUNCTUATION GERSHAYIM
+   U+061B                    (ARABIC SEMICOLON)
+   U+061F                    (ARABIC QUESTION MARK)
+   U+066A .. U+066D   (4 cps)  ARABIC PERCENT SIGN .. ARABIC FIVE POINTED STAR
+   U+06D4                    (ARABIC FULL STOP)
+   U+0964 .. U+0965   (2 cps)  DEVANAGARI DANDA .. DEVANAGARI DOUBLE DANDA
+   U+2010 .. U+2027   (24 cps)  HYPHEN .. HYPHENATION POINT
+   U+2030 .. U+2043   (20 cps)  PER MILLE SIGN .. HYPHEN BULLET
+   U+2045 .. U+2051   (13 cps)  LEFT SQUARE BRACKET WITH QUILL .. TWO ASTERISKS ALIGNED VERTICALLY
+   U+2053 .. U+205E   (12 cps)  SWUNG DASH .. VERTICAL FOUR DOTS
+   U+2E00 .. U+2E03   (4 cps)  RIGHT ANGLE SUBSTITUTION MARKER .. RIGHT SUBSTITUTION BRACKET
+   U+2E14                    (DOWNWARDS ANCORA)
+   U+2E17 .. U+2E18   (2 cps)  DOUBLE OBLIQUE HYPHEN .. INVERTED INTERROBANG
+   U+2E1A .. U+2E1B   (2 cps)  HYPHEN WITH DIAERESIS .. TILDE WITH RING ABOVE
+   U+2E1E                    (TILDE WITH DOT ABOVE)
+   U+2E20                    (LEFT VERTICAL BAR WITH QUILL)
+   U+2E2E                    (REVERSED QUESTION MARK)
+   U+2E30 .. U+2E31   (2 cps)  RING POINT .. WORD SEPARATOR MIDDLE DOT
+   U+2E3A .. U+2E3D   (4 cps)  TWO-EM DASH .. VERTICAL SIX DOTS
+   U+2E42                    (DOUBLE LOW-REVERSED-9 QUOTATION MARK)
+   U+3001 .. U+3003   (3 cps)  IDEOGRAPHIC COMMA .. DITTO MARK
+   U+3008 .. U+3011   (10 cps)  LEFT ANGLE BRACKET .. RIGHT BLACK LENTICULAR BRACKET
+   U+3014 .. U+301F   (12 cps)  LEFT TORTOISE SHELL BRACKET .. LOW DOUBLE PRIME QUOTATION MARK
+   U+3030                    (WAVY DASH)
+   U+303D                    (PART ALTERNATION MARK)
+   U+FE10                    (PRESENTATION FORM FOR VERTICAL COMMA)
+   U+FE19                    (PRESENTATION FORM FOR VERTICAL HORIZONTAL ELLIPSIS)
+   U+FE30                    (PRESENTATION FORM FOR VERTICAL TWO DOT LEADER)
+   U+FE45                    (SESAME DOT)
+   U+FE50                    (SMALL COMMA)
+   U+FE54                    (SMALL SEMICOLON)
+   U+FE6B                    (SMALL COMMERCIAL AT)
+   U+FF01 .. U+FF03   (3 cps)  FULLWIDTH EXCLAMATION MARK .. FULLWIDTH NUMBER SIGN
+   U+FF05 .. U+FF0A   (6 cps)  FULLWIDTH PERCENT SIGN .. FULLWIDTH ASTERISK
+   U+FF0C .. U+FF0F   (4 cps)  FULLWIDTH COMMA .. FULLWIDTH SOLIDUS
+   U+FF1A .. U+FF1B   (2 cps)  FULLWIDTH COLON .. FULLWIDTH SEMICOLON
+   U+FF1F .. U+FF20   (2 cps)  FULLWIDTH QUESTION MARK .. FULLWIDTH COMMERCIAL AT
+   U+FF3B .. U+FF3D   (3 cps)  FULLWIDTH LEFT SQUARE BRACKET .. FULLWIDTH RIGHT SQUARE BRACKET
+   U+FF3F                    (FULLWIDTH LOW LINE)
+   U+FF5B                    (FULLWIDTH LEFT CURLY BRACKET)
+   U+FF5D                    (FULLWIDTH RIGHT CURLY BRACKET)
+   U+FF5F .. U+FF65   (7 cps)  FULLWIDTH LEFT WHITE PARENTHESIS .. HALFWIDTH KATAKANA MIDDLE DOT
+
+B. ASCII symbols $ + < = > ^ ` | ~ verdict:
+   '$' U+0024 cat=Sc -> BERT=isolated P.ISO=isolated P.REM=removed P.MRG=mergedprev   ==> PUNCTUATION (isolated)
+   '+' U+002B cat=Sm -> BERT=isolated P.ISO=isolated P.REM=removed P.MRG=mergedprev   ==> PUNCTUATION (isolated)
+   '<' U+003C cat=Sm -> BERT=isolated P.ISO=isolated P.REM=removed P.MRG=mergedprev   ==> PUNCTUATION (isolated)
+   '=' U+003D cat=Sm -> BERT=isolated P.ISO=isolated P.REM=removed P.MRG=mergedprev   ==> PUNCTUATION (isolated)
+   '>' U+003E cat=Sm -> BERT=isolated P.ISO=isolated P.REM=removed P.MRG=mergedprev   ==> PUNCTUATION (isolated)
+   '^' U+005E cat=Sk -> BERT=isolated P.ISO=isolated P.REM=removed P.MRG=mergedprev   ==> PUNCTUATION (isolated)
+   '`' U+0060 cat=Sk -> BERT=isolated P.ISO=isolated P.REM=removed P.MRG=mergedprev   ==> PUNCTUATION (isolated)
+   '|' U+007C cat=Sm -> BERT=isolated P.ISO=isolated P.REM=removed P.MRG=mergedprev   ==> PUNCTUATION (isolated)
+   '~' U+007E cat=Sm -> BERT=isolated P.ISO=isolated P.REM=removed P.MRG=mergedprev   ==> PUNCTUATION (isolated)
+
+C. Halfwidth kana punctuation U+FF61-FF65 verdict:
+   U+FF61 <｡> cat=Po -> BERT=isolated P.ISO=isolated ==> PUNCTUATION (isolated)
+   U+FF62 <｢> cat=Ps -> BERT=isolated P.ISO=isolated ==> PUNCTUATION (isolated)
+   U+FF63 <｣> cat=Pe -> BERT=isolated P.ISO=isolated ==> PUNCTUATION (isolated)
+   U+FF64 <､> cat=Po -> BERT=isolated P.ISO=isolated ==> PUNCTUATION (isolated)
+   U+FF65 <･> cat=Po -> BERT=isolated P.ISO=isolated ==> PUNCTUATION (isolated)
+
+D. Whitespace-class chars in battery (Bert removes them; Punctuation leaves inline):
+   U+2000 < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+2001 < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+2002 < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+2003 < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+2004 < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+2005 < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+2006 < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+2007 < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+2008 < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+2009 < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+200A < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+2028 < > cat=Zl BERT=wsremoved P.ISO=inline P.REM=inline
+   U+2029 < > cat=Zp BERT=wsremoved P.ISO=inline P.REM=inline
+   U+202F < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+205F < > cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+   U+3000 <　> cat=Zs BERT=wsremoved P.ISO=inline P.REM=inline
+
+E. Mismatches vs predicted rule (is_ascii_punct OR unicodedata P*): 0
+   (empty list => rule confirmed on this battery; note unicodedata is Unicode 13.0.0, the wheel's Rust tables may differ on newly-assigned codepoints)
+
+F. Port OLD is_punct vs ground truth (probed set): missed 84, false-positives 80
+   OLD-MISSED (is punctuation per 0.22.2, OLD says no):
+     U+FF01 <！> cat=Po FULLWIDTH EXCLAMATION MARK
+     U+FF02 <＂> cat=Po FULLWIDTH QUOTATION MARK
+     U+FF03 <＃> cat=Po FULLWIDTH NUMBER SIGN
+     U+FF05 <％> cat=Po FULLWIDTH PERCENT SIGN
+     U+FF06 <＆> cat=Po FULLWIDTH AMPERSAND
+     U+FF07 <＇> cat=Po FULLWIDTH APOSTROPHE
+     U+FF08 <（> cat=Ps FULLWIDTH LEFT PARENTHESIS
+     U+FF09 <）> cat=Pe FULLWIDTH RIGHT PARENTHESIS
+     U+FF0A <＊> cat=Po FULLWIDTH ASTERISK
+     U+FF0C <，> cat=Po FULLWIDTH COMMA
+     U+FF0D <－> cat=Pd FULLWIDTH HYPHEN-MINUS
+     U+FF0E <．> cat=Po FULLWIDTH FULL STOP
+     U+FF0F <／> cat=Po FULLWIDTH SOLIDUS
+     U+FF1A <：> cat=Po FULLWIDTH COLON
+     U+FF1B <；> cat=Po FULLWIDTH SEMICOLON
+     U+FF1F <？> cat=Po FULLWIDTH QUESTION MARK
+     U+FF20 <＠> cat=Po FULLWIDTH COMMERCIAL AT
+     U+FF3B <［> cat=Ps FULLWIDTH LEFT SQUARE BRACKET
+     U+FF3C <＼> cat=Po FULLWIDTH REVERSE SOLIDUS
+     U+FF3D <］> cat=Pe FULLWIDTH RIGHT SQUARE BRACKET
+     U+FF3F <＿> cat=Pc FULLWIDTH LOW LINE
+     U+FF5B <｛> cat=Ps FULLWIDTH LEFT CURLY BRACKET
+     U+FF5D <｝> cat=Pe FULLWIDTH RIGHT CURLY BRACKET
+     U+FF5F <｟> cat=Ps FULLWIDTH LEFT WHITE PARENTHESIS
+     U+FF60 <｠> cat=Pe FULLWIDTH RIGHT WHITE PARENTHESIS
+     U+FF61 <｡> cat=Po HALFWIDTH IDEOGRAPHIC FULL STOP
+     U+FF62 <｢> cat=Ps HALFWIDTH LEFT CORNER BRACKET
+     U+FF63 <｣> cat=Pe HALFWIDTH RIGHT CORNER BRACKET
+     U+FF64 <､> cat=Po HALFWIDTH IDEOGRAPHIC COMMA
+     U+FF65 <･> cat=Po HALFWIDTH KATAKANA MIDDLE DOT
+     U+00A1 <¡> cat=Po INVERTED EXCLAMATION MARK
+     U+00A7 <§> cat=Po SECTION SIGN
+     U+00AB <«> cat=Pi LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+     U+00B6 <¶> cat=Po PILCROW SIGN
+     U+00B7 <·> cat=Po MIDDLE DOT
+     U+00BB <»> cat=Pf RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+     U+00BF <¿> cat=Po INVERTED QUESTION MARK
+     U+037E <;> cat=Po GREEK QUESTION MARK
+     U+0387 <·> cat=Po GREEK ANO TELEIA
+     U+055A <՚> cat=Po ARMENIAN APOSTROPHE
+     U+055C <՜> cat=Po ARMENIAN EXCLAMATION MARK
+     U+055E <՞> cat=Po ARMENIAN QUESTION MARK
+     U+058A <֊> cat=Pd ARMENIAN HYPHEN
+     U+05BE <־> cat=Pd HEBREW PUNCTUATION MAQAF
+     U+05C0 <׀> cat=Po HEBREW PUNCTUATION PASEQ
+     U+05C3 <׃> cat=Po HEBREW PUNCTUATION SOF PASUQ
+     U+05C6 <׆> cat=Po HEBREW PUNCTUATION NUN HAFUKHA
+     U+05F3 <׳> cat=Po HEBREW PUNCTUATION GERESH
+     U+05F4 <״> cat=Po HEBREW PUNCTUATION GERSHAYIM
+     U+061B <؛> cat=Po ARABIC SEMICOLON
+     U+061F <؟> cat=Po ARABIC QUESTION MARK
+     U+066A <٪> cat=Po ARABIC PERCENT SIGN
+     U+066B <٫> cat=Po ARABIC DECIMAL SEPARATOR
+     U+066C <٬> cat=Po ARABIC THOUSANDS SEPARATOR
+     U+066D <٭> cat=Po ARABIC FIVE POINTED STAR
+     U+06D4 <۔> cat=Po ARABIC FULL STOP
+     U+0964 <।> cat=Po DEVANAGARI DANDA
+     U+0965 <॥> cat=Po DEVANAGARI DOUBLE DANDA
+     U+2E00 <⸀> cat=Po RIGHT ANGLE SUBSTITUTION MARKER
+     U+2E01 <⸁> cat=Po RIGHT ANGLE DOTTED SUBSTITUTION MARKER
+     U+2E02 <⸂> cat=Pi LEFT SUBSTITUTION BRACKET
+     U+2E03 <⸃> cat=Pf RIGHT SUBSTITUTION BRACKET
+     U+2E14 <⸔> cat=Po DOWNWARDS ANCORA
+     U+2E17 <⸗> cat=Pd DOUBLE OBLIQUE HYPHEN
+     U+2E18 <⸘> cat=Po INVERTED INTERROBANG
+     U+2E1A <⸚> cat=Pd HYPHEN WITH DIAERESIS
+     U+2E1B <⸛> cat=Po TILDE WITH RING ABOVE
+     U+2E1E <⸞> cat=Po TILDE WITH DOT ABOVE
+     U+2E20 <⸠> cat=Pi LEFT VERTICAL BAR WITH QUILL
+     U+2E2E <⸮> cat=Po REVERSED QUESTION MARK
+     U+2E30 <⸰> cat=Po RING POINT
+     U+2E31 <⸱> cat=Po WORD SEPARATOR MIDDLE DOT
+     U+2E3A <⸺> cat=Pd TWO-EM DASH
+     U+2E3B <⸻> cat=Pd THREE-EM DASH
+     U+2E3C <⸼> cat=Po STENOGRAPHIC FULL STOP
+     U+2E3D <⸽> cat=Po VERTICAL SIX DOTS
+     U+2E42 <⹂> cat=Ps DOUBLE LOW-REVERSED-9 QUOTATION MARK
+     U+FE10 <︐> cat=Po PRESENTATION FORM FOR VERTICAL COMMA
+     U+FE19 <︙> cat=Po PRESENTATION FORM FOR VERTICAL HORIZONTAL ELLIPSIS
+     U+FE30 <︰> cat=Po PRESENTATION FORM FOR VERTICAL TWO DOT LEADER
+     U+FE45 <﹅> cat=Po SESAME DOT
+     U+FE50 <﹐> cat=Po SMALL COMMA
+     U+FE54 <﹔> cat=Po SMALL SEMICOLON
+     U+FE6B <﹫> cat=Po SMALL COMMERCIAL AT
+   OLD-FALSE (not punctuation per 0.22.2, OLD says yes):
+     U+2000 < > cat=Zs EN QUAD
+     U+2001 < > cat=Zs EM QUAD
+     U+2002 < > cat=Zs EN SPACE
+     U+2003 < > cat=Zs EM SPACE
+     U+2004 < > cat=Zs THREE-PER-EM SPACE
+     U+2005 < > cat=Zs FOUR-PER-EM SPACE
+     U+2006 < > cat=Zs SIX-PER-EM SPACE
+     U+2007 < > cat=Zs FIGURE SPACE
+     U+2008 < > cat=Zs PUNCTUATION SPACE
+     U+2009 < > cat=Zs THIN SPACE
+     U+200A < > cat=Zs HAIR SPACE
+     U+200B <​> cat=Cf ZERO WIDTH SPACE
+     U+200C <‌> cat=Cf ZERO WIDTH NON-JOINER
+     U+200D <‍> cat=Cf ZERO WIDTH JOINER
+     U+200E <‎> cat=Cf LEFT-TO-RIGHT MARK
+     U+200F <‏> cat=Cf RIGHT-TO-LEFT MARK
+     U+2028 < > cat=Zl LINE SEPARATOR
+     U+2029 < > cat=Zp PARAGRAPH SEPARATOR
+     U+202A <‪> cat=Cf LEFT-TO-RIGHT EMBEDDING
+     U+202B <‫> cat=Cf RIGHT-TO-LEFT EMBEDDING
+     U+202C <‬> cat=Cf POP DIRECTIONAL FORMATTING
+     U+202D <‭> cat=Cf LEFT-TO-RIGHT OVERRIDE
+     U+202E <‮> cat=Cf RIGHT-TO-LEFT OVERRIDE
+     U+202F < > cat=Zs NARROW NO-BREAK SPACE
+     U+2044 <⁄> cat=Sm FRACTION SLASH
+     U+2052 <⁒> cat=Sm COMMERCIAL MINUS SIGN
+     U+205F < > cat=Zs MEDIUM MATHEMATICAL SPACE
+     U+2060 <⁠> cat=Cf WORD JOINER
+     U+2061 <⁡> cat=Cf FUNCTION APPLICATION
+     U+2062 <⁢> cat=Cf INVISIBLE TIMES
+     U+2063 <⁣> cat=Cf INVISIBLE SEPARATOR
+     U+2064 <⁤> cat=Cf INVISIBLE PLUS
+     U+2065 <⁥> cat=Cn <unnamed>
+     U+2066 <⁦> cat=Cf LEFT-TO-RIGHT ISOLATE
+     U+2067 <⁧> cat=Cf RIGHT-TO-LEFT ISOLATE
+     U+2068 <⁨> cat=Cf FIRST STRONG ISOLATE
+     U+2069 <⁩> cat=Cf POP DIRECTIONAL ISOLATE
+     U+206A <⁪> cat=Cf INHIBIT SYMMETRIC SWAPPING
+     U+206B <⁫> cat=Cf ACTIVATE SYMMETRIC SWAPPING
+     U+206C <⁬> cat=Cf INHIBIT ARABIC FORM SHAPING
+     U+206D <⁭> cat=Cf ACTIVATE ARABIC FORM SHAPING
+     U+206E <⁮> cat=Cf NATIONAL DIGIT SHAPES
+     U+206F <⁯> cat=Cf NOMINAL DIGIT SHAPES
+     U+3000 <　> cat=Zs IDEOGRAPHIC SPACE
+     U+3004 <〄> cat=So JAPANESE INDUSTRIAL STANDARD SYMBOL
+     U+3005 <々> cat=Lm IDEOGRAPHIC ITERATION MARK
+     U+3006 <〆> cat=Lo IDEOGRAPHIC CLOSING MARK
+     U+3007 <〇> cat=Nl IDEOGRAPHIC NUMBER ZERO
+     U+3012 <〒> cat=So POSTAL MARK
+     U+3013 <〓> cat=So GETA MARK
+     U+3020 <〠> cat=So POSTAL MARK FACE
+     U+3021 <〡> cat=Nl HANGZHOU NUMERAL ONE
+     U+3022 <〢> cat=Nl HANGZHOU NUMERAL TWO
+     U+3023 <〣> cat=Nl HANGZHOU NUMERAL THREE
+     U+3024 <〤> cat=Nl HANGZHOU NUMERAL FOUR
+     U+3025 <〥> cat=Nl HANGZHOU NUMERAL FIVE
+     U+3026 <〦> cat=Nl HANGZHOU NUMERAL SIX
+     U+3027 <〧> cat=Nl HANGZHOU NUMERAL SEVEN
+     U+3028 <〨> cat=Nl HANGZHOU NUMERAL EIGHT
+     U+3029 <〩> cat=Nl HANGZHOU NUMERAL NINE
+     U+302A <〪> cat=Mn IDEOGRAPHIC LEVEL TONE MARK
+     U+302B <〫> cat=Mn IDEOGRAPHIC RISING TONE MARK
+     U+302C <〬> cat=Mn IDEOGRAPHIC DEPARTING TONE MARK
+     U+302D <〭> cat=Mn IDEOGRAPHIC ENTERING TONE MARK
+     U+302E <〮> cat=Mc HANGUL SINGLE DOT TONE MARK
+     U+302F <〯> cat=Mc HANGUL DOUBLE DOT TONE MARK
+     U+3031 <〱> cat=Lm VERTICAL KANA REPEAT MARK
+     U+3032 <〲> cat=Lm VERTICAL KANA REPEAT WITH VOICED SOUND MARK
+     U+3033 <〳> cat=Lm VERTICAL KANA REPEAT MARK UPPER HALF
+     U+3034 <〴> cat=Lm VERTICAL KANA REPEAT WITH VOICED SOUND MARK UPPER HALF
+     U+3035 <〵> cat=Lm VERTICAL KANA REPEAT MARK LOWER HALF
+     U+3036 <〶> cat=So CIRCLED POSTAL MARK
+     U+3037 <〷> cat=So IDEOGRAPHIC TELEGRAPH LINE FEED SEPARATOR SYMBOL
+     U+3038 <〸> cat=Nl HANGZHOU NUMERAL TEN
+     U+3039 <〹> cat=Nl HANGZHOU NUMERAL TWENTY
+     U+303A <〺> cat=Nl HANGZHOU NUMERAL THIRTY
+     U+303B <〻> cat=Lm VERTICAL IDEOGRAPHIC ITERATION MARK
+     U+303C <〼> cat=Lo MASU MARK
+     U+303E <〾> cat=So IDEOGRAPHIC VARIATION INDICATOR
+     U+303F <〿> cat=So IDEOGRAPHIC HALF FILL SPACE
+
+G. Port NEW is_hf_punctuation vs ground truth (probed set): missed 50, false-positives 37
+   NEW-MISSED (is punctuation per 0.22.2, NEW says no):
+     U+00A1 <¡> cat=Po INVERTED EXCLAMATION MARK
+     U+00A7 <§> cat=Po SECTION SIGN
+     U+00AB <«> cat=Pi LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+     U+00B6 <¶> cat=Po PILCROW SIGN
+     U+00B7 <·> cat=Po MIDDLE DOT
+     U+00BB <»> cat=Pf RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+     U+00BF <¿> cat=Po INVERTED QUESTION MARK
+     U+037E <;> cat=Po GREEK QUESTION MARK
+     U+0387 <·> cat=Po GREEK ANO TELEIA
+     U+055A <՚> cat=Po ARMENIAN APOSTROPHE
+     U+055C <՜> cat=Po ARMENIAN EXCLAMATION MARK
+     U+055E <՞> cat=Po ARMENIAN QUESTION MARK
+     U+058A <֊> cat=Pd ARMENIAN HYPHEN
+     U+05BE <־> cat=Pd HEBREW PUNCTUATION MAQAF
+     U+05C0 <׀> cat=Po HEBREW PUNCTUATION PASEQ
+     U+05C3 <׃> cat=Po HEBREW PUNCTUATION SOF PASUQ
+     U+05C6 <׆> cat=Po HEBREW PUNCTUATION NUN HAFUKHA
+     U+05F3 <׳> cat=Po HEBREW PUNCTUATION GERESH
+     U+05F4 <״> cat=Po HEBREW PUNCTUATION GERSHAYIM
+     U+061B <؛> cat=Po ARABIC SEMICOLON
+     U+061F <؟> cat=Po ARABIC QUESTION MARK
+     U+066A <٪> cat=Po ARABIC PERCENT SIGN
+     U+066B <٫> cat=Po ARABIC DECIMAL SEPARATOR
+     U+066C <٬> cat=Po ARABIC THOUSANDS SEPARATOR
+     U+066D <٭> cat=Po ARABIC FIVE POINTED STAR
+     U+06D4 <۔> cat=Po ARABIC FULL STOP
+     U+0964 <।> cat=Po DEVANAGARI DANDA
+     U+0965 <॥> cat=Po DEVANAGARI DOUBLE DANDA
+     U+2E00 <⸀> cat=Po RIGHT ANGLE SUBSTITUTION MARKER
+     U+2E01 <⸁> cat=Po RIGHT ANGLE DOTTED SUBSTITUTION MARKER
+     U+2E02 <⸂> cat=Pi LEFT SUBSTITUTION BRACKET
+     U+2E03 <⸃> cat=Pf RIGHT SUBSTITUTION BRACKET
+     U+2E14 <⸔> cat=Po DOWNWARDS ANCORA
+     U+2E17 <⸗> cat=Pd DOUBLE OBLIQUE HYPHEN
+     U+2E18 <⸘> cat=Po INVERTED INTERROBANG
+     U+2E1A <⸚> cat=Pd HYPHEN WITH DIAERESIS
+     U+2E1B <⸛> cat=Po TILDE WITH RING ABOVE
+     U+2E1E <⸞> cat=Po TILDE WITH DOT ABOVE
+     U+2E20 <⸠> cat=Pi LEFT VERTICAL BAR WITH QUILL
+     U+2E2E <⸮> cat=Po REVERSED QUESTION MARK
+     U+2E30 <⸰> cat=Po RING POINT
+     U+2E31 <⸱> cat=Po WORD SEPARATOR MIDDLE DOT
+     U+2E3A <⸺> cat=Pd TWO-EM DASH
+     U+2E3B <⸻> cat=Pd THREE-EM DASH
+     U+2E3C <⸼> cat=Po STENOGRAPHIC FULL STOP
+     U+2E3D <⸽> cat=Po VERTICAL SIX DOTS
+     U+2E42 <⹂> cat=Ps DOUBLE LOW-REVERSED-9 QUOTATION MARK
+     U+FE50 <﹐> cat=Po SMALL COMMA
+     U+FE54 <﹔> cat=Po SMALL SEMICOLON
+     U+FE6B <﹫> cat=Po SMALL COMMERCIAL AT
+   NEW-FALSE (not punctuation per 0.22.2, NEW says yes):
+     U+3004 <〄> cat=So JAPANESE INDUSTRIAL STANDARD SYMBOL
+     U+3005 <々> cat=Lm IDEOGRAPHIC ITERATION MARK
+     U+3006 <〆> cat=Lo IDEOGRAPHIC CLOSING MARK
+     U+3007 <〇> cat=Nl IDEOGRAPHIC NUMBER ZERO
+     U+3012 <〒> cat=So POSTAL MARK
+     U+3013 <〓> cat=So GETA MARK
+     U+3020 <〠> cat=So POSTAL MARK FACE
+     U+3021 <〡> cat=Nl HANGZHOU NUMERAL ONE
+     U+3022 <〢> cat=Nl HANGZHOU NUMERAL TWO
+     U+3023 <〣> cat=Nl HANGZHOU NUMERAL THREE
+     U+3024 <〤> cat=Nl HANGZHOU NUMERAL FOUR
+     U+3025 <〥> cat=Nl HANGZHOU NUMERAL FIVE
+     U+3026 <〦> cat=Nl HANGZHOU NUMERAL SIX
+     U+3027 <〧> cat=Nl HANGZHOU NUMERAL SEVEN
+     U+3028 <〨> cat=Nl HANGZHOU NUMERAL EIGHT
+     U+3029 <〩> cat=Nl HANGZHOU NUMERAL NINE
+     U+302A <〪> cat=Mn IDEOGRAPHIC LEVEL TONE MARK
+     U+302B <〫> cat=Mn IDEOGRAPHIC RISING TONE MARK
+     U+302C <〬> cat=Mn IDEOGRAPHIC DEPARTING TONE MARK
+     U+302D <〭> cat=Mn IDEOGRAPHIC ENTERING TONE MARK
+     U+302E <〮> cat=Mc HANGUL SINGLE DOT TONE MARK
+     U+302F <〯> cat=Mc HANGUL DOUBLE DOT TONE MARK
+     U+3031 <〱> cat=Lm VERTICAL KANA REPEAT MARK
+     U+3032 <〲> cat=Lm VERTICAL KANA REPEAT WITH VOICED SOUND MARK
+     U+3033 <〳> cat=Lm VERTICAL KANA REPEAT MARK UPPER HALF
+     U+3034 <〴> cat=Lm VERTICAL KANA REPEAT WITH VOICED SOUND MARK UPPER HALF
+     U+3035 <〵> cat=Lm VERTICAL KANA REPEAT MARK LOWER HALF
+     U+3036 <〶> cat=So CIRCLED POSTAL MARK
+     U+3037 <〷> cat=So IDEOGRAPHIC TELEGRAPH LINE FEED SEPARATOR SYMBOL
+     U+3038 <〸> cat=Nl HANGZHOU NUMERAL TEN
+     U+3039 <〹> cat=Nl HANGZHOU NUMERAL TWENTY
+     U+303A <〺> cat=Nl HANGZHOU NUMERAL THIRTY
+     U+303B <〻> cat=Lm VERTICAL IDEOGRAPHIC ITERATION MARK
+     U+303C <〼> cat=Lo MASU MARK
+     U+303E <〾> cat=So IDEOGRAPHIC VARIATION INDICATOR
+     U+303F <〿> cat=So IDEOGRAPHIC HALF FILL SPACE
+     U+FF5C <｜> cat=Sm FULLWIDTH VERTICAL LINE
+
+======================================================================================================================
+SPOT CHECKS — full BertPreTokenizer.pre_tokenize_str outputs
+======================================================================================================================
+
+input: 'Hey friend!     How are you?!?'
+  bert      : [('Hey', (0, 3)), ('friend', (4, 10)), ('!', (10, 11)), ('How', (16, 19)), ('are', (20, 23)), ('you', (24, 27)), ('?', (27, 28)), ('!', (28, 29)), ('?', (29, 30))]
+  p.iso     : [('Hey friend', (0, 10)), ('!', (10, 11)), ('     How are you', (11, 27)), ('?', (27, 28)), ('!', (28, 29)), ('?', (29, 30))]
+  p.rem     : [('Hey friend', (0, 10)), ('     How are you', (11, 27))]
+  p.mrgprev : [('Hey friend!', (0, 11)), ('     How are you?', (11, 28)), ('!', (28, 29)), ('?', (29, 30))]
+
+input: '野口里佳 Noguchi Rika'
+  bert      : [('野口里佳', (0, 4)), ('Noguchi', (5, 12)), ('Rika', (13, 17))]
+  p.iso     : [('野口里佳 Noguchi Rika', (0, 17))]
+  p.rem     : [('野口里佳 Noguchi Rika', (0, 17))]
+  p.mrgprev : [('野口里佳 Noguchi Rika', (0, 17))]
+
+input: '你好世界'
+  bert      : [('你好世界', (0, 4))]
+  p.iso     : [('你好世界', (0, 4))]
+  p.rem     : [('你好世界', (0, 4))]
+  p.mrgprev : [('你好世界', (0, 4))]
+
+input: 'a--b ... c!!!'
+  bert      : [('a', (0, 1)), ('-', (1, 2)), ('-', (2, 3)), ('b', (3, 4)), ('.', (5, 6)), ('.', (6, 7)), ('.', (7, 8)), ('c', (9, 10)), ('!', (10, 11)), ('!', (11, 12)), ('!', (12, 13))]
+  p.iso     : [('a', (0, 1)), ('-', (1, 2)), ('-', (2, 3)), ('b ', (3, 5)), ('.', (5, 6)), ('.', (6, 7)), ('.', (7, 8)), (' c', (8, 10)), ('!', (10, 11)), ('!', (11, 12)), ('!', (12, 13))]
+  p.rem     : [('a', (0, 1)), ('b ', (3, 5)), (' c', (8, 10))]
+  p.mrgprev : [('a-', (0, 2)), ('-', (2, 3)), ('b .', (3, 6)), ('.', (6, 7)), ('.', (7, 8)), (' c!', (8, 11)), ('!', (11, 12)), ('!', (12, 13))]
+
+input: '（ＡＢ）．ＣＤ'
+  bert      : [('（', (0, 1)), ('ＡＢ', (1, 3)), ('）', (3, 4)), ('．', (4, 5)), ('ＣＤ', (5, 7))]
+  p.iso     : [('（', (0, 1)), ('ＡＢ', (1, 3)), ('）', (3, 4)), ('．', (4, 5)), ('ＣＤ', (5, 7))]
+  p.rem     : [('ＡＢ', (1, 3)), ('ＣＤ', (5, 7))]
+  p.mrgprev : [('（', (0, 1)), ('ＡＢ）', (1, 4)), ('．', (4, 5)), ('ＣＤ', (5, 7))]
+
+input: 'a￠b'
+  bert      : [('a￠b', (0, 3))]
+  p.iso     : [('a￠b', (0, 3))]
+  p.rem     : [('a￠b', (0, 3))]
+  p.mrgprev : [('a￠b', (0, 3))]
+
+input: 'a・b'
+  bert      : [('a', (0, 1)), ('・', (1, 2)), ('b', (2, 3))]
+  p.iso     : [('a', (0, 1)), ('・', (1, 2)), ('b', (2, 3))]
+  p.rem     : [('a', (0, 1)), ('b', (2, 3))]
+  p.mrgprev : [('a・', (0, 2)), ('b', (2, 3))]
+
+input: '｢quote｣'
+  bert      : [('｢', (0, 1)), ('quote', (1, 6)), ('｣', (6, 7))]
+  p.iso     : [('｢', (0, 1)), ('quote', (1, 6)), ('｣', (6, 7))]
+  p.rem     : [('quote', (1, 6))]
+  p.mrgprev : [('｢', (0, 1)), ('quote｣', (1, 7))]
+
+input: 'x²=y; z≠w'
+  bert      : [('x²', (0, 2)), ('=', (2, 3)), ('y', (3, 4)), (';', (4, 5)), ('z≠w', (6, 9))]
+  p.iso     : [('x²', (0, 2)), ('=', (2, 3)), ('y', (3, 4)), (';', (4, 5)), (' z≠w', (5, 9))]
+  p.rem     : [('x²', (0, 2)), ('y', (3, 4)), (' z≠w', (5, 9))]
+  p.mrgprev : [('x²=', (0, 3)), ('y;', (3, 5)), (' z≠w', (5, 9))]
+
+input: '€100, £50'
+  bert      : [('€100', (0, 4)), (',', (4, 5)), ('£50', (6, 9))]
+  p.iso     : [('€100', (0, 4)), (',', (4, 5)), (' £50', (5, 9))]
+  p.rem     : [('€100', (0, 4)), (' £50', (5, 9))]
+  p.mrgprev : [('€100,', (0, 5)), (' £50', (5, 9))]
+
+input: 'a\u2003b'
+  bert      : [('a', (0, 1)), ('b', (2, 3))]
+  p.iso     : [('a\u2003b', (0, 3))]
+  p.rem     : [('a\u2003b', (0, 3))]
+  p.mrgprev : [('a\u2003b', (0, 3))]
+
+======================================================================================================================
+BERT PRE-TOKENIZER EXPECTATION CASES (also written to /tmp/bert_pre_expectations.json)
+offset semantics: character-based (s[a:b] == value for every split)
+======================================================================================================================
+
+input: 'Ｌｕｎｉｃｏｄé ｈｅｌｌｏ'
+   'Ｌｕｎｉｃｏｄé'               (0, 8)
+   'ｈｅｌｌｏ'                  (9, 14)
+
+input: '你好，世界！ Hello'
+   '你好'                     (0, 2)
+   '，'                      (2, 3)
+   '世界'                     (3, 5)
+   '！'                      (5, 6)
+   'Hello'                  (7, 12)
+
+input: 'a$b c'
+   'a'                      (0, 1)
+   '$'                      (1, 2)
+   'b'                      (2, 3)
+   'c'                      (4, 5)
+
+input: 'x=y;z'
+   'x'                      (0, 1)
+   '='                      (1, 2)
+   'y'                      (2, 3)
+   ';'                      (3, 4)
+   'z'                      (4, 5)
+
+input: "quote'test"
+   'quote'                  (0, 5)
+   "'"                      (5, 6)
+   'test'                   (6, 10)
+
+input: '100%_sure'
+   '100'                    (0, 3)
+   '%'                      (3, 4)
+   '_'                      (4, 5)
+   'sure'                   (5, 9)
+
+input: '你好世界'
+   '你好世界'                   (0, 4)
+
+input: 'a«b»c'
+   'a'                      (0, 1)
+   '«'                      (1, 2)
+   'b'                      (2, 3)
+   '»'                      (3, 4)
+   'c'                      (4, 5)
+
+input: '…ellipsis…'
+   '…'                      (0, 1)
+   'ellipsis'               (1, 9)
+   '…'                      (9, 10)
+
+input: 'a·b'
+   'a'                      (0, 1)
+   '·'                      (1, 2)
+   'b'                      (2, 3)
+
+DONE.
