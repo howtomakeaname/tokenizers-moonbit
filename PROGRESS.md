@@ -1089,3 +1089,11 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 - 独立评审后修正（2026-09-19 续）：初版 P\* 区间表并非"精确"——BMP 漏 391 个真 P\*（含 U+FE11-FE6B 竖排/小形变体整块、U+30FB 片假名中点、各文字系统标点与星面 P\*），且把旧表误覆盖的 38 个真 P\*（FE 区块）误删造成 \p{P} regex 回归。改为**经验生成**：`scripts/gen_unicode_punct.py` 对 Python `tokenizers` 0.22.2 的 BertPreTokenizer 分类器做 0-2 平面全量扫描（161 区间/717 码点，ASCII 符号刻意排除以保持 \p{P} 语义，分类器层经 `is_hf_punctuation` ASCII 并集补回），`is_unicode_punctuation` 改为区间表二分。全边界抽样复核 12520 码点与 HF 零差异（除刻意排除的 8 个 ASCII 符号）；新增 FE/片假名中点/星面/Unicode 14+ 排除项回归测试；顺带修复 CI 工具链漂移（`src/model/moon.pkg` 残留 unused `core/int` 导入）与脚本硬编码路径（`PARITY_MODELS_DIR` 环境变量覆盖）。
 - 已知遗留（本批未动）：offsets 原文映射（合成 155 失败主因，12 处缺口已定位）、decoder 目录（17 decoder × 23 用例行为表已产出待逐项对齐）。charsmap 字素簇归一化已由独立 PR 完成。
 - 全后端 native(406)/js(406)/wasm(383)/wasm-gc(383) 通过；fmt/check/info 干净（`is_hf_punctuation` 新增公开函数已入 .mbti）。
+
+### 2026-09-19 行为对比扫描第二批：precompiled charsmap 字素簇归一化
+
+- 行为对比扫描定位的真实模型 ids 分歧（t5、输入含 NFD 组合形式）根因：HF 0.22.2 的 precompiled charsmap 变换按 UAX#29 字素簇整体查 trie（簇 UTF-8 长度 < 6 字节时），未命中才回退逐字符；本库此前仅逐码点查找，`e` + U+0301 无法组合成 `é`，组合记号被孤立成 unk。诊断细节：分歧输入实为 `INPUTS[4]`（"café café Nomade NOMADE"，第二个 café 为 NFD 形式；两次出现均归一化为相同 token，故 id 11949 出现两次）。
+- 修复（`normalize_precompiled.mbt` `precompiled_map_normalize`）：按"基础字符 + 后随组合记号"近似字素簇分段；簇 < 6 字节时先整体 `precompiled_transform`（命中则整簇消费、替换一次）；未命中或 ≥ 6 字节回退逐字符查找（保持谚文 jamo 对不组合，对齐上游守卫）。
+- 验证：真实 t5 tokenizer + Python 0.22.2 实测——NFC 与 NFD 形式的 "café" 均编码为 [11949]（token "▁café"），混合输入 ids/tokens 与 Python 完全一致（此前 NFD 形式产出 `▁cafe` + unk）；行为对比扫描真实模型矩阵中 t5 的 ids/tokens 失败清零（剩余失败全部为 offsets 映射，归入下一批）。
+- 新增 `src/integration/charsmap_grapheme_test.mbt`（fixture 缺失自跳过）：NFC/NFD 等价、混合输入精确 ids、jamo 不组合三项锁定。
+- 全后端 native(400)/js(400)/wasm(377)/wasm-gc(377) 通过；fmt/check/info 干净；无公开 API 变化。

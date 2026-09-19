@@ -67,6 +67,10 @@ E5-small、MixedBread、SmolLM2。
   tokenizer 配置，并以 deterministic scanner 实现。look-ahead/look-behind、
   backreference、任意 alternation/grouping 语义以及未覆盖的 Unicode property
   组合会显式失败，而不是近似匹配。
+- **Precompiled charsmap 字素簇：** charsmap 变换与 HF 0.22.2 一致：先对整个字素簇
+  （基础字符 + 后随组合记号，UTF-8 长度 < 6 字节）整体查 trie，因此 t5 类
+  normalizer 下分解形式 `e` + U+0301 会组合为 `é`；未命中回退逐字符查找；
+  6 字节及以上的簇（如谚文 jamo 对）保持不组合，与上游守卫一致。
 - **Precompiled charsmap：** tokenizer.json 中的 `precompiled_charsmap` 会先做
   base64 解码，再按 SentencePiece double-array trie 应用到 Unicode scalar；空/缺失
   map 继续走常见 SPM NFKC + Unicode 空白折叠路径，并保留 ASCII fast path。
