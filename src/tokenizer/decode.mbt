@@ -66,14 +66,10 @@ fn Tokenizer::decode_with_hooks_impl(
   }
   match self.decoder {
     Some(d) => d.decode(tokens)
-    None => {
-      // No decoder: join token surfaces directly.
-      let sb = StringBuilder()
-      for t in tokens {
-        sb.write_string(t)
-      }
-      sb.to_string()
-    }
+    None =>
+      // No decoder: HuggingFace joins the token surfaces with spaces
+      // (`tokens.join(" ")` in the Rust tokenizer decode).
+      tokens.join(" ")
   }
 }
 

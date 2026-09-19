@@ -132,6 +132,17 @@ E5-small, MixedBread and SmolLM2.
   bounded/ranged forms before the generic span-building fallback, keeping those
   micro paths direct and faster than HF; more complex regex replacement remains
   future work.
+- **Punctuation classification:** BertPreTokenizer and the Punctuation
+  pre-tokenizer use HuggingFace's classifier (`is_ascii_punctuation ||
+  is_punctuation`). The P\* table is generated empirically from Python
+  `tokenizers` 0.22.2 itself (`scripts/gen_unicode_punct.py` sweeps the
+  BertPreTokenizer classifier over planes 0-2), so script punctuation
+  (Syriac/Tibetan/Myanmar/Thai ...), vertical/small form variants, the
+  katakana middle dot and astral-plane P\* are all covered; ASCII symbols
+  (`$ + < = > ^ \` | ~`) count as punctuation via the ASCII union. CJK ideographs are no longer split per character by BertPreTokenizer
+  (that is BertNormalizer's `handle_chinese_chars` concern), matching HF.
+  `merged_with_previous`/`merged_with_next` merge only the first/last
+  delimiter of a run, matching HF 0.22.2.
 - **Offsets:** char-based by default, relative to the original text. Optional
   byte-offset encode APIs are available for HuggingFace-style byte offsets.
 - **Truncation overflow windows:** encode mirrors HF `tokenizers` 0.22.2:

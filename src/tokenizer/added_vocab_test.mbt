@@ -79,7 +79,7 @@ test "decode skips special added tokens" {
   // <s> and </s> dropped; only "abc" remains (no decoder -> join surfaces)
   @test.assert_eq(s, "abc")
   let s2 = tok.decode([5, 4, 6], skip_special_tokens=false)
-  @test.assert_eq(s2, "<s>abc</s>")
+  @test.assert_eq(s2, "<s> abc </s>")
 }
 
 ///|
