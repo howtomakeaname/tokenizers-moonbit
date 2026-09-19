@@ -189,7 +189,10 @@ add("pad-left", with_trunc_pad(wordpiece_tokenizer(), None, {"strategy": {"Fixed
 add("pad-batchlongest", with_trunc_pad(wordpiece_tokenizer(), None, {"strategy": "BatchLongest", "direction": "Right", "pad_id": 0, "pad_token": "[PAD]", "pad_to_multiple_of": 2, "pad_type_id": 0}))
 
 # ---- real models sweep manifest ----
-REAL_MODELS_DIR = "/Users/bytedance/Documents/projects/moonbit-exp-projects/consumer-eval/models"
+REAL_MODELS_DIR = os.environ.get(
+    "PARITY_MODELS_DIR",
+    "/Users/bytedance/Documents/projects/moonbit-exp-projects/consumer-eval/models",
+)
 
 
 def run_golden():

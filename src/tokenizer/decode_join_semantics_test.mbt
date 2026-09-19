@@ -34,7 +34,9 @@ test "decode without decoder keeps explicit space tokens in the join" {
 
 ///|
 /// Special tokens kept (skip_special_tokens=false) join with spaces too.
-/// Python 0.22.2 equivalent: specials-kept decode joins all surfaces.
+/// (Python 0.22.2 reassigns declared added-token ids to fill vocab holes,
+/// so the literal id sequence differs there; the join semantics were
+/// probed with a contiguous-vocab equivalent.)
 test "decode without decoder joins kept specials with spaces" {
   let json =
     #|{"version":"1.0",

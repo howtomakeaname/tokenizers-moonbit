@@ -134,11 +134,12 @@ E5-small, MixedBread and SmolLM2.
   future work.
 - **Punctuation classification:** BertPreTokenizer and the Punctuation
   pre-tokenizer use HuggingFace's classifier (`is_ascii_punctuation ||
-  is_punctuation`): ASCII symbols (`$ + < = > ^ \` | ~`) count as
-  punctuation, Unicode P\* members (fullwidth/halfwidth punctuation, ideographic
-  stops, scattered Latin-1/Armenian/Hebrew/Arabic punctuation) are isolated,
-  and non-P characters in the CJK block (〄々〆〇〒〓, Hangzhou numerals) are
-  not. CJK ideographs are no longer split per character by BertPreTokenizer
+  is_punctuation`). The P\* table is generated empirically from Python
+  `tokenizers` 0.22.2 itself (`scripts/gen_unicode_punct.py` sweeps the
+  BertPreTokenizer classifier over planes 0-2), so script punctuation
+  (Syriac/Tibetan/Myanmar/Thai ...), vertical/small form variants, the
+  katakana middle dot and astral-plane P\* are all covered; ASCII symbols
+  (`$ + < = > ^ \` | ~`) count as punctuation via the ASCII union. CJK ideographs are no longer split per character by BertPreTokenizer
   (that is BertNormalizer's `handle_chinese_chars` concern), matching HF.
   `merged_with_previous`/`merged_with_next` merge only the first/last
   delimiter of a run, matching HF 0.22.2.
