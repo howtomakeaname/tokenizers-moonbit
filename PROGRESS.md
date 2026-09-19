@@ -1079,3 +1079,12 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 - 发布前验证：`moon fmt --check` / `moon check --deny-warn` / `moon info` 通过；native(398)/js(398)/wasm(375)/wasm-gc(375) 全过；`moon bench` 90/90；消费方项目端到端对拍通过。
 - 发布流程（PR #5，CI 8/8 全绿后合并）：`moon publish` 成功（Server status: 200 OK）。
 - 发布后验证：全新临时项目 `moon add howtomakeaname/tokenizers-moonbit@0.4.0` 安装发布包，四项 0.4.0 特性全部命中——单序列窗口 24（fox×20 stride=8，HF 实测一致）、bert 配置期校验报错消息逐字一致、pair 叉积 424（stride=4，HF 实测一致）、`Hello world` 编码 parity [15496, 995] 保持。
+### 2026-09-19 行为对比扫描第一批修复：decode join / HF 标点分类 / MWP-MWN run 语义
+
+- 新增行为对比扫描设施 `scripts/parity_cases.py`：42 个合成用例（富词表 BPE/WordPiece：多字符 merges、大小写、标点、重音、全角、CJK、数字）× 20 条边界输入，Python `tokenizers` 0.22.2 生成基准；另对 5 个真实模型（gpt2/bert/t5/qwen3/llama3_2）跑同输入矩阵。首轮：合成 813/1008、真实 59/100 通过；失败聚焦四类根因（offsets 映射、标点分类、decode join、NFD 组合）。本批修复后两类 + 标点；offsets 与 charsmap 字素簇归一化留下一批（分析报告见 `reports/offsets-alignment-analysis.md`）。
+- decode 无 decoder 时按 HF `tokens.join(" ")`（Rust tokenizer/mod.rs）改为空格连接：token surfaces 以空格相连，unknown id 在 join 前过滤（不产生多余空格），显式空格 token 原样参与 join（"hello"+" "+"moon" → "hello   moon"），保留的 special token 同样以空格连接。4 个断言旧拼接行为的既有测试期望更新为 HF 实测值；新增 `decode_join_semantics_test.mbt` 锁定。
+- HF 标点分类器 `is_hf_punctuation`（`is_ascii_punctuation || is_punctuation`）：ASCII 符号 `$ + < = > ^ \` | ~` 计为标点；`is_unicode_punctuation` 按 0.22.2 逐码点探针表（~430 码点，0 误报）改为精确 P\* 区间——新增拉丁-1/亚美尼亚/希伯来/阿拉伯/天城体零散 P\*、补充 U+2E00 区块、CJK 区块从整段 3001-303F 收敛为精确成员（〄々〆〇〒〓、杭州数字等非 P 移除）、FF5C（Sm）移除。
+- BertPreTokenizer 移除 CJK 逐字切分（HF 仅 whitespace(Removed) + 标点(Isolated)；CJK 隔离是 BertNormalizer handle_chinese_chars 职责）："你好，世界！ Hello" 现产出 你好|，|世界|！|Hello 与 HF 一致。
+- Punctuation pre-tokenizer `merged_with_previous`/`merged_with_next` 修正为 HF 的 run 首字符/末字符合并语义（"hi!!!there"：MWP → hi!|!|!|there，MWN → hi|!|!|!there），removed 保持无空片。旧整 run 合并测试期望更新。
+- 已知遗留（本批未动）：offsets 原文映射（合成 155 失败主因，12 处缺口已定位）、precompiled charsmap 字素簇归一化（t5 NFD 输入 ids 分歧根因：HF 按 <6 字节字素簇整体查 trie，本库按单码点）、decoder 目录（17 decoder × 23 用例行为表已产出待逐项对齐）。
+- 全后端 native(406)/js(406)/wasm(383)/wasm-gc(383) 通过；fmt/check/info 干净（`is_hf_punctuation` 新增公开函数已入 .mbti）。

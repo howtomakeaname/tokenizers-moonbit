@@ -132,6 +132,16 @@ E5-small, MixedBread and SmolLM2.
   bounded/ranged forms before the generic span-building fallback, keeping those
   micro paths direct and faster than HF; more complex regex replacement remains
   future work.
+- **Punctuation classification:** BertPreTokenizer and the Punctuation
+  pre-tokenizer use HuggingFace's classifier (`is_ascii_punctuation ||
+  is_punctuation`): ASCII symbols (`$ + < = > ^ \` | ~`) count as
+  punctuation, Unicode P\* members (fullwidth/halfwidth punctuation, ideographic
+  stops, scattered Latin-1/Armenian/Hebrew/Arabic punctuation) are isolated,
+  and non-P characters in the CJK block (〄々〆〇〒〓, Hangzhou numerals) are
+  not. CJK ideographs are no longer split per character by BertPreTokenizer
+  (that is BertNormalizer's `handle_chinese_chars` concern), matching HF.
+  `merged_with_previous`/`merged_with_next` merge only the first/last
+  delimiter of a run, matching HF 0.22.2.
 - **Offsets:** char-based by default, relative to the original text. Optional
   byte-offset encode APIs are available for HuggingFace-style byte offsets.
 - **Truncation overflow windows:** encode mirrors HF `tokenizers` 0.22.2:

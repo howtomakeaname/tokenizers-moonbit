@@ -19,6 +19,8 @@ pub fn gpt2_split(String) -> Array[String]
 
 pub fn is_cjk(Char) -> Bool
 
+pub fn is_hf_punctuation(Char) -> Bool
+
 pub fn is_letter(Char) -> Bool
 
 pub fn is_number(Char) -> Bool

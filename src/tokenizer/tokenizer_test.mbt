@@ -1446,7 +1446,8 @@ test "decode_batch decodes each id sequence" {
   let json =
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0," ":1,"moon":2},"unk_token":"hello"}}
   let tok = Tokenizer::from_str(json)
-  @test.assert_eq(tok.decode_batch([[0, 1, 2], [2]]), ["hello moon", "moon"])
+  // vocab contains " " as a token; join(" ") yields hello+space+space+space+moon
+  @test.assert_eq(tok.decode_batch([[0, 1, 2], [2]]), ["hello   moon", "moon"])
 }
 
 ///|
@@ -1455,14 +1456,16 @@ test "decode_batch handles duplicate id sequences" {
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0," ":1,"moon":2},"unk_token":"hello"}}
   let tok = Tokenizer::from_str(json)
   @test.assert_eq(tok.decode_batch([[0, 1, 2], [0, 1, 2], [], []]), [
-    "hello moon", "hello moon", "", "",
+    "hello   moon", "hello   moon", "", "",
   ])
-  @test.assert_eq(tok.decode_ids([0, 1, 2]), "hello moon")
-  @test.assert_eq(tok.batch_decode([[2], [0, 1, 2]]), ["moon", "hello moon"])
-  @test.assert_eq(tok.decode_ids_batch([[2], [0, 1, 2]]), ["moon", "hello moon"])
-  @test.assert_eq(tok.async_decode([0, 1, 2]), "hello moon")
+  @test.assert_eq(tok.decode_ids([0, 1, 2]), "hello   moon")
+  @test.assert_eq(tok.batch_decode([[2], [0, 1, 2]]), ["moon", "hello   moon"])
+  @test.assert_eq(tok.decode_ids_batch([[2], [0, 1, 2]]), [
+    "moon", "hello   moon",
+  ])
+  @test.assert_eq(tok.async_decode([0, 1, 2]), "hello   moon")
   @test.assert_eq(tok.async_decode_batch([[2], [0, 1, 2]]), [
-    "moon", "hello moon",
+    "moon", "hello   moon",
   ])
 }
 
@@ -3571,7 +3574,7 @@ test "train_wordlevel builds deterministic tokenizer" {
   let enc = tok.encode("hello moon", add_special_tokens=false)
   @test.assert_eq(enc.tokens, ["hello", "[UNK]"])
   @test.assert_eq(enc.ids, [2, 1])
-  @test.assert_eq(tok.decode(enc.ids, skip_special_tokens=false), "hello[UNK]")
+  @test.assert_eq(tok.decode(enc.ids, skip_special_tokens=false), "hello [UNK]")
 }
 
 ///|

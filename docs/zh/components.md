@@ -95,6 +95,13 @@ E5-small、MixedBread、SmolLM2。
   `[^\s\p{L}\p{N}]+` 和简单 literal alternation 替换；Normalizer 与 Decoder `Replace` 会先分发
   bounded/ranged 量词热路径，再进入通用 span fallback，使对应 micro benchmark
   保持快于 HF；更复杂正则替换待补。
+- **标点分类：** BertPreTokenizer 与 Punctuation pre-tokenizer 使用 HF 分类器
+  （`is_ascii_punctuation || is_punctuation`）：ASCII 符号（`$ + < = > ^ \` | ~`）
+  计为标点；Unicode P\* 成员（全角/半角标点、中文句读、拉丁-1/亚美尼亚/希伯来/
+  阿拉伯零散标点）会被隔离；CJK 区块内非 P 字符（〄々〆〇〒〓、杭州数字）不算
+  标点。BertPreTokenizer 不再对 CJK 逐字切分（那是 BertNormalizer 的
+  `handle_chinese_chars` 职责），与 HF 一致。`merged_with_previous`/
+  `merged_with_next` 只合并 run 的第一个/最后一个分隔符，与 HF 0.22.2 一致。
 - **Offsets：** 默认返回字符偏移；可通过 byte-offset encode API 对齐 HF byte offsets。
 - **截断溢出窗口：** encode 与 HF `tokenizers` 0.22.2 一致：两种方向、
   `stride = 0` / `stride > 0` 的窗口均写入 `enc.overflowing`，后处理器包裹

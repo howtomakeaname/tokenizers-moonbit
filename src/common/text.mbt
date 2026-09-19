@@ -226,22 +226,70 @@ pub fn is_unicode_punctuation(c : Char) -> Bool {
   (u >= 0x5B && u <= 0x5D) ||
   u == 0x5F ||
   (u >= 0x7B && u <= 0x7D) ||
+  // Latin-1 / Greek scattered P*
+  u == 0xA1 ||
+  u == 0xA7 ||
+  u == 0xAB ||
+  (u >= 0xB6 && u <= 0xB7) ||
+  u == 0xBB ||
+  u == 0xBF ||
+  u == 0x37E ||
+  u == 0x387 ||
+  // Armenian / Hebrew / Arabic / Devanagari P*
+  u == 0x55A ||
+  u == 0x55C ||
+  u == 0x55E ||
+  u == 0x58A ||
+  u == 0x5BE ||
+  u == 0x5C0 ||
+  u == 0x5C3 ||
+  u == 0x5C6 ||
+  (u >= 0x5F3 && u <= 0x5F4) ||
+  u == 0x61B ||
+  u == 0x61F ||
+  (u >= 0x66A && u <= 0x66D) ||
+  u == 0x6D4 ||
+  (u >= 0x964 && u <= 0x965) ||
+  // General punctuation
   (u >= 0x2010 && u <= 0x2027) ||
   (u >= 0x2030 && u <= 0x2043) ||
   (u >= 0x2045 && u <= 0x2051) ||
   (u >= 0x2053 && u <= 0x205E) ||
-  (u >= 0x3001 && u <= 0x303F) ||
-  (u >= 0xFE10 && u <= 0xFE1F) ||
-  (u >= 0xFE30 && u <= 0xFE4F) ||
+  // Supplemental punctuation (probed subset that 0.22.2 classifies as P*)
+  (u >= 0x2E00 && u <= 0x2E03) ||
+  u == 0x2E14 ||
+  (u >= 0x2E17 && u <= 0x2E18) ||
+  (u >= 0x2E1A && u <= 0x2E1B) ||
+  u == 0x2E1E ||
+  u == 0x2E20 ||
+  u == 0x2E2E ||
+  (u >= 0x2E30 && u <= 0x2E31) ||
+  (u >= 0x2E3A && u <= 0x2E3D) ||
+  u == 0x2E42 ||
+  // CJK symbols: exact P* members only (excludes 〄々〆〇〒〓 and 3021-303F non-P)
+  (u >= 0x3001 && u <= 0x3003) ||
+  (u >= 0x3008 && u <= 0x3011) ||
+  (u >= 0x3014 && u <= 0x301F) ||
+  u == 0x3030 ||
+  u == 0x303D ||
+  // Vertical / small form variants (exact probed members)
+  u == 0xFE10 ||
+  u == 0xFE19 ||
+  u == 0xFE30 ||
+  u == 0xFE45 ||
+  u == 0xFE50 ||
+  u == 0xFE54 ||
+  u == 0xFE6B ||
+  // Fullwidth forms (FF5C ｜ is Sm, not P*)
   (u >= 0xFF01 && u <= 0xFF03) ||
   (u >= 0xFF05 && u <= 0xFF0A) ||
   (u >= 0xFF0C && u <= 0xFF0F) ||
   (u >= 0xFF1A && u <= 0xFF1B) ||
-  u == 0xFF1F ||
-  u == 0xFF20 ||
+  (u >= 0xFF1F && u <= 0xFF20) ||
   (u >= 0xFF3B && u <= 0xFF3D) ||
   u == 0xFF3F ||
-  (u >= 0xFF5B && u <= 0xFF5D) ||
+  u == 0xFF5B ||
+  u == 0xFF5D ||
   (u >= 0xFF5F && u <= 0xFF65)
 }
 
