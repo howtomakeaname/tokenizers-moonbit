@@ -91,8 +91,10 @@ fn is_word_char(c : Char) -> Bool {
   is_letter(c) || is_number(c) || c == '_'
 }
 
-// BertPreTokenizer: split on whitespace, isolate punctuation, and split CJK
-// characters each into their own piece.
+// BertPreTokenizer: whitespace split (removed) then punctuation isolated,
+// mirroring HF bert.rs (`char::is_whitespace` split Removed + is_bert_punc
+// isolated). CJK characters are NOT split per char here — HF isolates CJK
+// only through BertNormalizer's handle_chinese_chars (a normalizer concern).
 
 ///|
 fn bert_pre_tokenize(text : String, base_offset : Int) -> Array[@types.Split] {
@@ -106,8 +108,8 @@ fn bert_pre_tokenize(text : String, base_offset : Int) -> Array[@types.Split] {
       i = i + 1
       continue
     }
-    if is_punct(c) || is_cjk(c) {
-      // each punctuation / CJK char is its own token
+    if is_hf_punctuation(c) {
+      // each punctuation char is its own token
       out.push({
         value: substr(chars, i, i + 1),
         offsets: (base_offset + i, base_offset + i + 1),
@@ -115,12 +117,9 @@ fn bert_pre_tokenize(text : String, base_offset : Int) -> Array[@types.Split] {
       i = i + 1
       continue
     }
-    // a run of non-space, non-punct, non-cjk chars
+    // a run of non-space, non-punctuation chars
     let mut j = i
-    while j < n &&
-          !is_space(chars[j]) &&
-          !is_punct(chars[j]) &&
-          !is_cjk(chars[j]) {
+    while j < n && !is_space(chars[j]) && !is_hf_punctuation(chars[j]) {
       j = j + 1
     }
     out.push({
@@ -146,9 +145,9 @@ fn punctuation_split(
   let out : Array[@types.Split] = []
   let mut i = 0
   while i < n {
-    if is_punct(chars[i]) {
+    if is_hf_punctuation(chars[i]) {
       let start = i
-      while i < n && is_punct(chars[i]) {
+      while i < n && is_hf_punctuation(chars[i]) {
         i = i + 1
       }
       match behavior {
@@ -166,45 +165,64 @@ fn punctuation_split(
             offsets: (base_offset + start, base_offset + i),
           })
         MergedWithPrevious =>
+          // HF merges only the FIRST delimiter of a run into the previous
+          // piece ("the-final--countdown" -> the- | final- | - | countdown);
+          // the rest of the run stays isolated.
           if out.length() == 0 {
-            out.push({
-              value: substr(chars, start, i),
-              offsets: (base_offset + start, base_offset + i),
-            })
+            for k in start..<i {
+              out.push({
+                value: substr(chars, k, k + 1),
+                offsets: (base_offset + k, base_offset + k + 1),
+              })
+            }
           } else {
             let idx = out.length() - 1
             let prev = out[idx]
             out[idx] = {
-              value: prev.value + substr(chars, start, i),
-              offsets: (prev.offsets.0, base_offset + i),
+              value: prev.value + substr(chars, start, start + 1),
+              offsets: (prev.offsets.0, base_offset + start + 1),
+            }
+            for k in (start + 1)..<i {
+              out.push({
+                value: substr(chars, k, k + 1),
+                offsets: (base_offset + k, base_offset + k + 1),
+              })
             }
           }
         MergedWithNext => {
-          let start2 = start
-          while i < n && is_punct(chars[i]) {
-            i = i + 1
-          }
-          if i < n {
-            let mut j = i
-            while j < n && !is_punct(chars[j]) {
-              j = j + 1
-            }
+          // HF merges only the LAST delimiter of a run into the following
+          // word ("the-final--countdown" -> the | -final | - | -countdown);
+          // the rest of the run stays isolated.
+          for k in start..<(i - 1) {
             out.push({
-              value: substr(chars, start2, j),
-              offsets: (base_offset + start2, base_offset + j),
+              value: substr(chars, k, k + 1),
+              offsets: (base_offset + k, base_offset + k + 1),
+            })
+          }
+          let last = i - 1
+          let mut j = i
+          while j < n && !is_hf_punctuation(chars[j]) {
+            j = j + 1
+          }
+          if j > i {
+            out.push({
+              value: substr(chars, last, j),
+              offsets: (base_offset + last, base_offset + j),
             })
             i = j
           } else {
+            // no following word: the last delimiter stays isolated
             out.push({
-              value: substr(chars, start2, i),
-              offsets: (base_offset + start2, base_offset + i),
+              value: substr(chars, last, last + 1),
+              offsets: (base_offset + last, base_offset + last + 1),
             })
+            i = last + 1
           }
         }
       }
     } else {
       let mut j = i
-      while j < n && !is_punct(chars[j]) {
+      while j < n && !is_hf_punctuation(chars[j]) {
         j = j + 1
       }
       out.push({
@@ -320,6 +338,21 @@ pub fn is_punct(c : Char) -> Bool {
   (u >= 0x7B && u <= 0x7E) || // { | } ~
   (u >= 0x2000 && u <= 0x206F) || // general punctuation
   (u >= 0x3000 && u <= 0x303F) // CJK symbols and punctuation
+}
+
+///|
+/// HuggingFace's pre-tokenizer punctuation classifier:
+/// `char::is_ascii_punctuation(x) || x.is_punctuation()` (Unicode P*
+/// categories, which include fullwidth and halfwidth punctuation). Rust's
+/// `is_ascii_punctuation` covers every graphic non-alnum ASCII char, so ASCII
+/// symbols like `$ + < = > ^ \` | ~` count as punctuation here.
+pub fn is_hf_punctuation(c : Char) -> Bool {
+  let u = c.to_int()
+  (u >= 0x21 && u <= 0x2F) ||
+  (u >= 0x3A && u <= 0x40) ||
+  (u >= 0x5B && u <= 0x60) ||
+  (u >= 0x7B && u <= 0x7E) ||
+  @common.is_unicode_punctuation(c)
 }
 
 ///|

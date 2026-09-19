@@ -14,12 +14,15 @@ test "punctuation honors split behavior" {
     "hi!!!there",
     base_offset=0,
   )
-  @test.assert_eq(previous.map(x => x.value), ["hi!!!", "there"])
+  // HF 0.22.2: only the first delimiter of a run merges with the previous
+  // piece (verified: merged_with_previous("hi!!!there") -> hi! | ! | ! | there)
+  @test.assert_eq(previous.map(x => x.value), ["hi!", "!", "!", "there"])
   let next = PreTokenizer::Punctuation(behavior=MergedWithNext).pre_tokenize(
     "hi!!!there",
     base_offset=0,
   )
-  @test.assert_eq(next.map(x => x.value), ["hi", "!!!there"])
+  // HF 0.22.2: only the last delimiter of a run merges with the next word
+  @test.assert_eq(next.map(x => x.value), ["hi", "!", "!", "!there"])
   let removed = PreTokenizer::Punctuation(behavior=Removed).pre_tokenize(
     "hi!!!there",
     base_offset=0,
