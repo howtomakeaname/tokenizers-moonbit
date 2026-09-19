@@ -70,6 +70,13 @@ E5-small, MixedBread and SmolLM2.
   look-ahead/look-behind, backreferences, arbitrary alternation/grouping
   semantics, and unsupported Unicode property combinations fail explicitly
   instead of being approximated.
+- **Precompiled charsmap clusters:** the charsmap transform mirrors HF
+  0.22.2: grapheme clusters (a base character plus trailing combining
+  marks) shorter than 6 UTF-8 bytes are looked up in the trie as a whole
+  first, so decomposed `e` + U+0301 composes to `é` on t5-style
+  normalizers; misses fall back to per-character lookups, and 6+ byte
+  clusters (Hangul jamo pairs) stay uncomposed, matching the upstream
+  guard.
 - **Precompiled charsmap:** tokenizer.json `precompiled_charsmap` payloads are
   base64-decoded into the SentencePiece double-array trie and applied per Unicode
   scalar; empty/null maps retain the common SPM NFKC + Unicode whitespace folding

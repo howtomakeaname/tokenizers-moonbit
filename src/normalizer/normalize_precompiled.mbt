@@ -17,16 +17,62 @@ fn precompiled_normalize(s : String) -> String {
 }
 
 ///|
+/// Apply a precompiled charsmap trie. Mirrors HF 0.22.2 (`precompiled.rs` /
+/// `spm_precompiled::transform`): text is segmented into grapheme clusters
+/// (approximated as a base char plus trailing combining marks); a cluster
+/// shorter than 6 UTF-8 bytes is looked up in the trie as a whole — on a
+/// hit the replacement replaces the entire cluster (leftover marks are
+/// consumed) — and misses fall back to per-character lookups. Clusters of
+/// 6+ bytes (e.g. Hangul jamo pairs) also use per-character lookups, which
+/// leaves them uncomposed, matching the upstream guard.
 fn precompiled_map_normalize(data : PrecompiledCharsMap, s : String) -> String {
   let chars = s.to_array()
+  let n = chars.length()
   let sb = StringBuilder()
   let mut i = 0
-  while i < chars.length() {
-    match precompiled_transform(data, char_to_string(chars[i])) {
-      Some(repl) => sb.write_string(repl)
-      None => sb.write_char(chars[i])
+  while i < n {
+    // cluster = base char + following combining marks
+    let mut j = i + 1
+    while j < n && is_combining_mark(chars[j].to_int()) {
+      j = j + 1
     }
-    i = i + 1
+    if j > i + 1 {
+      let cluster = char_slice_to_string(chars, i, j)
+      let cluster_bytes = @utf8.encode(cluster).length()
+      if cluster_bytes < 6 {
+        match precompiled_transform(data, cluster) {
+          Some(repl) => {
+            sb.write_string(repl)
+            i = j
+            continue
+          }
+          None => ()
+        }
+      }
+      // fall back to per-character lookups for the whole cluster
+      while i < j {
+        match precompiled_transform(data, char_to_string(chars[i])) {
+          Some(repl) => sb.write_string(repl)
+          None => sb.write_char(chars[i])
+        }
+        i = i + 1
+      }
+    } else {
+      match precompiled_transform(data, char_to_string(chars[i])) {
+        Some(repl) => sb.write_string(repl)
+        None => sb.write_char(chars[i])
+      }
+      i = i + 1
+    }
+  }
+  sb.to_string()
+}
+
+///|
+fn char_slice_to_string(chars : Array[Char], start : Int, stop : Int) -> String {
+  let sb = StringBuilder()
+  for k in start..<stop {
+    sb.write_char(chars[k])
   }
   sb.to_string()
 }

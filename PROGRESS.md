@@ -1079,3 +1079,10 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 - 发布前验证：`moon fmt --check` / `moon check --deny-warn` / `moon info` 通过；native(398)/js(398)/wasm(375)/wasm-gc(375) 全过；`moon bench` 90/90；消费方项目端到端对拍通过。
 - 发布流程（PR #5，CI 8/8 全绿后合并）：`moon publish` 成功（Server status: 200 OK）。
 - 发布后验证：全新临时项目 `moon add howtomakeaname/tokenizers-moonbit@0.4.0` 安装发布包，四项 0.4.0 特性全部命中——单序列窗口 24（fox×20 stride=8，HF 实测一致）、bert 配置期校验报错消息逐字一致、pair 叉积 424（stride=4，HF 实测一致）、`Hello world` 编码 parity [15496, 995] 保持。
+### 2026-09-19 行为对比扫描第二批：precompiled charsmap 字素簇归一化
+
+- 行为对比扫描定位的真实模型 ids 分歧（t5、输入含 NFD 组合形式）根因：HF 0.22.2 的 precompiled charsmap 变换按 UAX#29 字素簇整体查 trie（簇 UTF-8 长度 < 6 字节时），未命中才回退逐字符；本库此前仅逐码点查找，`e` + U+0301 无法组合成 `é`，组合记号被孤立成 unk。诊断细节：分歧输入实为 `INPUTS[4]`（"café café Nomade NOMADE"，第二个 café 为 NFD 形式；两次出现均归一化为相同 token，故 id 11949 出现两次）。
+- 修复（`normalize_precompiled.mbt` `precompiled_map_normalize`）：按"基础字符 + 后随组合记号"近似字素簇分段；簇 < 6 字节时先整体 `precompiled_transform`（命中则整簇消费、替换一次）；未命中或 ≥ 6 字节回退逐字符查找（保持谚文 jamo 对不组合，对齐上游守卫）。
+- 验证：真实 t5 tokenizer + Python 0.22.2 实测——NFC 与 NFD 形式的 "café" 均编码为 [11949]（token "▁café"），混合输入 ids/tokens 与 Python 完全一致（此前 NFD 形式产出 `▁cafe` + unk）；行为对比扫描真实模型矩阵中 t5 的 ids/tokens 失败清零（剩余失败全部为 offsets 映射，归入下一批）。
+- 新增 `src/integration/charsmap_grapheme_test.mbt`（fixture 缺失自跳过）：NFC/NFD 等价、混合输入精确 ids、jamo 不组合三项锁定。
+- 全后端 native(400)/js(400)/wasm(377)/wasm-gc(377) 通过；fmt/check/info 干净；无公开 API 变化。
