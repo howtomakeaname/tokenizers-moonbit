@@ -434,6 +434,11 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern.is_empty() {
     return s
   }
+  // single-char literal bounded quantifiers: a{2} / a{2,} / a{2,3}
+  match @common.replace_char_bounded_runs(s, pattern, content) {
+    Some(out) => return out
+    None => ()
+  }
   // bare single-character class spellings: per-character replacement
   match @common.bare_class_kind(pattern) {
     Some(kind) =>

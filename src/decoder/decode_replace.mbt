@@ -29,6 +29,18 @@ fn decode_replace_direct(
   pattern : String,
   content : String,
 ) -> String {
+  // single-char literal bounded quantifiers run per token (HF decoders are
+  // per-token: a{2} replaces only within one token surface)
+  if @common.char_bounded_quantifier_shape(pattern) {
+    let sb = StringBuilder()
+    for t in tokens {
+      match @common.replace_char_bounded_runs(t, pattern, content) {
+        Some(out) => sb.write_string(out)
+        None => sb.write_string(t)
+      }
+    }
+    return sb.to_string()
+  }
   if pattern == "\\s+" {
     return decode_replace_char_runs_direct(tokens, content, fn(c) {
       @common.is_unicode_whitespace(c.to_int())
