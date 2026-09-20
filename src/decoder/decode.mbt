@@ -439,6 +439,21 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     Some(out) => return out
     None => ()
   }
+  // zero-minimum quantifiers: a{0} / a{0,m} / a{0,} and class bases
+  match @common.zero_min_quantifier_spec(pattern) {
+    Some((kind, literal, max)) => {
+      let lit = literal
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = lit.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { @common.bounded_regex_kind_pred(kind, x) }
+      }
+      let m = if max < 0 { None } else { Some(max) }
+      return @common.replace_zero_min_runs(s, content, pred, m)
+    }
+    None => ()
+  }
   // bare single-character class spellings: per-character replacement
   match @common.bare_class_kind(pattern) {
     Some(kind) =>
