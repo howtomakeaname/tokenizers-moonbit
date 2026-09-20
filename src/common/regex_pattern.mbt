@@ -81,15 +81,6 @@ fn bounded_regex_kind_inner(pattern : String) -> (Int, Int)? {
   if word_class > 0 {
     return Some((4, word_class))
   }
-  let non_word = bounded_max_variants(
-    pattern,
-    ["\\W{1,2}", "[^\\w]{1,2}", "[^A-Za-z0-9_]{1,2}"],
-    ["\\W{1,3}", "[^\\w]{1,3}", "[^A-Za-z0-9_]{1,3}"],
-    ["\\W{1,4}", "[^\\w]{1,4}", "[^A-Za-z0-9_]{1,4}"],
-  )
-  if non_word > 0 {
-    return Some((13, non_word))
-  }
   // bracket \w spellings are class-context: word WITHOUT the onig quirks
   let w_bracket = bounded_max_variants(
     pattern,
@@ -108,6 +99,15 @@ fn bounded_regex_kind_inner(pattern : String) -> (Int, Int)? {
   )
   if w_bracket_inv > 0 {
     return Some((27, w_bracket_inv))
+  }
+  let non_word = bounded_max_variants(
+    pattern,
+    ["\\W{1,2}", "[^\\w]{1,2}", "[^A-Za-z0-9_]{1,2}"],
+    ["\\W{1,3}", "[^\\w]{1,3}", "[^A-Za-z0-9_]{1,3}"],
+    ["\\W{1,4}", "[^\\w]{1,4}", "[^A-Za-z0-9_]{1,4}"],
+  )
+  if non_word > 0 {
+    return Some((13, non_word))
   }
   let alnum = bounded_max(
     pattern, "[A-Za-z0-9]{1,2}", "[A-Za-z0-9]{1,3}", "[A-Za-z0-9]{1,4}",

@@ -50,7 +50,7 @@ fn ranged_regex_kind_inner(pattern : String) -> (Int, Int, Int)? {
       26,
       ["[\\w]{2,3}", "[^\\W]{2,3}"],
       ["[\\w]{2,4}", "[^\\W]{2,4}"],
-      ["[\\w]{3,4}"],
+      ["[\\w]{3,4}", "[^\\W]{3,4}"],
     ) {
     Some(v) => return Some(v)
     None => ()
@@ -61,7 +61,7 @@ fn ranged_regex_kind_inner(pattern : String) -> (Int, Int, Int)? {
       27,
       ["[\\W]{2,3}", "[^\\w]{2,3}"],
       ["[\\W]{2,4}", "[^\\w]{2,4}"],
-      ["[\\W]{3,4}"],
+      ["[\\W]{3,4}", "[^\\w]{3,4}"],
     ) {
     Some(v) => return Some(v)
     None => ()
