@@ -332,6 +332,10 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if bare_class_kind(pattern) is Some(_) {
     return true
   }
+  // single-char literal bounded quantifiers within the 1..4 window
+  if char_bounded_quantifier_shape(pattern) {
+    return true
+  }
   // everything the chain would handle via its hardcoded literal cases is
   // covered by the kinds/scanners above; a remaining pure literal is
   // correctly handled by the literal fallback
@@ -392,4 +396,66 @@ pub fn bare_class_kind(pattern : String) -> Int? {
     "[\\r\\n]" => Some(3)
     _ => None
   }
+}
+
+///|
+/// Canonicalize `\w`-family bracket spellings to their explicit ASCII
+/// class form so every quantifier/anchored table accepts them for free
+/// (HF treats `[\w]` and `[A-Za-z0-9_]` identically; the ASCII-vs-\w
+/// split is preserved via the kind override on the canonical spelling).
+pub fn canonicalize_word_class(pattern : String) -> String {
+  if !pattern.contains("[\\w]") &&
+    !pattern.contains("[^\\w]") &&
+    !pattern.contains("[\\W]") &&
+    !pattern.contains("[^\\W]") {
+    return pattern
+  }
+  // HF keeps bracket \w Unicode-wide (probed: [\w]+ on "ab é" replaces é),
+  // so canonicalize to the shortcut forms; the ASCII [A-Za-z0-9_] spelling
+  // stays distinct with its ASCII-only kind.
+  let a = pattern.replace(old="[^\\w]", new="\\W")
+  let b = a.replace(old="[\\w]", new="\\w")
+  let c = b.replace(old="[^\\W]", new="\\w")
+  c.replace(old="[\\W]", new="\\W")
+}
+
+///|
+/// Whether `pattern` is `c{n}` / `c{n,}` / `c{n,m}` for an ordinary
+/// literal char with 1 <= n <= m <= 4 (the supported bounded window).
+pub fn char_bounded_quantifier_shape(pattern : String) -> Bool {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  if n < 4 || chars[1] != '{' || chars[n - 1] != '}' {
+    return false
+  }
+  let c = chars[0]
+  if c == '{' || c == '}' || c == '\\' || c == '[' || c == ']' {
+    return false
+  }
+  let mut i = 2
+  let mut lo = 0
+  let mut lo_digits = 0
+  while i < n && chars[i] >= '0' && chars[i] <= '9' {
+    lo = lo * 10 + (chars[i].to_int() - '0'.to_int())
+    lo_digits = lo_digits + 1
+    i = i + 1
+  }
+  if lo_digits == 0 || lo == 0 || lo > 4 {
+    return false
+  }
+  if i < n && chars[i] == ',' {
+    i = i + 1
+    if i == n - 1 {
+      return true // {n,}
+    }
+    let mut hi = 0
+    let mut hi_digits = 0
+    while i < n && chars[i] >= '0' && chars[i] <= '9' {
+      hi = hi * 10 + (chars[i].to_int() - '0'.to_int())
+      hi_digits = hi_digits + 1
+      i = i + 1
+    }
+    return hi_digits > 0 && hi >= lo && hi <= 4 && i == n - 1
+  }
+  i == n - 1
 }
