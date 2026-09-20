@@ -181,6 +181,12 @@ moon test --target native --deny-warn                      # 同样跑 js/wasm/w
 4. **pair overflow 叉积 vs 0.23-dev**：按用户确认锁定 0.22.2；HF 主分支已改每侧独立窗口，若未来切换基准需重做（背景与实测数据在 PR #3）。
 5. **性能遗留**：大词表 JSON 冷加载（llama from_str ~1.14x）；identity 对齐列分配（lazy 化在队列 P2）；nightly 趋势落盘未建。
 6. **Unigram 采样随机性**：确定性种子（可复现），按需换真随机源。
+7. **已接受 Replace/正则族的对抗性分歧**（PR #13 评审实测，真实模型语料未触发，按需逐项收敛）：
+   - 锚定 `^…`/`…$` 族在 HF 为**逐行**锚定（onig 多行），本库仅字符串首/尾（`\s+$` 于含换行文本分歧）；
+   - `[0-9]`/`[A-Za-z0-9_]` 拼写映射到 Unicode `\d`/`\w` kind（全角数字/带音符字母会被匹配，HF 为 ASCII-only）；
+   - 裸 `[
+]` 实现为 `+`-run 语义（HF 逐字符），`[0-9][0-9]` 拼接式实现为 bounded run；
+   - 字面量大括号 pattern（`a{b`、`x}y`）被谓词当作算符而在加载期拒绝（onig 视为字面量、原链路可正确处理）——fail-explicitly 取舍。
 
 ## 6. 开发约定
 

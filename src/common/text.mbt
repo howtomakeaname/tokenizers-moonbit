@@ -287,12 +287,19 @@ pub fn is_not_whitespace_letter_or_number(c : Char) -> Bool {
 /// scanner, Normalizer Replace and Decoder Replace from drifting apart.
 
 ///|
-/// Whether the shared replace chain (Split/Normalizer/Decoder) fully
-/// supports `pattern` as a REGEX — i.e. one of the deterministic scanner
-/// families handles it, or it is a regex-literal (where literal
-/// replacement is the correct regex behavior). Used by load-time gates to
-/// reject unsupported regex patterns explicitly instead of silently
-/// falling back to a literal replace.
+/// Whether the shared replace chain (Split/Normalizer/Decoder) handles
+/// `pattern` through a deterministic scanner family or as a
+/// regex-literal (where literal replacement is the correct regex
+/// behavior). Exact against Python 0.22.2 for the audited corpus
+/// (real models use only `\s+`, ` {2,}` and String literals); known
+/// family-level divergences on adversarial input are tracked in
+/// PROGRESS §5 (per-line anchors, `[0-9]`/`[A-Za-z0-9_]` mapping to
+/// Unicode kinds, bare `[\r\n]` run semantics). A literal brace used
+/// as text (`a{b`) is treated as an operator and rejected — exotic,
+/// accepted under the fail-explicitly policy. Used by load-time gates
+/// to reject unsupported regex patterns explicitly instead of silently
+/// falling back to a literal replace (which could silently mis-replace
+/// text containing the literal pattern).
 pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if pattern.is_empty() {
     // Degenerate: the chain returns the input unchanged (documented
