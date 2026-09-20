@@ -31,7 +31,7 @@ pub fn bounded_regex_kind_pred(kind : Int, c : Char) -> Bool {
 }
 
 ///|
-fn is_ascii_word_char(c : Char) -> Bool {
+pub fn is_ascii_word_char(c : Char) -> Bool {
   (c >= 'a' && c <= 'z') ||
   (c >= 'A' && c <= 'Z') ||
   (c >= '0' && c <= '9') ||
@@ -43,7 +43,7 @@ fn is_ascii_word_char(c : Char) -> Bool {
 /// while `\d`/`\w` are Unicode. Post-override for kind entry points whose
 /// spelling groups conflate them (verified: [0-9] leaves fullwidth ０,
 /// \d replaces it).
-pub fn ascii_class_kind_override(pattern : String, kind : Int) -> Int {
+fn ascii_class_kind_override(pattern : String, kind : Int) -> Int {
   match kind {
     11 => if pattern.contains("[0-9]") { 22 } else { 11 }
     14 => if pattern.contains("[^0-9]") { 23 } else { 14 }

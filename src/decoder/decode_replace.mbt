@@ -52,9 +52,15 @@ fn decode_replace_direct(
       }
     None => ()
   }
-  if pattern == "\\d+" || pattern == "[\\d]+" || pattern == "[0-9]+" {
+  if pattern == "\\d+" || pattern == "[\\d]+" {
     return decode_replace_char_runs_direct(tokens, content, fn(c) {
       @common.is_decimal_number(c)
+    })
+  }
+  // `[0-9]+` is ASCII-only (HF: fullwidth digits stay)
+  if pattern == "[0-9]+" {
+    return decode_replace_char_runs_direct(tokens, content, fn(c) {
+      c >= '0' && c <= '9'
     })
   }
   if pattern == "[\\p{P}\\p{S}]+" ||
