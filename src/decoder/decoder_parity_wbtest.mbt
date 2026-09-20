@@ -179,3 +179,17 @@ test "replace decoder handles zero-min quantifiers per onig semantics" {
   @test.assert_eq(replace_pattern_supported("a{0,100000}"), true)
   @test.assert_eq(replace_pattern_supported("a{0,100001}"), false)
 }
+
+///|
+/// Decoder per-token replace keeps the `\p{N}` (full N: Nd + Nl + No)
+/// vs `\d` (Nd) split (probed 0.22.2 on "a²¼Ⅰ①₃0５").
+test "replace decoder splits p{N} full-N from d-Nd" {
+  let pn = Decoder::Replace(pattern="\\p{N}+", content="#")
+  @test.assert_eq(pn.decode(["a²¼Ⅰ①₃0５"]), "a#")
+  let d = Decoder::Replace(pattern="\\d+", content="#")
+  @test.assert_eq(d.decode(["a²¼Ⅰ①₃0５"]), "a²¼Ⅰ①₃#")
+  let neg = Decoder::Replace(pattern="\\P{N}+", content="#")
+  @test.assert_eq(neg.decode(["a²¼Ⅰ"]), "#²¼Ⅰ")
+  let ex = Decoder::Replace(pattern="\\p{N}{2}", content="#")
+  @test.assert_eq(ex.decode(["a¼0５"]), "a#５")
+}
