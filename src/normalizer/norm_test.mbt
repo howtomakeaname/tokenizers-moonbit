@@ -1223,3 +1223,18 @@ test "p{N} spellings map to full-N kinds" {
   @test.assert_eq(@common.is_decimal_number('²'), false)
   @test.assert_eq(@common.is_decimal_number('\u{1FBF0}'), true)
 }
+
+///|
+/// `\P{N}{1,n}` bounded negatives are the complement of FULL N (review
+/// fix: they were left on the kind-14 Nd complement). Probed 0.22.2.
+test "p{N} bounded negatives complement full N" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\P{N}{1,2}").normalize("aⅠb"), "#Ⅰ#")
+  @test.assert_eq(n("\\P{N}{1,2}").normalize("abcⅠde"), "##Ⅰ#")
+  @test.assert_eq(n("\\P{N}{1,3}").normalize("aⅠbc"), "#Ⅰ#")
+  @test.assert_eq(@common.bounded_regex_kind("\\P{N}{1,2}"), Some((29, 2)))
+  @test.assert_eq(@common.bounded_regex_kind("\\D{1,2}"), Some((14, 2)))
+  @test.assert_eq(n("\\P{N}{1,2}").normalize_aligned("aⅠb").0, "#Ⅰ#")
+}

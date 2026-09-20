@@ -192,4 +192,10 @@ test "replace decoder splits p{N} full-N from d-Nd" {
   @test.assert_eq(neg.decode(["a²¼Ⅰ"]), "#²¼Ⅰ")
   let ex = Decoder::Replace(pattern="\\p{N}{2}", content="#")
   @test.assert_eq(ex.decode(["a¼0５"]), "a#５")
+  // \\P{N} bounded/min negatives complement FULL N (review fix; HF
+  // decoder JSON Regex path probed 0.22.2: "#Ⅰ#", "#Ⅰde")
+  let bneg = Decoder::Replace(pattern="\\P{N}{1,2}", content="#")
+  @test.assert_eq(bneg.decode(["aⅠb"]), "#Ⅰ#")
+  let mneg = Decoder::Replace(pattern="\\P{N}{3,}", content="#")
+  @test.assert_eq(mneg.decode(["abcⅠde"]), "#Ⅰde")
 }
