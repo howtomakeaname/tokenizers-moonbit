@@ -161,3 +161,21 @@ test "decoder literal bounded quantifiers" {
   let d2 = Decoder::Replace(pattern="a{2,3}", content="#")
   @test.assert_eq(d2.decode(["zaaaay"]), "z#ay")
 }
+
+///|
+/// Zero-minimum quantifier patterns go through the same onig
+/// empty-match semantics as the normalizer (probed 0.22.2:
+/// `a{0,2}` on "zaaz" -> "#z#z#", `a{0}` on "aaa" -> "#a#a#a#",
+/// `\s{0,}` on "x  " -> "#x#"); decoding stays per-token.
+test "replace decoder handles zero-min quantifiers per onig semantics" {
+  let d = Decoder::Replace(pattern="a{0,2}", content="#")
+  @test.assert_eq(d.decode(["zaaz", "zz"]), "#z#z##z#z#")
+  let exact0 = Decoder::Replace(pattern="a{0}", content="#")
+  @test.assert_eq(exact0.decode(["aaa"]), "#a#a#a#")
+  let ws = Decoder::Replace(pattern="\\s{0,}", content="#")
+  @test.assert_eq(ws.decode(["x  "]), "#x#")
+  // onig rejects repeat bounds above 100000 at load in HF; ours fails
+  // at load too (the spec stops matching, the gate raises).
+  @test.assert_eq(replace_pattern_supported("a{0,100000}"), true)
+  @test.assert_eq(replace_pattern_supported("a{0,100001}"), false)
+}
