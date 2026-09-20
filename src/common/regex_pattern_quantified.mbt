@@ -1,6 +1,5 @@
 ///|
 fn ranged_regex_kind_inner(pattern : String) -> (Int, Int, Int)? {
-  let pattern = canonicalize_word_class(pattern)
   match
     ranged_kind_variants(
       pattern,
@@ -320,7 +319,6 @@ pub fn is_ranged_regex_pattern(pattern : String) -> Bool {
 /// and Decoder Replace. Return `(kind, exact_run)`. The supported exact run
 /// sizes intentionally stay in the small tokenizer-oriented 2..4 window.
 fn exact_regex_kind_inner(pattern : String) -> (Int, Int)? {
-  let pattern = canonicalize_word_class(pattern)
   match quantified_class_kind(pattern, "{2}") {
     Some(kind) => return Some((kind, 2))
     None => ()
@@ -358,7 +356,6 @@ pub fn is_exact_regex_pattern(pattern : String) -> Bool {
 /// bounded `{1,n}` and ranged `{m,n}` tables without introducing a full regex
 /// engine.
 fn min_regex_kind_inner(pattern : String) -> (Int, Int)? {
-  let pattern = canonicalize_word_class(pattern)
   match quantified_class_kind(pattern, "{2,}") {
     Some(kind) => return Some((kind, 2))
     None => ()
@@ -384,7 +381,6 @@ pub fn min_regex_kind(pattern : String) -> (Int, Int)? {
 
 ///|
 pub fn is_min_regex_pattern(pattern : String) -> Bool {
-  let pattern = canonicalize_word_class(pattern)
   match min_regex_kind(pattern) {
     Some(_) => true
     None => false
@@ -396,7 +392,6 @@ pub fn is_min_regex_pattern(pattern : String) -> Bool {
 /// Replace. Return `(kind, leading)` where `kind` uses
 /// `bounded_regex_kind_pred` and `leading=true` means `^...+`.
 fn anchored_regex_kind_inner(pattern : String) -> (Int, Bool)? {
-  let pattern = canonicalize_word_class(pattern)
   match
     anchored_variants(pattern, ["^\\s+", "^[\\s]+"], ["\\s+$", "[\\s]+$"], 1) {
     Some(v) => return Some(v)

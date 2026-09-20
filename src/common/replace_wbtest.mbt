@@ -896,3 +896,27 @@ test "split regex helpers cover simple patterns" {
   @test.assert_eq(is_simple_split_regex_pattern("foo.*bar"), false)
   @test.assert_eq(is_simple_split_regex_pattern("[A-Z]{5,}"), false)
 }
+
+///|
+/// `is_word_char` covers the full empirically-probed onig `\w` set
+/// (PR #16 review finding 7): fullwidth Latin letters, halfwidth
+/// katakana, µ/ª, Roman numerals, superscripts/fractions quirks — and
+/// still excludes circled digits, emoji, '#'.
+test "is_word_char covers onig w unicode ranges" {
+  @test.assert_eq(is_word_char('ａ'), true) // U+FF41 fullwidth a
+  @test.assert_eq(is_word_char('ｱ'), true) // U+FF71 halfwidth katakana
+  @test.assert_eq(is_word_char('µ'), true) // U+00B5
+  @test.assert_eq(is_word_char('ª'), true) // U+00AA
+  @test.assert_eq(is_word_char('Ⅷ'), true) // U+2177 Nl
+  @test.assert_eq(is_word_char('½'), true) // U+00BD onig quirk
+  @test.assert_eq(is_word_char('²'), true) // U+00B2 onig quirk
+  @test.assert_eq(is_word_char('ˆ'), true) // U+02C6 (Sk, probed matched)
+  @test.assert_eq(is_word_char('ｌ'), true) // U+FF4C
+  @test.assert_eq(is_word_char('一'), true) // U+4E00 CJK ext (U+9FFD-era)
+  @test.assert_eq(is_word_char('ⓐ'), true) // U+24D0 circled letter
+  @test.assert_eq(is_word_char('①'), false) // U+2460 circled digit
+  @test.assert_eq(is_word_char('😀'), false) // U+1F600 emoji
+  @test.assert_eq(is_word_char('#'), false)
+  @test.assert_eq(is_word_char('∀'), false) // U+2200 math
+  @test.assert_eq(is_word_char('_'), true) // ASCII underscore
+}

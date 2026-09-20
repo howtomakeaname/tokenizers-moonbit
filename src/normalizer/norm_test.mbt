@@ -987,14 +987,14 @@ test "replace regex ascii plus spellings and unicode letter bare" {
 /// the shortcut forms; anchored newline class and single-char literal
 /// bounded quantifiers join the supported set.
 test "replace regex w-bracket, anchored newline, literal quantifiers" {
-  let w_min = @normalizer.Normalizer::Replace(pattern="[\\w]{2,}", content="#")
-  @test.assert_eq(w_min.normalize("ab cdef"), "# #")
-  @test.assert_eq(w_min.normalize("ab é"), "# é")
-  let w_inv = @normalizer.Normalizer::Replace(pattern="[^\\w]{2,}", content="#")
-  @test.assert_eq(w_inv.normalize("a  ,,b"), "a#b")
-  let w_anch = @normalizer.Normalizer::Replace(pattern="[\\w]+$", content="#")
-  // no line boundary before '!': unchanged (HF-verified)
-  @test.assert_eq(w_anch.normalize("ab!"), "ab!")
+  // PR #17 review: HF treats bracket [\w] as class-context (onig Latin-1
+  // quirks are NON-word there) while bare \w includes them — a unified
+  // predicate cannot honor both, so bracket spellings are explicitly
+  // unsupported until a spelling-aware table split exists.
+  let w_json : Json = @json.parse(
+    "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"[\\\\w]{2,}\"},\"content\":\"#\"}",
+  )
+  @test.assert_raise(() => @normalizer.Normalizer::from_json(w_json))
   let nl_head = @normalizer.Normalizer::Replace(
     pattern="^[\\r\\n]+",
     content="#",
@@ -1016,4 +1016,23 @@ test "replace regex w-bracket, anchored newline, literal quantifiers" {
     "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{0,2}\"},\"content\":\"X\"}",
   )
   @test.assert_raise(() => @normalizer.Normalizer::from_json(bad_json))
+}
+
+///|
+/// End-to-end `\w` families over the PR #16 review's divergent inputs —
+/// expectations from direct HF probes (fullwidth letters/digits, halfwidth
+/// katakana, µ/ª/Roman numerals all match; circled digits/emoji do not).
+test "replace w families over full onig coverage" {
+  let w2 = @normalizer.Normalizer::Replace(pattern="\\w{2}", content="#")
+  @test.assert_eq(w2.normalize("ａｂ"), "#")
+  @test.assert_eq(w2.normalize("ｱｲ"), "#")
+  let w1 = @normalizer.Normalizer::Replace(pattern="\\w", content="#")
+  @test.assert_eq(w1.normalize("µ"), "#")
+  @test.assert_eq(w1.normalize("ª"), "#")
+  @test.assert_eq(w1.normalize("Ⅷ"), "#")
+  @test.assert_eq(w1.normalize("½"), "#")
+  @test.assert_eq(w1.normalize("①"), "①")
+  @test.assert_eq(w1.normalize("😀"), "😀")
+  let inv = @normalizer.Normalizer::Replace(pattern="[^\\w]+", content="#")
+  @test.assert_eq(inv.normalize("，。！"), "#")
 }

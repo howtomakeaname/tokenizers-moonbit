@@ -33,8 +33,50 @@ pub fn is_ascii_alnum(c : Char) -> Bool {
 /// numbers from Unicode scripts as word characters (plus `_`), so CJK/Greek/etc.
 /// neighbors must block single-word added-token extraction just like ASCII
 /// letters do.
+
+///|
+/// onig's six Latin-1 quirk codepoints (² ³ ¹ ¼ ½ ¾): they match BARE
+/// `\w`/`\w+`/`\w{n}` but NOT class-context spellings (`[\w]`, `[^\w]`)
+/// or single-word added-token boundaries (probed across all families).
+let word_onig_quirks : Array[Int] = [0xB2, 0xB3, 0xB9, 0xBC, 0xBD, 0xBE]
+
+///|
+/// Word-char test for BARE `\w` spellings (includes the onig quirks).
 pub fn is_word_char(c : Char) -> Bool {
-  is_unicode_letter(c) || is_decimal_number(c) || c == '_'
+  if c == '_' {
+    return true
+  }
+  let u = c.to_int()
+  for q in word_onig_quirks {
+    if u == q {
+      return true
+    }
+  }
+  is_word_char_class(c)
+}
+
+///|
+/// Word-char test for CLASS-CONTEXT spellings (`[\w]`, `[a\w]`, `[^\w]`)
+/// and single-word boundaries: the table WITHOUT the onig quirks.
+pub fn is_word_char_class(c : Char) -> Bool {
+  if c == '_' {
+    return true
+  }
+  let u = c.to_int()
+  let mut lo = 0
+  let mut hi = word_ranges.length() - 1
+  while lo <= hi {
+    let mid = (lo + hi) / 2
+    let (start, stop) = word_ranges[mid]
+    if u < start {
+      hi = mid - 1
+    } else if u > stop {
+      lo = mid + 1
+    } else {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -396,27 +438,6 @@ pub fn bare_class_kind(pattern : String) -> Int? {
     "[\\r\\n]" => Some(3)
     _ => None
   }
-}
-
-///|
-/// Canonicalize `\w`-family bracket spellings to their equivalent
-/// shortcut form (\w/\W) so every quantifier/anchored table accepts
-/// them for free. HF keeps these Unicode-wide (probed: `[\w]+` on
-/// "ab é" -> "# #"), unlike the ASCII `[A-Za-z0-9_]` spelling.
-pub fn canonicalize_word_class(pattern : String) -> String {
-  if !pattern.contains("[\\w]") &&
-    !pattern.contains("[^\\w]") &&
-    !pattern.contains("[\\W]") &&
-    !pattern.contains("[^\\W]") {
-    return pattern
-  }
-  // HF keeps bracket \w Unicode-wide (probed: [\w]+ on "ab é" replaces é),
-  // so canonicalize to the shortcut forms; the ASCII [A-Za-z0-9_] spelling
-  // stays distinct with its ASCII-only kind.
-  let a = pattern.replace(old="[^\\w]", new="\\W")
-  let b = a.replace(old="[\\w]", new="\\w")
-  let c = b.replace(old="[^\\W]", new="\\w")
-  c.replace(old="[\\W]", new="\\W")
 }
 
 ///|

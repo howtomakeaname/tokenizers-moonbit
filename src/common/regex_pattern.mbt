@@ -1,6 +1,5 @@
 ///|
 fn bounded_regex_kind_inner(pattern : String) -> (Int, Int)? {
-  let pattern = canonicalize_word_class(pattern)
   let ws = bounded_max(pattern, "\\s{1,2}", "\\s{1,3}", "\\s{1,4}")
   if ws > 0 {
     return Some((1, ws))

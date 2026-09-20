@@ -14,8 +14,6 @@ pub fn bounded_regex_kind(String) -> (Int, Int)?
 
 pub fn bounded_regex_kind_pred(Int, Char) -> Bool
 
-pub fn canonicalize_word_class(String) -> String
-
 pub fn char_bounded_quantifier_shape(String) -> Bool
 
 pub fn char_string(Char) -> String
@@ -61,6 +59,8 @@ pub fn is_unicode_symbol(Char) -> Bool
 pub fn is_unicode_whitespace(Int) -> Bool
 
 pub fn is_word_char(Char) -> Bool
+
+pub fn is_word_char_class(Char) -> Bool
 
 pub fn literal_matches(Array[Char], String) -> Array[Span]?
 
