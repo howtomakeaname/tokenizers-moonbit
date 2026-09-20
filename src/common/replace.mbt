@@ -525,3 +525,83 @@ fn matches_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
   }
   true
 }
+
+///|
+/// Single-character-literal bounded quantifier: `c{n}`, `c{n,}`, `c{n,m}`
+/// where `c` is an ordinary literal char and 1 <= n <= m <= 4. Greedy
+/// bounded runs of `c` are replaced (HF probes: `a{2}` on "zaaz" -> "z#z",
+/// `a{2,3}` on "zaaaay" -> "z#ay", `a{1}` on "zaaz" -> "z##z").
+/// Returns None unless the pattern has exactly this shape.
+pub fn replace_char_bounded_runs(
+  s : String,
+  pattern : String,
+  content : String,
+) -> String? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  // shape: c { digits }  |  c { digits , }  |  c { digits , digits }
+  if n < 4 || chars[1] != '{' || chars[n - 1] != '}' {
+    return None
+  }
+  let c = chars[0]
+  if c == '{' || c == '}' || c == '\\' || c == '[' || c == ']' {
+    return None
+  }
+  let mut i = 2
+  let mut lo = 0
+  let mut lo_digits = 0
+  while i < n && chars[i] >= '0' && chars[i] <= '9' {
+    lo = lo * 10 + (chars[i].to_int() - '0'.to_int())
+    lo_digits = lo_digits + 1
+    i = i + 1
+  }
+  if lo_digits == 0 || lo == 0 || lo > 4 {
+    return None
+  }
+  let mut hi = lo
+  if i < n && chars[i] == ',' {
+    i = i + 1
+    if i == n - 1 {
+      // {n,} — unbounded above; cap at 64 for determinism
+      hi = 64
+    } else {
+      let mut hi_digits = 0
+      hi = 0
+      while i < n && chars[i] >= '0' && chars[i] <= '9' {
+        hi = hi * 10 + (chars[i].to_int() - '0'.to_int())
+        hi_digits = hi_digits + 1
+        i = i + 1
+      }
+      if hi_digits == 0 || hi < lo || hi > 4 {
+        return None
+      }
+    }
+  } else if i != n - 1 {
+    return None
+  }
+  // greedy bounded runs over s
+  let src = s.to_array()
+  let m = src.length()
+  let sb = StringBuilder()
+  let mut j = 0
+  while j < m {
+    if src[j] == c {
+      let start = j
+      while j < m && src[j] == c && j - start < hi {
+        j = j + 1
+      }
+      let len = j - start
+      if len >= lo {
+        sb.write_string(content)
+      } else {
+        for k in start..<j {
+          sb.write_char(src[k])
+        }
+      }
+    } else {
+      sb.write_char(src[j])
+      j = j + 1
+    }
+  }
+  Some(sb.to_string())
+}

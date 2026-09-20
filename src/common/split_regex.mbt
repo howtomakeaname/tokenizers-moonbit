@@ -160,6 +160,10 @@ pub fn simple_split_regex_matches(
     )
   } else if pattern == "^\\s+" {
     Some(leading_run_match(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
+  } else if pattern == "^[\\r\\n]+" {
+    Some(leading_run_match(chars, fn(c) { c == '\r' || c == '\n' }))
+  } else if pattern == "[\\r\\n]+$" {
+    Some(trailing_run_match(chars, fn(c) { c == '\r' || c == '\n' }))
   } else if pattern == "\\S+" || pattern == "[^\\s]+" {
     Some(run_matches(chars, fn(c) { !is_unicode_whitespace(c.to_int()) }))
   } else if pattern == "\\s+$" {
