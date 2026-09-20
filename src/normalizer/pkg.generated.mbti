@@ -123,7 +123,10 @@ pub fn Normalizer::to_json(Self) -> String?
 pub struct NormalizerState {
   json : String
 } derive(Eq, @debug.Debug)
+pub fn NormalizerState::equal(Self, Self) -> Bool
 pub fn NormalizerState::new(String) -> Self
+pub fn NormalizerState::not_equal(Self, Self) -> Bool
+pub fn NormalizerState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PrecompiledCharsMap {
   trie : Array[Int]

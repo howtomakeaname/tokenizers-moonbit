@@ -134,7 +134,10 @@ pub fn PreTokenizer::whitespace_split() -> Self
 pub struct PreTokenizerState {
   json : String
 } derive(Eq, @debug.Debug)
+pub fn PreTokenizerState::equal(Self, Self) -> Bool
 pub fn PreTokenizerState::new(String) -> Self
+pub fn PreTokenizerState::not_equal(Self, Self) -> Bool
+pub fn PreTokenizerState::to_repr(Self) -> @debug.Repr
 
 pub enum SplitBehavior {
   Removed
@@ -144,10 +147,13 @@ pub enum SplitBehavior {
   Contiguous
 } derive(Eq, @debug.Debug)
 pub fn SplitBehavior::contiguous() -> Self
+pub fn SplitBehavior::equal(Self, Self) -> Bool
 pub fn SplitBehavior::isolated() -> Self
 pub fn SplitBehavior::merged_with_next() -> Self
 pub fn SplitBehavior::merged_with_previous() -> Self
+pub fn SplitBehavior::not_equal(Self, Self) -> Bool
 pub fn SplitBehavior::removed() -> Self
+pub fn SplitBehavior::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

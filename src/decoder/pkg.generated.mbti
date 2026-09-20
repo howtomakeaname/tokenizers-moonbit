@@ -124,7 +124,10 @@ pub fn Decoder::wordpiece(prefix? : String, cleanup? : Bool) -> Self
 pub struct DecoderState {
   json : String
 } derive(Eq, @debug.Debug)
+pub fn DecoderState::equal(Self, Self) -> Bool
 pub fn DecoderState::new(String) -> Self
+pub fn DecoderState::not_equal(Self, Self) -> Bool
+pub fn DecoderState::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

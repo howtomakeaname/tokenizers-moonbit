@@ -124,7 +124,10 @@ pub fn Model::wordpiece_read_file(String, unk_token? : String, continuing_subwor
 pub struct ModelState {
   json : String
 } derive(Eq, @debug.Debug)
+pub fn ModelState::equal(Self, Self) -> Bool
 pub fn ModelState::new(String) -> Self
+pub fn ModelState::not_equal(Self, Self) -> Bool
+pub fn ModelState::to_repr(Self) -> @debug.Repr
 
 pub struct UnigramModel {
   vocab : Map[String, (Int, Double)]

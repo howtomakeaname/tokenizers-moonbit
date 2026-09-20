@@ -612,3 +612,9 @@ fn simple_anchored_regex_matches(
 }
 
 ///|
+
+///|
+pub extend Regex with @debug.Debug::{to_repr}
+
+///|
+pub extend Regex with Eq::{equal, not_equal}

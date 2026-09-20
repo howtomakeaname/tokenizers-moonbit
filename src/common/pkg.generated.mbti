@@ -99,15 +99,21 @@ pub(all) enum PatternKind {
   StringPattern
   RegexPattern
 } derive(Eq, @debug.Debug)
+pub fn PatternKind::equal(Self, Self) -> Bool
+pub fn PatternKind::not_equal(Self, Self) -> Bool
+pub fn PatternKind::to_repr(Self) -> @debug.Repr
 
 pub struct Regex {
   pattern : String
 } derive(Eq, @debug.Debug)
+pub fn Regex::equal(Self, Self) -> Bool
 pub fn Regex::find_matches(Self, String) -> Array[(Int, Int)]?
 pub fn Regex::is_supported(Self) -> Bool
 pub fn Regex::new(String) -> Self
+pub fn Regex::not_equal(Self, Self) -> Bool
 pub fn Regex::pattern(Self) -> String
 pub fn Regex::replace_all(Self, String, String) -> String?
+pub fn Regex::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Span {
   start : Int

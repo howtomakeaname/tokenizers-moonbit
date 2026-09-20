@@ -32,6 +32,7 @@ pub(all) suberror TokenizerError {
 } derive(@debug.Debug)
 pub fn TokenizerError::kind(Self) -> TokenizerErrorKind
 pub fn TokenizerError::message(Self) -> String
+pub fn TokenizerError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub(all) struct Encoding {
@@ -58,6 +59,7 @@ pub fn Encoding::char_to_token_by_sequence_index(Self, Int, sequence_index? : In
 pub fn Encoding::char_to_word(Self, Int, sequence_id? : Int) -> Int?
 pub fn Encoding::char_to_word_by_sequence_index(Self, Int, sequence_index? : Int) -> Int?
 pub fn Encoding::empty() -> Self
+pub fn Encoding::equal(Self, Self) -> Bool
 pub fn Encoding::from_buffers(EncodingBuffers, sequence_ids? : Array[Int?], word_ids? : Array[Int?], overflowing? : Array[Self]) -> Self raise TokenizerError
 pub fn Encoding::from_state(EncodingState) -> Self raise TokenizerError
 pub fn Encoding::from_tokens(Array[Token], type_id? : Int) -> Self
@@ -88,6 +90,7 @@ pub fn Encoding::merge(Array[Self], growing_offsets? : Bool) -> Self
 pub fn Encoding::merge_with(Self, Self, growing_offsets? : Bool) -> Self
 pub fn Encoding::n_sequences(Self) -> Int
 pub fn Encoding::new(Array[Int], Array[Int], Array[String], Array[(Int, Int)], Array[Int], Array[Int], sequence_ids? : Array[Int?], word_ids? : Array[Int?], overflowing? : Array[Self]) -> Self raise TokenizerError
+pub fn Encoding::not_equal(Self, Self) -> Bool
 pub fn Encoding::offsets(Self) -> Array[(Int, Int)]
 pub fn Encoding::overflowing(Self) -> Array[Self]
 pub fn Encoding::pad(Self, Int, pad_id? : Int, pad_type_id? : Int, pad_token? : String, direction? : EncodingDirection) -> Self
@@ -104,6 +107,7 @@ pub fn Encoding::set_type_ids(Self, Array[Int]) -> Self raise TokenizerError
 pub fn Encoding::set_word_ids(Self, Array[Int?]) -> Self raise TokenizerError
 pub fn Encoding::special_tokens_mask(Self) -> Array[Int]
 pub fn Encoding::take_overflowing(Self) -> (Self, Array[Self])
+pub fn Encoding::to_repr(Self) -> @debug.Repr
 pub fn Encoding::token_to_char_offsets(Self, Int) -> (Int, Int)?
 pub fn Encoding::token_to_chars(Self, Int) -> (Int, (Int, Int))?
 pub fn Encoding::token_to_offsets(Self, Int) -> (Int, Int)?
@@ -139,11 +143,17 @@ pub(all) struct EncodingBuffers {
   special_tokens_mask : Array[Int]
   attention_mask : Array[Int]
 } derive(Eq, @debug.Debug)
+pub fn EncodingBuffers::equal(Self, Self) -> Bool
+pub fn EncodingBuffers::not_equal(Self, Self) -> Bool
+pub fn EncodingBuffers::to_repr(Self) -> @debug.Repr
 
 pub(all) enum EncodingDirection {
   Left
   Right
 } derive(Eq, @debug.Debug)
+pub fn EncodingDirection::equal(Self, Self) -> Bool
+pub fn EncodingDirection::not_equal(Self, Self) -> Bool
+pub fn EncodingDirection::to_repr(Self) -> @debug.Repr
 
 pub(all) struct EncodingState {
   ids : Array[Int]
@@ -156,6 +166,9 @@ pub(all) struct EncodingState {
   word_ids : Array[Int?]
   overflowing : Array[Encoding]
 } derive(Eq, @debug.Debug)
+pub fn EncodingState::equal(Self, Self) -> Bool
+pub fn EncodingState::not_equal(Self, Self) -> Bool
+pub fn EncodingState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Split {
   value : String
@@ -166,19 +179,25 @@ pub fn Split::__repr__(Self) -> String
 pub fn Split::__setstate__(SplitState) -> Self
 pub fn Split::__str__(Self) -> String
 pub fn Split::as_tuple(Self) -> (String, (Int, Int))
+pub fn Split::equal(Self, Self) -> Bool
 pub fn Split::from_state(SplitState) -> Self
 pub fn Split::from_tuple((String, (Int, Int))) -> Self
 pub fn Split::get_offsets(Self) -> (Int, Int)
 pub fn Split::get_state(Self) -> SplitState
 pub fn Split::get_value(Self) -> String
 pub fn Split::new(String, offsets? : (Int, Int)) -> Self
+pub fn Split::not_equal(Self, Self) -> Bool
 pub fn Split::offsets(Self) -> (Int, Int)
+pub fn Split::to_repr(Self) -> @debug.Repr
 pub fn Split::value(Self) -> String
 
 pub(all) struct SplitState {
   value : String
   offsets : (Int, Int)
 } derive(Eq, @debug.Debug)
+pub fn SplitState::equal(Self, Self) -> Bool
+pub fn SplitState::not_equal(Self, Self) -> Bool
+pub fn SplitState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Token {
   id : Int
@@ -190,6 +209,7 @@ pub fn Token::__repr__(Self) -> String
 pub fn Token::__setstate__(TokenState) -> Self
 pub fn Token::__str__(Self) -> String
 pub fn Token::as_tuple(Self) -> (Int, String, (Int, Int))
+pub fn Token::equal(Self, Self) -> Bool
 pub fn Token::from_state(TokenState) -> Self
 pub fn Token::from_tuple((Int, String, (Int, Int))) -> Self
 pub fn Token::get_id(Self) -> Int
@@ -198,7 +218,9 @@ pub fn Token::get_state(Self) -> TokenState
 pub fn Token::get_value(Self) -> String
 pub fn Token::id(Self) -> Int
 pub fn Token::new(Int, String, offsets? : (Int, Int)) -> Self
+pub fn Token::not_equal(Self, Self) -> Bool
 pub fn Token::offsets(Self) -> (Int, Int)
+pub fn Token::to_repr(Self) -> @debug.Repr
 pub fn Token::value(Self) -> String
 
 pub(all) struct TokenState {
@@ -206,12 +228,18 @@ pub(all) struct TokenState {
   value : String
   offsets : (Int, Int)
 } derive(Eq, @debug.Debug)
+pub fn TokenState::equal(Self, Self) -> Bool
+pub fn TokenState::not_equal(Self, Self) -> Bool
+pub fn TokenState::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TokenizerErrorKind {
   ParseKind
   UnsupportedComponentKind
   VocabKind
 } derive(Eq, @debug.Debug)
+pub fn TokenizerErrorKind::equal(Self, Self) -> Bool
+pub fn TokenizerErrorKind::not_equal(Self, Self) -> Bool
+pub fn TokenizerErrorKind::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 
