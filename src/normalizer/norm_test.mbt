@@ -727,17 +727,11 @@ test "normalizer state rejects components without serialized JSON" {
 /// against the fixture inventory: real models only use `\s+`, ` {2,}`,
 /// and String literals — all supported.
 test "normalizer Replace regex unsupported patterns fail at load" {
-  try {
-    let n = Normalizer::from_json(
-      @json.parse(
-        "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"l+o\"},\"content\":\"X\"}",
-      ),
-    )
-    ignore(n)
-    @test.fail("unsupported Replace regex should not load")
-  } catch {
-    _ => () // expected: UnsupportedComponent at load
-  }
+  // assert_raise keeps the failure outside any swallowing catch
+  let json : Json = @json.parse(
+    "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"l+o\"},\"content\":\"X\"}",
+  )
+  @test.assert_raise(() => Normalizer::from_json(json))
   // supported families load: whitespace runs, min runs, literals
   let ok1 = Normalizer::from_json(
     @json.parse(
