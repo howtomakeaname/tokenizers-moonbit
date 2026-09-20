@@ -821,3 +821,9 @@ pub fn Tokenizer::set_encode_special_tokens(
 pub fn Tokenizer::enable_encode_special_tokens(self : Tokenizer) -> Tokenizer {
   self.set_encode_special_tokens(true)
 }
+
+///|
+pub extend TokenizerState with @debug.Debug::{to_repr}
+
+///|
+pub extend TokenizerState with Eq::{equal, not_equal}

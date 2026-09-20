@@ -703,3 +703,9 @@ pub fn Decoder::ctc(
 
 ///|
 /// Serialize decoders created through the typed/programmatic API.
+
+///|
+pub extend DecoderState with @debug.Debug::{to_repr}
+
+///|
+pub extend DecoderState with Eq::{equal, not_equal}

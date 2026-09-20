@@ -861,3 +861,21 @@ fn write_json_string(sb : StringBuilder, s : String) -> Unit {
 /// Number of special tokens this processor inserts for single/pair encoding.
 /// Used to mirror HF truncation order: truncate raw sequences while reserving
 /// room for post-processor specials, then post-process, then pad.
+
+///|
+pub extend Piece with @debug.Debug::{to_repr}
+
+///|
+pub extend Piece with Eq::{equal, not_equal}
+
+///|
+pub extend PostProcessorState with @debug.Debug::{to_repr}
+
+///|
+pub extend PostProcessorState with Eq::{equal, not_equal}
+
+///|
+pub extend SpecialToken with @debug.Debug::{to_repr}
+
+///|
+pub extend SpecialToken with Eq::{equal, not_equal}

@@ -473,3 +473,27 @@ fn AddedVocabulary::new_with_encode_special_tokens(
 }
 
 ///|
+
+///|
+pub extend AddedToken with @debug.Debug::{to_repr}
+
+///|
+pub extend AddedToken with Eq::{equal, not_equal}
+
+///|
+pub extend AddedTokenInfo with @debug.Debug::{to_repr}
+
+///|
+pub extend AddedTokenInfo with Eq::{equal, not_equal}
+
+///|
+pub extend AddedTokenState with @debug.Debug::{to_repr}
+
+///|
+pub extend AddedTokenState with Eq::{equal, not_equal}
+
+///|
+pub extend Segment with @debug.Debug::{to_repr}
+
+///|
+pub extend Segment with Eq::{equal, not_equal}

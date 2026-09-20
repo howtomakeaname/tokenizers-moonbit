@@ -344,3 +344,27 @@ fn[T] concat(a : Array[T], b : Array[T]) -> Array[T] {
   }
   out
 }
+
+///|
+pub extend PaddingDirection with @debug.Debug::{to_repr}
+
+///|
+pub extend PaddingDirection with Eq::{equal, not_equal}
+
+///|
+pub extend PaddingParams with @debug.Debug::{to_repr}
+
+///|
+pub extend PaddingParams with Eq::{equal, not_equal}
+
+///|
+pub extend PaddingParamsState with @debug.Debug::{to_repr}
+
+///|
+pub extend PaddingParamsState with Eq::{equal, not_equal}
+
+///|
+pub extend PaddingStrategy with @debug.Debug::{to_repr}
+
+///|
+pub extend PaddingStrategy with Eq::{equal, not_equal}

@@ -216,3 +216,27 @@ pub fn Split::offsets(self : Split) -> (Int, Int) {
 
 ///|
 /// Errors raised across the tokenizer pipeline.
+
+///|
+pub extend Split with @debug.Debug::{to_repr}
+
+///|
+pub extend Split with Eq::{equal, not_equal}
+
+///|
+pub extend SplitState with @debug.Debug::{to_repr}
+
+///|
+pub extend SplitState with Eq::{equal, not_equal}
+
+///|
+pub extend Token with @debug.Debug::{to_repr}
+
+///|
+pub extend Token with Eq::{equal, not_equal}
+
+///|
+pub extend TokenState with @debug.Debug::{to_repr}
+
+///|
+pub extend TokenState with Eq::{equal, not_equal}

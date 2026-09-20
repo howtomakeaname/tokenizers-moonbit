@@ -785,3 +785,15 @@ fn Tokenizer::truncate_single_raw(
 ///|
 /// Encode a batch of texts. Applies truncation per item, then padding across
 /// the batch (BatchLongest pads to the longest in the batch).
+
+///|
+pub extend EncodeInput with @debug.Debug::{to_repr}
+
+///|
+pub extend EncodeInput with Eq::{equal, not_equal}
+
+///|
+pub extend TextInputSequence with @debug.Debug::{to_repr}
+
+///|
+pub extend TextInputSequence with Eq::{equal, not_equal}
