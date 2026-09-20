@@ -44,9 +44,13 @@ test "decode without decoder joins kept specials with spaces" {
     #|                {"id":6,"content":"</s>","single_word":false,"lstrip":false,"rstrip":false,"normalized":false,"special":true}],
     #| "model":{"type":"WordLevel","vocab":{"abc":4,"[UNK]":7},"unk_token":"[UNK]"}}
   let tok = @tokenizer.Tokenizer::from_str(json)
+  // fresh added contents allocate sequential ids (vocab_size + counter),
+  // so resolve them instead of relying on the declared ids
+  let s_id = tok.token_to_id("<s>").unwrap()
+  let e_id = tok.token_to_id("</s>").unwrap()
   @test.assert_eq(
-    tok.decode([5, 4, 6], skip_special_tokens=false),
+    tok.decode([s_id, 4, e_id], skip_special_tokens=false),
     "<s> abc </s>",
   )
-  @test.assert_eq(tok.decode([5, 4, 6], skip_special_tokens=true), "abc")
+  @test.assert_eq(tok.decode([s_id, 4, e_id], skip_special_tokens=true), "abc")
 }
