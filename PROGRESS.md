@@ -1097,3 +1097,19 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 - 验证：真实 t5 tokenizer + Python 0.22.2 实测——NFC 与 NFD 形式的 "café" 均编码为 [11949]（token "▁café"），混合输入 ids/tokens 与 Python 完全一致（此前 NFD 形式产出 `▁cafe` + unk）；行为对比扫描真实模型矩阵中 t5 的 ids/tokens 失败清零（剩余失败全部为 offsets 映射，归入下一批）。
 - 新增 `src/integration/charsmap_grapheme_test.mbt`（fixture 缺失自跳过）：NFC/NFD 等价、混合输入精确 ids、jamo 不组合三项锁定。
 - 全后端 native(400)/js(400)/wasm(377)/wasm-gc(377) 通过；fmt/check/info 干净；无公开 API 变化。
+### 2026-09-20 行为对比扫描第三批：decoder 边缘语义对齐
+
+- 依据入库探针矩阵（`reports/parity-artifacts/decoder-probe-0.22.2.md`，17 decoder × 23 用例）逐项对 Python `tokenizers` 0.22.2 实测复核并修复四类分歧（每项均先在 Python 复测真值）：
+  - **BPEDecoder suffix**：非末 token 的 suffix 替换为空格，末 token 仅删除（`["ab</w>","cd</w>"]` → `"ab cd"`、`["ab","cd</w>"]` → `"abcd"`）；此前对所有 token 一律加空格。
+  - **Metaspace 解码**：`always`/`first` 方案丢弃首 token 内**全部**替换符（含 token 中部，`["▁▁double"]` → `"double"`、`["▁x▁y"]` → `"xy"`），此前只删一个前导；`never` 方案首 token 的替换符也映射为空格（此前未区分 scheme）。
+  - **CTC**：折叠连续重复后，pad 串在任意位置（含 token 内部）删除、空 token 丢弃；`cleanup=true` 时对 join 后文本做 wordpiece cleanup 再把词分隔符串映射为空格，`cleanup=false` 时分隔符保留字面量（实测 `["hi","|","there"]` → `"hi|there"`）；此前仅整 token 精确匹配 pad/分隔符。
+  - **Replace 显式失败**：`replace_all` 对超出受支持 regex 族的 pattern（如 `l+o`）原静默退化为字面量替换（违反项目"显式失败"原则），新增 `replace_pattern_supported` 判定，Replace decoder 遇不支持 pattern 显式 abort。
+- 探针纠错记录：agent 探针表中"Replace 作用于 join 后整串/可跨 token 边界"一条经直接复测证伪——Regex 变体同样是逐 token replace-all（`l+o` 命中 `"lo"` token、`e.*o` 不跨 `"h"+"ello"` 边界），本库原逐 token 实现正确，未引入 join 化改动。
+- 新增 `src/decoder/decoder_parity_wbtest.mbt` 锁定上述语义与支持性判定。
+- 独立评审后修正（2026-09-20 续，三项阻塞全部落实）：
+  1. Replace 显式失败门此前的唯一调用点在 `decode_chain`，而公开 `Decoder::decode` 对独立 Replace 走 `decode_replace_direct` 快路径完全绕过（`l+o` 在独立路径仍静默字面量替换、Sequence 内却 abort）。已在 `decode_replace_direct` 末端接入同一 `replace_pattern_supported` 门；Sequence 快路径对单字符 regex 元字符（如 `.`）回落通用路径，消除"快路径按字面量处理 regex 单字符"的同类隐患。
+  2. BPEDecoder 实为 token 内**子串级全量替换**（HF bpe.rs `token.replace(suffix, ...)`）：`["a</w>b","cd"]` → `"a bcd"`、`["a</w>b</w>","cd"]` → `"a b cd"`、`["cd","a</w>b"]` → `"cdab"`；已改为 `replace_literal(t, suffix, 末token?"":" ")`，空 suffix 保持不变并注释（Rust replace 空串会在字符间插入，属病态配置）。
+  3. CTC `cleanup=true` 应**逐 token** 应用 wordpiece cleanup 与分隔符映射（HF ctc.rs），此前对 join 后整串处理导致 `["hi ","!"]` → `"hi!"`（HF 为 `"hi !"`）；同时 `cleanup_text` 恢复为上游 11 条有序字面量规则的精确复刻——旧单趟近似多清了 `;`/`:` 前空格、漏了 `" ' "` 尾空格与 `" do not"→" don't"`。WordPiece 解码同样改为逐 token cleanup（HF decode_chain 语义）。
+  - 评审 Nit 采纳情况：`reports/offsets-alignment-analysis.md` 拆分说明已写入 commit message；空 Regex pattern 与空 BPE suffix 的病态行为已注释；`replace_pattern_supported` 与 `replace_all` 表的知识重复问题记录为后续重构项（从 @common 暴露族判定）。
+- 修正后全后端 native(416)/js(416)/wasm(393)/wasm-gc(393) 通过；行为对比扫描合成 857/1008（decoder 批次净恢复 4 项检查）。
+- 全后端 native(412)/js(412)/wasm(389)/wasm-gc(389) 通过；行为对比扫描无回归（合成 853/1008、真实 59/100，剩余失败均为 offsets 映射批次）；fmt/check/info 干净。

@@ -478,12 +478,14 @@ test "Strip and CTC decoders have direct coverage" {
     Decoder::Strip(content=' ', start=1, stop=2).decode(["  hi   ", " ok "]),
     " hi ok",
   )
+  // HF 0.22.2: cleanup=false keeps the word delimiter literal
+  // (dedup + pad removal still apply).
   @test.assert_eq(
     Decoder::CTC(pad_token="_", word_delimiter_token="|", cleanup=false).decode([
         "h", "h", "i", "_", "|", "t", "t", "h", "e", "r", "e",
       ],
     ),
-    "hi there",
+    "hi|there",
   )
   @test.assert_eq(
     Decoder::CTC(pad_token="_", word_delimiter_token="|", cleanup=true).decode([
@@ -502,11 +504,12 @@ test "WordPiece decoder cleanup uses BERT punctuation and contraction rules" {
     ]),
     "they're not going? i'm sure!",
   )
+  // HF 0.22.2 wordpiece cleanup has no ";" / ":" rules — those spaces stay.
   @test.assert_eq(
     decoder.decode([
       "do", "n't", "stop", ";", "test", ":", "ok", ",", "yes", ".",
     ]),
-    "don't stop; test: ok, yes.",
+    "don't stop ; test : ok, yes.",
   )
   @test.assert_eq(
     Decoder::wordpiece(prefix="##", cleanup=false).decode(["hi", "?", "there"]),

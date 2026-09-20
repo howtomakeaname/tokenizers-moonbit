@@ -9,10 +9,19 @@ pub fn Decoder::decode_chain(
       [@pretokenizer.byte_level_decode_str(join(tokens))]
     WordPiece(prefix~, cleanup~) => decode_wordpiece(tokens, prefix, cleanup)
     BPEDecoder(suffix~) => decode_bpe(tokens, suffix)
-    Metaspace(replacement~, ..) => decode_metaspace(tokens, replacement)
+    Metaspace(replacement~, prepend_scheme~, ..) =>
+      decode_metaspace(tokens, replacement, prepend_scheme)
     Fuse => [join(tokens)]
-    Replace(pattern~, content~) =>
+    Replace(pattern~, content~) => {
+      // An unsupported regex pattern must fail explicitly rather than
+      // silently falling back to a literal replace (project policy);
+      // supported patterns either match a scanner family or are pure
+      // literals.
+      guard replace_pattern_supported(pattern) else {
+        abort("unsupported Replace decoder pattern: \{pattern}")
+      }
       tokens.map(t => replace_all(t, pattern, content))
+    }
     ReplaceString(pattern~, content~) =>
       tokens.map(t => @common.replace_literal(t, pattern, content))
     Strip(content~, start~, stop~) =>
@@ -32,6 +41,28 @@ pub fn Decoder::decode_chain(
       toks
     }
   }
+}
+
+///|
+
+///|
+fn is_regex_meta_char(c : Char) -> Bool {
+  let u = c.to_int()
+  u == 0x2E || // .
+  u == 0x2A || // *
+  u == 0x2B || // +
+  u == 0x3F || // ?
+  u == 0x5B || // [
+  u == 0x5D || // ]
+  u == 0x28 || // (
+  u == 0x29 || // )
+  u == 0x7C || // |
+  u == 0x5E || // ^
+  u == 0x24 || // $
+  u == 0x5C || // backslash
+  u == 0x7B || // {
+  u == 0x7D || // }
+  u == 0x2D // - (inside classes)
 }
 
 ///|
@@ -109,6 +140,11 @@ fn decode_sentencepiece_sequence_fast(
   if pat.length() != 1 {
     return None
   }
+  // A single-char pattern that is regex syntax (e.g. ".") must not be
+  // treated literally here; leave it to the general gated path.
+  if is_regex_meta_char(pat[0]) {
+    return None
+  }
   let sb = StringBuilder()
   let pending : Array[Int] = []
   fn flush_bytes() -> Unit {
@@ -160,26 +196,45 @@ fn decode_ctc(
   word_delimiter_token : String,
   cleanup : Bool,
 ) -> Array[String] {
-  let out : Array[String] = []
+  // HF 0.22.2 CTC: (1) collapse consecutive identical tokens; (2) delete
+  // the pad_token string wherever it occurs (whole tokens and inside
+  // tokens) and drop tokens that become empty; (3) with cleanup, apply
+  // the wordpiece cleanup to the joined text and then map the
+  // word_delimiter_token string (wherever it occurs, including inside
+  // tokens) to a space; with cleanup=false the delimiter stays literal.
+  let deduped : Array[String] = []
   let mut prev = ""
   let mut first = true
   for t in tokens {
     if !first && t == prev {
-      continue // collapse consecutive duplicates
+      continue
     }
     first = false
     prev = t
-    if t == pad_token {
-      continue
-    }
-    if t == word_delimiter_token {
-      out.push(" ")
+    deduped.push(t)
+  }
+  let out : Array[String] = []
+  for t in deduped {
+    let stripped = if pad_token.length() > 0 {
+      @common.replace_literal(t, pad_token, "")
     } else {
-      out.push(t)
+      t
+    }
+    if stripped.length() > 0 {
+      out.push(stripped)
     }
   }
+  // HF ctc.rs applies wordpiece cleanup and the delimiter replacement
+  // PER TOKEN (["hi ","!"] with cleanup -> "hi !", not the joined "hi!").
   if cleanup {
-    out.map(s => cleanup_text(s))
+    out.map(t => {
+      let cleaned = cleanup_text(t)
+      if word_delimiter_token.length() > 0 {
+        @common.replace_literal(cleaned, word_delimiter_token, " ")
+      } else {
+        cleaned
+      }
+    })
   } else {
     out
   }
@@ -225,50 +280,77 @@ fn decode_wordpiece(
   prefix : String,
   cleanup : Bool,
 ) -> Array[String] {
-  let sb = StringBuilder()
+  // HF wordpiece.rs decode_chain: per token — i == 0 verbatim, others
+  // strip the prefix when present or prepend a space — then cleanup runs
+  // PER TOKEN (not on the joined text).
+  let out : Array[String] = []
   for i, t in tokens {
-    if i == 0 {
-      sb.write_string(t)
+    let base = if i == 0 {
+      t
     } else if t.has_prefix(prefix) {
-      sb.write_string(drop_prefix(t, prefix))
+      drop_prefix(t, prefix)
     } else {
-      sb.write_char(' ')
-      sb.write_string(t)
+      " " + t
+    }
+    if cleanup {
+      out.push(cleanup_text(base))
+    } else {
+      out.push(base)
     }
   }
-  let s = sb.to_string()
-  [if cleanup { cleanup_text(s) } else { s }]
+  out
 }
 
 ///|
 fn decode_bpe(tokens : Array[String], suffix : String) -> Array[String] {
-  tokens.map(t => {
-    if t.has_suffix(suffix) {
-      drop_suffix(t, suffix) + " "
+  // HF 0.22.2 BPEDecoder (bpe.rs): per token,
+  // `token.replace(suffix, if last { "" } else { " " })` — an unconditional
+  // substring replace of ALL suffix occurrences, mid-token included
+  // (["a</w>b","cd"] -> "a bcd", ["a</w>b</w>","cd"] -> "a b cd").
+  if suffix.is_empty() {
+    // Pathological empty suffix: Rust's replace inserts between chars;
+    // keep tokens unchanged rather than explode (documented divergence).
+    return tokens
+  }
+  let n = tokens.length()
+  let out : Array[String] = []
+  for i, t in tokens {
+    if i == n - 1 {
+      out.push(@common.replace_literal(t, suffix, ""))
     } else {
-      t
+      out.push(@common.replace_literal(t, suffix, " "))
     }
-  })
+  }
+  out
 }
 
 ///|
 fn decode_metaspace(
   tokens : Array[String],
   replacement : Char,
+  prepend_scheme : String,
 ) -> Array[String] {
+  // HF 0.22.2 Metaspace decode: with prepend_scheme always/first every
+  // replacement char in the FIRST token is dropped (including mid-token,
+  // e.g. ["▁▁double"] -> "double"), while later tokens map the replacement
+  // to a space. With `never` the first token's replacement chars map to a
+  // space too.
+  let drop_first = prepend_scheme != "never"
   let out : Array[String] = []
   for i, t in tokens {
     let sb = StringBuilder()
     for c in t {
-      sb.write_char(if c == replacement { ' ' } else { c })
+      if c == replacement {
+        if i == 0 && drop_first {
+          // dropped entirely
+        } else {
+          sb.write_char(' ')
+        }
+      } else {
+        sb.write_char(c)
+      }
     }
-    let s = sb.to_string()
-    // Drop the leading space introduced by the prepended metaspace on token 0.
-    if i == 0 && s.has_prefix(" ") {
-      out.push(drop_prefix(s, " "))
-    } else {
-      out.push(s)
-    }
+    out.push(sb.to_string())
   }
   out
 }
@@ -281,17 +363,6 @@ fn drop_prefix(s : String, prefix : String) -> String {
   let chars = s.to_array()
   let sb = StringBuilder()
   for i in pc..<chars.length() {
-    sb.write_char(chars[i])
-  }
-  sb.to_string()
-}
-
-///|
-fn drop_suffix(s : String, suffix : String) -> String {
-  let sc = suffix.char_length()
-  let chars = s.to_array()
-  let sb = StringBuilder()
-  for i in 0..<(chars.length() - sc) {
     sb.write_char(chars[i])
   }
   sb.to_string()
@@ -325,46 +396,53 @@ fn strip_token(t : String, content : Char, start : Int, stop : Int) -> String {
 
 ///|
 fn cleanup_text(s : String) -> String {
-  // HF's WordPiece/CTC cleanup is a fixed set of ASCII-space contractions and
-  // punctuation rewrites. Implement it as one deterministic pass instead of the
-  // old twelve literal replace passes; this is the hot path for BERT decode.
-  let chars = s.to_array()
-  let n = chars.length()
-  let sb = StringBuilder()
-  let mut i = 0
-  while i < n {
-    if chars[i] == ' ' && i + 1 < n && should_drop_cleanup_space(chars, i) {
-      i = i + 1
-    } else {
-      sb.write_char(chars[i])
-      i = i + 1
-    }
-  }
-  sb.to_string()
-}
-
-///|
-fn should_drop_cleanup_space(chars : Array[Char], i : Int) -> Bool {
-  let next = chars[i + 1]
-  if next == '.' ||
-    next == ',' ||
-    next == '?' ||
-    next == '!' ||
-    next == ';' ||
-    next == ':' ||
-    next == '\'' {
-    return true
-  }
-  i + 3 < chars.length() &&
-  next == 'n' &&
-  chars[i + 2] == '\'' &&
-  chars[i + 3] == 't'
+  // HF wordpiece.rs cleanup(): the exact ordered literal replaces. The
+  // previous single-pass approximation drifted on three rules (it dropped
+  // spaces before ";" and ":" which HF keeps, left the trailing space of
+  // " ' ", and lacked " do not" -> " don't").
+  let out = @common.replace_literal(s, " .", ".")
+  let out = @common.replace_literal(out, " ?", "?")
+  let out = @common.replace_literal(out, " !", "!")
+  let out = @common.replace_literal(out, " ,", ",")
+  let out = @common.replace_literal(out, " ' ", "'")
+  let out = @common.replace_literal(out, " n't", "n't")
+  let out = @common.replace_literal(out, " 'm", "'m")
+  let out = @common.replace_literal(out, " do not", " don't")
+  let out = @common.replace_literal(out, " 's", "'s")
+  let out = @common.replace_literal(out, " 've", "'ve")
+  @common.replace_literal(out, " 're", "'re")
 }
 
 // Replacement for HF decoder Replace. HF distinguishes literal String patterns
 // from Regex patterns in JSON, but this lightweight representation keeps the
 // pattern string only. Handle the common Regex forms seen in SentencePiece-style
 // decoder configs explicitly, then fall back to literal substring replacement.
+
+///|
+
+///|
+/// Whether `replace_all` handles `pattern` without falling through to the
+/// implicit literal replace: a scanner family matches, one of the hardcoded
+/// whitespace/class cases applies, or the pattern is a regex-literal (in
+/// which case literal replacement IS the regex behavior).
+fn replace_pattern_supported(pattern : String) -> Bool {
+  if pattern.is_empty() {
+    return true
+  }
+  if @common.replace_simple_regex("a", pattern, "x") is Some(_) {
+    return true
+  }
+  if @common.replace_bounded_simple_regex("a", pattern, "x") is Some(_) {
+    return true
+  }
+  if @common.replace_anchored_simple_regex("a", pattern, "x") is Some(_) {
+    return true
+  }
+  if @common.is_simple_split_regex_pattern(pattern) {
+    return true
+  }
+  false
+}
 
 ///|
 fn replace_all(s : String, pattern : String, content : String) -> String {

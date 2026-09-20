@@ -199,6 +199,11 @@ fn decode_replace_direct(
   if @common.is_simple_split_regex_pattern(pattern) {
     return decode_replace_simple_regex_direct(tokens, pattern, content)
   }
+  // Unsupported regex family: fail explicitly (same gate as decode_chain's
+  // Replace arm) instead of silently falling back to a literal replace.
+  guard replace_pattern_supported(pattern) else {
+    abort("unsupported Replace decoder pattern: \{pattern}")
+  }
   let sb = StringBuilder()
   for t in tokens {
     sb.write_string(replace_all(t, pattern, content))
