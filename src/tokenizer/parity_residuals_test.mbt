@@ -31,8 +31,8 @@ test "byte-level trim follows the authoritative rules" {
   @test.assert_eq(e.tokens[0], "ĠĠ")
   @test.assert_eq(e.offsets[0], (2, 2))
   @test.assert_eq(e.offsets[1], (2, 3))
-  // add_prefix_space=true + trim: the SINGLE added leading space on the
-  // first token is kept (Python 0.22.2 "a b" -> Ġa(0,2)? probe: [(0,2),(2,3)])
+  // add_prefix_space=true + trim: the added prefix space maps to a
+  // zero-width span at 0 and is kept on the first token
   let json_prefix =
     #|{"version":"1.0","pre_tokenizer":{"type":"ByteLevel","add_prefix_space":true,"use_regex":false,"trim_offsets":true},"model":{"type":"BPE","unk_token":"<|eot|>","vocab":{"a":0,"Ġb":1,"b":2,"Ġ":3},"merges":[["Ġ","b"]]},"post_processor":{"type":"ByteLevel","add_prefix_space":true,"trim_offsets":true}}
   let tok2 = Tokenizer::from_str(json_prefix)

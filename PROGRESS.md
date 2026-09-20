@@ -1138,5 +1138,6 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 - **standalone StripAccents 语义**：HF 的独立 StripAccents 只删除**已分解**的组合记号（预组合 é 原样保留：normalize("café")=="café"），与 BertNormalizer 的 strip_accents（先 NFD 再删）不同；拆分 `strip_accents`/`bert_strip_accents`（含 aligned 变体）分别实现。
 - **added-token id 分配（HF add_tokens 规则）**：内容已存在于模型词表时**复用模型 id**（忽略声明 id）；声明 id 与**不同**词表 token 冲突时重分配为 `get_vocab_size() + 递增计数`（实测 vocab{hello:5,world:6,UNK:9} + 声明 id5 → 重分配为 3）。两处旧测试断言声明 id 的期望按 HF 真值更新。
 - 效果：行为对比扫描合成 **1008/1008、真实模型 100/100，双双 100%**（起点：合成 813/1008、真实 59/100）。扫描驱动固化到 `/tmp/parity-driver/cmd/sweep`（不再被探针覆盖）。
-- 新发现（记录为下一批缺口）：pair + `add_prefix_space` 预分词路径第二序列的前缀 Ġ 发射缺失（HF `encode('a',' b')` 首序列产出 Ġ+a 两 token，本库丢 Ġ）；normalizer Replace 不支持 regex 族的文本级静默 no-op 仍待 load 期显式门（需穷举 chain 支持族防误拒）。
+- 新发现（记录为下一批缺口）：normalizer Replace 不支持 regex 族的文本级静默 no-op 仍待 load 期显式门（需穷举 chain 支持族防误拒）。评审确认 pair + `add_prefix_space` 场景与 HF 一致（早先疑似分歧为误报，已从缺口清单移除）。
+- 独立评审后修正（2026-09-20 续）：added-token id 分配改为 HF `add_tokens` 的真实算法——按 JSON 顺序，内容可解析（模型词表或已添加）则复用该 id，否则一律 `get_vocab_size() + 递增计数`（**完全忽略**声明 id；实测：新内容声明 100 于 vocab{a:0,b:1} → 2；两条同声明 id 5 → 2 与 3，不再静默遮蔽）；byte-level trim 的空白计数补上 unicode 空白字符（可达于含原始空格的 added-token 内容）；移除误报的 pair+aps 缺口与过期注释。
 - 新增 `src/tokenizer/parity_residuals_test.mbt`（4 个测试锁定上述语义）。全后端 native(432)/js(432)/wasm(409)/wasm-gc(409) 通过；fmt/check/info 干净。

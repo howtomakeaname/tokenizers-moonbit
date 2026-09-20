@@ -369,7 +369,9 @@ fn count_trailing_byte_spaces(token : String) -> Int {
 
 ///|
 fn is_byte_level_space(c : Char) -> Bool {
-  c == 'Ġ'
+  // HF counts the byte-level space char OR any unicode whitespace char
+  // (reachable via added-token content containing a raw space)
+  c == 'Ġ' || @common.is_unicode_whitespace(c.to_int())
 }
 
 ///|
