@@ -328,6 +328,10 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if anchored_regex_kind(pattern) is Some(_) {
     return true
   }
+  // bare single-character class spellings: exact run of 1
+  if bare_class_kind(pattern) is Some(_) {
+    return true
+  }
   // everything the chain would handle via its hardcoded literal cases is
   // covered by the kinds/scanners above; a remaining pure literal is
   // correctly handled by the literal fallback
@@ -351,4 +355,41 @@ fn replace_ranged_simple_regex_probe(pattern : String) -> Bool {
 /// escape removes the metachar meaning.
 fn is_regex_literal_pattern(pattern : String) -> Bool {
   regex_literal_spec(pattern) is Some(_)
+}
+
+///|
+/// Bare single-character class spellings (no quantifier) map to their
+/// class kind with an implied exact run of 1 — HF replaces each matching
+/// character individually (probed: Replace(Regex "[0-9]", "#") on "a5b7"
+/// -> "a#b#"). Returns the class kind.
+pub fn bare_class_kind(pattern : String) -> Int? {
+  match pattern {
+    "\\s" | "[\\s]" => Some(1)
+    "\\S" | "[^\\s]" => Some(12)
+    "[0-9]" => Some(22)
+    "\\d" | "[\\d]" | "\\p{N}" | "\\p{Number}" | "[\\p{N}]" | "[\\p{Number}]" =>
+      Some(11)
+    "[^0-9]" => Some(23)
+    "\\D"
+    | "[\\D]"
+    | "[^\\d]"
+    | "\\P{N}"
+    | "\\P{Number}"
+    | "[^\\p{N}]"
+    | "[^\\p{Number}]" => Some(14)
+    "[A-Za-z0-9_]" => Some(24)
+    "\\w" => Some(4)
+    "[^A-Za-z0-9_]" => Some(25)
+    "\\W" => Some(13)
+    "[A-Za-z]" => Some(6)
+    "\\p{L}" | "\\p{Letter}" | "[\\p{L}]" | "[\\p{Letter}]" => Some(6)
+    "[^A-Za-z]" => Some(16)
+    "\\P{L}" | "\\P{Letter}" | "[^\\p{L}]" => Some(16)
+    "\\p{P}" | "\\p{Punctuation}" | "[\\p{P}]" => Some(8)
+    "\\P{P}" | "\\P{Punctuation}" => Some(18)
+    "\\p{S}" | "\\p{Symbol}" | "[\\p{S}]" => Some(9)
+    "\\P{S}" | "\\P{Symbol}" => Some(19)
+    "[\\r\\n]" => Some(3)
+    _ => None
+  }
 }

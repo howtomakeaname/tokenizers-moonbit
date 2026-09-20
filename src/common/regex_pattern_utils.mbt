@@ -22,7 +22,34 @@ pub fn bounded_regex_kind_pred(kind : Int, c : Char) -> Bool {
     19 => !is_unicode_symbol(c)
     20 => !is_unicode_punctuation_or_symbol(c)
     21 => is_not_whitespace_letter_or_number(c)
+    22 => c >= '0' && c <= '9' // [0-9] ASCII-only (HF: not \d)
+    23 => !(c >= '0' && c <= '9') // [^0-9]
+    24 => is_ascii_word_char(c) // [A-Za-z0-9_] ASCII-only (HF: not \w)
+    25 => !is_ascii_word_char(c) // [^A-Za-z0-9_]
     _ => false
+  }
+}
+
+///|
+fn is_ascii_word_char(c : Char) -> Bool {
+  (c >= 'a' && c <= 'z') ||
+  (c >= 'A' && c <= 'Z') ||
+  (c >= '0' && c <= '9') ||
+  c == '_'
+}
+
+///|
+/// HF maps `[0-9]`/`[A-Za-z0-9_]` class spellings to ASCII-only semantics
+/// while `\d`/`\w` are Unicode. Post-override for kind entry points whose
+/// spelling groups conflate them (verified: [0-9] leaves fullwidth ０,
+/// \d replaces it).
+pub fn ascii_class_kind_override(pattern : String, kind : Int) -> Int {
+  match kind {
+    11 => if pattern.contains("[0-9]") { 22 } else { 11 }
+    14 => if pattern.contains("[^0-9]") { 23 } else { 14 }
+    4 => if pattern.contains("[A-Za-z0-9_]") { 24 } else { 4 }
+    13 => if pattern.contains("[^A-Za-z0-9_]") { 25 } else { 13 }
+    _ => kind
   }
 }
 

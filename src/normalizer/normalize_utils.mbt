@@ -198,6 +198,16 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       None => ()
     }
   }
+  match @common.bare_class_kind(pattern) {
+    Some(kind) =>
+      return @common.replace_exact_char_runs(
+        s,
+        content,
+        fn(c) { @common.bounded_regex_kind_pred(kind, c) },
+        exact_run=1,
+      )
+    None => ()
+  }
   match @common.replace_simple_regex(s, pattern, content) {
     Some(out) => return out
     None => ()
