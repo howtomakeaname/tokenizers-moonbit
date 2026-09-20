@@ -26,6 +26,8 @@ pub fn bounded_regex_kind_pred(kind : Int, c : Char) -> Bool {
     23 => !(c >= '0' && c <= '9') // [^0-9]
     24 => is_ascii_word_char(c) // [A-Za-z0-9_] ASCII-only (HF: not \w)
     25 => !is_ascii_word_char(c) // [^A-Za-z0-9_]
+    26 => is_word_char_class(c) // [\w] bracket: word WITHOUT onig quirks
+    27 => !is_word_char_class(c) // [^\w] bracket
     _ => false
   }
 }

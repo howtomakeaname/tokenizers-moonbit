@@ -63,6 +63,13 @@ pub fn is_word_char_class(c : Char) -> Bool {
     return true
   }
   let u = c.to_int()
+  // the empirically generated table was probed with BARE \w and therefore
+  // contains the onig quirks; class-context semantics must exclude them
+  for q in word_onig_quirks {
+    if u == q {
+      return false
+    }
+  }
   let mut lo = 0
   let mut hi = word_ranges.length() - 1
   while lo <= hi {
@@ -427,6 +434,10 @@ pub fn bare_class_kind(pattern : String) -> Int? {
     "\\w" => Some(4)
     "[^A-Za-z0-9_]" => Some(25)
     "\\W" => Some(13)
+    "[\\w]" => Some(26) // bracket: word WITHOUT onig quirks
+    "[^\\w]" => Some(27)
+    "[\\W]" => Some(27)
+    "[^\\W]" => Some(26)
     "[A-Za-z]" => Some(6)
     "\\p{L}" | "\\p{Letter}" | "[\\p{L}]" | "[\\p{Letter}]" => Some(7)
     "[^A-Za-z]" => Some(16)

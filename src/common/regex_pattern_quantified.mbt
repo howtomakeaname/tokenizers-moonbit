@@ -47,6 +47,28 @@ fn ranged_regex_kind_inner(pattern : String) -> (Int, Int, Int)? {
   match
     ranged_kind_variants(
       pattern,
+      26,
+      ["[\\w]{2,3}", "[^\\W]{2,3}"],
+      ["[\\w]{2,4}", "[^\\W]{2,4}"],
+      ["[\\w]{3,4}", "[^\\W]{3,4}"],
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    ranged_kind_variants(
+      pattern,
+      27,
+      ["[\\W]{2,3}", "[^\\w]{2,3}"],
+      ["[\\W]{2,4}", "[^\\w]{2,4}"],
+      ["[\\W]{3,4}", "[^\\w]{3,4}"],
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    ranged_kind_variants(
+      pattern,
       11,
       [
         "\\d{2,3}", "[\\d]{2,3}", "[0-9]{2,3}", "\\p{N}{2,3}", "\\p{Number}{2,3}",
@@ -451,6 +473,26 @@ fn anchored_regex_kind_inner(pattern : String) -> (Int, Bool)? {
   match
     anchored_variants(
       pattern,
+      ["^[\\w]+", "^[^\\W]+"],
+      ["[\\w]+$", "[^\\W]+$"],
+      26,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^[\\W]+", "^[^\\w]+"],
+      ["[\\W]+$", "[^\\w]+$"],
+      27,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
       ["^\\W+", "^[^\\w]+", "^[^A-Za-z0-9_]+"],
       ["\\W+$", "[^\\w]+$", "[^A-Za-z0-9_]+$"],
       13,
@@ -712,6 +754,13 @@ fn quantified_class_kind(pattern : String, suffix : String) -> Int? {
   }
   if quantified_base_matches(pattern, ["\\w", "[A-Za-z0-9_]"], suffix) {
     return Some(4)
+  }
+  // bracket \w is class-context: word WITHOUT the onig quirks
+  if quantified_base_matches(pattern, ["[\\w]", "[^\\W]"], suffix) {
+    return Some(26)
+  }
+  if quantified_base_matches(pattern, ["[\\W]", "[^\\w]"], suffix) {
+    return Some(27)
   }
   if quantified_base_matches(pattern, ["[A-Za-z0-9]", "[a-zA-Z0-9]"], suffix) {
     return Some(5)

@@ -18,6 +18,9 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   pattern == "[A-Za-z0-9_]+$" ||
   pattern == "\\W+" ||
   pattern == "[^\\w]+" ||
+  pattern == "[\\w]+" ||
+  pattern == "[\\W]+" ||
+  pattern == "[^\\W]+" ||
   pattern == "[^A-Za-z0-9_]+" ||
   pattern == "\\w{2,}" ||
   pattern == "[A-Za-z0-9_]{2,}" ||
