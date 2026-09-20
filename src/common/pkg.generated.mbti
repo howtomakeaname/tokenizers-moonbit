@@ -14,6 +14,10 @@ pub fn bounded_regex_kind(String) -> (Int, Int)?
 
 pub fn bounded_regex_kind_pred(Int, Char) -> Bool
 
+pub fn canonicalize_word_class(String) -> String
+
+pub fn char_bounded_quantifier_shape(String) -> Bool
+
 pub fn char_string(Char) -> String
 
 pub fn exact_regex_kind(String) -> (Int, Int)?
@@ -69,6 +73,8 @@ pub fn replace_anchored_simple_regex(String, String, String) -> String?
 pub fn replace_bounded_char_runs(String, String, (Char) -> Bool, max_run~ : Int) -> String
 
 pub fn replace_bounded_simple_regex(String, String, String) -> String?
+
+pub fn replace_char_bounded_runs(String, String, String) -> String?
 
 pub fn replace_char_runs(String, String, (Char) -> Bool) -> String
 

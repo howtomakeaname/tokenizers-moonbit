@@ -150,3 +150,14 @@ test "decoder replace bare classes and ascii plus" {
   let word = Decoder::Replace(pattern="[A-Za-z0-9_]+", content="#")
   @test.assert_eq(word.decode(["a", "é", "b"]), "#é#")
 }
+
+///|
+/// Single-char literal bounded quantifiers through both decoder paths
+/// (HF decoders are per-token: a{2} only replaces within one surface).
+test "decoder literal bounded quantifiers" {
+  let d = Decoder::Replace(pattern="a{2}", content="#")
+  @test.assert_eq(d.decode(["xaa", "y"]), "x#y")
+  @test.assert_eq(d.decode(["x", "a", "a", "y"]), "xaay")
+  let d2 = Decoder::Replace(pattern="a{2,3}", content="#")
+  @test.assert_eq(d2.decode(["zaaaay"]), "z#ay")
+}
