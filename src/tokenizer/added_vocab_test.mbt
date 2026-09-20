@@ -125,3 +125,18 @@ test "pretokenized added token offsets survive batch and byte conversion" {
   @test.assert_eq(encs[1].tokens, ["hello", "world", "[PAD]"])
   @test.assert_eq(encs[1].attention_mask, [1, 1, 0])
 }
+
+///|
+/// single_word added-token boundaries use class-context word semantics:
+/// the onig Latin-1 quirks do NOT block extraction (HF-probed: "²TAG"
+/// extracts TAG as its own token; PR #18 quirk filter fixed this).
+test "single word boundary ignores onig quirk chars" {
+  let json =
+    #|{"version":"1.0",
+    #| "added_tokens":[{"id":5,"content":"TAG","single_word":true,"lstrip":false,"rstrip":false,"normalized":false,"special":false}],
+    #| "pre_tokenizer":{"type":"WhitespaceSplit"},
+    #| "model":{"type":"WordLevel","vocab":{"hello":0,"[UNK]":1,"[CLS]":2,"[SEP]":3},"unk_token":"[UNK]"}}
+  let tok = @tokenizer.Tokenizer::from_str(json)
+  let enc = tok.encode("²TAG", add_special_tokens=false)
+  @test.assert_eq(enc.tokens, ["[UNK]", "TAG"])
+}

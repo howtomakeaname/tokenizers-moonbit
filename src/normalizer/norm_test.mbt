@@ -1052,7 +1052,7 @@ test "replace w families over full onig coverage" {
 }
 
 ///|
-/// Inverse bracket spellings (`[\W]`/`[^\w]`, `[^W]`-family) ride the same
+/// Inverse bracket spellings (`[\W]`/`[^\w]`) ride the same
 /// kind-27 rows; expectations HF-probed.
 test "replace regex inverse w-bracket spellings" {
   let inv_exact = @normalizer.Normalizer::Replace(
@@ -1080,10 +1080,37 @@ test "replace regex inverse w-bracket spellings" {
     content="#",
   )
   @test.assert_eq(inv_tail.normalize("ab²"), "ab²")
-  // greedy bounded: HF [w]{2,3} on 'abcd²' -> '#d²' (abc then d<min)
+  // greedy bounded: HF [\w]{2,3} on 'abcd²' -> '#d²' (abc then d<min)
   let ranged = @normalizer.Normalizer::Replace(
     pattern="[\\w]{2,3}",
     content="#",
   )
   @test.assert_eq(ranged.normalize("abcd²"), "#d²")
+}
+
+///|
+/// Review fixes: bounded inverse-bracket rows no longer shadowed by kind 13;
+/// ranged {3,4} inverse spellings; Split gate accepts the bracket + forms.
+test "replace regex bracket review fixes" {
+  // F1: [^w]{1,n} must be kind 27 (quirks match the inverse)
+  let inv_b = @normalizer.Normalizer::Replace(
+    pattern="[^\\w]{1,2}",
+    content="#",
+  )
+  @test.assert_eq(inv_b.normalize("x²³y"), "x#y")
+  @test.assert_eq(inv_b.normalize("²"), "#")
+  // F2: {3,4} inverses load and behave
+  let inv34 = @normalizer.Normalizer::Replace(
+    pattern="[^\\w]{3,4}",
+    content="#",
+  )
+  @test.assert_eq(inv34.normalize("²²²²"), "#")
+  let pos34 = @normalizer.Normalizer::Replace(
+    pattern="[^\\W]{3,4}",
+    content="#",
+  )
+  @test.assert_eq(pos34.normalize("abcd"), "#")
+  // bare w bounded is unchanged (quirks still word)
+  let bare_b = @normalizer.Normalizer::Replace(pattern="\\w{1,2}", content="#")
+  @test.assert_eq(bare_b.normalize("²a"), "#")
 }
