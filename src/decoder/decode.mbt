@@ -426,22 +426,7 @@ fn cleanup_text(s : String) -> String {
 /// whitespace/class cases applies, or the pattern is a regex-literal (in
 /// which case literal replacement IS the regex behavior).
 fn replace_pattern_supported(pattern : String) -> Bool {
-  if pattern.is_empty() {
-    return true
-  }
-  if @common.replace_simple_regex("a", pattern, "x") is Some(_) {
-    return true
-  }
-  if @common.replace_bounded_simple_regex("a", pattern, "x") is Some(_) {
-    return true
-  }
-  if @common.replace_anchored_simple_regex("a", pattern, "x") is Some(_) {
-    return true
-  }
-  if @common.is_simple_split_regex_pattern(pattern) {
-    return true
-  }
-  false
+  @common.is_supported_replace_regex(pattern)
 }
 
 ///|
