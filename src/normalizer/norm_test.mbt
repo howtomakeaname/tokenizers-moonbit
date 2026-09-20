@@ -1017,3 +1017,22 @@ test "replace regex w-bracket, anchored newline, literal quantifiers" {
   )
   @test.assert_raise(() => @normalizer.Normalizer::from_json(bad_json))
 }
+
+///|
+/// End-to-end `\w` families over the PR #16 review's divergent inputs —
+/// expectations from direct HF probes (fullwidth letters/digits, halfwidth
+/// katakana, µ/ª/Roman numerals all match; circled digits/emoji do not).
+test "replace w families over full onig coverage" {
+  let w2 = @normalizer.Normalizer::Replace(pattern="\\w{2}", content="#")
+  @test.assert_eq(w2.normalize("ａｂ"), "#")
+  @test.assert_eq(w2.normalize("ｱｲ"), "#")
+  let w1 = @normalizer.Normalizer::Replace(pattern="\\w", content="#")
+  @test.assert_eq(w1.normalize("µ"), "#")
+  @test.assert_eq(w1.normalize("ª"), "#")
+  @test.assert_eq(w1.normalize("Ⅷ"), "#")
+  @test.assert_eq(w1.normalize("½"), "#")
+  @test.assert_eq(w1.normalize("①"), "①")
+  @test.assert_eq(w1.normalize("😀"), "😀")
+  let inv = @normalizer.Normalizer::Replace(pattern="[^\\w]+", content="#")
+  @test.assert_eq(inv.normalize("，。！"), "#")
+}
