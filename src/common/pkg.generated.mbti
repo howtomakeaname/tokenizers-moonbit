@@ -40,6 +40,8 @@ pub fn is_ranged_regex_pattern(String) -> Bool
 
 pub fn is_simple_split_regex_pattern(String) -> Bool
 
+pub fn is_supported_replace_regex(String) -> Bool
+
 pub fn is_unicode_letter(Char) -> Bool
 
 pub fn is_unicode_punctuation(Char) -> Bool

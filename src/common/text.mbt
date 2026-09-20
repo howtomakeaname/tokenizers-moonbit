@@ -285,3 +285,63 @@ pub fn is_not_whitespace_letter_or_number(c : Char) -> Bool {
 /// Replace configs. Return `(kind, max_run)`, where `kind` is consumed by
 /// `bounded_regex_kind_pred`. Keeping this table shared prevents the Split
 /// scanner, Normalizer Replace and Decoder Replace from drifting apart.
+
+///|
+/// Whether the shared replace chain (Split/Normalizer/Decoder) fully
+/// supports `pattern` as a REGEX — i.e. one of the deterministic scanner
+/// families handles it, or it is a regex-literal (where literal
+/// replacement is the correct regex behavior). Used by load-time gates to
+/// reject unsupported regex patterns explicitly instead of silently
+/// falling back to a literal replace.
+pub fn is_supported_replace_regex(pattern : String) -> Bool {
+  if pattern.is_empty() {
+    // Degenerate: the chain returns the input unchanged (documented
+    // divergence from HF's insert-between-chars); keep loadable.
+    return true
+  }
+  // quantifier-zoo kinds (the `{`-containing branch of the chain)
+  if pattern.contains("{") {
+    if replace_bounded_simple_regex_probe(pattern) {
+      return true
+    }
+    if replace_ranged_simple_regex_probe(pattern) {
+      return true
+    }
+    if exact_regex_kind(pattern) is Some(_) {
+      return true
+    }
+    if min_regex_kind(pattern) is Some(_) {
+      return true
+    }
+  }
+  // scanner families (literal / alternation / class runs / anchored)
+  if simple_split_regex_matches("a".to_array(), pattern) is Some(_) {
+    return true
+  }
+  if anchored_regex_kind(pattern) is Some(_) {
+    return true
+  }
+  // everything the chain would handle via its hardcoded literal cases is
+  // covered by the kinds/scanners above; a remaining pure literal is
+  // correctly handled by the literal fallback
+  is_regex_literal_pattern(pattern)
+}
+
+///|
+/// Probe the bounded/ranged families without caring about the output.
+fn replace_bounded_simple_regex_probe(pattern : String) -> Bool {
+  replace_bounded_simple_regex("a", pattern, "x") is Some(_)
+}
+
+///|
+fn replace_ranged_simple_regex_probe(pattern : String) -> Bool {
+  replace_ranged_simple_regex("a", pattern, "x") is Some(_)
+}
+
+///|
+/// A pattern with no regex metacharacters (so literal replacement is the
+/// correct regex semantics). Escaped literals (e.g. `a\\.b`) count: the
+/// escape removes the metachar meaning.
+fn is_regex_literal_pattern(pattern : String) -> Bool {
+  regex_literal_spec(pattern) is Some(_)
+}
