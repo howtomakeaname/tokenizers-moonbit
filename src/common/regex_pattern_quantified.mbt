@@ -70,18 +70,21 @@ fn ranged_regex_kind_inner(pattern : String) -> (Int, Int, Int)? {
     ranged_kind_variants(
       pattern,
       11,
-      [
-        "\\d{2,3}", "[\\d]{2,3}", "[0-9]{2,3}", "\\p{N}{2,3}", "\\p{Number}{2,3}",
-        "[\\p{N}]{2,3}", "[\\p{Number}]{2,3}",
-      ],
-      [
-        "\\d{2,4}", "[\\d]{2,4}", "[0-9]{2,4}", "\\p{N}{2,4}", "\\p{Number}{2,4}",
-        "[\\p{N}]{2,4}", "[\\p{Number}]{2,4}",
-      ],
-      [
-        "\\d{3,4}", "[\\d]{3,4}", "[0-9]{3,4}", "\\p{N}{3,4}", "\\p{Number}{3,4}",
-        "[\\p{N}]{3,4}", "[\\p{Number}]{3,4}",
-      ],
+      ["\\d{2,3}", "[\\d]{2,3}", "[0-9]{2,3}"],
+      ["\\d{2,4}", "[\\d]{2,4}", "[0-9]{2,4}"],
+      ["\\d{3,4}", "[\\d]{3,4}", "[0-9]{3,4}"],
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  // \p{N} spellings are FULL N (Nd + Nl + No), distinct from \d
+  match
+    ranged_kind_variants(
+      pattern,
+      28,
+      ["\\p{N}{2,3}", "\\p{Number}{2,3}", "[\\p{N}]{2,3}", "[\\p{Number}]{2,3}"],
+      ["\\p{N}{2,4}", "\\p{Number}{2,4}", "[\\p{N}]{2,4}", "[\\p{Number}]{2,4}"],
+      ["\\p{N}{3,4}", "\\p{Number}{3,4}", "[\\p{N}]{3,4}", "[\\p{Number}]{3,4}"],
     ) {
     Some(v) => return Some(v)
     None => ()
@@ -90,17 +93,25 @@ fn ranged_regex_kind_inner(pattern : String) -> (Int, Int, Int)? {
     ranged_kind_variants(
       pattern,
       14,
+      ["\\D{2,3}", "[\\D]{2,3}", "[^\\d]{2,3}", "[^0-9]{2,3}"],
+      ["\\D{2,4}", "[\\D]{2,4}", "[^\\d]{2,4}", "[^0-9]{2,4}"],
+      ["\\D{3,4}", "[\\D]{3,4}", "[^\\d]{3,4}", "[^0-9]{3,4}"],
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    ranged_kind_variants(
+      pattern,
+      29,
       [
-        "\\D{2,3}", "[\\D]{2,3}", "[^\\d]{2,3}", "[^0-9]{2,3}", "\\P{N}{2,3}", "\\P{Number}{2,3}",
-        "[^\\p{N}]{2,3}", "[^\\p{Number}]{2,3}",
+        "\\P{N}{2,3}", "\\P{Number}{2,3}", "[^\\p{N}]{2,3}", "[^\\p{Number}]{2,3}",
       ],
       [
-        "\\D{2,4}", "[\\D]{2,4}", "[^\\d]{2,4}", "[^0-9]{2,4}", "\\P{N}{2,4}", "\\P{Number}{2,4}",
-        "[^\\p{N}]{2,4}", "[^\\p{Number}]{2,4}",
+        "\\P{N}{2,4}", "\\P{Number}{2,4}", "[^\\p{N}]{2,4}", "[^\\p{Number}]{2,4}",
       ],
       [
-        "\\D{3,4}", "[\\D]{3,4}", "[^\\d]{3,4}", "[^0-9]{3,4}", "\\P{N}{3,4}", "\\P{Number}{3,4}",
-        "[^\\p{N}]{3,4}", "[^\\p{Number}]{3,4}",
+        "\\P{N}{3,4}", "\\P{Number}{3,4}", "[^\\p{N}]{3,4}", "[^\\p{Number}]{3,4}",
       ],
     ) {
     Some(v) => return Some(v)
@@ -431,15 +442,20 @@ fn anchored_regex_kind_inner(pattern : String) -> (Int, Bool)? {
   match
     anchored_variants(
       pattern,
-      [
-        "^\\d+", "^[\\d]+", "^[0-9]+", "^\\p{N}+", "^\\p{Number}+", "^[\\p{N}]+",
-        "^[\\p{Number}]+",
-      ],
-      [
-        "\\d+$", "[\\d]+$", "[0-9]+$", "\\p{N}+$", "\\p{Number}+$", "[\\p{N}]+$",
-        "[\\p{Number}]+$",
-      ],
+      ["^\\d+", "^[\\d]+", "^[0-9]+"],
+      ["\\d+$", "[\\d]+$", "[0-9]+$"],
       11,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  // \p{N} spellings are FULL N (Nd + Nl + No), distinct from \d
+  match
+    anchored_variants(
+      pattern,
+      ["^\\p{N}+", "^\\p{Number}+", "^[\\p{N}]+", "^[\\p{Number}]+"],
+      ["\\p{N}+$", "\\p{Number}+$", "[\\p{N}]+$", "[\\p{Number}]+$"],
+      28,
     ) {
     Some(v) => return Some(v)
     None => ()
@@ -447,15 +463,19 @@ fn anchored_regex_kind_inner(pattern : String) -> (Int, Bool)? {
   match
     anchored_variants(
       pattern,
-      [
-        "^\\D+", "^[\\D]+", "^[^\\d]+", "^[^0-9]+", "^\\P{N}+", "^\\P{Number}+",
-        "^[^\\p{N}]+", "^[^\\p{Number}]+",
-      ],
-      [
-        "\\D+$", "[\\D]+$", "[^\\d]+$", "[^0-9]+$", "\\P{N}+$", "\\P{Number}+$",
-        "[^\\p{N}]+$", "[^\\p{Number}]+$",
-      ],
+      ["^\\D+", "^[\\D]+", "^[^\\d]+", "^[^0-9]+"],
+      ["\\D+$", "[\\D]+$", "[^\\d]+$", "[^0-9]+$"],
       14,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    anchored_variants(
+      pattern,
+      ["^\\P{N}+", "^\\P{Number}+", "^[^\\p{N}]+", "^[^\\p{Number}]+"],
+      ["\\P{N}+$", "\\P{Number}+$", "[^\\p{N}]+$", "[^\\p{Number}]+$"],
+      29,
     ) {
     Some(v) => return Some(v)
     None => ()
@@ -798,14 +818,16 @@ fn quantified_class_kind(pattern : String, suffix : String) -> Int? {
     ) {
     return Some(10)
   }
+  if quantified_base_matches(pattern, ["\\d", "[\\d]", "[0-9]"], suffix) {
+    return Some(11)
+  }
+  // \p{N} spellings are FULL N (Nd + Nl + No), distinct from \d
   if quantified_base_matches(
       pattern,
-      [
-        "\\d", "[\\d]", "[0-9]", "\\p{N}", "\\p{Number}", "[\\p{N}]", "[\\p{Number}]",
-      ],
+      ["\\p{N}", "\\p{Number}", "[\\p{N}]", "[\\p{Number}]"],
       suffix,
     ) {
-    return Some(11)
+    return Some(28)
   }
   if quantified_base_matches(pattern, ["\\S", "[^\\s]"], suffix) {
     return Some(12)
@@ -819,13 +841,17 @@ fn quantified_class_kind(pattern : String, suffix : String) -> Int? {
   }
   if quantified_base_matches(
       pattern,
-      [
-        "\\D", "[\\D]", "[^\\d]", "[^0-9]", "\\P{N}", "\\P{Number}", "[^\\p{N}]",
-        "[^\\p{Number}]",
-      ],
+      ["\\D", "[\\D]", "[^\\d]", "[^0-9]"],
       suffix,
     ) {
     return Some(14)
+  }
+  if quantified_base_matches(
+      pattern,
+      ["\\P{N}", "\\P{Number}", "[^\\p{N}]", "[^\\p{Number}]"],
+      suffix,
+    ) {
+    return Some(29)
   }
   if quantified_base_matches(pattern, ["[^A-Za-z0-9]", "[^a-zA-Z0-9]"], suffix) {
     return Some(15)

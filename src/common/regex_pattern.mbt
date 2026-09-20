@@ -37,21 +37,22 @@ fn bounded_regex_kind_inner(pattern : String) -> (Int, Int)? {
   }
   let digit = bounded_max_variants(
     pattern,
-    [
-      "\\d{1,2}", "[\\d]{1,2}", "[0-9]{1,2}", "\\p{N}{1,2}", "\\p{Number}{1,2}",
-      "[\\p{N}]{1,2}", "[\\p{Number}]{1,2}",
-    ],
-    [
-      "\\d{1,3}", "[\\d]{1,3}", "[0-9]{1,3}", "\\p{N}{1,3}", "\\p{Number}{1,3}",
-      "[\\p{N}]{1,3}", "[\\p{Number}]{1,3}",
-    ],
-    [
-      "\\d{1,4}", "[\\d]{1,4}", "[0-9]{1,4}", "\\p{N}{1,4}", "\\p{Number}{1,4}",
-      "[\\p{N}]{1,4}", "[\\p{Number}]{1,4}",
-    ],
+    ["\\d{1,2}", "[\\d]{1,2}", "[0-9]{1,2}"],
+    ["\\d{1,3}", "[\\d]{1,3}", "[0-9]{1,3}"],
+    ["\\d{1,4}", "[\\d]{1,4}", "[0-9]{1,4}"],
   )
   if digit > 0 {
     return Some((11, digit))
+  }
+  // \p{N} spellings are FULL N (Nd + Nl + No), distinct from \d
+  let number = bounded_max_variants(
+    pattern,
+    ["\\p{N}{1,2}", "\\p{Number}{1,2}", "[\\p{N}]{1,2}", "[\\p{Number}]{1,2}"],
+    ["\\p{N}{1,3}", "\\p{Number}{1,3}", "[\\p{N}]{1,3}", "[\\p{Number}]{1,3}"],
+    ["\\p{N}{1,4}", "\\p{Number}{1,4}", "[\\p{N}]{1,4}", "[\\p{Number}]{1,4}"],
+  )
+  if number > 0 {
+    return Some((28, number))
   }
   let non_digit = bounded_max_variants(
     pattern,
