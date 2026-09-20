@@ -507,3 +507,9 @@ pub fn Model::set_nbest_size_alias(self : Model, nbest_size : Int?) -> Model {
 
 ///|
 /// Look up a token surface by id (decode direction).
+
+///|
+pub extend ModelState with @debug.Debug::{to_repr}
+
+///|
+pub extend ModelState with Eq::{equal, not_equal}

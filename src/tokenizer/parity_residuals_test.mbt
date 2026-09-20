@@ -10,7 +10,7 @@
 test "batch-longest pads single encode to multiple" {
   let json =
     #|{"version":"1.0","pre_tokenizer":{"type":"WhitespaceSplit"},"padding":{"strategy":"BatchLongest","direction":"Right","pad_id":0,"pad_token":"[PAD]","pad_to_multiple_of":2,"pad_type_id":0},"model":{"type":"WordLevel","vocab":{"a":1,"[PAD]":0,"[UNK]":2},"unk_token":"[UNK]"}}
-  let tok = Tokenizer::from_str(json)
+  let tok = @tokenizer.Tokenizer::from_str(json)
   let e = tok.encode("a a a a a")
   @test.assert_eq(e.ids.length(), 6)
   @test.assert_eq(e.tokens[e.ids.length() - 1], "[PAD]")
@@ -26,7 +26,7 @@ test "byte-level trim follows the authoritative rules" {
   // add_prefix_space=false: "  leading..." -> ĠĠ collapses to (2,2)
   let json_no_prefix =
     #|{"version":"1.0","pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":false,"trim_offsets":true},"model":{"type":"BPE","unk_token":"<|eot|>","vocab":{"ĠĠ":0,"l":1,"e":2,"a":3,"d":4,"i":5,"n":6,"g":7,"Ġ":8},"merges":[["Ġ","Ġ"]]},"post_processor":{"type":"ByteLevel","add_prefix_space":false,"trim_offsets":true}}
-  let tok = Tokenizer::from_str(json_no_prefix)
+  let tok = @tokenizer.Tokenizer::from_str(json_no_prefix)
   let e = tok.encode("  leading")
   @test.assert_eq(e.tokens[0], "ĠĠ")
   @test.assert_eq(e.offsets[0], (2, 2))
@@ -35,7 +35,7 @@ test "byte-level trim follows the authoritative rules" {
   // zero-width span at 0 and is kept on the first token
   let json_prefix =
     #|{"version":"1.0","pre_tokenizer":{"type":"ByteLevel","add_prefix_space":true,"use_regex":false,"trim_offsets":true},"model":{"type":"BPE","unk_token":"<|eot|>","vocab":{"a":0,"Ġb":1,"b":2,"Ġ":3},"merges":[["Ġ","b"]]},"post_processor":{"type":"ByteLevel","add_prefix_space":true,"trim_offsets":true}}
-  let tok2 = Tokenizer::from_str(json_prefix)
+  let tok2 = @tokenizer.Tokenizer::from_str(json_prefix)
   let e2 = tok2.encode("a b")
   // the added prefix space maps to a zero-width span at 0 (Python 0.22.2)
   @test.assert_eq(e2.tokens, ["Ġ", "a", "Ġb"])
@@ -45,7 +45,7 @@ test "byte-level trim follows the authoritative rules" {
   // pair+aps pretokenizer path has a separate known gap (see PROGRESS).
   let json_pair =
     #|{"version":"1.0","pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":false,"trim_offsets":true},"model":{"type":"BPE","unk_token":"<|eot|>","vocab":{"a":0,"Ġb":1,"b":2,"Ġ":3},"merges":[["Ġ","b"]]},"post_processor":{"type":"RobertaProcessing","sep":["</s>",9],"cls":["<s>",8],"trim_offsets":true,"add_prefix_space":false}}
-  let tok3 = Tokenizer::from_str(json_pair)
+  let tok3 = @tokenizer.Tokenizer::from_str(json_pair)
   let p = tok3.encode_pair("a", " b", add_special_tokens=false)
   @test.assert_eq(p.tokens, ["a", "Ġb"])
   @test.assert_eq(p.offsets, [(0, 1), (1, 2)])
@@ -60,7 +60,7 @@ test "standalone strip accents differs from bert strip accents" {
   // standalone keeps precomposed é intact, Bert strip_accents maps it to e
   let standalone_json =
     #|{"version":"1.0","normalizer":{"type":"StripAccents"},"model":{"type":"WordLevel","vocab":{"café":0,"cafe":1,"[UNK]":2},"unk_token":"[UNK]"}}
-  let standalone = Tokenizer::from_str(standalone_json)
+  let standalone = @tokenizer.Tokenizer::from_str(standalone_json)
   @test.assert_eq(standalone.encode("café", add_special_tokens=false).ids, [0])
   @test.assert_eq(
     standalone.encode("cafe\u{301}", add_special_tokens=false).ids,
@@ -68,7 +68,7 @@ test "standalone strip accents differs from bert strip accents" {
   )
   let bert_json =
     #|{"version":"1.0","normalizer":{"type":"BertNormalizer","clean_text":false,"handle_chinese_chars":false,"strip_accents":true,"lowercase":false},"model":{"type":"WordLevel","vocab":{"café":0,"cafe":1,"[UNK]":2},"unk_token":"[UNK]"}}
-  let bert = Tokenizer::from_str(bert_json)
+  let bert = @tokenizer.Tokenizer::from_str(bert_json)
   @test.assert_eq(bert.encode("café", add_special_tokens=false).ids, [1])
 }
 
@@ -80,13 +80,13 @@ test "added token ids reuse model ids and reassign collisions" {
   // reuse: [SPECIAL] declared 2, vocab has it as 0 -> id 0 everywhere
   let reuse_json =
     #|{"version":"1.0","added_tokens":[{"id":2,"content":"[SPECIAL]","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],"model":{"type":"WordLevel","vocab":{"[SPECIAL]":0,"[UNK]":1},"unk_token":"[UNK]"}}
-  let tok = Tokenizer::from_str(reuse_json)
+  let tok = @tokenizer.Tokenizer::from_str(reuse_json)
   @test.assert_eq(tok.encode("[SPECIAL]", add_special_tokens=false).ids, [0])
   // collision: <|eot|> declared 5 collides with vocab hello:5 -> vocab
   // size 3, reassigned to 3; hello keeps working
   let collision_json =
     #|{"version":"1.0","added_tokens":[{"id":5,"content":"<|eot|>","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],"model":{"type":"WordLevel","vocab":{"hello":5,"world":6,"[UNK]":9},"unk_token":"[UNK]"}}
-  let tok2 = Tokenizer::from_str(collision_json)
+  let tok2 = @tokenizer.Tokenizer::from_str(collision_json)
   @test.assert_eq(tok2.token_to_id("hello"), Some(5))
   @test.assert_eq(tok2.token_to_id("<|eot|>"), Some(3))
 }

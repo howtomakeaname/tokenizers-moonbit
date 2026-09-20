@@ -362,3 +362,9 @@ fn split_normalized_by_spans(
 /// Minimal HF-style pre-tokenized string wrapper. Splits are ordinary
 /// tokenizer `Split` values and can be normalized, pre-tokenized further, or
 /// converted into an Encoding with a Model.
+
+///|
+pub extend NormalizedStringState with @debug.Debug::{to_repr}
+
+///|
+pub extend NormalizedStringState with Eq::{equal, not_equal}

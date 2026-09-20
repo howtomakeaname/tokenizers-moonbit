@@ -6,3 +6,9 @@ pub(all) enum PatternKind {
   StringPattern
   RegexPattern
 } derive(Debug, Eq)
+
+///|
+pub extend PatternKind with Eq::{equal, not_equal}
+
+///|
+pub extend PatternKind with @debug.Debug::{to_repr}

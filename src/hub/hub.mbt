@@ -533,3 +533,39 @@ pub fn HubResponseDecision::should_retry_without_range(
 }
 
 ///|
+
+///|
+pub extend HubDownloadOptions with Eq::{equal, not_equal}
+
+///|
+pub extend HubDownloadOptions with @debug.Debug::{to_repr}
+
+///|
+pub extend HubHeadResult with Eq::{equal, not_equal}
+
+///|
+pub extend HubHeadResult with @debug.Debug::{to_repr}
+
+///|
+pub extend HubRequestPlan with Eq::{equal, not_equal}
+
+///|
+pub extend HubRequestPlan with @debug.Debug::{to_repr}
+
+///|
+pub extend HubResponseDecision with Eq::{equal, not_equal}
+
+///|
+pub extend HubResponseDecision with @debug.Debug::{to_repr}
+
+///|
+pub extend HubResponseMetadata with Eq::{equal, not_equal}
+
+///|
+pub extend HubResponseMetadata with @debug.Debug::{to_repr}
+
+///|
+pub extend HubTransferAction with Eq::{equal, not_equal}
+
+///|
+pub extend HubTransferAction with @debug.Debug::{to_repr}

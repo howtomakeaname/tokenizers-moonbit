@@ -622,3 +622,33 @@ fn read_revision_ref(repo : String, revision : String) -> String? {
 }
 
 ///|
+
+///|
+pub extend PretrainedAuxFiles with @debug.Debug::{to_repr}
+
+///|
+pub extend PretrainedAuxFiles with Eq::{equal, not_equal}
+
+///|
+pub extend PretrainedCacheMetadata with @debug.Debug::{to_repr}
+
+///|
+pub extend PretrainedCacheMetadata with Eq::{equal, not_equal}
+
+///|
+pub extend PretrainedCachePaths with @debug.Debug::{to_repr}
+
+///|
+pub extend PretrainedCachePaths with Eq::{equal, not_equal}
+
+///|
+pub extend PretrainedDownloadResumeMetadata with @debug.Debug::{to_repr}
+
+///|
+pub extend PretrainedDownloadResumeMetadata with Eq::{equal, not_equal}
+
+///|
+pub extend PretrainedResolutionHint with @debug.Debug::{to_repr}
+
+///|
+pub extend PretrainedResolutionHint with Eq::{equal, not_equal}

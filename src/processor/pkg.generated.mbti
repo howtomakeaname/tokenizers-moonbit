@@ -18,12 +18,15 @@ pub enum Piece {
 pub fn Piece::__repr__(Self) -> String
 pub fn Piece::__str__(Self) -> String
 pub fn Piece::as_tuple(Self) -> (String, String, Int)
+pub fn Piece::equal(Self, Self) -> Bool
 pub fn Piece::from_tuple((String, String, Int)) -> Self raise @types.TokenizerError
 pub fn Piece::get_id(Self) -> String
 pub fn Piece::get_kind(Self) -> String
 pub fn Piece::get_type_id(Self) -> Int
 pub fn Piece::id(Self) -> String
 pub fn Piece::kind(Self) -> String
+pub fn Piece::not_equal(Self, Self) -> Bool
+pub fn Piece::to_repr(Self) -> @debug.Repr
 pub fn Piece::type_id(Self) -> Int
 
 pub enum PostProcessor {
@@ -93,7 +96,10 @@ pub fn PostProcessor::use_regex(Self) -> Bool?
 pub struct PostProcessorState {
   json : String
 } derive(Eq, @debug.Debug)
+pub fn PostProcessorState::equal(Self, Self) -> Bool
 pub fn PostProcessorState::new(String) -> Self
+pub fn PostProcessorState::not_equal(Self, Self) -> Bool
+pub fn PostProcessorState::to_repr(Self) -> @debug.Repr
 
 pub struct SpecialToken {
   id : String
@@ -103,6 +109,7 @@ pub struct SpecialToken {
 pub fn SpecialToken::__repr__(Self) -> String
 pub fn SpecialToken::__str__(Self) -> String
 pub fn SpecialToken::as_tuple(Self) -> (String, Array[Int], Array[String])
+pub fn SpecialToken::equal(Self, Self) -> Bool
 pub fn SpecialToken::from_tuple((String, Array[Int], Array[String])) -> Self
 pub fn SpecialToken::get_id(Self) -> String
 pub fn SpecialToken::get_ids(Self) -> Array[Int]
@@ -110,6 +117,8 @@ pub fn SpecialToken::get_tokens(Self) -> Array[String]
 pub fn SpecialToken::id(Self) -> String
 pub fn SpecialToken::ids(Self) -> Array[Int]
 pub fn SpecialToken::new(String, Array[Int], Array[String]) -> Self
+pub fn SpecialToken::not_equal(Self, Self) -> Bool
+pub fn SpecialToken::to_repr(Self) -> @debug.Repr
 pub fn SpecialToken::tokens(Self) -> Array[String]
 
 // Type aliases

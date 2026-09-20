@@ -41,8 +41,8 @@ let overflowing_bytelevel_json =
 ///|
 /// BertProcessing wraps each truncated overflow window in [CLS]/[SEP].
 test "bert post-processor keeps template-wrapped overflow windows" {
-  let tok = Tokenizer::from_str(overflowing_bert_json)
-  let tok4 = tok.with_truncation(Some(TruncationParams::new(4)))
+  let tok = @tokenizer.Tokenizer::from_str(overflowing_bert_json)
+  let tok4 = tok.with_truncation(Some(@tokenizer.TruncationParams::new(4)))
   let enc = tok4.encode("a b c d e f g h")
   @test.assert_eq(enc.ids, [0, 2, 3, 1])
   @test.assert_eq(enc.overflowing.length(), 3)
@@ -54,8 +54,10 @@ test "bert post-processor keeps template-wrapped overflow windows" {
 ///|
 /// With `stride > 0` the windows overlap the main sequence by `stride`.
 test "bert post-processor stride windows overlap and wrap" {
-  let tok = Tokenizer::from_str(overflowing_bert_json)
-  let tok6 = tok.with_truncation(Some(TruncationParams::new(6).with_stride(2)))
+  let tok = @tokenizer.Tokenizer::from_str(overflowing_bert_json)
+  let tok6 = tok.with_truncation(
+    Some(@tokenizer.TruncationParams::new(6).with_stride(2)),
+  )
   let enc = tok6.encode("a b c d e f g h")
   @test.assert_eq(enc.ids, [0, 2, 3, 4, 5, 1])
   @test.assert_eq(enc.overflowing.length(), 2)
@@ -67,8 +69,10 @@ test "bert post-processor stride windows overlap and wrap" {
 /// `add_special_tokens=false` skips specials on the main encoding and on
 /// every window, and truncation then uses the full max_length budget.
 test "bert post-processor windows respect add_special_tokens=false" {
-  let tok = Tokenizer::from_str(overflowing_bert_json)
-  let tok6 = tok.with_truncation(Some(TruncationParams::new(6).with_stride(2)))
+  let tok = @tokenizer.Tokenizer::from_str(overflowing_bert_json)
+  let tok6 = tok.with_truncation(
+    Some(@tokenizer.TruncationParams::new(6).with_stride(2)),
+  )
   let enc = tok6.encode("a b c d e f g h", add_special_tokens=false)
   @test.assert_eq(enc.ids, [2, 3, 4, 5, 6, 7])
   @test.assert_eq(enc.overflowing.length(), 1)
@@ -78,8 +82,8 @@ test "bert post-processor windows respect add_special_tokens=false" {
 ///|
 /// TemplateProcessing applies the single template to each window too.
 test "template post-processor keeps wrapped overflow windows" {
-  let tok = Tokenizer::from_str(overflowing_template_json)
-  let tok4 = tok.with_truncation(Some(TruncationParams::new(4)))
+  let tok = @tokenizer.Tokenizer::from_str(overflowing_template_json)
+  let tok4 = tok.with_truncation(Some(@tokenizer.TruncationParams::new(4)))
   let enc = tok4.encode("a b c d e f g h")
   @test.assert_eq(enc.ids, [0, 2, 3, 1])
   @test.assert_eq(enc.overflowing.length(), 3)
@@ -92,8 +96,8 @@ test "template post-processor keeps wrapped overflow windows" {
 ///|
 /// ByteLevel has no special pieces; windows pass through untouched.
 test "byte-level post-processor keeps raw overflow windows" {
-  let tok = Tokenizer::from_str(overflowing_bytelevel_json)
-  let tok4 = tok.with_truncation(Some(TruncationParams::new(4)))
+  let tok = @tokenizer.Tokenizer::from_str(overflowing_bytelevel_json)
+  let tok4 = tok.with_truncation(Some(@tokenizer.TruncationParams::new(4)))
   let enc = tok4.encode("a b c d e f g h")
   @test.assert_eq(enc.ids, [2, 3, 4, 5])
   @test.assert_eq(enc.overflowing.length(), 1)
@@ -103,8 +107,8 @@ test "byte-level post-processor keeps raw overflow windows" {
 ///|
 /// Without any post-processor the truncated windows surface unchanged.
 test "no post-processor keeps raw overflow windows" {
-  let tok = Tokenizer::from_str(overflowing_plain_json)
-  let tok4 = tok.with_truncation(Some(TruncationParams::new(4)))
+  let tok = @tokenizer.Tokenizer::from_str(overflowing_plain_json)
+  let tok4 = tok.with_truncation(Some(@tokenizer.TruncationParams::new(4)))
   let enc = tok4.encode("a b c d e f g h")
   @test.assert_eq(enc.ids, [2, 3, 4, 5])
   @test.assert_eq(enc.overflowing.length(), 1)
@@ -115,9 +119,13 @@ test "no post-processor keeps raw overflow windows" {
 /// `Left` truncation keeps the tail as main and turns the removed head into
 /// windows ordered closest-to-main first (HF `Encoding::truncate`).
 test "left truncation keeps head windows" {
-  let tok = Tokenizer::from_str(overflowing_bert_json)
+  let tok = @tokenizer.Tokenizer::from_str(overflowing_bert_json)
   let left = tok.with_truncation(
-    Some(TruncationParams::new(6).with_stride(2).with_direction_hf("left")),
+    Some(
+      @tokenizer.TruncationParams::new(6)
+      .with_stride(2)
+      .with_direction_hf("left"),
+    ),
   )
   let enc = left.encode("a b c d e f g h")
   @test.assert_eq(enc.ids, [0, 6, 7, 8, 9, 1])
@@ -129,10 +137,12 @@ test "left truncation keeps head windows" {
 ///|
 /// HF pads overflow windows to the same target as the main encoding.
 test "fixed padding pads overflow windows too" {
-  let tok = Tokenizer::from_str(overflowing_bert_json)
+  let tok = @tokenizer.Tokenizer::from_str(overflowing_bert_json)
   let padded = tok
-    .with_truncation(Some(TruncationParams::new(4)))
-    .with_padding(Some(PaddingParams::fixed(8, pad_id=5, pad_token="[UNK]")))
+    .with_truncation(Some(@tokenizer.TruncationParams::new(4)))
+    .with_padding(
+      Some(@tokenizer.PaddingParams::fixed(8, pad_id=5, pad_token="[UNK]")),
+    )
   let enc = padded.encode("a b c d e f g h")
   @test.assert_eq(enc.ids, [0, 2, 3, 1, 5, 5, 5, 5])
   @test.assert_eq(enc.overflowing.length(), 3)
@@ -148,9 +158,11 @@ test "fixed padding pads overflow windows too" {
 /// `tokenizers` 0.22.2 (bert max=4 stride=4 raises; max=4 stride=2 and
 /// stride=0 configs do not; stride == effective max_length does not raise).
 test "with_truncation rejects invalid stride at configuration time" {
-  let tok = Tokenizer::from_str(overflowing_bert_json)
+  let tok = @tokenizer.Tokenizer::from_str(overflowing_bert_json)
   let message = try {
-    let _ = tok.with_truncation(Some(TruncationParams::new(4).with_stride(4)))
+    let _ = tok.with_truncation(
+      Some(@tokenizer.TruncationParams::new(4).with_stride(4)),
+    )
     "no error"
   } catch {
     e => e.message()
@@ -159,10 +171,12 @@ test "with_truncation rejects invalid stride at configuration time" {
     message, "tokenizer stride set to 4, which is greater than or equal to its effective max length of 2 (= 4 original max length - 2 added special tokens), ",
   )
   // stride == effective max_length is accepted, matching upstream.
-  let ok1 = tok.with_truncation(Some(TruncationParams::new(4).with_stride(2)))
+  let ok1 = tok.with_truncation(
+    Some(@tokenizer.TruncationParams::new(4).with_stride(2)),
+  )
   @test.assert_eq(ok1.truncation().unwrap().get_stride(), 2)
   // stride = 0 never raises, even when max_length <= added specials.
-  let ok2 = tok.with_truncation(Some(TruncationParams::new(1)))
+  let ok2 = tok.with_truncation(Some(@tokenizer.TruncationParams::new(1)))
   @test.assert_eq(ok2.truncation().unwrap().get_max_length(), 1)
 }
 
@@ -174,8 +188,10 @@ test "with_truncation rejects invalid stride at configuration time" {
 /// 7 windows, a-windows first (each against main-b then every b-window),
 /// then main-a against each b-window.
 test "pair overflow builds the 0.22.x window cross-product" {
-  let tok = Tokenizer::from_str(overflowing_pair_json)
-  let tok4 = tok.with_truncation(Some(TruncationParams::new(16).with_stride(4)))
+  let tok = @tokenizer.Tokenizer::from_str(overflowing_pair_json)
+  let tok4 = tok.with_truncation(
+    Some(@tokenizer.TruncationParams::new(16).with_stride(4)),
+  )
   let enc = tok4.encode_pair(
     "t0 t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19", "u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11",
   )
@@ -201,9 +217,9 @@ test "pair overflow builds the 0.22.x window cross-product" {
 test "bert pair overflow wraps every cross-product combination" {
   let vocab = "{\"[CLS]\":40,\"[SEP]\":41,\"[UNK]\":99,\"t0\":0,\"t1\":1,\"t2\":2,\"t3\":3,\"t4\":4,\"t5\":5,\"t6\":6,\"t7\":7,\"t8\":8,\"t9\":9,\"t10\":10,\"t11\":11,\"u0\":20,\"u1\":21,\"u2\":22,\"u3\":23,\"u4\":24,\"u5\":25,\"u6\":26,\"u7\":27}"
   let json = "{\"version\":\"1.0\",\"pre_tokenizer\":{\"type\":\"WhitespaceSplit\"},\"model\":{\"type\":\"WordLevel\",\"vocab\":\{vocab},\"unk_token\":\"[UNK]\"},\"post_processor\":{\"type\":\"BertProcessing\",\"cls\":[\"[CLS]\",40],\"sep\":[\"[SEP]\",41]}}"
-  let tok = Tokenizer::from_str(json)
+  let tok = @tokenizer.Tokenizer::from_str(json)
   let tok_t = tok.with_truncation(
-    Some(TruncationParams::new(10).with_stride(2)),
+    Some(@tokenizer.TruncationParams::new(10).with_stride(2)),
   )
   let enc = tok_t.encode_pair(
     "t0 t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11", "u0 u1 u2 u3 u4 u5 u6 u7",

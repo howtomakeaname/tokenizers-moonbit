@@ -135,3 +135,12 @@ fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
   sb.write_char(hex[u / 16 % 16])
   sb.write_char(hex[u % 16])
 }
+
+///|
+pub extend TokenizerError with @debug.Debug::{to_repr}
+
+///|
+pub extend TokenizerErrorKind with @debug.Debug::{to_repr}
+
+///|
+pub extend TokenizerErrorKind with Eq::{equal, not_equal}

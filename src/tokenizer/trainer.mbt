@@ -612,3 +612,15 @@ pub fn Trainer::progress_format(self : Trainer) -> String? {
 pub fn Trainer::get_progress_format(self : Trainer) -> String? {
   self.progress_format()
 }
+
+///|
+pub extend Trainer with @debug.Debug::{to_repr}
+
+///|
+pub extend Trainer with Eq::{equal, not_equal}
+
+///|
+pub extend TrainerState with @debug.Debug::{to_repr}
+
+///|
+pub extend TrainerState with Eq::{equal, not_equal}

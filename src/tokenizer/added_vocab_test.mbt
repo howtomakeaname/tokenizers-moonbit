@@ -18,7 +18,7 @@ let av_bpe : String =
 
 ///|
 test "added tokens split out of surrounding text" {
-  let tok = Tokenizer::from_str(av_bpe)
+  let tok = @tokenizer.Tokenizer::from_str(av_bpe)
   let enc = tok.encode("<s>abc</s>", add_special_tokens=false)
   // <s> | abc(merged) | </s>
   @test.assert_eq(enc.tokens, ["<s>", "abc", "</s>"])
@@ -30,7 +30,7 @@ test "added tokens split out of surrounding text" {
 
 ///|
 test "added token in the middle of text" {
-  let tok = Tokenizer::from_str(av_bpe)
+  let tok = @tokenizer.Tokenizer::from_str(av_bpe)
   let enc = tok.encode("ab[MASK]ab", add_special_tokens=false)
   @test.assert_eq(enc.tokens, ["ab", "[MASK]", "ab"])
   @test.assert_eq(enc.ids, [3, 7, 3])
@@ -38,7 +38,7 @@ test "added token in the middle of text" {
 
 ///|
 test "lstrip/rstrip eats surrounding whitespace" {
-  let tok = Tokenizer::from_str(av_bpe)
+  let tok = @tokenizer.Tokenizer::from_str(av_bpe)
   // [MASK] has lstrip+rstrip: the spaces around it are absorbed into the token.
   let enc = tok.encode("ab [MASK] ab", add_special_tokens=false)
   @test.assert_eq(enc.tokens, ["ab", " [MASK] ", "ab"])
@@ -51,7 +51,7 @@ test "single_word added tokens use Unicode word boundaries" {
     #| "added_tokens":[{"id":1,"content":"TAG","single_word":true,"lstrip":false,"rstrip":false,"normalized":false,"special":false}],
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"[UNK]":0,"TAG":1,"αTAGβ":2,"中TAG文":3,"TAGα":4,"αTAG":5,"foo":6},"unk_token":"[UNK]"}}
-  let tok = Tokenizer::from_str(json)
+  let tok = @tokenizer.Tokenizer::from_str(json)
   @test.assert_eq(tok.encode("αTAGβ", add_special_tokens=false).tokens, [
     "αTAGβ",
   ])
@@ -74,7 +74,7 @@ test "single_word added tokens use Unicode word boundaries" {
 
 ///|
 test "decode skips special added tokens" {
-  let tok = Tokenizer::from_str(av_bpe)
+  let tok = @tokenizer.Tokenizer::from_str(av_bpe)
   let s = tok.decode([5, 4, 6], skip_special_tokens=true)
   // <s> and </s> dropped; only "abc" remains (no decoder -> join surfaces)
   @test.assert_eq(s, "abc")
@@ -90,7 +90,7 @@ test "pretokenized encode still extracts added tokens inside words" {
     #| "normalizer":{"type":"Lowercase"},
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"hello":0,"world":1,"[UNK]":2,"[MASK]":3},"unk_token":"[UNK]"}}
-  let tok = Tokenizer::from_str(json)
+  let tok = @tokenizer.Tokenizer::from_str(json)
   let enc = tok.encode_pretokenized(
     ["Hello[MASK]WORLD"],
     add_special_tokens=false,
@@ -110,7 +110,7 @@ test "pretokenized added token offsets survive batch and byte conversion" {
     #| "padding":{"strategy":"BatchLongest","direction":"Right","pad_id":3,"pad_type_id":0,"pad_token":"[PAD]"},
     #| "normalizer":{"type":"Lowercase"},
     #| "model":{"type":"WordLevel","vocab":{"我":0,"hello":1,"world":2,"[PAD]":3,"[MASK]":4,"[UNK]":5},"unk_token":"[UNK]"}}
-  let tok = Tokenizer::from_str(json)
+  let tok = @tokenizer.Tokenizer::from_str(json)
   let encs = tok.encode_pretokenized_batch_with_byte_offsets(
     [["我", " [MASK] ", "WORLD"], ["Hello", "WORLD"]],
     add_special_tokens=false,

@@ -195,6 +195,13 @@ REAL_MODELS_DIR = os.environ.get(
 )
 
 
+PAIRS = [
+    ("hello world", "a second sequence"),
+    ("café café", "mixed 你好 42"),
+    ("你好，世界！", "Ｌｕｎｉｃｏｄé ｈｅｌｌｏ"),
+]
+
+
 def run_golden():
     golden = {}
     for case in CASES:
@@ -207,10 +214,23 @@ def run_golden():
                 "tokens": enc.tokens,
                 "offsets": [list(o) for o in enc.offsets],
             })
+        pair_results = []
+        for a, b in PAIRS:
+            enc = tok.encode(a, b)
+            pair_results.append({
+                "ids": enc.ids,
+                "tokens": enc.tokens,
+                "offsets": [list(o) for o in enc.offsets],
+                "type_ids": enc.type_ids,
+            })
         decs = []
         for r, text in zip(results[:4], case["inputs"][:4]):
             decs.append(tok.decode(r["ids"], skip_special_tokens=True))
-        golden[case["name"]] = {"encode": results, "decode": decs}
+        golden[case["name"]] = {
+            "encode": results,
+            "decode": decs,
+            "pair": pair_results,
+        }
     return golden
 
 

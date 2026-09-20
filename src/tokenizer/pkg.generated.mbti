@@ -78,6 +78,7 @@ pub fn AddedToken::__setstate__(AddedTokenState) -> Self
 pub fn AddedToken::__str__(Self) -> String
 pub fn AddedToken::as_tuple(Self) -> (String, Bool, Bool, Bool, Bool, Bool)
 pub fn AddedToken::content(Self) -> String
+pub fn AddedToken::equal(Self, Self) -> Bool
 pub fn AddedToken::from_state(AddedTokenState) -> Self
 pub fn AddedToken::from_tuple((String, Bool, Bool, Bool, Bool, Bool)) -> Self
 pub fn AddedToken::get_content(Self) -> String
@@ -91,6 +92,7 @@ pub fn AddedToken::is_special(Self) -> Bool
 pub fn AddedToken::lstrip(Self) -> Bool
 pub fn AddedToken::new(String, single_word? : Bool, lstrip? : Bool, rstrip? : Bool, normalized? : Bool?, special? : Bool) -> Self
 pub fn AddedToken::normalized(Self) -> Bool
+pub fn AddedToken::not_equal(Self, Self) -> Bool
 pub fn AddedToken::rstrip(Self) -> Bool
 pub fn AddedToken::set_content(Self, String) -> Self
 pub fn AddedToken::set_content_alias(Self, String) -> Self
@@ -106,6 +108,7 @@ pub fn AddedToken::set_special(Self, Bool) -> Self
 pub fn AddedToken::set_special_alias(Self, Bool) -> Self
 pub fn AddedToken::single_word(Self) -> Bool
 pub fn AddedToken::special(String) -> Self
+pub fn AddedToken::to_repr(Self) -> @debug.Repr
 pub fn AddedToken::with_lstrip(Self, Bool) -> Self
 pub fn AddedToken::with_normalized(Self, Bool) -> Self
 pub fn AddedToken::with_rstrip(Self, Bool) -> Self
@@ -113,6 +116,9 @@ pub fn AddedToken::with_single_word(Self, Bool) -> Self
 pub fn AddedToken::with_special(Self, Bool) -> Self
 
 type AddedTokenInfo derive(Eq, @debug.Debug)
+pub fn AddedTokenInfo::equal(Self, Self) -> Bool
+pub fn AddedTokenInfo::not_equal(Self, Self) -> Bool
+pub fn AddedTokenInfo::to_repr(Self) -> @debug.Repr
 
 pub struct AddedTokenState {
   content : String
@@ -122,6 +128,9 @@ pub struct AddedTokenState {
   normalized : Bool
   special : Bool
 } derive(Eq, @debug.Debug)
+pub fn AddedTokenState::equal(Self, Self) -> Bool
+pub fn AddedTokenState::not_equal(Self, Self) -> Bool
+pub fn AddedTokenState::to_repr(Self) -> @debug.Repr
 
 type AddedVocabulary
 
@@ -138,11 +147,14 @@ pub enum EncodeInput {
   SingleInput(TextInputSequence)
   PairInput(TextInputSequence, TextInputSequence)
 } derive(Eq, @debug.Debug)
+pub fn EncodeInput::equal(Self, Self) -> Bool
 pub fn EncodeInput::mixed_pair(TextInputSequence, TextInputSequence) -> Self
+pub fn EncodeInput::not_equal(Self, Self) -> Bool
 pub fn EncodeInput::pair(String, String) -> Self
 pub fn EncodeInput::pair_pretokenized(Array[String], Array[String]) -> Self
 pub fn EncodeInput::single(String) -> Self
 pub fn EncodeInput::single_pretokenized(Array[String]) -> Self
+pub fn EncodeInput::to_repr(Self) -> @debug.Repr
 
 pub struct NormalizedString {
   original : String
@@ -193,11 +205,17 @@ pub struct NormalizedStringState {
   original : String
   normalized : String
 } derive(Eq, @debug.Debug)
+pub fn NormalizedStringState::equal(Self, Self) -> Bool
+pub fn NormalizedStringState::not_equal(Self, Self) -> Bool
+pub fn NormalizedStringState::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PaddingDirection {
   Left
   Right
 } derive(Eq, @debug.Debug)
+pub fn PaddingDirection::equal(Self, Self) -> Bool
+pub fn PaddingDirection::not_equal(Self, Self) -> Bool
+pub fn PaddingDirection::to_repr(Self) -> @debug.Repr
 
 pub(all) struct PaddingParams {
   strategy : PaddingStrategy
@@ -213,6 +231,7 @@ pub fn PaddingParams::as_tuple(Self) -> (PaddingStrategy, PaddingDirection, Int,
 pub fn PaddingParams::batch_longest(pad_id? : Int, pad_token? : String) -> Self
 pub fn PaddingParams::direction(Self) -> PaddingDirection
 pub fn PaddingParams::direction_string(Self) -> String
+pub fn PaddingParams::equal(Self, Self) -> Bool
 pub fn PaddingParams::fixed(Int, pad_id? : Int, pad_token? : String) -> Self
 pub fn PaddingParams::from_state(PaddingParamsState) -> Self
 pub fn PaddingParams::from_tuple((PaddingStrategy, PaddingDirection, Int, Int, String, Int?)) -> Self
@@ -225,11 +244,13 @@ pub fn PaddingParams::get_pad_type_id(Self) -> Int
 pub fn PaddingParams::get_state(Self) -> PaddingParamsState
 pub fn PaddingParams::get_strategy(Self) -> PaddingStrategy
 pub fn PaddingParams::new(PaddingStrategy, pad_id? : Int, pad_token? : String) -> Self
+pub fn PaddingParams::not_equal(Self, Self) -> Bool
 pub fn PaddingParams::pad_id(Self) -> Int
 pub fn PaddingParams::pad_to_multiple_of(Self) -> Int?
 pub fn PaddingParams::pad_token(Self) -> String
 pub fn PaddingParams::pad_type_id(Self) -> Int
 pub fn PaddingParams::strategy(Self) -> PaddingStrategy
+pub fn PaddingParams::to_repr(Self) -> @debug.Repr
 pub fn PaddingParams::with_direction(Self, PaddingDirection) -> Self
 pub fn PaddingParams::with_direction_hf(Self, String) -> Self raise @types.TokenizerError
 pub fn PaddingParams::with_pad_to_multiple_of(Self, Int?) -> Self
@@ -243,11 +264,17 @@ pub(all) struct PaddingParamsState {
   pad_token : String
   pad_to_multiple_of : Int?
 } derive(Eq, @debug.Debug)
+pub fn PaddingParamsState::equal(Self, Self) -> Bool
+pub fn PaddingParamsState::not_equal(Self, Self) -> Bool
+pub fn PaddingParamsState::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PaddingStrategy {
   BatchLongest
   Fixed(Int)
 } derive(Eq, @debug.Debug)
+pub fn PaddingStrategy::equal(Self, Self) -> Bool
+pub fn PaddingStrategy::not_equal(Self, Self) -> Bool
+pub fn PaddingStrategy::to_repr(Self) -> @debug.Repr
 
 pub struct PreTokenizedString {
   original : String
@@ -279,11 +306,17 @@ pub struct PreTokenizedStringState {
   original : String
   splits : Array[@types.Split]
 } derive(Eq, @debug.Debug)
+pub fn PreTokenizedStringState::equal(Self, Self) -> Bool
+pub fn PreTokenizedStringState::not_equal(Self, Self) -> Bool
+pub fn PreTokenizedStringState::to_repr(Self) -> @debug.Repr
 
 pub struct PretrainedAuxFiles {
   tokenizer_config_json : String?
   special_tokens_map_json : String?
 } derive(Eq, @debug.Debug)
+pub fn PretrainedAuxFiles::equal(Self, Self) -> Bool
+pub fn PretrainedAuxFiles::not_equal(Self, Self) -> Bool
+pub fn PretrainedAuxFiles::to_repr(Self) -> @debug.Repr
 
 pub struct PretrainedCacheMetadata {
   tokenizer_json_path : String
@@ -294,8 +327,11 @@ pub struct PretrainedCacheMetadata {
   etag : String?
 } derive(Eq, @debug.Debug)
 pub fn PretrainedCacheMetadata::cache_exists(Self) -> Bool
+pub fn PretrainedCacheMetadata::equal(Self, Self) -> Bool
 pub fn PretrainedCacheMetadata::etag_matches(Self, String?) -> Bool
 pub fn PretrainedCacheMetadata::is_fresh(Self, resolved_revision? : String?, etag? : String?, require_tokenizer_config? : Bool, require_special_tokens_map? : Bool) -> Bool
+pub fn PretrainedCacheMetadata::not_equal(Self, Self) -> Bool
+pub fn PretrainedCacheMetadata::to_repr(Self) -> @debug.Repr
 
 pub struct PretrainedCachePaths {
   repo_cache_dir : String
@@ -308,6 +344,9 @@ pub struct PretrainedCachePaths {
   etag_path : String
   resume_path : String
 } derive(Eq, @debug.Debug)
+pub fn PretrainedCachePaths::equal(Self, Self) -> Bool
+pub fn PretrainedCachePaths::not_equal(Self, Self) -> Bool
+pub fn PretrainedCachePaths::to_repr(Self) -> @debug.Repr
 
 pub struct PretrainedDownloadResumeMetadata {
   resume_path : String
@@ -316,6 +355,9 @@ pub struct PretrainedDownloadResumeMetadata {
   expected_size : Int?
   downloaded_size : Int
 } derive(Eq, @debug.Debug)
+pub fn PretrainedDownloadResumeMetadata::equal(Self, Self) -> Bool
+pub fn PretrainedDownloadResumeMetadata::not_equal(Self, Self) -> Bool
+pub fn PretrainedDownloadResumeMetadata::to_repr(Self) -> @debug.Repr
 
 pub struct PretrainedResolutionHint {
   model_id : String
@@ -329,15 +371,24 @@ pub struct PretrainedResolutionHint {
   cache_exists : Bool
   message : String
 } derive(Eq, @debug.Debug)
+pub fn PretrainedResolutionHint::equal(Self, Self) -> Bool
+pub fn PretrainedResolutionHint::not_equal(Self, Self) -> Bool
+pub fn PretrainedResolutionHint::to_repr(Self) -> @debug.Repr
 
 type Segment derive(Eq, @debug.Debug)
+pub fn Segment::equal(Self, Self) -> Bool
+pub fn Segment::not_equal(Self, Self) -> Bool
+pub fn Segment::to_repr(Self) -> @debug.Repr
 
 pub enum TextInputSequence {
   Text(String)
   PreTokenized(Array[String])
 } derive(Eq, @debug.Debug)
+pub fn TextInputSequence::equal(Self, Self) -> Bool
+pub fn TextInputSequence::not_equal(Self, Self) -> Bool
 pub fn TextInputSequence::pretokenized(Array[String]) -> Self
 pub fn TextInputSequence::text(String) -> Self
+pub fn TextInputSequence::to_repr(Self) -> @debug.Repr
 
 pub struct Tokenizer {
   normalizer : @normalizer.Normalizer?
@@ -557,7 +608,10 @@ pub fn TokenizerComponentHooks::with_pre_tokenize(Self, ((String, Int) -> Array[
 pub struct TokenizerState {
   json : String
 } derive(Eq, @debug.Debug)
+pub fn TokenizerState::equal(Self, Self) -> Bool
 pub fn TokenizerState::new(String) -> Self
+pub fn TokenizerState::not_equal(Self, Self) -> Bool
+pub fn TokenizerState::to_repr(Self) -> @debug.Repr
 
 pub enum Trainer {
   WordLevelTrainer(unk_token~ : String, min_frequency~ : Int, special_tokens~ : Array[String], special_added_tokens~ : Array[AddedToken], vocab_size~ : Int?, show_progress~ : Bool)
@@ -574,6 +628,7 @@ pub fn Trainer::bpe_trainer(unk_token? : String?, min_frequency? : Int, special_
 pub fn Trainer::byte_fallback(Self) -> Bool?
 pub fn Trainer::continuing_subword_prefix(Self) -> String?
 pub fn Trainer::end_of_word_suffix(Self) -> String?
+pub fn Trainer::equal(Self, Self) -> Bool
 pub fn Trainer::from_state(TrainerState) -> Self raise @types.TokenizerError
 pub fn Trainer::fuse_unk(Self) -> Bool?
 pub fn Trainer::get_byte_fallback(Self) -> Bool?
@@ -604,6 +659,7 @@ pub fn Trainer::max_piece_length(Self) -> Int?
 pub fn Trainer::max_token_length(Self) -> Int?
 pub fn Trainer::min_frequency(Self) -> Int
 pub fn Trainer::n_sub_iterations(Self) -> Int?
+pub fn Trainer::not_equal(Self, Self) -> Bool
 pub fn Trainer::progress_format(Self) -> String?
 pub fn Trainer::seed_size(Self) -> Int?
 pub fn Trainer::set_byte_fallback(Self, Bool) -> Self
@@ -648,6 +704,7 @@ pub fn Trainer::show_progress(Self) -> Bool
 pub fn Trainer::shrinking_factor(Self) -> Double?
 pub fn Trainer::special_added_tokens(Self) -> Array[AddedToken]
 pub fn Trainer::special_tokens(Self) -> Array[String]
+pub fn Trainer::to_repr(Self) -> @debug.Repr
 pub fn Trainer::unigram(unk_token? : String?, unk_piece? : String?, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, shrinking_factor? : Double, max_piece_length? : Int?, initial_alphabet? : Array[String], n_sub_iterations? : Int, show_progress? : Bool, seed_size? : Int) -> Self
 pub fn Trainer::unigram_trainer(unk_token? : String?, unk_piece? : String?, min_frequency? : Int, special_tokens? : Array[String], special_added_tokens? : Array[AddedToken], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, shrinking_factor? : Double, max_piece_length? : Int?, initial_alphabet? : Array[String], n_sub_iterations? : Int, show_progress? : Bool, seed_size? : Int) -> Self
 pub fn Trainer::unk_token(Self) -> String?
@@ -679,12 +736,18 @@ pub struct TrainerState {
   seed_size : Int?
   progress_format : String?
 } derive(Eq, @debug.Debug)
+pub fn TrainerState::equal(Self, Self) -> Bool
+pub fn TrainerState::not_equal(Self, Self) -> Bool
+pub fn TrainerState::to_repr(Self) -> @debug.Repr
 pub fn TrainerState::with_kind(Self, String) -> Self
 
 pub(all) enum TruncationDirection {
   Left
   Right
 } derive(Eq, @debug.Debug)
+pub fn TruncationDirection::equal(Self, Self) -> Bool
+pub fn TruncationDirection::not_equal(Self, Self) -> Bool
+pub fn TruncationDirection::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TruncationParams {
   max_length : Int
@@ -697,6 +760,7 @@ pub fn TruncationParams::__setstate__(TruncationParamsState) -> Self
 pub fn TruncationParams::as_tuple(Self) -> (Int, Int, TruncationDirection, TruncationStrategy)
 pub fn TruncationParams::direction(Self) -> TruncationDirection
 pub fn TruncationParams::direction_string(Self) -> String
+pub fn TruncationParams::equal(Self, Self) -> Bool
 pub fn TruncationParams::from_state(TruncationParamsState) -> Self
 pub fn TruncationParams::from_tuple((Int, Int, TruncationDirection, TruncationStrategy)) -> Self
 pub fn TruncationParams::get_direction(Self) -> TruncationDirection
@@ -708,9 +772,11 @@ pub fn TruncationParams::get_strategy_string(Self) -> String
 pub fn TruncationParams::get_stride(Self) -> Int
 pub fn TruncationParams::max_length(Self) -> Int
 pub fn TruncationParams::new(Int) -> Self
+pub fn TruncationParams::not_equal(Self, Self) -> Bool
 pub fn TruncationParams::strategy(Self) -> TruncationStrategy
 pub fn TruncationParams::strategy_string(Self) -> String
 pub fn TruncationParams::stride(Self) -> Int
+pub fn TruncationParams::to_repr(Self) -> @debug.Repr
 pub fn TruncationParams::with_direction(Self, TruncationDirection) -> Self
 pub fn TruncationParams::with_direction_hf(Self, String) -> Self raise @types.TokenizerError
 pub fn TruncationParams::with_strategy(Self, TruncationStrategy) -> Self
@@ -723,12 +789,18 @@ pub(all) struct TruncationParamsState {
   direction : TruncationDirection
   strategy : TruncationStrategy
 } derive(Eq, @debug.Debug)
+pub fn TruncationParamsState::equal(Self, Self) -> Bool
+pub fn TruncationParamsState::not_equal(Self, Self) -> Bool
+pub fn TruncationParamsState::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TruncationStrategy {
   LongestFirst
   OnlyFirst
   OnlySecond
 } derive(Eq, @debug.Debug)
+pub fn TruncationStrategy::equal(Self, Self) -> Bool
+pub fn TruncationStrategy::not_equal(Self, Self) -> Bool
+pub fn TruncationStrategy::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

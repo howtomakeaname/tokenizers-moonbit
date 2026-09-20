@@ -513,3 +513,9 @@ pub fn Normalizer::set_content_alias(
 }
 
 ///|
+
+///|
+pub extend NormalizerState with @debug.Debug::{to_repr}
+
+///|
+pub extend NormalizerState with Eq::{equal, not_equal}

@@ -404,3 +404,27 @@ fn longest_first_lengths(
     (n1, n2)
   }
 }
+
+///|
+pub extend TruncationDirection with @debug.Debug::{to_repr}
+
+///|
+pub extend TruncationDirection with Eq::{equal, not_equal}
+
+///|
+pub extend TruncationParams with @debug.Debug::{to_repr}
+
+///|
+pub extend TruncationParams with Eq::{equal, not_equal}
+
+///|
+pub extend TruncationParamsState with @debug.Debug::{to_repr}
+
+///|
+pub extend TruncationParamsState with Eq::{equal, not_equal}
+
+///|
+pub extend TruncationStrategy with @debug.Debug::{to_repr}
+
+///|
+pub extend TruncationStrategy with Eq::{equal, not_equal}

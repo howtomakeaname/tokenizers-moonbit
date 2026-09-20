@@ -685,3 +685,15 @@ pub fn PreTokenizer::split(
 
 ///|
 /// Serialize simple pre-tokenizers created through the training API.
+
+///|
+pub extend PreTokenizerState with @debug.Debug::{to_repr}
+
+///|
+pub extend PreTokenizerState with Eq::{equal, not_equal}
+
+///|
+pub extend SplitBehavior with @debug.Debug::{to_repr}
+
+///|
+pub extend SplitBehavior with Eq::{equal, not_equal}

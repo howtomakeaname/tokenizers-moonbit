@@ -263,3 +263,15 @@ pub struct HubFileDownloadResult {
 /// Apply a complete tokenizer-adjacent Hub file body to the HF-style local cache.
 /// This is the sidecar counterpart to `apply_tokenizer_json_download_result` but
 /// intentionally omits tokenizer-specific 304/206 cache decisions.
+
+///|
+pub extend HubDownloadResult with Eq::{equal, not_equal}
+
+///|
+pub extend HubDownloadResult with @debug.Debug::{to_repr}
+
+///|
+pub extend HubFileDownloadResult with Eq::{equal, not_equal}
+
+///|
+pub extend HubFileDownloadResult with @debug.Debug::{to_repr}

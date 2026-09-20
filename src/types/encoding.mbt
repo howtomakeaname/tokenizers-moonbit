@@ -788,3 +788,27 @@ pub fn Encoding::merge_with(
 
 ///|
 /// Number of tokens in this encoding.
+
+///|
+pub extend Encoding with @debug.Debug::{to_repr}
+
+///|
+pub extend Encoding with Eq::{equal, not_equal}
+
+///|
+pub extend EncodingBuffers with @debug.Debug::{to_repr}
+
+///|
+pub extend EncodingBuffers with Eq::{equal, not_equal}
+
+///|
+pub extend EncodingDirection with @debug.Debug::{to_repr}
+
+///|
+pub extend EncodingDirection with Eq::{equal, not_equal}
+
+///|
+pub extend EncodingState with @debug.Debug::{to_repr}
+
+///|
+pub extend EncodingState with Eq::{equal, not_equal}

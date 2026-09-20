@@ -218,3 +218,9 @@ fn clamp_int(n : Int, lo : Int, hi : Int) -> Int {
 // each call still builds fresh mutable model/added-token caches and builder
 // state while avoiding the largest repeated parse cost. Keep a few entries so
 // alternating model loads (e.g. gpt2 + bert in services/tests) stay hot.
+
+///|
+pub extend PreTokenizedStringState with @debug.Debug::{to_repr}
+
+///|
+pub extend PreTokenizedStringState with Eq::{equal, not_equal}

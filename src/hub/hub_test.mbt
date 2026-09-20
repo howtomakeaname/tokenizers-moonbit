@@ -1,30 +1,34 @@
 ///|
 test "tokenizer_json_url trims endpoint slash" {
   @test.assert_eq(
-    tokenizer_json_url("https://huggingface.co/", "bert-base-uncased", "main"),
+    @hub.tokenizer_json_url(
+      "https://huggingface.co/", "bert-base-uncased", "main",
+    ),
     "https://huggingface.co/bert-base-uncased/resolve/main/tokenizer.json",
   )
   @test.assert_eq(
-    tokenizer_json_url("https://hf-mirror.example", "org/model", "abc123"),
+    @hub.tokenizer_json_url("https://hf-mirror.example", "org/model", "abc123"),
     "https://hf-mirror.example/org/model/resolve/abc123/tokenizer.json",
   )
   @test.assert_eq(
-    tokenizer_json_url("https://hf.example", "org/model", "refs/pr/7"),
+    @hub.tokenizer_json_url("https://hf.example", "org/model", "refs/pr/7"),
     "https://hf.example/org/model/resolve/refs%2Fpr%2F7/tokenizer.json",
   )
   @test.assert_eq(
-    tokenizer_json_url("https://hf.example", "org/model", "feature/foo"),
+    @hub.tokenizer_json_url("https://hf.example", "org/model", "feature/foo"),
     "https://hf.example/org/model/resolve/feature%2Ffoo/tokenizer.json",
   )
   @test.assert_eq(
-    hub_file_url(
+    @hub.hub_file_url(
       "https://hf.example/", "org/model", "refs/pr/7", "tokenizer_config.json",
     ),
     "https://hf.example/org/model/resolve/refs%2Fpr%2F7/tokenizer_config.json",
   )
   let mut bad_filename = false
   try
-    hub_file_url("https://hf.example", "org/model", "main", "../config.json")
+    @hub.hub_file_url(
+      "https://hf.example", "org/model", "main", "../config.json",
+    )
     |> ignore
   catch {
     @types.ParseError(msg) =>
@@ -36,7 +40,7 @@ test "tokenizer_json_url trims endpoint slash" {
 
 ///|
 test "download options default to online main revision" {
-  let opts = HubDownloadOptions::new()
+  let opts = @hub.HubDownloadOptions::new()
   @test.assert_eq(opts.endpoint, "https://huggingface.co")
   @test.assert_eq(opts.revision, "main")
   @test.assert_eq(opts.local_files_only, false)
@@ -45,7 +49,7 @@ test "download options default to online main revision" {
   @test.assert_eq(opts.with_stream_chunk_size(0).stream_chunk_size, 65536)
   @test.assert_eq(opts.with_stream_chunk_size(-1).stream_chunk_size, 65536)
   @test.assert_eq(
-    HubDownloadOptions::new(stream_chunk_size=-8).stream_chunk_size,
+    @hub.HubDownloadOptions::new(stream_chunk_size=-8).stream_chunk_size,
     65536,
   )
 }
@@ -54,15 +58,15 @@ test "download options default to online main revision" {
 test "download options honor Hub environment defaults" {
   @sys.set_env_var("HF_ENDPOINT", "https://env-hf.example")
   @sys.set_env_var("HF_HUB_OFFLINE", "1")
-  let env_opts = HubDownloadOptions::new()
+  let env_opts = @hub.HubDownloadOptions::new()
   @test.assert_eq(env_opts.endpoint, "https://env-hf.example")
   @test.assert_eq(env_opts.local_files_only, true)
   for value in ["TRUE", "Yes", "ON"] {
     @sys.set_env_var("HF_HUB_OFFLINE", value)
-    @test.assert_eq(HubDownloadOptions::new().local_files_only, true)
+    @test.assert_eq(@hub.HubDownloadOptions::new().local_files_only, true)
   }
 
-  let explicit = HubDownloadOptions::new(
+  let explicit = @hub.HubDownloadOptions::new(
     endpoint="https://explicit-hf.example",
     local_files_only=false,
   )
@@ -71,7 +75,7 @@ test "download options honor Hub environment defaults" {
 
   @sys.set_env_var("HF_ENDPOINT", "")
   @sys.set_env_var("HF_HUB_OFFLINE", "false")
-  let reset = HubDownloadOptions::new()
+  let reset = @hub.HubDownloadOptions::new()
   @test.assert_eq(reset.endpoint, "https://huggingface.co")
   @test.assert_eq(reset.local_files_only, false)
 }
@@ -82,11 +86,13 @@ test "Hub cache application validates model id and revision" {
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"hello":0,"[UNK]":1},"unk_token":"[UNK]"}}
   let mut bad_model = false
   try
-    apply_tokenizer_json_response(
+    @hub.apply_tokenizer_json_response(
       "org/model name",
       json,
-      HubResponseMetadata::new(200),
-      options=HubDownloadOptions::new(cache_dir=Some("_build/hub_validation")),
+      @hub.HubResponseMetadata::new(200),
+      options=@hub.HubDownloadOptions::new(
+        cache_dir=Some("_build/hub_validation"),
+      ),
     )
     |> ignore
   catch {
@@ -97,11 +103,11 @@ test "Hub cache application validates model id and revision" {
 
   let mut bad_revision = false
   try
-    apply_tokenizer_json_response(
+    @hub.apply_tokenizer_json_response(
       "org/model",
       json,
-      HubResponseMetadata::new(200),
-      options=HubDownloadOptions::new(
+      @hub.HubResponseMetadata::new(200),
+      options=@hub.HubDownloadOptions::new(
         revision="../escape",
         cache_dir=Some("_build/hub_validation"),
       ),
@@ -137,9 +143,9 @@ test "Hub request plan uses cache etag and resume range" {
     downloaded_size=256,
   )
   |> ignore
-  let plan = plan_tokenizer_json_request(
+  let plan = @hub.plan_tokenizer_json_request(
     "org/request-plan-tokenizer",
-    options=HubDownloadOptions::new(
+    options=@hub.HubDownloadOptions::new(
       endpoint="https://hf.example/",
       revision="main",
       cache_dir=Some(cache),
@@ -162,10 +168,10 @@ test "Hub request plan uses cache etag and resume range" {
     true,
   )
   @test.assert_eq(plan.resume_metadata.unwrap().downloaded_size, 256)
-  let sidecar_plan = plan_hub_file_request(
+  let sidecar_plan = @hub.plan_hub_file_request(
     "org/request-plan-tokenizer",
     "added_tokens.json",
-    options=HubDownloadOptions::new(
+    options=@hub.HubDownloadOptions::new(
       endpoint="https://hf.example/",
       revision="refs/pr/7",
       cache_dir=Some(cache),
@@ -187,17 +193,17 @@ test "Hub request plan uses cache etag and resume range" {
 test "Hub sidecar download result writes raw file into cache" {
   let cache = "_build/hub_sidecar_apply_cache"
   let model = "org/sidecar-apply-tokenizer"
-  let result = apply_hub_file_download_result(
+  let result = @hub.apply_hub_file_download_result(
     model,
     "added_tokens.json",
     "{\"added\":[]}",
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       200,
       resolved_revision=Some("sidecarrev"),
       etag=Some("etag-added"),
     ),
     "https://hf.example/org/sidecar-apply-tokenizer/resolve/main/added_tokens.json",
-    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+    options=@hub.HubDownloadOptions::new(cache_dir=Some(cache)),
   )
   @test.assert_eq(result.filename, "added_tokens.json")
   @test.assert_eq(result.content, "{\"added\":[]}")
@@ -230,13 +236,13 @@ test "Hub sidecar download result writes raw file into cache" {
 
   let mut rejected_tokenizer_json = false
   try
-    apply_hub_file_download_result(
+    @hub.apply_hub_file_download_result(
       model,
       "tokenizer.json",
       "{}",
-      HubResponseMetadata::new(200),
+      @hub.HubResponseMetadata::new(200),
       "https://hf.example/tokenizer.json",
-      options=HubDownloadOptions::new(cache_dir=Some(cache)),
+      options=@hub.HubDownloadOptions::new(cache_dir=Some(cache)),
     )
     |> ignore
   catch {
@@ -248,13 +254,13 @@ test "Hub sidecar download result writes raw file into cache" {
 
   let mut rejected_status = false
   try
-    apply_hub_file_download_result(
+    @hub.apply_hub_file_download_result(
       model,
       "special_tokens_map.json",
       "{}",
-      HubResponseMetadata::new(404),
+      @hub.HubResponseMetadata::new(404),
       "https://hf.example/missing",
-      options=HubDownloadOptions::new(cache_dir=Some(cache)),
+      options=@hub.HubDownloadOptions::new(cache_dir=Some(cache)),
     )
     |> ignore
   catch {
@@ -267,17 +273,17 @@ test "Hub sidecar download result writes raw file into cache" {
 ///|
 test "Hub request headers avoid empty auth and optional user agent" {
   @sys.set_env_var("HF_TOKEN", "env-token")
-  let no_auth = plan_tokenizer_json_request(
+  let no_auth = @hub.plan_tokenizer_json_request(
     "bert-base-uncased",
-    options=HubDownloadOptions::new(token=Some(""), user_agent=None),
+    options=@hub.HubDownloadOptions::new(token=Some(""), user_agent=None),
   )
   @test.assert_eq(no_auth.headers.get("Accept"), Some("*/*"))
   @test.assert_eq(no_auth.headers.get("Authorization"), None)
   @test.assert_eq(no_auth.headers.get("User-Agent"), None)
 
-  let with_user_agent = plan_tokenizer_json_request(
+  let with_user_agent = @hub.plan_tokenizer_json_request(
     "bert-base-uncased",
-    options=HubDownloadOptions::new(
+    options=@hub.HubDownloadOptions::new(
       token=Some("tok"),
       user_agent=Some("custom-agent"),
     ),
@@ -296,9 +302,9 @@ test "Hub request headers avoid empty auth and optional user agent" {
   }
   @sys.set_env_var("HF_TOKEN", "")
   @sys.set_env_var("HF_TOKEN_PATH", "_build/hub_token_path")
-  let from_token_path = plan_tokenizer_json_request(
+  let from_token_path = @hub.plan_tokenizer_json_request(
     "bert-base-uncased",
-    options=HubDownloadOptions::new(user_agent=None),
+    options=@hub.HubDownloadOptions::new(user_agent=None),
   )
   @test.assert_eq(
     from_token_path.headers.get("Authorization"),
@@ -306,9 +312,9 @@ test "Hub request headers avoid empty auth and optional user agent" {
   )
 
   @sys.set_env_var("HF_TOKEN", "env-token")
-  let from_env_token = plan_tokenizer_json_request(
+  let from_env_token = @hub.plan_tokenizer_json_request(
     "bert-base-uncased",
-    options=HubDownloadOptions::new(user_agent=None),
+    options=@hub.HubDownloadOptions::new(user_agent=None),
   )
   @test.assert_eq(
     from_env_token.headers.get("Authorization"),
@@ -324,9 +330,9 @@ test "Hub request headers avoid empty auth and optional user agent" {
   @sys.set_env_var("HF_TOKEN", "")
   @sys.set_env_var("HF_TOKEN_PATH", "")
   @sys.set_env_var("HF_HOME", "_build/hub_hf_home_token")
-  let from_hf_home = plan_tokenizer_json_request(
+  let from_hf_home = @hub.plan_tokenizer_json_request(
     "bert-base-uncased",
-    options=HubDownloadOptions::new(user_agent=None),
+    options=@hub.HubDownloadOptions::new(user_agent=None),
   )
   @test.assert_eq(
     from_hf_home.headers.get("Authorization"),
@@ -351,7 +357,7 @@ fn expected_user_agent_header(expected : String?) -> String? {
 
 ///|
 test "Hub response metadata parses cache headers" {
-  let meta = HubResponseMetadata::from_headers(200, {
+  let meta = @hub.HubResponseMetadata::from_headers(200, {
     "x-repo-commit": "abc123",
     "etag": "etag-new",
     "content-length": "4096",
@@ -366,7 +372,7 @@ test "Hub response metadata parses cache headers" {
 
 ///|
 test "Hub response metadata parses headers case-insensitively" {
-  let meta = HubResponseMetadata::from_headers(206, {
+  let meta = @hub.HubResponseMetadata::from_headers(206, {
     "X-Repo-Commit": "abc123",
     "ETag": "etag-new",
     "Content-Length": "224",
@@ -384,7 +390,7 @@ test "Hub response metadata parses headers case-insensitively" {
 
 ///|
 test "Hub response metadata ignores malformed length and range headers" {
-  let invalid = HubResponseMetadata::from_headers(206, {
+  let invalid = @hub.HubResponseMetadata::from_headers(206, {
     "Content-Length": "",
     "Accept-Ranges": "none",
     "Content-Range": "items 0-10/20",
@@ -395,7 +401,7 @@ test "Hub response metadata ignores malformed length and range headers" {
   @test.assert_eq(invalid.content_range_end, None)
   @test.assert_eq(invalid.content_range_total, None)
 
-  let unsatisfied = HubResponseMetadata::from_headers(416, {
+  let unsatisfied = @hub.HubResponseMetadata::from_headers(416, {
     "Content-Length": "abc",
     "Accept-Ranges": "Bytes",
     "Content-Range": "bytes */256",
@@ -406,7 +412,7 @@ test "Hub response metadata ignores malformed length and range headers" {
   @test.assert_eq(unsatisfied.content_range_end, None)
   @test.assert_eq(unsatisfied.content_range_total, Some(256))
 
-  let reversed = HubResponseMetadata::from_headers(206, {
+  let reversed = @hub.HubResponseMetadata::from_headers(206, {
     "Content-Length": "5",
     "Content-Range": "bytes 20-10/100",
   })
@@ -418,26 +424,26 @@ test "Hub response metadata ignores malformed length and range headers" {
 ///|
 test "Hub HTTP status diagnostics describe common failures" {
   @test.assert_eq(
-    hub_http_status_diagnostic(401),
+    @hub.hub_http_status_diagnostic(401),
     "HTTP 401 (private or gated repository; provide a valid Hub token)",
   )
   @test.assert_eq(
-    hub_http_status_diagnostic(403),
+    @hub.hub_http_status_diagnostic(403),
     "HTTP 403 (private or gated repository; provide a valid Hub token)",
   )
   @test.assert_eq(
-    hub_http_status_diagnostic(404),
+    @hub.hub_http_status_diagnostic(404),
     "HTTP 404 (missing repository, revision, or tokenizer.json file)",
   )
   @test.assert_eq(
-    hub_http_status_diagnostic(429),
+    @hub.hub_http_status_diagnostic(429),
     "HTTP 429 (rate limit exceeded; retry later or use a Hub token)",
   )
   @test.assert_eq(
-    hub_http_status_diagnostic(503),
+    @hub.hub_http_status_diagnostic(503),
     "HTTP 503 (Hub service unavailable; retry later)",
   )
-  @test.assert_eq(hub_http_status_diagnostic(418), "HTTP 418")
+  @test.assert_eq(@hub.hub_http_status_diagnostic(418), "HTTP 418")
 }
 
 ///|
@@ -463,13 +469,13 @@ test "Hub response decision handles cache and range statuses" {
     downloaded_size=32,
   )
   |> ignore
-  let plan = plan_tokenizer_json_request(
+  let plan = @hub.plan_tokenizer_json_request(
     "org/response-decision-tokenizer",
-    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+    options=@hub.HubDownloadOptions::new(cache_dir=Some(cache)),
   )
-  let not_modified = decide_tokenizer_json_response(
+  let not_modified = @hub.decide_tokenizer_json_response(
     plan,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       304,
       resolved_revision=Some("abc123"),
       etag=Some("etag-existing"),
@@ -477,9 +483,9 @@ test "Hub response decision handles cache and range statuses" {
     ),
   )
   @test.assert_eq(not_modified.can_use_cache(), true)
-  let partial = decide_tokenizer_json_response(
+  let partial = @hub.decide_tokenizer_json_response(
     plan,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       206,
       resolved_revision=Some("def456"),
       etag=Some("etag-new"),
@@ -493,9 +499,9 @@ test "Hub response decision handles cache and range statuses" {
   @test.assert_eq(partial.should_append_range(), true)
   @test.assert_eq(partial.range_start, Some(32))
   @test.assert_eq(partial.expected_size, Some(256))
-  let partial_with_larger_total = decide_tokenizer_json_response(
+  let partial_with_larger_total = @hub.decide_tokenizer_json_response(
     plan,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       206,
       resolved_revision=Some("def456"),
       etag=Some("etag-new"),
@@ -508,12 +514,12 @@ test "Hub response decision handles cache and range statuses" {
   )
   @test.assert_eq(partial_with_larger_total.should_append_range(), true)
   @test.assert_eq(partial_with_larger_total.expected_size, Some(512))
-  let bad_partial = decide_tokenizer_json_response(
-    plan_tokenizer_json_request(
+  let bad_partial = @hub.decide_tokenizer_json_response(
+    @hub.plan_tokenizer_json_request(
       "org/no-resume-tokenizer",
-      options=HubDownloadOptions::new(cache_dir=Some(cache)),
+      options=@hub.HubDownloadOptions::new(cache_dir=Some(cache)),
     ),
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       206,
       resolved_revision=Some("def456"),
       etag=Some("etag-new"),
@@ -525,9 +531,9 @@ test "Hub response decision handles cache and range statuses" {
     ),
   )
   @test.assert_eq(bad_partial.should_retry_without_range(), true)
-  let mismatched_total = decide_tokenizer_json_response(
+  let mismatched_total = @hub.decide_tokenizer_json_response(
     plan,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       206,
       resolved_revision=Some("def456"),
       etag=Some("etag-new"),
@@ -539,9 +545,9 @@ test "Hub response decision handles cache and range statuses" {
     ),
   )
   @test.assert_eq(mismatched_total.should_retry_without_range(), true)
-  let mismatched_body_length = decide_tokenizer_json_response(
+  let mismatched_body_length = @hub.decide_tokenizer_json_response(
     plan,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       206,
       resolved_revision=Some("def456"),
       etag=Some("etag-new"),
@@ -553,9 +559,9 @@ test "Hub response decision handles cache and range statuses" {
     ),
   )
   @test.assert_eq(mismatched_body_length.should_retry_without_range(), true)
-  let mismatched_range = decide_tokenizer_json_response(
+  let mismatched_range = @hub.decide_tokenizer_json_response(
     plan,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       206,
       resolved_revision=Some("def456"),
       etag=Some("etag-new"),
@@ -567,18 +573,18 @@ test "Hub response decision handles cache and range statuses" {
     ),
   )
   @test.assert_eq(mismatched_range.should_retry_without_range(), true)
-  let unauthorized = decide_tokenizer_json_response(
+  let unauthorized = @hub.decide_tokenizer_json_response(
     plan,
-    HubResponseMetadata::new(401),
+    @hub.HubResponseMetadata::new(401),
   )
   @test.assert_eq(unauthorized.can_use_cache(), false)
   @test.assert_eq(
     unauthorized.message,
     "Hub response cannot be applied to tokenizer cache: HTTP 401 (private or gated repository; provide a valid Hub token)",
   )
-  let missing = decide_tokenizer_json_response(
+  let missing = @hub.decide_tokenizer_json_response(
     plan,
-    HubResponseMetadata::new(404),
+    @hub.HubResponseMetadata::new(404),
   )
   @test.assert_eq(
     missing.message,
@@ -609,18 +615,18 @@ test "Hub HEAD plan and decision validate cached metadata" {
     downloaded_size=64,
   )
   |> ignore
-  let head_plan = head_tokenizer_json_request(
+  let head_plan = @hub.head_tokenizer_json_request(
     "org/head-decision-tokenizer",
-    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+    options=@hub.HubDownloadOptions::new(cache_dir=Some(cache)),
   )
   @test.assert_eq(head_plan.headers.get("If-None-Match"), Some("etag-head"))
   @test.assert_eq(head_plan.headers.get("Range"), None)
   @test.assert_eq(head_plan.headers.get("If-Range"), None)
   @test.assert_eq(head_plan.range_start, None)
   @test.assert_eq(head_plan.resume_metadata, None)
-  let slash_revision_head_plan = head_tokenizer_json_request(
+  let slash_revision_head_plan = @hub.head_tokenizer_json_request(
     "org/head-decision-tokenizer",
-    options=HubDownloadOptions::new(
+    options=@hub.HubDownloadOptions::new(
       endpoint="https://hf.example",
       revision="refs/pr/7",
       cache_dir=Some(cache),
@@ -632,24 +638,24 @@ test "Hub HEAD plan and decision validate cached metadata" {
   )
   @test.assert_eq(slash_revision_head_plan.headers.get("Range"), None)
   @test.assert_eq(slash_revision_head_plan.headers.get("If-Range"), None)
-  let not_modified = decide_tokenizer_json_head_response(
+  let not_modified = @hub.decide_tokenizer_json_head_response(
     head_plan,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       304,
       resolved_revision=Some("headrev"),
       etag=Some("etag-head"),
     ),
   )
   @test.assert_eq(not_modified.can_use_cache(), true)
-  let reused_with_new_revision = apply_tokenizer_json_response(
+  let reused_with_new_revision = @hub.apply_tokenizer_json_response(
     "org/head-decision-tokenizer",
     "",
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       304,
       resolved_revision=Some("newrev"),
       etag=Some("etag-head"),
     ),
-    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+    options=@hub.HubDownloadOptions::new(cache_dir=Some(cache)),
   )
   @test.assert_eq(
     reused_with_new_revision.encode("head", add_special_tokens=false).ids,
@@ -663,9 +669,9 @@ test "Hub HEAD plan and decision validate cached metadata" {
     ),
     Some("headrev"),
   )
-  let same_etag = decide_tokenizer_json_head_response(
+  let same_etag = @hub.decide_tokenizer_json_head_response(
     head_plan,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       200,
       resolved_revision=Some("headrev"),
       etag=Some("etag-head"),
@@ -674,9 +680,9 @@ test "Hub HEAD plan and decision validate cached metadata" {
     ),
   )
   @test.assert_eq(same_etag.can_use_cache(), true)
-  let empty_remote_metadata = decide_tokenizer_json_head_response(
+  let empty_remote_metadata = @hub.decide_tokenizer_json_head_response(
     head_plan,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       200,
       resolved_revision=Some(""),
       etag=Some(""),
@@ -686,9 +692,9 @@ test "Hub HEAD plan and decision validate cached metadata" {
   )
   @test.assert_eq(empty_remote_metadata.can_use_cache(), false)
   @test.assert_eq(empty_remote_metadata.should_write_full_body(), true)
-  let changed = decide_tokenizer_json_head_response(
+  let changed = @hub.decide_tokenizer_json_head_response(
     head_plan,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       200,
       resolved_revision=Some("newrev"),
       etag=Some("etag-new"),
@@ -697,9 +703,9 @@ test "Hub HEAD plan and decision validate cached metadata" {
     ),
   )
   @test.assert_eq(changed.should_write_full_body(), true)
-  let unsupported = decide_tokenizer_json_head_response(
+  let unsupported = @hub.decide_tokenizer_json_head_response(
     head_plan,
-    HubResponseMetadata::new(405),
+    @hub.HubResponseMetadata::new(405),
   )
   @test.assert_eq(unsupported.can_use_cache(), false)
   @test.assert_eq(unsupported.should_write_full_body(), false)
@@ -707,9 +713,9 @@ test "Hub HEAD plan and decision validate cached metadata" {
     unsupported.message,
     "Hub HEAD response cannot validate tokenizer cache: HTTP 405",
   )
-  let unavailable = decide_tokenizer_json_head_response(
+  let unavailable = @hub.decide_tokenizer_json_head_response(
     head_plan,
-    HubResponseMetadata::new(503),
+    @hub.HubResponseMetadata::new(503),
   )
   @test.assert_eq(
     unavailable.message,
@@ -724,7 +730,7 @@ test "apply Hub response reuses cache replaces cache and appends ranges" {
   let new_json =
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"new":0,"[UNK]":1},"unk_token":"[UNK]"}}
   let cache = "_build/hub_apply_response_cache"
-  let opts = HubDownloadOptions::new(cache_dir=Some(cache))
+  let opts = @hub.HubDownloadOptions::new(cache_dir=Some(cache))
   @tokenizer.Tokenizer::from_pretrained_downloaded(
     "org/apply-response-tokenizer",
     old_json,
@@ -734,10 +740,10 @@ test "apply Hub response reuses cache replaces cache and appends ranges" {
     etag=Some("etag-old"),
   )
   |> ignore
-  let cached = apply_tokenizer_json_response(
+  let cached = @hub.apply_tokenizer_json_response(
     "org/apply-response-tokenizer",
     "",
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       304,
       resolved_revision=Some("oldrev"),
       etag=Some("etag-old"),
@@ -746,10 +752,10 @@ test "apply Hub response reuses cache replaces cache and appends ranges" {
     options=opts,
   )
   @test.assert_eq(cached.token_to_id("old"), Some(0))
-  let replaced = apply_tokenizer_json_response(
+  let replaced = @hub.apply_tokenizer_json_response(
     "org/apply-response-tokenizer",
     new_json,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       200,
       resolved_revision=Some("newrev"),
       etag=Some("etag-new"),
@@ -774,10 +780,10 @@ test "apply Hub response reuses cache replaces cache and appends ranges" {
   @fs.write_string_to_file(resume_meta.incomplete_path, prefix) catch {
     _ => abort("cannot write incomplete tokenizer cache")
   }
-  let ranged = apply_tokenizer_json_response(
+  let ranged = @hub.apply_tokenizer_json_response(
     range_model,
     suffix,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       206,
       resolved_revision=Some("rangerev"),
       etag=Some("etag-range"),
@@ -814,14 +820,14 @@ test "Hub download result helper reuses cache and combines ranges" {
     etag=Some("etag-cached"),
   )
   |> ignore
-  let plan = plan_tokenizer_json_request(
+  let plan = @hub.plan_tokenizer_json_request(
     model,
-    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+    options=@hub.HubDownloadOptions::new(cache_dir=Some(cache)),
   )
-  let not_modified = apply_tokenizer_json_download_result(
+  let not_modified = @hub.apply_tokenizer_json_download_result(
     plan,
     None,
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       304,
       resolved_revision=Some("cachedrev"),
       etag=Some("etag-cached"),
@@ -830,10 +836,10 @@ test "Hub download result helper reuses cache and combines ranges" {
   )
   @test.assert_eq(not_modified.status, 304)
   @test.assert_eq(not_modified.content, cached_json)
-  let full = apply_tokenizer_json_download_result(
+  let full = @hub.apply_tokenizer_json_download_result(
     plan,
     Some(range_json),
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       200,
       resolved_revision=Some("fullrev"),
       etag=Some("etag-full"),
@@ -857,14 +863,14 @@ test "Hub download result helper reuses cache and combines ranges" {
   @fs.write_string_to_file(resume_meta.incomplete_path, prefix) catch {
     _ => abort("cannot write incomplete tokenizer cache")
   }
-  let range_plan = plan_tokenizer_json_request(
+  let range_plan = @hub.plan_tokenizer_json_request(
     model,
-    options=HubDownloadOptions::new(cache_dir=Some(cache)),
+    options=@hub.HubDownloadOptions::new(cache_dir=Some(cache)),
   )
-  let partial = apply_tokenizer_json_download_result(
+  let partial = @hub.apply_tokenizer_json_download_result(
     range_plan,
     Some(suffix),
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       206,
       resolved_revision=Some("rangerev"),
       etag=Some("etag-range"),
@@ -884,11 +890,11 @@ test "Hub streamed chunk helper writes incomplete cache and clears resume" {
     #|{"version":"1.0","model":{"type":"WordLevel","vocab":{"range":0,"[UNK]":1},"unk_token":"[UNK]"}}
   let cache = "_build/hub_stream_chunks_cache"
   let full_model = "org/stream-full-tokenizer"
-  let opts = HubDownloadOptions::new(cache_dir=Some(cache))
-  let full_result = apply_tokenizer_json_download_chunks(
+  let opts = @hub.HubDownloadOptions::new(cache_dir=Some(cache))
+  let full_result = @hub.apply_tokenizer_json_download_chunks(
     full_model,
     [string_prefix(full_json, 35), string_suffix(full_json, 35)],
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       200,
       resolved_revision=Some("fullrev"),
       etag=Some("etag-full"),
@@ -933,10 +939,10 @@ test "Hub streamed chunk helper writes incomplete cache and clears resume" {
   @fs.write_string_to_file(resume_meta.incomplete_path, prefix) catch {
     _ => abort("cannot write incomplete tokenizer cache")
   }
-  let range_result = apply_tokenizer_json_download_chunks(
+  let range_result = @hub.apply_tokenizer_json_download_chunks(
     range_model,
     [string_prefix(suffix, 17), string_suffix(suffix, 17)],
-    HubResponseMetadata::new(
+    @hub.HubResponseMetadata::new(
       206,
       resolved_revision=Some("rangerev"),
       etag=Some("etag-range"),
@@ -966,15 +972,15 @@ test "Hub streamed byte helper preserves UTF-8 split across chunks" {
   let bytes = @utf8.encode(json)
   let cache = "_build/hub_stream_utf8_cache"
   let model = "org/stream-utf8-tokenizer"
-  let opts = HubDownloadOptions::new(cache_dir=Some(cache))
-  let meta = HubResponseMetadata::new(
+  let opts = @hub.HubDownloadOptions::new(cache_dir=Some(cache))
+  let meta = @hub.HubResponseMetadata::new(
     200,
     resolved_revision=Some("utf8rev"),
     etag=Some("etag-utf8"),
     content_length=Some(bytes.length()),
     accept_ranges=true,
   )
-  let result = apply_tokenizer_json_download_bytes(
+  let result = @hub.apply_tokenizer_json_download_bytes(
     model,
     [bytes[0:56].to_owned(), bytes[56:57].to_owned(), bytes[57:].to_owned()],
     meta,
@@ -1039,12 +1045,14 @@ fn string_suffix(s : String, start : Int) -> String {
 
 ///|
 async test "direct Hub network APIs reject local_files_only" {
-  let options = HubDownloadOptions::new(
+  let options = @hub.HubDownloadOptions::new(
     endpoint="https://127.0.0.1:9",
     local_files_only=true,
   )
   let mut download_rejected = false
-  try download_tokenizer_json("bert-base-uncased", options~) |> ignore catch {
+  try
+    @hub.download_tokenizer_json("bert-base-uncased", options~) |> ignore
+  catch {
     @types.ParseError(msg) =>
       download_rejected = msg.contains("local_files_only=true")
     _ => ()
@@ -1052,7 +1060,7 @@ async test "direct Hub network APIs reject local_files_only" {
   @test.assert_eq(download_rejected, true)
 
   let mut head_rejected = false
-  try head_tokenizer_json("bert-base-uncased", options~) |> ignore catch {
+  try @hub.head_tokenizer_json("bert-base-uncased", options~) |> ignore catch {
     @types.ParseError(msg) =>
       head_rejected = msg.contains("local_files_only=true")
     _ => ()
@@ -1061,7 +1069,7 @@ async test "direct Hub network APIs reject local_files_only" {
 
   let mut sidecar_rejected = false
   try
-    download_hub_file("bert-base-uncased", "added_tokens.json", options~)
+    @hub.download_hub_file("bert-base-uncased", "added_tokens.json", options~)
     |> ignore
   catch {
     @types.ParseError(msg) =>
@@ -1088,12 +1096,12 @@ async test "from_pretrained loads local tokenizer file and directory without Hub
   @fs.write_string_to_file(dir_path + "/tokenizer.json", json) catch {
     _ => abort("cannot write local tokenizer directory")
   }
-  let options = HubDownloadOptions::new(
+  let options = @hub.HubDownloadOptions::new(
     endpoint="https://127.0.0.1:9",
     local_files_only=false,
   )
-  let from_file = from_pretrained(file_path, options~)
-  let from_dir = from_pretrained(dir_path, options~)
+  let from_file = @hub.from_pretrained(file_path, options~)
+  let from_dir = @hub.from_pretrained(dir_path, options~)
   @test.assert_eq(from_file.encode("hub local", add_special_tokens=false).ids, [
     0, 1,
   ])
@@ -1111,9 +1119,9 @@ async test "from_pretrained reports local directory missing tokenizer before Hub
   }
   let mut missing = false
   try
-    from_pretrained(
+    @hub.from_pretrained(
       dir_path,
-      options=HubDownloadOptions::new(
+      options=@hub.HubDownloadOptions::new(
         endpoint="https://127.0.0.1:9",
         local_files_only=false,
       ),
@@ -1142,9 +1150,9 @@ async test "from_pretrained honors local_files_only cache hit and miss" {
   )
   |> ignore
 
-  let hit = from_pretrained(
+  let hit = @hub.from_pretrained(
     "org/local-only",
-    options=HubDownloadOptions::new(
+    options=@hub.HubDownloadOptions::new(
       cache_dir=Some(cache),
       endpoint="https://127.0.0.1:9",
       local_files_only=true,
@@ -1154,9 +1162,9 @@ async test "from_pretrained honors local_files_only cache hit and miss" {
 
   let mut missed = false
   try
-    from_pretrained(
+    @hub.from_pretrained(
       "org/missing-local-only",
-      options=HubDownloadOptions::new(
+      options=@hub.HubDownloadOptions::new(
         cache_dir=Some(cache),
         endpoint="https://127.0.0.1:9",
         local_files_only=true,
@@ -1178,9 +1186,11 @@ async test "optional online Hub smoke" {
   guard @sys.get_env_var("TOKENIZERS_MOONBIT_HUB_ONLINE_TEST") == Some("1") else {
     return
   }
-  let tok = from_pretrained(
+  let tok = @hub.from_pretrained(
     "hf-internal-testing/tiny-random-BertModel",
-    options=HubDownloadOptions::new(cache_dir=Some("_build/hub_online_cache")),
+    options=@hub.HubDownloadOptions::new(
+      cache_dir=Some("_build/hub_online_cache"),
+    ),
   )
   assert_true(tok.get_vocab_size() > 0)
 }
