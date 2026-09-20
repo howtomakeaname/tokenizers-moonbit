@@ -203,22 +203,41 @@ fn Tokenizer::encode_raw_with_hooks_impl(
               let pieces = self.pre_tokenize_with_hook(ntext, base2, hooks)
               // ByteLevel and Metaspace rewrite pieces (byte->visible
               // chars, space->▁, prefix inserts); derive the piece origin
-              // map so model-token spans land on input char coords.
-              let origin_pt = match self.pre_tokenizer {
-                Some(@pretokenizer.PreTokenizer::ByteLevel(..)) => true
-                Some(@pretokenizer.PreTokenizer::Metaspace(..)) => true
+              // map so model-token spans land on input char coords. The
+              // map MODEL is keyed on the pre-tokenizer kind — ByteLevel
+              // expands per UTF-8 byte, Metaspace rewrites 1:1 per char —
+              // never on length coincidences.
+              let origin_kind : String? = match self.pre_tokenizer {
+                Some(@pretokenizer.PreTokenizer::ByteLevel(..)) => Some("byte")
+                Some(@pretokenizer.PreTokenizer::Metaspace(..)) => Some("char")
                 Some(@pretokenizer.PreTokenizer::Sequence(steps)) => {
-                  let mut any_bl = false
+                  // a homogeneous Sequence keeps one model; a mix cannot be
+                  // represented by a single map
+                  let mut model : String? = None
                   for st in steps {
                     match st {
-                      @pretokenizer.PreTokenizer::ByteLevel(..) => any_bl = true
-                      @pretokenizer.PreTokenizer::Metaspace(..) => any_bl = true
+                      @pretokenizer.PreTokenizer::ByteLevel(..) =>
+                        if model is None {
+                          model = Some("byte")
+                        } else if model != Some("byte") {
+                          model = Some("mixed")
+                        }
+                      @pretokenizer.PreTokenizer::Metaspace(..) =>
+                        if model is None {
+                          model = Some("char")
+                        } else if model != Some("char") {
+                          model = Some("mixed")
+                        }
                       _ => ()
                     }
                   }
-                  any_bl
+                  if model is Some("mixed") {
+                    None
+                  } else {
+                    model
+                  }
                 }
-                _ => false
+                _ => None
               }
               for piece in pieces {
                 let word_id = next_word_id
@@ -230,8 +249,9 @@ fn Tokenizer::encode_raw_with_hooks_impl(
                 let norm_e = piece.offsets.1 - base_offset
                 // ByteLevel pieces encode bytes as visible chars; map the
                 // piece's visible-char indices back to input char indices.
-                let bl_map = if origin_pt && track_offsets {
-                  byte_level_origin_map(
+                let bl_map = if origin_kind is Some(_) && track_offsets {
+                  piece_origin_map(
+                    origin_kind.unwrap(),
                     char_substring(normalized, norm_s, norm_e),
                     piece.value.char_length(),
                   )
@@ -306,40 +326,34 @@ fn Tokenizer::encode_raw_with_hooks_impl(
 /// char it came from — multi-byte chars expand to several visible chars
 /// that all map to the same input char. Returns None when the piece is not
 /// a byte-level encoding of the substring (lengths do not add up).
-fn byte_level_origin_map(norm_sub : String, value_len : Int) -> Array[Int]? {
-  match byte_map_of(norm_sub) {
-    Some(map) => {
+fn piece_origin_map(
+  kind : String,
+  norm_sub : String,
+  value_len : Int,
+) -> Array[Int]? {
+  // base map: per-UTF-8-byte (ByteLevel) or per-char (Metaspace 1:1
+  // rewrite). A single prepended visible char (Ġ prefix space / ▁
+  // prepend) attaches to the first input char's index.
+  let base : Array[Int]? = if kind == "byte" {
+    byte_map_of(norm_sub)
+  } else {
+    let n = norm_sub.char_length()
+    let map : Array[Int] = []
+    for i in 0..<n {
+      map.push(i)
+    }
+    Some(map)
+  }
+  match base {
+    Some(map) =>
       if map.length() == value_len {
-        return Some(map)
+        Some(map)
+      } else if map.length() + 1 == value_len {
+        Some([0, ..map])
+      } else {
+        None
       }
-      // ByteLevel add_prefix_space / Metaspace prepend insert one visible
-      // char (Ġ / ▁) in front; the insert attaches to the first input
-      // char's span (HF insert semantics).
-      if map.length() + 1 == value_len {
-        return Some([0, ..map])
-      }
-      None
-    }
-    None => {
-      // 1:1 pre-tokenizers (Metaspace space->▁ replacement keeps length);
-      // a single prepended replacement char attaches to char 0.
-      let n = norm_sub.char_length()
-      if n == value_len {
-        let map : Array[Int] = []
-        for i in 0..<n {
-          map.push(i)
-        }
-        return Some(map)
-      }
-      if n + 1 == value_len {
-        let map : Array[Int] = [0]
-        for i in 0..<n {
-          map.push(i)
-        }
-        return Some(map)
-      }
-      None
-    }
+    None => None
   }
 }
 

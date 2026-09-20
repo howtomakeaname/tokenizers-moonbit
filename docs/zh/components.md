@@ -109,8 +109,8 @@ E5-small、MixedBread、SmolLM2。
   `merged_with_next` 只合并 run 的第一个/最后一个分隔符，与 HF 0.22.2 一致。
 - **Offsets（原文参照）：** encode 偏移为指向**原文**的字符偏移，对齐 HuggingFace
   NormalizedString 的 alignment 语义：归一化阶段为每个归一化字符维护原文 span
-  （NFD 组合记号折叠到基础字符、NFC 组合 span 覆盖被消费区间、Strip/Prepend/
-  Replace/BertNormalizer/charsmap 各自映射回原文），added-vocabulary 切分与模型
+  （NFD 组合记号折叠到基础字符、NFC 组合保留首个被组合字符的 span、Strip/Prepend/
+  Replace（内容附着命中末字符 span）/BertNormalizer/charsmap 各自映射回原文），added-vocabulary 切分与模型
   token 发射经对齐列转换，ByteLevel/Metaspace 的 piece 改写（多字节扩展、空格→▁、
   前缀插入）映射回输入字符坐标。行为对比扫描验证：合成 857 → 971/1008、真实模型
   59 → 94/100。

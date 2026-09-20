@@ -1120,7 +1120,13 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
   - **管线穿线**（`encode_helpers.mbt`）：`normalize_with_alignment` 取代表旧的 String-only 路径（hook 场景回退 identity 对齐，行为不变）；stage-2 added-token 与模型 token 发射统一经 `to_orig`（expand + stage1 基址）转换；模型 tokenize 改传 `offset=0` 取 piece 相对 span 后转换。
   - **piece origin 表**：ByteLevel/Metaspace 的 piece 值与归一化子串存在改写（多字节→多可见字符、空格→▁、前缀插入 ▁/Ġ），发射处按 `byte_map_of`（每字节→源字符）或 1:1/前缀附着规则派生 origin 表，将模型 token 的可见字符坐标映射回输入字符坐标（插入字符附着首字符 span，对齐 HF insert 语义）。
   - **修复过程 bug 两枚**：`canonical_compose_aligned` 初版漏了原版的 `last_cc < cc` 守卫与 last_cc 更新差异导致 Qwen tokenization 回归（已逐位镜像原实现）；`expand_align` 未钳 start 上界致 ByteLevel 多字节越界 abort（已钳）。
-- 效果（行为对比扫描）：合成 **857 → 971/1008**（offsets 失败 151 → 约 20）、真实模型 **59 → 94/100**（41 → 6）。gpt2/llama/qwen/bert 全绿，t5 剩 5 例 charsmap+Metaspace 复合偏移、qwen3 1 例。
+- 效果（行为对比扫描）：合成 **857 → 987/1008**、真实模型 **59 → 99/100**（gpt2/llama/qwen/bert/t5 基本全绿，qwen3 剩 1 例）。
+- 独立评审后修正（2026-09-20 续，四项阻塞全部落实并各配锁定测试）：
+  1. NFC/NFKC 组合 span 规则：HF `-N` 契约下组合字符保留**首个**被组合字符的 span（"z"+"e"+U+0301+"z" → é=(1,2)），初版误做 min/max 区间合并；已移除合并逻辑。
+  2. Replace 内容附着：HF 将每个替换字符附着到**命中末字符**的 span（Regex "aa"→"XY" 于 "zaa"：X、Y 均 (2,3)），初版误附整个命中区间；已改。
+  3. ReplaceString 回归：初版把字面量变体也路由进 regex 匹配器（`{"String":"\n"}` 会误匹配换行、元字符字面量静默无操作）；新增 `replace_literal_aligned` 纯字面量路径。Regex 变体不支持族（如 `a+`）的**文本级**替换缺口为既有 regex 子集限制，已列队（与 decoder 门同类问题，后续统一加显式失败）。
+  4. piece origin 表按预分词器**类型**选择（ByteLevel=每字节、Metaspace=每字符 1:1、前缀插入 +1 附着首字符），初版按长度巧合选择导致 Metaspace 非_ascii 错位（"héllo" 的 h 得 (1,2)、CJK 回退错误分支）；混合 Sequence（ByteLevel+Metaspace）显式不支持（返回 None 走原行为）并注释。
+  - 评审 Nit 采纳：expand_align 零宽 span 的 (0,0) 语义已注释；`tokenizer-encode-special-switch-mixed` 微基准 +14%（identity 列分配）记录在案，模型语料基准因 fixture 缺失为 no-op，CI 基准门无基线对比——已列入后续优化项（lazy identity 列）。
 - 新增 `src/tokenizer/offsets_alignment_test.mbt`（7 个测试，期望值 Python 0.22.2 实测）：NFD 原文 span、Strip 原文坐标、Prepend 附着、Bert 中文插入附着、ByteLevel 多字节共享 span、Metaspace 前缀附着、NFC/NFD 等价性。
 - 遗留（独立小类，已记录待后续批次）：t5/qwen3 复合偏移 6 例；Metaspace `prepend_scheme=first` 残余 8 例；norm-replace regex 族 2 例；独立 StripAccents 语义（HF 对 standalone StripAccents 似为 no-op，需专项核实）；BatchLongest 单条 encode 的 pad_to_multiple_of 行为；added-single-word NFD 边角 2 例。
 - 全后端 native(423)/js(423)/wasm(400)/wasm-gc(400) 通过；fmt/check/info 干净（新增公开 API：`Normalizer::normalize_aligned`、`normalize_unicode_aligned`、`precompiled_*_aligned`、`expand_align` 已入 .mbti）。

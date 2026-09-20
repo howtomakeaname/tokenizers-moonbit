@@ -153,8 +153,8 @@ E5-small, MixedBread and SmolLM2.
 - **Offsets (original-referential):** encode offsets are char offsets into
   the ORIGINAL text, mirroring HuggingFace's NormalizedString alignment
   semantics: normalization keeps a per-normalized-char original span
-  (NFD marks collapse onto the base char, NFC composition spans the
-  consumed run, Strip/Prepend/Replace/BertNormalizer/charsmap each map
+  (NFD marks collapse onto the base char, NFC composition keeps the
+  first composed-from char's span, Strip/Prepend/Replace/BertNormalizer/charsmap each map
   their edits back), added-vocabulary segmentation and model-token
   emission convert through the alignment column, and ByteLevel/Metaspace
   piece rewrites (multi-byte expansion, space->▁, prefix inserts) map

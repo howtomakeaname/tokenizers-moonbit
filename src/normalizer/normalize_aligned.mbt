@@ -96,8 +96,9 @@ pub fn Normalizer::normalize_aligned(
       }
       (prepend + input, align)
     }
-    Replace(pattern~, content~) | ReplaceString(pattern~, content~) =>
-      replace_aligned(input, pattern, content)
+    Replace(pattern~, content~) => replace_aligned(input, pattern, content)
+    ReplaceString(pattern~, content~) =>
+      replace_literal_aligned(input, pattern, content)
     Sequence(steps) => {
       let mut text = input
       let mut align = identity_align(input.char_length())
@@ -324,9 +325,11 @@ fn replace_aligned(
       sb.write_char(chars[k])
       align.push((k, k + 1))
     }
-    // Replacement content attaches to the matched span.
+    // HF attaches every content char to the span of the LAST char of
+    // the match (transform +0 contract on the final matched char).
+    let last_char_span = (span.1 - 1, span.1)
     for _ch in content {
-      align.push(span)
+      align.push(last_char_span)
     }
     sb.write_string(content)
     pos = span.1
@@ -334,6 +337,53 @@ fn replace_aligned(
   for k in pos..<chars.length() {
     sb.write_char(chars[k])
     align.push((k, k + 1))
+  }
+  (sb.to_string(), align)
+}
+
+///|
+/// ReplaceString (literal pattern) alignment: find-all occurrences of the
+/// literal pattern; content chars attach to the last matched char.
+fn replace_literal_aligned(
+  input : String,
+  pattern : String,
+  content : String,
+) -> (String, Aligned) {
+  if pattern.is_empty() {
+    return (input, identity_align(input.char_length()))
+  }
+  let chars = input.to_array()
+  let pat_chars = pattern.to_array()
+  let m = pat_chars.length()
+  let sb = StringBuilder()
+  let align : Array[(Int, Int)] = []
+  let mut i = 0
+  let n = chars.length()
+  while i < n {
+    // match pattern at i?
+    let mut matched = true
+    if i + m > n {
+      matched = false
+    } else {
+      for k in 0..<m {
+        if chars[i + k] != pat_chars[k] {
+          matched = false
+          break
+        }
+      }
+    }
+    if matched {
+      let last_char_span = (i + m - 1, i + m)
+      for _ch in content {
+        align.push(last_char_span)
+      }
+      sb.write_string(content)
+      i = i + m
+    } else {
+      sb.write_char(chars[i])
+      align.push((i, i + 1))
+      i = i + 1
+    }
   }
   (sb.to_string(), align)
 }

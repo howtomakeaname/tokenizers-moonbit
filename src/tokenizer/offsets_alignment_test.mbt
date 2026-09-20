@@ -107,3 +107,23 @@ test "nfc nfd offsets are identical against the original" {
   @test.assert_eq(nfc, [(0, 4), (5, 11)])
   @test.assert_eq(nfd, [(0, 5), (6, 12)])
 }
+
+///|
+/// ReplaceString patterns are literal: "\n" as a String pattern does not
+/// match a newline. Python 0.22.2 keeps a(0,1) b(2,3).
+test "replacestring patterns stay literal" {
+  let json =
+    #|{"version":"1.0","normalizer":{"type":"Replace","pattern":{"String":"\\n"},"content":"X"},"pre_tokenizer":{"type":"WhitespaceSplit"},"model":{"type":"WordLevel","vocab":{"a":0,"b":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let offs = offsets_of(json, "a\nb")
+  @test.assert_eq(offs, [(0, 1), (2, 3)])
+}
+
+///|
+/// Metaspace origin map is per-CHAR (1:1 rewrite), never per-byte: CJK
+/// pieces keep single-char spans. Python 0.22.2 on 中文: ▁中(0,1) 文(1,2).
+test "metaspace origin map is per char for cjk" {
+  let json =
+    #|{"version":"1.0","pre_tokenizer":{"type":"Metaspace","replacement":"▁","prepend_scheme":"always"},"model":{"type":"BPE","unk_token":"<|eot|>","vocab":{"▁中":0,"文":1,"中":2,"▁":3},"merges":[["▁","中"]]}}
+  let offs = offsets_of(json, "中文")
+  @test.assert_eq(offs, [(0, 1), (1, 2)])
+}

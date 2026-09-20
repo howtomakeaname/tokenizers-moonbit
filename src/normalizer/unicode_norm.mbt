@@ -395,14 +395,10 @@ fn canonical_compose_aligned(
     let blocked = last_cc >= cc && last_cc != -1 && cc != 0
     match composed {
       Some(x) if !blocked && last_cc < cc => {
-        // compose into the starter; merge the consumed mark's span
+        // compose into the starter; HF keeps the composed char on the
+        // FIRST composed-from char's span (transform -N contract)
         out[starter_idx] = x
         starter = x
-        starter_span = (
-          min_int(starter_span.0, spans[i].0),
-          max_int(starter_span.1, spans[i].1),
-        )
-        ospans[starter_idx] = starter_span
       }
       _ =>
         if cc == 0 {
@@ -421,22 +417,4 @@ fn canonical_compose_aligned(
     i = i + 1
   }
   (out, ospans)
-}
-
-///|
-fn min_int(a : Int, b : Int) -> Int {
-  if a < b {
-    a
-  } else {
-    b
-  }
-}
-
-///|
-fn max_int(a : Int, b : Int) -> Int {
-  if a > b {
-    a
-  } else {
-    b
-  }
 }
