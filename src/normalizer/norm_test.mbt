@@ -980,3 +980,40 @@ test "replace regex ascii plus spellings and unicode letter bare" {
     )
   })
 }
+
+///|
+/// `[\w]`-family bracket spellings are Unicode-wide (HF probes) and
+/// accepted across the quantifier/anchored tables via canonicalization to
+/// the shortcut forms; anchored newline class and single-char literal
+/// bounded quantifiers join the supported set.
+test "replace regex w-bracket, anchored newline, literal quantifiers" {
+  let w_min = @normalizer.Normalizer::Replace(pattern="[\\w]{2,}", content="#")
+  @test.assert_eq(w_min.normalize("ab cdef"), "# #")
+  @test.assert_eq(w_min.normalize("ab é"), "# é")
+  let w_inv = @normalizer.Normalizer::Replace(pattern="[^\\w]{2,}", content="#")
+  @test.assert_eq(w_inv.normalize("a  ,,b"), "a#b")
+  let w_anch = @normalizer.Normalizer::Replace(pattern="[\\w]+$", content="#")
+  // no line boundary before '!': unchanged (HF-verified)
+  @test.assert_eq(w_anch.normalize("ab!"), "ab!")
+  let nl_head = @normalizer.Normalizer::Replace(
+    pattern="^[\\r\\n]+",
+    content="#",
+  )
+  @test.assert_eq(nl_head.normalize("\n\nx"), "#x")
+  let nl_tail = @normalizer.Normalizer::Replace(
+    pattern="[\\r\\n]+$",
+    content="#",
+  )
+  @test.assert_eq(nl_tail.normalize("x\n\n"), "x#")
+  let lit = @normalizer.Normalizer::Replace(pattern="a{2}", content="#")
+  @test.assert_eq(lit.normalize("zaaz"), "z#z")
+  let lit_range = @normalizer.Normalizer::Replace(pattern="a{2,3}", content="#")
+  @test.assert_eq(lit_range.normalize("zaaaay"), "z#ay")
+  let lit_min = @normalizer.Normalizer::Replace(pattern="a{2,}", content="#")
+  @test.assert_eq(lit_min.normalize("zaaaaz"), "z#z")
+  // {0,m} empty-match semantics stay outside the deterministic subset
+  let bad_json : Json = @json.parse(
+    "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{0,2}\"},\"content\":\"X\"}",
+  )
+  @test.assert_raise(() => @normalizer.Normalizer::from_json(bad_json))
+}

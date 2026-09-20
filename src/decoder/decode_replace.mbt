@@ -29,6 +29,18 @@ fn decode_replace_direct(
   pattern : String,
   content : String,
 ) -> String {
+  // single-char literal bounded quantifiers run per token (HF decoders are
+  // per-token: a{2} replaces only within one token surface)
+  if @common.char_bounded_quantifier_shape(pattern) {
+    let sb = StringBuilder()
+    for t in tokens {
+      match @common.replace_char_bounded_runs(t, pattern, content) {
+        Some(out) => sb.write_string(out)
+        None => sb.write_string(t)
+      }
+    }
+    return sb.to_string()
+  }
   if pattern == "\\s+" {
     return decode_replace_char_runs_direct(tokens, content, fn(c) {
       @common.is_unicode_whitespace(c.to_int())
@@ -543,21 +555,31 @@ fn decode_replace_leading_runs_direct(
   content : String,
   pred : (Char) -> Bool,
 ) -> String {
+  // HF anchors are MULTILINE even per token surface (probed: ^[\r\n]+ on
+  // ["x\n\n","y"] -> "x\n#y")
   let sb = StringBuilder()
   for t in tokens {
     let chars = t.to_array()
     let n = chars.length()
-    let mut start = 0
-    while start < n && pred(chars[start]) {
-      start = start + 1
-    }
-    if start > 0 {
-      sb.write_string(content)
-      for i in start..<n {
-        sb.write_char(chars[i])
+    let mut i = 0
+    let mut at_line_head = true
+    while i < n {
+      if at_line_head {
+        let start = i
+        while i < n && pred(chars[i]) {
+          i = i + 1
+        }
+        if i > start {
+          sb.write_string(content)
+        }
+        at_line_head = false
+        continue
       }
-    } else {
-      sb.write_string(t)
+      sb.write_char(chars[i])
+      if chars[i] == '\n' {
+        at_line_head = true
+      }
+      i = i + 1
     }
   }
   sb.to_string()
@@ -569,18 +591,46 @@ fn decode_replace_trailing_runs_direct(
   content : String,
   pred : (Char) -> Bool,
 ) -> String {
+  // MULTILINE $: longest run prefix ending at a line boundary (before any
+  // \n or at token end); probed: [\w]+$ on ["ab\n","cd"] -> "#\n#"
   let sb = StringBuilder()
   for t in tokens {
     let chars = t.to_array()
-    let mut stop = chars.length()
-    while stop > 0 && pred(chars[stop - 1]) {
-      stop = stop - 1
-    }
-    for i in 0..<stop {
+    let n = chars.length()
+    let mut i = 0
+    while i < n {
+      if pred(chars[i]) {
+        let start = i
+        let mut g = i
+        while g < n && pred(chars[g]) {
+          g = g + 1
+        }
+        let mut j = -1
+        if g == n {
+          j = g
+        } else {
+          let mut k = g
+          while k > start {
+            if chars[k] == '\n' {
+              j = k
+              break
+            }
+            k = k - 1
+          }
+        }
+        if j > start {
+          sb.write_string(content)
+          i = j
+          continue
+        }
+        for x in start..<g {
+          sb.write_char(chars[x])
+        }
+        i = g
+        continue
+      }
       sb.write_char(chars[i])
-    }
-    if stop < chars.length() {
-      sb.write_string(content)
+      i = i + 1
     }
   }
   sb.to_string()

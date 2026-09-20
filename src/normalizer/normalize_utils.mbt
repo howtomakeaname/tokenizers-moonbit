@@ -198,6 +198,11 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       None => ()
     }
   }
+  // single-char literal bounded quantifiers: a{2} / a{2,} / a{2,3}
+  match @common.replace_char_bounded_runs(s, pattern, content) {
+    Some(out) => return out
+    None => ()
+  }
   match @common.bare_class_kind(pattern) {
     Some(kind) =>
       return @common.replace_exact_char_runs(

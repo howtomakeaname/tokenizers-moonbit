@@ -159,11 +159,23 @@ pub fn simple_split_regex_matches(
       ),
     )
   } else if pattern == "^\\s+" {
-    Some(leading_run_match(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
+    Some(
+      leading_run_match_multiline(chars, fn(c) {
+        is_unicode_whitespace(c.to_int())
+      }),
+    )
+  } else if pattern == "^[\\r\\n]+" {
+    Some(leading_run_match_multiline(chars, fn(c) { c == '\r' || c == '\n' }))
+  } else if pattern == "[\\r\\n]+$" {
+    Some(trailing_run_match_multiline(chars, fn(c) { c == '\r' || c == '\n' }))
   } else if pattern == "\\S+" || pattern == "[^\\s]+" {
     Some(run_matches(chars, fn(c) { !is_unicode_whitespace(c.to_int()) }))
   } else if pattern == "\\s+$" {
-    Some(trailing_run_match(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
+    Some(
+      trailing_run_match_multiline(chars, fn(c) {
+        is_unicode_whitespace(c.to_int())
+      }),
+    )
   } else if pattern == "[ \\t]+" || pattern == "[^\\S\\r\\n]+" {
     Some(
       run_matches(chars, fn(c) {
@@ -246,13 +258,13 @@ pub fn simple_split_regex_matches(
   } else if pattern == "[A-Za-z0-9_]+" || pattern == "\\b[A-Za-z0-9_]+\\b" {
     Some(run_matches(chars, fn(c) { is_ascii_word_char(c) }))
   } else if pattern == "^\\w+" {
-    Some(leading_run_match(chars, fn(c) { is_word_char(c) }))
+    Some(leading_run_match_multiline(chars, fn(c) { is_word_char(c) }))
   } else if pattern == "^[A-Za-z0-9_]+" {
-    Some(leading_run_match(chars, fn(c) { is_ascii_word_char(c) }))
+    Some(leading_run_match_multiline(chars, fn(c) { is_ascii_word_char(c) }))
   } else if pattern == "\\w+$" {
-    Some(trailing_run_match(chars, fn(c) { is_word_char(c) }))
+    Some(trailing_run_match_multiline(chars, fn(c) { is_word_char(c) }))
   } else if pattern == "[A-Za-z0-9_]+$" {
-    Some(trailing_run_match(chars, fn(c) { is_ascii_word_char(c) }))
+    Some(trailing_run_match_multiline(chars, fn(c) { is_ascii_word_char(c) }))
   } else if pattern == "\\W+" || pattern == "[^\\w]+" {
     Some(run_matches(chars, fn(c) { !is_word_char(c) }))
   } else if pattern == "[^A-Za-z0-9_]+" {
@@ -276,9 +288,9 @@ pub fn simple_split_regex_matches(
   } else if pattern == "[A-Za-z0-9]{4}" || pattern == "[a-zA-Z0-9]{4}" {
     Some(run_matches_exact(chars, fn(c) { is_ascii_alnum(c) }, exact_run=4))
   } else if pattern == "^[A-Za-z0-9]+" || pattern == "^[a-zA-Z0-9]+" {
-    Some(leading_run_match(chars, fn(c) { is_ascii_alnum(c) }))
+    Some(leading_run_match_multiline(chars, fn(c) { is_ascii_alnum(c) }))
   } else if pattern == "[A-Za-z0-9]+$" || pattern == "[a-zA-Z0-9]+$" {
-    Some(trailing_run_match(chars, fn(c) { is_ascii_alnum(c) }))
+    Some(trailing_run_match_multiline(chars, fn(c) { is_ascii_alnum(c) }))
   } else if pattern == "[^A-Za-z0-9]+" || pattern == "[^a-zA-Z0-9]+" {
     Some(run_matches(chars, fn(c) { !is_ascii_alnum(c) }))
   } else if pattern == "[A-Za-z]+" || pattern == "[a-zA-Z]+" {
@@ -292,9 +304,9 @@ pub fn simple_split_regex_matches(
   } else if pattern == "[A-Za-z]{4}" || pattern == "[a-zA-Z]{4}" {
     Some(run_matches_exact(chars, fn(c) { is_ascii_letter(c) }, exact_run=4))
   } else if pattern == "^[A-Za-z]+" || pattern == "^[a-zA-Z]+" {
-    Some(leading_run_match(chars, fn(c) { is_ascii_letter(c) }))
+    Some(leading_run_match_multiline(chars, fn(c) { is_ascii_letter(c) }))
   } else if pattern == "[A-Za-z]+$" || pattern == "[a-zA-Z]+$" {
-    Some(trailing_run_match(chars, fn(c) { is_ascii_letter(c) }))
+    Some(trailing_run_match_multiline(chars, fn(c) { is_ascii_letter(c) }))
   } else if pattern == "[^A-Za-z]+" || pattern == "[^a-zA-Z]+" {
     Some(run_matches(chars, fn(c) { !is_ascii_letter(c) }))
   } else if pattern == "\\p{L}+" ||
@@ -326,12 +338,12 @@ pub fn simple_split_regex_matches(
     pattern == "^\\p{Letter}+" ||
     pattern == "^[\\p{L}]+" ||
     pattern == "^[\\p{Letter}]+" {
-    Some(leading_run_match(chars, fn(c) { is_unicode_letter(c) }))
+    Some(leading_run_match_multiline(chars, fn(c) { is_unicode_letter(c) }))
   } else if pattern == "\\p{L}+$" ||
     pattern == "\\p{Letter}+$" ||
     pattern == "[\\p{L}]+$" ||
     pattern == "[\\p{Letter}]+$" {
-    Some(trailing_run_match(chars, fn(c) { is_unicode_letter(c) }))
+    Some(trailing_run_match_multiline(chars, fn(c) { is_unicode_letter(c) }))
   } else if pattern == "\\P{L}+" ||
     pattern == "\\P{Letter}+" ||
     pattern == "[^\\p{L}]+" ||
@@ -372,12 +384,16 @@ pub fn simple_split_regex_matches(
     pattern == "^\\p{Punctuation}+" ||
     pattern == "^[\\p{P}]+" ||
     pattern == "^[\\p{Punctuation}]+" {
-    Some(leading_run_match(chars, fn(c) { is_unicode_punctuation(c) }))
+    Some(
+      leading_run_match_multiline(chars, fn(c) { is_unicode_punctuation(c) }),
+    )
   } else if pattern == "\\p{P}+$" ||
     pattern == "\\p{Punctuation}+$" ||
     pattern == "[\\p{P}]+$" ||
     pattern == "[\\p{Punctuation}]+$" {
-    Some(trailing_run_match(chars, fn(c) { is_unicode_punctuation(c) }))
+    Some(
+      trailing_run_match_multiline(chars, fn(c) { is_unicode_punctuation(c) }),
+    )
   } else if pattern == "\\P{P}+" ||
     pattern == "\\P{Punctuation}+" ||
     pattern == "[^\\p{P}]+" ||
@@ -412,12 +428,12 @@ pub fn simple_split_regex_matches(
     pattern == "^\\p{Symbol}+" ||
     pattern == "^[\\p{S}]+" ||
     pattern == "^[\\p{Symbol}]+" {
-    Some(leading_run_match(chars, fn(c) { is_unicode_symbol(c) }))
+    Some(leading_run_match_multiline(chars, fn(c) { is_unicode_symbol(c) }))
   } else if pattern == "\\p{S}+$" ||
     pattern == "\\p{Symbol}+$" ||
     pattern == "[\\p{S}]+$" ||
     pattern == "[\\p{Symbol}]+$" {
-    Some(trailing_run_match(chars, fn(c) { is_unicode_symbol(c) }))
+    Some(trailing_run_match_multiline(chars, fn(c) { is_unicode_symbol(c) }))
   } else if pattern == "\\P{S}+" ||
     pattern == "\\P{Symbol}+" ||
     pattern == "[^\\p{S}]+" ||
@@ -477,14 +493,18 @@ pub fn simple_split_regex_matches(
     pattern == "^[\\p{Punctuation}\\p{Symbol}]+" ||
     pattern == "^[\\p{Symbol}\\p{Punctuation}]+" {
     Some(
-      leading_run_match(chars, fn(c) { is_unicode_punctuation_or_symbol(c) }),
+      leading_run_match_multiline(chars, fn(c) {
+        is_unicode_punctuation_or_symbol(c)
+      }),
     )
   } else if pattern == "[\\p{P}\\p{S}]+$" ||
     pattern == "[\\p{S}\\p{P}]+$" ||
     pattern == "[\\p{Punctuation}\\p{Symbol}]+$" ||
     pattern == "[\\p{Symbol}\\p{Punctuation}]+$" {
     Some(
-      trailing_run_match(chars, fn(c) { is_unicode_punctuation_or_symbol(c) }),
+      trailing_run_match_multiline(chars, fn(c) {
+        is_unicode_punctuation_or_symbol(c)
+      }),
     )
   } else if pattern == "[^\\p{P}\\p{S}]+" ||
     pattern == "[^\\p{S}\\p{P}]+" ||
@@ -514,18 +534,18 @@ pub fn simple_split_regex_matches(
     pattern == "^\\p{Number}+" ||
     pattern == "^[\\p{N}]+" ||
     pattern == "^[\\p{Number}]+" {
-    Some(leading_run_match(chars, fn(c) { is_decimal_number(c) }))
+    Some(leading_run_match_multiline(chars, fn(c) { is_decimal_number(c) }))
   } else if pattern == "^[0-9]+" {
-    Some(leading_run_match(chars, fn(c) { c >= '0' && c <= '9' }))
+    Some(leading_run_match_multiline(chars, fn(c) { c >= '0' && c <= '9' }))
   } else if pattern == "\\d+$" ||
     pattern == "[\\d]+$" ||
     pattern == "\\p{N}+$" ||
     pattern == "\\p{Number}+$" ||
     pattern == "[\\p{N}]+$" ||
     pattern == "[\\p{Number}]+$" {
-    Some(trailing_run_match(chars, fn(c) { is_decimal_number(c) }))
+    Some(trailing_run_match_multiline(chars, fn(c) { is_decimal_number(c) }))
   } else if pattern == "[0-9]+$" {
-    Some(trailing_run_match(chars, fn(c) { c >= '0' && c <= '9' }))
+    Some(trailing_run_match_multiline(chars, fn(c) { c >= '0' && c <= '9' }))
   } else if pattern == "\\D+" ||
     pattern == "[\\D]+" ||
     pattern == "[^\\d]+" ||
@@ -608,11 +628,15 @@ fn simple_anchored_regex_matches(
     Some((kind, leading)) =>
       if leading {
         Some(
-          leading_run_match(chars, fn(c) { bounded_regex_kind_pred(kind, c) }),
+          leading_run_match_multiline(chars, fn(c) {
+            bounded_regex_kind_pred(kind, c)
+          }),
         )
       } else {
         Some(
-          trailing_run_match(chars, fn(c) { bounded_regex_kind_pred(kind, c) }),
+          trailing_run_match_multiline(chars, fn(c) {
+            bounded_regex_kind_pred(kind, c)
+          }),
         )
       }
     None => None
