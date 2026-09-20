@@ -34,7 +34,25 @@ pub fn is_ascii_alnum(c : Char) -> Bool {
 /// neighbors must block single-word added-token extraction just like ASCII
 /// letters do.
 pub fn is_word_char(c : Char) -> Bool {
-  is_unicode_letter(c) || is_decimal_number(c) || c == '_'
+  if c == '_' {
+    return true
+  }
+  let u = c.to_int()
+  let ranges = unicode_word_ranges()
+  let mut lo = 0
+  let mut hi = ranges.length() - 1
+  while lo <= hi {
+    let mid = (lo + hi) / 2
+    let (start, stop) = ranges[mid]
+    if u < start {
+      hi = mid - 1
+    } else if u > stop {
+      lo = mid + 1
+    } else {
+      return true
+    }
+  }
+  false
 }
 
 ///|
