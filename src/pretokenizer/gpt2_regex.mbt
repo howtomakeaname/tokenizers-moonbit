@@ -243,9 +243,10 @@ pub fn is_space(c : Char) -> Bool {
 }
 
 ///|
-/// Decimal-number-ish (Unicode \p{N}, approximated by common ranges).
+/// Unicode \p{N} (full N: Nd + Nl + No; probed 0.22.2 — the GPT-2
+/// family pattern merges ` ¼3` into one number run).
 pub fn is_number(c : Char) -> Bool {
-  @common.is_decimal_number(c)
+  @common.is_unicode_number(c)
 }
 
 ///|
