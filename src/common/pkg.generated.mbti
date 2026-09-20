@@ -14,8 +14,6 @@ pub fn bounded_regex_kind(String) -> (Int, Int)?
 
 pub fn bounded_regex_kind_pred(Int, Char) -> Bool
 
-pub fn canonicalize_word_class(String) -> String
-
 pub fn char_bounded_quantifier_shape(String) -> Bool
 
 pub fn char_string(Char) -> String
@@ -62,6 +60,8 @@ pub fn is_unicode_whitespace(Int) -> Bool
 
 pub fn is_word_char(Char) -> Bool
 
+pub fn is_word_char_class(Char) -> Bool
+
 pub fn literal_matches(Array[Char], String) -> Array[Span]?
 
 pub fn min_regex_kind(String) -> (Int, Int)?
@@ -101,8 +101,6 @@ pub fn replace_whitespace_runs(String, String) -> String
 pub fn simple_split_regex_matches(Array[Char], String) -> Array[Span]?
 
 pub fn unicode_punct_ranges() -> Array[(Int, Int)]
-
-pub fn unicode_word_ranges() -> Array[(Int, Int)]
 
 // Errors
 

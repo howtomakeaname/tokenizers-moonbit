@@ -987,14 +987,14 @@ test "replace regex ascii plus spellings and unicode letter bare" {
 /// the shortcut forms; anchored newline class and single-char literal
 /// bounded quantifiers join the supported set.
 test "replace regex w-bracket, anchored newline, literal quantifiers" {
-  let w_min = @normalizer.Normalizer::Replace(pattern="[\\w]{2,}", content="#")
-  @test.assert_eq(w_min.normalize("ab cdef"), "# #")
-  @test.assert_eq(w_min.normalize("ab é"), "# é")
-  let w_inv = @normalizer.Normalizer::Replace(pattern="[^\\w]{2,}", content="#")
-  @test.assert_eq(w_inv.normalize("a  ,,b"), "a#b")
-  let w_anch = @normalizer.Normalizer::Replace(pattern="[\\w]+$", content="#")
-  // no line boundary before '!': unchanged (HF-verified)
-  @test.assert_eq(w_anch.normalize("ab!"), "ab!")
+  // PR #17 review: HF treats bracket [\w] as class-context (onig Latin-1
+  // quirks are NON-word there) while bare \w includes them — a unified
+  // predicate cannot honor both, so bracket spellings are explicitly
+  // unsupported until a spelling-aware table split exists.
+  let w_json : Json = @json.parse(
+    "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"[\\\\w]{2,}\"},\"content\":\"#\"}",
+  )
+  @test.assert_raise(() => @normalizer.Normalizer::from_json(w_json))
   let nl_head = @normalizer.Normalizer::Replace(
     pattern="^[\\r\\n]+",
     content="#",
