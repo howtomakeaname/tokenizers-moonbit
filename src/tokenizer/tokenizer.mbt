@@ -169,8 +169,57 @@ pub fn Tokenizer::from_str(
     @processor.PostProcessor::from_json(j)
   })
   let decoder = decode_opt(root, "decoder", j => @decoder.Decoder::from_json(j))
+  // Mirrors HF's added-vocabulary id allocation: a declared added-token id
+  // that collides with a DIFFERENT model-vocab token is reassigned to
+  // `get_vocab_size()` + a running counter (verified against Python 0.22.2:
+  // vocab {hello:5, world:6, [UNK]:9} with declared added id 5 reassigns to
+  // 3, keeping `hello` resolvable).
+  let added_infos = parse_added_tokens(root)
+  let vocab_size = model.get_vocab_size()
+  let mut reassign_counter = 0
+  let taken_ids : Map[Int, String] = Map([])
+  for info in added_infos {
+    taken_ids[info.id] = info.content
+  }
+  let remapped : Array[AddedTokenInfo] = []
+  for info in added_infos {
+    // content already in the model vocab: reuse the model id (HF
+    // add_tokens keeps the existing id when the token exists)
+    match model.token_to_id(info.content) {
+      Some(mid) => {
+        taken_ids[info.id] = info.content
+        remapped.push({ ..info, id: mid, })
+        continue
+      }
+      None => ()
+    }
+    match model.id_to_token(info.id) {
+      Some(vocab_token) =>
+        if vocab_token != info.content {
+          // collision: pick vocab_size + counter, skipping used ids
+          let mut candidate = vocab_size + reassign_counter
+          reassign_counter = reassign_counter + 1
+          let mut guard_count = 0
+          while guard_count < 100000 {
+            let in_use = taken_ids.contains(candidate) ||
+              model.id_to_token(candidate) is Some(_)
+            if !in_use {
+              break
+            }
+            candidate = vocab_size + reassign_counter
+            reassign_counter = reassign_counter + 1
+            guard_count = guard_count + 1
+          }
+          taken_ids[candidate] = info.content
+          remapped.push({ ..info, id: candidate, })
+        } else {
+          remapped.push(info)
+        }
+      None => remapped.push(info)
+    }
+  }
   let added_vocabulary = AddedVocabulary::new_with_encode_special_tokens(
-    parse_added_tokens(root),
+    remapped,
     @types.get_bool(root, "encode_special_tokens", default=false),
   ).with_normalizer(normalizer)
   let truncation = decode_opt(root, "truncation", parse_truncation)

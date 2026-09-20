@@ -1122,8 +1122,10 @@ test "special token encode switch and added-token introspection match HF" {
   @test.assert_eq(tok.get_encode_special_tokens(), false)
   @test.assert_eq(tok.is_special_token("[MASK]"), true)
   @test.assert_eq(tok.is_special_token("hello"), false)
+  // HF reuses the model-vocab id when the content already exists
+  // ([MASK] declared as 3, vocab has it as 1 -> added decoder reports 1)
   @test.assert_eq(
-    tok.get_added_tokens_decoder().get(3).unwrap().content,
+    tok.get_added_tokens_decoder().get(1).unwrap().content,
     "[MASK]",
   )
   @test.assert_eq(tok.num_special_tokens_to_add(), 2)
@@ -1250,7 +1252,9 @@ test "post_process false keeps HF processor metadata without specials" {
   )
   @test.assert_eq(roberta_pair.tokens, ["a", "\u{0120}b"])
   @test.assert_eq(roberta_pair.type_ids, [0, 0])
-  @test.assert_eq(roberta_pair.offsets, [(0, 1), (0, 2)])
+  // add_prefix_space=false: the real leading space is trimmed
+  // (Python 0.22.2: 'a' + ' b' -> [(0,1), (1,2)])
+  @test.assert_eq(roberta_pair.offsets, [(0, 1), (1, 2)])
   @test.assert_eq(roberta_pair.special_tokens_mask, [0, 0])
   @test.assert_eq(roberta_pair.sequence_ids(), [Some(0), Some(1)])
 
@@ -2642,14 +2646,16 @@ test "encode special token aliases switch added-token extraction" {
     #| "added_tokens":[{"id":2,"content":"[SPECIAL]","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],
     #| "model":{"type":"WordLevel","vocab":{"[SPECIAL]":0,"[UNK]":1},"unk_token":"[UNK]"}}
   let tok = Tokenizer::from_str(json)
-  @test.assert_eq(tok.encode("[SPECIAL]", add_special_tokens=false).ids, [2])
+  // HF reuses the model-vocab id (0) when the content exists in the vocab,
+  // so the declared id 2 never wins (Python 0.22.2 -> [0])
+  @test.assert_eq(tok.encode("[SPECIAL]", add_special_tokens=false).ids, [0])
   let literal = tok.enable_encode_special_tokens()
   @test.assert_eq(literal.encode("[SPECIAL]", add_special_tokens=false).ids, [0])
   @test.assert_eq(
     literal
     .disable_encode_special_tokens()
     .encode("[SPECIAL]", add_special_tokens=false).ids,
-    [2],
+    [0],
   )
 }
 

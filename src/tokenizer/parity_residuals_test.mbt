@@ -71,3 +71,22 @@ test "standalone strip accents differs from bert strip accents" {
   let bert = Tokenizer::from_str(bert_json)
   @test.assert_eq(bert.encode("café", add_special_tokens=false).ids, [1])
 }
+
+///|
+/// Added-token id allocation (HF add_tokens): content already in the
+/// model vocab reuses the model id; a declared id colliding with a
+/// DIFFERENT vocab token is reassigned to vocab_size + counter.
+test "added token ids reuse model ids and reassign collisions" {
+  // reuse: [SPECIAL] declared 2, vocab has it as 0 -> id 0 everywhere
+  let reuse_json =
+    #|{"version":"1.0","added_tokens":[{"id":2,"content":"[SPECIAL]","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],"model":{"type":"WordLevel","vocab":{"[SPECIAL]":0,"[UNK]":1},"unk_token":"[UNK]"}}
+  let tok = Tokenizer::from_str(reuse_json)
+  @test.assert_eq(tok.encode("[SPECIAL]", add_special_tokens=false).ids, [0])
+  // collision: <|eot|> declared 5 collides with vocab hello:5 -> vocab
+  // size 3, reassigned to 3; hello keeps working
+  let collision_json =
+    #|{"version":"1.0","added_tokens":[{"id":5,"content":"<|eot|>","special":true,"single_word":false,"lstrip":false,"rstrip":false,"normalized":false}],"model":{"type":"WordLevel","vocab":{"hello":5,"world":6,"[UNK]":9},"unk_token":"[UNK]"}}
+  let tok2 = Tokenizer::from_str(collision_json)
+  @test.assert_eq(tok2.token_to_id("hello"), Some(5))
+  @test.assert_eq(tok2.token_to_id("<|eot|>"), Some(3))
+}
