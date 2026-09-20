@@ -1,5 +1,5 @@
 ///|
-pub fn ranged_regex_kind(pattern : String) -> (Int, Int, Int)? {
+fn ranged_regex_kind_inner(pattern : String) -> (Int, Int, Int)? {
   match
     ranged_kind_variants(
       pattern,
@@ -299,6 +299,14 @@ pub fn ranged_regex_kind(pattern : String) -> (Int, Int, Int)? {
 }
 
 ///|
+pub fn ranged_regex_kind(pattern : String) -> (Int, Int, Int)? {
+  match ranged_regex_kind_inner(pattern) {
+    Some((kind, b, c)) => Some((ascii_class_kind_override(pattern, kind), b, c))
+    None => None
+  }
+}
+
+///|
 pub fn is_ranged_regex_pattern(pattern : String) -> Bool {
   match ranged_regex_kind(pattern) {
     Some(_) => true
@@ -310,7 +318,7 @@ pub fn is_ranged_regex_pattern(pattern : String) -> Bool {
 /// Common exact `{n}` regex class families shared by Split, Normalizer Replace
 /// and Decoder Replace. Return `(kind, exact_run)`. The supported exact run
 /// sizes intentionally stay in the small tokenizer-oriented 2..4 window.
-pub fn exact_regex_kind(pattern : String) -> (Int, Int)? {
+fn exact_regex_kind_inner(pattern : String) -> (Int, Int)? {
   match quantified_class_kind(pattern, "{2}") {
     Some(kind) => return Some((kind, 2))
     None => ()
@@ -327,6 +335,14 @@ pub fn exact_regex_kind(pattern : String) -> (Int, Int)? {
 }
 
 ///|
+pub fn exact_regex_kind(pattern : String) -> (Int, Int)? {
+  match exact_regex_kind_inner(pattern) {
+    Some((kind, b)) => Some((ascii_class_kind_override(pattern, kind), b))
+    None => None
+  }
+}
+
+///|
 pub fn is_exact_regex_pattern(pattern : String) -> Bool {
   match exact_regex_kind(pattern) {
     Some(_) => true
@@ -339,7 +355,7 @@ pub fn is_exact_regex_pattern(pattern : String) -> Bool {
 /// Replace and Decoder Replace. Return `(kind, min_run)`. This complements the
 /// bounded `{1,n}` and ranged `{m,n}` tables without introducing a full regex
 /// engine.
-pub fn min_regex_kind(pattern : String) -> (Int, Int)? {
+fn min_regex_kind_inner(pattern : String) -> (Int, Int)? {
   match quantified_class_kind(pattern, "{2,}") {
     Some(kind) => return Some((kind, 2))
     None => ()
@@ -356,6 +372,14 @@ pub fn min_regex_kind(pattern : String) -> (Int, Int)? {
 }
 
 ///|
+pub fn min_regex_kind(pattern : String) -> (Int, Int)? {
+  match min_regex_kind_inner(pattern) {
+    Some((kind, b)) => Some((ascii_class_kind_override(pattern, kind), b))
+    None => None
+  }
+}
+
+///|
 pub fn is_min_regex_pattern(pattern : String) -> Bool {
   match min_regex_kind(pattern) {
     Some(_) => true
@@ -367,7 +391,7 @@ pub fn is_min_regex_pattern(pattern : String) -> Bool {
 /// Common anchored `^...+` / `...+$` regex class families shared by Split and
 /// Replace. Return `(kind, leading)` where `kind` uses
 /// `bounded_regex_kind_pred` and `leading=true` means `^...+`.
-pub fn anchored_regex_kind(pattern : String) -> (Int, Bool)? {
+fn anchored_regex_kind_inner(pattern : String) -> (Int, Bool)? {
   match
     anchored_variants(pattern, ["^\\s+", "^[\\s]+"], ["\\s+$", "[\\s]+$"], 1) {
     Some(v) => return Some(v)
@@ -574,6 +598,15 @@ pub fn anchored_regex_kind(pattern : String) -> (Int, Bool)? {
     ],
     21,
   )
+}
+
+///|
+pub fn anchored_regex_kind(pattern : String) -> (Int, Bool)? {
+  match anchored_regex_kind_inner(pattern) {
+    Some((kind, leading)) =>
+      Some((ascii_class_kind_override(pattern, kind), leading))
+    None => None
+  }
 }
 
 ///|

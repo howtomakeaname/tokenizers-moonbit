@@ -1,5 +1,5 @@
 ///|
-pub fn bounded_regex_kind(pattern : String) -> (Int, Int)? {
+fn bounded_regex_kind_inner(pattern : String) -> (Int, Int)? {
   let ws = bounded_max(pattern, "\\s{1,2}", "\\s{1,3}", "\\s{1,4}")
   if ws > 0 {
     return Some((1, ws))
@@ -296,6 +296,14 @@ pub fn bounded_regex_kind(pattern : String) -> (Int, Int)? {
     return Some((21, non_space_letter_number))
   }
   None
+}
+
+///|
+pub fn bounded_regex_kind(pattern : String) -> (Int, Int)? {
+  match bounded_regex_kind_inner(pattern) {
+    Some((kind, b)) => Some((ascii_class_kind_override(pattern, kind), b))
+    None => None
+  }
 }
 
 ///|

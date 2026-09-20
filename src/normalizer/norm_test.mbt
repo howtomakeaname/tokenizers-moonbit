@@ -857,3 +857,126 @@ test "normalizer Replace regex unsupported patterns fail at load" {
   )
   @test.assert_eq(ok5.kind(), "Replace") // String patterns share the kind
 }
+
+///|
+/// Adversarial regex-family divergences fixed per PR #13 review —
+/// expectations probed from Python `tokenizers` 0.22.2 (Regex variants).
+test "replace regex anchors are multiline" {
+  let ws_tail = @normalizer.Normalizer::Replace(pattern="\\s+$", content="#")
+  @test.assert_eq(
+    ws_tail.normalize("xy\t\t12\t34\n\n56\r\n78"),
+    "xy\t\t12\t34#\n56#\n78",
+  )
+  @test.assert_eq(ws_tail.normalize("x  \n\n  y"), "x#\n  y")
+  let head = @normalizer.Normalizer::Replace(pattern="^\\s+", content="#")
+  @test.assert_eq(head.normalize("\tA\n  B\nC"), "#A\n#B\nC")
+  // a greedy run from a line head spans newlines: "\n\n  B" -> "#B" in one match
+  @test.assert_eq(head.normalize("\n\n  B"), "#B")
+  @test.assert_eq(head.normalize("A\n\n  B"), "A\n#B")
+}
+
+///|
+/// ASCII-only class spellings vs Unicode shortcuts: `[0-9]`/`[A-Za-z0-9_]`
+/// never match fullwidth/accented characters while `\d`/`\w` do.
+test "replace regex ascii class spellings stay ascii" {
+  let ascii_digit = @normalizer.Normalizer::Replace(
+    pattern="[0-9]",
+    content="#",
+  )
+  @test.assert_eq(ascii_digit.normalize("a5b7"), "a#b#")
+  @test.assert_eq(ascii_digit.normalize("a０b"), "a０b")
+  let uni_digit = @normalizer.Normalizer::Replace(pattern="\\d", content="#")
+  @test.assert_eq(uni_digit.normalize("a０b"), "a#b")
+  let ascii_word = @normalizer.Normalizer::Replace(
+    pattern="[A-Za-z0-9_]",
+    content="#",
+  )
+  @test.assert_eq(ascii_word.normalize("aé中b"), "#é中#")
+  let uni_word = @normalizer.Normalizer::Replace(pattern="\\w", content="#")
+  @test.assert_eq(uni_word.normalize("aé中b"), "####")
+  // quantified spellings inherit the ASCII mapping
+  let ascii_min = @normalizer.Normalizer::Replace(
+    pattern="[0-9]{2,}",
+    content="#",
+  )
+  @test.assert_eq(ascii_min.normalize("x55y"), "x#y")
+  @test.assert_eq(ascii_min.normalize("x０１y"), "x０１y")
+}
+
+///|
+/// A brace that is not part of a valid quantifier is a literal character
+/// (onig semantics): `a{b` / `x}y` load and replace literally.
+test "replace regex literal braces" {
+  let open_brace = @normalizer.Normalizer::Replace(pattern="a{b", content="#")
+  @test.assert_eq(open_brace.normalize("za{bz"), "z#z")
+  let close_brace = @normalizer.Normalizer::Replace(pattern="x}y", content="#")
+  @test.assert_eq(close_brace.normalize("ax}yay"), "a#ay")
+  // valid quantifier braces still parse as a quantifier family
+  let two = @normalizer.Normalizer::Replace(pattern="[0-9]{2}", content="#")
+  @test.assert_eq(two.normalize("x55y"), "x#y")
+}
+
+///|
+/// Review round 2: plain-`+` ASCII spellings, bare Unicode letter family,
+/// `{,n}` explicit rejection, decoder bare classes.
+test "replace regex ascii plus spellings and unicode letter bare" {
+  // plain + (no anchor) previously bypassed the ASCII override
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="[0-9]+", content="#").normalize(
+      "a０b",
+    ),
+    "a０b",
+  )
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="[0-9]+", content="#").normalize(
+      "a55b",
+    ),
+    "a#b",
+  )
+  // inverse of ASCII class IS Unicode-wide: ０ matches [^0-9]
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="[^0-9]+", content="#").normalize(
+      "a０b",
+    ),
+    "#",
+  )
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="[A-Za-z0-9_]+", content="#").normalize(
+      "aé中b",
+    ),
+    "#é中#",
+  )
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="[^A-Za-z0-9_]+", content="#").normalize(
+      "１２３",
+    ),
+    "#",
+  )
+  // bare \p{L} is the UNICODE letter family (é/中 match), not [A-Za-z]
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="\\p{L}", content="#").normalize(
+      "aé中b",
+    ),
+    "####",
+  )
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="\\p{L}", content="#").normalize(
+      "中5é_0",
+    ),
+    "#5#_0",
+  )
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="\\P{L}", content="#").normalize(
+      "a中5",
+    ),
+    "a中#",
+  )
+  // `{,n}` is a quantifier in onig: unsupported here -> load rejected
+  @test.assert_raise(() => {
+    @normalizer.Normalizer::from_json(
+      @json.parse(
+        "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{,3}\"},\"content\":\"X\"}",
+      ),
+    )
+  })
+}

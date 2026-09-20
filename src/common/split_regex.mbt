@@ -241,19 +241,22 @@ pub fn simple_split_regex_matches(
     Some(
       run_matches_exact(chars, fn(c) { c == '\r' || c == '\n' }, exact_run=4),
     )
-  } else if pattern == "\\w+" ||
-    pattern == "[A-Za-z0-9_]+" ||
-    pattern == "\\b\\w+\\b" ||
-    pattern == "\\b[A-Za-z0-9_]+\\b" {
+  } else if pattern == "\\w+" || pattern == "\\b\\w+\\b" {
     Some(run_matches(chars, fn(c) { is_word_char(c) }))
-  } else if pattern == "^\\w+" || pattern == "^[A-Za-z0-9_]+" {
+  } else if pattern == "[A-Za-z0-9_]+" || pattern == "\\b[A-Za-z0-9_]+\\b" {
+    Some(run_matches(chars, fn(c) { is_ascii_word_char(c) }))
+  } else if pattern == "^\\w+" {
     Some(leading_run_match(chars, fn(c) { is_word_char(c) }))
-  } else if pattern == "\\w+$" || pattern == "[A-Za-z0-9_]+$" {
+  } else if pattern == "^[A-Za-z0-9_]+" {
+    Some(leading_run_match(chars, fn(c) { is_ascii_word_char(c) }))
+  } else if pattern == "\\w+$" {
     Some(trailing_run_match(chars, fn(c) { is_word_char(c) }))
-  } else if pattern == "\\W+" ||
-    pattern == "[^\\w]+" ||
-    pattern == "[^A-Za-z0-9_]+" {
+  } else if pattern == "[A-Za-z0-9_]+$" {
+    Some(trailing_run_match(chars, fn(c) { is_ascii_word_char(c) }))
+  } else if pattern == "\\W+" || pattern == "[^\\w]+" {
     Some(run_matches(chars, fn(c) { !is_word_char(c) }))
+  } else if pattern == "[^A-Za-z0-9_]+" {
+    Some(run_matches(chars, fn(c) { !is_ascii_word_char(c) }))
   } else if pattern == "\\w{2,}" || pattern == "[A-Za-z0-9_]{2,}" {
     Some(run_matches_min(chars, fn(c) { is_word_char(c) }, min_run=2))
   } else if pattern == "\\w{2}" || pattern == "[A-Za-z0-9_]{2}" {
@@ -496,28 +499,33 @@ pub fn simple_split_regex_matches(
     Some(run_matches(chars, fn(c) { is_not_whitespace_letter_or_number(c) }))
   } else if pattern == "\\d+" ||
     pattern == "[\\d]+" ||
-    pattern == "[0-9]+" ||
     pattern == "\\p{N}+" ||
     pattern == "\\p{Number}+" ||
     pattern == "[\\p{N}]+" ||
     pattern == "[\\p{Number}]+" {
     Some(run_matches(chars, fn(c) { is_decimal_number(c) }))
+  } else if pattern == "[0-9]+" {
+    Some(run_matches(chars, fn(c) { c >= '0' && c <= '9' }))
+  } else if pattern == "[^0-9]+" {
+    Some(run_matches(chars, fn(c) { !(c >= '0' && c <= '9') }))
   } else if pattern == "^\\d+" ||
     pattern == "^[\\d]+" ||
-    pattern == "^[0-9]+" ||
     pattern == "^\\p{N}+" ||
     pattern == "^\\p{Number}+" ||
     pattern == "^[\\p{N}]+" ||
     pattern == "^[\\p{Number}]+" {
     Some(leading_run_match(chars, fn(c) { is_decimal_number(c) }))
+  } else if pattern == "^[0-9]+" {
+    Some(leading_run_match(chars, fn(c) { c >= '0' && c <= '9' }))
   } else if pattern == "\\d+$" ||
     pattern == "[\\d]+$" ||
-    pattern == "[0-9]+$" ||
     pattern == "\\p{N}+$" ||
     pattern == "\\p{Number}+$" ||
     pattern == "[\\p{N}]+$" ||
     pattern == "[\\p{Number}]+$" {
     Some(trailing_run_match(chars, fn(c) { is_decimal_number(c) }))
+  } else if pattern == "[0-9]+$" {
+    Some(trailing_run_match(chars, fn(c) { c >= '0' && c <= '9' }))
   } else if pattern == "\\D+" ||
     pattern == "[\\D]+" ||
     pattern == "[^\\d]+" ||

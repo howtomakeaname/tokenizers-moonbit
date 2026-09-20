@@ -198,6 +198,16 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       None => ()
     }
   }
+  match @common.bare_class_kind(pattern) {
+    Some(kind) =>
+      return @common.replace_exact_char_runs(
+        s,
+        content,
+        fn(c) { @common.bounded_regex_kind_pred(kind, c) },
+        exact_run=1,
+      )
+    None => ()
+  }
   match @common.replace_simple_regex(s, pattern, content) {
     Some(out) => return out
     None => ()
@@ -318,13 +328,21 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   }
   if pattern == "\\d+" ||
     pattern == "[\\d]+" ||
-    pattern == "[0-9]+" ||
     pattern == "\\p{N}+" ||
     pattern == "\\p{Number}+" ||
     pattern == "[\\p{N}]+" ||
     pattern == "[\\p{Number}]+" {
     return @common.replace_char_runs(s, content, fn(c) {
       @common.is_decimal_number(c)
+    })
+  }
+  // `[0-9]+` is ASCII-only (HF: fullwidth digits stay)
+  if pattern == "[0-9]+" {
+    return @common.replace_char_runs(s, content, fn(c) { c >= '0' && c <= '9' })
+  }
+  if pattern == "[^0-9]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      !(c >= '0' && c <= '9')
     })
   }
   if pattern == "^\\d+" ||
@@ -498,27 +516,45 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       exact_run=4,
     )
   }
-  if pattern == "\\w+" ||
-    pattern == "[A-Za-z0-9_]+" ||
-    pattern == "\\b\\w+\\b" ||
-    pattern == "\\b[A-Za-z0-9_]+\\b" {
+  if pattern == "\\w+" || pattern == "\\b\\w+\\b" {
     return @common.replace_char_runs(s, content, fn(c) {
       @common.is_word_char(c)
     })
   }
-  if pattern == "^\\w+" || pattern == "^[A-Za-z0-9_]+" {
+  // `[A-Za-z0-9_]+` (and \b-wrapped) is ASCII-only (HF: é/中 stay)
+  if pattern == "[A-Za-z0-9_]+" || pattern == "\\b[A-Za-z0-9_]+\\b" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_ascii_word_char(c)
+    })
+  }
+  if pattern == "^\\w+" {
     return @common.replace_leading_runs(s, content, fn(c) {
       @common.is_word_char(c)
     })
   }
-  if pattern == "\\w+$" || pattern == "[A-Za-z0-9_]+$" {
+  if pattern == "^[A-Za-z0-9_]+" {
+    return @common.replace_leading_runs(s, content, fn(c) {
+      @common.is_ascii_word_char(c)
+    })
+  }
+  if pattern == "\\w+$" {
     return @common.replace_trailing_runs(s, content, fn(c) {
       @common.is_word_char(c)
     })
   }
-  if pattern == "\\W+" || pattern == "[^\\w]+" || pattern == "[^A-Za-z0-9_]+" {
+  if pattern == "[A-Za-z0-9_]+$" {
+    return @common.replace_trailing_runs(s, content, fn(c) {
+      @common.is_ascii_word_char(c)
+    })
+  }
+  if pattern == "\\W+" || pattern == "[^\\w]+" {
     return @common.replace_char_runs(s, content, fn(c) {
       !@common.is_word_char(c)
+    })
+  }
+  if pattern == "[^A-Za-z0-9_]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      !@common.is_ascii_word_char(c)
     })
   }
   if pattern == "\\w{2,}" || pattern == "[A-Za-z0-9_]{2,}" {

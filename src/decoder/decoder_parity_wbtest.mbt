@@ -136,3 +136,17 @@ test "standalone replace decode uses supported patterns" {
   @test.assert_eq(d.decode(["a b", "  c"]), "a b c")
   @test.assert_eq(replace_pattern_supported("l+o"), false)
 }
+
+///|
+/// Decoder Replace: bare single-character classes replace per character
+/// and plain-`+` ASCII spellings keep fullwidth digits (review round 2).
+test "decoder replace bare classes and ascii plus" {
+  let bare = Decoder::Replace(pattern="[0-9]", content="#")
+  @test.assert_eq(bare.decode(["a", "5", "b"]), "a#b")
+  let plus = Decoder::Replace(pattern="[0-9]+", content="#")
+  @test.assert_eq(plus.decode(["a", "５", "b"]), "a５b")
+  // decoder Replace is per-token: each "5" is its own token -> "#"
+  @test.assert_eq(plus.decode(["a", "5", "5", "b"]), "a##b")
+  let word = Decoder::Replace(pattern="[A-Za-z0-9_]+", content="#")
+  @test.assert_eq(word.decode(["a", "é", "b"]), "#é#")
+}
