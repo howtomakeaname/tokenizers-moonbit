@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-21 PR #16**（9 commit，评审修正后）：fail-explicitly 清单收敛。①`[\w]`/`[\W]` 括号拼写经 `canonicalize_word_class` 在六个 kind 入口统一规范化到 `\w`/`\W` 快捷形式（HF 实测括号 `\w` 保持 Unicode-wide，与 ASCII `[A-Za-z0-9_]` 拼写不同；评审 1851 项交叉对拍 normalizer 路径零分歧）；②锚定 `[\r\n]+`/`[\r\n]+$` 入表；③单字符字面量有界量词 `a{2}`/`a{2,}`/`a{2,3}`（`replace_char_bounded_runs` 贪婪有界 run，normalizer/decoder 三路径接入，decoder 逐 token 与 HF 一致）。评审四项发现全部修复：F1 元字符基（`.{2}` HF 为 any-char、`?{2}` 等为构造错误）加入拒绝集；F2/F3 Split 与 decoder 锚定 span 改为**多行**语义（评审实测 HF `^[\r\n]+` Split 于 "A\n\nB" 产 `['A\n','B']`、decoder 于 `["x\n\n","y"]` 产 `x\n#y`——修复后逐例一致；13 处 split 锚定行全部改走 `*_multiline` helper，旧单锚 helper 删除）；F4 `a{n,}` 去 64 cap（整 run 消费，HF 70 个 a 对拍一致）；F6 canonicalize 文档注释反转修正。评审另报 F7（`\w` 谓词缺全角拉丁/半角片假名等区间，1851 项对拍中 72 项分歧的主因）→ §5.7 记录为后续批次。验证：440/440 四后端、双扫描 1134+100 全绿。
+
 - **2026-09-21 发版 0.5.0（已发布）**：0.4.0 后累计 PR #6–#14（行为对比扫描五批 + 工具链漂移 7/8 层 + lazy align/正则分歧批）。含行为变化：decode join、charsmap 字素簇、decoder 边缘语义、offsets 原文参照、added-token id 分配、Replace 显式门、ASCII class/多行锚定/裸类。semver minor（新增公开 API：normalize_aligned 族、is_supported_replace_regex、unicode_punct_ranges、is_hf_punctuation、kind extends）。PR #15 CI 8/8 后合并；`moon publish` 成功；干净项目安装 0.5.0 验证四项全中——naïve offsets (0,2)(2,5)(5,8) 与 HF 逐位一致、decode roundtrip、BatchLongest 单条 encode 按 multiple=2 取整（odd→4/even→4，HF 同）、`Hello world` parity [15496, 995]。
 
 - **2026-09-21 PR #14**（8 commit，两轮评审）：队列 P2 + §5.7 四类对抗分歧修复。①**lazy identity 对齐列**：`Align::Identity(len)` 零分配替代逐字符 tuple（钳制算术逐位等价，评审穷举+随机化证明；独立实测 no-normalizer encode ~1.7x 提速）；②**字面量大括号**：非量词 `{`/`}` 字面字符（onig），`{,n}` 视为量词→显式拒绝（评审抓到首版顺序 bug：`{,n}` 检查排在 digits==0 早退后被跳过）；③**ASCII class 拼写**：新增 kind 22–25，五个 kind 入口后置覆盖——评审抓到 plain-`+` 拼写绕过全部入口（共享 scanner/normalizer/decoder 双路径硬编码 Unicode 分支），已全部拆分；裸 `\p{L}` 误映射 kind 6 修正为 Unicode kind 7/17；④**多行锚定**按 onig 重写（行首贪婪跨换行、最长边界前缀匹配）；⑤**裸类** exact-1 逐字符替换双侧接入。评审另证伪我三处测试期望（`[^0-9]+` 于全角为单 run、`\P{L}` 保留字母、decoder Replace 逐 token）。流程教训：c8591d4 描述了多行锚定重写但漏提交 replace.mbt 本体（本地绿/CI 红暴露）——commit 前应 `git status` 核对文件清单。验证：438/438 四后端、双扫描 1134+100 全绿、27 项 HF 探针逐项对齐。
@@ -187,7 +189,7 @@ moon test --target native --deny-warn                      # 同样跑 js/wasm/w
 4. **pair overflow 叉积 vs 0.23-dev**：按用户确认锁定 0.22.2；HF 主分支已改每侧独立窗口，若未来切换基准需重做（背景与实测数据在 PR #3）。
 5. **性能遗留**：大词表 JSON 冷加载（llama from_str ~1.14x）；identity 对齐列分配（lazy 化在队列 P2）；nightly 趋势落盘未建。
 6. **Unigram 采样随机性**：确定性种子（可复现），按需换真随机源。
-7. **已收敛的 Replace/正则对抗分歧**（PR #13 评审发现，PR #14 修复并全部 HF 实测对齐）：多行锚定（onig 逐行 `^`/`$` + 跨换行贪婪 run）、ASCII class 拼写（`[0-9]`/`[A-Za-z0-9_]` 全量词/锚定/裸拼写）、字面量大括号（`a{b` 字面量化、`{,n}` 显式拒绝）、裸单字符类逐字符替换（normalizer+decoder 双侧）。**仍显式不支持**（fail-explicitly 清单）：`[\w]`/`[^\w]` 量词形式、锚定 `[\r\n]+`、`a{1}`/`a{0,2}` 越窗量词、class 内大括号、`a{2}` 字面量+量词组合。
+7. **已收敛的 Replace/正则对抗分歧**（PR #13 评审发现，PR #14/#16 修复并全部 HF 实测对齐）：多行锚定（onig 逐行 `^`/`$` + 跨换行贪婪 run，normalizer/Split/decoder 三端一致）、ASCII class 拼写（`[0-9]`/`[A-Za-z0-9_]` 全量词/锚定/裸拼写）、字面量大括号（`a{b` 字面量化、`{,n}` 显式拒绝）、裸单字符类逐字符替换（双侧）、`[\w]` 族括号拼写（canonicalize 到 `\w`/`\W` 快捷形式，Unicode-wide 与 HF 一致）、锚定 `[\r\n]+`、单字符字面量有界量词 `c{n}`/`c{n,}`/`c{n,m}`（窗口 1–4，`{n,}` 整 run 消费；元字符基 `.{n}`/`?{n}` 等显式拒绝）。**仍显式不支持**：`{0,m}` 空匹配插入语义（HF 在每字符间插 content，属另一族）、`a{2,1}` 逆序区间（HF 接受并等价 `{1,2}`，本库拒绝）、class 内大括号、`\w` 谓词的全角拉丁/半角片假名等 Unicode 覆盖缺口（PR #16 评审 F7，后续批次）。
 
 ## 6. 开发约定
 
