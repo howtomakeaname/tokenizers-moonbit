@@ -186,3 +186,104 @@ fn precompiled_ascii_fast(s : String) -> String? {
 // strip_accents: remove combining marks via the precomputed NFD-minus-Mn table.
 
 ///|
+
+// Aligned variants of the precompiled charsmap paths: replacements map the
+// replacement chars onto the consumed original cluster/char span.
+
+///|
+pub fn precompiled_normalize_aligned(s : String) -> (String, Array[(Int, Int)]) {
+  match precompiled_ascii_fast(s) {
+    Some(out) => {
+      // ascii fast path: chars map 1:1 (whitespace folding is 1:1)
+      let align : Array[(Int, Int)] = []
+      for i in 0..<s.char_length() {
+        align.push((i, i + 1))
+      }
+      return (out, align)
+    }
+    None => ()
+  }
+  let sb = StringBuilder()
+  let normalized = normalize_unicode_aligned(s, compat=true, compose=true)
+  let text = normalized.0
+  // rebuild whitespace folding with alignment against `s` composed through
+  let folded : Array[(Int, Int)] = []
+  let inner = normalized.1
+  let mut oi = 0
+  for c in text {
+    if @common.is_unicode_whitespace(c.to_int()) {
+      sb.write_char(' ')
+      folded.push(inner[oi])
+    } else {
+      sb.write_char(c)
+      folded.push(inner[oi])
+    }
+    oi = oi + 1
+  }
+  (sb.to_string(), folded)
+}
+
+///|
+pub fn precompiled_map_normalize_aligned(
+  data : PrecompiledCharsMap,
+  s : String,
+) -> (String, Array[(Int, Int)]) {
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder()
+  let align : Array[(Int, Int)] = []
+  let mut i = 0
+  while i < n {
+    let mut j = i + 1
+    while j < n && is_combining_mark(chars[j].to_int()) {
+      j = j + 1
+    }
+    if j > i + 1 {
+      let cluster = char_slice_to_string(chars, i, j)
+      let cluster_bytes = @utf8.encode(cluster).length()
+      if cluster_bytes < 6 {
+        match precompiled_transform(data, cluster) {
+          Some(repl) => {
+            for _ch in repl {
+              align.push((i, j))
+            }
+            sb.write_string(repl)
+            i = j
+            continue
+          }
+          None => ()
+        }
+      }
+      while i < j {
+        match precompiled_transform(data, char_to_string(chars[i])) {
+          Some(repl) => {
+            for _ch in repl {
+              align.push((i, i + 1))
+            }
+            sb.write_string(repl)
+          }
+          None => {
+            sb.write_char(chars[i])
+            align.push((i, i + 1))
+          }
+        }
+        i = i + 1
+      }
+    } else {
+      match precompiled_transform(data, char_to_string(chars[i])) {
+        Some(repl) => {
+          for _ch in repl {
+            align.push((i, i + 1))
+          }
+          sb.write_string(repl)
+        }
+        None => {
+          sb.write_char(chars[i])
+          align.push((i, i + 1))
+        }
+      }
+      i = i + 1
+    }
+  }
+  (sb.to_string(), align)
+}

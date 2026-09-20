@@ -18,7 +18,15 @@ pub fn compat_decomp_raw() -> String
 
 pub fn composition_raw() -> String
 
+pub fn expand_align(Array[(Int, Int)], Int, Int) -> (Int, Int)
+
 pub fn normalize_unicode(String, compat~ : Bool, compose~ : Bool) -> String
+
+pub fn normalize_unicode_aligned(String, compat~ : Bool, compose~ : Bool) -> (String, Array[(Int, Int)])
+
+pub fn precompiled_map_normalize_aligned(PrecompiledCharsMap, String) -> (String, Array[(Int, Int)])
+
+pub fn precompiled_normalize_aligned(String) -> (String, Array[(Int, Int)])
 
 // Errors
 
@@ -77,6 +85,7 @@ pub fn Normalizer::nfkc() -> Self
 pub fn Normalizer::nfkd() -> Self
 pub fn Normalizer::nmt() -> Self
 pub fn Normalizer::normalize(Self, String) -> String
+pub fn Normalizer::normalize_aligned(Self, String) -> (String, Array[(Int, Int)])
 pub fn Normalizer::normalize_str(Self, String) -> String
 pub fn Normalizer::normalizers(Self) -> Array[Self]
 pub fn Normalizer::pattern(Self) -> String?
@@ -122,5 +131,6 @@ pub(all) struct PrecompiledCharsMap {
 }
 
 // Type aliases
+pub type Aligned = Array[(Int, Int)]
 
 // Traits

@@ -167,8 +167,21 @@ fn Tokenizer::encode_raw_with_hooks_impl(
     match seg1 {
       Special(info~, value~, offsets~) => emit(info.id, value, offsets, 0, None)
       Normal(text=raw, base_offset~) => {
-        // Normalize this ordinary piece.
-        let normalized = self.normalize_with_hook(raw, hooks)
+        // Normalize this ordinary piece, keeping the normalized->original
+        // alignment column (identity when a hook replaces the normalizer).
+        let (normalized, align) = self.normalize_with_alignment(raw, hooks)
+        // Convert a normalized-coordinate span of this segment back into
+        // original-text coordinates (identity alignment keeps the previous
+        // scalar arithmetic bit-for-bit).
+        fn to_orig(
+          base_offset : Int,
+          align : Array[(Int, Int)],
+          s : Int,
+          e : Int,
+        ) -> (Int, Int) {
+          let (a, b) = @normalizer.expand_align(align, s, e)
+          (base_offset + a, base_offset + b)
+        }
         // Stage 2: split out normalized added tokens within it.
         for
           seg2 in self.added_vocabulary.extract_stage2(
@@ -177,20 +190,86 @@ fn Tokenizer::encode_raw_with_hooks_impl(
             keep_special~,
           ) {
           match seg2 {
-            Special(info~, value~, offsets~) =>
-              emit(info.id, value, offsets, 0, None)
+            Special(info~, value~, offsets~) => {
+              let orig = to_orig(
+                base_offset,
+                align,
+                offsets.0 - base_offset,
+                offsets.1 - base_offset,
+              )
+              emit(info.id, value, orig, 0, None)
+            }
             Normal(text=ntext, base_offset=base2) => {
               let pieces = self.pre_tokenize_with_hook(ntext, base2, hooks)
+              // ByteLevel and Metaspace rewrite pieces (byte->visible
+              // chars, space->▁, prefix inserts); derive the piece origin
+              // map so model-token spans land on input char coords.
+              let origin_pt = match self.pre_tokenizer {
+                Some(@pretokenizer.PreTokenizer::ByteLevel(..)) => true
+                Some(@pretokenizer.PreTokenizer::Metaspace(..)) => true
+                Some(@pretokenizer.PreTokenizer::Sequence(steps)) => {
+                  let mut any_bl = false
+                  for st in steps {
+                    match st {
+                      @pretokenizer.PreTokenizer::ByteLevel(..) => any_bl = true
+                      @pretokenizer.PreTokenizer::Metaspace(..) => any_bl = true
+                      _ => ()
+                    }
+                  }
+                  any_bl
+                }
+                _ => false
+              }
               for piece in pieces {
                 let word_id = next_word_id
                 next_word_id = next_word_id + 1
-                let model_offset = if track_offsets {
-                  piece.offsets.0
+                // Piece offsets are normalized-segment coordinates
+                // (base2-included); model tokens are emitted piece-relative
+                // and converted through the alignment column here.
+                let norm_s = piece.offsets.0 - base_offset
+                let norm_e = piece.offsets.1 - base_offset
+                // ByteLevel pieces encode bytes as visible chars; map the
+                // piece's visible-char indices back to input char indices.
+                let bl_map = if origin_pt && track_offsets {
+                  byte_level_origin_map(
+                    char_substring(normalized, norm_s, norm_e),
+                    piece.value.char_length(),
+                  )
                 } else {
-                  0
+                  None
                 }
-                for t in self.model.tokenize(piece.value, offset=model_offset) {
-                  emit(t.id, t.value, t.offsets, 0, Some(word_id))
+                for t in self.model.tokenize(piece.value, offset=0) {
+                  let rel = t.offsets
+                  let orig = if track_offsets {
+                    match bl_map {
+                      Some(map) => {
+                        // visible coords -> input char coords -> original
+                        let n = map.length()
+                        if rel.0 < n && rel.1 > rel.0 && rel.1 <= n {
+                          let cs = map[rel.0]
+                          let ce = map[rel.1 - 1] + 1
+                          to_orig(base_offset, align, norm_s + cs, norm_s + ce)
+                        } else {
+                          to_orig(
+                            base_offset,
+                            align,
+                            norm_s + rel.0,
+                            norm_s + rel.1,
+                          )
+                        }
+                      }
+                      None =>
+                        to_orig(
+                          base_offset,
+                          align,
+                          norm_s + rel.0,
+                          norm_s + rel.1,
+                        )
+                    }
+                  } else {
+                    (0, 0)
+                  }
+                  emit(t.id, t.value, orig, 0, Some(word_id))
                 }
               }
             }
@@ -213,17 +292,113 @@ fn Tokenizer::encode_raw_with_hooks_impl(
 }
 
 ///|
-fn Tokenizer::normalize_with_hook(
+
+///|
+/// Normalize and also return the original-referential alignment column
+/// (one [start, stop) char span per normalized char). Hook-supplied
+/// normalizers have no alignment; the identity column is used, matching
+/// the pre-alignment behavior.
+
+///|
+/// For a ByteLevel pre-tokenized piece, `piece.value` is the byte-level
+/// visible encoding of the normalized substring it covers. This returns,
+/// for each visible char of the value, the index of the input (normalized)
+/// char it came from — multi-byte chars expand to several visible chars
+/// that all map to the same input char. Returns None when the piece is not
+/// a byte-level encoding of the substring (lengths do not add up).
+fn byte_level_origin_map(norm_sub : String, value_len : Int) -> Array[Int]? {
+  match byte_map_of(norm_sub) {
+    Some(map) => {
+      if map.length() == value_len {
+        return Some(map)
+      }
+      // ByteLevel add_prefix_space / Metaspace prepend insert one visible
+      // char (Ġ / ▁) in front; the insert attaches to the first input
+      // char's span (HF insert semantics).
+      if map.length() + 1 == value_len {
+        return Some([0, ..map])
+      }
+      None
+    }
+    None => {
+      // 1:1 pre-tokenizers (Metaspace space->▁ replacement keeps length);
+      // a single prepended replacement char attaches to char 0.
+      let n = norm_sub.char_length()
+      if n == value_len {
+        let map : Array[Int] = []
+        for i in 0..<n {
+          map.push(i)
+        }
+        return Some(map)
+      }
+      if n + 1 == value_len {
+        let map : Array[Int] = [0]
+        for i in 0..<n {
+          map.push(i)
+        }
+        return Some(map)
+      }
+      None
+    }
+  }
+}
+
+///|
+/// Byte-level visible-char -> input-char map of a substring (one entry per
+/// UTF-8 byte). None when the substring is empty.
+fn byte_map_of(norm_sub : String) -> Array[Int]? {
+  let chars = norm_sub.to_array()
+  if chars.is_empty() {
+    return None
+  }
+  let map : Array[Int] = []
+  for i, c in chars {
+    let b = @utf8.encode(c.to_string()).length()
+    for _k in 0..<b {
+      map.push(i)
+    }
+  }
+  Some(map)
+}
+
+///|
+/// Extract the substring of `text` in char range [s, e).
+fn char_substring(text : String, s : Int, e : Int) -> String {
+  let chars = text.to_array()
+  let sb = StringBuilder()
+  let stop = if e < chars.length() { e } else { chars.length() }
+  let start = if s > 0 { s } else { 0 }
+  for k in start..<stop {
+    sb.write_char(chars[k])
+  }
+  sb.to_string()
+}
+
+///|
+fn Tokenizer::normalize_with_alignment(
   self : Tokenizer,
   text : String,
   hooks : TokenizerComponentHooks,
-) -> String {
+) -> (String, Array[(Int, Int)]) {
   match hooks.normalize {
-    Some(f) => f(text)
+    Some(f) => {
+      let out = f(text)
+      let align : Array[(Int, Int)] = []
+      for i in 0..<text.char_length() {
+        align.push((i, i + 1))
+      }
+      (out, align)
+    }
     None =>
       match self.normalizer {
-        Some(nm) => nm.normalize(text)
-        None => text
+        Some(nm) => nm.normalize_aligned(text)
+        None => {
+          let align : Array[(Int, Int)] = []
+          for i in 0..<text.char_length() {
+            align.push((i, i + 1))
+          }
+          (text, align)
+        }
       }
   }
 }

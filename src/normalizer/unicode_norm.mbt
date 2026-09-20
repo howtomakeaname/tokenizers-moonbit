@@ -302,3 +302,141 @@ fn str_to_int(s : String) -> Int {
   }
   v
 }
+
+// Aligned variant of normalize_unicode: threads a per-output-codepoint
+// original span through decompose -> canonical order -> compose. Each
+// decomposed cp keeps its source char's span; canonical swaps move spans
+// along; composition merges the starter's span with the consumed marks'.
+
+///|
+pub fn normalize_unicode_aligned(
+  input : String,
+  compat~ : Bool,
+  compose~ : Bool,
+) -> (String, Array[(Int, Int)]) {
+  let table = if compat { compat_map() } else { canon_map() }
+  let cm = canon_map()
+  let cps : Array[Int] = []
+  let spans : Array[(Int, Int)] = []
+  for i, c in input {
+    let before = cps.length()
+    decompose_cp(c.to_int(), table, cm, compat, cps)
+    let after = cps.length()
+    // every decomposed cp of this char maps to the char's span
+    for _k in before..<after {
+      spans.push((i, i + 1))
+    }
+  }
+  canonical_order_aligned(cps, spans)
+  let (final_cps, final_spans) = if compose {
+    canonical_compose_aligned(cps, spans)
+  } else {
+    (cps, spans)
+  }
+  let sb = StringBuilder()
+  for cp in final_cps {
+    sb.write_char(cp.unsafe_to_char())
+  }
+  (sb.to_string(), final_spans)
+}
+
+///|
+fn canonical_order_aligned(cps : Array[Int], spans : Array[(Int, Int)]) -> Unit {
+  let n = cps.length()
+  let mut i = 1
+  while i < n {
+    let cc = ccc_of(cps[i])
+    if cc == 0 {
+      i = i + 1
+      continue
+    }
+    let mut j = i
+    while j > 0 {
+      let prev_cc = ccc_of(cps[j - 1])
+      if prev_cc == 0 || prev_cc <= cc {
+        break
+      }
+      let tmp = cps[j]
+      cps[j] = cps[j - 1]
+      cps[j - 1] = tmp
+      let tsp = spans[j]
+      spans[j] = spans[j - 1]
+      spans[j - 1] = tsp
+      j = j - 1
+    }
+    i = i + 1
+  }
+}
+
+///|
+fn canonical_compose_aligned(
+  cps : Array[Int],
+  spans : Array[(Int, Int)],
+) -> (Array[Int], Array[(Int, Int)]) {
+  let n = cps.length()
+  if n == 0 {
+    return ([], [])
+  }
+  let cmp = comp_map()
+  let out : Array[Int] = []
+  let ospans : Array[(Int, Int)] = []
+  let mut starter = cps[0]
+  let mut starter_idx = 0
+  let mut starter_span = spans[0]
+  out.push(starter)
+  ospans.push(starter_span)
+  let mut last_cc = -1
+  let mut i = 1
+  while i < n {
+    let ch = cps[i]
+    let cc = ccc_of(ch)
+    let key = starter * 0x110000 + ch
+    let composed = cmp.get(key)
+    let blocked = last_cc >= cc && last_cc != -1 && cc != 0
+    match composed {
+      Some(x) if !blocked && last_cc < cc => {
+        // compose into the starter; merge the consumed mark's span
+        out[starter_idx] = x
+        starter = x
+        starter_span = (
+          min_int(starter_span.0, spans[i].0),
+          max_int(starter_span.1, spans[i].1),
+        )
+        ospans[starter_idx] = starter_span
+      }
+      _ =>
+        if cc == 0 {
+          out.push(ch)
+          starter = ch
+          starter_idx = out.length() - 1
+          starter_span = spans[i]
+          ospans.push(spans[i])
+          last_cc = -1
+        } else {
+          out.push(ch)
+          ospans.push(spans[i])
+          last_cc = cc
+        }
+    }
+    i = i + 1
+  }
+  (out, ospans)
+}
+
+///|
+fn min_int(a : Int, b : Int) -> Int {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn max_int(a : Int, b : Int) -> Int {
+  if a > b {
+    a
+  } else {
+    b
+  }
+}
