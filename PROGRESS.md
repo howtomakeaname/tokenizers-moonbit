@@ -86,7 +86,7 @@ moon test --target native --deny-warn                      # 同样跑 js/wasm/w
 ```
 
 - CI 8 job：4 后端测试 / Python 脚本 / Release gates（fmt+check+info+metadata）/ 可选 parity smoke / HF benchmark smoke（~10min）。
-- **工具链漂移警惕**：CI 用最新 moon；历史已现六层——`StringBuilder::new()` 弃用、`{}` 歧义、formatter 规范变化、`.mbti` 尾空行、`unused_package`（bench/core:int/core:bench 导入）。本地全绿 CI 红时先怀疑漂移，逐层修复后提交（参照 PR #5/#6 内的 chore commit）。
+- **工具链漂移警惕**：CI 用最新 moon；历史已现八层——`StringBuilder::new()` 弃用、`{}` 歧义、formatter 规范变化、`.mbti` 尾空行、`unused_package`（bench/core:int/core:bench 导入）、`implicit_impl_as_method`（43 个 pub derive 类型补 `pub extend X with Eq/Debug`，20260920 工具链）、`test_unqualified_package`（黑盒测试同包类型/函数需 `@pkg.` 全限定，~680 处迁移）。本地全绿 CI 红时先怀疑漂移，逐层修复后提交。
 
 ## 4. 能力矩阵
 
