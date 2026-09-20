@@ -56,21 +56,21 @@ fn bounded_regex_kind_inner(pattern : String) -> (Int, Int)? {
   }
   let non_digit = bounded_max_variants(
     pattern,
-    [
-      "\\D{1,2}", "[\\D]{1,2}", "[^\\d]{1,2}", "[^0-9]{1,2}", "\\P{N}{1,2}", "\\P{Number}{1,2}",
-      "[^\\p{N}]{1,2}", "[^\\p{Number}]{1,2}",
-    ],
-    [
-      "\\D{1,3}", "[\\D]{1,3}", "[^\\d]{1,3}", "[^0-9]{1,3}", "\\P{N}{1,3}", "\\P{Number}{1,3}",
-      "[^\\p{N}]{1,3}", "[^\\p{Number}]{1,3}",
-    ],
-    [
-      "\\D{1,4}", "[\\D]{1,4}", "[^\\d]{1,4}", "[^0-9]{1,4}", "\\P{N}{1,4}", "\\P{Number}{1,4}",
-      "[^\\p{N}]{1,4}", "[^\\p{Number}]{1,4}",
-    ],
+    ["\\D{1,2}", "[\\D]{1,2}", "[^\\d]{1,2}", "[^0-9]{1,2}"],
+    ["\\D{1,3}", "[\\D]{1,3}", "[^\\d]{1,3}", "[^0-9]{1,3}"],
+    ["\\D{1,4}", "[\\D]{1,4}", "[^\\d]{1,4}", "[^0-9]{1,4}"],
   )
   if non_digit > 0 {
     return Some((14, non_digit))
+  }
+  let non_number = bounded_max_variants(
+    pattern,
+    ["\\P{N}{1,2}", "\\P{Number}{1,2}", "[^\\p{N}]{1,2}", "[^\\p{Number}]{1,2}"],
+    ["\\P{N}{1,3}", "\\P{Number}{1,3}", "[^\\p{N}]{1,3}", "[^\\p{Number}]{1,3}"],
+    ["\\P{N}{1,4}", "\\P{Number}{1,4}", "[^\\p{N}]{1,4}", "[^\\p{Number}]{1,4}"],
+  )
+  if non_number > 0 {
+    return Some((29, non_number))
   }
   let word = bounded_max(pattern, "\\w{1,2}", "\\w{1,3}", "\\w{1,4}")
   if word > 0 {

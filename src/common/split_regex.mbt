@@ -576,7 +576,7 @@ pub fn simple_split_regex_matches(
     pattern == "\\p{Number}{2,}" ||
     pattern == "[\\p{N}]{2,}" ||
     pattern == "[\\p{Number}]{2,}" {
-    Some(run_matches_min(chars, fn(c) { is_decimal_number(c) }, min_run=2))
+    Some(run_matches_min(chars, fn(c) { is_unicode_number(c) }, min_run=2))
   } else if pattern == "\\d{2}" ||
     pattern == "[\\d]{2}" ||
     pattern == "[0-9]{2}" {
