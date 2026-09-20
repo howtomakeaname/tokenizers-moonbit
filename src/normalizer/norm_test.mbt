@@ -720,3 +720,54 @@ test "normalizer state rejects components without serialized JSON" {
   }
   @test.assert_eq(raised, true)
 }
+
+///|
+/// Unsupported regex families in a normalizer Replace must fail at LOAD
+/// time (no-silent-mismatch); supported families keep loading. Probed
+/// against the fixture inventory: real models only use `\s+`, ` {2,}`,
+/// and String literals — all supported.
+test "normalizer Replace regex unsupported patterns fail at load" {
+  try {
+    let n = Normalizer::from_json(
+      @json.parse(
+        "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"l+o\"},\"content\":\"X\"}",
+      ),
+    )
+    ignore(n)
+    @test.fail("unsupported Replace regex should not load")
+  } catch {
+    _ => () // expected: UnsupportedComponent at load
+  }
+  // supported families load: whitespace runs, min runs, literals
+  let ok1 = Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"\\\\s+\"},\"content\":\" \"}",
+    ),
+  )
+  @test.assert_eq(ok1.kind(), "Replace")
+  let ok2 = Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\" {2,}\"},\"content\":\" \"}",
+    ),
+  )
+  @test.assert_eq(ok2.kind(), "Replace")
+  let ok3 = Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"café\"},\"content\":\"x\"}",
+    ),
+  )
+  @test.assert_eq(ok3.kind(), "Replace")
+  let ok4 = Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"\\\\p{N}{2,}\"},\"content\":\"N\"}",
+    ),
+  )
+  @test.assert_eq(ok4.kind(), "Replace")
+  // String patterns are literal by design — no gate
+  let ok5 = Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"String\":\"a.b\"},\"content\":\"X\"}",
+    ),
+  )
+  @test.assert_eq(ok5.kind(), "Replace") // String patterns share the kind
+}

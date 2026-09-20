@@ -220,7 +220,16 @@ pub fn Normalizer::from_json(
       let content = @types.get_str(obj, "content", default="")
       match pattern_kind {
         @common.StringPattern => ReplaceString(pattern~, content~)
-        @common.RegexPattern => Replace(pattern~, content~)
+        @common.RegexPattern => {
+          // Unsupported regex families must fail at load instead of
+          // silently replacing literally (no-silent-mismatch policy).
+          if !@common.is_supported_replace_regex(pattern) {
+            raise @types.UnsupportedComponent(
+              "normalizer Replace regex pattern: \{pattern}",
+            )
+          }
+          Replace(pattern~, content~)
+        }
       }
     }
     "Prepend" => Prepend(prepend=@types.get_str(obj, "prepend", default=""))
