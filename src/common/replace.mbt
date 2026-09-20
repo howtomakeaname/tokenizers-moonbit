@@ -622,3 +622,68 @@ pub fn replace_char_bounded_runs(
   }
   Some(sb.to_string())
 }
+
+///|
+/// Zero-minimum bounded quantifier replace (`c{0}`, `c{0,m}`, `c{0,}`, and
+/// class bases like `\\d{0,2}`): HF/onig global-replace semantics derived
+/// from probes (13-case trace battery):
+///   - greedy match up to `max` (unbounded when `max` is None)
+///   - an EMPTY match at the position where the previous match ended is
+///     SKIPPED (copy one char, advance, no insert)
+///   - an inserted empty match copies one char and advances; the "previous
+///     end" becomes the empty match's own position
+///   - an empty match at end-of-string inserts only when its position
+///     differs from the previous match end
+///   - the empty input string produces no matches at all
+pub fn replace_zero_min_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  max : Int?, // None = unbounded
+) -> String {
+  let chars = s.to_array()
+  let n = chars.length()
+  if n == 0 {
+    return s
+  }
+  let cap = match max {
+    Some(m) => m
+    None => n
+  }
+  let sb = StringBuilder()
+  let mut p = 0
+  let mut prev_end = -1
+  while p <= n {
+    if p == n {
+      // end-of-string empty match only when not adjacent to prev end
+      if p != prev_end {
+        sb.write_string(content)
+      }
+      break
+    }
+    // greedy bounded run at p
+    let mut g = p
+    while g < n && g - p < cap && pred(chars[g]) {
+      g = g + 1
+    }
+    if g > p {
+      // non-empty match
+      sb.write_string(content)
+      prev_end = g
+      p = g
+      continue
+    }
+    // empty match
+    if p == prev_end {
+      // skipped: copy one char, advance, no insert
+      sb.write_char(chars[p])
+      p = p + 1
+      continue
+    }
+    sb.write_string(content)
+    sb.write_char(chars[p])
+    prev_end = p
+    p = p + 1
+  }
+  sb.to_string()
+}

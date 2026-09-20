@@ -385,6 +385,10 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if char_bounded_quantifier_shape(pattern) {
     return true
   }
+  // zero-minimum quantifiers: a{0} / a{0,m} / a{0,} and class bases
+  if zero_min_quantifier_spec(pattern) is Some(_) {
+    return true
+  }
   // everything the chain would handle via its hardcoded literal cases is
   // covered by the kinds/scanners above; a remaining pure literal is
   // correctly handled by the literal fallback
@@ -506,4 +510,66 @@ pub fn char_bounded_quantifier_shape(pattern : String) -> Bool {
     return hi_digits > 0 && hi >= lo && hi <= 4 && i == n - 1
   }
   i == n - 1
+}
+
+///|
+/// Parse a zero-minimum quantifier pattern into (kind, literal, max)
+/// when the pattern is `base{0}`, `base{0,m}` or `base{0,}` where `base`
+/// is a bare single-char class spelling (via bare_class_kind) or an
+/// ordinary literal char. `kind` = -1 signals a literal base (the char is
+/// carried in `literal`); `max` = -1 signals the unbounded `{0,}` form.
+pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  // find the LAST '{' — base is everything before it
+  let mut open = -1
+  for i in 0..<n {
+    if chars[i] == '{' {
+      open = i
+    }
+  }
+  if open < 1 || open + 3 > n || chars[n - 1] != '}' {
+    return None
+  }
+  // inner must be "0" or "0," or "0,<digits>"
+  if chars[open + 1] != '0' {
+    return None
+  }
+  let max : Int = if open + 2 == n - 1 {
+    0 // {0}
+  } else if chars[open + 2] != ',' {
+    return None
+  } else if open + 3 == n - 1 {
+    -1 // {0,} unbounded
+  } else {
+    // {0,m}
+    let mut v = 0
+    let mut k = open + 3
+    while k < n - 1 {
+      let c = chars[k]
+      if c < '0' || c > '9' {
+        return None
+      }
+      v = v * 10 + (c.to_int() - '0'.to_int())
+      k = k + 1
+    }
+    v
+  }
+  // base spelling
+  let base_sb = StringBuilder()
+  for i in 0..<open {
+    base_sb.write_char(chars[i])
+  }
+  let base = base_sb.to_string()
+  match bare_class_kind(base) {
+    Some(kind) => Some((kind, None, max))
+    None => {
+      let bc = base.to_array()
+      if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
+        Some((-1, Some(bc[0]), max))
+      } else {
+        None
+      }
+    }
+  }
 }

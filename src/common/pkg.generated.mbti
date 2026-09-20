@@ -98,9 +98,13 @@ pub fn replace_trailing_runs(String, String, (Char) -> Bool) -> String
 
 pub fn replace_whitespace_runs(String, String) -> String
 
+pub fn replace_zero_min_runs(String, String, (Char) -> Bool, Int?) -> String
+
 pub fn simple_split_regex_matches(Array[Char], String) -> Array[Span]?
 
 pub fn unicode_punct_ranges() -> Array[(Int, Int)]
+
+pub fn zero_min_quantifier_spec(String) -> (Int, Char?, Int)?
 
 // Errors
 
