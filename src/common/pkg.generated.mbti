@@ -16,6 +16,8 @@ pub fn bounded_regex_kind_pred(Int, Char) -> Bool
 
 pub fn char_bounded_quantifier_shape(String) -> Bool
 
+pub fn char_bounded_spec(String) -> (Char, Int, Int)?
+
 pub fn char_string(Char) -> String
 
 pub fn exact_regex_kind(String) -> (Int, Int)?
@@ -80,6 +82,8 @@ pub fn replace_char_runs(String, String, (Char) -> Bool) -> String
 
 pub fn replace_exact_char_runs(String, String, (Char) -> Bool, exact_run~ : Int) -> String
 
+pub fn replace_family_spans(Array[Char], String) -> Array[Span]?
+
 pub fn replace_leading_runs(String, String, (Char) -> Bool) -> String
 
 pub fn replace_literal(String, String, String) -> String
@@ -103,6 +107,8 @@ pub fn replace_zero_min_runs(String, String, (Char) -> Bool, Int?) -> String
 pub fn simple_split_regex_matches(Array[Char], String) -> Array[Span]?
 
 pub fn unicode_punct_ranges() -> Array[(Int, Int)]
+
+pub fn zero_min_match_spans(Array[Char], (Char) -> Bool, Int?) -> Array[Span]
 
 pub fn zero_min_quantifier_spec(String) -> (Int, Char?, Int)?
 

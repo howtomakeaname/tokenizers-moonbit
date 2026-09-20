@@ -527,16 +527,15 @@ fn matches_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
 }
 
 ///|
-/// Single-character-literal bounded quantifier: `c{n}`, `c{n,}`, `c{n,m}`
-/// where `c` is an ordinary literal char and 1 <= n <= m <= 4. Greedy
-/// bounded runs of `c` are replaced (HF probes: `a{2}` on "zaaz" -> "z#z",
-/// `a{2,3}` on "zaaaay" -> "z#ay", `a{1}` on "zaaz" -> "z##z").
-/// Returns None unless the pattern has exactly this shape.
-pub fn replace_char_bounded_runs(
-  s : String,
-  pattern : String,
-  content : String,
-) -> String? {
+/// Parse the single-character-literal bounded quantifier shape: `c{n}`,
+/// `c{n,}`, `c{n,m}` where `c` is an ordinary literal char and
+/// 1 <= n <= m <= 4. Returns (base char, lo, hi); `hi` = -1 for `{n,}`
+/// (unbounded above). Returns None for any other shape.
+/// HF probes: `a{2}` on "zaaz" -> "z#z", `a{2,3}` on "zaaaay" -> "z#ay",
+/// `a{1}` on "zaaz" -> "z##z". Metacharacter bases are excluded
+/// (mirrors char_bounded_quantifier_shape): `.{n}` is any-char in HF;
+/// `?{n}`/`+{n}`/etc. are construction errors.
+pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
   let chars = pattern.to_array()
   let n = chars.length()
   // shape: c { digits }  |  c { digits , }  |  c { digits , digits }
@@ -544,8 +543,6 @@ pub fn replace_char_bounded_runs(
     return None
   }
   let c = chars[0]
-  // metacharacter bases excluded (mirrors char_bounded_quantifier_shape):
-  // `.{n}` is any-char in HF; `?{n}`/`+{n}`/etc. are construction errors
   if c == '{' ||
     c == '}' ||
     c == '\\' ||
@@ -579,7 +576,7 @@ pub fn replace_char_bounded_runs(
     if i == n - 1 {
       // {n,} — unbounded above; consume the whole run (HF-exact, matches
       // the sibling replace_min_char_runs handlers)
-      hi = 1_000_000_000
+      hi = -1
     } else {
       let mut hi_digits = 0
       hi = 0
@@ -591,36 +588,34 @@ pub fn replace_char_bounded_runs(
       if hi_digits == 0 || hi < lo || hi > 4 {
         return None
       }
-      ignore(hi)
     }
   } else if i != n - 1 {
     return None
   }
-  // greedy bounded runs over s
-  let src = s.to_array()
-  let m = src.length()
-  let sb = StringBuilder()
-  let mut j = 0
-  while j < m {
-    if src[j] == c {
-      let start = j
-      while j < m && src[j] == c && j - start < hi {
-        j = j + 1
-      }
-      let len = j - start
-      if len >= lo {
-        sb.write_string(content)
-      } else {
-        for k in start..<j {
-          sb.write_char(src[k])
-        }
-      }
-    } else {
-      sb.write_char(src[j])
-      j = j + 1
+  Some((c, lo, hi))
+}
+
+///|
+/// Single-character-literal bounded quantifier replace over greedy
+/// bounded runs of the base char (see `char_bounded_spec`).
+pub fn replace_char_bounded_runs(
+  s : String,
+  pattern : String,
+  content : String,
+) -> String? {
+  match char_bounded_spec(pattern) {
+    Some((c, lo, hi)) => {
+      let src = s.to_array()
+      Some(
+        replace_spans(
+          src,
+          block_match_spans(src, fn(x) { x == c }, lo, hi),
+          content,
+        ),
+      )
     }
+    None => None
   }
-  Some(sb.to_string())
 }
 
 ///|
@@ -642,22 +637,36 @@ pub fn replace_zero_min_runs(
   max : Int?, // None = unbounded
 ) -> String {
   let chars = s.to_array()
+  replace_spans(chars, zero_min_match_spans(chars, pred, max), content)
+}
+
+///|
+/// Match spans for zero-minimum quantifiers, including EMPTY spans `(p, p)`
+/// for empty matches (the adjacency rules above applied at emission time).
+/// The empty span's char stays outside any span, so both span walkers —
+/// `replace_spans` for text and the normalizer's aligned walker — copy it
+/// between inserted contents, reproducing the probed outputs.
+pub fn zero_min_match_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  max : Int?, // None = unbounded
+) -> Array[Span] {
+  let out : Array[Span] = []
   let n = chars.length()
   if n == 0 {
-    return s
+    return out
   }
   let cap = match max {
     Some(m) => m
     None => n
   }
-  let sb = StringBuilder()
   let mut p = 0
   let mut prev_end = -1
   while p <= n {
     if p == n {
       // end-of-string empty match only when not adjacent to prev end
       if p != prev_end {
-        sb.write_string(content)
+        out.push({ start: p, stop: p, })
       }
       break
     }
@@ -668,22 +677,250 @@ pub fn replace_zero_min_runs(
     }
     if g > p {
       // non-empty match
-      sb.write_string(content)
+      out.push({ start: p, stop: g, })
       prev_end = g
       p = g
       continue
     }
     // empty match
     if p == prev_end {
-      // skipped: copy one char, advance, no insert
-      sb.write_char(chars[p])
+      // skipped: no span, the walker copies the char as unmatched gap
       p = p + 1
       continue
     }
-    sb.write_string(content)
-    sb.write_char(chars[p])
+    out.push({ start: p, stop: p, })
     prev_end = p
     p = p + 1
   }
-  sb.to_string()
+  out
+}
+
+///|
+/// Greedy block spans over predicate runs, unifying the run families
+/// (`replace_bounded_char_runs`, `replace_exact_char_runs`,
+/// `replace_min_char_runs`, `replace_ranged_char_runs`, and the literal
+/// `replace_char_bounded_runs`): within each maximal run, consecutive
+/// blocks of up to `hi` chars (the whole run when `hi < 0`); a block
+/// becomes a match span iff its length >= `lo`, leftover shorter blocks
+/// stay unmatched.
+fn block_match_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      while i < n && pred(chars[i]) {
+        let start = i
+        let limit = if hi < 0 { n } else { start + hi }
+        while i < n && i < limit && pred(chars[i]) {
+          i = i + 1
+        }
+        if i - start >= lo {
+          out.push({ start, stop: i, })
+        }
+      }
+    } else {
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
+/// MULTILINE `^` + class-run match spans (`^\s+`): a match starts at a
+/// line head (string start or after any `\n`) and extends greedily over
+/// predicate chars, newlines included — span mirror of
+/// `replace_line_leading_runs` (HF probes: "^\s+" on "\n\n  B" -> "#B",
+/// on "A\n\n  B" -> "A\n#B").
+fn line_leading_match_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  let n = chars.length()
+  let mut i = 0
+  let mut at_line_head = true
+  while i < n {
+    if at_line_head {
+      let g = i
+      let mut j = i
+      while j < n && pred(chars[j]) {
+        j = j + 1
+      }
+      if j > g {
+        out.push({ start: g, stop: j, })
+        i = j
+        at_line_head = i == 0 || chars[i - 1] == '\n'
+        continue
+      }
+      at_line_head = false
+      continue
+    }
+    if chars[i] == '\n' {
+      at_line_head = true
+    }
+    i = i + 1
+  }
+  out
+}
+
+///|
+/// MULTILINE `$` + class-run match spans (`\s+$`): the match is the
+/// longest prefix of a greedy predicate run that ends at a line boundary
+/// (right before a `\n` or at the string end); the newline is kept —
+/// span mirror of `replace_line_trailing_runs` (HF probe:
+/// "\s+$" on "x  \n\n  y" -> "x#\n  y" — match "  \n").
+fn line_trailing_match_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let start = i
+      let mut g = i
+      while g < n && pred(chars[g]) {
+        g = g + 1
+      }
+      // longest j in (start, g] with boundary at j
+      let mut j = -1
+      if g == n {
+        j = g
+      } else {
+        // scan back for the nearest '\n' inside (start, g]
+        let mut k = g
+        while k > start {
+          if chars[k] == '\n' {
+            j = k
+            break
+          }
+          k = k - 1
+        }
+      }
+      if j > start {
+        out.push({ start, stop: j, })
+        i = j
+        continue
+      }
+      // no boundary-anchored match: the run stays unmatched
+      i = g
+      continue
+    }
+    i = i + 1
+  }
+  out
+}
+
+///|
+/// Match spans for every regex family the replace chain implements,
+/// mirroring the dispatch order of the normalizer's `replace_all`:
+/// bounded / ranged / exact / min class quantifiers, MULTILINE anchored
+/// class runs, single-char literal bounded quantifiers, zero-min
+/// quantifiers (with EMPTY spans for empty matches), bare single-char
+/// classes, and the simple split scanner families. Returns None when no
+/// family claims the pattern — the literal-substring fallback applies.
+pub fn replace_family_spans(
+  chars : Array[Char],
+  pattern : String,
+) -> Array[Span]? {
+  if pattern.contains("{") {
+    match bounded_regex_kind(pattern) {
+      Some((kind, max_run)) =>
+        return Some(
+          block_match_spans(
+            chars,
+            fn(c) { bounded_regex_kind_pred(kind, c) },
+            1,
+            max_run,
+          ),
+        )
+      None => ()
+    }
+    match ranged_regex_kind(pattern) {
+      Some((kind, min_run, max_run)) =>
+        return Some(
+          block_match_spans(
+            chars,
+            fn(c) { bounded_regex_kind_pred(kind, c) },
+            min_run,
+            max_run,
+          ),
+        )
+      None => ()
+    }
+    match exact_regex_kind(pattern) {
+      Some((kind, exact_run)) =>
+        return Some(
+          block_match_spans(
+            chars,
+            fn(c) { bounded_regex_kind_pred(kind, c) },
+            exact_run,
+            exact_run,
+          ),
+        )
+      None => ()
+    }
+    match min_regex_kind(pattern) {
+      Some((kind, min_run)) =>
+        return Some(
+          block_match_spans(
+            chars,
+            fn(c) { bounded_regex_kind_pred(kind, c) },
+            min_run,
+            -1,
+          ),
+        )
+      None => ()
+    }
+  }
+  if pattern.has_prefix("^") || pattern.has_suffix("$") {
+    match anchored_regex_kind(pattern) {
+      Some((kind, leading)) => {
+        let pred = fn(c) { bounded_regex_kind_pred(kind, c) }
+        if leading {
+          return Some(line_leading_match_spans(chars, pred))
+        }
+        return Some(line_trailing_match_spans(chars, pred))
+      }
+      None => ()
+    }
+  }
+  match char_bounded_spec(pattern) {
+    Some((c, lo, hi)) =>
+      return Some(block_match_spans(chars, fn(x) { x == c }, lo, hi))
+    None => ()
+  }
+  match zero_min_quantifier_spec(pattern) {
+    Some((kind, literal, max)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { bounded_regex_kind_pred(kind, x) }
+      }
+      let m : Int? = if max < 0 { None } else { Some(max) }
+      return Some(zero_min_match_spans(chars, pred, m))
+    }
+    None => ()
+  }
+  match bare_class_kind(pattern) {
+    Some(kind) =>
+      return Some(
+        block_match_spans(
+          chars,
+          fn(c) { bounded_regex_kind_pred(kind, c) },
+          1,
+          1,
+        ),
+      )
+    None => ()
+  }
+  simple_split_regex_matches(chars, pattern)
 }
