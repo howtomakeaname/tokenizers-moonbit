@@ -59,6 +59,17 @@ fn parse_regex_literal_body(chars : Array[Char]) -> String? {
   let mut i = 0
   while i < chars.length() {
     let c = chars[i]
+    // A brace that is not part of a valid quantifier `{n}` / `{n,}` /
+    // `{n,m}` is a literal character (onig semantics); quantified patterns
+    // never reach the literal scanner, so raw braces here are literal.
+    if c == '{' || c == '}' {
+      if !at_quantifier_brace(chars, i) {
+        sb.write_char(c)
+        i = i + 1
+        continue
+      }
+      return None
+    }
     if c == '\\' {
       if i + 1 >= chars.length() {
         return None
@@ -724,4 +735,38 @@ fn chars_match_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
     }
   }
   true
+}
+
+///|
+/// Whether the `{` at `i` begins a valid quantifier `{n}` / `{n,}` /
+/// `{n,m}` (a `}` alone can never begin one).
+fn at_quantifier_brace(chars : Array[Char], i : Int) -> Bool {
+  if chars[i] != '{' {
+    return false
+  }
+  let n = chars.length()
+  let mut j = i + 1
+  let mut digits = 0
+  while j < n && chars[j] >= '0' && chars[j] <= '9' {
+    j = j + 1
+    digits = digits + 1
+  }
+  if digits == 0 {
+    return false
+  }
+  if j < n && chars[j] == '}' {
+    return true // {n}
+  }
+  if j < n && chars[j] == ',' {
+    j = j + 1
+    let mut digits2 = 0
+    while j < n && chars[j] >= '0' && chars[j] <= '9' {
+      j = j + 1
+      digits2 = digits2 + 1
+    }
+    if j < n && chars[j] == '}' {
+      return true // {n,} or {n,m}
+    }
+  }
+  false
 }
