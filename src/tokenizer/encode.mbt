@@ -726,9 +726,18 @@ fn Tokenizer::finalize_padding(
   match self.padding {
     Some(pp) =>
       match pp.strategy {
-        // Fixed padding applies per-encoding; BatchLongest only in encode_batch.
+        // Fixed padding applies per-encoding; BatchLongest in a single
+        // encode pads to the longest of a one-element batch — the encoding
+        // itself — rounded up to pad_to_multiple_of (HF pads single
+        // encodes too: len 5 with multiple 2 becomes 6).
         Fixed(n) => pad_encoding(enc, n, pp)
-        BatchLongest => enc
+        BatchLongest => {
+          let target = round_up(
+            enc.ids.length(),
+            pp.pad_to_multiple_of.unwrap_or(0),
+          )
+          pad_encoding(enc, target, pp)
+        }
       }
     None => enc
   }

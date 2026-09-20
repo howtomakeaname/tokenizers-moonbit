@@ -1,4 +1,5 @@
 import {
+  "howtomakeaname/tokenizers-moonbit/common",
   "howtomakeaname/tokenizers-moonbit/types",
   "moonbitlang/core/json",
 }

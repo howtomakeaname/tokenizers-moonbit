@@ -169,8 +169,36 @@ pub fn Tokenizer::from_str(
     @processor.PostProcessor::from_json(j)
   })
   let decoder = decode_opt(root, "decoder", j => @decoder.Decoder::from_json(j))
+  // HF's added-vocabulary id allocation (add_tokens): in JSON order,
+  // a token whose content already exists (model vocab or previously added)
+  // reuses that id; anything else gets `get_vocab_size() + counter++` —
+  // the DECLARED id is ignored for non-resolvable content, and duplicate
+  // declarations collapse onto one entry (probed against Python 0.22.2:
+  // fresh content declared 100 over vocab {a:0,b:1} -> 2; two tokens both
+  // declared 5 -> 2 and 3).
+  let added_infos = parse_added_tokens(root)
+  let vocab_size = model.get_vocab_size()
+  let mut alloc_counter = 0
+  let resolved : Map[String, Int] = Map([])
+  let remapped : Array[AddedTokenInfo] = []
+  for info in added_infos {
+    let id = match resolved.get(info.content) {
+      Some(prev) => prev
+      None =>
+        match model.token_to_id(info.content) {
+          Some(mid) => mid
+          None => {
+            let candidate = vocab_size + alloc_counter
+            alloc_counter = alloc_counter + 1
+            candidate
+          }
+        }
+    }
+    resolved[info.content] = id
+    remapped.push({ ..info, id, })
+  }
   let added_vocabulary = AddedVocabulary::new_with_encode_special_tokens(
-    parse_added_tokens(root),
+    remapped,
     @types.get_bool(root, "encode_special_tokens", default=false),
   ).with_normalizer(normalizer)
   let truncation = decode_opt(root, "truncation", parse_truncation)

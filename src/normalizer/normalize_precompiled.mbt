@@ -244,8 +244,11 @@ pub fn precompiled_map_normalize_aligned(
       if cluster_bytes < 6 {
         match precompiled_transform(data, cluster) {
           Some(repl) => {
+            // HF transform -N contract: the replacement maps to the FIRST
+            // consumed char's span; the remaining cluster chars lose
+            // coverage (t5 "cafe◌́" -> "café" gives é the span of "e").
             for _ch in repl {
-              align.push((i, j))
+              align.push((i, i + 1))
             }
             sb.write_string(repl)
             i = j

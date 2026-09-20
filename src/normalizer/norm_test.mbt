@@ -522,8 +522,14 @@ test "normalizer exposes HF-style configuration getters" {
   @test.assert_eq(Normalizer::lowercase_normalizer().kind(), "Lowercase")
   @test.assert_eq(Normalizer::lowercase_normalizer().normalize("ABC"), "abc")
   @test.assert_eq(Normalizer::strip_accents_normalizer().kind(), "StripAccents")
+  // HF 0.22.2 standalone StripAccents only removes already-decomposed
+  // marks; precomposed café is untouched (NFD "cafe" + U+0301 -> "cafe").
   @test.assert_eq(
     Normalizer::strip_accents_normalizer().normalize("café"),
+    "café",
+  )
+  @test.assert_eq(
+    Normalizer::strip_accents_normalizer().normalize("cafe\u{301}"),
     "cafe",
   )
   @test.assert_eq(Normalizer::nmt().kind(), "Nmt")

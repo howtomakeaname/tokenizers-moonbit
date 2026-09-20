@@ -141,7 +141,7 @@ pub fn Normalizer::normalize_aligned(
         None => lowercase
       }
       if should_strip_accents {
-        let (t2, a2) = step(text, align, strip_accents_aligned)
+        let (t2, a2) = step(text, align, bert_strip_accents_aligned)
         text = t2
         align = a2
       }
@@ -200,25 +200,16 @@ fn strip_aligned(
 
 ///|
 fn strip_accents_aligned(input : String) -> (String, Aligned) {
+  // Standalone StripAccents removes already-decomposed marks only
+  // (precomposed chars untouched — same rule as strip_accents).
   let sb = StringBuilder()
   let align : Array[(Int, Int)] = []
   for i, c in input {
-    let cp = c.to_int()
-    if is_combining_mark(cp) {
+    if is_combining_mark(c.to_int()) {
       continue
     }
-    match accent_map().get(cp) {
-      Some(stripped) => {
-        for _ch in stripped {
-          align.push((i, i + 1))
-        }
-        sb.write_string(stripped)
-      }
-      None => {
-        sb.write_char(c)
-        align.push((i, i + 1))
-      }
-    }
+    sb.write_char(c)
+    align.push((i, i + 1))
   }
   (sb.to_string(), align)
 }
@@ -383,6 +374,33 @@ fn replace_literal_aligned(
       sb.write_char(chars[i])
       align.push((i, i + 1))
       i = i + 1
+    }
+  }
+  (sb.to_string(), align)
+}
+
+///|
+/// BertNormalizer strip_accents: NFD-then-drop-marks with span mapping
+/// (precomposed é -> e keeps the char's span; expansions map to it too).
+fn bert_strip_accents_aligned(input : String) -> (String, Array[(Int, Int)]) {
+  let sb = StringBuilder()
+  let align : Array[(Int, Int)] = []
+  for i, c in input {
+    let cp = c.to_int()
+    if is_combining_mark(cp) {
+      continue
+    }
+    match accent_map().get(cp) {
+      Some(stripped) => {
+        for _ch in stripped {
+          align.push((i, i + 1))
+        }
+        sb.write_string(stripped)
+      }
+      None => {
+        sb.write_char(c)
+        align.push((i, i + 1))
+      }
     }
   }
   (sb.to_string(), align)

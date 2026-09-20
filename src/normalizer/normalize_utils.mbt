@@ -1,5 +1,23 @@
 ///|
 fn strip_accents(s : String) -> String {
+  // HF standalone StripAccents removes ALREADY-DECOMPOSED combining marks
+  // only — precomposed characters are untouched (Python 0.22.2:
+  // normalize_str("café") == "café", "cafe" + U+0301 == "cafe"). The
+  // NFD-then-drop behavior belongs to BertNormalizer's strip_accents.
+  let sb = StringBuilder()
+  for c in s {
+    if is_combining_mark(c.to_int()) {
+      continue
+    }
+    sb.write_char(c)
+  }
+  sb.to_string()
+}
+
+///|
+/// BertNormalizer strip_accents: NFD-then-drop-marks (precomposed é -> e),
+/// also removing marks that were already decomposed.
+fn bert_strip_accents(s : String) -> String {
   let sb = StringBuilder()
   for c in s {
     let cp = c.to_int()

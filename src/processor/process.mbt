@@ -284,10 +284,17 @@ fn process_byte_level_offsets(
   if !trim_offsets {
     return enc
   }
-  ignore(add_prefix_space)
   let offsets : Array[(Int, Int)] = []
   for i in 0..<enc.tokens.length() {
-    offsets.push(process_token_offset(enc.tokens[i], enc.offsets[i]))
+    let is_first = i == 0 || enc.offsets[i].0 == 0
+    offsets.push(
+      process_token_offset(
+        enc.tokens[i],
+        enc.offsets[i],
+        add_prefix_space,
+        is_first,
+      ),
+    )
   }
   {
     ids: enc.ids.copy(),
@@ -305,20 +312,28 @@ fn process_byte_level_offsets(
 }
 
 ///|
-fn process_token_offset(token : String, offsets : (Int, Int)) -> (Int, Int) {
-  let leading_spaces = count_leading_byte_spaces(token)
+fn process_token_offset(
+  token : String,
+  offsets : (Int, Int),
+  add_prefix_space : Bool,
+  is_first : Bool,
+) -> (Int, Int) {
+  // Mirrors HF byte_level.rs process_offsets: the leading space added by
+  // `add_prefix_space` on the first token is kept (a single leading space
+  // on the first/zero-anchored token is assumed to be the added one);
+  // every other leading/trailing space shrinks the span, clamped.
+  let mut leading_spaces = count_leading_byte_spaces(token)
   let trailing_spaces = count_trailing_byte_spaces(token)
   let mut start = offsets.0
   let mut stop = offsets.1
-  if leading_spaces > 0 && start > 0 {
+  if leading_spaces > 0 {
+    if is_first && add_prefix_space && leading_spaces == 1 {
+      leading_spaces = 0
+    }
     start = min_int(start + leading_spaces, stop)
   }
-  if trailing_spaces > 0 {
-    if stop >= trailing_spaces {
-      stop = max_int(stop - trailing_spaces, start)
-    } else {
-      stop = start
-    }
+  if trailing_spaces > 0 && stop >= trailing_spaces {
+    stop = max_int(stop - trailing_spaces, start)
   }
   (start, stop)
 }
@@ -354,7 +369,9 @@ fn count_trailing_byte_spaces(token : String) -> Int {
 
 ///|
 fn is_byte_level_space(c : Char) -> Bool {
-  c == 'Ġ'
+  // HF counts the byte-level space char OR any unicode whitespace char
+  // (reachable via added-token content containing a raw space)
+  c == 'Ġ' || @common.is_unicode_whitespace(c.to_int())
 }
 
 ///|

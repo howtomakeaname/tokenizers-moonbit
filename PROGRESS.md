@@ -1130,3 +1130,14 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 - 新增 `src/tokenizer/offsets_alignment_test.mbt`（7 个测试，期望值 Python 0.22.2 实测）：NFD 原文 span、Strip 原文坐标、Prepend 附着、Bert 中文插入附着、ByteLevel 多字节共享 span、Metaspace 前缀附着、NFC/NFD 等价性。
 - 遗留（独立小类，已记录待后续批次）：t5/qwen3 复合偏移 6 例；Metaspace `prepend_scheme=first` 残余 8 例；norm-replace regex 族 2 例；独立 StripAccents 语义（HF 对 standalone StripAccents 似为 no-op，需专项核实）；BatchLongest 单条 encode 的 pad_to_multiple_of 行为；added-single-word NFD 边角 2 例。
 - 全后端 native(423)/js(423)/wasm(400)/wasm-gc(400) 通过；fmt/check/info 干净（新增公开 API：`Normalizer::normalize_aligned`、`normalize_unicode_aligned`、`precompiled_*_aligned`、`expand_align` 已入 .mbti）。
+### 2026-09-20 行为对比扫描第五批：残余小类清零（合成与真实扫描 100%）
+
+- **t5[4] charsmap 簇 span**：字素簇整体替换的 span 应按 HF `-N` 契约映射到**首个**被消费字符（"cafe◌́"→"café" 的 é 取 "e" 的 span），修正后真实模型扫描 **100/100**。
+- **BatchLongest 单条 encode padding**：HF 对单条 encode 也应用 padding（longest=自身长度，再按 `pad_to_multiple_of` 取整；实测 len 5 + multiple 2 → 6）。`finalize_padding` 的 BatchLongest 分支从 no-op 改为按 multiple 取整 pad。
+- **ByteLevel trim_offsets 权威算法**：精确复刻 HF `byte_level.rs process_offsets`——首个/零锚 token 上由 `add_prefix_space` 添加的**单个**前导空格保留（`is_first && aps && leading==1`），其余前导/尾导空格裁剪并钳制；全空白 token 坍缩到其末端（"ĠĠ"→(2,2)）。旧实现用 `start>0` 近似该规则，两者在 (0,0)-锚定与真实前导空格场景分歧；一处旧测试期望（Roberta aps=false pair (0,2)）经 Python 实测证伪并更新为 (1,2)。
+- **standalone StripAccents 语义**：HF 的独立 StripAccents 只删除**已分解**的组合记号（预组合 é 原样保留：normalize("café")=="café"），与 BertNormalizer 的 strip_accents（先 NFD 再删）不同；拆分 `strip_accents`/`bert_strip_accents`（含 aligned 变体）分别实现。
+- **added-token id 分配（HF add_tokens 规则）**：内容已存在于模型词表时**复用模型 id**（忽略声明 id）；声明 id 与**不同**词表 token 冲突时重分配为 `get_vocab_size() + 递增计数`（实测 vocab{hello:5,world:6,UNK:9} + 声明 id5 → 重分配为 3）。两处旧测试断言声明 id 的期望按 HF 真值更新。
+- 效果：行为对比扫描合成 **1008/1008、真实模型 100/100，双双 100%**（起点：合成 813/1008、真实 59/100）。扫描驱动固化到 `/tmp/parity-driver/cmd/sweep`（不再被探针覆盖）。
+- 新发现（记录为下一批缺口）：normalizer Replace 不支持 regex 族的文本级静默 no-op 仍待 load 期显式门（需穷举 chain 支持族防误拒）。评审确认 pair + `add_prefix_space` 场景与 HF 一致（早先疑似分歧为误报，已从缺口清单移除）。
+- 独立评审后修正（2026-09-20 续）：added-token id 分配改为 HF `add_tokens` 的真实算法——按 JSON 顺序，内容可解析（模型词表或已添加）则复用该 id，否则一律 `get_vocab_size() + 递增计数`（**完全忽略**声明 id；实测：新内容声明 100 于 vocab{a:0,b:1} → 2；两条同声明 id 5 → 2 与 3，不再静默遮蔽）；byte-level trim 的空白计数补上 unicode 空白字符（可达于含原始空格的 added-token 内容）；移除误报的 pair+aps 缺口与过期注释。
+- 新增 `src/tokenizer/parity_residuals_test.mbt`（4 个测试锁定上述语义）。全后端 native(432)/js(432)/wasm(409)/wasm-gc(409) 通过；fmt/check/info 干净。
