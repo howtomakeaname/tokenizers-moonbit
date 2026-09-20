@@ -175,11 +175,11 @@ fn Tokenizer::encode_raw_with_hooks_impl(
         // scalar arithmetic bit-for-bit).
         fn to_orig(
           base_offset : Int,
-          align : Array[(Int, Int)],
+          align : Align,
           s : Int,
           e : Int,
         ) -> (Int, Int) {
-          let (a, b) = @normalizer.expand_align(align, s, e)
+          let (a, b) = align.expand(s, e)
           (base_offset + a, base_offset + b)
         }
         // Stage 2: split out normalized added tokens within it.
@@ -389,30 +389,51 @@ fn char_substring(text : String, s : Int, e : Int) -> String {
 }
 
 ///|
+
+///|
+/// Lazy alignment column: identity normalizers (absent normalizer or a
+/// component hook) keep a zero-allocation sentinel that expands spans with
+/// the exact clamping semantics of a materialized (i, i+1) column.
+priv enum Align {
+  Identity(Int)
+  Table(Array[(Int, Int)])
+}
+
+///|
+fn Align::expand(self : Align, s : Int, e : Int) -> (Int, Int) {
+  match self {
+    Identity(n) =>
+      if n == 0 || e <= s {
+        (0, 0)
+      } else {
+        let lo = if s < 0 { 0 } else { s }
+        let si = if lo < n { lo } else { n - 1 }
+        let ei = if e - 1 < n { e - 1 } else { n - 1 }
+        (si, ei + 1)
+      }
+    Table(col) => @normalizer.expand_align(col, s, e)
+  }
+}
+
+///|
 fn Tokenizer::normalize_with_alignment(
   self : Tokenizer,
   text : String,
   hooks : TokenizerComponentHooks,
-) -> (String, Array[(Int, Int)]) {
+) -> (String, Align) {
   match hooks.normalize {
     Some(f) => {
       let out = f(text)
-      let align : Array[(Int, Int)] = []
-      for i in 0..<text.char_length() {
-        align.push((i, i + 1))
-      }
-      (out, align)
+      // the identity column is relative to the ORIGINAL text length
+      (out, Align::Identity(text.char_length()))
     }
     None =>
       match self.normalizer {
-        Some(nm) => nm.normalize_aligned(text)
-        None => {
-          let align : Array[(Int, Int)] = []
-          for i in 0..<text.char_length() {
-            align.push((i, i + 1))
-          }
-          (text, align)
+        Some(nm) => {
+          let (t, col) = nm.normalize_aligned(text)
+          (t, Align::Table(col))
         }
+        None => (text, Align::Identity(text.char_length()))
       }
   }
 }
