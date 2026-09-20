@@ -363,20 +363,120 @@ pub fn replace_anchored_simple_regex(
   match anchored_regex_kind(pattern) {
     Some((kind, leading)) =>
       if leading {
+        // HF/onig `^` is MULTILINE: the anchor matches at the string start
+        // AND after every \n / \r\n boundary (probed 0.22.2:
+        // "^\s+" on "\tA\n  B\nC" -> "#A\n#B\nC").
         Some(
-          replace_leading_runs(s, content, fn(c) {
+          replace_line_leading_runs(s, content, fn(c) {
             bounded_regex_kind_pred(kind, c)
           }),
         )
       } else {
+        // `$` matches before every \n and at the string end; the newline
+        // itself is kept ("\s+$" on "x\t\n56\r\n78" keeps the \n).
         Some(
-          replace_trailing_runs(s, content, fn(c) {
+          replace_line_trailing_runs(s, content, fn(c) {
             bounded_regex_kind_pred(kind, c)
           }),
         )
       }
     None => None
   }
+}
+
+///|
+/// MULTILINE `^` + class-run (e.g. `^\s+`): a match starts at a line head
+/// (string start or after any `\n`) and extends greedily over predicate
+/// chars, newlines included; one non-overlapping replacement per match
+/// (HF probes: "^\s+" on "\n\n  B" -> "#B", on "A\n\n  B" -> "A\n#B").
+fn replace_line_leading_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+) -> String {
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder()
+  let mut i = 0
+  let mut at_line_head = true
+  while i < n {
+    if at_line_head {
+      let g = i
+      let mut j = i
+      while j < n && pred(chars[j]) {
+        j = j + 1
+      }
+      if j > g {
+        sb.write_string(content)
+        i = j
+        at_line_head = false // consumed chars decide; recompute below
+        at_line_head = i == 0 || chars[i - 1] == '\n'
+        continue
+      }
+      at_line_head = false
+      continue
+    }
+    sb.write_char(chars[i])
+    if chars[i] == '\n' {
+      at_line_head = true
+    }
+    i = i + 1
+  }
+  sb.to_string()
+}
+
+///|
+/// MULTILINE `$` + class-run (e.g. `\s+$`): the match is the longest
+/// prefix of a greedy predicate run that ends at a line boundary (right
+/// before a `\n` or at the string end); the newline is kept
+/// (HF probes: "\s+$" on "x  \n\n  y" -> "x#\n  y" — match "  \n").
+fn replace_line_trailing_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+) -> String {
+  let chars = s.to_array()
+  let n = chars.length()
+  let sb = StringBuilder()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let start = i
+      let mut g = i
+      while g < n && pred(chars[g]) {
+        g = g + 1
+      }
+      // longest j in (start, g] with boundary at j
+      let mut j = -1
+      if g == n {
+        j = g
+      } else {
+        // scan back for the nearest '\n' inside (start, g]
+        let mut k = g
+        while k > start {
+          if chars[k] == '\n' {
+            j = k
+            break
+          }
+          k = k - 1
+        }
+      }
+      if j > start {
+        sb.write_string(content)
+        i = j
+        continue
+      }
+      // no boundary-anchored match: copy the run verbatim, continue after
+      for t in start..<g {
+        sb.write_char(chars[t])
+      }
+      i = g
+      continue
+    }
+    sb.write_char(chars[i])
+    i = i + 1
+  }
+  sb.to_string()
 }
 
 ///|

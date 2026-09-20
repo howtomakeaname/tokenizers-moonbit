@@ -8,6 +8,10 @@ import {
 // Values
 pub fn anchored_regex_kind(String) -> (Int, Bool)?
 
+pub fn ascii_class_kind_override(String, Int) -> Int
+
+pub fn bare_class_kind(String) -> Int?
+
 pub fn bounded_regex_kind(String) -> (Int, Int)?
 
 pub fn bounded_regex_kind_pred(Int, Char) -> Bool
