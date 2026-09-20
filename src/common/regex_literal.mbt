@@ -392,44 +392,29 @@ fn is_regex_escaped_literal(c : Char) -> Bool {
 }
 
 ///|
+
+///|
+/// Unicode `\d` test (Nd): binary search over the empirically generated
+/// `decimal_ranges` (probed against 0.22.2 — includes Unicode-14+
+/// additions such as U+1FBF0 MATHEMATICAL SANS-SERIF DIGIT ZERO that
+/// the previous hard-coded interval list missed; stays Nd-only,
+/// distinct from the full-N `is_unicode_number` of `\p{N}` spellings).
 pub fn is_decimal_number(c : Char) -> Bool {
   let u = c.to_int()
-  // ASCII digits
-  (u >= 0x0030 && u <= 0x0039) ||
-  // Arabic-Indic
-  (u >= 0x0660 && u <= 0x0669) ||
-  // Extended Arabic-Indic
-  (u >= 0x06F0 && u <= 0x06F9) ||
-  // Devanagari
-  (u >= 0x0966 && u <= 0x096F) ||
-  // Bengali
-  (u >= 0x09E6 && u <= 0x09EF) ||
-  // Gurmukhi
-  (u >= 0x0A66 && u <= 0x0A6F) ||
-  // Gujarati
-  (u >= 0x0AE6 && u <= 0x0AEF) ||
-  // Oriya
-  (u >= 0x0B66 && u <= 0x0B6F) ||
-  // Tamil
-  (u >= 0x0BE6 && u <= 0x0BEF) ||
-  // Telugu
-  (u >= 0x0C66 && u <= 0x0C6F) ||
-  // Kannada
-  (u >= 0x0CE6 && u <= 0x0CEF) ||
-  // Malayalam
-  (u >= 0x0D66 && u <= 0x0D7F) ||
-  // Thai
-  (u >= 0x0E50 && u <= 0x0E59) ||
-  // Lao
-  (u >= 0x0ED0 && u <= 0x0ED9) ||
-  // Tibetan
-  (u >= 0x0F20 && u <= 0x0F29) ||
-  // Myanmar
-  (u >= 0x1040 && u <= 0x1049) ||
-  // Khmer
-  (u >= 0x17E0 && u <= 0x17E9) ||
-  // Fullwidth
-  (u >= 0xFF10 && u <= 0xFF19)
+  let mut lo = 0
+  let mut hi = decimal_ranges.length() - 1
+  while lo <= hi {
+    let mid = (lo + hi) / 2
+    let (start, stop) = decimal_ranges[mid]
+    if u < start {
+      hi = mid - 1
+    } else if u > stop {
+      lo = mid + 1
+    } else {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -646,15 +631,19 @@ fn simple_ranged_regex_matches(
 }
 
 ///|
-fn number_run_matches(chars : Array[Char], max_digits~ : Int) -> Array[Span] {
+fn number_run_matches(
+  chars : Array[Char],
+  max_digits~ : Int,
+  pred~ : (Char) -> Bool,
+) -> Array[Span] {
   let out : Array[Span] = []
   let n = chars.length()
   let mut i = 0
   while i < n {
-    if is_decimal_number(chars[i]) {
+    if pred(chars[i]) {
       let start = i
       let mut count = 0
-      while i < n && is_decimal_number(chars[i]) && count < max_digits {
+      while i < n && pred(chars[i]) && count < max_digits {
         i = i + 1
         count = count + 1
       }
@@ -670,6 +659,7 @@ fn number_run_matches(chars : Array[Char], max_digits~ : Int) -> Array[Span] {
 fn number_exact_matches(
   chars : Array[Char],
   exact_digits~ : Int,
+  pred~ : (Char) -> Bool,
 ) -> Array[Span] {
   let out : Array[Span] = []
   if exact_digits <= 0 {
@@ -678,9 +668,9 @@ fn number_exact_matches(
   let n = chars.length()
   let mut i = 0
   while i < n {
-    if is_decimal_number(chars[i]) {
+    if pred(chars[i]) {
       let start = i
-      while i < n && is_decimal_number(chars[i]) {
+      while i < n && pred(chars[i]) {
         i = i + 1
       }
       let run = i - start
