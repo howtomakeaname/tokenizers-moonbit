@@ -526,6 +526,17 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       @common.is_word_char(c)
     })
   }
+  // bracket \w is class-context (quirks excluded, probed)
+  if pattern == "[\\w]+" || pattern == "[^\\W]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_word_char_class(c)
+    })
+  }
+  if pattern == "[^\\w]+" || pattern == "[\\W]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      !@common.is_word_char_class(c)
+    })
+  }
   // `[A-Za-z0-9_]+` (and \b-wrapped) is ASCII-only (HF: é/中 stay)
   if pattern == "[A-Za-z0-9_]+" || pattern == "\\b[A-Za-z0-9_]+\\b" {
     return @common.replace_char_runs(s, content, fn(c) {
@@ -537,6 +548,16 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       @common.is_word_char(c)
     })
   }
+  if pattern == "^[\\w]+" || pattern == "^[^\\W]+" {
+    return @common.replace_leading_runs(s, content, fn(c) {
+      @common.is_word_char_class(c)
+    })
+  }
+  if pattern == "^[^\\w]+" || pattern == "^[\\W]+" {
+    return @common.replace_leading_runs(s, content, fn(c) {
+      !@common.is_word_char_class(c)
+    })
+  }
   if pattern == "^[A-Za-z0-9_]+" {
     return @common.replace_leading_runs(s, content, fn(c) {
       @common.is_ascii_word_char(c)
@@ -545,6 +566,16 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern == "\\w+$" {
     return @common.replace_trailing_runs(s, content, fn(c) {
       @common.is_word_char(c)
+    })
+  }
+  if pattern == "[\\w]+$" || pattern == "[^\\W]+$" {
+    return @common.replace_trailing_runs(s, content, fn(c) {
+      @common.is_word_char_class(c)
+    })
+  }
+  if pattern == "[^\\w]+$" || pattern == "[\\W]+$" {
+    return @common.replace_trailing_runs(s, content, fn(c) {
+      !@common.is_word_char_class(c)
     })
   }
   if pattern == "[A-Za-z0-9_]+$" {
