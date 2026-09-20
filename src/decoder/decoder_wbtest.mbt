@@ -478,12 +478,14 @@ test "Strip and CTC decoders have direct coverage" {
     Decoder::Strip(content=' ', start=1, stop=2).decode(["  hi   ", " ok "]),
     " hi ok",
   )
+  // HF 0.22.2: cleanup=false keeps the word delimiter literal
+  // (dedup + pad removal still apply).
   @test.assert_eq(
     Decoder::CTC(pad_token="_", word_delimiter_token="|", cleanup=false).decode([
         "h", "h", "i", "_", "|", "t", "t", "h", "e", "r", "e",
       ],
     ),
-    "hi there",
+    "hi|there",
   )
   @test.assert_eq(
     Decoder::CTC(pad_token="_", word_delimiter_token="|", cleanup=true).decode([

@@ -152,6 +152,15 @@ E5-small, MixedBread and SmolLM2.
   delimiter of a run, matching HF 0.22.2.
 - **Offsets:** char-based by default, relative to the original text. Optional
   byte-offset encode APIs are available for HuggingFace-style byte offsets.
+- **Decoder semantics:** BPEDecoder maps the suffix to a space in every
+  token except the last (where it is removed); Metaspace decode drops ALL
+  replacement chars in the first token for `always`/`first` prepend
+  schemes (`never` maps them to spaces); CTC collapses consecutive
+  duplicates, deletes the pad token string anywhere (including inside
+  tokens), maps the word delimiter to a space only with `cleanup=true`
+  (it stays literal otherwise); Replace decoders are per-token
+  replace-all and patterns outside the supported deterministic regex
+  families fail explicitly instead of silently replacing literally.
 - **Truncation overflow windows:** encode mirrors HF `tokenizers` 0.22.2:
   windows land in `enc.overflowing` for both directions and `stride = 0` /
   `stride > 0`, post-processors wrap each window, and fixed padding pads

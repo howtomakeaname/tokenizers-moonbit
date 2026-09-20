@@ -1097,3 +1097,13 @@ tests/data/      *.full.json（gitignore）+ *_expected.json（gitignore）
 - 验证：真实 t5 tokenizer + Python 0.22.2 实测——NFC 与 NFD 形式的 "café" 均编码为 [11949]（token "▁café"），混合输入 ids/tokens 与 Python 完全一致（此前 NFD 形式产出 `▁cafe` + unk）；行为对比扫描真实模型矩阵中 t5 的 ids/tokens 失败清零（剩余失败全部为 offsets 映射，归入下一批）。
 - 新增 `src/integration/charsmap_grapheme_test.mbt`（fixture 缺失自跳过）：NFC/NFD 等价、混合输入精确 ids、jamo 不组合三项锁定。
 - 全后端 native(400)/js(400)/wasm(377)/wasm-gc(377) 通过；fmt/check/info 干净；无公开 API 变化。
+### 2026-09-20 行为对比扫描第三批：decoder 边缘语义对齐
+
+- 依据入库探针矩阵（`reports/parity-artifacts/decoder-probe-0.22.2.md`，17 decoder × 23 用例）逐项对 Python `tokenizers` 0.22.2 实测复核并修复四类分歧（每项均先在 Python 复测真值）：
+  - **BPEDecoder suffix**：非末 token 的 suffix 替换为空格，末 token 仅删除（`["ab</w>","cd</w>"]` → `"ab cd"`、`["ab","cd</w>"]` → `"abcd"`）；此前对所有 token 一律加空格。
+  - **Metaspace 解码**：`always`/`first` 方案丢弃首 token 内**全部**替换符（含 token 中部，`["▁▁double"]` → `"double"`、`["▁x▁y"]` → `"xy"`），此前只删一个前导；`never` 方案首 token 的替换符也映射为空格（此前未区分 scheme）。
+  - **CTC**：折叠连续重复后，pad 串在任意位置（含 token 内部）删除、空 token 丢弃；`cleanup=true` 时对 join 后文本做 wordpiece cleanup 再把词分隔符串映射为空格，`cleanup=false` 时分隔符保留字面量（实测 `["hi","|","there"]` → `"hi|there"`）；此前仅整 token 精确匹配 pad/分隔符。
+  - **Replace 显式失败**：`replace_all` 对超出受支持 regex 族的 pattern（如 `l+o`）原静默退化为字面量替换（违反项目"显式失败"原则），新增 `replace_pattern_supported` 判定，Replace decoder 遇不支持 pattern 显式 abort。
+- 探针纠错记录：agent 探针表中"Replace 作用于 join 后整串/可跨 token 边界"一条经直接复测证伪——Regex 变体同样是逐 token replace-all（`l+o` 命中 `"lo"` token、`e.*o` 不跨 `"h"+"ello"` 边界），本库原逐 token 实现正确，未引入 join 化改动。
+- 新增 `src/decoder/decoder_parity_wbtest.mbt`（5 个测试锁定上述语义与支持性判定）。
+- 全后端 native(412)/js(412)/wasm(389)/wasm-gc(389) 通过；行为对比扫描无回归（合成 853/1008、真实 59/100，剩余失败均为 offsets 映射批次）；fmt/check/info 干净。
