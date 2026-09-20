@@ -4,6 +4,10 @@
 // match-span families via `@common.replace_family_spans`; this sweep
 // pins that equivalence over every hardcoded SPM spelling in
 // `replace_all` plus the generic quantifier/class shapes.
+//
+// NOTE: a few rows (e.g. `a+`) are patterns the load gate intentionally
+// REJECTS — both paths then fall to the literal no-op and equivalence
+// still holds; inclusion here is not a claim of HF parity for those.
 
 ///|
 test "replace normalize and normalize_aligned produce identical text" {
