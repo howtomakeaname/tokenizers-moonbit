@@ -915,3 +915,68 @@ test "replace regex literal braces" {
   let two = @normalizer.Normalizer::Replace(pattern="[0-9]{2}", content="#")
   @test.assert_eq(two.normalize("x55y"), "x#y")
 }
+
+///|
+/// Review round 2: plain-`+` ASCII spellings, bare Unicode letter family,
+/// `{,n}` explicit rejection, decoder bare classes.
+test "replace regex ascii plus spellings and unicode letter bare" {
+  // plain + (no anchor) previously bypassed the ASCII override
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="[0-9]+", content="#").normalize(
+      "a０b",
+    ),
+    "a０b",
+  )
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="[0-9]+", content="#").normalize(
+      "a55b",
+    ),
+    "a#b",
+  )
+  // inverse of ASCII class IS Unicode-wide: ０ matches [^0-9]
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="[^0-9]+", content="#").normalize(
+      "a０b",
+    ),
+    "#",
+  )
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="[A-Za-z0-9_]+", content="#").normalize(
+      "aé中b",
+    ),
+    "#é中#",
+  )
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="[^A-Za-z0-9_]+", content="#").normalize(
+      "１２３",
+    ),
+    "#",
+  )
+  // bare \p{L} is the UNICODE letter family (é/中 match), not [A-Za-z]
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="\\p{L}", content="#").normalize(
+      "aé中b",
+    ),
+    "####",
+  )
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="\\p{L}", content="#").normalize(
+      "中5é_0",
+    ),
+    "#5#_0",
+  )
+  @test.assert_eq(
+    @normalizer.Normalizer::Replace(pattern="\\P{L}", content="#").normalize(
+      "a中5",
+    ),
+    "a中#",
+  )
+  // `{,n}` is a quantifier in onig: unsupported here -> load rejected
+  @test.assert_raise(() => {
+    @normalizer.Normalizer::from_json(
+      @json.parse(
+        "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{,3}\"},\"content\":\"X\"}",
+      ),
+    )
+  })
+}
