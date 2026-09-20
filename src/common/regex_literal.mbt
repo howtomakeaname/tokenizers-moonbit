@@ -646,36 +646,6 @@ fn simple_ranged_regex_matches(
 }
 
 ///|
-fn leading_run_match(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] {
-  let out : Array[Span] = []
-  let n = chars.length()
-  let mut i = 0
-  while i < n && pred(chars[i]) {
-    i = i + 1
-  }
-  if i > 0 {
-    out.push({ start: 0, stop: i, })
-  }
-  out
-}
-
-///|
-fn trailing_run_match(
-  chars : Array[Char],
-  pred : (Char) -> Bool,
-) -> Array[Span] {
-  let out : Array[Span] = []
-  let mut i = chars.length()
-  while i > 0 && pred(chars[i - 1]) {
-    i = i - 1
-  }
-  if i < chars.length() {
-    out.push({ start: i, stop: chars.length(), })
-  }
-  out
-}
-
-///|
 fn number_run_matches(chars : Array[Char], max_digits~ : Int) -> Array[Span] {
   let out : Array[Span] = []
   let n = chars.length()
@@ -780,4 +750,81 @@ fn at_quantifier_brace(chars : Array[Char], i : Int) -> Bool {
     }
   }
   false
+}
+
+///|
+/// MULTILINE `^` + class-run spans (onig): a match starts at a line head
+/// (string start or after any `\n`) and extends greedily over predicate
+/// chars, newlines included. HF Split probes: "^\\s+" style on
+/// "A\n\nB" splits at the line head after A.
+fn leading_run_match_multiline(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  let n = chars.length()
+  let mut i = 0
+  let mut at_line_head = true
+  while i < n {
+    if at_line_head {
+      let start = i
+      while i < n && pred(chars[i]) {
+        i = i + 1
+      }
+      if i > start {
+        out.push({ start, stop: i, })
+      }
+      at_line_head = false
+      continue
+    }
+    if chars[i] == '\n' {
+      at_line_head = true
+    }
+    i = i + 1
+  }
+  out
+}
+
+///|
+/// MULTILINE `$` + class-run spans: the match is the longest prefix of a
+/// greedy predicate run ending at a line boundary (before any `\n` or at
+/// the string end), mirroring replace_line_trailing_runs.
+fn trailing_run_match_multiline(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if pred(chars[i]) {
+      let start = i
+      let mut g = i
+      while g < n && pred(chars[g]) {
+        g = g + 1
+      }
+      let mut j = -1
+      if g == n {
+        j = g
+      } else {
+        let mut k = g
+        while k > start {
+          if chars[k] == '\n' {
+            j = k
+            break
+          }
+          k = k - 1
+        }
+      }
+      if j > start {
+        out.push({ start, stop: j, })
+        i = j
+        continue
+      }
+      i = g
+      continue
+    }
+    i = i + 1
+  }
+  out
 }
