@@ -18,11 +18,11 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→0.4.0；0.4.0 后 main 已合入行为对比扫描五批（§7.7），下次发版建议 **0.5.0**。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→0.5.0；0.5.0 后 main 已合入 PR #16–#19（\w Unicode 经验表、kind 26/27 括号分裂、零下限量词 + aligned 路径统一），下次发版 **0.6.0**。
 
 ## 2. 当前状态与下一步（TL;DR）
 
-**状态（2026-09-20）**：行为对比扫描**双双全绿**——合成 1008/1008、真实模型 100/100（Python 0.22.2 基准）；39 模型 fixture 对拍全绿；测试 native/js 432、wasm/wasm-gc 409；CI 8/8（含 HF benchmark smoke）。
+**状态（2026-09-21）**：行为对比扫描**双双全绿**——合成 1134/1134、真实模型 100/100（Python 0.22.2 基准）；39 模型 fixture 对拍全绿；测试 native/js 452、wasm/wasm-gc 429；CI 8/8（含 HF benchmark smoke）。Replace text/aligned 双路径已统一到共享匹配 span 分发器（PR #19），71 拼写 ×20 输入等价扫描在库内常驻。
 
 ### 待办队列
 
@@ -31,12 +31,16 @@
 | P1 | normalizer Replace 不支持 regex 族的**加载期显式门** | 穷举 chain 支持族做判定，未知族 load 期 `UnsupportedComponent`，不得误拒现有 39 模型 | 需先枚举 `normalize_utils.mbt` replace_all 全部族；decoder 侧同类门见 PR #8（`replace_pattern_supported`） |
 | P2 | identity 对齐列 lazy 化 | `tokenizer-encode-special-switch-mixed` 微基准回到 +14% 以内 | encode 热路径每归一化字符一个 tuple（PR #9 评审 nit；identity 情形可延迟构造） |
 | P2 | `replace_pattern_supported` 与 `replace_all` 分发表去重 | 从 `@common` 暴露统一族判定，两处调用同一实现 | 两处表会漂移（PR #8 评审 nit） |
-| P3 | 发版 0.5.0 | PR + CI 全绿 + `moon publish` + 干净项目安装后跑行为扫描验证 | 含 offsets 对齐、added-id 分配等行为变化；semver minor（无 breaking） |
+| P2 | issue #20：`\p{N}`/`\p{Number}` 仅映射 Nd，onig N 含 Nl+No | `²`(No) 在 `\p{Number}+`/`\P{N}+` 下与 HF 逐例一致；`\d` 保持 Nd-only | 拆 kind：`\d`/`[0-9]`(Nd) vs `\p{N}` 拼写(全 N)，Nl/No 经验区间表（PR #19 评审发现） |
+| P2 | issue #21：`\b` 边界用 ASCII 词定义，onig 为 Unicode 词 | `\b[A-Za-z0-9_]+\b` 于 `"a²b"` 与 HF 一致（无匹配） | 边界判定改 `is_word_char`（裸表含怪癖）后重探针（PR #19 评审发现） |
+| P3 | 发版 0.6.0 | PR + CI 全绿 + `moon publish` + 干净项目安装后跑行为扫描验证 | 含 0.5.0 后 PR #16–#19：\w Unicode 表、kind 26/27、零下限量词、aligned 路径统一；semver minor |
 | P3 | 高级 trainer 大语料 EM 对拍 | 与 HF trainer 在真实语料逐 id 对比；需外部数据集 | 当前 Unigram 为 deterministic ranking+shrinking 近似（§7.4） |
 | P3 | Hub sidecar 内容解析与错误映射 | 参照 hf-tokenizers 源码逐项对拍 | R11 遗留 |
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-21 PR #19**（8 commit，两轮评审）：`{0}`/`{0,m}`/`{0,}` 零下限量词 replace 语义 + 评审抓出的 **encode 路径 aligned 静默 no-op 结构性修复**。①零下限族走 onig 全局替换空匹配规则（prev_end 邻接跳过 / 空匹配插入并复制一字符 / 串尾仅非邻接插入 / 空输入无匹配），字面量与类基两种 base，normalizer/decoder 接入；②评审 blocking：`replace_aligned` 原先只查 simple_split 扫描器——**全部量词族（`a{2}`、`\s{1,2}`、多行锚定、零下限）在 encode 路径静默跳过**（tokenizer.json 加载成功但 encode 不替换，正是 no-silent-mismatch 红线；`a{2}` 族为 main 既有洞）。修复：text/aligned 双路径共用 `@common.replace_family_spans` 匹配 span 分发器（`zero_min_match_spans` 含空 span、`block_match_spans` 统一 bounded/exact/min/ranged 块语义、多行 leading/trailing span 镜像、`char_bounded_spec` 提取），`replace_zero_min_runs`/`replace_char_bounded_runs` 重构为同源 span 步进——两路径结构性不可分歧，未匹配模式双侧同走 literal 回退；③偏移规则 HF 实测锁定：非空匹配 content 锚定**最后匹配字符** span、空匹配于 p 锚 `(p-1,p)`、串首钳 `(0,0)`（`a{0,2}`/"zaaz" → `(0,0)(0,1)(2,3)(3,4)(3,4)` 逐位一致）；④评审 F2：max 上限 100000（onig 实测 `a{0,100000}` 加载 / `a{0,100001}` 报错，同时消除 Int 回绕→无界隐患）；⑤71 拼写 ×20 输入 text≡aligned 等价扫描进库常驻 + decoder 逐 token 零下限锁定。两轮评审 APPROVE：行为评审 2,111 项 MoonBit-vs-HF 对拍 0 项归因本 PR；代码评审 16,039 项 text-vs-aligned 0 分歧。评审另发现两处 main 既有分歧 → issue #20（`\p{N}` 仅映射 Nd）与 #21（`\b` ASCII 词边界）。验证：452/452（native/js）、429/429（wasm/wasm-gc）、双扫描 1134+100 全绿、CI 8/8。
+
 - **2026-09-21 PR #18**（8 commit，评审修正后）：kind 26/27 括号拼写表分裂（PR #17 评审 F3 设计落地）。`[\w]`/`[^\W]`→26（word-class，怪癖排除）、`[\W]`/`[^\w]`→27，接入 bounded/ranged/quantified(min+exact)/anchored 表 + bare_class_kind + scanner/normalizer/decoder 三链——恢复 PR #16 被回退的括号拼写支持且语义正确（HF 实测怪癖字符类上下文不匹配、run 在怪癖处断开、`\w` 裸拼写包含怪癖）。评审 18,060 项交叉对拍确认核心设计正确后抓 3 项：F1 bounded 表 kind-13 行遮蔽新 27 行（行序修正）、F2 ranged {3,4} 漏反集拼写（`[^\W]{3,4}` 加载后 decoder SIGABRT / `[^\w]{3,4}` 静默 kind-13）、F3 Split 门未加括号 +拼写（scanner 行不可达）；另确认 F4 副作用修复（single_word 边界怪癖字符不再阻断提取，`²TAG` 现可提取 TAG）并补锁定测试。验证：445/445 四后端、双扫描 1134+100 全绿、17+7 项 HF 探针逐例一致。
 
 - **2026-09-21 PR #17**（7 commit，评审修正后）：`\w` 谓词 Unicode 覆盖（PR #16 评审 F7，1851 项对拍中 72 项分歧主因）。初版类别推导（L*/M*/Nd/Nl/Pc + 6 个 onig 怪癖）**被评审证伪**——本地 unicodedata 13.0 而 onig 追踪新 Unicode（U+2C2F/U+9FFD 等 14+ 新增遗漏，498 边界分歧）；改为**全量经验生成**（content-swap 双探针对 0..0x110000 每码点探测）。评审三项发现全部修正：F1 表为 fn 返回字面量致每次调用分配 794 元组（**~190x 热路径回归**，评审实测 685ns vs 3.6ns）→ hoist 为模块级 let + 二分；F2 只扫平面 0-2 漏 9,371 码点（CJK Ext G/H、变体选择符补充）→ 全量重生 797 区间/144,671 码点，边界 ±1 验证 0 分歧；F3 onig 六怪癖字符（²³¹¼½¾）**裸 `\w` 匹配但类上下文（`[\w]`/`[^\w]`）与 single_word 边界不匹配**——统一谓词无法两全，PR #16 的括号拼写规范化被**回退**（按 no-silent-mismatch 原则显式拒绝优于错语义），single_word 边界改用新 `is_word_char_class`（无怪癖表），拼写感知表分裂（kind 26/27 显式括号行）记录为后续设计。评审另实证推断了 §5.7 旧记录中 ˆ/全角数字两条 stale 结论（评审探针自身的 '#' content 碰撞）。验证：442/442 四后端、双扫描 1134+100 全绿、141k 边界探针 0 分歧。
@@ -72,7 +76,7 @@
 - **语料**：`scripts/parity_cases.py` 生成 42 个合成 tokenizer 配置（富词表 BPE ~90 tokens 含多字符 merges/大小写/标点/重音/全角/CJK/数字 + WordPiece）× 20 条边界输入（全角 apostrophe、CJK 混排、NFD 组合、代码、连续空白、连标点等）+ 5 个真实模型（gpt2/bert/t5/qwen3/llama3_2）同输入矩阵；golden 由本机 Python `tokenizers` 0.22.2 产出，比较 ids/tokens/offsets 与 decode 往返。
 - **驱动**：`/tmp/parity-driver`（moon.workspace 软链本仓库 `/tmp/tokenizer-moonbit`），`moon run cmd/sweep --target native`；`PARITY_MODE=real` 跑真实模型。**探针写 `cmd/drv`，勿覆盖 `cmd/sweep`**。
 - **语料再生成**：`python3 scripts/parity_cases.py /tmp/parity-sweep`（真实模型目录 `PARITY_MODELS_DIR` 可覆盖）。
-- **当前基线：合成 1008/1008、真实 100/100**。改行为前先跑，改后回归对比；新增修复应加锁定测试进仓库（期望值先在 Python 实测）。
+- **当前基线：合成 1134/1134、真实 100/100**。改行为前先跑，改后回归对比；新增修复应加锁定测试进仓库（期望值先在 Python 实测）。
 
 ### 39 模型 fixture 对拍
 
@@ -193,7 +197,7 @@ moon test --target native --deny-warn                      # 同样跑 js/wasm/w
 4. **pair overflow 叉积 vs 0.23-dev**：按用户确认锁定 0.22.2；HF 主分支已改每侧独立窗口，若未来切换基准需重做（背景与实测数据在 PR #3）。
 5. **性能遗留**：大词表 JSON 冷加载（llama from_str ~1.14x）；identity 对齐列分配（lazy 化在队列 P2）；nightly 趋势落盘未建。
 6. **Unigram 采样随机性**：确定性种子（可复现），按需换真随机源。
-7. **已收敛的 Replace/正则对抗分歧**（PR #13 评审发现，PR #14/#16 修复并全部 HF 实测对齐）：多行锚定（onig 逐行 `^`/`$` + 跨换行贪婪 run，normalizer/Split/decoder 三端一致）、ASCII class 拼写（`[0-9]`/`[A-Za-z0-9_]` 全量词/锚定/裸拼写）、字面量大括号（`a{b` 字面量化、`{,n}` 显式拒绝）、裸单字符类逐字符替换（双侧）、`[\w]` 族括号拼写（canonicalize 到 `\w`/`\W` 快捷形式，Unicode-wide 与 HF 一致）、锚定 `[\r\n]+`、单字符字面量有界量词 `c{n}`/`c{n,}`/`c{n,m}`（窗口 1–4，`{n,}` 整 run 消费；元字符基 `.{n}`/`?{n}` 等显式拒绝）。**仍显式不支持**：`{0,m}` 空匹配插入语义（HF 在每字符间插 content，属另一族）、`a{2,1}` 逆序区间（HF 接受并等价 `{1,2}`，本库拒绝）、class 内大括号、
+7. **已收敛的 Replace/正则对抗分歧**（PR #13 评审发现，PR #14/#16 修复并全部 HF 实测对齐）：多行锚定（onig 逐行 `^`/`$` + 跨换行贪婪 run，normalizer/Split/decoder 三端一致）、ASCII class 拼写（`[0-9]`/`[A-Za-z0-9_]` 全量词/锚定/裸拼写）、字面量大括号（`a{b` 字面量化、`{,n}` 显式拒绝）、裸单字符类逐字符替换（双侧）、`[\w]` 族括号拼写（canonicalize 到 `\w`/`\W` 快捷形式，Unicode-wide 与 HF 一致）、锚定 `[\r\n]+`、单字符字面量有界量词 `c{n}`/`c{n,}`/`c{n,m}`（窗口 1–4，`{n,}` 整 run 消费；元字符基 `.{n}`/`?{n}` 等显式拒绝）、零下限量词 `c{0}`/`c{0,m}`/`c{0,}` 与类基（PR #19：onig 空匹配规则，max 上限 100000 与 onig 一致；text/aligned 双路径统一走 `replace_family_spans`，71 拼写等价扫描常驻）。**仍显式不支持**：`a{2,1}` 逆序区间（HF 接受并等价 `{1,2}`，本库拒绝）、class 内大括号、
 
 ## 6. 开发约定
 
