@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-21 发版 0.5.0**：0.4.0 后累计 PR #6–#14（行为对比扫描五批 + 工具链漂移 7/8 层 + lazy align/正则分歧批）。含行为变化：decode join、charsmap 字素簇、decoder 边缘语义、offsets 原文参照、added-token id 分配、Replace 显式门、ASCII class/多行锚定/裸类。semver minor（新增公开 API：normalize_aligned 族、is_supported_replace_regex、unicode_punct_ranges、is_hf_punctuation、kind extends）。
+
 - **2026-09-21 PR #14**（8 commit，两轮评审）：队列 P2 + §5.7 四类对抗分歧修复。①**lazy identity 对齐列**：`Align::Identity(len)` 零分配替代逐字符 tuple（钳制算术逐位等价，评审穷举+随机化证明；独立实测 no-normalizer encode ~1.7x 提速）；②**字面量大括号**：非量词 `{`/`}` 字面字符（onig），`{,n}` 视为量词→显式拒绝（评审抓到首版顺序 bug：`{,n}` 检查排在 digits==0 早退后被跳过）；③**ASCII class 拼写**：新增 kind 22–25，五个 kind 入口后置覆盖——评审抓到 plain-`+` 拼写绕过全部入口（共享 scanner/normalizer/decoder 双路径硬编码 Unicode 分支），已全部拆分；裸 `\p{L}` 误映射 kind 6 修正为 Unicode kind 7/17；④**多行锚定**按 onig 重写（行首贪婪跨换行、最长边界前缀匹配）；⑤**裸类** exact-1 逐字符替换双侧接入。评审另证伪我三处测试期望（`[^0-9]+` 于全角为单 run、`\P{L}` 保留字母、decoder Replace 逐 token）。流程教训：c8591d4 描述了多行锚定重写但漏提交 replace.mbt 本体（本地绿/CI 红暴露）——commit 前应 `git status` 核对文件清单。验证：438/438 四后端、双扫描 1134+100 全绿、27 项 HF 探针逐项对齐。
 
 - **2026-09-20 PR #13**（10 commit）：队列 P1+P2+覆盖扩展。①扫描语料加 pair 电池（3 对 (a,b)/用例，ids/tokens/offsets/type_ids 四字段，+126 检查全过——pair 路径干净，留作回归）；②`@common.is_supported_replace_regex` 统一 replace-regex 族判定（PR #8 评审 nit 去重）；③normalizer Replace 不支持 regex 族加载期 `UnsupportedComponent`（39 fixture 审计仅用支持族，集成 28/28 实跑）；④decoder 门改用共享谓词（评审实测两表 0 判定差）。评审修正：门的锁定测试曾被 catch 吞掉失败（改 `assert_raise` 并以"禁用门→测试红"验证非空转）、谓词文档过度声明收窄 + 四类对抗性分歧入 §5 队列。**工具链漂移第 7/8 层**：`implicit_impl_as_method`（51 个 derive 类型补显式 `pub extend`、9 包补 debug 导入、.mbti 再生成）与 `test_unqualified_package`（黑盒测试同包名 `@pkg.` 限定，词法感知迁移 ~685 处）；纯机械，扫描仍 1134/1134 + 100/100。本地工具链已升 0.1.20260920 与 CI 对齐。
