@@ -50,3 +50,24 @@ test "byte-level trim follows the authoritative rules" {
   @test.assert_eq(p.tokens, ["a", "Ġb"])
   @test.assert_eq(p.offsets, [(0, 1), (1, 2)])
 }
+
+///|
+/// Standalone StripAccents removes only already-decomposed combining
+/// marks (precomposed é untouched); BertNormalizer strip_accents does
+/// NFD-then-drop (é -> e).
+test "standalone strip accents differs from bert strip accents" {
+  // via a full tokenizer with an "é"-vs-"cafe"-sensitive vocab:
+  // standalone keeps precomposed é intact, Bert strip_accents maps it to e
+  let standalone_json =
+    #|{"version":"1.0","normalizer":{"type":"StripAccents"},"model":{"type":"WordLevel","vocab":{"café":0,"cafe":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let standalone = Tokenizer::from_str(standalone_json)
+  @test.assert_eq(standalone.encode("café", add_special_tokens=false).ids, [0])
+  @test.assert_eq(
+    standalone.encode("cafe\u{301}", add_special_tokens=false).ids,
+    [1],
+  )
+  let bert_json =
+    #|{"version":"1.0","normalizer":{"type":"BertNormalizer","clean_text":false,"handle_chinese_chars":false,"strip_accents":true,"lowercase":false},"model":{"type":"WordLevel","vocab":{"café":0,"cafe":1,"[UNK]":2},"unk_token":"[UNK]"}}
+  let bert = Tokenizer::from_str(bert_json)
+  @test.assert_eq(bert.encode("café", add_special_tokens=false).ids, [1])
+}

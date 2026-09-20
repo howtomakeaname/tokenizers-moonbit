@@ -41,7 +41,7 @@ pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
         None => lowercase
       }
       if should_strip_accents {
-        s = strip_accents(s)
+        s = bert_strip_accents(s)
       }
       if lowercase {
         s = to_lowercase(s)
