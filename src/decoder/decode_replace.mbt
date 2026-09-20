@@ -86,12 +86,20 @@ fn decode_replace_direct(
   if pattern == "\\D{3,}" ||
     pattern == "[\\D]{3,}" ||
     pattern == "[^\\d]{3,}" ||
-    pattern == "[^0-9]{3,}" ||
-    pattern == "\\P{N}{3,}" ||
+    pattern == "[^0-9]{3,}" {
+    return decode_replace_min_non_digit_direct(tokens, content, min_run=3)
+  }
+  // \\P{N} is the complement of FULL N (Nd + Nl + No; probed 0.22.2)
+  if pattern == "\\P{N}{3,}" ||
     pattern == "\\P{Number}{3,}" ||
     pattern == "[^\\p{N}]{3,}" ||
     pattern == "[^\\p{Number}]{3,}" {
-    return decode_replace_min_non_digit_direct(tokens, content, min_run=3)
+    return decode_replace_min_runs_direct(
+      tokens,
+      content,
+      fn(c) { !@common.is_unicode_number(c) },
+      min_run=3,
+    )
   }
   if pattern == "[^\\s\\p{L}\\p{N}]{4}" ||
     pattern == "[^\\s\\p{N}\\p{L}]{4}" ||
@@ -638,3 +646,41 @@ fn decode_replace_trailing_runs_direct(
 
 ///|
 /// Transform a token list (HF decode_chain semantics).
+
+///|
+/// Per-token min-run replace with a caller-supplied predicate (the
+/// `\P{N}{n,}` family needs the FULL-N complement, distinct from
+/// `decode_replace_min_non_digit_direct`'s Nd complement).
+fn decode_replace_min_runs_direct(
+  tokens : Array[String],
+  content : String,
+  pred : (Char) -> Bool,
+  min_run~ : Int,
+) -> String {
+  let sb = StringBuilder()
+  for t in tokens {
+    let pending = StringBuilder()
+    let mut run = 0
+    for c in t {
+      if pred(c) {
+        pending.write_char(c)
+        run = run + 1
+      } else {
+        if run >= min_run {
+          sb.write_string(content)
+        } else {
+          sb.write_string(pending.to_string())
+        }
+        pending.reset()
+        run = 0
+        sb.write_char(c)
+      }
+    }
+    if run >= min_run {
+      sb.write_string(content)
+    } else {
+      sb.write_string(pending.to_string())
+    }
+  }
+  sb.to_string()
+}
