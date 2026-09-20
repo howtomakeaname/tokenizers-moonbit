@@ -88,3 +88,51 @@ test "ctc decoder substring semantics match 0.22.2" {
   @test.assert_eq(raw.decode(["hi", "|", "there"]), "hi|there")
   @test.assert_eq(raw.decode(["a", "<pad>x", "b"]), "axb")
 }
+
+///|
+/// BPEDecoder replaces ALL suffix occurrences per token (mid-token
+/// included), space for non-last tokens and "" for the last.
+test "bpe decoder replaces mid-token suffix occurrences" {
+  let d = Decoder::BPEDecoder(suffix="</w>")
+  @test.assert_eq(d.decode(["a</w>b", "cd"]), "a bcd")
+  @test.assert_eq(d.decode(["a</w>b</w>", "cd"]), "a b cd")
+  @test.assert_eq(d.decode(["cd", "a</w>b"]), "cdab")
+}
+
+///|
+/// CTC cleanup runs per token, so a token with a trailing space keeps it.
+test "ctc cleanup is per token" {
+  let d = Decoder::CTC(
+    pad_token="<pad>",
+    word_delimiter_token="|",
+    cleanup=true,
+  )
+  @test.assert_eq(d.decode(["hi ", "!"]), "hi !")
+}
+
+///|
+/// wordpiece cleanup exact rule list: no ";" / ":" rules (spaces stay),
+/// " ' " contracts fully, " do not" -> " don't".
+test "wordpiece cleanup rule list matches 0.22.2 exactly" {
+  let d = Decoder::wordpiece(prefix="##", cleanup=true)
+  @test.assert_eq(
+    d.decode(["do", "n't", "stop", ";", "test", ":", "ok", ",", "yes", "."]),
+    "don't stop ; test : ok, yes.",
+  )
+  // apostrophe as its own token keeps its prepended space (" ' " rule
+  // needs the trailing space inside one token)
+  @test.assert_eq(d.decode(["a", "'", "b"]), "a ' b")
+  // the " do not" rule fires within one token surface only
+  @test.assert_eq(d.decode(["a", "do", "not"]), "a do not")
+  @test.assert_eq(d.decode(["a", " do not"]), "a  don't")
+}
+
+///|
+/// The public Decoder::decode standalone Replace path agrees with the
+/// decode_chain gate: supported patterns decode, unsupported ones are
+/// rejected by replace_pattern_supported (the decode path aborts).
+test "standalone replace decode uses supported patterns" {
+  let d = Decoder::Replace(pattern="\\s+", content=" ")
+  @test.assert_eq(d.decode(["a b", "  c"]), "a b c")
+  @test.assert_eq(replace_pattern_supported("l+o"), false)
+}

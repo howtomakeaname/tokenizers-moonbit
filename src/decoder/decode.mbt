@@ -44,6 +44,28 @@ pub fn Decoder::decode_chain(
 }
 
 ///|
+
+///|
+fn is_regex_meta_char(c : Char) -> Bool {
+  let u = c.to_int()
+  u == 0x2E || // .
+  u == 0x2A || // *
+  u == 0x2B || // +
+  u == 0x3F || // ?
+  u == 0x5B || // [
+  u == 0x5D || // ]
+  u == 0x28 || // (
+  u == 0x29 || // )
+  u == 0x7C || // |
+  u == 0x5E || // ^
+  u == 0x24 || // $
+  u == 0x5C || // backslash
+  u == 0x7B || // {
+  u == 0x7D || // }
+  u == 0x2D // - (inside classes)
+}
+
+///|
 fn join(tokens : Array[String]) -> String {
   let sb = StringBuilder()
   for t in tokens {
@@ -116,6 +138,11 @@ fn decode_sentencepiece_sequence_fast(
   }
   let pat = pattern.to_array()
   if pat.length() != 1 {
+    return None
+  }
+  // A single-char pattern that is regex syntax (e.g. ".") must not be
+  // treated literally here; leave it to the general gated path.
+  if is_regex_meta_char(pat[0]) {
     return None
   }
   let sb = StringBuilder()
@@ -197,13 +224,17 @@ fn decode_ctc(
       out.push(stripped)
     }
   }
+  // HF ctc.rs applies wordpiece cleanup and the delimiter replacement
+  // PER TOKEN (["hi ","!"] with cleanup -> "hi !", not the joined "hi!").
   if cleanup {
-    let cleaned = cleanup_text(join(out))
-    if word_delimiter_token.length() > 0 {
-      [@common.replace_literal(cleaned, word_delimiter_token, " ")]
-    } else {
-      [cleaned]
-    }
+    out.map(t => {
+      let cleaned = cleanup_text(t)
+      if word_delimiter_token.length() > 0 {
+        @common.replace_literal(cleaned, word_delimiter_token, " ")
+      } else {
+        cleaned
+      }
+    })
   } else {
     out
   }
@@ -249,39 +280,45 @@ fn decode_wordpiece(
   prefix : String,
   cleanup : Bool,
 ) -> Array[String] {
-  let sb = StringBuilder()
+  // HF wordpiece.rs decode_chain: per token — i == 0 verbatim, others
+  // strip the prefix when present or prepend a space — then cleanup runs
+  // PER TOKEN (not on the joined text).
+  let out : Array[String] = []
   for i, t in tokens {
-    if i == 0 {
-      sb.write_string(t)
+    let base = if i == 0 {
+      t
     } else if t.has_prefix(prefix) {
-      sb.write_string(drop_prefix(t, prefix))
+      drop_prefix(t, prefix)
     } else {
-      sb.write_char(' ')
-      sb.write_string(t)
+      " " + t
+    }
+    if cleanup {
+      out.push(cleanup_text(base))
+    } else {
+      out.push(base)
     }
   }
-  let s = sb.to_string()
-  [if cleanup { cleanup_text(s) } else { s }]
+  out
 }
 
 ///|
 fn decode_bpe(tokens : Array[String], suffix : String) -> Array[String] {
-  // HF 0.22.2 BPEDecoder: in every token except the last, suffix
-  // occurrences are replaced with a space; in the last token they are
-  // simply removed (["ab</w>","cd</w>"] -> "ab cd", ["ab","cd</w>"] ->
-  // "abcd").
+  // HF 0.22.2 BPEDecoder (bpe.rs): per token,
+  // `token.replace(suffix, if last { "" } else { " " })` — an unconditional
+  // substring replace of ALL suffix occurrences, mid-token included
+  // (["a</w>b","cd"] -> "a bcd", ["a</w>b</w>","cd"] -> "a b cd").
+  if suffix.is_empty() {
+    // Pathological empty suffix: Rust's replace inserts between chars;
+    // keep tokens unchanged rather than explode (documented divergence).
+    return tokens
+  }
   let n = tokens.length()
   let out : Array[String] = []
   for i, t in tokens {
-    if t.has_suffix(suffix) {
-      let stripped = drop_suffix(t, suffix)
-      if i == n - 1 {
-        out.push(stripped)
-      } else {
-        out.push(stripped + " ")
-      }
+    if i == n - 1 {
+      out.push(@common.replace_literal(t, suffix, ""))
     } else {
-      out.push(t)
+      out.push(@common.replace_literal(t, suffix, " "))
     }
   }
   out
@@ -332,17 +369,6 @@ fn drop_prefix(s : String, prefix : String) -> String {
 }
 
 ///|
-fn drop_suffix(s : String, suffix : String) -> String {
-  let sc = suffix.char_length()
-  let chars = s.to_array()
-  let sb = StringBuilder()
-  for i in 0..<(chars.length() - sc) {
-    sb.write_char(chars[i])
-  }
-  sb.to_string()
-}
-
-///|
 fn strip_token(t : String, content : Char, start : Int, stop : Int) -> String {
   let chars = t.to_array()
   let n = chars.length()
@@ -370,40 +396,21 @@ fn strip_token(t : String, content : Char, start : Int, stop : Int) -> String {
 
 ///|
 fn cleanup_text(s : String) -> String {
-  // HF's WordPiece/CTC cleanup is a fixed set of ASCII-space contractions and
-  // punctuation rewrites. Implement it as one deterministic pass instead of the
-  // old twelve literal replace passes; this is the hot path for BERT decode.
-  let chars = s.to_array()
-  let n = chars.length()
-  let sb = StringBuilder()
-  let mut i = 0
-  while i < n {
-    if chars[i] == ' ' && i + 1 < n && should_drop_cleanup_space(chars, i) {
-      i = i + 1
-    } else {
-      sb.write_char(chars[i])
-      i = i + 1
-    }
-  }
-  sb.to_string()
-}
-
-///|
-fn should_drop_cleanup_space(chars : Array[Char], i : Int) -> Bool {
-  let next = chars[i + 1]
-  if next == '.' ||
-    next == ',' ||
-    next == '?' ||
-    next == '!' ||
-    next == ';' ||
-    next == ':' ||
-    next == '\'' {
-    return true
-  }
-  i + 3 < chars.length() &&
-  next == 'n' &&
-  chars[i + 2] == '\'' &&
-  chars[i + 3] == 't'
+  // HF wordpiece.rs cleanup(): the exact ordered literal replaces. The
+  // previous single-pass approximation drifted on three rules (it dropped
+  // spaces before ";" and ":" which HF keeps, left the trailing space of
+  // " ' ", and lacked " do not" -> " don't").
+  let out = @common.replace_literal(s, " .", ".")
+  let out = @common.replace_literal(out, " ?", "?")
+  let out = @common.replace_literal(out, " !", "!")
+  let out = @common.replace_literal(out, " ,", ",")
+  let out = @common.replace_literal(out, " ' ", "'")
+  let out = @common.replace_literal(out, " n't", "n't")
+  let out = @common.replace_literal(out, " 'm", "'m")
+  let out = @common.replace_literal(out, " do not", " don't")
+  let out = @common.replace_literal(out, " 's", "'s")
+  let out = @common.replace_literal(out, " 've", "'ve")
+  @common.replace_literal(out, " 're", "'re")
 }
 
 // Replacement for HF decoder Replace. HF distinguishes literal String patterns

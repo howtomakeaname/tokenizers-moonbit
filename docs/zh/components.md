@@ -108,12 +108,14 @@ E5-small、MixedBread、SmolLM2。
   `handle_chinese_chars` 职责），与 HF 一致。`merged_with_previous`/
   `merged_with_next` 只合并 run 的第一个/最后一个分隔符，与 HF 0.22.2 一致。
 - **Offsets：** 默认返回字符偏移；可通过 byte-offset encode API 对齐 HF byte offsets。
-- **Decoder 语义：** BPEDecoder 除最后一个 token 外把 suffix 替换为空格（最后
-  一个仅删除）；Metaspace 解码在 `always`/`first` 方案下丢弃首 token 内全部替
-  换符（`never` 则映射为空格）；CTC 先折叠连续重复 token、删除任意位置（含
-  token 内部）的 pad 串，`cleanup=true` 时才把词分隔符映射为空格（否则保留字
-  面量）；Replace 类 decoder 为逐 token replace-all，超出受支持 regex 族的
-  pattern 显式报错而非静默按字面量替换。
+- **Decoder 语义：** BPEDecoder 对每个 token 做子串级 suffix 全量替换——非末
+  token 替换为空格、末 token 仅删除；Metaspace 解码在 `always`/`first` 方案下
+  丢弃首 token 内全部替换符（`never` 则映射为空格）；CTC 先折叠连续重复
+  token、删除任意位置（含 token 内部）的 pad 串，`cleanup=true` 时逐 token 应
+  用 wordpiece cleanup 后再把词分隔符映射为空格（否则保留字面量）；WordPiece
+  与 CTC 的 cleanup 使用与上游一致的精确规则表；Replace 类 decoder 为逐
+  token replace-all，超出受支持 regex 族的 pattern 在独立与 Sequence 两条路
+  径上均显式报错而非静默按字面量替换。
 - **截断溢出窗口：** encode 与 HF `tokenizers` 0.22.2 一致：两种方向、
   `stride = 0` / `stride > 0` 的窗口均写入 `enc.overflowing`，后处理器包裹
   每个窗口，固定 padding 同步 pad 窗口。pair encode 复刻 0.22.x 的窗口叉积
