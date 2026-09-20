@@ -542,7 +542,9 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
   } else if open + 3 == n - 1 {
     -1 // {0,} unbounded
   } else {
-    // {0,m}
+    // {0,m}: onig rejects repeat bounds above 100000 ("too big number for
+    // repeat range", probed 0.22.2: `a{0,100000}` loads, `a{0,100001}`
+    // errors), so the spec stops matching there and the load gate raises.
     let mut v = 0
     let mut k = open + 3
     while k < n - 1 {
@@ -551,6 +553,9 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
         return None
       }
       v = v * 10 + (c.to_int() - '0'.to_int())
+      if v > 100000 {
+        return None
+      }
       k = k + 1
     }
     v

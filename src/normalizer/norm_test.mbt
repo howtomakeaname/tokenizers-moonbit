@@ -1150,3 +1150,27 @@ test "replace zero-min quantifiers follow onig empty-match semantics" {
   )
   @test.assert_eq(bracket.normalize("a²b"), "#²#") // quirk is class-non-word
 }
+
+///|
+/// Onig rejects repeat bounds above 100000 ("too big number for repeat
+/// range", probed 0.22.2: `a{0,100000}` loads, `a{0,100001}` errors) —
+/// the zero-min spec stops matching there so the load gate raises
+/// instead of accepting an overflowed bound.
+test "zero-min quantifier max bound follows onig 100000 limit" {
+  @test.assert_eq(
+    @common.zero_min_quantifier_spec("a{0,100000}"),
+    Some((-1, Some('a'), 100000)),
+  )
+  @test.assert_eq(@common.zero_min_quantifier_spec("a{0,100001}"), None)
+  @test.assert_eq(
+    @common.zero_min_quantifier_spec("a{0,99999999999999999999}"),
+    None,
+  )
+  @test.assert_raise(() => {
+    @normalizer.Normalizer::from_json(
+      @json.parse(
+        "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{0,100001}\"},\"content\":\"#\"}",
+      ),
+    )
+  })
+}
