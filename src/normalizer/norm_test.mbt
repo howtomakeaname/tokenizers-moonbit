@@ -1025,11 +1025,10 @@ test "replace regex w-bracket, anchored newline, literal quantifiers" {
   @test.assert_eq(lit_range.normalize("zaaaay"), "z#ay")
   let lit_min = @normalizer.Normalizer::Replace(pattern="a{2,}", content="#")
   @test.assert_eq(lit_min.normalize("zaaaaz"), "z#z")
-  // {0,m} empty-match semantics stay outside the deterministic subset
-  let bad_json : Json = @json.parse(
-    "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{0,2}\"},\"content\":\"X\"}",
-  )
-  @test.assert_raise(() => @normalizer.Normalizer::from_json(bad_json))
+  // {0,m} zero-minimum quantifiers are now supported (onig empty-match
+  // semantics, HF-probed: a{0,2} on "zaaz" -> "#z#z#")
+  let zm = @normalizer.Normalizer::Replace(pattern="a{0,2}", content="#")
+  @test.assert_eq(zm.normalize("zaaz"), "#z#z#")
 }
 
 ///|
@@ -1113,4 +1112,65 @@ test "replace regex bracket review fixes" {
   // bare w bounded is unchanged (quirks still word)
   let bare_b = @normalizer.Normalizer::Replace(pattern="\\w{1,2}", content="#")
   @test.assert_eq(bare_b.normalize("²a"), "#")
+}
+
+///|
+/// Zero-minimum quantifiers (`a{0}`, `a{0,m}`, `a{0,}`, class bases):
+/// onig global-replace empty-match semantics, every expectation probed
+/// against Python 0.22.2 (empty match adjacent to previous match end is
+/// skipped; inserted empty matches copy one char; end-of-string empty
+/// inserts only when not adjacent; empty input never matches).
+test "replace zero-min quantifiers follow onig empty-match semantics" {
+  let zm = @normalizer.Normalizer::Replace(pattern="a{0,2}", content="#")
+  @test.assert_eq(zm.normalize("zaaz"), "#z#z#")
+  @test.assert_eq(zm.normalize("zzz"), "#z#z#z#")
+  @test.assert_eq(zm.normalize("aaa"), "##") // greedy consumes, no trailing empty
+  @test.assert_eq(zm.normalize(""), "")
+  @test.assert_eq(zm.normalize("ab"), "#b#") // mid empty adjacent-skipped
+  @test.assert_eq(zm.normalize("ba"), "#b#")
+  let exact0 = @normalizer.Normalizer::Replace(pattern="a{0}", content="#")
+  @test.assert_eq(exact0.normalize("zaz"), "#z#a#z#")
+  @test.assert_eq(exact0.normalize("aaa"), "#a#a#a#") // even matching chars copied
+  let unbounded = @normalizer.Normalizer::Replace(pattern="a{0,}", content="#")
+  @test.assert_eq(unbounded.normalize("zaaz"), "#z#z#")
+  let digit = @normalizer.Normalizer::Replace(pattern="[0-9]{0,2}", content="#")
+  @test.assert_eq(digit.normalize("z55y"), "#z#y#")
+  let uni_digit = @normalizer.Normalizer::Replace(
+    pattern="\\d{0,2}",
+    content="#",
+  )
+  @test.assert_eq(uni_digit.normalize("z55y"), "#z#y#")
+  let word = @normalizer.Normalizer::Replace(pattern="\\w{0,2}", content="#")
+  @test.assert_eq(word.normalize("ab!"), "#!#")
+  let ws = @normalizer.Normalizer::Replace(pattern="\\s{0,2}", content="#")
+  @test.assert_eq(ws.normalize("x  y"), "#x#y#")
+  let bracket = @normalizer.Normalizer::Replace(
+    pattern="[\\w]{0,2}",
+    content="#",
+  )
+  @test.assert_eq(bracket.normalize("a²b"), "#²#") // quirk is class-non-word
+}
+
+///|
+/// Onig rejects repeat bounds above 100000 ("too big number for repeat
+/// range", probed 0.22.2: `a{0,100000}` loads, `a{0,100001}` errors) —
+/// the zero-min spec stops matching there so the load gate raises
+/// instead of accepting an overflowed bound.
+test "zero-min quantifier max bound follows onig 100000 limit" {
+  @test.assert_eq(
+    @common.zero_min_quantifier_spec("a{0,100000}"),
+    Some((-1, Some('a'), 100000)),
+  )
+  @test.assert_eq(@common.zero_min_quantifier_spec("a{0,100001}"), None)
+  @test.assert_eq(
+    @common.zero_min_quantifier_spec("a{0,99999999999999999999}"),
+    None,
+  )
+  @test.assert_raise(() => {
+    @normalizer.Normalizer::from_json(
+      @json.parse(
+        "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{0,100001}\"},\"content\":\"#\"}",
+      ),
+    )
+  })
 }

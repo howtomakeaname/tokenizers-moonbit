@@ -292,8 +292,12 @@ fn replace_aligned(
   content : String,
 ) -> (String, Aligned) {
   let chars = input.to_array()
+  // Same match-span families as the text path's `replace_all` — the two
+  // paths cannot diverge on which replacements apply (previously only the
+  // simple split scanner was consulted here, silently skipping every
+  // quantifier family during encode).
   let spans : Array[(Int, Int)] = match
-    @common.simple_split_regex_matches(chars, pattern) {
+    @common.replace_family_spans(chars, pattern) {
     Some(list) => {
       let conv : Array[(Int, Int)] = []
       for sp in list {
@@ -301,13 +305,11 @@ fn replace_aligned(
       }
       conv
     }
-    None => []
+    None => return replace_literal_aligned(input, pattern, content)
   }
   let sb = StringBuilder()
   let align : Array[(Int, Int)] = []
   let mut pos = 0
-  let content_len = content.char_length()
-  ignore(content_len)
   for span in spans {
     if span.0 < pos {
       continue
@@ -317,8 +319,14 @@ fn replace_aligned(
       align.push((k, k + 1))
     }
     // HF attaches every content char to the span of the LAST char of
-    // the match (transform +0 contract on the final matched char).
-    let last_char_span = (span.1 - 1, span.1)
+    // the match (transform +0 contract on the final matched char). For
+    // an EMPTY match at p this is (p-1, p) — the preceding char's span —
+    // clamped to (0, 0) at the string start (probed 0.22.2:
+    // `a{0,2}` on "zaaz" -> "#z#z#" with offsets (0,0),(0,1),(2,3),
+    // (3,4),(3,4); `a{0}` on "zaz" -> "#z#a#z#" with the empty at 1 on
+    // (0,1)).
+    let anchor = if span.1 == 0 { 0 } else { span.1 - 1 }
+    let last_char_span = (anchor, span.1)
     for _ch in content {
       align.push(last_char_span)
     }
