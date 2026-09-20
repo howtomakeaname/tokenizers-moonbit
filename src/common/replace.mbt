@@ -544,7 +544,22 @@ pub fn replace_char_bounded_runs(
     return None
   }
   let c = chars[0]
-  if c == '{' || c == '}' || c == '\\' || c == '[' || c == ']' {
+  // metacharacter bases excluded (mirrors char_bounded_quantifier_shape):
+  // `.{n}` is any-char in HF; `?{n}`/`+{n}`/etc. are construction errors
+  if c == '{' ||
+    c == '}' ||
+    c == '\\' ||
+    c == '[' ||
+    c == ']' ||
+    c == '.' ||
+    c == '^' ||
+    c == '$' ||
+    c == '*' ||
+    c == '+' ||
+    c == '?' ||
+    c == '(' ||
+    c == ')' ||
+    c == '|' {
     return None
   }
   let mut i = 2
@@ -562,8 +577,9 @@ pub fn replace_char_bounded_runs(
   if i < n && chars[i] == ',' {
     i = i + 1
     if i == n - 1 {
-      // {n,} — unbounded above; cap at 64 for determinism
-      hi = 64
+      // {n,} — unbounded above; consume the whole run (HF-exact, matches
+      // the sibling replace_min_char_runs handlers)
+      hi = 1_000_000_000
     } else {
       let mut hi_digits = 0
       hi = 0
@@ -575,6 +591,7 @@ pub fn replace_char_bounded_runs(
       if hi_digits == 0 || hi < lo || hi > 4 {
         return None
       }
+      ignore(hi)
     }
   } else if i != n - 1 {
     return None

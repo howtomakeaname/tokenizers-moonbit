@@ -399,10 +399,10 @@ pub fn bare_class_kind(pattern : String) -> Int? {
 }
 
 ///|
-/// Canonicalize `\w`-family bracket spellings to their explicit ASCII
-/// class form so every quantifier/anchored table accepts them for free
-/// (HF treats `[\w]` and `[A-Za-z0-9_]` identically; the ASCII-vs-\w
-/// split is preserved via the kind override on the canonical spelling).
+/// Canonicalize `\w`-family bracket spellings to their equivalent
+/// shortcut form (\w/\W) so every quantifier/anchored table accepts
+/// them for free. HF keeps these Unicode-wide (probed: `[\w]+` on
+/// "ab é" -> "# #"), unlike the ASCII `[A-Za-z0-9_]` spelling.
 pub fn canonicalize_word_class(pattern : String) -> String {
   if !pattern.contains("[\\w]") &&
     !pattern.contains("[^\\w]") &&
@@ -429,7 +429,23 @@ pub fn char_bounded_quantifier_shape(pattern : String) -> Bool {
     return false
   }
   let c = chars[0]
-  if c == '{' || c == '}' || c == '\\' || c == '[' || c == ']' {
+  // metacharacters are excluded: `.{n}` is any-char in HF and
+  // `?{n}`/`+{n}`/etc. are construction errors there — both must not
+  // load here as literal runs
+  if c == '{' ||
+    c == '}' ||
+    c == '\\' ||
+    c == '[' ||
+    c == ']' ||
+    c == '.' ||
+    c == '^' ||
+    c == '$' ||
+    c == '*' ||
+    c == '+' ||
+    c == '?' ||
+    c == '(' ||
+    c == ')' ||
+    c == '|' {
     return false
   }
   let mut i = 2
