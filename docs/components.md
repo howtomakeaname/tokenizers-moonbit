@@ -150,6 +150,16 @@ E5-small, MixedBread and SmolLM2.
   (that is BertNormalizer's `handle_chinese_chars` concern), matching HF.
   `merged_with_previous`/`merged_with_next` merge only the first/last
   delimiter of a run, matching HF 0.22.2.
+- **Offsets (original-referential):** encode offsets are char offsets into
+  the ORIGINAL text, mirroring HuggingFace's NormalizedString alignment
+  semantics: normalization keeps a per-normalized-char original span
+  (NFD marks collapse onto the base char, NFC composition keeps the
+  first composed-from char's span, Strip/Prepend/Replace/BertNormalizer/charsmap each map
+  their edits back), added-vocabulary segmentation and model-token
+  emission convert through the alignment column, and ByteLevel/Metaspace
+  piece rewrites (multi-byte expansion, space->▁, prefix inserts) map
+  back to input char coordinates. Verified by the behavioral sweep
+  (synthetic 857 -> 971/1008; real models 59 -> 94/100).
 - **Offsets:** char-based by default, relative to the original text. Optional
   byte-offset encode APIs are available for HuggingFace-style byte offsets.
 - **Decoder semantics:** BPEDecoder substring-replaces every suffix

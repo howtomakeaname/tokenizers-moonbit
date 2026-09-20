@@ -107,6 +107,13 @@ E5-small、MixedBread、SmolLM2。
   ASCII 符号（`$ + < = > ^ \` | ~`）通过 ASCII 并集计为标点。BertPreTokenizer 不再对 CJK 逐字切分（那是 BertNormalizer 的
   `handle_chinese_chars` 职责），与 HF 一致。`merged_with_previous`/
   `merged_with_next` 只合并 run 的第一个/最后一个分隔符，与 HF 0.22.2 一致。
+- **Offsets（原文参照）：** encode 偏移为指向**原文**的字符偏移，对齐 HuggingFace
+  NormalizedString 的 alignment 语义：归一化阶段为每个归一化字符维护原文 span
+  （NFD 组合记号折叠到基础字符、NFC 组合保留首个被组合字符的 span、Strip/Prepend/
+  Replace（内容附着命中末字符 span）/BertNormalizer/charsmap 各自映射回原文），added-vocabulary 切分与模型
+  token 发射经对齐列转换，ByteLevel/Metaspace 的 piece 改写（多字节扩展、空格→▁、
+  前缀插入）映射回输入字符坐标。行为对比扫描验证：合成 857 → 971/1008、真实模型
+  59 → 94/100。
 - **Offsets：** 默认返回字符偏移；可通过 byte-offset encode API 对齐 HF byte offsets。
 - **Decoder 语义：** BPEDecoder 对每个 token 做子串级 suffix 全量替换——非末
   token 替换为空格、末 token 仅删除；Metaspace 解码在 `always`/`first` 方案下

@@ -108,16 +108,27 @@ fn is_byte_self_mapped(b : Int) -> Bool {
 fn nmt_normalize(s : String) -> String {
   let sb = StringBuilder()
   for c in s {
-    let u = c.to_int()
-    if u == 0 || u == 0xFFFD || is_nmt_control_or_format(u) {
-      continue
-    }
-    if is_nmt_space(u) {
-      sb.write_char(' ')
-    } else {
-      sb.write_char(c)
-    }
+    sb.write_string(nmt_char_replacement(c.to_int()))
   }
+  sb.to_string()
+}
+
+///|
+/// The Nmt per-character replacement ("" drops the char).
+fn nmt_char_replacement(u : Int) -> String {
+  if u == 0 || u == 0xFFFD || is_nmt_control_or_format(u) {
+    return ""
+  }
+  if is_nmt_space(u) {
+    return " "
+  }
+  cp_to_string(u)
+}
+
+///|
+fn cp_to_string(u : Int) -> String {
+  let sb = StringBuilder()
+  sb.write_char(u.unsafe_to_char())
   sb.to_string()
 }
 
