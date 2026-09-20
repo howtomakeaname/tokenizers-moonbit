@@ -16,3 +16,37 @@ test "batch-longest pads single encode to multiple" {
   @test.assert_eq(e.tokens[e.ids.length() - 1], "[PAD]")
   @test.assert_eq(e.attention_mask(), [1, 1, 1, 1, 1, 0])
 }
+
+///|
+/// ByteLevel trim_offsets (HF byte_level.rs process_offsets): an
+/// all-whitespace token collapses to its end; a real leading space is
+/// trimmed; the single leading space added by add_prefix_space on the
+/// first token is kept.
+test "byte-level trim follows the authoritative rules" {
+  // add_prefix_space=false: "  leading..." -> ĠĠ collapses to (2,2)
+  let json_no_prefix =
+    #|{"version":"1.0","pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":false,"trim_offsets":true},"model":{"type":"BPE","unk_token":"<|eot|>","vocab":{"ĠĠ":0,"l":1,"e":2,"a":3,"d":4,"i":5,"n":6,"g":7,"Ġ":8},"merges":[["Ġ","Ġ"]]},"post_processor":{"type":"ByteLevel","add_prefix_space":false,"trim_offsets":true}}
+  let tok = Tokenizer::from_str(json_no_prefix)
+  let e = tok.encode("  leading")
+  @test.assert_eq(e.tokens[0], "ĠĠ")
+  @test.assert_eq(e.offsets[0], (2, 2))
+  @test.assert_eq(e.offsets[1], (2, 3))
+  // add_prefix_space=true + trim: the SINGLE added leading space on the
+  // first token is kept (Python 0.22.2 "a b" -> Ġa(0,2)? probe: [(0,2),(2,3)])
+  let json_prefix =
+    #|{"version":"1.0","pre_tokenizer":{"type":"ByteLevel","add_prefix_space":true,"use_regex":false,"trim_offsets":true},"model":{"type":"BPE","unk_token":"<|eot|>","vocab":{"a":0,"Ġb":1,"b":2,"Ġ":3},"merges":[["Ġ","b"]]},"post_processor":{"type":"ByteLevel","add_prefix_space":true,"trim_offsets":true}}
+  let tok2 = Tokenizer::from_str(json_prefix)
+  let e2 = tok2.encode("a b")
+  // the added prefix space maps to a zero-width span at 0 (Python 0.22.2)
+  @test.assert_eq(e2.tokens, ["Ġ", "a", "Ġb"])
+  @test.assert_eq(e2.offsets, [(0, 0), (0, 1), (2, 3)])
+  // real leading space (not added by us) with aps=false post: trimmed
+  // (Python 0.22.2 Roberta pair 'a'+' b' -> [(0,1),(1,2)]); note the
+  // pair+aps pretokenizer path has a separate known gap (see PROGRESS).
+  let json_pair =
+    #|{"version":"1.0","pre_tokenizer":{"type":"ByteLevel","add_prefix_space":false,"use_regex":false,"trim_offsets":true},"model":{"type":"BPE","unk_token":"<|eot|>","vocab":{"a":0,"Ġb":1,"b":2,"Ġ":3},"merges":[["Ġ","b"]]},"post_processor":{"type":"RobertaProcessing","sep":["</s>",9],"cls":["<s>",8],"trim_offsets":true,"add_prefix_space":false}}
+  let tok3 = Tokenizer::from_str(json_pair)
+  let p = tok3.encode_pair("a", " b", add_special_tokens=false)
+  @test.assert_eq(p.tokens, ["a", "Ġb"])
+  @test.assert_eq(p.offsets, [(0, 1), (1, 2)])
+}
