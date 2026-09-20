@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-20 PR #13**（10 commit）：队列 P1+P2+覆盖扩展。①扫描语料加 pair 电池（3 对 (a,b)/用例，ids/tokens/offsets/type_ids 四字段，+126 检查全过——pair 路径干净，留作回归）；②`@common.is_supported_replace_regex` 统一 replace-regex 族判定（PR #8 评审 nit 去重）；③normalizer Replace 不支持 regex 族加载期 `UnsupportedComponent`（39 fixture 审计仅用支持族，集成 28/28 实跑）；④decoder 门改用共享谓词（评审实测两表 0 判定差）。评审修正：门的锁定测试曾被 catch 吞掉失败（改 `assert_raise` 并以"禁用门→测试红"验证非空转）、谓词文档过度声明收窄 + 四类对抗性分歧入 §5 队列。**工具链漂移第 7/8 层**：`implicit_impl_as_method`（51 个 derive 类型补显式 `pub extend`、9 包补 debug 导入、.mbti 再生成）与 `test_unqualified_package`（黑盒测试同包名 `@pkg.` 限定，词法感知迁移 ~685 处）；纯机械，扫描仍 1134/1134 + 100/100。本地工具链已升 0.1.20260920 与 CI 对齐。
+
 
 - **2026-09-20 PR #11**：PROGRESS.md 本轮结构化（见文首约定）。
 - **2026-09-20 PR #10**：残余小类清零，双扫描 100%。内容：
