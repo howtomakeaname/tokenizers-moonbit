@@ -17,7 +17,7 @@ let tiny_bpe : String =
 
 ///|
 test "inline BPE encode/decode runs on all backends" {
-  let tok = Tokenizer::from_str(tiny_bpe)
+  let tok = @tokenizer.Tokenizer::from_str(tiny_bpe)
   let enc = tok.encode("abc", add_special_tokens=false)
   // a+b -> ab, ab+c -> abc (id 4)
   @test.assert_eq(enc.ids, [4])

@@ -15,7 +15,7 @@ let unicode_ws_added_token_json : String =
 
 ///|
 test "AddedToken lstrip/rstrip consumes NBSP around token" {
-  let tok = Tokenizer::from_str(unicode_ws_added_token_json)
+  let tok = @tokenizer.Tokenizer::from_str(unicode_ws_added_token_json)
   let enc = tok.encode("foo\u{00A0}[MASK]\u{00A0}bar", add_special_tokens=false)
   @test.assert_eq(enc.tokens, ["foo", "\u{00A0}[MASK]\u{00A0}", "bar"])
   @test.assert_eq(enc.ids, [0, 3, 1])
@@ -24,7 +24,7 @@ test "AddedToken lstrip/rstrip consumes NBSP around token" {
 
 ///|
 test "AddedToken lstrip/rstrip consumes mixed Unicode whitespace" {
-  let tok = Tokenizer::from_str(unicode_ws_added_token_json)
+  let tok = @tokenizer.Tokenizer::from_str(unicode_ws_added_token_json)
   let enc = tok.encode(
     "foo\u{2003}\u{202F}[MASK]\u{0B}\u{0C}\u{3000}bar",
     add_special_tokens=false,
