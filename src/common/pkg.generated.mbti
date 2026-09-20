@@ -102,6 +102,8 @@ pub fn simple_split_regex_matches(Array[Char], String) -> Array[Span]?
 
 pub fn unicode_punct_ranges() -> Array[(Int, Int)]
 
+pub fn unicode_word_ranges() -> Array[(Int, Int)]
+
 // Errors
 
 // Types and methods
