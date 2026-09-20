@@ -179,8 +179,10 @@ fn AddedVocabulary::split_with(
         }
         // single_word: require non-word boundaries on both sides.
         let ok = if info.single_word {
-          let left_ok = i == 0 || !is_word_char(chars[i - 1])
-          let right_ok = end >= n || !is_word_char(chars[end])
+          // single-word boundaries follow class-context word semantics
+          // (onig Latin-1 quirks are non-word here; probed)
+          let left_ok = i == 0 || !@common.is_word_char_class(chars[i - 1])
+          let right_ok = end >= n || !@common.is_word_char_class(chars[end])
           left_ok && right_ok
         } else {
           true
@@ -264,11 +266,6 @@ fn AddedVocabulary::extract_stage2(
     return [Normal(text=normalized_text, base_offset=base)]
   }
   self.split_with(self.normalized, normalized_text, base, keep_special)
-}
-
-///|
-fn is_word_char(c : Char) -> Bool {
-  @common.is_word_char(c)
 }
 
 ///|
