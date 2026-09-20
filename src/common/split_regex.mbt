@@ -529,103 +529,111 @@ pub fn simple_split_regex_matches(
     pattern == "[^\\p{N}\\p{L}\\s]+" ||
     pattern == "[^\\s\\p{Letter}\\p{Number}]+" {
     Some(run_matches(chars, fn(c) { is_not_whitespace_letter_or_number(c) }))
-  } else if pattern == "\\d+" ||
-    pattern == "[\\d]+" ||
-    pattern == "\\p{N}+" ||
+  } else if pattern == "\\d+" || pattern == "[\\d]+" {
+    Some(run_matches(chars, fn(c) { is_decimal_number(c) }))
+  } else if pattern == "\\p{N}+" ||
     pattern == "\\p{Number}+" ||
     pattern == "[\\p{N}]+" ||
     pattern == "[\\p{Number}]+" {
-    Some(run_matches(chars, fn(c) { is_decimal_number(c) }))
+    Some(run_matches(chars, fn(c) { is_unicode_number(c) }))
   } else if pattern == "[0-9]+" {
     Some(run_matches(chars, fn(c) { c >= '0' && c <= '9' }))
   } else if pattern == "[^0-9]+" {
     Some(run_matches(chars, fn(c) { !(c >= '0' && c <= '9') }))
-  } else if pattern == "^\\d+" ||
-    pattern == "^[\\d]+" ||
-    pattern == "^\\p{N}+" ||
+  } else if pattern == "^\\d+" || pattern == "^[\\d]+" {
+    Some(leading_run_match_multiline(chars, fn(c) { is_decimal_number(c) }))
+  } else if pattern == "^\\p{N}+" ||
     pattern == "^\\p{Number}+" ||
     pattern == "^[\\p{N}]+" ||
     pattern == "^[\\p{Number}]+" {
-    Some(leading_run_match_multiline(chars, fn(c) { is_decimal_number(c) }))
+    Some(leading_run_match_multiline(chars, fn(c) { is_unicode_number(c) }))
   } else if pattern == "^[0-9]+" {
     Some(leading_run_match_multiline(chars, fn(c) { c >= '0' && c <= '9' }))
-  } else if pattern == "\\d+$" ||
-    pattern == "[\\d]+$" ||
-    pattern == "\\p{N}+$" ||
+  } else if pattern == "\\d+$" || pattern == "[\\d]+$" {
+    Some(trailing_run_match_multiline(chars, fn(c) { is_decimal_number(c) }))
+  } else if pattern == "\\p{N}+$" ||
     pattern == "\\p{Number}+$" ||
     pattern == "[\\p{N}]+$" ||
     pattern == "[\\p{Number}]+$" {
-    Some(trailing_run_match_multiline(chars, fn(c) { is_decimal_number(c) }))
+    Some(trailing_run_match_multiline(chars, fn(c) { is_unicode_number(c) }))
   } else if pattern == "[0-9]+$" {
     Some(trailing_run_match_multiline(chars, fn(c) { c >= '0' && c <= '9' }))
   } else if pattern == "\\D+" ||
     pattern == "[\\D]+" ||
     pattern == "[^\\d]+" ||
-    pattern == "[^0-9]+" ||
-    pattern == "\\P{N}+" ||
+    pattern == "[^0-9]+" {
+    Some(run_matches(chars, fn(c) { !is_decimal_number(c) }))
+  } else if pattern == "\\P{N}+" ||
     pattern == "\\P{Number}+" ||
     pattern == "[^\\p{N}]+" ||
     pattern == "[^\\p{Number}]+" {
-    Some(run_matches(chars, fn(c) { !is_decimal_number(c) }))
+    Some(run_matches(chars, fn(c) { !is_unicode_number(c) }))
   } else if pattern == "\\d{2,}" ||
     pattern == "[\\d]{2,}" ||
-    pattern == "[0-9]{2,}" ||
-    pattern == "\\p{N}{2,}" ||
+    pattern == "[0-9]{2,}" {
+    Some(run_matches_min(chars, fn(c) { is_decimal_number(c) }, min_run=2))
+  } else if pattern == "\\p{N}{2,}" ||
     pattern == "\\p{Number}{2,}" ||
     pattern == "[\\p{N}]{2,}" ||
     pattern == "[\\p{Number}]{2,}" {
     Some(run_matches_min(chars, fn(c) { is_decimal_number(c) }, min_run=2))
+  } else if pattern == "\\d{2}" ||
+    pattern == "[\\d]{2}" ||
+    pattern == "[0-9]{2}" {
+    Some(number_exact_matches(chars, exact_digits=2, pred=is_decimal_number))
   } else if pattern == "\\p{N}{2}" ||
     pattern == "\\p{Number}{2}" ||
     pattern == "[\\p{N}]{2}" ||
-    pattern == "[\\p{Number}]{2}" ||
-    pattern == "\\d{2}" ||
-    pattern == "[\\d]{2}" ||
-    pattern == "[0-9]{2}" {
-    Some(number_exact_matches(chars, exact_digits=2))
+    pattern == "[\\p{Number}]{2}" {
+    Some(number_exact_matches(chars, exact_digits=2, pred=is_unicode_number))
+  } else if pattern == "\\d{3}" ||
+    pattern == "[\\d]{3}" ||
+    pattern == "[0-9]{3}" {
+    Some(number_exact_matches(chars, exact_digits=3, pred=is_decimal_number))
   } else if pattern == "\\p{N}{3}" ||
     pattern == "\\p{Number}{3}" ||
     pattern == "[\\p{N}]{3}" ||
-    pattern == "[\\p{Number}]{3}" ||
-    pattern == "\\d{3}" ||
-    pattern == "[\\d]{3}" ||
-    pattern == "[0-9]{3}" {
-    Some(number_exact_matches(chars, exact_digits=3))
+    pattern == "[\\p{Number}]{3}" {
+    Some(number_exact_matches(chars, exact_digits=3, pred=is_unicode_number))
+  } else if pattern == "\\d{4}" ||
+    pattern == "[\\d]{4}" ||
+    pattern == "[0-9]{4}" {
+    Some(number_exact_matches(chars, exact_digits=4, pred=is_decimal_number))
   } else if pattern == "\\p{N}{4}" ||
     pattern == "\\p{Number}{4}" ||
     pattern == "[\\p{N}]{4}" ||
-    pattern == "[\\p{Number}]{4}" ||
-    pattern == "\\d{4}" ||
-    pattern == "[\\d]{4}" ||
-    pattern == "[0-9]{4}" {
-    Some(number_exact_matches(chars, exact_digits=4))
-  } else if pattern == "\\p{N}{1,2}" ||
-    pattern == "\\p{Number}{1,2}" ||
-    pattern == "[\\p{N}]{1,2}" ||
-    pattern == "[\\p{Number}]{1,2}" ||
-    pattern == "\\d{1,2}" ||
+    pattern == "[\\p{Number}]{4}" {
+    Some(number_exact_matches(chars, exact_digits=4, pred=is_unicode_number))
+  } else if pattern == "\\d{1,2}" ||
     pattern == "[\\d]{1,2}" ||
     pattern == "[0-9]{1,2}" ||
     pattern == "[0-9][0-9]" {
-    Some(number_run_matches(chars, max_digits=2))
-  } else if pattern == "\\p{N}{1,3}" ||
-    pattern == "\\p{Number}{1,3}" ||
-    pattern == "[\\p{N}]{1,3}" ||
-    pattern == "[\\p{Number}]{1,3}" ||
-    pattern == "\\d{1,3}" ||
+    Some(number_run_matches(chars, max_digits=2, pred=is_decimal_number))
+  } else if pattern == "\\p{N}{1,2}" ||
+    pattern == "\\p{Number}{1,2}" ||
+    pattern == "[\\p{N}]{1,2}" ||
+    pattern == "[\\p{Number}]{1,2}" {
+    Some(number_run_matches(chars, max_digits=2, pred=is_unicode_number))
+  } else if pattern == "\\d{1,3}" ||
     pattern == "[\\d]{1,3}" ||
     pattern == "[0-9]{1,3}" ||
     pattern == "[0-9][0-9][0-9]" {
-    Some(number_run_matches(chars, max_digits=3))
-  } else if pattern == "\\p{N}{1,4}" ||
-    pattern == "\\p{Number}{1,4}" ||
-    pattern == "[\\p{N}]{1,4}" ||
-    pattern == "[\\p{Number}]{1,4}" ||
-    pattern == "\\d{1,4}" ||
+    Some(number_run_matches(chars, max_digits=3, pred=is_decimal_number))
+  } else if pattern == "\\p{N}{1,3}" ||
+    pattern == "\\p{Number}{1,3}" ||
+    pattern == "[\\p{N}]{1,3}" ||
+    pattern == "[\\p{Number}]{1,3}" {
+    Some(number_run_matches(chars, max_digits=3, pred=is_unicode_number))
+  } else if pattern == "\\d{1,4}" ||
     pattern == "[\\d]{1,4}" ||
     pattern == "[0-9]{1,4}" ||
     pattern == "[0-9][0-9][0-9][0-9]" {
-    Some(number_run_matches(chars, max_digits=4))
+    Some(number_run_matches(chars, max_digits=4, pred=is_decimal_number))
+  } else if pattern == "\\p{N}{1,4}" ||
+    pattern == "\\p{Number}{1,4}" ||
+    pattern == "[\\p{N}]{1,4}" ||
+    pattern == "[\\p{Number}]{1,4}" {
+    Some(number_run_matches(chars, max_digits=4, pred=is_unicode_number))
   } else {
     None
   }
