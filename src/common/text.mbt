@@ -374,6 +374,16 @@ pub fn is_not_whitespace_letter_or_number(c : Char) -> Bool {
 /// falling back to a literal replace (which could silently mis-replace
 /// text containing the literal pattern).
 pub fn is_supported_replace_regex(pattern : String) -> Bool {
+  // lazy suffixes collapse to greedy equivalents before family checks;
+  // the lazy-exact family (`a{n}?`) is its own engine and claims the
+  // raw spelling
+  if lazy_exact_spec(pattern) is Some(_) {
+    return true
+  }
+  let pattern = match lazy_normalize(pattern) {
+    Some(p) => p
+    None => pattern
+  }
   if pattern.is_empty() {
     // Degenerate: the chain returns the input unchanged (documented
     // divergence from HF's insert-between-chars); keep loadable.
@@ -476,6 +486,104 @@ pub fn bare_class_kind(pattern : String) -> Int? {
 }
 
 ///|
+/// Digit run at [k, until) capped at the onig 100000 bound; returns
+/// (value, next_index).
+fn parse_capped_digits(arr : Array[Char], k : Int, until : Int) -> (Int, Int)? {
+  let mut v = 0
+  let mut j = k
+  while j < until && arr[j] >= '0' && arr[j] <= '9' {
+    v = v * 10 + (arr[j].to_int() - '0'.to_int())
+    if v > 100000 {
+      return None
+    }
+    j = j + 1
+  }
+  if j == k {
+    return None
+  }
+  Some((v, j))
+}
+
+///|
+/// Normalize a LAZY-quantifier suffix for global replace (probed 0.22.2):
+///   `{0-族}?`  (`{0}?`, `{,n}?`, `{0,n}?`, `{0,}?`) == `{0}`
+///   `{n}?`   (exact, n >= 1)                 == `{0,n}`
+///   `{n,m}?` / `{n,}?` (n >= 1)               == `{n}`
+/// Returns the equivalent greedy pattern for the downstream families,
+/// or None when the pattern has no lazy suffix / the bound is out of
+/// the onig 100000 window (the gate then rejects).
+pub fn lazy_normalize(pattern : String) -> String? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  if n < 5 || chars[n - 1] != '?' || chars[n - 2] != '}' {
+    return None
+  }
+  let stop = n - 2 // index of the '}'
+  let mut open = -1
+  let mut i = 0
+  while i < stop {
+    if chars[i] == '{' {
+      open = i
+    }
+    i = i + 1
+  }
+  if open < 1 {
+    return None
+  }
+  let inner : Array[Char] = []
+  let mut q = open + 1
+  while q < stop {
+    inner.push(chars[q])
+    q = q + 1
+  }
+  let base_sb = StringBuilder()
+  for i in 0..<open {
+    base_sb.write_char(chars[i])
+  }
+  let base = base_sb.to_string()
+  let m = inner.length()
+  if m == 0 {
+    return None
+  }
+  // leading comma: {,digits}? == {0}
+  if inner[0] == ',' {
+    if parse_capped_digits(inner, 1, m) is Some((_, j)) && j == m {
+      return Some(base + "{0}")
+    }
+    return None
+  }
+  // {0-族}: leading zeros then either end or ',...'
+  if inner[0] == '0' {
+    return Some(base + "{0}") // {0...}? and {0...,...}? all == {0}
+  }
+  // first number >= 1
+  match parse_capped_digits(inner, 0, m) {
+    Some((lo, j)) => {
+      if j == m {
+        // exact {n}? has its OWN family (exact-n blocks PLUS empty
+        // matches — probed: 'za' -> '#z#a#'); left unclaimed here so
+        // lazy_exact_spec and its engine handle it
+        return None
+      }
+      if inner[j] == ',' {
+        if j + 1 == m {
+          return Some(base + "{" + lo.to_string() + "}") // {n,}? == {n}
+        }
+        match parse_capped_digits(inner, j + 1, m) {
+          Some((_, k2)) =>
+            if k2 == m {
+              return Some(base + "{" + lo.to_string() + "}") // {n,m}? == {n}
+            }
+          None => ()
+        }
+      }
+      None
+    }
+    None => None
+  }
+}
+
+///|
 /// Parse a zero-minimum quantifier pattern into (kind, literal, max)
 /// when the pattern is `base{0}`, `base{0,m}` or `base{0,}` where `base`
 /// is a bare single-char class spelling (via bare_class_kind) or an
@@ -562,6 +670,83 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
       if bc.length() == 2 && bc[0] == '\\' {
         // escaped literal base (probed 0.22.2: `\\n{0,2}` on "z\n\nz"
         // -> '#z#z#', `\\t{2}`/`\\\\{2}`/`\\.{2}` all compute)
+        match bc[1] {
+          'n' => Some((-1, Some('\n'), max))
+          't' => Some((-1, Some('\t'), max))
+          'r' => Some((-1, Some('\r'), max))
+          '\\' => Some((-1, Some('\\'), max))
+          '.' => Some((-1, Some('.'), max))
+          _ => None
+        }
+      } else if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
+        Some((-1, Some(bc[0]), max))
+      } else {
+        None
+      }
+    }
+  }
+}
+
+///|
+/// LAZY exact form `base{n}?` (probed 0.22.2): an exact-n block when the
+/// run reaches n, otherwise the zero-min empty-match walk — so `a{2}?`
+/// gives '#z#z#' on 'zaaz' (block + boundary empties) but '#z#a#' on
+/// 'za' (no 2-run, pure empties). Base is a class kind or an escaped /
+/// ordinary literal char (same resolution as the zero-min spec).
+pub fn lazy_exact_spec(pattern : String) -> (Int, Char?, Int)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  if n < 5 || chars[n - 1] != '?' || chars[n - 2] != '}' {
+    return None
+  }
+  let stop = n - 2
+  let mut open = -1
+  let mut i = 0
+  while i < stop {
+    if chars[i] == '{' {
+      open = i
+    }
+    i = i + 1
+  }
+  if open < 1 {
+    return None
+  }
+  let inner : Array[Char] = []
+  let mut q = open + 1
+  while q < stop {
+    inner.push(chars[q])
+    q = q + 1
+  }
+  let m = inner.length()
+  if m == 0 || inner[0] == '0' || inner[0] == ',' {
+    return None // zero-min lazy shapes / comma-open belong to lazy_normalize
+  }
+  match parse_capped_digits(inner, 0, m) {
+    Some((v, j)) => if j == m && v >= 1 { return zero_min_base(open, chars, v) }
+    None => ()
+  }
+  None
+}
+
+///|
+/// Shared base resolution for zero-min/lazy specs (class kind or an
+/// escaped / ordinary literal char); `max` is the already-normalized
+/// bound.
+fn zero_min_base(
+  open : Int,
+  chars : Array[Char],
+  max : Int,
+) -> (Int, Char?, Int)? {
+  let base_sb = StringBuilder()
+  for i in 0..<open {
+    base_sb.write_char(chars[i])
+  }
+  let base = base_sb.to_string()
+  match bare_class_kind(base) {
+    Some(kind) => Some((kind, None, max))
+    None => {
+      let bc = base.to_array()
+      if bc.length() == 2 && bc[0] == '\\' {
         match bc[1] {
           'n' => Some((-1, Some('\n'), max))
           't' => Some((-1, Some('\t'), max))
