@@ -1605,3 +1605,66 @@ test "lazy remainder tails keep interior empty matches" {
   @test.assert_eq(n("a{4,3}?").normalize("zaaaaaaz"), "#z#a#a#z#")
   @test.assert_eq(n("a{5,3}?").normalize("zaaaaaaaz"), "#z#a#a#z#")
 }
+
+///|
+/// Remaining double-anchored spellings (review follow-ups, probed
+/// 0.22.2): quantifier-less `^BASE$` == `^BASE{1}$` with multiline
+/// whole-line semantics (a single-char window never crosses lines —
+/// `^\n$` on "\n\n" gives two matches); reversed `^a{3,2}$` swaps to
+/// the {2,3} window like its lazy twin; a lazy tail before the `$` is
+/// identical (whole-line windows have no lazy/greedy difference); and
+/// escaped-operator bases (`^\+$`) carry the '+' inside the base (odd
+/// backslash run), distinct from `^\\+$` (escaped backslash + the
+/// quantifier).
+test "quantifier-less, reversed, lazy-tail, escaped-operator double anchors" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^a$").normalize("a"), "#")
+  @test.assert_eq(n("^a$").normalize("a\na"), "#\n#")
+  @test.assert_eq(n("^a$").normalize("ab\na"), "ab\n#")
+  @test.assert_eq(n("^a$").normalize("b\na\nb"), "b\n#\nb")
+  @test.assert_eq(n("^a$").normalize(""), "")
+  @test.assert_eq(n("^\\s$").normalize(" \n "), "#\n#")
+  @test.assert_eq(n("^\\s$").normalize("\n \n"), "\n#\n")
+  @test.assert_eq(n("^5$").normalize("5\n55"), "#\n55")
+  @test.assert_eq(n("^\\w$").normalize("a\nb"), "#\n#")
+  @test.assert_eq(n("^\\+$").normalize("+\n+"), "#\n#")
+  @test.assert_eq(n("^\\.$").normalize(".\n."), "#\n#")
+  @test.assert_eq(n("^\\\\$").normalize("\\\n\\"), "#\n#")
+  @test.assert_eq(n("^\\n$").normalize("\n\n"), "##")
+  @test.assert_eq(n("^a{3,2}$").normalize("aa"), "#")
+  @test.assert_eq(n("^a{3,2}$").normalize("aaaa"), "aaaa")
+  @test.assert_eq(n("^a{3,2}$").normalize("aaa"), "#")
+  @test.assert_eq(n("^a{3,2}$").normalize("aaaaa"), "aaaaa")
+  @test.assert_eq(n("^a{3,2}$").normalize("aa\naaaa"), "#\naaaa")
+  @test.assert_eq(n("^a{3,2}?$").normalize("aa"), "#")
+  @test.assert_eq(n("^a{3,2}?$").normalize("aaaa"), "aaaa")
+  @test.assert_eq(n("^\\s{4,2}$").normalize("   "), "#")
+  @test.assert_eq(n("^5{3,2}$").normalize("555"), "#")
+  @test.assert_eq(n("^a$").normalize_aligned("a\na").0, "#\n#")
+  @test.assert_eq(
+    @common.double_anchored_spec("^a$"),
+    Some((-1, Some('a'), 1, 1)),
+  )
+  @test.assert_eq(
+    @common.double_anchored_spec("^a{3,2}$"),
+    Some((-1, Some('a'), 2, 3)),
+  )
+  @test.assert_eq(
+    @common.double_anchored_spec("^\\+$"),
+    Some((-1, Some('+'), 1, 1)),
+  )
+  @test.assert_eq(
+    @common.double_anchored_spec("^\\\\+$"),
+    Some((-1, Some('\\'), 1, -1)),
+  )
+  @test.assert_eq(@common.is_supported_replace_regex("^a$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\+$"), true)
+  let loaded = @normalizer.Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"^a$\"},\"content\":\"#\"}",
+    ),
+  )
+  @test.assert_eq(loaded.normalize("a\na"), "#\n#")
+}
