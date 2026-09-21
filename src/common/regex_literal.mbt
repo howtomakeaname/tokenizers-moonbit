@@ -939,8 +939,6 @@ fn regex_literal_branch_alternatives_spec(
   // — on 'foobar' -> '##'), so no global strip here
   let lo = 0
   let hi = n
-  ignore(lo)
-  ignore(hi)
   // split top-level unescaped '|' into segments, then parse each
   let branches : Array[(String, Bool, Bool, Bool, Bool)] = []
   let mut seg_lo = lo
@@ -1039,8 +1037,6 @@ fn regex_literal_branch_alternatives_spec(
 fn literal_branch_alternation_matches(
   chars : Array[Char],
   branches : Array[(String, Bool, Bool, Bool, Bool)],
-  word_start : Bool,
-  word_end : Bool,
 ) -> Array[Span] {
   let n = chars.length()
   // candidates: (start, branch_idx, stop)
@@ -1049,8 +1045,6 @@ fn literal_branch_alternation_matches(
     let (lit, b_start, b_end, w_start, w_end) = branch
     let pat = lit.to_array()
     let m = pat.length()
-    // per-branch word boundaries take precedence; the parameters are
-    // kept for signature stability (always false from the spec now)
     if m == 0 || m > n {
       continue
     }
@@ -1086,13 +1080,7 @@ fn literal_branch_alternation_matches(
       while j <= n {
         if at_line_start && ls + m <= n && ls < n {
           if chars_match_at(chars, ls, pat) &&
-            literal_word_boundaries_match(
-              chars,
-              ls,
-              ls + m,
-              word_start,
-              word_end,
-            ) {
+            literal_word_boundaries_match(chars, ls, ls + m, w_start, w_end) {
             cands.push((ls, bi, ls + m))
           }
           at_line_start = false

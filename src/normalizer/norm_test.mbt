@@ -1865,3 +1865,17 @@ test "word boundaries bind per branch on alternations" {
   @test.assert_eq(n("\\ba|\\bb").normalize("a b ab"), "# # #b")
   @test.assert_eq(n("\\bfoo|bar\\b").normalize_aligned("foobar").0, "##")
 }
+
+///|
+/// `^`-anchored branches keep their per-branch `\b` too (review fix:
+/// the b_start loop had been left on the always-false parameters —
+/// `^foo\b|bar` on 'foobar' is 'foo#' in HF, not '##').
+test "caret branches keep per-branch word boundaries" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^foo\\b|bar").normalize("foobar"), "foo#")
+  @test.assert_eq(n("^\\bfoo\\b|bar").normalize("foobar"), "foo#")
+  @test.assert_eq(n("^foo\\b|bar").normalize("foobar\n"), "foo#\n")
+  @test.assert_eq(n("^\\b foo|zzz").normalize(" foo"), " foo")
+}
