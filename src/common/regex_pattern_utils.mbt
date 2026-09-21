@@ -30,6 +30,7 @@ pub fn bounded_regex_kind_pred(kind : Int, c : Char) -> Bool {
     27 => !is_word_char_class(c) // [^\w] bracket
     28 => is_unicode_number(c) // \p{N} full N (Nd + Nl + No; probed)
     29 => !is_unicode_number(c) // \P{N}
+    30 => c != '\n' // `.` base: any char EXCEPT newline (onig default, probed: ^.{3,2}$ on 'a\nb' unchanged)
     _ => false
   }
 }

@@ -986,6 +986,25 @@ fn double_anchored_brace(
     q2 = q2 + 1
   }
   let base = sb.to_string()
+  // dot-sequence base (`^..$` = a 2-char line, `^...$` = 3-char) —
+  // `.` matches any char EXCEPT newline (onig default; the quantified
+  // spelling `^.{2}$` arrives as a single-dot base with lo/hi set)
+  if base.length() >= 1 {
+    let bc = base.to_array()
+    let mut all_dots = true
+    for c in bc {
+      if c != '.' {
+        all_dots = false
+        break
+      }
+    }
+    if all_dots && bc.length() > 1 {
+      return Some((30, None, bc.length(), bc.length()))
+    }
+    if all_dots && bc.length() == 1 {
+      return Some((30, None, lo, hi))
+    }
+  }
   match bare_class_kind(base) {
     Some(kind) =>
       if swapped && bounded_regex_kind_pred(kind, '\n') {
