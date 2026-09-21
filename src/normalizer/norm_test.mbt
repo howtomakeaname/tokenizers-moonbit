@@ -1725,3 +1725,23 @@ test "anchored literals match per line" {
   @test.assert_eq(n("ab$").normalize("xab\nx"), "x#\nx")
   @test.assert_eq(n("^ab$").normalize_aligned("a\nab\nb").0, "a\n#\nb")
 }
+
+///|
+/// Review fixes for per-line anchored literals: literals containing
+/// newlines span lines under the anchors (`a\nb$` on 'xa\nb' ->
+/// 'x#'; `\n\n$` collapses a trailing blank line; `^a\nb$` matches
+/// across lines), and `lit$` alternations pick the LEFTMOST start
+/// (longest alternative first — `(?:b|ab)$` on 'ab' matches [0,2)).
+test "anchored literals span newlines and pick leftmost ends" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\n\\n$").normalize("a\n\n"), "a#")
+  @test.assert_eq(n("a\\nb$").normalize("xa\nb"), "x#")
+  @test.assert_eq(n("^a\\nb$").normalize("a\nb"), "#")
+  @test.assert_eq(n("^\\n\\n$").normalize("\n\n"), "#")
+  @test.assert_eq(n("(?:b|ab)$").normalize("ab"), "#")
+  @test.assert_eq(n("(?:b|ab)$").normalize("ab\nab"), "#\n#")
+  @test.assert_eq(n("(?:b|xb)$").normalize("axb"), "a#")
+  @test.assert_eq(n("^a\\na").normalize("a\na\na"), "#\na")
+}
