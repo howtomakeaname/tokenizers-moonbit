@@ -1694,3 +1694,70 @@ test "swap guards are semantic; escaped question mark loads" {
   @test.assert_eq(q.normalize("?"), "#")
   @test.assert_eq(q.normalize("??"), "??")
 }
+
+///|
+/// MULTILINE anchored literal matching (probed 0.22.2): `^lit` at
+/// every line start, `lit$` at every line end, `^lit$` when a whole
+/// line equals the literal — the anchored wrapper previously matched
+/// the whole STRING only, silently no-opping multiline input while the
+/// gate claimed support. `\r` belongs to its line (CRLF: only the
+/// second line matches `^ab$`).
+test "anchored literals match per line" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^ab$").normalize("ab"), "#")
+  @test.assert_eq(n("^ab$").normalize("ab\nab"), "#\n#")
+  @test.assert_eq(n("^ab$").normalize("ab\na"), "#\na")
+  @test.assert_eq(n("^ab$").normalize("a\nab\nb"), "a\n#\nb")
+  @test.assert_eq(n("^ab$").normalize("abab"), "abab")
+  @test.assert_eq(n("^ab$").normalize("ab\r\nab"), "ab\r\n#")
+  @test.assert_eq(n("^ab$").normalize(""), "")
+  @test.assert_eq(n("^!!$").normalize("!!\r\n!!"), "!!\r\n#")
+  @test.assert_eq(n("^a b$").normalize("a b\na b"), "#\n#")
+  @test.assert_eq(n("^\\{2}$").normalize("x\n{2}\ny"), "x\n#\ny")
+  @test.assert_eq(n("^\\{1,2}$").normalize("{1,2}\n{"), "#\n{")
+  @test.assert_eq(n("^ab").normalize("ab\nab"), "#\n#")
+  @test.assert_eq(n("^ab").normalize("abx"), "#x")
+  @test.assert_eq(n("ab$").normalize("ab\nab"), "#\n#")
+  @test.assert_eq(n("ab$").normalize("xab"), "x#")
+  @test.assert_eq(n("^ab").normalize("x\nabx"), "x\n#x")
+  @test.assert_eq(n("ab$").normalize("xab\nx"), "x#\nx")
+  @test.assert_eq(n("^ab$").normalize_aligned("a\nab\nb").0, "a\n#\nb")
+}
+
+///|
+/// Review fixes for per-line anchored literals: literals containing
+/// newlines span lines under the anchors (`a\nb$` on 'xa\nb' ->
+/// 'x#'; `\n\n$` collapses a trailing blank line; `^a\nb$` matches
+/// across lines), and `lit$` alternations pick the LEFTMOST start
+/// (longest alternative first — `(?:b|ab)$` on 'ab' matches [0,2)).
+test "anchored literals span newlines and pick leftmost ends" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\n\\n$").normalize("a\n\n"), "a#")
+  @test.assert_eq(n("a\\nb$").normalize("xa\nb"), "x#")
+  @test.assert_eq(n("^a\\nb$").normalize("a\nb"), "#")
+  @test.assert_eq(n("^\\n\\n$").normalize("\n\n"), "#")
+  @test.assert_eq(n("(?:b|ab)$").normalize("ab"), "#")
+  @test.assert_eq(n("(?:b|ab)$").normalize("ab\nab"), "#\n#")
+  @test.assert_eq(n("(?:b|xb)$").normalize("axb"), "a#")
+  @test.assert_eq(n("^a\\na").normalize("a\na\na"), "#\na")
+}
+
+///|
+/// `lit$` tie-break is DECLARATION order at the leftmost start (not
+/// length — probed both declaration orders against 0.22.2:
+/// `(?:\n\n|\n)$` on 'a\n\n' -> 'a#' taking the first-listed spanning
+/// alternative; the reversed declaration gives 'a##').
+test "end-anchored alternation ties break by declaration order" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("(?:\\n\\n|\\n)$").normalize("a\n\n"), "a#")
+  @test.assert_eq(n("(?:\\n|\\n\\n)$").normalize("a\n\n"), "a##")
+  @test.assert_eq(n("(?:a|aaa\\nb)$").normalize("aaa\nbb"), "aa#\nbb")
+  @test.assert_eq(n("(?:b|ab)$").normalize("ab"), "#")
+  @test.assert_eq(n("(?:b|xb)$").normalize("axb"), "a#")
+}

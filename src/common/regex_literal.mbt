@@ -312,6 +312,15 @@ fn literal_alternation_matches(
 }
 
 ///|
+/// MULTILINE anchored literal matching (probed 0.22.2): `^lit` matches
+/// at every line start, `lit$` ending at every line end, `^lit$` from a
+/// line start to a line end — literals CONTAINING newlines may span
+/// lines (a\nb$ on "xa\nb" -> "x#"; \n\n$ collapses a trailing blank
+/// line). `lit$` alternations pick the LEFTMOST start (longest
+/// alternative first at the leftmost start, declaration order at
+/// ties — (?:b|ab)$ on 'ab' matches [0,2)). \r belongs to its line.
+/// Matches never overlap
+/// (a match shadows the line starts/ends it covers).
 fn literal_alternation_matches_anchored(
   chars : Array[Char],
   pats : Array[Array[Char]],
@@ -321,33 +330,102 @@ fn literal_alternation_matches_anchored(
   word_end~ : Bool,
 ) -> Array[Span] {
   let n = chars.length()
+  let is_line_end = fn(e : Int) -> Bool { e == n || chars[e] == '\n' }
+  let out : Array[Span] = []
+  if anchored_start && anchored_end {
+    // from each line start, the literal must end exactly at A line end
+    // — any line end, so literals containing newlines span lines
+    let mut last_end = 0
+    let mut ls = 0
+    let mut i = 0
+    while i <= n {
+      let at_line_start = i == ls
+      if at_line_start && ls >= last_end && ls < n {
+        for pat in pats {
+          let m = pat.length()
+          let le = ls + m
+          if m > 0 &&
+            le <= n &&
+            (le == n || chars[le] == '\n') &&
+            chars_match_at(chars, ls, pat) &&
+            literal_word_boundaries_match(chars, ls, le, word_start, word_end) {
+            out.push({ start: ls, stop: le, })
+            last_end = le
+            break
+          }
+        }
+      }
+      if i == n {
+        break
+      }
+      if chars[i] == '\n' {
+        ls = i + 1
+      }
+      i = i + 1
+    }
+    return out
+  }
   if anchored_start {
-    for pat in pats {
-      let m = pat.length()
-      if m > 0 &&
-        m <= n &&
-        (!anchored_end || m == n) &&
-        chars_match_at(chars, 0, pat) &&
-        literal_word_boundaries_match(chars, 0, m, word_start, word_end) {
-        return [{ start: 0, stop: m, }]
+    let mut last_end = 0
+    let mut ls = 0
+    let mut i = 0
+    while i <= n {
+      let at_line_start = i == ls
+      if at_line_start && ls >= last_end && ls < n {
+        for pat in pats {
+          let m = pat.length()
+          if m > 0 &&
+            ls + m <= n &&
+            chars_match_at(chars, ls, pat) &&
+            literal_word_boundaries_match(
+              chars,
+              ls,
+              ls + m,
+              word_start,
+              word_end,
+            ) {
+            out.push({ start: ls, stop: ls + m, })
+            last_end = ls + m
+            break
+          }
+        }
+      }
+      if i == n {
+        break
+      }
+      if chars[i] == '\n' {
+        ls = i + 1
+      }
+      i = i + 1
+    }
+    return out
+  }
+  // anchored_end: onig picks the LEFTMOST START, ties broken by
+  // DECLARATION order (probed both ways: (?:\n\n|\n)$ on 'a\n\n' ->
+  // 'a#' taking the first-listed spanning alt; the reversed
+  // declaration gives 'a##'). Scan starts ascending, alternatives in
+  // declaration order, requiring the end to be a line end.
+  let mut last_end = 0
+  let mut st = 0
+  while st <= n {
+    if st >= last_end {
+      for pat in pats {
+        let m = pat.length()
+        let e = st + m
+        if m > 0 &&
+          e <= n &&
+          is_line_end(e) &&
+          chars_match_at(chars, st, pat) &&
+          literal_word_boundaries_match(chars, st, e, word_start, word_end) {
+          out.push({ start: st, stop: e, })
+          last_end = e
+          break
+        }
       }
     }
-    return []
+    st = st + 1
   }
-  let mut i = 0
-  while i < n {
-    for pat in pats {
-      let m = pat.length()
-      if m > 0 &&
-        i + m == n &&
-        chars_match_at(chars, i, pat) &&
-        literal_word_boundaries_match(chars, i, n, word_start, word_end) {
-        return [{ start: i, stop: n, }]
-      }
-    }
-    i = i + 1
-  }
-  []
+  out
 }
 
 ///|
