@@ -842,7 +842,27 @@ fn zero_min_base(
 pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
   let chars = pattern.to_array()
   let n = chars.length()
-  if n < 4 || chars[0] != '^' || chars[n - 1] != '$' {
+  if n < 3 || chars[0] != '^' || chars[n - 1] != '$' {
+    return None
+  }
+  if chars[n - 2] == '?' && chars[n - 3] == '}' {
+    // rewrite the lazy '?' into the terminal '$' so the brace helper
+    // sees a well-formed tail
+    let stripped : Array[Char] = []
+    for i in 0..<n {
+      stripped.push(if i == n - 2 { '$' } else { chars[i] })
+    }
+    return double_anchored_brace(stripped, n - 1)
+  }
+  double_anchored_brace(chars, n)
+}
+
+///|
+fn double_anchored_brace(
+  chars : Array[Char],
+  n : Int,
+) -> (Int, Char?, Int, Int)? {
+  if n < 3 || chars[0] != '^' || chars[n - 1] != '$' {
     return None
   }
   // locate a trailing quantifier inside the anchors: '+' at n-2, or a
@@ -850,7 +870,27 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
   let mut lo = 0
   let mut hi = 0
   let mut base_end : Int = 0 // exclusive end of the base inside chars
-  if chars[n - 2] == '+' {
+  if chars[n - 2] == '?' && chars[n - 3] == '}' {
+    // lazy tail on a brace quantifier: whole-line windows make lazy
+    // == greedy (probed: ^a{3,2}?$ == ^a{3,2}$)
+    return double_anchored_brace(chars, n - 1)
+  }
+  // '+' is the quantifier unless it is itself escaped (odd backslash
+  // run before it: `^\+$` is the literal-plus base, `^\\+$` is an
+  // escaped backslash base followed by the + quantifier)
+  let mut plus_is_quantifier = chars[n - 2] == '+'
+  if plus_is_quantifier && n >= 4 {
+    let mut bs = 0
+    let mut k = n - 3
+    while k >= 1 && chars[k] == '\\' {
+      bs = bs + 1
+      k = k - 1
+    }
+    if bs % 2 == 1 {
+      plus_is_quantifier = false
+    }
+  }
+  if plus_is_quantifier {
     lo = 1
     hi = -1
     base_end = n - 2
@@ -893,9 +933,17 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
           } else {
             match parse_capped_digits(inner, j + 1, m) {
               Some((w, k2)) =>
-                if k2 == m && v >= 1 && w >= v && w <= 4 {
-                  lo = v
-                  hi = w
+                if k2 == m && v >= 1 && w <= 4 {
+                  // reversed {n,m} with n > m: onig swaps the window
+                  // (probed: ^a{3,2}$ on 'aa'/'aaa' -> '#', 'aaaa'
+                  // unchanged == the {2,3} window)
+                  if w < v {
+                    lo = w
+                    hi = v
+                  } else {
+                    lo = v
+                    hi = w
+                  }
                 } else {
                   return None
                 }
@@ -909,7 +957,13 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
     }
     base_end = open
   } else {
-    return None // a double-anchored base needs a quantifier
+    // quantifier-less `^BASE$` == `^BASE{1}$` (probed 0.22.2: 'a\na'
+    // with ^a$ -> '#\n#'; a single-char window never crosses lines).
+    // Also reached for escaped-operator bases (`^\+$`): the '+'
+    // belongs to the base, window is the single char.
+    lo = 1
+    hi = 1
+    base_end = n - 1
   }
   // resolve the base
   let sb = StringBuilder()
@@ -931,6 +985,21 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
           'n' => Some('\n')
           't' => Some('\t')
           'r' => Some('\r')
+          '+'
+          | '.'
+          | '*'
+          | '?'
+          | '('
+          | ')'
+          | '['
+          | ']'
+          | '{'
+          | '}'
+          | '|'
+          | '^'
+          | '$'
+          | '-'
+          | '\\' => Some(bsc[1])
           _ => None
         }
         match lit {
