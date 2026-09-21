@@ -37,7 +37,7 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
-- **2026-09-21 发版 0.9.0（已发布）**：0.8.1 后累计 PR #40（dot 基 kind 30 整行族 + 顶层 `|` 逐分支 `^`/`$` 锚定——修复一处 pre-existing 静默分歧）、#41（`\b` 逐分支绑定 + 评审 b_start 循环修复）。直接推 main 流程：bump + `moon publish` 成功 + 干净安装验证。
+- **2026-09-21 发版 0.9.0（已发布，干净验证 4/4×三后端）**：0.8.1 后累计 PR #40（dot 基 kind 30 整行族 + 顶层 `|` 逐分支 `^`/`$` 锚定——修复一处 pre-existing 静默分歧）、#41（`\b` 逐分支绑定 + 评审 b_start 循环修复）。直接推 main 流程：bump + `moon publish` 成功 + /tmp/verify09 干净安装验证（`\b` 逐分支、逐分支锚、dot 窗口、`^ab$` 逐行回归，native/js/wasm-gc 全过）。
 
 - **2026-09-21 PR #41**（3 commit，两轮评审）：`` 逐分支绑定。`foo|bar` == `(\bfoo)|(bar\b)`（HF 于 'foobar'→'##'——原全局绑定静默 no-op，同 PR #40 修复的 `^`/`$` 逐分支同类）。branch spec 剥每分支前导 `\bFOO`/尾随 `FOO\b`（5 元组），matcher 逐分支应用；整组形式 `\b(?:foo|bar)\b` 语义不变。评审一项 blocking：`b_start` 循环漏迁移（`^foo\b|bar` 于 'foobar' 应 'foo#' 而非 '##'——main 上该 pattern 显式拒绝，故非回归但属新面静默错）修复 + 死参数移除。验证：140 cell（137 一致 + 3 pre-existing fail-explicit：`\\\b` 后边界、空分支）；483/483、双扫描全绿。空分支（`^|a` HF '#b#'）评估为零下限空匹配语义——复杂度高、真实配置不出现，维持显式拒绝记录在案。
 
