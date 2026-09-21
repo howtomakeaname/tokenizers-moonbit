@@ -37,6 +37,12 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-21 PR #28**（9 commit，两轮评审）：fail-explicitly 清单廉价扩展四项（全部先 HF 探针定真值）。①`{,m}` 逗号开界 = 量词 `{0,m}`（`a{,2}` 于 'zaaz'→'#z#z#'；空 `{,}` **不是**量词——字面量，'xa{,}x'→'x#x'）；②前导零等价（`a{00}`≡`a{0}`、`a{01}`≡`a{1}`、`a{0,02}`≡`a{0,2}`）；③转义字面量基 `
+	\.` 携带量词（`
+{2}` 于 "z
+
+z"→'z#z'；转义基跳过元字符排除——`.`{2}` 是 any-char 拒绝、`\.{2}` 是字面点计算）；④混类补集排列补全至 12（短名 6+长名 6）× 门控/扫描器/bounded/ranged/exact/min/anchored 全位点。评审三项修复：F1 gate 孪生 `char_bounded_quantifier_shape` 未扩展转义基（compute 层 HF-exact 但 from_json 拒绝、decoder SIGABRT）——两个调用点改用 `char_bounded_spec` 直接判定并删除孪生（单一真相源）；F2 `at_quantifier_brace` 要求逗号后 ≥1 数字使 `{,}` 归字面量（HF 可加载）；F3 anchored/exact/min 位点排列补齐。验证：两轮评审 ~5,500 对拍 0 输出分歧（含 12 排列 ×10 输入全量、decoder 无 abort、边界 cap 100000 双向一致）；463/463（native/js）、440/440（wasm）、双扫描 1134+100、CI 8/8。遗留（评审记录）：双锚 `^[...]+$`、惰性后缀 `?`、多转义基 `\{0,2}` 仍 fail-explicitly（HF 可算，后续批次）。
+
 - **2026-09-21 PR #26**（4 commit，一轮评审）：issue #21 —— `\b` 词边界改用 Unicode 词定义。`\b[A-Za-z0-9_]+\b` 原与裸 `[A-Za-z0-9_]+` 共分支（ASCII run 全替换）；现拆到 `ascii_word_boundary_run_matches`（span helper + `replace_ascii_word_boundary_runs`）：匹配 = ASCII 词 run 且 prev/next 均非 Unicode 词（**裸 \w 表含 onig 怪癖**——HF 实测 `²ab`/`ab²`/`¼ab½` 均无匹配，怪癖在 \b 处算词）。回溯不可救子 run（任何更短子 run 仍邻词字符）→ run 级过滤即精确。scanner/normalizer/decoder 三处拆分（等价扫描与 aligned 路径经 simple_split 自动获得）。评审：行为 841 cell（可达 568 全一致，边界模型证明 + 对抗输入实证）、代码审计 dispatch 完备性确认（无遮蔽、门不拒、`\b\w+\b` 与字面量族 `regex_word_boundary_at` 约定不变）；一项 blocking = 漏提交 .mbti（已补）。验证：459/459（native/js）、436/436（wasm）、双扫描 1134+100、CI 8/8。评审另证 HF 可算的 `\b[ˆ\W]+\b`/`\b\w+`/`\w+\b` 拼写本库显式拒绝（加载期/解码期 fail-loud，策略合规）——留作后续可选扩展。
 
 - **2026-09-21 PR #24**（9 commit，两轮评审）：issue #20 —— `\p{N}`/`\p{Number}` 全 N（Nd+Nl+No）与 `\d`（Nd）kind 拆分。①`scripts/gen_unicode_number.py` 全量 content-swap 双探针生成两张经验表：`number_ranges`（\p{N}，1911 码点/144 区间，130 个 drift 于 host unicodedata——onig 更新，如 U+10D40 Garay）与 `decimal_ranges`（\d，760/71；旧硬编码 Nd 区间漏 Unicode-14+ 新增，实测 U+1FBF0 数学数字 HF \d 匹配而我们漏）；②kind 28/29 拆分（bare/bounded/ranged/exact/min/anchored/quantified-base 表 + pred 行），`\d`/`[0-9]` 保持 11/22，kind-21 混合类数字部分换全 N（HF `[ˆ\s\p{L}\p{N}]` 于 a²b 零匹配）；③scanner/normalizer/decoder 全部混合 hardcode 组拆分。评审四项 blocking 全修：F1 bounded 负拼写 `\P{N}{1,n}` 漏拆（`aⅠb`→`#Ⅰ#` 非 `##`）、F2 decoder `\P{N}{3,}` 被 `\D{3,}` 行抢跑（新 `decode_replace_min_runs_direct` 谓词参数化）、F3 GPT2/Qwen/o200k patstr `is_number` Nd-only（`x ¼3y`→['x',' ¼3','y']，最高流量 \p{N} 消费者）、F4 split `{2,}` 死行谓词。行为评审的 decoder "字面量" must-fix 经直接探针**证伪**（Python `decoders.Replace(pattern=str)` 是字面量重载，本库消费 JSON `{"Regex":...}` 是 onig 路径——`decoder.decode(["a²¼…"])→'a#'`），评审二轮撤回并改用 JSON Regex oracle。两轮累计 ~2,700 行为 cell + 两次全码点表 sweep 零未解释分歧。验证：457/457（native/js）、434/434（wasm/wasm-gc）、双扫描 1134+100 全绿、CI 8/8。
@@ -201,7 +207,7 @@ moon test --target native --deny-warn                      # 同样跑 js/wasm/w
 4. **pair overflow 叉积 vs 0.23-dev**：按用户确认锁定 0.22.2；HF 主分支已改每侧独立窗口，若未来切换基准需重做（背景与实测数据在 PR #3）。
 5. **性能遗留**：大词表 JSON 冷加载（llama from_str ~1.14x）；identity 对齐列分配（lazy 化在队列 P2）；nightly 趋势落盘未建。
 6. **Unigram 采样随机性**：确定性种子（可复现），按需换真随机源。
-7. **已收敛的 Replace/正则对抗分歧**（PR #13 评审发现，PR #14/#16 修复并全部 HF 实测对齐）：多行锚定（onig 逐行 `^`/`$` + 跨换行贪婪 run，normalizer/Split/decoder 三端一致）、ASCII class 拼写（`[0-9]`/`[A-Za-z0-9_]` 全量词/锚定/裸拼写）、字面量大括号（`a{b` 字面量化、`{,n}` 显式拒绝）、裸单字符类逐字符替换（双侧）、`[\w]` 族括号拼写（canonicalize 到 `\w`/`\W` 快捷形式，Unicode-wide 与 HF 一致）、锚定 `[\r\n]+`、单字符字面量有界量词 `c{n}`/`c{n,}`/`c{n,m}`（窗口 1–4，`{n,}` 整 run 消费；元字符基 `.{n}`/`?{n}` 等显式拒绝）、零下限量词 `c{0}`/`c{0,m}`/`c{0,}` 与类基（PR #19：onig 空匹配规则，max 上限 100000 与 onig 一致；text/aligned 双路径统一走 `replace_family_spans`，71 拼写等价扫描常驻）。**仍显式不支持**：`a{2,1}` 逆序区间（HF 接受并等价 `{1,2}`，本库拒绝）、class 内大括号、
+7. **已收敛的 Replace/正则对抗分歧**（PR #13 评审发现，PR #14/#16 修复并全部 HF 实测对齐）：多行锚定（onig 逐行 `^`/`$` + 跨换行贪婪 run，normalizer/Split/decoder 三端一致）、ASCII class 拼写（`[0-9]`/`[A-Za-z0-9_]` 全量词/锚定/裸拼写）、字面量大括号（`a{b` 字面量化、`{,n}` 显式拒绝）、裸单字符类逐字符替换（双侧）、`[\w]` 族括号拼写（canonicalize 到 `\w`/`\W` 快捷形式，Unicode-wide 与 HF 一致）、锚定 `[\r\n]+`、单字符字面量有界量词 `c{n}`/`c{n,}`/`c{n,m}`（窗口 1–4，`{n,}` 整 run 消费；元字符基 `.{n}`/`?{n}` 等显式拒绝）、零下限量词 `c{0}`/`c{0,m}`/`c{0,}` 与类基（PR #19：onig 空匹配规则，max 上限 100000 与 onig 一致；text/aligned 双路径统一走 `replace_family_spans`，71 拼写等价扫描常驻）。**仍显式不支持**：`a{2,1}` 逆序区间（HF 接受并等价 `{1,2}`，本库拒绝）、class 内大括号、惰性后缀 `?`（`a{,2}?` 等）、双锚 `^[...]+$`、多转义基 `\\{0,2}`（PR #28 评审记录，均 HF 可算而本库显式拒绝）、
 
 ## 6. 开发约定
 
