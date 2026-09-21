@@ -440,14 +440,14 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     None => pattern
   }
   match @common.lazy_exact_spec(pattern) {
-    Some((kind, literal, n)) => {
+    Some((kind, literal, lo, hi)) => {
       let pred : (Char) -> Bool = if kind == -1 {
         let c = literal.unwrap_or('\u{0}')
         fn(x) { x == c }
       } else {
         fn(x) { @common.bounded_regex_kind_pred(kind, x) }
       }
-      return @common.replace_lazy_exact_runs(s, content, pred, n)
+      return @common.replace_lazy_exact_runs(s, content, pred, lo, hi)
     }
     None => ()
   }
@@ -488,6 +488,18 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   }
   match @common.replace_bounded_simple_regex(s, pattern, content) {
     Some(out) => return out
+    None => ()
+  }
+  match @common.double_anchored_spec(pattern) {
+    Some((kind, literal, lo, hi)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { @common.bounded_regex_kind_pred(kind, x) }
+      }
+      return @common.replace_double_anchored_line_runs(s, content, pred, lo, hi)
+    }
     None => ()
   }
   match @common.replace_anchored_simple_regex(s, pattern, content) {

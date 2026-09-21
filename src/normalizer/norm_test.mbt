@@ -1453,7 +1453,7 @@ test "lazy quantifier suffixes collapse per probed families" {
   @test.assert_eq(@common.lazy_normalize("a{2,3}?"), Some("a{2}"))
   @test.assert_eq(@common.lazy_normalize("a{2,}?"), Some("a{2}"))
   @test.assert_eq(@common.lazy_normalize("a{2}?"), None) // own family
-  @test.assert_eq(@common.lazy_exact_spec("a{2}?"), Some((-1, Some('a'), 2)))
+  @test.assert_eq(@common.lazy_exact_spec("a{2}?"), Some((-1, Some('a'), 2, 2)))
   @test.assert_eq(@common.lazy_exact_spec("a{2}"), None)
 }
 
@@ -1469,7 +1469,8 @@ test "lazy bound validation follows parsed values" {
   @test.assert_eq(@common.is_supported_replace_regex("a{0,2x}?"), false)
   @test.assert_eq(@common.is_supported_replace_regex("a{0,100001}?"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\{0,2}?"), false)
-  @test.assert_eq(@common.is_supported_replace_regex("a{3,2}?"), false)
+  // reversed range now supported: onig swaps to (?:a{2,3})? — see the
+  // dedicated reversed-range lock test below
   let n = fn(p : String) -> @normalizer.Normalizer {
     @normalizer.Normalizer::Replace(pattern=p, content="#")
   }
@@ -1477,7 +1478,10 @@ test "lazy bound validation follows parsed values" {
   @test.assert_eq(n("a{02}?").normalize("zaaaz"), "#z#a#z#")
   @test.assert_eq(n("a{0002}?").normalize("zaaz"), "#z#z#")
   @test.assert_eq(n("a{02,3}?").normalize("zaaaz"), "z#az")
-  @test.assert_eq(@common.lazy_exact_spec("a{02}?"), Some((-1, Some('a'), 2)))
+  @test.assert_eq(
+    @common.lazy_exact_spec("a{02}?"),
+    Some((-1, Some('a'), 2, 2)),
+  )
   @test.assert_eq(@common.lazy_exact_spec("a{00}?"), None)
   @test.assert_eq(@common.lazy_normalize("a{02,3}?"), Some("a{2}"))
 }
@@ -1496,4 +1500,108 @@ test "backslash parity guards escaped-brace vs escaped-backslash lazy" {
   @test.assert_eq(n("\\\\{0}?").normalize("z\\z"), "#z#\\#z#")
   // odd run: escaped brace — literal, gate rejects
   @test.assert_eq(@common.is_supported_replace_regex("\\{0,2}?"), false)
+}
+
+///|
+/// REVERSED ranges `base{n,m}?` with n > m: onig swaps to
+/// `(?:X{m,n})?` — greedy ranged blocks plus the empty-match walk.
+/// Every expectation probed 0.22.2.
+test "reversed lazy ranges swap to ranged-blocks-plus-empties" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("a{3,2}?").normalize("zaaz"), "#z#z#")
+  @test.assert_eq(n("a{3,2}?").normalize("aaaaa"), "##")
+  @test.assert_eq(n("a{3,2}?").normalize("zaaaaaaaaz"), "#z###z#")
+  @test.assert_eq(n("a{3,2}?").normalize("zaz"), "#z#a#z#")
+  @test.assert_eq(n("a{3,2}?").normalize("za"), "#z#a#")
+  @test.assert_eq(n("a{3,2}?").normalize("zaaaaz"), "#z#a#z#")
+  @test.assert_eq(n("a{3,2}?").normalize("zaaaaaaz"), "#z##z#")
+  @test.assert_eq(n("a{3,2}?").normalize("aabaa"), "#b#")
+  @test.assert_eq(n("a{2,1}?").normalize("zaaz"), "#z#z#")
+  @test.assert_eq(n("a{4,2}?").normalize("aaaa"), "#")
+  @test.assert_eq(n("a{4,2}?").normalize("aaaaaa"), "##")
+  @test.assert_eq(n("\\s{3,2}?").normalize("x   y"), "#x#y#")
+  @test.assert_eq(n("\\s{4,2}?").normalize("x    y"), "#x#y#")
+  @test.assert_eq(n("5{3,2}?").normalize("z555y"), "#z#y#")
+  @test.assert_eq(n("a{3,2}?").normalize(""), "")
+  @test.assert_eq(n("a{3,2}?").normalize_aligned("zaaaaz").0, "#z#a#z#")
+  @test.assert_eq(
+    @common.lazy_exact_spec("a{3,2}?"),
+    Some((-1, Some('a'), 2, 3)),
+  )
+  @test.assert_eq(@common.is_supported_replace_regex("a{3,2}?"), true)
+  let loaded = @normalizer.Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{3,2}?\"},\"content\":\"#\"}",
+    ),
+  )
+  @test.assert_eq(loaded.normalize("zaaz"), "#z#z#")
+}
+
+///|
+/// DOUBLE-anchored `^BASE QUANT $`: whole-line matching under the
+/// multiline option — each line whose ENTIRE content satisfies the
+/// class and length window; greedy runs may cross newlines when the
+/// class includes them. Every expectation probed 0.22.2.
+test "double-anchored whole-line matching" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  let mixed = "^[^\\s\\p{L}\\p{N}]+$"
+  @test.assert_eq(n(mixed).normalize("!!"), "#")
+  @test.assert_eq(n(mixed).normalize("!!x!!"), "!!x!!")
+  @test.assert_eq(n(mixed).normalize("x"), "x")
+  @test.assert_eq(n(mixed).normalize(""), "")
+  @test.assert_eq(n(mixed).normalize("!!\n!!"), "#\n#")
+  @test.assert_eq(n(mixed).normalize("!!\nx!!"), "#\nx!!")
+  @test.assert_eq(n(mixed).normalize("a\n!!\nb"), "a\n#\nb")
+  @test.assert_eq(n(mixed).normalize("!!\r\n!!"), "!!\r\n#")
+  @test.assert_eq(n("^\\w+$").normalize("ab"), "#")
+  @test.assert_eq(n("^\\w+$").normalize("a b"), "a b")
+  @test.assert_eq(n("^\\w+$").normalize("a\nb"), "#\n#")
+  @test.assert_eq(n("^\\d+$").normalize("123"), "#")
+  @test.assert_eq(n("^\\d+$").normalize("12a"), "12a")
+  @test.assert_eq(n("^a+$").normalize("aaa"), "#")
+  @test.assert_eq(n("^a+$").normalize("aab"), "aab")
+  @test.assert_eq(n("^\\s+$").normalize("  "), "#")
+  @test.assert_eq(n("^\\s+$").normalize(" \n "), "#") // \s crosses \n
+  @test.assert_eq(n("^\\n+$").normalize("\n\n"), "#")
+  @test.assert_eq(n("^[0-9]{2,}$").normalize("1234"), "#")
+  @test.assert_eq(n("^[0-9]{2,}$").normalize("1"), "1")
+  @test.assert_eq(n("^\\w{1,3}$").normalize("ab"), "#")
+  @test.assert_eq(n("^\\w{1,3}$").normalize("abcd"), "abcd")
+  @test.assert_eq(n("^\\p{N}+$").normalize("²¼"), "#")
+  @test.assert_eq(n("^[^\\w]+$").normalize("!!"), "#")
+  @test.assert_eq(n("^[^\\p{Number}\\p{Letter}\\s]+$").normalize("!!"), "#")
+  @test.assert_eq(n(mixed).normalize_aligned("a\n!!\nb").0, "a\n#\nb")
+  @test.assert_eq(@common.double_anchored_spec(mixed), Some((21, None, 1, -1)))
+  @test.assert_eq(
+    @common.double_anchored_spec("^\\w{1,3}$"),
+    Some((4, None, 1, 3)),
+  )
+  @test.assert_eq(
+    @common.double_anchored_spec("^a+$"),
+    Some((-1, Some('a'), 1, -1)),
+  )
+
+  @test.assert_eq(@common.is_supported_replace_regex(mixed), true)
+}
+
+///|
+/// Sub-lo remainder tails walk the empty rules (review fix): after the
+/// greedy blocks, every remainder position past the prev_end-adjacent
+/// one fires an empty match — `a{3}?` on 'aaaaa' is '#a#a#' (not
+/// '#aa#'). Reversed shapes with m >= 3 behave the same.
+test "lazy remainder tails keep interior empty matches" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("a{3}?").normalize("aaaaa"), "#a#a#")
+  @test.assert_eq(n("a{3}?").normalize("zaaaaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{4}?").normalize("zaaaaaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{4}?").normalize("zaaaaaaaz"), "#z#a#a#a#z#")
+  @test.assert_eq(n("\\s{3}?").normalize("x     y"), "#x# # #y#")
+  @test.assert_eq(n("a{4,3}?").normalize("zaaaaaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{5,3}?").normalize("zaaaaaaaz"), "#z#a#a#z#")
 }
