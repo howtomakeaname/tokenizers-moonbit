@@ -1979,3 +1979,34 @@ test "zero-min double-anchored windows match empty lines" {
     "#\nabc\n#\n#",
   )
 }
+
+///|
+/// \n-matching predicates under zero-min windows: the greedy scan
+/// spans newlines (one whole match, probed `^\s{0,2}$` on `'\n\n'` →
+/// `'#'`), except exact-zero (`^\s{0}$` → `'#\n#\n'` per empty line —
+/// hi == 0 keeps the empty-line path). Review fix.
+test "nl-pred window classes reject explicitly" {
+  // ANY window over a \n-matching predicate fails at load — probed
+  // 0.22.2 shows idiosyncratic consecutive-newline anchor behavior on
+  // every bound (\\s{1,2}$ on 'a\\n\\nb' matches nothing while a
+  // greedy-backtracking model matches [1,2)); reject beats silently
+  // approximating. \\n-excluding predicates keep their windows.
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{0,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{0}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{1,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{2,4}$"), false)
+  //  and quantifier-less nl-pred forms keep their PR#34/#36 behavior
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s+$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\n+$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\n{2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\D{0,}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{,2}$"), false)
+  // `+` and quantifier-less nl-pred forms keep their PR#34/#36 behavior
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s+$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\n+$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\w{1,3}$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^.{0,2}$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^a{0,2}$"), true)
+}

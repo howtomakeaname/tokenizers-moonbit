@@ -881,6 +881,7 @@ fn double_anchored_brace(
   let mut lo = 0
   let mut hi = 0
   let mut swapped = false
+  let mut braced = false // a {n}/{n,m} window (vs `+` / quantifier-less)
   let mut base_end : Int = 0 // exclusive end of the base inside chars
   // '+' is the quantifier unless it is itself escaped (odd backslash
   // run before it: `^\+$` is the literal-plus base, `^\\+$` is an
@@ -902,6 +903,7 @@ fn double_anchored_brace(
     hi = -1
     base_end = n - 2
   } else if chars[n - 2] == '}' {
+    braced = true
     // find the matching '{' scanning back from n-2
     let mut open = -1
     let mut i = n - 3
@@ -943,7 +945,7 @@ fn double_anchored_brace(
           sb0.write_char(chars[q0])
           q0 = q0 + 1
         }
-        return double_anchored_base(sb0.to_string(), lo, hi, swapped~)
+        return double_anchored_base(sb0.to_string(), lo, hi, swapped~, braced~)
       }
     }
     match parse_capped_digits(inner, 0, m) {
@@ -1011,7 +1013,7 @@ fn double_anchored_brace(
     sb.write_char(chars[q2])
     q2 = q2 + 1
   }
-  double_anchored_base(sb.to_string(), lo, hi, swapped~)
+  double_anchored_base(sb.to_string(), lo, hi, swapped~, braced~)
 }
 
 ///|
@@ -1020,6 +1022,7 @@ fn double_anchored_base(
   lo : Int,
   hi : Int,
   swapped~ : Bool,
+  braced~ : Bool,
 ) -> (Int, Char?, Int, Int)? {
   // dot-sequence base (`^..$` = a 2-char line, `^...$` = 3-char) —
   // `.` matches any char EXCEPT newline (onig default; the quantified
@@ -1048,10 +1051,14 @@ fn double_anchored_base(
   }
   match bare_class_kind(base) {
     Some(kind) =>
-      if swapped && bounded_regex_kind_pred(kind, '\n') {
-        // SEMANTIC guard: any class whose predicate matches '\n'
-        // (\s, [\r\n], \D, \W, [^0-9], ... — probed) makes the
-        // atomic-vs-backtracking divergence appear
+      if braced && bounded_regex_kind_pred(kind, '\n') {
+        // BRACE windows over a \n-matching predicate (\s, [\r\n],
+        // \D, \W, [^0-9], ...) reject: consecutive-newline inputs
+        // have idiosyncratic anchor/line-end behavior on every bound
+        // (probed 0.22.2: ^\s{1,2}$ on 'a\n\nb' matches nothing
+        // while a greedy-backtracking model matches [1,2)). The `+`
+        // and quantifier-less forms keep their probed PR#34/#36
+        // behavior.
         None
       } else {
         Some((kind, None, lo, hi))
@@ -1064,8 +1071,8 @@ fn double_anchored_base(
       if bsc.length() == 2 && bsc[0] == '\\' {
         let lit : Char? = match bsc[1] {
           'n' =>
-            if swapped {
-              None // '\n' spans lines: atomic swap unsupported
+            if braced {
+              None // '\n' base brace windows share the nl-pred rejection
             } else {
               Some('\n')
             }
