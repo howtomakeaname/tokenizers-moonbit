@@ -317,8 +317,9 @@ fn literal_alternation_matches(
 /// line start to a line end — literals CONTAINING newlines may span
 /// lines (a\nb$ on "xa\nb" -> "x#"; \n\n$ collapses a trailing blank
 /// line). `lit$` alternations pick the LEFTMOST start (longest
-/// alternative first, declaration order within a length — (?:b|ab)$ on
-/// 'ab' matches [0,2)). \r belongs to its line. Matches never overlap
+/// alternative first at the leftmost start, declaration order at
+/// ties — (?:b|ab)$ on 'ab' matches [0,2)). \r belongs to its line.
+/// Matches never overlap
 /// (a match shadows the line starts/ends it covers).
 fn literal_alternation_matches_anchored(
   chars : Array[Char],
@@ -399,32 +400,30 @@ fn literal_alternation_matches_anchored(
     }
     return out
   }
-  // anchored_end: ending at each line end, LEFTMOST start preferred
-  // (longest alternative first, declaration order within a length)
-  let by_len_desc : Array[Array[Char]] = pats.copy()
-  by_len_desc.sort_by((a, b) => b.length() - a.length())
+  // anchored_end: onig picks the LEFTMOST START, ties broken by
+  // DECLARATION order (probed both ways: (?:\n\n|\n)$ on 'a\n\n' ->
+  // 'a#' taking the first-listed spanning alt; the reversed
+  // declaration gives 'a##'). Scan starts ascending, alternatives in
+  // declaration order, requiring the end to be a line end.
   let mut last_end = 0
-  let mut i = 0
-  while i <= n {
-    if i > last_end && is_line_end(i) {
-      for pat in by_len_desc {
+  let mut st = 0
+  while st <= n {
+    if st >= last_end {
+      for pat in pats {
         let m = pat.length()
-        let st = i - m
+        let e = st + m
         if m > 0 &&
-          st >= last_end &&
-          st >= 0 &&
+          e <= n &&
+          is_line_end(e) &&
           chars_match_at(chars, st, pat) &&
-          literal_word_boundaries_match(chars, st, i, word_start, word_end) {
-          out.push({ start: st, stop: i, })
-          last_end = i
+          literal_word_boundaries_match(chars, st, e, word_start, word_end) {
+          out.push({ start: st, stop: e, })
+          last_end = e
           break
         }
       }
     }
-    if i == n {
-      break
-    }
-    i = i + 1
+    st = st + 1
   }
   out
 }

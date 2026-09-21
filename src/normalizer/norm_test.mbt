@@ -1745,3 +1745,19 @@ test "anchored literals span newlines and pick leftmost ends" {
   @test.assert_eq(n("(?:b|xb)$").normalize("axb"), "a#")
   @test.assert_eq(n("^a\\na").normalize("a\na\na"), "#\na")
 }
+
+///|
+/// `lit$` tie-break is DECLARATION order at the leftmost start (not
+/// length — probed both declaration orders against 0.22.2:
+/// `(?:\n\n|\n)$` on 'a\n\n' -> 'a#' taking the first-listed spanning
+/// alternative; the reversed declaration gives 'a##').
+test "end-anchored alternation ties break by declaration order" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("(?:\\n\\n|\\n)$").normalize("a\n\n"), "a#")
+  @test.assert_eq(n("(?:\\n|\\n\\n)$").normalize("a\n\n"), "a##")
+  @test.assert_eq(n("(?:a|aaa\\nb)$").normalize("aaa\nbb"), "aa#\nbb")
+  @test.assert_eq(n("(?:b|ab)$").normalize("ab"), "#")
+  @test.assert_eq(n("(?:b|xb)$").normalize("axb"), "a#")
+}
