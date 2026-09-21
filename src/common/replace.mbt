@@ -861,14 +861,14 @@ pub fn replace_family_spans(
     None => pattern
   }
   match lazy_exact_spec(pattern) {
-    Some((kind, literal, n)) => {
+    Some((kind, literal, lo, hi)) => {
       let pred : (Char) -> Bool = if kind == -1 {
         let c = literal.unwrap_or('\u{0}')
         fn(x) { x == c }
       } else {
         fn(x) { bounded_regex_kind_pred(kind, x) }
       }
-      return Some(lazy_exact_match_spans(chars, pred, n))
+      return Some(lazy_ranged_or_empty_spans(chars, pred, lo, hi))
     }
     None => ()
   }
@@ -921,6 +921,18 @@ pub fn replace_family_spans(
         )
       None => ()
     }
+  }
+  match double_anchored_spec(pattern) {
+    Some((kind, literal, lo, hi)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { bounded_regex_kind_pred(kind, x) }
+      }
+      return Some(double_anchored_line_spans(chars, pred, lo, hi))
+    }
+    None => ()
   }
   if pattern.has_prefix("^") || pattern.has_suffix("$") {
     match anchored_regex_kind(pattern) {
@@ -1004,14 +1016,16 @@ pub fn replace_ascii_word_boundary_runs(s : String, content : String) -> String 
 }
 
 ///|
-/// LAZY exact `base{n}?` match spans (probed 0.22.2): at each position
-/// an exact-n block when the run reaches n, otherwise the zero-min
-/// empty-match walk (skip empty adjacent to prev_end, copy one char,
-/// end-of-string empty only when not adjacent).
-fn lazy_exact_match_spans(
+/// LAZY exact `base{n}?` / reversed `base{n,m}?` match spans (probed
+/// 0.22.2): greedy ranged blocks (each block takes min(hi, remaining)
+/// while the remainder stays >= lo — the replace_ranged block rule)
+/// followed by the zero-min empty-match walk for everything the blocks
+/// do not consume. Fixed `{n}?` is the lo == hi case.
+fn lazy_ranged_or_empty_spans(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  n : Int,
+  lo : Int,
+  hi : Int,
 ) -> Array[Span] {
   let out : Array[Span] = []
   let len = chars.length()
@@ -1032,10 +1046,16 @@ fn lazy_exact_match_spans(
       while g < len && pred(chars[g]) {
         g = g + 1
       }
-      if g - p >= n {
-        out.push({ start: p, stop: p + n, })
-        prev_end = p + n
-        p = p + n
+      if g - p >= lo {
+        let mut b = p
+        while g - b >= lo {
+          let remaining = g - b
+          let take = if hi < 0 || remaining < hi { remaining } else { hi }
+          out.push({ start: b, stop: b + take, })
+          prev_end = b + take
+          b = b + take
+        }
+        p = g // sub-lo remainder is copied as unmatched gap
         continue
       }
     }
@@ -1056,8 +1076,68 @@ pub fn replace_lazy_exact_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  n : Int,
+  lo : Int,
+  hi : Int,
 ) -> String {
   let chars = s.to_array()
-  replace_spans(chars, lazy_exact_match_spans(chars, pred, n), content)
+  replace_spans(chars, lazy_ranged_or_empty_spans(chars, pred, lo, hi), content)
+}
+
+///|
+/// DOUBLE-anchored `^BASE QUANT $` match spans: from each line start
+/// (string start or after '\n'), a greedy predicate run (which may
+/// CROSS newlines when the class includes them — probed: `^\s+$` on
+/// " \n " matches the WHOLE string) capped by hi, ending at the
+/// LONGEST line-end boundary (before a '\n' or at the string end)
+/// with length >= lo. No empty matches (the quantifier needs >= 1).
+fn double_anchored_line_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  let n = chars.length()
+  let mut p = 0
+  while p < n {
+    let at_line_start = p == 0 || chars[p - 1] == '\n'
+    if at_line_start && pred(chars[p]) {
+      let mut g = p
+      while g < n && pred(chars[g]) {
+        g = g + 1
+      }
+      let cap = if hi < 0 { g - p } else if g - p < hi { g - p } else { hi }
+      // longest L in [max(lo,1), cap] with p+L a line end
+      let mut le = -1
+      let mut len = cap
+      while len >= lo && len >= 1 {
+        let pos = p + len
+        if pos == n || chars[pos] == '\n' {
+          le = pos
+          break
+        }
+        len = len - 1
+      }
+      if le > p {
+        out.push({ start: p, stop: le, })
+        p = le
+        continue
+      }
+    }
+    p = p + 1
+  }
+  out
+}
+
+///|
+/// DOUBLE-anchored line replace (normalizer/decoder hardcode path).
+pub fn replace_double_anchored_line_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+) -> String {
+  let chars = s.to_array()
+  replace_spans(chars, double_anchored_line_spans(chars, pred, lo, hi), content)
 }

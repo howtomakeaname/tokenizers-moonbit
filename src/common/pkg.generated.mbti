@@ -18,6 +18,8 @@ pub fn char_bounded_spec(String) -> (Char, Int, Int)?
 
 pub fn char_string(Char) -> String
 
+pub fn double_anchored_spec(String) -> (Int, Char?, Int, Int)?
+
 pub fn exact_regex_kind(String) -> (Int, Int)?
 
 pub fn is_anchored_regex_pattern(String) -> Bool
@@ -64,7 +66,7 @@ pub fn is_word_char(Char) -> Bool
 
 pub fn is_word_char_class(Char) -> Bool
 
-pub fn lazy_exact_spec(String) -> (Int, Char?, Int)?
+pub fn lazy_exact_spec(String) -> (Int, Char?, Int, Int)?
 
 pub fn lazy_normalize(String) -> String?
 
@@ -86,11 +88,13 @@ pub fn replace_char_bounded_runs(String, String, String) -> String?
 
 pub fn replace_char_runs(String, String, (Char) -> Bool) -> String
 
+pub fn replace_double_anchored_line_runs(String, String, (Char) -> Bool, Int, Int) -> String
+
 pub fn replace_exact_char_runs(String, String, (Char) -> Bool, exact_run~ : Int) -> String
 
 pub fn replace_family_spans(Array[Char], String) -> Array[Span]?
 
-pub fn replace_lazy_exact_runs(String, String, (Char) -> Bool, Int) -> String
+pub fn replace_lazy_exact_runs(String, String, (Char) -> Bool, Int, Int) -> String
 
 pub fn replace_leading_runs(String, String, (Char) -> Bool) -> String
 
