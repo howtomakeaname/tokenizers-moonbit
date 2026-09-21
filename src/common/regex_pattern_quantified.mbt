@@ -661,12 +661,16 @@ fn anchored_regex_kind_inner(pattern : String) -> (Int, Bool)? {
   anchored_variants(
     pattern,
     [
-      "^[^\\s\\p{L}\\p{N}]+", "^[^\\s\\p{N}\\p{L}]+", "^[^\\p{L}\\p{N}\\s]+", "^[^\\p{N}\\p{L}\\s]+",
-      "^[^\\s\\p{Letter}\\p{Number}]+",
+      "^[^\\s\\p{L}\\p{N}]+", "^[^\\s\\p{N}\\p{L}]+", "^[^\\p{L}\\s\\p{N}]+", "^[^\\p{L}\\p{N}\\s]+",
+      "^[^\\p{N}\\s\\p{L}]+", "^[^\\p{N}\\p{L}\\s]+", "^[^\\s\\p{Letter}\\p{Number}]+",
+      "^[^\\s\\p{Number}\\p{Letter}]+", "^[^\\p{Letter}\\s\\p{Number}]+", "^[^\\p{Letter}\\p{Number}\\s]+",
+      "^[^\\p{Number}\\s\\p{Letter}]+", "^[^\\p{Number}\\p{Letter}\\s]+",
     ],
     [
-      "[^\\s\\p{L}\\p{N}]+$", "[^\\s\\p{N}\\p{L}]+$", "[^\\p{L}\\p{N}\\s]+$", "[^\\p{N}\\p{L}\\s]+$",
-      "[^\\s\\p{Letter}\\p{Number}]+$",
+      "[^\\s\\p{L}\\p{N}]+$", "[^\\s\\p{N}\\p{L}]+$", "[^\\p{L}\\s\\p{N}]+$", "[^\\p{L}\\p{N}\\s]+$",
+      "[^\\p{N}\\s\\p{L}]+$", "[^\\p{N}\\p{L}\\s]+$", "[^\\s\\p{Letter}\\p{Number}]+$",
+      "[^\\s\\p{Number}\\p{Letter}]+$", "[^\\p{Letter}\\s\\p{Number}]+$", "[^\\p{Letter}\\p{Number}\\s]+$",
+      "[^\\p{Number}\\s\\p{Letter}]+$", "[^\\p{Number}\\p{Letter}\\s]+$",
     ],
     21,
   )
@@ -898,8 +902,10 @@ fn quantified_class_kind(pattern : String, suffix : String) -> Int? {
   if quantified_base_matches(
       pattern,
       [
-        "[^\\s\\p{L}\\p{N}]", "[^\\s\\p{N}\\p{L}]", "[^\\p{L}\\p{N}\\s]", "[^\\p{N}\\p{L}\\s]",
-        "[^\\s\\p{Letter}\\p{Number}]",
+        "[^\\s\\p{L}\\p{N}]", "[^\\s\\p{N}\\p{L}]", "[^\\p{L}\\s\\p{N}]", "[^\\p{L}\\p{N}\\s]",
+        "[^\\p{N}\\s\\p{L}]", "[^\\p{N}\\p{L}\\s]", "[^\\s\\p{Letter}\\p{Number}]",
+        "[^\\s\\p{Number}\\p{Letter}]", "[^\\p{Letter}\\s\\p{Number}]", "[^\\p{Letter}\\p{Number}\\s]",
+        "[^\\p{Number}\\s\\p{Letter}]", "[^\\p{Number}\\p{Letter}\\s]",
       ],
       suffix,
     ) {
