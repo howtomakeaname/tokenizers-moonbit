@@ -434,6 +434,23 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
   if pattern.is_empty() {
     return s
   }
+  // lazy suffixes collapse to greedy equivalents first (probed 0.22.2)
+  let pattern = match @common.lazy_normalize(pattern) {
+    Some(p) => p
+    None => pattern
+  }
+  match @common.lazy_exact_spec(pattern) {
+    Some((kind, literal, n)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { @common.bounded_regex_kind_pred(kind, x) }
+      }
+      return @common.replace_lazy_exact_runs(s, content, pred, n)
+    }
+    None => ()
+  }
   // single-char literal bounded quantifiers: a{2} / a{2,} / a{2,3}
   match @common.replace_char_bounded_runs(s, pattern, content) {
     Some(out) => return out
