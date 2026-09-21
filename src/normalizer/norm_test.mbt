@@ -1676,3 +1676,21 @@ test "quantifier-less, reversed, lazy-tail, escaped-operator double anchors" {
   )
   @test.assert_eq(loaded.normalize("a\na"), "#\n#")
 }
+
+///|
+/// Swapped-window guards are SEMANTIC (review fix): any class whose
+/// predicate matches '\n' rejects the reversed swap (atomic vs
+/// backtracking divergence — \D, \W, [^0-9], raw/escaped newline), and
+/// the lazy-'?' rejection is escape-aware so `^\?$` (literal question
+/// base) keeps its multiline whole-line semantics.
+test "swap guards are semantic; escaped question mark loads" {
+  @test.assert_eq(@common.is_supported_replace_regex("^\\D{3,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\W{4,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^[^0-9]{3,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\P{L}{3,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\d{3,2}$"), true) // \n-free pred
+  let q = @normalizer.Normalizer::Replace(pattern="^\\?$", content="#")
+  @test.assert_eq(q.normalize("\n?\n"), "\n#\n")
+  @test.assert_eq(q.normalize("?"), "#")
+  @test.assert_eq(q.normalize("??"), "??")
+}

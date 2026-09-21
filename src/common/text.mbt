@@ -850,7 +850,19 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
   // positions and shortest-line-end selection for \n-spanning classes
   // — a different engine capability. Fail explicitly (probed:
   // ^a{3,2}?$ on '\n\n' -> '#\n#\n' in HF).
-  if chars[n - 2] == '?' {
+  let mut q_is_lazy = chars[n - 2] == '?'
+  if q_is_lazy && n >= 4 {
+    let mut bs = 0
+    let mut k = n - 3
+    while k >= 1 && chars[k] == '\\' {
+      bs = bs + 1
+      k = k - 1
+    }
+    if bs % 2 == 1 {
+      q_is_lazy = false // escaped literal '?' base (probed: ^\?$)
+    }
+  }
+  if q_is_lazy {
     return None
   }
   double_anchored_brace(chars, n)
@@ -870,11 +882,6 @@ fn double_anchored_brace(
   let mut hi = 0
   let mut swapped = false
   let mut base_end : Int = 0 // exclusive end of the base inside chars
-  if chars[n - 2] == '?' && chars[n - 3] == '}' {
-    // lazy tail on a brace quantifier: whole-line windows make lazy
-    // == greedy (probed: ^a{3,2}?$ == ^a{3,2}$)
-    return double_anchored_brace(chars, n - 1)
-  }
   // '+' is the quantifier unless it is itself escaped (odd backslash
   // run before it: `^\+$` is the literal-plus base, `^\\+$` is an
   // escaped backslash base followed by the + quantifier)
@@ -981,8 +988,11 @@ fn double_anchored_brace(
   let base = sb.to_string()
   match bare_class_kind(base) {
     Some(kind) =>
-      if swapped && (kind == 1 || kind == 3) {
-        None // \s / [\r\n] span \n: atomic swap unsupported
+      if swapped && bounded_regex_kind_pred(kind, '\n') {
+        // SEMANTIC guard: any class whose predicate matches '\n'
+        // (\s, [\r\n], \D, \W, [^0-9], ... — probed) makes the
+        // atomic-vs-backtracking divergence appear
+        None
       } else {
         Some((kind, None, lo, hi))
       }
@@ -995,7 +1005,7 @@ fn double_anchored_brace(
         let lit : Char? = match bsc[1] {
           'n' =>
             if swapped {
-              None // \n spans lines: atomic swap unsupported
+              None // '\n' spans lines: atomic swap unsupported
             } else {
               Some('\n')
             }
@@ -1027,6 +1037,9 @@ fn double_anchored_brace(
         !is_regex_operator(bsc[0]) &&
         bsc[0] != '\\' &&
         bsc[0] != '$' {
+        if swapped && bsc[0] == '\n' {
+          return None // raw-newline literal spans lines under a swap
+        }
         return Some((-1, Some(bsc[0]), lo, hi))
       }
       None
