@@ -845,14 +845,13 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
   if n < 3 || chars[0] != '^' || chars[n - 1] != '$' {
     return None
   }
-  if chars[n - 2] == '?' && chars[n - 3] == '}' {
-    // rewrite the lazy '?' into the terminal '$' so the brace helper
-    // sees a well-formed tail
-    let stripped : Array[Char] = []
-    for i in 0..<n {
-      stripped.push(if i == n - 2 { '$' } else { chars[i] })
-    }
-    return double_anchored_brace(stripped, n - 1)
+  // A lazy '?' before the '$' is NOT supported: HF parses X{n,m}? as
+  // (?:X{m,n})? whose whole-line form adds empty matches at ^-and-$
+  // positions and shortest-line-end selection for \n-spanning classes
+  // — a different engine capability. Fail explicitly (probed:
+  // ^a{3,2}?$ on '\n\n' -> '#\n#\n' in HF).
+  if chars[n - 2] == '?' {
+    return None
   }
   double_anchored_brace(chars, n)
 }
@@ -869,6 +868,7 @@ fn double_anchored_brace(
   // '{...}' block ending at n-2
   let mut lo = 0
   let mut hi = 0
+  let mut swapped = false
   let mut base_end : Int = 0 // exclusive end of the base inside chars
   if chars[n - 2] == '?' && chars[n - 3] == '}' {
     // lazy tail on a brace quantifier: whole-line windows make lazy
@@ -933,13 +933,19 @@ fn double_anchored_brace(
           } else {
             match parse_capped_digits(inner, j + 1, m) {
               Some((w, k2)) =>
-                if k2 == m && v >= 1 && w <= 4 {
-                  // reversed {n,m} with n > m: onig swaps the window
-                  // (probed: ^a{3,2}$ on 'aa'/'aaa' -> '#', 'aaaa'
-                  // unchanged == the {2,3} window)
+                if k2 == m && v >= 1 && w >= 1 && w <= 4 {
+                  // reversed {n,m} with n > m: onig swaps to an ATOMIC
+                  // {m,n} window (probed: ^a{3,2}$ on 'aa'/'aaa' ->
+                  // '#', 'aaaa' unchanged == the {2,3} window; ^a{2,0}$
+                  // stays rejected — its {0,2} swap has empty-line
+                  // semantics this engine lacks). Claimed only for
+                  // \n-free classes: \s/[\r\n]/\n spans make atomicity
+                  // vs backtracking diverge (probed: ^\s{4,2}$ on
+                  // '   \nx' unchanged in HF) — those fail explicitly.
                   if w < v {
                     lo = w
                     hi = v
+                    swapped = true
                   } else {
                     lo = v
                     hi = w
@@ -974,7 +980,12 @@ fn double_anchored_brace(
   }
   let base = sb.to_string()
   match bare_class_kind(base) {
-    Some(kind) => Some((kind, None, lo, hi))
+    Some(kind) =>
+      if swapped && (kind == 1 || kind == 3) {
+        None // \s / [\r\n] span \n: atomic swap unsupported
+      } else {
+        Some((kind, None, lo, hi))
+      }
     None => {
       if mixed_complement_ordering_kind(base) is Some(kind) {
         return Some((kind, None, lo, hi))
@@ -982,7 +993,12 @@ fn double_anchored_brace(
       let bsc = base.to_array()
       if bsc.length() == 2 && bsc[0] == '\\' {
         let lit : Char? = match bsc[1] {
-          'n' => Some('\n')
+          'n' =>
+            if swapped {
+              None // \n spans lines: atomic swap unsupported
+            } else {
+              Some('\n')
+            }
           't' => Some('\t')
           'r' => Some('\r')
           '+'
