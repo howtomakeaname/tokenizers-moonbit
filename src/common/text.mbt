@@ -999,6 +999,12 @@ fn double_anchored_brace(
       }
     }
     if all_dots && bc.length() > 1 {
+      // a trailing quantifier binds to the LAST dot only (probed:
+      // ^..+$ is >=2 chars/line), so quantified multi-dot windows are
+      // out of scope here — fail explicitly rather than mis-window
+      if lo != 1 || hi != 1 {
+        return None
+      }
       return Some((30, None, bc.length(), bc.length()))
     }
     if all_dots && bc.length() == 1 {

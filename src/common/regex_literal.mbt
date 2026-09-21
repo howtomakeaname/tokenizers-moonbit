@@ -1109,14 +1109,15 @@ fn literal_branch_alternation_matches(
         j = j + 1
       }
     } else {
-      // plain occurrences everywhere
+      // plain occurrences: collect EVERY position (the greedy merge
+      // owns overlap suppression — a local skip here would lose
+      // occurrences an earlier branch's match shadows, probed:
+      // `ax|xxx` on "axxxx" must give '##')
       let mut p = 0
       while p + m <= n {
         if chars_match_at(chars, p, pat) &&
           literal_word_boundaries_match(chars, p, p + m, word_start, word_end) {
           cands.push((p, bi, p + m))
-          p = p + m
-          continue
         }
         p = p + 1
       }

@@ -1824,3 +1824,23 @@ test "branch ties follow declaration order" {
   @test.assert_eq(n("^ab|a").normalize("ab"), "#")
   @test.assert_eq(n("a|^ab").normalize("ab"), "#b")
 }
+
+///|
+/// Review fixes: plain branches collect every occurrence (the greedy
+/// merge owns overlap suppression — `ax|xxx` on 'axxxx' -> '##'), and
+/// quantified multi-dot windows fail explicitly (a trailing quantifier
+/// binds to the LAST dot: `^..+$` is >=2 chars/line, out of scope).
+test "branch merge owns overlap; quantified multi-dot rejects" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("ax|xxx").normalize("axxxx"), "##")
+  @test.assert_eq(n("xxx|ax").normalize("axxxx"), "##")
+  @test.assert_eq(n("foo|bar").normalize("foobar"), "##")
+  @test.assert_eq(n("ab|b").normalize("abab"), "##")
+  @test.assert_eq(n("aa|a").normalize("aaa"), "##")
+  @test.assert_eq(@common.is_supported_replace_regex("^..+$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^..{2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^..$"), true)
+  @test.assert_eq(n("^..$").normalize("ab\nabc"), "#\nabc")
+}
