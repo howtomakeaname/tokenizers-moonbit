@@ -1481,3 +1481,19 @@ test "lazy bound validation follows parsed values" {
   @test.assert_eq(@common.lazy_exact_spec("a{00}?"), None)
   @test.assert_eq(@common.lazy_normalize("a{02,3}?"), Some("a{2}"))
 }
+
+///|
+/// Escaped-backslash lazy bases (even backslash run before `{` — the
+/// brace is a real quantifier; probed 0.22.2) vs escaped-brace bases
+/// (odd run — literal pattern). Review fix: the guard counts parity.
+test "backslash parity guards escaped-brace vs escaped-backslash lazy" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\\\{0,2}?").normalize("z\\\\z"), "#z#\\#\\#z#")
+  @test.assert_eq(n("\\\\{2}?").normalize("z\\\\z"), "#z#z#")
+  @test.assert_eq(n("\\\\{2,3}?").normalize("z\\\\\\\\z"), "z##z")
+  @test.assert_eq(n("\\\\{0}?").normalize("z\\z"), "#z#\\#z#")
+  // odd run: escaped brace — literal, gate rejects
+  @test.assert_eq(@common.is_supported_replace_regex("\\{0,2}?"), false)
+}

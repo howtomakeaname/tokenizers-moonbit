@@ -530,10 +530,17 @@ pub fn lazy_normalize(pattern : String) -> String? {
   if open < 1 {
     return None
   }
-  // escaped-brace bases (e.g. `\\{0,2}?`) are literal patterns, not
-  // quantified bases — leave them to the literal path (probed: main
-  // rejects them and that matches the fail-explicitly policy)
-  if chars[open - 1] == '\\' {
+  // an ODD backslash run before `{` escapes the brace (e.g. `\{0,2}?`
+  // is a literal pattern — leave it to the literal path); an EVEN run
+  // is an escaped-backslash base (`\\{0,2}?`) with a real quantifier
+  // (probed 0.22.2: HF computes the full lazy families on it)
+  let mut bs = 0
+  let mut k = open - 1
+  while k >= 0 && chars[k] == '\\' {
+    bs = bs + 1
+    k = k - 1
+  }
+  if bs % 2 == 1 {
     return None
   }
   let inner : Array[Char] = []
