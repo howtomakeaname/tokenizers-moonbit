@@ -233,3 +233,17 @@ test "replace decoder lazy suffixes" {
   let rg = Decoder::Replace(pattern="a{2,3}?", content="#")
   @test.assert_eq(rg.decode(["zaaaz"]), "z#az")
 }
+
+///|
+/// Quantifier-less double anchors reach the decoder Replace path with
+/// the multiline whole-line semantics (review fix: the non-multiline
+/// wrapper previously claimed them first). HF JSON Regex decoder
+/// probed 0.22.2.
+test "replace decoder quantifier-less double anchors are multiline" {
+  let d = Decoder::Replace(pattern="^a$", content="#")
+  @test.assert_eq(d.decode(["a\na"]), "#\n#")
+  let nl = Decoder::Replace(pattern="^\n$", content="#")
+  @test.assert_eq(nl.decode(["\n\n"]), "##")
+  let plus = Decoder::Replace(pattern="^\\+$", content="#")
+  @test.assert_eq(plus.decode(["+\n+"]), "#\n#")
+}

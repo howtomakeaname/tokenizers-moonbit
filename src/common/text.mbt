@@ -842,15 +842,62 @@ fn zero_min_base(
 pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
   let chars = pattern.to_array()
   let n = chars.length()
-  if n < 4 || chars[0] != '^' || chars[n - 1] != '$' {
+  if n < 3 || chars[0] != '^' || chars[n - 1] != '$' {
+    return None
+  }
+  // A lazy '?' before the '$' is NOT supported: HF parses X{n,m}? as
+  // (?:X{m,n})? whose whole-line form adds empty matches at ^-and-$
+  // positions and shortest-line-end selection for \n-spanning classes
+  // — a different engine capability. Fail explicitly (probed:
+  // ^a{3,2}?$ on '\n\n' -> '#\n#\n' in HF).
+  let mut q_is_lazy = chars[n - 2] == '?'
+  if q_is_lazy && n >= 4 {
+    let mut bs = 0
+    let mut k = n - 3
+    while k >= 1 && chars[k] == '\\' {
+      bs = bs + 1
+      k = k - 1
+    }
+    if bs % 2 == 1 {
+      q_is_lazy = false // escaped literal '?' base (probed: ^\?$)
+    }
+  }
+  if q_is_lazy {
+    return None
+  }
+  double_anchored_brace(chars, n)
+}
+
+///|
+fn double_anchored_brace(
+  chars : Array[Char],
+  n : Int,
+) -> (Int, Char?, Int, Int)? {
+  if n < 3 || chars[0] != '^' || chars[n - 1] != '$' {
     return None
   }
   // locate a trailing quantifier inside the anchors: '+' at n-2, or a
   // '{...}' block ending at n-2
   let mut lo = 0
   let mut hi = 0
+  let mut swapped = false
   let mut base_end : Int = 0 // exclusive end of the base inside chars
-  if chars[n - 2] == '+' {
+  // '+' is the quantifier unless it is itself escaped (odd backslash
+  // run before it: `^\+$` is the literal-plus base, `^\\+$` is an
+  // escaped backslash base followed by the + quantifier)
+  let mut plus_is_quantifier = chars[n - 2] == '+'
+  if plus_is_quantifier && n >= 4 {
+    let mut bs = 0
+    let mut k = n - 3
+    while k >= 1 && chars[k] == '\\' {
+      bs = bs + 1
+      k = k - 1
+    }
+    if bs % 2 == 1 {
+      plus_is_quantifier = false
+    }
+  }
+  if plus_is_quantifier {
     lo = 1
     hi = -1
     base_end = n - 2
@@ -893,9 +940,23 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
           } else {
             match parse_capped_digits(inner, j + 1, m) {
               Some((w, k2)) =>
-                if k2 == m && v >= 1 && w >= v && w <= 4 {
-                  lo = v
-                  hi = w
+                if k2 == m && v >= 1 && w >= 1 && w <= 4 {
+                  // reversed {n,m} with n > m: onig swaps to an ATOMIC
+                  // {m,n} window (probed: ^a{3,2}$ on 'aa'/'aaa' ->
+                  // '#', 'aaaa' unchanged == the {2,3} window; ^a{2,0}$
+                  // stays rejected — its {0,2} swap has empty-line
+                  // semantics this engine lacks). Claimed only for
+                  // \n-free classes: \s/[\r\n]/\n spans make atomicity
+                  // vs backtracking diverge (probed: ^\s{4,2}$ on
+                  // '   \nx' unchanged in HF) — those fail explicitly.
+                  if w < v {
+                    lo = w
+                    hi = v
+                    swapped = true
+                  } else {
+                    lo = v
+                    hi = w
+                  }
                 } else {
                   return None
                 }
@@ -909,7 +970,13 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
     }
     base_end = open
   } else {
-    return None // a double-anchored base needs a quantifier
+    // quantifier-less `^BASE$` == `^BASE{1}$` (probed 0.22.2: 'a\na'
+    // with ^a$ -> '#\n#'; a single-char window never crosses lines).
+    // Also reached for escaped-operator bases (`^\+$`): the '+'
+    // belongs to the base, window is the single char.
+    lo = 1
+    hi = 1
+    base_end = n - 1
   }
   // resolve the base
   let sb = StringBuilder()
@@ -920,7 +987,15 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
   }
   let base = sb.to_string()
   match bare_class_kind(base) {
-    Some(kind) => Some((kind, None, lo, hi))
+    Some(kind) =>
+      if swapped && bounded_regex_kind_pred(kind, '\n') {
+        // SEMANTIC guard: any class whose predicate matches '\n'
+        // (\s, [\r\n], \D, \W, [^0-9], ... — probed) makes the
+        // atomic-vs-backtracking divergence appear
+        None
+      } else {
+        Some((kind, None, lo, hi))
+      }
     None => {
       if mixed_complement_ordering_kind(base) is Some(kind) {
         return Some((kind, None, lo, hi))
@@ -928,9 +1003,29 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
       let bsc = base.to_array()
       if bsc.length() == 2 && bsc[0] == '\\' {
         let lit : Char? = match bsc[1] {
-          'n' => Some('\n')
+          'n' =>
+            if swapped {
+              None // '\n' spans lines: atomic swap unsupported
+            } else {
+              Some('\n')
+            }
           't' => Some('\t')
           'r' => Some('\r')
+          '+'
+          | '.'
+          | '*'
+          | '?'
+          | '('
+          | ')'
+          | '['
+          | ']'
+          | '{'
+          | '}'
+          | '|'
+          | '^'
+          | '$'
+          | '-'
+          | '\\' => Some(bsc[1])
           _ => None
         }
         match lit {
@@ -942,6 +1037,9 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
         !is_regex_operator(bsc[0]) &&
         bsc[0] != '\\' &&
         bsc[0] != '$' {
+        if swapped && bsc[0] == '\n' {
+          return None // raw-newline literal spans lines under a swap
+        }
         return Some((-1, Some(bsc[0]), lo, hi))
       }
       None
