@@ -1456,3 +1456,28 @@ test "lazy quantifier suffixes collapse per probed families" {
   @test.assert_eq(@common.lazy_exact_spec("a{2}?"), Some((-1, Some('a'), 2)))
   @test.assert_eq(@common.lazy_exact_spec("a{2}"), None)
 }
+
+///|
+/// Lazy-bound validation hardening (review fixes): leading-zero values
+/// route by VALUE (`a{02}?` is exact-2 lazy, probed: 'zaaz' -> '#z#z#',
+/// 'zaaaz' -> '#z#a#z#'), invalid tails stay literals (`a{0,2x}?` gate
+/// false), the 100000 cap covers `{0,N}?`, escaped-brace bases and
+/// reversed ranges fail explicitly.
+test "lazy bound validation follows parsed values" {
+  @test.assert_eq(@common.is_supported_replace_regex("a{02}?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a{02,3}?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a{0,2x}?"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a{0,100001}?"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\{0,2}?"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a{3,2}?"), false)
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("a{02}?").normalize("zaaz"), "#z#z#")
+  @test.assert_eq(n("a{02}?").normalize("zaaaz"), "#z#a#z#")
+  @test.assert_eq(n("a{0002}?").normalize("zaaz"), "#z#z#")
+  @test.assert_eq(n("a{02,3}?").normalize("zaaaz"), "z#az")
+  @test.assert_eq(@common.lazy_exact_spec("a{02}?"), Some((-1, Some('a'), 2)))
+  @test.assert_eq(@common.lazy_exact_spec("a{00}?"), None)
+  @test.assert_eq(@common.lazy_normalize("a{02,3}?"), Some("a{2}"))
+}
