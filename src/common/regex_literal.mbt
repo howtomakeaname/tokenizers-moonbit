@@ -905,7 +905,7 @@ fn trailing_run_match_multiline(
 /// (literal, start_anchor, end_anchor) per branch.
 fn regex_literal_branch_alternatives_spec(
   pattern : String,
-) -> (Array[(String, Bool, Bool)], Bool, Bool)? {
+) -> (Array[(String, Bool, Bool, Bool, Bool)], Bool, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
   if n == 0 {
@@ -935,15 +935,14 @@ fn regex_literal_branch_alternatives_spec(
   if !has_top_pipe {
     return None
   }
-  let word_start = n > 2 && chars[0] == '\\' && chars[1] == 'b'
-  let word_end = n > 2 && chars[n - 1] == 'b' && chars[n - 2] == '\\'
-  let lo = if word_start { 2 } else { 0 }
-  let hi = if word_end { n - 2 } else { n }
-  if lo >= hi {
-    return None
-  }
+  // \b binds PER BRANCH (probed 0.22.2: \bfoo|bar\b == (\bfoo)|(bar\b)
+  // — on 'foobar' -> '##'), so no global strip here
+  let lo = 0
+  let hi = n
+  ignore(lo)
+  ignore(hi)
   // split top-level unescaped '|' into segments, then parse each
-  let branches : Array[(String, Bool, Bool)] = []
+  let branches : Array[(String, Bool, Bool, Bool, Bool)] = []
   let mut seg_lo = lo
   let mut i = lo
   while i <= hi {
@@ -970,6 +969,21 @@ fn regex_literal_branch_alternatives_spec(
       let b_end = chars[e - 1] == '$' && !is_escaped_at(chars, e - 1)
       if b_end {
         e = e - 1
+      }
+      // per-branch \b: leading \bFOO and trailing FOO\b
+      let w_start = e - s >= 2 &&
+        chars[s] == '\\' &&
+        chars[s + 1] == 'b' &&
+        !is_escaped_at(chars, s)
+      if w_start {
+        s = s + 2
+      }
+      let w_end = e - s >= 2 &&
+        chars[e - 1] == 'b' &&
+        chars[e - 2] == '\\' &&
+        !is_escaped_at(chars, e - 2)
+      if w_end {
+        e = e - 2
       }
       if s >= e {
         return None
@@ -1006,7 +1020,7 @@ fn regex_literal_branch_alternatives_spec(
       if lit.length() == 0 {
         return None
       }
-      branches.push((chars_to_string(lit), b_start, b_end))
+      branches.push((chars_to_string(lit), b_start, b_end, w_start, w_end))
       seg_lo = i + 1
     }
     i = i + 1
@@ -1014,7 +1028,7 @@ fn regex_literal_branch_alternatives_spec(
   if branches.length() < 2 {
     return None
   }
-  Some((branches, word_start, word_end))
+  Some((branches, false, false))
 }
 
 ///|
@@ -1024,7 +1038,7 @@ fn regex_literal_branch_alternatives_spec(
 /// — onig find_iter semantics with alternation declaration-order ties.
 fn literal_branch_alternation_matches(
   chars : Array[Char],
-  branches : Array[(String, Bool, Bool)],
+  branches : Array[(String, Bool, Bool, Bool, Bool)],
   word_start : Bool,
   word_end : Bool,
 ) -> Array[Span] {
@@ -1032,9 +1046,11 @@ fn literal_branch_alternation_matches(
   // candidates: (start, branch_idx, stop)
   let cands : Array[(Int, Int, Int)] = []
   for bi, branch in branches {
-    let (lit, b_start, b_end) = branch
+    let (lit, b_start, b_end, w_start, w_end) = branch
     let pat = lit.to_array()
     let m = pat.length()
+    // per-branch word boundaries take precedence; the parameters are
+    // kept for signature stability (always false from the spec now)
     if m == 0 || m > n {
       continue
     }
@@ -1049,7 +1065,7 @@ fn literal_branch_alternation_matches(
           if le <= n &&
             (le == n || chars[le] == '\n') &&
             chars_match_at(chars, ls, pat) &&
-            literal_word_boundaries_match(chars, ls, le, word_start, word_end) {
+            literal_word_boundaries_match(chars, ls, le, w_start, w_end) {
             cands.push((ls, bi, le))
           }
           at_line_start = false
@@ -1099,7 +1115,7 @@ fn literal_branch_alternation_matches(
         if is_end && j - m >= 0 {
           let st = j - m
           if chars_match_at(chars, st, pat) &&
-            literal_word_boundaries_match(chars, st, j, word_start, word_end) {
+            literal_word_boundaries_match(chars, st, j, w_start, w_end) {
             cands.push((st, bi, j))
           }
         }
@@ -1116,7 +1132,7 @@ fn literal_branch_alternation_matches(
       let mut p = 0
       while p + m <= n {
         if chars_match_at(chars, p, pat) &&
-          literal_word_boundaries_match(chars, p, p + m, word_start, word_end) {
+          literal_word_boundaries_match(chars, p, p + m, w_start, w_end) {
           cands.push((p, bi, p + m))
         }
         p = p + 1
