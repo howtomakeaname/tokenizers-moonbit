@@ -1346,3 +1346,43 @@ test "mixed-class complement orderings all accepted" {
     @test.assert_eq(n.normalize_aligned("!!").0, "#")
   }
 }
+
+///|
+/// Review fixes: escaped-base bounded quantifiers must be reachable from
+/// the LOAD path (the gate twin previously rejected them), `a{,}` is a
+/// literal that loads, and the mixed-class anchored/exact orderings are
+/// accepted. Probed 0.22.2 (`a{,}` on 'xa{,}x' -> 'x#x').
+test "escaped bases load; a{,} is a literal that loads" {
+  let esc = @normalizer.Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"\\\\n{2}\"},\"content\":\"#\"}",
+    ),
+  )
+  @test.assert_eq(esc.normalize("z\n\nz"), "z#z")
+  let dot = @normalizer.Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"\\\\.{2}\"},\"content\":\"#\"}",
+    ),
+  )
+  @test.assert_eq(dot.normalize("a.b..c"), "a.b#c")
+  let comma_empty = @normalizer.Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{,}\"},\"content\":\"#\"}",
+    ),
+  )
+  @test.assert_eq(comma_empty.normalize("xa{,}x"), "x#x")
+  @test.assert_eq(comma_empty.normalize("zaaz"), "zaaz")
+  // gate coverage for the escaped bounded/ranged window
+  @test.assert_eq(@common.is_supported_replace_regex("\\t{2}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\t{2,3}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\r{2,}"), true)
+  // anchored + exact mixed-class orderings load
+  @test.assert_eq(
+    @common.is_supported_replace_regex("^[^\\p{Number}\\p{Letter}\\s]+"),
+    true,
+  )
+  @test.assert_eq(
+    @common.is_supported_replace_regex("[^\\p{L}\\s\\p{N}]{2}"),
+    true,
+  )
+}
