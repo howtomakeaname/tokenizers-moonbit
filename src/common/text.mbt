@@ -406,7 +406,7 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
     return true
   }
   // single-char literal bounded quantifiers within the 1..4 window
-  if char_bounded_quantifier_shape(pattern) {
+  if char_bounded_spec(pattern) is Some(_) {
     return true
   }
   // zero-minimum quantifiers: a{0} / a{0,m} / a{0,} and class bases
@@ -473,63 +473,6 @@ pub fn bare_class_kind(pattern : String) -> Int? {
     "[\\r\\n]" => Some(3)
     _ => None
   }
-}
-
-///|
-/// Whether `pattern` is `c{n}` / `c{n,}` / `c{n,m}` for an ordinary
-/// literal char with 1 <= n <= m <= 4 (the supported bounded window).
-pub fn char_bounded_quantifier_shape(pattern : String) -> Bool {
-  let chars = pattern.to_array()
-  let n = chars.length()
-  if n < 4 || chars[1] != '{' || chars[n - 1] != '}' {
-    return false
-  }
-  let c = chars[0]
-  // metacharacters are excluded: `.{n}` is any-char in HF and
-  // `?{n}`/`+{n}`/etc. are construction errors there — both must not
-  // load here as literal runs
-  if c == '{' ||
-    c == '}' ||
-    c == '\\' ||
-    c == '[' ||
-    c == ']' ||
-    c == '.' ||
-    c == '^' ||
-    c == '$' ||
-    c == '*' ||
-    c == '+' ||
-    c == '?' ||
-    c == '(' ||
-    c == ')' ||
-    c == '|' {
-    return false
-  }
-  let mut i = 2
-  let mut lo = 0
-  let mut lo_digits = 0
-  while i < n && chars[i] >= '0' && chars[i] <= '9' {
-    lo = lo * 10 + (chars[i].to_int() - '0'.to_int())
-    lo_digits = lo_digits + 1
-    i = i + 1
-  }
-  if lo_digits == 0 || lo == 0 || lo > 4 {
-    return false
-  }
-  if i < n && chars[i] == ',' {
-    i = i + 1
-    if i == n - 1 {
-      return true // {n,}
-    }
-    let mut hi = 0
-    let mut hi_digits = 0
-    while i < n && chars[i] >= '0' && chars[i] <= '9' {
-      hi = hi * 10 + (chars[i].to_int() - '0'.to_int())
-      hi_digits = hi_digits + 1
-      i = i + 1
-    }
-    return hi_digits > 0 && hi >= lo && hi <= 4 && i == n - 1
-  }
-  i == n - 1
 }
 
 ///|

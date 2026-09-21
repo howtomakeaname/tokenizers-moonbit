@@ -31,7 +31,7 @@ fn decode_replace_direct(
 ) -> String {
   // single-char literal bounded quantifiers run per token (HF decoders are
   // per-token: a{2} replaces only within one token surface)
-  if @common.char_bounded_quantifier_shape(pattern) {
+  if @common.char_bounded_spec(pattern) is Some(_) {
     let sb = StringBuilder()
     for t in tokens {
       match @common.replace_char_bounded_runs(t, pattern, content) {

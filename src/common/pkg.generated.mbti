@@ -14,8 +14,6 @@ pub fn bounded_regex_kind(String) -> (Int, Int)?
 
 pub fn bounded_regex_kind_pred(Int, Char) -> Bool
 
-pub fn char_bounded_quantifier_shape(String) -> Bool
-
 pub fn char_bounded_spec(String) -> (Char, Int, Int)?
 
 pub fn char_string(Char) -> String
