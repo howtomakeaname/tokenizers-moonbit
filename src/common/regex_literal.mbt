@@ -313,10 +313,13 @@ fn literal_alternation_matches(
 
 ///|
 /// MULTILINE anchored literal matching (probed 0.22.2): `^lit` matches
-/// at every line start, `lit$` at every line end, `^lit$` when a whole
-/// line equals the literal — lines split on the newline char, and a
-/// carriage return belongs to its line (so CRLF text matches only the
-/// second line under ^ab$).
+/// at every line start, `lit$` ending at every line end, `^lit$` from a
+/// line start to a line end — literals CONTAINING newlines may span
+/// lines (a\nb$ on "xa\nb" -> "x#"; \n\n$ collapses a trailing blank
+/// line). `lit$` alternations pick the LEFTMOST start (longest
+/// alternative first, declaration order within a length — (?:b|ab)$ on
+/// 'ab' matches [0,2)). \r belongs to its line. Matches never overlap
+/// (a match shadows the line starts/ends it covers).
 fn literal_alternation_matches_anchored(
   chars : Array[Char],
   pats : Array[Array[Char]],
@@ -326,84 +329,104 @@ fn literal_alternation_matches_anchored(
   word_end~ : Bool,
 ) -> Array[Span] {
   let n = chars.length()
-  // collect line boundaries: starts include 0 and every post-'\n'
-  let line_starts : Array[Int] = []
-  let mut i = 0
-  let mut at_start = true
-  while i <= n {
-    let boundary = i == n
-    if at_start {
-      line_starts.push(i)
-      at_start = false
-    }
-    if boundary {
-      break
-    }
-    if chars[i] == '\n' {
-      at_start = true
-    }
-    i = i + 1
-  }
+  let is_line_end = fn(e : Int) -> Bool { e == n || chars[e] == '\n' }
   let out : Array[Span] = []
   if anchored_start && anchored_end {
-    // whole-line equality per line
-    for ls in line_starts {
-      let le = line_end(chars, ls)
-      for pat in pats {
-        let m = pat.length()
-        if m > 0 &&
-          le - ls == m &&
-          chars_match_at(chars, ls, pat) &&
-          literal_word_boundaries_match(chars, ls, le, word_start, word_end) {
-          out.push({ start: ls, stop: le, })
-          break
+    // from each line start, the literal must end exactly at A line end
+    // — any line end, so literals containing newlines span lines
+    let mut last_end = 0
+    let mut ls = 0
+    let mut i = 0
+    while i <= n {
+      let at_line_start = i == ls
+      if at_line_start && ls >= last_end && ls < n {
+        for pat in pats {
+          let m = pat.length()
+          let le = ls + m
+          if m > 0 &&
+            le <= n &&
+            (le == n || chars[le] == '\n') &&
+            chars_match_at(chars, ls, pat) &&
+            literal_word_boundaries_match(chars, ls, le, word_start, word_end) {
+            out.push({ start: ls, stop: le, })
+            last_end = le
+            break
+          }
         }
       }
+      if i == n {
+        break
+      }
+      if chars[i] == '\n' {
+        ls = i + 1
+      }
+      i = i + 1
     }
     return out
   }
   if anchored_start {
-    for ls in line_starts {
-      for pat in pats {
+    let mut last_end = 0
+    let mut ls = 0
+    let mut i = 0
+    while i <= n {
+      let at_line_start = i == ls
+      if at_line_start && ls >= last_end && ls < n {
+        for pat in pats {
+          let m = pat.length()
+          if m > 0 &&
+            ls + m <= n &&
+            chars_match_at(chars, ls, pat) &&
+            literal_word_boundaries_match(
+              chars,
+              ls,
+              ls + m,
+              word_start,
+              word_end,
+            ) {
+            out.push({ start: ls, stop: ls + m, })
+            last_end = ls + m
+            break
+          }
+        }
+      }
+      if i == n {
+        break
+      }
+      if chars[i] == '\n' {
+        ls = i + 1
+      }
+      i = i + 1
+    }
+    return out
+  }
+  // anchored_end: ending at each line end, LEFTMOST start preferred
+  // (longest alternative first, declaration order within a length)
+  let by_len_desc : Array[Array[Char]] = pats.copy()
+  by_len_desc.sort_by((a, b) => b.length() - a.length())
+  let mut last_end = 0
+  let mut i = 0
+  while i <= n {
+    if i > last_end && is_line_end(i) {
+      for pat in by_len_desc {
         let m = pat.length()
+        let st = i - m
         if m > 0 &&
-          ls + m <= n &&
-          chars_match_at(chars, ls, pat) &&
-          literal_word_boundaries_match(chars, ls, ls + m, word_start, word_end) {
-          out.push({ start: ls, stop: ls + m, })
+          st >= last_end &&
+          st >= 0 &&
+          chars_match_at(chars, st, pat) &&
+          literal_word_boundaries_match(chars, st, i, word_start, word_end) {
+          out.push({ start: st, stop: i, })
+          last_end = i
           break
         }
       }
     }
-    return out
-  }
-  // anchored_end: match ending at each line end
-  for ls in line_starts {
-    let le = line_end(chars, ls)
-    for pat in pats {
-      let m = pat.length()
-      if m > 0 &&
-        le - ls >= m &&
-        chars_match_at(chars, le - m, pat) &&
-        literal_word_boundaries_match(chars, le - m, le, word_start, word_end) {
-        out.push({ start: le - m, stop: le, })
-        break
-      }
+    if i == n {
+      break
     }
-  }
-  out
-}
-
-///|
-/// End index of the line starting at ls (before the '\n' or at the
-/// string end).
-fn line_end(chars : Array[Char], ls : Int) -> Int {
-  let n = chars.length()
-  let mut i = ls
-  while i < n && chars[i] != '\n' {
     i = i + 1
   }
-  i
+  out
 }
 
 ///|
