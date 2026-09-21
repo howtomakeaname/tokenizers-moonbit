@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-21 PR #40**（4 commit，两轮评审）：dot 基整行族 + 逐分支锚 alternation。①`.` 基（kind 30）入双锚族：`^.$`/`^..$`（点序列=定长窗口）/`^.{1,3}$`/`^.{2,}$`/逆序 swap——`.` **不匹配 `\n`**（onig 默认，`^.{3,2}$` 于 'a\nb' 不变定位此语义）；量化多 dot（`^..+$` 量词绑最后一个点）显式拒绝；②**顶层 `|`（深度 0、转义感知）触发逐分支锚解读**：`^foo|bar$` == `(^foo)|(bar$)`（HF 于 'foo\nfoobar'→'#\n##'——旧行为误读为整组锚 `#\nfoobar`，**修复一处 pre-existing 静默分歧**）；分支可 `(?:...)` 包裹；候选按 (start, 声明序) 合并、贪心非重叠（`^ab|a`→'#' vs `a|^ab`→'#b' 探针锁定）；整组锚 `^(?:foo|bar)$` 语义不变。评审两项 blocking 修复：plain 分支收集**每个**出现（重叠抑制归 merge——`ax|xxx` 于 'axxxx'→'##'，本地跳过会丢被遮蔽的同分支出现）；量化多 dot 拒绝。验证：行为 486 cell（436 一致 + 47 fail-explicit + 3 pre-existing \b 逐分支）+ 代码审计全量 parser/engine 攻击；481/481（native/js）、双扫描全绿。遗留（评审记录）：`\b` 逐分支绑定（pre-existing，与本次 `^`/`$` 同类）、空分支/裸组分支的空匹配语义、`^.{0,2}$` 零下限点窗。
+
 - **2026-09-21 发版 0.8.1（已发布，干净验证 2/2×三后端）**：PR #39 单批修复（锚定字面逐行）。按新工作流偏好（发版类 commit 直接推 main，不走 PR）执行：bump + `moon publish` 成功 + /tmp/verify081 干净安装验证（`^ab$` 逐行、`^a$` 多行，native/js/wasm-gc 全过）。
 
 - **2026-09-21 PR #39**（4 commit，两轮评审）：多字符字面双锚逐行锚定——**最后一个已知静默分歧关闭**（PR #36 三轮评审均点名）。`literal_alternation_matches_anchored` 原为整串锚（`^ab$` 加载成功但多行输入静默 no-op），重写为 multiline 逐行：`^lit` 每行行首、`lit$` 每行行尾、`^lit$` 行首到**任意**行尾整串等值。评审两轮 blocking 修复：①含 `\n` 字面跨行匹配（`a\nb$` 于 'xa\nb'→'x#'、`\n\n$` 塌缩尾空行、`^a\nb$` 跨行），`^lit` 匹配遮蔽覆盖的行首（非重叠 find_iter 语义）；②`lit$` alternation 的 **onig tie-break = 最左 start + 声明序**（非长度——双声明序探针确证 `(?:\n\n|\n)$`→'a#' 而反序→'a##'），改 start 升序扫描。单一实现经 simple_split 服务 Split/normalizer/decoder/aligned 四路。验证：两轮 ~1,000 对拍，除 fail-explicitly 面（`^.$`/`^ab?c$`/`^foo|bar$` 等）外零分歧；477/477（native/js）、454/454（wasm）、双扫描全绿。遗留（评审记录）：`^foo|bar$` 混合锚按 onig 应逐分支绑定锚（pre-existing）、`^.$` 单字符通配整行族可作 double_anchored 后续扩展。
