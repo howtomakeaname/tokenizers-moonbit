@@ -1587,3 +1587,21 @@ test "double-anchored whole-line matching" {
 
   @test.assert_eq(@common.is_supported_replace_regex(mixed), true)
 }
+
+///|
+/// Sub-lo remainder tails walk the empty rules (review fix): after the
+/// greedy blocks, every remainder position past the prev_end-adjacent
+/// one fires an empty match — `a{3}?` on 'aaaaa' is '#a#a#' (not
+/// '#aa#'). Reversed shapes with m >= 3 behave the same.
+test "lazy remainder tails keep interior empty matches" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("a{3}?").normalize("aaaaa"), "#a#a#")
+  @test.assert_eq(n("a{3}?").normalize("zaaaaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{4}?").normalize("zaaaaaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{4}?").normalize("zaaaaaaaz"), "#z#a#a#a#z#")
+  @test.assert_eq(n("\\s{3}?").normalize("x     y"), "#x# # #y#")
+  @test.assert_eq(n("a{4,3}?").normalize("zaaaaaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{5,3}?").normalize("zaaaaaaaz"), "#z#a#a#z#")
+}

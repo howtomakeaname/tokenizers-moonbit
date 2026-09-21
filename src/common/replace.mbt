@@ -1055,7 +1055,11 @@ fn lazy_ranged_or_empty_spans(
           prev_end = b + take
           b = b + take
         }
-        p = g // sub-lo remainder is copied as unmatched gap
+        // fall through to the empty walk from b: the sub-lo remainder
+        // positions each get their empty-match attempt (probed: a{3}?
+        // on 'aaaaa' -> '#a#a#' — first remainder position is skipped
+        // as prev_end-adjacent, the rest fire empties)
+        p = b
         continue
       }
     }
