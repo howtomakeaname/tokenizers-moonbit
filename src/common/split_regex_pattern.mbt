@@ -250,9 +250,16 @@ fn is_simple_punctuation_symbol_regex_pattern(pattern : String) -> Bool {
   pattern == "[^\\p{Symbol}\\p{Punctuation}]+" ||
   pattern == "[^\\s\\p{L}\\p{N}]+" ||
   pattern == "[^\\s\\p{N}\\p{L}]+" ||
+  pattern == "[^\\p{L}\\s\\p{N}]+" ||
   pattern == "[^\\p{L}\\p{N}\\s]+" ||
+  pattern == "[^\\p{N}\\s\\p{L}]+" ||
   pattern == "[^\\p{N}\\p{L}\\s]+" ||
-  pattern == "[^\\s\\p{Letter}\\p{Number}]+"
+  pattern == "[^\\s\\p{Letter}\\p{Number}]+" ||
+  pattern == "[^\\s\\p{Number}\\p{Letter}]+" ||
+  pattern == "[^\\p{Letter}\\s\\p{Number}]+" ||
+  pattern == "[^\\p{Letter}\\p{Number}\\s]+" ||
+  pattern == "[^\\p{Number}\\s\\p{Letter}]+" ||
+  pattern == "[^\\p{Number}\\p{Letter}\\s]+"
 }
 
 ///|

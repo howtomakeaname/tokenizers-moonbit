@@ -317,16 +317,22 @@ fn ranged_regex_kind_inner(pattern : String) -> (Int, Int, Int)? {
     pattern,
     21,
     [
-      "[^\\s\\p{L}\\p{N}]{2,3}", "[^\\s\\p{N}\\p{L}]{2,3}", "[^\\p{L}\\p{N}\\s]{2,3}",
-      "[^\\p{N}\\p{L}\\s]{2,3}", "[^\\s\\p{Letter}\\p{Number}]{2,3}",
+      "[^\\s\\p{L}\\p{N}]{2,3}", "[^\\s\\p{N}\\p{L}]{2,3}", "[^\\p{L}\\s\\p{N}]{2,3}",
+      "[^\\p{L}\\p{N}\\s]{2,3}", "[^\\p{N}\\s\\p{L}]{2,3}", "[^\\p{N}\\p{L}\\s]{2,3}",
+      "[^\\s\\p{Letter}\\p{Number}]{2,3}", "[^\\s\\p{Number}\\p{Letter}]{2,3}", "[^\\p{Letter}\\s\\p{Number}]{2,3}",
+      "[^\\p{Letter}\\p{Number}\\s]{2,3}", "[^\\p{Number}\\s\\p{Letter}]{2,3}", "[^\\p{Number}\\p{Letter}\\s]{2,3}",
     ],
     [
-      "[^\\s\\p{L}\\p{N}]{2,4}", "[^\\s\\p{N}\\p{L}]{2,4}", "[^\\p{L}\\p{N}\\s]{2,4}",
-      "[^\\p{N}\\p{L}\\s]{2,4}", "[^\\s\\p{Letter}\\p{Number}]{2,4}",
+      "[^\\s\\p{L}\\p{N}]{2,4}", "[^\\s\\p{N}\\p{L}]{2,4}", "[^\\p{L}\\s\\p{N}]{2,4}",
+      "[^\\p{L}\\p{N}\\s]{2,4}", "[^\\p{N}\\s\\p{L}]{2,4}", "[^\\p{N}\\p{L}\\s]{2,4}",
+      "[^\\s\\p{Letter}\\p{Number}]{2,4}", "[^\\s\\p{Number}\\p{Letter}]{2,4}", "[^\\p{Letter}\\s\\p{Number}]{2,4}",
+      "[^\\p{Letter}\\p{Number}\\s]{2,4}", "[^\\p{Number}\\s\\p{Letter}]{2,4}", "[^\\p{Number}\\p{Letter}\\s]{2,4}",
     ],
     [
-      "[^\\s\\p{L}\\p{N}]{3,4}", "[^\\s\\p{N}\\p{L}]{3,4}", "[^\\p{L}\\p{N}\\s]{3,4}",
-      "[^\\p{N}\\p{L}\\s]{3,4}", "[^\\s\\p{Letter}\\p{Number}]{3,4}",
+      "[^\\s\\p{L}\\p{N}]{3,4}", "[^\\s\\p{N}\\p{L}]{3,4}", "[^\\p{L}\\s\\p{N}]{3,4}",
+      "[^\\p{L}\\p{N}\\s]{3,4}", "[^\\p{N}\\s\\p{L}]{3,4}", "[^\\p{N}\\p{L}\\s]{3,4}",
+      "[^\\s\\p{Letter}\\p{Number}]{3,4}", "[^\\s\\p{Number}\\p{Letter}]{3,4}", "[^\\p{Letter}\\s\\p{Number}]{3,4}",
+      "[^\\p{Letter}\\p{Number}\\s]{3,4}", "[^\\p{Number}\\s\\p{Letter}]{3,4}", "[^\\p{Number}\\p{Letter}\\s]{3,4}",
     ],
   )
 }
