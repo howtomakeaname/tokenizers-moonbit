@@ -590,10 +590,15 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     })
   }
   // `[A-Za-z0-9_]+` (and \b-wrapped) is ASCII-only (HF: é/中 stay)
-  if pattern == "[A-Za-z0-9_]+" || pattern == "\\b[A-Za-z0-9_]+\\b" {
+  if pattern == "[A-Za-z0-9_]+" {
     return @common.replace_char_runs(s, content, fn(c) {
       @common.is_ascii_word_char(c)
     })
+  }
+  // \\b boundaries use the UNICODE word set (bare table incl. quirks;
+  // probed 0.22.2: 'a²b' has no match)
+  if pattern == "\\b[A-Za-z0-9_]+\\b" {
+    return @common.replace_ascii_word_boundary_runs(s, content)
   }
   if pattern == "^\\w+" {
     return @common.replace_leading_runs(s, content, fn(c) {

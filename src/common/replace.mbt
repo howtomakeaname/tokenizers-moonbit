@@ -924,3 +924,39 @@ pub fn replace_family_spans(
   }
   simple_split_regex_matches(chars, pattern)
 }
+
+///|
+/// `\b[A-Za-z0-9_]+\b` match spans: ASCII word runs whose neighbors are
+/// NOT word characters, where word-ness is the Unicode `\w` set (bare
+/// table incl. the onig quirks) — probed 0.22.2: 'a²b' has NO match
+/// (² is a word char, so there is no boundary between a|²), 'x_1y'
+/// matches whole, '¼ab½'/'²ab'/'aéb' none. Backtracking cannot rescue a
+/// sub-run: every shorter sub-run still borders a word char.
+fn ascii_word_boundary_run_matches(chars : Array[Char]) -> Array[Span] {
+  let out : Array[Span] = []
+  let n = chars.length()
+  let mut i = 0
+  while i < n {
+    if is_ascii_word_char(chars[i]) {
+      let start = i
+      while i < n && is_ascii_word_char(chars[i]) {
+        i = i + 1
+      }
+      let prev_word = start > 0 && is_word_char(chars[start - 1])
+      let next_word = i < n && is_word_char(chars[i])
+      if !prev_word && !next_word {
+        out.push({ start, stop: i, })
+      }
+    } else {
+      i = i + 1
+    }
+  }
+  out
+}
+
+///|
+/// `\b[A-Za-z0-9_]+\b` replace (normalizer/decoder hardcode path).
+pub fn replace_ascii_word_boundary_runs(s : String, content : String) -> String {
+  let chars = s.to_array()
+  replace_spans(chars, ascii_word_boundary_run_matches(chars), content)
+}
