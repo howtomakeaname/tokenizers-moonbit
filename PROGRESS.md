@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-21 发版 0.8.1（已发布，干净验证 2/2×三后端）**：PR #39 单批修复（锚定字面逐行）。按新工作流偏好（发版类 commit 直接推 main，不走 PR）执行：bump + `moon publish` 成功 + /tmp/verify081 干净安装验证（`^ab$` 逐行、`^a$` 多行，native/js/wasm-gc 全过）。
+
 - **2026-09-21 PR #39**（4 commit，两轮评审）：多字符字面双锚逐行锚定——**最后一个已知静默分歧关闭**（PR #36 三轮评审均点名）。`literal_alternation_matches_anchored` 原为整串锚（`^ab$` 加载成功但多行输入静默 no-op），重写为 multiline 逐行：`^lit` 每行行首、`lit$` 每行行尾、`^lit$` 行首到**任意**行尾整串等值。评审两轮 blocking 修复：①含 `\n` 字面跨行匹配（`a\nb$` 于 'xa\nb'→'x#'、`\n\n$` 塌缩尾空行、`^a\nb$` 跨行），`^lit` 匹配遮蔽覆盖的行首（非重叠 find_iter 语义）；②`lit$` alternation 的 **onig tie-break = 最左 start + 声明序**（非长度——双声明序探针确证 `(?:\n\n|\n)$`→'a#' 而反序→'a##'），改 start 升序扫描。单一实现经 simple_split 服务 Split/normalizer/decoder/aligned 四路。验证：两轮 ~1,000 对拍，除 fail-explicitly 面（`^.$`/`^ab?c$`/`^foo|bar$` 等）外零分歧；477/477（native/js）、454/454（wasm）、双扫描全绿。遗留（评审记录）：`^foo|bar$` 混合锚按 onig 应逐分支绑定锚（pre-existing）、`^.$` 单字符通配整行族可作 double_anchored 后续扩展。
 
 - **2026-09-21 发版 0.8.0（已发布，干净安装验证 6/6×三后端）**：0.7.0 后累计 PR #34（双锚整行族 + 逆序惰性交换）、#36（无量词多行/双锚逆序/转义基/decoder 路径）。PR #37 CI 8/8 后合并；`moon publish` 成功；干净项目安装 0.8.0（/tmp/verify08，native/js/wasm-gc 各 6/6）——`^a$` 多行整行、\b Unicode 边界加载、混类双锚逐行、`^5{3,2}$` 交换、惰性 `a{2,3}?`、\p{N} 全 N 全部与 HF 一致（验证脚本坑：JSON 转义需含反斜杠，`\b` 不转义会被 JSON 解析成退格）。
