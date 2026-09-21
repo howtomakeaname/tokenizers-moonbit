@@ -1221,3 +1221,18 @@ test "pretokenizer to_json covers serializable variants" {
     ),
   )
 }
+
+///|
+/// GPT-2 family pattern ` ?\p{N}+` matches FULL N (Nd + Nl + No):
+/// ` ¼3` merges into one number run (probed 0.22.2).
+test "gpt2 pattern number runs are full N" {
+  let pieces = gpt2_split("x ¼3y")
+  @test.assert_eq(pieces.length(), 3)
+  @test.assert_eq(pieces[0], "x")
+  @test.assert_eq(pieces[1], " ¼3")
+  @test.assert_eq(pieces[2], "y")
+  let p2 = gpt2_split("Ⅰ2 Ⅷx")
+  @test.assert_eq(p2[0], "Ⅰ2")
+  @test.assert_eq(p2[1], " Ⅷ")
+  @test.assert_eq(p2[2], "x")
+}

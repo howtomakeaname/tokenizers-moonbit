@@ -1174,3 +1174,67 @@ test "zero-min quantifier max bound follows onig 100000 limit" {
     )
   })
 }
+
+///|
+/// `\p{N}`/`\p{Number}` spellings are FULL N (Nd + Nl + No) while `\d`
+/// stays Nd and `[0-9]` ASCII — every expectation probed against Python
+/// 0.22.2 on the battery "a²¼Ⅰ①₃0５\u{1FBF0}" (² ¼ ① ₃ = No, Ⅰ = Nl,
+/// 0 = ASCII Nd, ５ = fullwidth Nd, U+1FBF0 = Unicode-14 mathematical
+/// digit that the old hard-coded Nd intervals missed).
+test "p{N} full-N vs d-Nd split matches onig semantics" {
+  let s = "a²¼Ⅰ①₃0５\u{1FBF0}"
+  fn n(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\p{N}").normalize(s), "a########")
+  @test.assert_eq(n("\\p{Number}").normalize(s), "a########")
+  @test.assert_eq(n("[\\p{N}]").normalize(s), "a########")
+  @test.assert_eq(n("\\P{N}").normalize(s), "#²¼Ⅰ①₃0５\u{1FBF0}")
+  @test.assert_eq(n("[^\\p{N}]").normalize(s), "#²¼Ⅰ①₃0５\u{1FBF0}")
+  // \d = Nd incl. fullwidth ５ and U+1FBF0, excluding No/Nl
+  @test.assert_eq(n("\\d").normalize(s), "a²¼Ⅰ①₃###")
+  @test.assert_eq(n("[0-9]").normalize(s), "a²¼Ⅰ①₃#５\u{1FBF0}")
+  @test.assert_eq(n("\\d+").normalize(s), "a²¼Ⅰ①₃#")
+  @test.assert_eq(n("\\p{N}+").normalize(s), "a#")
+  @test.assert_eq(n("\\P{N}+").normalize(s), "#²¼Ⅰ①₃0５\u{1FBF0}")
+  @test.assert_eq(n("\\p{N}{2}").normalize(s), "a####")
+  @test.assert_eq(n("\\p{N}{1,3}").normalize(s), "a###")
+  @test.assert_eq(n("^\\p{N}+").normalize(s), s)
+  @test.assert_eq(n("\\p{N}+$").normalize(s), "a#")
+  @test.assert_eq(n("\\p{N}{2,}").normalize(s), "a#")
+}
+
+///|
+/// Kind split sanity: the `\p{N}` spellings resolve to kind 28/29 and
+/// `\d` stays 11 in every entry table.
+test "p{N} spellings map to full-N kinds" {
+  @test.assert_eq(@common.bare_class_kind("\\p{N}"), Some(28))
+  @test.assert_eq(@common.bare_class_kind("\\p{Number}"), Some(28))
+  @test.assert_eq(@common.bare_class_kind("[\\p{N}]"), Some(28))
+  @test.assert_eq(@common.bare_class_kind("\\P{N}"), Some(29))
+  @test.assert_eq(@common.bare_class_kind("[^\\p{Number}]"), Some(29))
+  @test.assert_eq(@common.bare_class_kind("\\d"), Some(11))
+  @test.assert_eq(@common.bounded_regex_kind("\\p{N}{1,2}"), Some((28, 2)))
+  @test.assert_eq(@common.bounded_regex_kind("\\d{1,2}"), Some((11, 2)))
+  // the predicate split itself
+  @test.assert_eq(@common.is_unicode_number('²'), true)
+  @test.assert_eq(@common.is_unicode_number('Ⅰ'), true)
+  @test.assert_eq(@common.is_unicode_number('x'), false)
+  @test.assert_eq(@common.is_decimal_number('²'), false)
+  @test.assert_eq(@common.is_decimal_number('\u{1FBF0}'), true)
+}
+
+///|
+/// `\P{N}{1,n}` bounded negatives are the complement of FULL N (review
+/// fix: they were left on the kind-14 Nd complement). Probed 0.22.2.
+test "p{N} bounded negatives complement full N" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\P{N}{1,2}").normalize("aⅠb"), "#Ⅰ#")
+  @test.assert_eq(n("\\P{N}{1,2}").normalize("abcⅠde"), "##Ⅰ#")
+  @test.assert_eq(n("\\P{N}{1,3}").normalize("aⅠbc"), "#Ⅰ#")
+  @test.assert_eq(@common.bounded_regex_kind("\\P{N}{1,2}"), Some((29, 2)))
+  @test.assert_eq(@common.bounded_regex_kind("\\D{1,2}"), Some((14, 2)))
+  @test.assert_eq(n("\\P{N}{1,2}").normalize_aligned("aⅠb").0, "#Ⅰ#")
+}

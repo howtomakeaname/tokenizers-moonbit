@@ -52,6 +52,8 @@ pub fn is_supported_replace_regex(String) -> Bool
 
 pub fn is_unicode_letter(Char) -> Bool
 
+pub fn is_unicode_number(Char) -> Bool
+
 pub fn is_unicode_punctuation(Char) -> Bool
 
 pub fn is_unicode_punctuation_or_symbol(Char) -> Bool

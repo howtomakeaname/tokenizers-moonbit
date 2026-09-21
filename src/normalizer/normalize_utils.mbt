@@ -346,14 +346,18 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       exact_run=4,
     )
   }
-  if pattern == "\\d+" ||
-    pattern == "[\\d]+" ||
-    pattern == "\\p{N}+" ||
+  if pattern == "\\d+" || pattern == "[\\d]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      @common.is_decimal_number(c)
+    })
+  }
+  // \p{N} spellings are FULL N (Nd + Nl + No; probed 0.22.2)
+  if pattern == "\\p{N}+" ||
     pattern == "\\p{Number}+" ||
     pattern == "[\\p{N}]+" ||
     pattern == "[\\p{Number}]+" {
     return @common.replace_char_runs(s, content, fn(c) {
-      @common.is_decimal_number(c)
+      @common.is_unicode_number(c)
     })
   }
   // `[0-9]+` is ASCII-only (HF: fullwidth digits stay)
@@ -365,47 +369,49 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       !(c >= '0' && c <= '9')
     })
   }
-  if pattern == "^\\d+" ||
-    pattern == "^[\\d]+" ||
-    pattern == "^[0-9]+" ||
-    pattern == "^\\p{N}+" ||
-    pattern == "^\\p{Number}+" ||
-    pattern == "^[\\p{N}]+" ||
-    pattern == "^[\\p{Number}]+" {
+  if pattern == "^\\d+" || pattern == "^[\\d]+" || pattern == "^[0-9]+" {
     return @common.replace_leading_runs(s, content, fn(c) {
       @common.is_decimal_number(c)
     })
   }
-  if pattern == "\\d+$" ||
-    pattern == "[\\d]+$" ||
-    pattern == "[0-9]+$" ||
-    pattern == "\\p{N}+$" ||
+  if pattern == "^\\p{N}+" ||
+    pattern == "^\\p{Number}+" ||
+    pattern == "^[\\p{N}]+" ||
+    pattern == "^[\\p{Number}]+" {
+    return @common.replace_leading_runs(s, content, fn(c) {
+      @common.is_unicode_number(c)
+    })
+  }
+  if pattern == "\\d+$" || pattern == "[\\d]+$" || pattern == "[0-9]+$" {
+    return @common.replace_trailing_runs(s, content, fn(c) {
+      @common.is_decimal_number(c)
+    })
+  }
+  if pattern == "\\p{N}+$" ||
     pattern == "\\p{Number}+$" ||
     pattern == "[\\p{N}]+$" ||
     pattern == "[\\p{Number}]+$" {
     return @common.replace_trailing_runs(s, content, fn(c) {
-      @common.is_decimal_number(c)
+      @common.is_unicode_number(c)
     })
   }
   if pattern == "\\D+" ||
     pattern == "[\\D]+" ||
     pattern == "[^\\d]+" ||
-    pattern == "[^0-9]+" ||
-    pattern == "\\P{N}+" ||
-    pattern == "\\P{Number}+" ||
-    pattern == "[^\\p{N}]+" ||
-    pattern == "[^\\p{Number}]+" {
+    pattern == "[^0-9]+" {
     return @common.replace_char_runs(s, content, fn(c) {
       !@common.is_decimal_number(c)
     })
   }
-  if pattern == "\\d{2,}" ||
-    pattern == "[\\d]{2,}" ||
-    pattern == "[0-9]{2,}" ||
-    pattern == "\\p{N}{2,}" ||
-    pattern == "\\p{Number}{2,}" ||
-    pattern == "[\\p{N}]{2,}" ||
-    pattern == "[\\p{Number}]{2,}" {
+  if pattern == "\\P{N}+" ||
+    pattern == "\\P{Number}+" ||
+    pattern == "[^\\p{N}]+" ||
+    pattern == "[^\\p{Number}]+" {
+    return @common.replace_char_runs(s, content, fn(c) {
+      !@common.is_unicode_number(c)
+    })
+  }
+  if pattern == "\\d{2,}" || pattern == "[\\d]{2,}" || pattern == "[0-9]{2,}" {
     return @common.replace_min_char_runs(
       s,
       content,
@@ -413,13 +419,18 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       min_run=2,
     )
   }
-  if pattern == "\\p{N}{2}" ||
-    pattern == "\\p{Number}{2}" ||
-    pattern == "[\\p{N}]{2}" ||
-    pattern == "[\\p{Number}]{2}" ||
-    pattern == "\\d{2}" ||
-    pattern == "[\\d]{2}" ||
-    pattern == "[0-9]{2}" {
+  if pattern == "\\p{N}{2,}" ||
+    pattern == "\\p{Number}{2,}" ||
+    pattern == "[\\p{N}]{2,}" ||
+    pattern == "[\\p{Number}]{2,}" {
+    return @common.replace_min_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_number(c) },
+      min_run=2,
+    )
+  }
+  if pattern == "\\d{2}" || pattern == "[\\d]{2}" || pattern == "[0-9]{2}" {
     return @common.replace_exact_char_runs(
       s,
       content,
@@ -427,13 +438,18 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       exact_run=2,
     )
   }
-  if pattern == "\\p{N}{3}" ||
-    pattern == "\\p{Number}{3}" ||
-    pattern == "[\\p{N}]{3}" ||
-    pattern == "[\\p{Number}]{3}" ||
-    pattern == "\\d{3}" ||
-    pattern == "[\\d]{3}" ||
-    pattern == "[0-9]{3}" {
+  if pattern == "\\p{N}{2}" ||
+    pattern == "\\p{Number}{2}" ||
+    pattern == "[\\p{N}]{2}" ||
+    pattern == "[\\p{Number}]{2}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_number(c) },
+      exact_run=2,
+    )
+  }
+  if pattern == "\\d{3}" || pattern == "[\\d]{3}" || pattern == "[0-9]{3}" {
     return @common.replace_exact_char_runs(
       s,
       content,
@@ -441,13 +457,18 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       exact_run=3,
     )
   }
-  if pattern == "\\p{N}{4}" ||
-    pattern == "\\p{Number}{4}" ||
-    pattern == "[\\p{N}]{4}" ||
-    pattern == "[\\p{Number}]{4}" ||
-    pattern == "\\d{4}" ||
-    pattern == "[\\d]{4}" ||
-    pattern == "[0-9]{4}" {
+  if pattern == "\\p{N}{3}" ||
+    pattern == "\\p{Number}{3}" ||
+    pattern == "[\\p{N}]{3}" ||
+    pattern == "[\\p{Number}]{3}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_number(c) },
+      exact_run=3,
+    )
+  }
+  if pattern == "\\d{4}" || pattern == "[\\d]{4}" || pattern == "[0-9]{4}" {
     return @common.replace_exact_char_runs(
       s,
       content,
@@ -455,17 +476,33 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
       exact_run=4,
     )
   }
-  if pattern == "\\p{N}{1,3}" ||
-    pattern == "\\p{Number}{1,3}" ||
-    pattern == "[\\p{N}]{1,3}" ||
-    pattern == "[\\p{Number}]{1,3}" ||
-    pattern == "\\d{1,3}" ||
-    pattern == "[\\d]{1,3}" ||
-    pattern == "[0-9]{1,3}" {
+  if pattern == "\\p{N}{4}" ||
+    pattern == "\\p{Number}{4}" ||
+    pattern == "[\\p{N}]{4}" ||
+    pattern == "[\\p{Number}]{4}" {
+    return @common.replace_exact_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_number(c) },
+      exact_run=4,
+    )
+  }
+  if pattern == "\\d{1,3}" || pattern == "[\\d]{1,3}" || pattern == "[0-9]{1,3}" {
     return @common.replace_bounded_char_runs(
       s,
       content,
       fn(c) { @common.is_decimal_number(c) },
+      max_run=3,
+    )
+  }
+  if pattern == "\\p{N}{1,3}" ||
+    pattern == "\\p{Number}{1,3}" ||
+    pattern == "[\\p{N}]{1,3}" ||
+    pattern == "[\\p{Number}]{1,3}" {
+    return @common.replace_bounded_char_runs(
+      s,
+      content,
+      fn(c) { @common.is_unicode_number(c) },
       max_run=3,
     )
   }

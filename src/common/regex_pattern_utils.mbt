@@ -28,6 +28,8 @@ pub fn bounded_regex_kind_pred(kind : Int, c : Char) -> Bool {
     25 => !is_ascii_word_char(c) // [^A-Za-z0-9_]
     26 => is_word_char_class(c) // [\w] bracket: word WITHOUT onig quirks
     27 => !is_word_char_class(c) // [^\w] bracket
+    28 => is_unicode_number(c) // \p{N} full N (Nd + Nl + No; probed)
+    29 => !is_unicode_number(c) // \P{N}
     _ => false
   }
 }

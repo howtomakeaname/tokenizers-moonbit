@@ -87,6 +87,30 @@ pub fn is_word_char_class(c : Char) -> Bool {
 }
 
 ///|
+/// Unicode `\p{N}` / `\p{Number}` test (General Category N = Nd + Nl +
+/// No): binary search over the empirically generated `number_ranges`.
+/// Probed against 0.22.2: `²` (No) and `Ⅰ` (Nl) match `\p{N}` but NOT
+/// `\d` (which stays Nd-only via `is_decimal_number`) — the spellings
+/// are distinct kinds and must not share this predicate.
+pub fn is_unicode_number(c : Char) -> Bool {
+  let u = c.to_int()
+  let mut lo = 0
+  let mut hi = number_ranges.length() - 1
+  while lo <= hi {
+    let mid = (lo + hi) / 2
+    let (start, stop) = number_ranges[mid]
+    if u < start {
+      hi = mid - 1
+    } else if u > stop {
+      lo = mid + 1
+    } else {
+      return true
+    }
+  }
+  false
+}
+
+///|
 /// Unicode `\p{L}` approximation used by hand-written GPT/Qwen scanners and
 /// the common simple-regex fallback. It intentionally covers the script ranges
 /// that appear in the fixture matrix and common multilingual tokenizers without
@@ -326,7 +350,7 @@ pub fn is_unicode_punctuation_or_symbol(c : Char) -> Bool {
 pub fn is_not_whitespace_letter_or_number(c : Char) -> Bool {
   !is_unicode_whitespace(c.to_int()) &&
   !is_unicode_letter(c) &&
-  !is_decimal_number(c)
+  !is_unicode_number(c)
 }
 
 ///|
@@ -424,16 +448,12 @@ pub fn bare_class_kind(pattern : String) -> Int? {
     "\\s" | "[\\s]" => Some(1)
     "\\S" | "[^\\s]" => Some(12)
     "[0-9]" => Some(22)
-    "\\d" | "[\\d]" | "\\p{N}" | "\\p{Number}" | "[\\p{N}]" | "[\\p{Number}]" =>
-      Some(11)
+    "\\d" | "[\\d]" => Some(11)
+    // \p{N} spellings are FULL N (Nd + Nl + No; probed 0.22.2: ² matches)
+    "\\p{N}" | "\\p{Number}" | "[\\p{N}]" | "[\\p{Number}]" => Some(28)
     "[^0-9]" => Some(23)
-    "\\D"
-    | "[\\D]"
-    | "[^\\d]"
-    | "\\P{N}"
-    | "\\P{Number}"
-    | "[^\\p{N}]"
-    | "[^\\p{Number}]" => Some(14)
+    "\\D" | "[\\D]" | "[^\\d]" => Some(14)
+    "\\P{N}" | "\\P{Number}" | "[^\\p{N}]" | "[^\\p{Number}]" => Some(29)
     "[A-Za-z0-9_]" => Some(24)
     "\\w" => Some(4)
     "[^A-Za-z0-9_]" => Some(25)
