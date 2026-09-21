@@ -1238,3 +1238,44 @@ test "p{N} bounded negatives complement full N" {
   @test.assert_eq(@common.bounded_regex_kind("\\D{1,2}"), Some((14, 2)))
   @test.assert_eq(n("\\P{N}{1,2}").normalize_aligned("aⅠb").0, "#Ⅰ#")
 }
+
+///|
+/// `\b` word boundaries use the UNICODE `\w` definition (bare table
+/// incl. onig quirks), distinct from the ASCII class they wrap: a
+/// `\b[A-Za-z0-9_]+\b` match requires the run's neighbors to be
+/// non-word. Every expectation probed against 0.22.2 — 'a²b' has NO
+/// match (² is a word char, no boundary between a|²), '¼ab½'/'²ab'/
+/// 'aéb'/'a1²2b' none, while the bare class replaces every ASCII run
+/// and `\b\w+\b` merges whole Unicode word runs.
+test "word boundaries are unicode-aware for ascii-class spellings" {
+  let bats : Array[String] = [
+    "a²b", "ab²c", "²ab", "ab²", "aéb", "a中b", "x_1y", "hello world", "a1²2b",
+    "¼ab½", "ab", "", "²", "a",
+  ]
+  let wrapped = @normalizer.Normalizer::Replace(
+    pattern="\\b[A-Za-z0-9_]+\\b",
+    content="#",
+  )
+  let want_w : Array[String] = [
+    "a²b", "ab²c", "²ab", "ab²", "aéb", "a中b", "#", "# #", "a1²2b", "¼ab½",
+    "#", "", "²", "#",
+  ]
+  let bare = @normalizer.Normalizer::Replace(
+    pattern="[A-Za-z0-9_]+",
+    content="#",
+  )
+  let want_b : Array[String] = [
+    "#²#", "#²#", "²#", "#²", "#é#", "#中#", "#", "# #", "#²#", "¼#½", "#",
+    "", "²", "#",
+  ]
+  let wordw = @normalizer.Normalizer::Replace(pattern="\\b\\w+\\b", content="#")
+  let want_wd : Array[String] = [
+    "#", "#", "#", "#", "#", "#", "#", "# #", "#", "#", "#", "", "#", "#",
+  ]
+  for i, s in bats {
+    @test.assert_eq(wrapped.normalize(s), want_w[i])
+    @test.assert_eq(wrapped.normalize_aligned(s).0, want_w[i])
+    @test.assert_eq(bare.normalize(s), want_b[i])
+    @test.assert_eq(wordw.normalize(s), want_wd[i])
+  }
+}

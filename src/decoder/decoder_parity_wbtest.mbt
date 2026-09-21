@@ -199,3 +199,16 @@ test "replace decoder splits p{N} full-N from d-Nd" {
   let mneg = Decoder::Replace(pattern="\\P{N}{3,}", content="#")
   @test.assert_eq(mneg.decode(["abcⅠde"]), "#Ⅰde")
 }
+
+///|
+/// Decoder per-token `\b[A-Za-z0-9_]+\b` keeps the unicode-aware
+/// boundary (HF JSON Regex decoder probed 0.22.2: 'a²b' unchanged).
+test "replace decoder ascii-class word boundaries are unicode-aware" {
+  let d = Decoder::Replace(pattern="\\b[A-Za-z0-9_]+\\b", content="#")
+  @test.assert_eq(d.decode(["a²b"]), "a²b")
+  @test.assert_eq(d.decode(["x_1y"]), "#")
+  @test.assert_eq(d.decode(["hello world"]), "# #")
+  @test.assert_eq(d.decode(["¼ab½"]), "¼ab½")
+  let bare = Decoder::Replace(pattern="[A-Za-z0-9_]+", content="#")
+  @test.assert_eq(bare.decode(["a²b"]), "#²#")
+}
