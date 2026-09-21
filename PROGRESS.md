@@ -18,7 +18,7 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.0**（2026-09-21，0.8.1 后含 PR #40/#41：dot 基整行族、逐分支锚与 \b 绑定）。0.9.0 后待办见 §2 队列。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.1**（2026-09-21，0.9.0 后含 PR #42 空分支零下限语义）。0.9.1 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-21 PR #42**（2 commit，一轮评审 APPROVE）：空分支空匹配插入语义。空分支 = 零宽断言组合替代（`^`/`$`/`\b`/裸），走零下限 prev_end 规则：声明序逐位置尝试；**邻接空匹配放弃整个位置**（onig 不回试同位置后续分支——`a||b` 于 'ab'→'#b#'，b 分支永不触发）；串尾空仅非邻接插入；空输入不匹配。架构：branch matcher 从 collect-and-merge **重写为单遍扫描**（merge 无法表达位置放弃），非空分支的逐分支锚/边界匹配统一进同一扫描。评审确认非空-only 分支集下单遍与 merge 行为等价（解析证明 + 全回归电池 + 485 全套件）；意外收获：全空 pattern（`|`、`||`）HF 也计算且我们正确复现（`"ab"`→'#a#b#'）。验证：~212 cell 全一致（含 Split 5 模式含 offsets、decoder、declaration-order 攻击）；485/485、双扫描全绿。遗留（评审记录）：裸 `\b$`（无 pipe）单 pattern 路径、`(?:)|a` 组包裹空分支——pre-existing 后续面。
+
 - **2026-09-21 发版 0.9.0（已发布，干净验证 4/4×三后端）**：0.8.1 后累计 PR #40（dot 基 kind 30 整行族 + 顶层 `|` 逐分支 `^`/`$` 锚定——修复一处 pre-existing 静默分歧）、#41（`\b` 逐分支绑定 + 评审 b_start 循环修复）。直接推 main 流程：bump + `moon publish` 成功 + /tmp/verify09 干净安装验证（`\b` 逐分支、逐分支锚、dot 窗口、`^ab$` 逐行回归，native/js/wasm-gc 全过）。
 
 - **2026-09-21 PR #41**（3 commit，两轮评审）：`` 逐分支绑定。`foo|bar` == `(\bfoo)|(bar\b)`（HF 于 'foobar'→'##'——原全局绑定静默 no-op，同 PR #40 修复的 `^`/`$` 逐分支同类）。branch spec 剥每分支前导 `\bFOO`/尾随 `FOO\b`（5 元组），matcher 逐分支应用；整组形式 `\b(?:foo|bar)\b` 语义不变。评审一项 blocking：`b_start` 循环漏迁移（`^foo\b|bar` 于 'foobar' 应 'foo#' 而非 '##'——main 上该 pattern 显式拒绝，故非回归但属新面静默错）修复 + 死参数移除。验证：140 cell（137 一致 + 3 pre-existing fail-explicit：`\\\b` 后边界、空分支）；483/483、双扫描全绿。空分支（`^|a` HF '#b#'）评估为零下限空匹配语义——复杂度高、真实配置不出现，维持显式拒绝记录在案。
