@@ -18,7 +18,7 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.6.0**（2026-09-21，PR #22）。0.6.0 后待办见 §2 队列（issue #20/#21 等）。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.7.0**（2026-09-21）。0.7.0 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-21 发版 0.7.0（已发布）**：0.6.0 后累计 PR #24（\p{N} 全 N kind 28/29 拆分 + \d 经验 Nd 表 + GPT2/Qwen/o200k patstr 全 N）、#26（\b Unicode 词边界）、#28（{,n}/前导零/转义基/混类 12 排列）、#30（惰性 ? 三族）。新增公开 API：is_unicode_number、lazy_normalize、lazy_exact_spec、replace_lazy_exact_runs、replace_ascii_word_boundary_runs、zero_min_match_spans/replace_family_spans/char_bounded_spec 族。PR 合并后 `moon publish` 成功；干净项目安装验证（/tmp/verify07）三后端全过——\p{Number}+ 于 a²b→a#b、\b[A-Za-z0-9_]+\b 于 a²b 无匹配、a{,2}? 三族、惰性 exact 块+空匹配。
+
 - **2026-09-21 PR #30**（8 commit，三轮评审）：惰性 `?` 后缀量词族。HF 探针实证三族归约：①零下限 lazy（`{0}?`/`{,n}?`/`{0,n}?`/`{0,}?`/`{00}?`）≡ `{0}`；②`{n,m}?`/`{n,}?`（n≥1）≡ 贪婪 exact `{n}`（块 n、余量保留、无空匹配）；③**exact `{n}?` 是独立族**（run 达 n 时 exact-n 块、否则零下限空匹配游走——`'zaaz'`→`'#z#z#'` 而 `'za'`→`'#z#a#'`，既非 `{0,n}` 也非 `{n}`，评审确证 onig 解析为 `(?:X{n})?` 叠加可选）——需专设 `lazy_exact_match_spans` 引擎。`lazy_normalize` 在 normalizer/decoder 双 replace 链、`replace_family_spans`（aligned）、加载门四点前置归一化。评审三轮修复五项：前导零按**解析值**路由（`a{02}?` 是 exact-2 lazy 非 `{0}`）、非法尾（`a{0,2x}?`）归字面量、`{0,N}?` 补 100000 cap、转义大括号基奇偶判定（奇=字面量拒/偶=转义反斜杠基照算，`\\{2,3}?` 全族 HF 一致）、逆序 `{3,2}?` 显式拒绝（HF 交换语义记录为后续面）。验证：三轮评审累计 ~9,900 对拍（84 拼写 × 47 输入矩阵 + 转义基专项 18 cell），除 17 个记录在案的 fail-explicitly 形状外零分歧；467/467（native/js）、444/444（wasm）、双扫描 1134+100、CI 全绿（pull_request 事件丢失一次，workflow_dispatch 手动补跑）。
 
 - **2026-09-21 PR #28**（9 commit，两轮评审）：fail-explicitly 清单廉价扩展四项（全部先 HF 探针定真值）。①`{,m}` 逗号开界 = 量词 `{0,m}`（`a{,2}` 于 'zaaz'→'#z#z#'；空 `{,}` **不是**量词——字面量，'xa{,}x'→'x#x'）；②前导零等价（`a{00}`≡`a{0}`、`a{01}`≡`a{1}`、`a{0,02}`≡`a{0,2}`）；③转义字面量基 `
