@@ -1844,3 +1844,38 @@ test "branch merge owns overlap; quantified multi-dot rejects" {
   @test.assert_eq(@common.is_supported_replace_regex("^..$"), true)
   @test.assert_eq(n("^..$").normalize("ab\nabc"), "#\nabc")
 }
+
+///|
+/// `\b` binds PER BRANCH on top-level alternations (probed 0.22.2:
+/// `\bfoo|bar\b` == `(\bfoo)|(bar\b)` — on 'foobar' -> '##', since
+/// the leading \bfoo matches at the string start AND bar\b at the
+/// string end; on 'foo\nfoobar' -> '#\n##'). The grouped global form
+/// `\b(?:foo|bar)\b` keeps applying both boundaries to the group.
+test "word boundaries bind per branch on alternations" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\bfoo|bar\\b").normalize("foobar"), "##")
+  @test.assert_eq(n("\\bfoo|bar\\b").normalize("foo\nfoobar"), "#\n##")
+  @test.assert_eq(n("\\bfoo|bar\\b").normalize("foo xbar baz"), "# x# baz")
+  @test.assert_eq(n("\\bfoo|bar").normalize("xbar foo"), "x# #")
+  @test.assert_eq(n("a|b\\b").normalize("ab"), "##")
+  @test.assert_eq(n("\\bfoo\\b|bar").normalize("foo bar foobar"), "# # foo#")
+  @test.assert_eq(n("foo\\b|\\bbar").normalize("foobar"), "foobar")
+  @test.assert_eq(n("\\ba|\\bb").normalize("a b ab"), "# # #b")
+  @test.assert_eq(n("\\bfoo|bar\\b").normalize_aligned("foobar").0, "##")
+}
+
+///|
+/// `^`-anchored branches keep their per-branch `\b` too (review fix:
+/// the b_start loop had been left on the always-false parameters —
+/// `^foo\b|bar` on 'foobar' is 'foo#' in HF, not '##').
+test "caret branches keep per-branch word boundaries" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^foo\\b|bar").normalize("foobar"), "foo#")
+  @test.assert_eq(n("^\\bfoo\\b|bar").normalize("foobar"), "foo#")
+  @test.assert_eq(n("^foo\\b|bar").normalize("foobar\n"), "foo#\n")
+  @test.assert_eq(n("^\\b foo|zzz").normalize(" foo"), " foo")
+}
