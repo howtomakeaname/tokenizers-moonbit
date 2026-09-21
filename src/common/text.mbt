@@ -380,6 +380,10 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if lazy_exact_spec(pattern) is Some(_) {
     return true
   }
+  // double-anchored whole-line family (`^X+$` etc.)
+  if double_anchored_spec(pattern) is Some(_) {
+    return true
+  }
   let pattern = match lazy_normalize(pattern) {
     Some(p) => p
     None => pattern
@@ -727,7 +731,7 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
 /// gives '#z#z#' on 'zaaz' (block + boundary empties) but '#z#a#' on
 /// 'za' (no 2-run, pure empties). Base is a class kind or an escaped /
 /// ordinary literal char (same resolution as the zero-min spec).
-pub fn lazy_exact_spec(pattern : String) -> (Int, Char?, Int)? {
+pub fn lazy_exact_spec(pattern : String) -> (Int, Char?, Int, Int)? {
   let chars = pattern.to_array()
   let n = chars.length()
   if n < 5 || chars[n - 1] != '?' || chars[n - 2] != '}' {
@@ -757,7 +761,32 @@ pub fn lazy_exact_spec(pattern : String) -> (Int, Char?, Int)? {
   }
   // route by VALUE: {02}? is exact-2 lazy (probed), {00}? is {0} (not ours)
   match parse_capped_digits(inner, 0, m) {
-    Some((v, j)) => if j == m && v >= 1 { return zero_min_base(open, chars, v) }
+    Some((v, j)) =>
+      if j == m && v >= 1 {
+        match zero_min_base(open, chars, v) {
+          Some((k, lit, _)) => return Some((k, lit, v, v))
+          None => return None
+        }
+      }
+    None => ()
+  }
+  // reversed range {n,m}? with n > m: onig swaps to (?:X{m,n})? —
+  // greedy ranged blocks PLUS the empty-match walk (probed: a{3,2}?
+  // 'zaaz' -> '#z#z#', 'zaaaaz' -> '#z#a#z#', 'aaaaa' -> '##')
+  match parse_capped_digits(inner, 0, m) {
+    Some((lo, j)) =>
+      if j < m && inner[j] == ',' && j + 1 < m {
+        match parse_capped_digits(inner, j + 1, m) {
+          Some((hi, k2)) =>
+            if k2 == m && hi < lo {
+              match zero_min_base(open, chars, hi) {
+                Some((k, lit, _)) => return Some((k, lit, hi, lo))
+                None => return None
+              }
+            }
+          None => ()
+        }
+      }
     None => ()
   }
   None
@@ -796,5 +825,147 @@ fn zero_min_base(
         None
       }
     }
+  }
+}
+
+///|
+/// DOUBLE-anchored `^BASE QUANT $` spec (probed 0.22.2): under the
+/// multiline option HF's Replace uses, `^...$` matches EACH LINE whose
+/// entire content satisfies the class and length window — '!!' -> '#',
+/// '!!x!!' unchanged, '!!\n!!' -> '#\n#', 'a\n!!\nb' -> 'a\n#\nb'
+/// (lines split on '\n'; '\r' belongs to the line content, so '!!\r\n!!'
+/// leaves the '\r'-bearing first line unmatched). QUANT is `+`, `{n}`,
+/// `{n,}`, `{n,m}` (window 1..4); BASE is a bare class spelling, one of
+/// the twelve mixed-complement orderings, a single literal char, or an
+/// escaped literal. Returns (kind, literal, lo, hi); hi = -1 unbounded;
+/// kind -1 signals the literal base.
+pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  if n < 4 || chars[0] != '^' || chars[n - 1] != '$' {
+    return None
+  }
+  // locate a trailing quantifier inside the anchors: '+' at n-2, or a
+  // '{...}' block ending at n-2
+  let mut lo = 0
+  let mut hi = 0
+  let mut base_end : Int = 0 // exclusive end of the base inside chars
+  if chars[n - 2] == '+' {
+    lo = 1
+    hi = -1
+    base_end = n - 2
+  } else if chars[n - 2] == '}' {
+    // find the matching '{' scanning back from n-2
+    let mut open = -1
+    let mut i = n - 3
+    while i >= 1 {
+      if chars[i] == '{' {
+        open = i
+        break
+      }
+      i = i - 1
+    }
+    if open < 2 {
+      return None
+    }
+    let inner : Array[Char] = []
+    let mut k = open + 1
+    while k < n - 2 {
+      inner.push(chars[k])
+      k = k + 1
+    }
+    let m = inner.length()
+    match parse_capped_digits(inner, 0, m) {
+      Some((v, j)) =>
+        if j == m {
+          if v < 1 || v > 4 {
+            return None
+          }
+          lo = v
+          hi = v
+        } else if inner[j] == ',' {
+          if j + 1 == m {
+            if v < 1 || v > 4 {
+              return None
+            }
+            lo = v
+            hi = -1
+          } else {
+            match parse_capped_digits(inner, j + 1, m) {
+              Some((w, k2)) =>
+                if k2 == m && v >= 1 && w >= v && w <= 4 {
+                  lo = v
+                  hi = w
+                } else {
+                  return None
+                }
+              None => return None
+            }
+          }
+        } else {
+          return None
+        }
+      None => return None
+    }
+    base_end = open
+  } else {
+    return None // a double-anchored base needs a quantifier
+  }
+  // resolve the base
+  let sb = StringBuilder()
+  let mut q2 = 1
+  while q2 < base_end {
+    sb.write_char(chars[q2])
+    q2 = q2 + 1
+  }
+  let base = sb.to_string()
+  match bare_class_kind(base) {
+    Some(kind) => Some((kind, None, lo, hi))
+    None => {
+      if mixed_complement_ordering_kind(base) is Some(kind) {
+        return Some((kind, None, lo, hi))
+      }
+      let bsc = base.to_array()
+      if bsc.length() == 2 && bsc[0] == '\\' {
+        let lit : Char? = match bsc[1] {
+          'n' => Some('\n')
+          't' => Some('\t')
+          'r' => Some('\r')
+          _ => None
+        }
+        match lit {
+          Some(c) => return Some((-1, Some(c), lo, hi))
+          None => return None
+        }
+      }
+      if bsc.length() == 1 &&
+        !is_regex_operator(bsc[0]) &&
+        bsc[0] != '\\' &&
+        bsc[0] != '$' {
+        return Some((-1, Some(bsc[0]), lo, hi))
+      }
+      None
+    }
+  }
+}
+
+///|
+/// The twelve mixed-complement orderings (`[^\s\p{L}\p{N}]` family,
+/// short and long property names) resolve to kind 21.
+fn mixed_complement_ordering_kind(base : String) -> Int? {
+  match base {
+    "[^\\s\\p{L}\\p{N}]"
+    | "[^\\s\\p{N}\\p{L}]"
+    | "[^\\p{L}\\s\\p{N}]"
+    | "[^\\p{L}\\p{N}\\s]"
+    | "[^\\p{N}\\s\\p{L}]"
+    | "[^\\p{N}\\p{L}\\s]"
+    | "[^\\s\\p{Letter}\\p{Number}]"
+    | "[^\\s\\p{Number}\\p{Letter}]"
+    | "[^\\p{Letter}\\s\\p{Number}]"
+    | "[^\\p{Letter}\\p{Number}\\s]"
+    | "[^\\p{Number}\\s\\p{Letter}]"
+    | "[^\\p{Number}\\p{Letter}\\s]" => Some(21)
+    _ => None
   }
 }
