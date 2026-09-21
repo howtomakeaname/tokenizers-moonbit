@@ -37,8 +37,11 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-21 PR #30**（8 commit，三轮评审）：惰性 `?` 后缀量词族。HF 探针实证三族归约：①零下限 lazy（`{0}?`/`{,n}?`/`{0,n}?`/`{0,}?`/`{00}?`）≡ `{0}`；②`{n,m}?`/`{n,}?`（n≥1）≡ 贪婪 exact `{n}`（块 n、余量保留、无空匹配）；③**exact `{n}?` 是独立族**（run 达 n 时 exact-n 块、否则零下限空匹配游走——`'zaaz'`→`'#z#z#'` 而 `'za'`→`'#z#a#'`，既非 `{0,n}` 也非 `{n}`，评审确证 onig 解析为 `(?:X{n})?` 叠加可选）——需专设 `lazy_exact_match_spans` 引擎。`lazy_normalize` 在 normalizer/decoder 双 replace 链、`replace_family_spans`（aligned）、加载门四点前置归一化。评审三轮修复五项：前导零按**解析值**路由（`a{02}?` 是 exact-2 lazy 非 `{0}`）、非法尾（`a{0,2x}?`）归字面量、`{0,N}?` 补 100000 cap、转义大括号基奇偶判定（奇=字面量拒/偶=转义反斜杠基照算，`\\{2,3}?` 全族 HF 一致）、逆序 `{3,2}?` 显式拒绝（HF 交换语义记录为后续面）。验证：三轮评审累计 ~9,900 对拍（84 拼写 × 47 输入矩阵 + 转义基专项 18 cell），除 17 个记录在案的 fail-explicitly 形状外零分歧；467/467（native/js）、444/444（wasm）、双扫描 1134+100、CI 全绿（pull_request 事件丢失一次，workflow_dispatch 手动补跑）。
+
 - **2026-09-21 PR #28**（9 commit，两轮评审）：fail-explicitly 清单廉价扩展四项（全部先 HF 探针定真值）。①`{,m}` 逗号开界 = 量词 `{0,m}`（`a{,2}` 于 'zaaz'→'#z#z#'；空 `{,}` **不是**量词——字面量，'xa{,}x'→'x#x'）；②前导零等价（`a{00}`≡`a{0}`、`a{01}`≡`a{1}`、`a{0,02}`≡`a{0,2}`）；③转义字面量基 `
-	\.` 携带量词（`
+	
+\.` 携带量词（`
 {2}` 于 "z
 
 z"→'z#z'；转义基跳过元字符排除——`.`{2}` 是 any-char 拒绝、`\.{2}` 是字面点计算）；④混类补集排列补全至 12（短名 6+长名 6）× 门控/扫描器/bounded/ranged/exact/min/anchored 全位点。评审三项修复：F1 gate 孪生 `char_bounded_quantifier_shape` 未扩展转义基（compute 层 HF-exact 但 from_json 拒绝、decoder SIGABRT）——两个调用点改用 `char_bounded_spec` 直接判定并删除孪生（单一真相源）；F2 `at_quantifier_brace` 要求逗号后 ≥1 数字使 `{,}` 归字面量（HF 可加载）；F3 anchored/exact/min 位点排列补齐。验证：两轮评审 ~5,500 对拍 0 输出分歧（含 12 排列 ×10 输入全量、decoder 无 abort、边界 cap 100000 双向一致）；463/463（native/js）、440/440（wasm）、双扫描 1134+100、CI 8/8。遗留（评审记录）：双锚 `^[...]+$`、惰性后缀 `?`、多转义基 `\{0,2}` 仍 fail-explicitly（HF 可算，后续批次）。
