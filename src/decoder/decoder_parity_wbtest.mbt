@@ -247,3 +247,13 @@ test "replace decoder quantifier-less double anchors are multiline" {
   let plus = Decoder::Replace(pattern="^\\+$", content="#")
   @test.assert_eq(plus.decode(["+\n+"]), "#\n#")
 }
+
+///|
+/// Anchored literals decode per line (HF JSON Regex decoder probed
+/// 0.22.2: '^ab$' on ["ab\nab"] -> '#\n#').
+test "replace decoder anchored literals are per line" {
+  let d = Decoder::Replace(pattern="^ab$", content="#")
+  @test.assert_eq(d.decode(["ab\nab"]), "#\n#")
+  let s = Decoder::Replace(pattern="ab$", content="#")
+  @test.assert_eq(s.decode(["xab\nx"]), "x#\nx")
+}

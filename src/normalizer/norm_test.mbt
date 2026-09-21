@@ -1694,3 +1694,34 @@ test "swap guards are semantic; escaped question mark loads" {
   @test.assert_eq(q.normalize("?"), "#")
   @test.assert_eq(q.normalize("??"), "??")
 }
+
+///|
+/// MULTILINE anchored literal matching (probed 0.22.2): `^lit` at
+/// every line start, `lit$` at every line end, `^lit$` when a whole
+/// line equals the literal — the anchored wrapper previously matched
+/// the whole STRING only, silently no-opping multiline input while the
+/// gate claimed support. `\r` belongs to its line (CRLF: only the
+/// second line matches `^ab$`).
+test "anchored literals match per line" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^ab$").normalize("ab"), "#")
+  @test.assert_eq(n("^ab$").normalize("ab\nab"), "#\n#")
+  @test.assert_eq(n("^ab$").normalize("ab\na"), "#\na")
+  @test.assert_eq(n("^ab$").normalize("a\nab\nb"), "a\n#\nb")
+  @test.assert_eq(n("^ab$").normalize("abab"), "abab")
+  @test.assert_eq(n("^ab$").normalize("ab\r\nab"), "ab\r\n#")
+  @test.assert_eq(n("^ab$").normalize(""), "")
+  @test.assert_eq(n("^!!$").normalize("!!\r\n!!"), "!!\r\n#")
+  @test.assert_eq(n("^a b$").normalize("a b\na b"), "#\n#")
+  @test.assert_eq(n("^\\{2}$").normalize("x\n{2}\ny"), "x\n#\ny")
+  @test.assert_eq(n("^\\{1,2}$").normalize("{1,2}\n{"), "#\n{")
+  @test.assert_eq(n("^ab").normalize("ab\nab"), "#\n#")
+  @test.assert_eq(n("^ab").normalize("abx"), "#x")
+  @test.assert_eq(n("ab$").normalize("ab\nab"), "#\n#")
+  @test.assert_eq(n("ab$").normalize("xab"), "x#")
+  @test.assert_eq(n("^ab").normalize("x\nabx"), "x\n#x")
+  @test.assert_eq(n("ab$").normalize("xab\nx"), "x#\nx")
+  @test.assert_eq(n("^ab$").normalize_aligned("a\nab\nb").0, "a\n#\nb")
+}
