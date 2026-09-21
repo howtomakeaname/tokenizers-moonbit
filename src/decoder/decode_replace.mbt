@@ -29,6 +29,26 @@ fn decode_replace_direct(
   pattern : String,
   content : String,
 ) -> String {
+  // double-anchored whole-line spellings claim the pattern FIRST (the
+  // non-multiline literal/anchored wrappers below previously swallowed
+  // them — review finding: Decoder::Replace("^a$").decode(["a\na"])
+  // stayed unchanged while HF gives "#\n#"); the engine applies the
+  // line semantics within each token surface
+  if @common.double_anchored_spec(pattern) is Some((kind, literal, lo, hi)) {
+    let pred : (Char) -> Bool = if kind == -1 {
+      let c = literal.unwrap_or('\u{0}')
+      fn(x) { x == c }
+    } else {
+      fn(x) { @common.bounded_regex_kind_pred(kind, x) }
+    }
+    let sb = StringBuilder()
+    for t in tokens {
+      sb.write_string(
+        @common.replace_double_anchored_line_runs(t, content, pred, lo, hi),
+      )
+    }
+    return sb.to_string()
+  }
   // single-char literal bounded quantifiers run per token (HF decoders are
   // per-token: a{2} replaces only within one token surface)
   if @common.char_bounded_spec(pattern) is Some(_) {

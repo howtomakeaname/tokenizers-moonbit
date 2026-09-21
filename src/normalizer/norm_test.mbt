@@ -1638,10 +1638,18 @@ test "quantifier-less, reversed, lazy-tail, escaped-operator double anchors" {
   @test.assert_eq(n("^a{3,2}$").normalize("aaa"), "#")
   @test.assert_eq(n("^a{3,2}$").normalize("aaaaa"), "aaaaa")
   @test.assert_eq(n("^a{3,2}$").normalize("aa\naaaa"), "#\naaaa")
-  @test.assert_eq(n("^a{3,2}?$").normalize("aa"), "#")
-  @test.assert_eq(n("^a{3,2}?$").normalize("aaaa"), "aaaa")
-  @test.assert_eq(n("^\\s{4,2}$").normalize("   "), "#")
   @test.assert_eq(n("^5{3,2}$").normalize("555"), "#")
+  // lazy tails and \n-spanning reversed windows fail EXPLICITLY: HF's
+  // optional/atomic semantics (empty matches at ^-and-$ positions,
+  // shortest-line-end, no backtracking after the swap) are a different
+  // engine capability — reject beats silently approximating (probed:
+  // ^a{3,2}?$ on newline-newline -> hash-nl-hash-nl; ^\s{4,2}$ on
+  // "spaces \nx" unchanged)
+  @test.assert_eq(@common.is_supported_replace_regex("^a{3,2}?$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^a{2,0}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{4,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\n{3,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^[\\r\\n]{3,2}$"), false)
   @test.assert_eq(n("^a$").normalize_aligned("a\na").0, "#\n#")
   @test.assert_eq(
     @common.double_anchored_spec("^a$"),
