@@ -528,9 +528,16 @@ pub fn simple_split_regex_matches(
     Some(run_matches(chars, fn(c) { !is_unicode_punctuation_or_symbol(c) }))
   } else if pattern == "[^\\s\\p{L}\\p{N}]+" ||
     pattern == "[^\\s\\p{N}\\p{L}]+" ||
+    pattern == "[^\\p{L}\\s\\p{N}]+" ||
     pattern == "[^\\p{L}\\p{N}\\s]+" ||
+    pattern == "[^\\p{N}\\s\\p{L}]+" ||
     pattern == "[^\\p{N}\\p{L}\\s]+" ||
-    pattern == "[^\\s\\p{Letter}\\p{Number}]+" {
+    pattern == "[^\\s\\p{Letter}\\p{Number}]+" ||
+    pattern == "[^\\s\\p{Number}\\p{Letter}]+" ||
+    pattern == "[^\\p{Letter}\\s\\p{Number}]+" ||
+    pattern == "[^\\p{Letter}\\p{Number}\\s]+" ||
+    pattern == "[^\\p{Number}\\s\\p{Letter}]+" ||
+    pattern == "[^\\p{Number}\\p{Letter}\\s]+" {
     Some(run_matches(chars, fn(c) { is_not_whitespace_letter_or_number(c) }))
   } else if pattern == "\\d+" || pattern == "[\\d]+" {
     Some(run_matches(chars, fn(c) { is_decimal_number(c) }))

@@ -212,3 +212,13 @@ test "replace decoder ascii-class word boundaries are unicode-aware" {
   let bare = Decoder::Replace(pattern="[A-Za-z0-9_]+", content="#")
   @test.assert_eq(bare.decode(["a²b"]), "#²#")
 }
+
+///|
+/// Escaped-base bounded quantifiers must decode (previously the decoder
+/// gate accepted them but decode aborted — review F1).
+test "replace decoder escaped bases compute" {
+  let d = Decoder::Replace(pattern="\t{2}", content="#")
+  @test.assert_eq(d.decode(["a\t\tb"]), "a#b")
+  let nl = Decoder::Replace(pattern="\\n{2}", content="#")
+  @test.assert_eq(nl.decode(["z\n\nz"]), "z#z")
+}

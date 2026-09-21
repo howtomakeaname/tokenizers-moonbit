@@ -406,7 +406,7 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
     return true
   }
   // single-char literal bounded quantifiers within the 1..4 window
-  if char_bounded_quantifier_shape(pattern) {
+  if char_bounded_spec(pattern) is Some(_) {
     return true
   }
   // zero-minimum quantifiers: a{0} / a{0,m} / a{0,} and class bases
@@ -476,63 +476,6 @@ pub fn bare_class_kind(pattern : String) -> Int? {
 }
 
 ///|
-/// Whether `pattern` is `c{n}` / `c{n,}` / `c{n,m}` for an ordinary
-/// literal char with 1 <= n <= m <= 4 (the supported bounded window).
-pub fn char_bounded_quantifier_shape(pattern : String) -> Bool {
-  let chars = pattern.to_array()
-  let n = chars.length()
-  if n < 4 || chars[1] != '{' || chars[n - 1] != '}' {
-    return false
-  }
-  let c = chars[0]
-  // metacharacters are excluded: `.{n}` is any-char in HF and
-  // `?{n}`/`+{n}`/etc. are construction errors there — both must not
-  // load here as literal runs
-  if c == '{' ||
-    c == '}' ||
-    c == '\\' ||
-    c == '[' ||
-    c == ']' ||
-    c == '.' ||
-    c == '^' ||
-    c == '$' ||
-    c == '*' ||
-    c == '+' ||
-    c == '?' ||
-    c == '(' ||
-    c == ')' ||
-    c == '|' {
-    return false
-  }
-  let mut i = 2
-  let mut lo = 0
-  let mut lo_digits = 0
-  while i < n && chars[i] >= '0' && chars[i] <= '9' {
-    lo = lo * 10 + (chars[i].to_int() - '0'.to_int())
-    lo_digits = lo_digits + 1
-    i = i + 1
-  }
-  if lo_digits == 0 || lo == 0 || lo > 4 {
-    return false
-  }
-  if i < n && chars[i] == ',' {
-    i = i + 1
-    if i == n - 1 {
-      return true // {n,}
-    }
-    let mut hi = 0
-    let mut hi_digits = 0
-    while i < n && chars[i] >= '0' && chars[i] <= '9' {
-      hi = hi * 10 + (chars[i].to_int() - '0'.to_int())
-      hi_digits = hi_digits + 1
-      i = i + 1
-    }
-    return hi_digits > 0 && hi >= lo && hi <= 4 && i == n - 1
-  }
-  i == n - 1
-}
-
-///|
 /// Parse a zero-minimum quantifier pattern into (kind, literal, max)
 /// when the pattern is `base{0}`, `base{0,m}` or `base{0,}` where `base`
 /// is a bare single-char class spelling (via bare_class_kind) or an
@@ -551,22 +494,19 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
   if open < 1 || open + 3 > n || chars[n - 1] != '}' {
     return None
   }
-  // inner must be "0" or "0," or "0,<digits>"
-  if chars[open + 1] != '0' {
-    return None
-  }
-  let max : Int = if open + 2 == n - 1 {
-    0 // {0}
-  } else if chars[open + 2] != ',' {
-    return None
-  } else if open + 3 == n - 1 {
-    -1 // {0,} unbounded
-  } else {
-    // {0,m}: onig rejects repeat bounds above 100000 ("too big number for
-    // repeat range", probed 0.22.2: `a{0,100000}` loads, `a{0,100001}`
-    // errors), so the spec stops matching there and the load gate raises.
+  // inner: `{0...}` (leading zeros allowed: {0}/{00}/{0,}/{00,2}/{0,02})
+  // or `{,m}` — onig treats a comma-open bound as min 0 (probed 0.22.2:
+  // `a{,2}` on 'zaaz' -> '#z#z#', `a{,0}` == `a{0}`); the empty `{,}` is
+  // NOT a quantifier (literal — probed: 'zaaz' unchanged) and falls to
+  // the literal path.
+  let max : Int = if chars[open + 1] == ',' {
+    if open + 2 == n - 1 {
+      return None // {,}
+    }
+    // {,m}: onig rejects repeat bounds above 100000 ("too big number for
+    // repeat range", probed 0.22.2), so the spec stops matching there.
     let mut v = 0
-    let mut k = open + 3
+    let mut k = open + 2
     while k < n - 1 {
       let c = chars[k]
       if c < '0' || c > '9' {
@@ -579,6 +519,35 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
       k = k + 1
     }
     v
+  } else if chars[open + 1] != '0' {
+    return None
+  } else {
+    let mut z = open + 1
+    while z < n - 1 && chars[z] == '0' {
+      z = z + 1
+    }
+    if z == n - 1 {
+      0 // {0...} exact-zero (leading zeros equivalent, probed: a{00} == a{0})
+    } else if chars[z] != ',' {
+      return None
+    } else if z + 1 == n - 1 {
+      -1 // {0...,} unbounded
+    } else {
+      let mut v = 0
+      let mut k = z + 1
+      while k < n - 1 {
+        let c = chars[k]
+        if c < '0' || c > '9' {
+          return None
+        }
+        v = v * 10 + (c.to_int() - '0'.to_int())
+        if v > 100000 {
+          return None
+        }
+        k = k + 1
+      }
+      v
+    }
   }
   // base spelling
   let base_sb = StringBuilder()
@@ -590,7 +559,18 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
     Some(kind) => Some((kind, None, max))
     None => {
       let bc = base.to_array()
-      if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
+      if bc.length() == 2 && bc[0] == '\\' {
+        // escaped literal base (probed 0.22.2: `\\n{0,2}` on "z\n\nz"
+        // -> '#z#z#', `\\t{2}`/`\\\\{2}`/`\\.{2}` all compute)
+        match bc[1] {
+          'n' => Some((-1, Some('\n'), max))
+          't' => Some((-1, Some('\t'), max))
+          'r' => Some((-1, Some('\r'), max))
+          '\\' => Some((-1, Some('\\'), max))
+          '.' => Some((-1, Some('.'), max))
+          _ => None
+        }
+      } else if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
         Some((-1, Some(bc[0]), max))
       } else {
         None

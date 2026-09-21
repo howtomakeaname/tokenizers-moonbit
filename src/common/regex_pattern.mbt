@@ -300,16 +300,22 @@ fn bounded_regex_kind_inner(pattern : String) -> (Int, Int)? {
   let non_space_letter_number = bounded_max_variants(
     pattern,
     [
-      "[^\\s\\p{L}\\p{N}]{1,2}", "[^\\s\\p{N}\\p{L}]{1,2}", "[^\\p{L}\\p{N}\\s]{1,2}",
-      "[^\\p{N}\\p{L}\\s]{1,2}", "[^\\s\\p{Letter}\\p{Number}]{1,2}",
+      "[^\\s\\p{L}\\p{N}]{1,2}", "[^\\s\\p{N}\\p{L}]{1,2}", "[^\\p{L}\\s\\p{N}]{1,2}",
+      "[^\\p{L}\\p{N}\\s]{1,2}", "[^\\p{N}\\s\\p{L}]{1,2}", "[^\\p{N}\\p{L}\\s]{1,2}",
+      "[^\\s\\p{Letter}\\p{Number}]{1,2}", "[^\\s\\p{Number}\\p{Letter}]{1,2}", "[^\\p{Letter}\\s\\p{Number}]{1,2}",
+      "[^\\p{Letter}\\p{Number}\\s]{1,2}", "[^\\p{Number}\\s\\p{Letter}]{1,2}", "[^\\p{Number}\\p{Letter}\\s]{1,2}",
     ],
     [
-      "[^\\s\\p{L}\\p{N}]{1,3}", "[^\\s\\p{N}\\p{L}]{1,3}", "[^\\p{L}\\p{N}\\s]{1,3}",
-      "[^\\p{N}\\p{L}\\s]{1,3}", "[^\\s\\p{Letter}\\p{Number}]{1,3}",
+      "[^\\s\\p{L}\\p{N}]{1,3}", "[^\\s\\p{N}\\p{L}]{1,3}", "[^\\p{L}\\s\\p{N}]{1,3}",
+      "[^\\p{L}\\p{N}\\s]{1,3}", "[^\\p{N}\\s\\p{L}]{1,3}", "[^\\p{N}\\p{L}\\s]{1,3}",
+      "[^\\s\\p{Letter}\\p{Number}]{1,3}", "[^\\s\\p{Number}\\p{Letter}]{1,3}", "[^\\p{Letter}\\s\\p{Number}]{1,3}",
+      "[^\\p{Letter}\\p{Number}\\s]{1,3}", "[^\\p{Number}\\s\\p{Letter}]{1,3}", "[^\\p{Number}\\p{Letter}\\s]{1,3}",
     ],
     [
-      "[^\\s\\p{L}\\p{N}]{1,4}", "[^\\s\\p{N}\\p{L}]{1,4}", "[^\\p{L}\\p{N}\\s]{1,4}",
-      "[^\\p{N}\\p{L}\\s]{1,4}", "[^\\s\\p{Letter}\\p{Number}]{1,4}",
+      "[^\\s\\p{L}\\p{N}]{1,4}", "[^\\s\\p{N}\\p{L}]{1,4}", "[^\\p{L}\\s\\p{N}]{1,4}",
+      "[^\\p{L}\\p{N}\\s]{1,4}", "[^\\p{N}\\s\\p{L}]{1,4}", "[^\\p{N}\\p{L}\\s]{1,4}",
+      "[^\\s\\p{Letter}\\p{Number}]{1,4}", "[^\\s\\p{Number}\\p{Letter}]{1,4}", "[^\\p{Letter}\\s\\p{Number}]{1,4}",
+      "[^\\p{Letter}\\p{Number}\\s]{1,4}", "[^\\p{Number}\\s\\p{Letter}]{1,4}", "[^\\p{Number}\\p{Letter}\\s]{1,4}",
     ],
   )
   if non_space_letter_number > 0 {

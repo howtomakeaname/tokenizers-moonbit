@@ -971,14 +971,15 @@ test "replace regex ascii plus spellings and unicode letter bare" {
     ),
     "a中#",
   )
-  // `{,n}` is a quantifier in onig: unsupported here -> load rejected
-  @test.assert_raise(() => {
-    @normalizer.Normalizer::from_json(
-      @json.parse(
-        "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{,3}\"},\"content\":\"X\"}",
-      ),
-    )
-  })
+  // `{,n}` is the quantifier {0,n} in onig (probed 0.22.2: 'zaaz' with
+  // a{,2} -> '#z#z#'); it loads and behaves as zero-min
+  let comma_open = @normalizer.Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{,3}\"},\"content\":\"X\"}",
+    ),
+  )
+  @test.assert_eq(comma_open.kind(), "Replace")
+  @test.assert_eq(comma_open.normalize("zaaaz"), "XzXzX")
 }
 
 ///|
@@ -1278,4 +1279,110 @@ test "word boundaries are unicode-aware for ascii-class spellings" {
     @test.assert_eq(bare.normalize(s), want_b[i])
     @test.assert_eq(wordw.normalize(s), want_wd[i])
   }
+}
+
+///|
+/// Cheap fail-explicitly extensions, every expectation probed against
+/// 0.22.2: `{,n}` is the quantifier `{0,n}` (comma-open bound, min 0);
+/// leading zeros are equivalent (`a{00}` == `a{0}`, `a{01}` == `a{1}`,
+/// `a{0,02}` == `a{0,2}`); escaped literal bases (`\n` `\t` `\\` `.`)
+/// carry their quantifiers. The empty `{,}` stays a literal (unchanged).
+test "comma-open bounds, leading zeros, escaped bases compute" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("a{,2}").normalize("za{,2}z"), "#z#{#,#2#}#z#")
+  @test.assert_eq(n("a{,2}").normalize("zaaz"), "#z#z#")
+  @test.assert_eq(n("a{,2}").normalize("zaaaaz"), "#z##z#")
+  @test.assert_eq(n("a{,0}").normalize("zaz"), "#z#a#z#")
+  @test.assert_eq(n("\\s{,2}").normalize("x  y"), "#x#y#")
+  @test.assert_eq(n("5{,3}").normalize("z555y"), "#z#y#")
+  @test.assert_eq(n("a{,}").normalize("zaaz"), "zaaz") // literal, not a quantifier
+  @test.assert_eq(n("a{00}").normalize("zaz"), "#z#a#z#")
+  @test.assert_eq(n("a{00}").normalize("zaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{01}").normalize("zaaz"), "z##z")
+  @test.assert_eq(n("a{002}").normalize("zaz"), "zaz")
+  @test.assert_eq(n("a{02}").normalize("zaaaz"), "z#az")
+  @test.assert_eq(n("a{0,02}").normalize("zaaz"), "#z#z#")
+  @test.assert_eq(n("a{000,2}").normalize("zaaz"), "#z#z#")
+  @test.assert_eq(n("\\n{0,2}").normalize("z\n\nz"), "#z#z#")
+  @test.assert_eq(n("\\n{2}").normalize("z\n\nz"), "z#z")
+  @test.assert_eq(n("\\t{2}").normalize("a\t\tb"), "a#b")
+  @test.assert_eq(n("\\n{0}").normalize("z\nz"), "#z#\n#z#")
+  @test.assert_eq(n("\\\\{2}").normalize("a\\\\b"), "a#b")
+  @test.assert_eq(n("\\.{2}").normalize("a..b"), "a#b")
+  // aligned path agrees on a sample
+  @test.assert_eq(n("a{,2}").normalize_aligned("zaaz").0, "#z#z#")
+  @test.assert_eq(n("\\n{0,2}").normalize_aligned("z\n\nz").0, "#z#z#")
+  // spec-level shape checks
+  @test.assert_eq(
+    @common.zero_min_quantifier_spec("a{,2}"),
+    Some((-1, Some('a'), 2)),
+  )
+  @test.assert_eq(
+    @common.zero_min_quantifier_spec("a{00}"),
+    Some((-1, Some('a'), 0)),
+  )
+  @test.assert_eq(@common.zero_min_quantifier_spec("a{,}"), None)
+  @test.assert_eq(@common.char_bounded_spec("\\n{2}"), Some(('\n', 2, 2)))
+  @test.assert_eq(@common.char_bounded_spec("\\.{2}"), Some(('.', 2, 2)))
+}
+
+///|
+/// The mixed-class complement family accepts every ordering of its
+/// three members, short and long property names (probed 0.22.2:
+/// `[^...]+` on 'a² b' matches nothing — a, ², space are all covered;
+/// '!!' matches).
+test "mixed-class complement orderings all accepted" {
+  let pats : Array[String] = [
+    "[^\\p{Number}\\p{Letter}\\s]+", "[^\\p{L}\\s\\p{N}]+", "[^\\p{N}\\s\\p{L}]+",
+    "[^\\s\\p{Number}\\p{Letter}]+", "[^\\p{Letter}\\p{Number}\\s]+", "[^\\p{Number}\\s\\p{Letter}]+",
+    "[^\\p{Number}\\p{Letter}\\s]{2,3}", "[^\\p{L}\\s\\p{N}]{1,2}",
+  ]
+  for p in pats {
+    let n = @normalizer.Normalizer::Replace(pattern=p, content="#")
+    @test.assert_eq(n.normalize("a² b"), "a² b")
+    @test.assert_eq(n.normalize("!!"), "#")
+    @test.assert_eq(n.normalize_aligned("!!").0, "#")
+  }
+}
+
+///|
+/// Review fixes: escaped-base bounded quantifiers must be reachable from
+/// the LOAD path (the gate twin previously rejected them), `a{,}` is a
+/// literal that loads, and the mixed-class anchored/exact orderings are
+/// accepted. Probed 0.22.2 (`a{,}` on 'xa{,}x' -> 'x#x').
+test "escaped bases load; a{,} is a literal that loads" {
+  let esc = @normalizer.Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"\\\\n{2}\"},\"content\":\"#\"}",
+    ),
+  )
+  @test.assert_eq(esc.normalize("z\n\nz"), "z#z")
+  let dot = @normalizer.Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"\\\\.{2}\"},\"content\":\"#\"}",
+    ),
+  )
+  @test.assert_eq(dot.normalize("a.b..c"), "a.b#c")
+  let comma_empty = @normalizer.Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{,}\"},\"content\":\"#\"}",
+    ),
+  )
+  @test.assert_eq(comma_empty.normalize("xa{,}x"), "x#x")
+  @test.assert_eq(comma_empty.normalize("zaaz"), "zaaz")
+  // gate coverage for the escaped bounded/ranged window
+  @test.assert_eq(@common.is_supported_replace_regex("\\t{2}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\t{2,3}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\r{2,}"), true)
+  // anchored + exact mixed-class orderings load
+  @test.assert_eq(
+    @common.is_supported_replace_regex("^[^\\p{Number}\\p{Letter}\\s]+"),
+    true,
+  )
+  @test.assert_eq(
+    @common.is_supported_replace_regex("[^\\p{L}\\s\\p{N}]{2}"),
+    true,
+  )
 }

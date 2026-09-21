@@ -712,14 +712,14 @@ fn at_quantifier_brace(chars : Array[Char], i : Int) -> Bool {
     digits = digits + 1
   }
   if digits == 0 {
-    // `{,n}` is a quantifier in onig (== {0,n}) but unsupported here;
-    // treat as an operator so the pattern fails explicitly, not literally
+    // `{,n}` is a quantifier in onig (== {0,n}); `{,}` with no digits is
+    // NOT one — probed 0.22.2: 'a{,}' is a literal ('xa{,}x' -> 'x#x')
     if j < n && chars[j] == ',' {
       let mut m = j + 1
       while m < n && chars[m] >= '0' && chars[m] <= '9' {
         m = m + 1
       }
-      if m < n && chars[m] == '}' {
+      if m > j + 1 && m < n && chars[m] == '}' {
         return true
       }
     }

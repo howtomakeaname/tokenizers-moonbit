@@ -532,34 +532,57 @@ fn matches_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
 /// 1 <= n <= m <= 4. Returns (base char, lo, hi); `hi` = -1 for `{n,}`
 /// (unbounded above). Returns None for any other shape.
 /// HF probes: `a{2}` on "zaaz" -> "z#z", `a{2,3}` on "zaaaay" -> "z#ay",
-/// `a{1}` on "zaaz" -> "z##z". Metacharacter bases are excluded
-/// (mirrors char_bounded_quantifier_shape): `.{n}` is any-char in HF;
-/// `?{n}`/`+{n}`/etc. are construction errors.
+/// `a{1}` on "zaaz" -> "z##z". Metacharacter bases are excluded:
+/// `.{n}` is any-char in HF; `?{n}`/`+{n}`/etc. are construction errors.
 pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
   let chars = pattern.to_array()
   let n = chars.length()
   // shape: c { digits }  |  c { digits , }  |  c { digits , digits }
-  if n < 4 || chars[1] != '{' || chars[n - 1] != '}' {
+  // where c is an ordinary literal char or an escaped literal (\n \t
+  // \r \\ \. — probed 0.22.2: `\\n{2}` on "z\n\nz" -> 'z#z').
+  // Escaped bases skip the metachar exclusion: the escape makes them
+  // literal (`. {n}` is any-char in HF, `\\.{2}` is a literal dot).
+  if n < 4 || chars[n - 1] != '}' {
     return None
   }
-  let c = chars[0]
-  if c == '{' ||
-    c == '}' ||
-    c == '\\' ||
-    c == '[' ||
-    c == ']' ||
-    c == '.' ||
-    c == '^' ||
-    c == '$' ||
-    c == '*' ||
-    c == '+' ||
-    c == '?' ||
-    c == '(' ||
-    c == ')' ||
-    c == '|' {
+  let mut c : Char = '\u{0}'
+  let mut brace : Int = 0
+  if chars[1] == '{' {
+    c = chars[0]
+    brace = 1
+  } else if chars[0] == '\\' && n >= 5 && chars[2] == '{' {
+    brace = 2
+    c = match chars[1] {
+      'n' => '\n'
+      't' => '\t'
+      'r' => '\r'
+      '\\' => '\\'
+      '.' => '.'
+      _ => return None
+    }
+  } else {
     return None
   }
-  let mut i = 2
+  if brace == 1 &&
+    (
+      c == '{' ||
+      c == '}' ||
+      c == '\\' ||
+      c == '[' ||
+      c == ']' ||
+      c == '.' ||
+      c == '^' ||
+      c == '$' ||
+      c == '*' ||
+      c == '+' ||
+      c == '?' ||
+      c == '(' ||
+      c == ')' ||
+      c == '|'
+    ) {
+    return None
+  }
+  let mut i = brace + 1
   let mut lo = 0
   let mut lo_digits = 0
   while i < n && chars[i] >= '0' && chars[i] <= '9' {
