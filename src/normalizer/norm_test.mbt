@@ -1879,3 +1879,41 @@ test "caret branches keep per-branch word boundaries" {
   @test.assert_eq(n("^foo\\b|bar").normalize("foobar\n"), "foo#\n")
   @test.assert_eq(n("^\\b foo|zzz").normalize(" foo"), " foo")
 }
+
+///|
+/// EMPTY branches on top-level alternations (probed 0.22.2): an empty
+/// branch is a zero-width assertions-only alternative walked with the
+/// zero-min prev_end rules — declaration order wins a position outright
+/// (an adjacent empty ABANDONS the whole position, onig does not retry
+/// later branches: 'a||b' on 'ab' -> '#b#'), the end-of-string empty
+/// fires only when not adjacent, and empty input never matches.
+test "empty branches walk the zero-min rules" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^|a").normalize("ba"), "#b#")
+  @test.assert_eq(n("^|a").normalize("ab"), "#ab")
+  @test.assert_eq(n("^|a").normalize("ba\nab"), "#b#\n#ab")
+  @test.assert_eq(n("^|a").normalize(""), "")
+  @test.assert_eq(n("a$|").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("a$|").normalize("a b"), "#a# #b#")
+  @test.assert_eq(n("|^a").normalize("ba"), "#b#a#")
+  @test.assert_eq(n("a|").normalize("ab"), "#b#")
+  @test.assert_eq(n("a|").normalize("a b"), "# #b#")
+  @test.assert_eq(n("|a").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("\\b|a").normalize("ab"), "#ab#")
+  @test.assert_eq(n("\\b|\\b").normalize("ba"), "#ba#")
+  @test.assert_eq(n("\\b|\\b").normalize("ba\nab"), "#ba#\n#ab#")
+  @test.assert_eq(n("^|$").normalize("ba"), "#ba#")
+  @test.assert_eq(n("^|$").normalize("ba\nab"), "#ba#\n#ab#")
+  @test.assert_eq(n("^|$").normalize("a b"), "#a b#")
+  @test.assert_eq(n("a||b").normalize("ba"), "#b#")
+  @test.assert_eq(n("a||b").normalize("ab"), "#b#")
+  @test.assert_eq(n("a||b").normalize("a b"), "# #b#")
+  @test.assert_eq(n("^|").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("\\bfoo|").normalize("ba\nab"), "#b#a#\n#a#b#")
+  @test.assert_eq(n("^|a|b$").normalize("ab"), "#a#")
+  @test.assert_eq(n("^|a|b$").normalize("ba\nab"), "#b#\n#a#")
+  @test.assert_eq(n("a||b").normalize_aligned("a b").0, "# #b#")
+  @test.assert_eq(@common.is_supported_replace_regex("^|a"), true)
+}

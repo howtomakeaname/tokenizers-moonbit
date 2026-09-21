@@ -257,3 +257,13 @@ test "replace decoder anchored literals are per line" {
   let s = Decoder::Replace(pattern="ab$", content="#")
   @test.assert_eq(s.decode(["xab\nx"]), "x#\nx")
 }
+
+///|
+/// Empty branches decode per token with the same zero-min walk (HF
+/// JSON Regex decoder probed 0.22.2: '^|a' on ["ba"] -> '#b#').
+test "replace decoder empty branches" {
+  let d = Decoder::Replace(pattern="^|a", content="#")
+  @test.assert_eq(d.decode(["ba"]), "#b#")
+  let e = Decoder::Replace(pattern="a|", content="#")
+  @test.assert_eq(e.decode(["ab"]), "#b#")
+}

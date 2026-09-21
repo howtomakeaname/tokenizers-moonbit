@@ -948,9 +948,9 @@ fn regex_literal_branch_alternatives_spec(
       // segment [seg_lo, i)
       let mut s = seg_lo
       let mut e = i
-      if s >= e {
-        return None
-      }
+      // an EMPTY segment is a legal assertions-only branch (probed
+      // 0.22.2: 'a|' on 'ba' -> '#b#'); the strips below are guarded
+      // for s == e and the body parse accepts the empty lit
       // strip an optional (?:...) wrapper around the branch
       if e - s > 4 &&
         chars[s] == '(' &&
@@ -960,11 +960,11 @@ fn regex_literal_branch_alternatives_spec(
         s = s + 3
         e = e - 1
       }
-      let b_start = chars[s] == '^' && !is_escaped_at(chars, s)
+      let b_start = s < e && chars[s] == '^' && !is_escaped_at(chars, s)
       if b_start {
         s = s + 1
       }
-      let b_end = chars[e - 1] == '$' && !is_escaped_at(chars, e - 1)
+      let b_end = s < e && chars[e - 1] == '$' && !is_escaped_at(chars, e - 1)
       if b_end {
         e = e - 1
       }
@@ -983,10 +983,7 @@ fn regex_literal_branch_alternatives_spec(
       if w_end {
         e = e - 2
       }
-      if s >= e {
-        return None
-      }
-      // parse the literal body [s, e)
+      // parse the literal body [s, e) — may be empty (assertions-only)
       let lit : Array[Char] = []
       let mut k = s
       while k < e {
@@ -1015,9 +1012,6 @@ fn regex_literal_branch_alternatives_spec(
           k = k + 1
         }
       }
-      if lit.length() == 0 {
-        return None
-      }
       branches.push((chars_to_string(lit), b_start, b_end, w_start, w_end))
       seg_lo = i + 1
     }
@@ -1030,110 +1024,91 @@ fn regex_literal_branch_alternatives_spec(
 }
 
 ///|
-/// PER-BRANCH anchored alternation matching: candidates from every
-/// branch (line-anchored / plain-occurrence per its flags) merge by
-/// (start, branch declaration order) and emit greedily non-overlapping
-/// — onig find_iter semantics with alternation declaration-order ties.
+/// PER-BRANCH alternation matching, single pass with the zero-min
+/// prev_end adjacency rules (probed 0.22.2): at each position the
+/// branches are tried in DECLARATION order — a non-empty branch
+/// matches per its anchors/boundaries; an EMPTY branch (assertions
+/// only) matches zero-width when its assertions hold and the position
+/// is not adjacent to the previous match end (then one char is copied
+/// and the scan advances). The end-of-string empty inserts only when
+/// not adjacent. '^|a' on 'ab' -> '#ab' (the ^ empty wins position 0,
+/// so a is never tried there); 'a|' on 'ab' -> '#b#' (empty at 1 is
+/// prev_end-adjacent, the end-of-string empty fires).
 fn literal_branch_alternation_matches(
   chars : Array[Char],
   branches : Array[(String, Bool, Bool, Bool, Bool)],
 ) -> Array[Span] {
   let n = chars.length()
-  // candidates: (start, branch_idx, stop)
-  let cands : Array[(Int, Int, Int)] = []
-  for bi, branch in branches {
-    let (lit, b_start, b_end, w_start, w_end) = branch
-    let pat = lit.to_array()
-    let m = pat.length()
-    if m == 0 || m > n {
-      continue
-    }
-    if b_start && b_end {
-      // whole-line equality from a line start to any line end
-      let mut ls = 0
-      let mut j = 0
-      let mut at_line_start = true
-      while j <= n {
-        if at_line_start && ls < n {
-          let le = ls + m
-          if le <= n &&
-            (le == n || chars[le] == '\n') &&
-            chars_match_at(chars, ls, pat) &&
-            literal_word_boundaries_match(chars, ls, le, w_start, w_end) {
-            cands.push((ls, bi, le))
-          }
-          at_line_start = false
-        }
-        if j == n {
-          break
-        }
-        if chars[j] == '\n' {
-          ls = j + 1
-          at_line_start = true
-        }
-        j = j + 1
-      }
-    } else if b_start {
-      let mut ls = 0
-      let mut j = 0
-      let mut at_line_start = true
-      while j <= n {
-        if at_line_start && ls + m <= n && ls < n {
-          if chars_match_at(chars, ls, pat) &&
-            literal_word_boundaries_match(chars, ls, ls + m, w_start, w_end) {
-            cands.push((ls, bi, ls + m))
-          }
-          at_line_start = false
-        }
-        if j == n {
-          break
-        }
-        if chars[j] == '\n' {
-          ls = j + 1
-          at_line_start = true
-        }
-        j = j + 1
-      }
-    } else if b_end {
-      // ending at a line end; leftmost start for a single literal is
-      // the unique position le-m per line end
-      let mut j = 0
-      while j <= n {
-        let is_end = j == n || chars[j] == '\n'
-        if is_end && j - m >= 0 {
-          let st = j - m
-          if chars_match_at(chars, st, pat) &&
-            literal_word_boundaries_match(chars, st, j, w_start, w_end) {
-            cands.push((st, bi, j))
-          }
-        }
-        if j == n {
-          break
-        }
-        j = j + 1
-      }
-    } else {
-      // plain occurrences: collect EVERY position (the greedy merge
-      // owns overlap suppression — a local skip here would lose
-      // occurrences an earlier branch's match shadows, probed:
-      // `ax|xxx` on "axxxx" must give '##')
-      let mut p = 0
-      while p + m <= n {
-        if chars_match_at(chars, p, pat) &&
-          literal_word_boundaries_match(chars, p, p + m, w_start, w_end) {
-          cands.push((p, bi, p + m))
-        }
-        p = p + 1
-      }
-    }
-  }
-  cands.sort_by((a, b) => if a.0 != b.0 { a.0 - b.0 } else { a.1 - b.1 })
   let out : Array[Span] = []
-  let mut last_end = 0
-  for c in cands {
-    if c.0 >= last_end {
-      out.push({ start: c.0, stop: c.2, })
-      last_end = c.2
+  if n == 0 {
+    return out // empty input never matches (zero-min rule, probed)
+  }
+  let mut p = 0
+  let mut prev_end = -1
+  fn empty_assertions_hold(
+    bs : Bool,
+    be : Bool,
+    ws : Bool,
+    we : Bool,
+    pos : Int,
+  ) -> Bool {
+    let line_start_ok = !bs || pos == 0 || chars[pos - 1] == '\n'
+    let line_end_ok = !be || pos == n || chars[pos] == '\n'
+    let word_ok = (!ws || regex_word_boundary_at(chars, pos)) &&
+      (!we || regex_word_boundary_at(chars, pos))
+    line_start_ok && line_end_ok && word_ok
+  }
+  while p <= n {
+    if p == n {
+      for branch in branches {
+        let (lit, bs, be, ws, we) = branch
+        if lit.is_empty() &&
+          empty_assertions_hold(bs, be, ws, we, p) &&
+          p != prev_end {
+          out.push({ start: p, stop: p, })
+          break
+        }
+      }
+      break
+    }
+    let mut consumed = false
+    for branch in branches {
+      let (lit, bs, be, ws, we) = branch
+      if lit.is_empty() {
+        if empty_assertions_hold(bs, be, ws, we, p) {
+          if p != prev_end {
+            out.push({ start: p, stop: p, })
+            prev_end = p
+          }
+          // adjacent or not, the engine's leftmost-branch result IS
+          // this empty match: an adjacent one abandons the WHOLE
+          // position (copy one char, advance) — onig does not retry
+          // later branches at the same position (probed: 'a||b' on
+          // 'ab' -> '#b#' — the b branch never fires at 1)
+          p = p + 1
+          consumed = true
+          break
+        }
+        continue // assertions fail: next branch
+      }
+      let pat = lit.to_array()
+      let m = pat.length()
+      if m == 0 || p + m > n {
+        continue
+      }
+      let start_ok = !bs || p == 0 || chars[p - 1] == '\n'
+      let end_ok = !be || p + m == n || chars[p + m] == '\n'
+      let word_ok = literal_word_boundaries_match(chars, p, p + m, ws, we)
+      if start_ok && end_ok && word_ok && chars_match_at(chars, p, pat) {
+        out.push({ start: p, stop: p + m, })
+        prev_end = p + m
+        p = p + m
+        consumed = true
+        break
+      }
+    }
+    if !consumed {
+      p = p + 1
     }
   }
   out
