@@ -18,7 +18,7 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.7.0**（2026-09-21）。0.7.0 后待办见 §2 队列。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.8.0**（2026-09-21，含 PR #34/#36 双锚整行族与逆序交换）。0.8.0 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-21 PR #36**（5 commit，三轮评审）：双锚族剩余拼写。①无量词 `^BASE$` ≡ `^BASE{1}$` 多行整行（原被非多行 literal wrapper 吞掉而 gate 声称支持——**静默分歧**修复；单字符窗口天然不跨行）；②双锚逆序 `^a{3,2}$` 交换为原子 `{2,3}` 窗口——**仅限谓词不含 `\n` 的类**（`bounded_regex_kind_pred(kind,'\n')` 语义守卫：原子 vs 回溯在 \n 跨行 run 上分歧，HF 实测 `^\s{4,2}$` 于 '   \nx' 不变）；③`$` 前惰性 `?` 显式拒绝（HF 的 `(?:X{n,m})?` 整行形有 ^∩$ 空匹配 + 最短行尾语义——另一引擎能力），转义感知（`^\?$` 字面问号基保留多行语义，反斜杠奇偶）；④转义操作符基全集；⑤decoder 路径修复——`decode_replace_direct` 最前抢占双锚拼写（原非多行 wrapper 抢先，`^a$` decode 不变 vs HF `#\n#`）。评审三轮七项 blocking 全修（含我的 swap 枚举守卫被证伪改语义守卫、`^\?$` 转义回归）。验证：三轮 ~7,000 对拍，除记录在案的 fail-explicitly 形状外零分歧；473/473（native/js）、450/450（wasm）、双扫描全绿。遗留（评审记录）：多字符字面 `^ab$`/`^!!$`/`^\{2}$` 的 literal wrapper 整串锚（非逐行）仍静默分歧——后续批次；`^a{5}$` 窗口外、`^.{1}$` 等继续 fail-explicitly。
+
 - **2026-09-21 PR #34**（5 commit，两轮评审）：双锚 `^BASE QUANT $` 整行族 + 逆序惰性区间交换。①双锚语义 HF 实证：multiline 下**逐行整行匹配**（`'!!'`→`'#'`、`'!!x!!'` 不变、`'a\n!!\nb'`→`'a\n#\nb'`），且类含 `\n` 时贪婪 run **可跨行**（`^\s+$` 于 `" \n "` 整串一个匹配）、`\r` 属于行内容（`'!!\r\n!!'` 仅第二行匹配）——引擎 = 行首起贪婪（hi 封顶）+ 最长行尾边界（长 ≥ lo）；QUANT ∈ +/{n}/{n,}/{n,m}（窗口 1-4），基 = 单类/12 混类排列/字面/\n\t\r 转义；②逆序 `{n,m}?`（n>m）onig 交换为 `(?:X{m,n})?` = 贪婪 ranged 块 + 空匹配游走（`a{3,2}?` 于 'zaaaaz'→'#z#a#z#'：块3+余1走空），lazy_exact 引擎泛化为 (lo,hi)。评审一项 blocking：`p = g` 尾部跳转丢弃 sub-lo 余量内部空匹配（回归 `{n}?` n≥3）→ `p = b` 贯穿修复 + 7 cell 尾部锁定（含评审自身期望值错误一例——HF 新鲜 oracle 纠正）。两轮评审 ~1,000 对拍（双锚 18×27 矩阵 + 逆序 198 项 run 长度扫描）零分歧；470/470（native/js）、447/447（wasm）、双扫描全绿。遗留（评审记录）：双锚逆序 `^a{3,2}$`、无量词 `^a$` 多行、窗口外 `{5}`、`.{n}` 基等仍 fail-explicitly。
 
 - **2026-09-21 发版 0.7.0（已发布，干净安装验证 7/7×三后端）**：0.6.0 后累计 PR #24（\p{N} 全 N kind 28/29 拆分 + \d 经验 Nd 表 + GPT2/Qwen/o200k patstr 全 N）、#26（\b Unicode 词边界）、#28（{,n}/前导零/转义基/混类 12 排列）、#30（惰性 ? 三族）。新增公开 API：is_unicode_number、lazy_normalize、lazy_exact_spec、replace_lazy_exact_runs、replace_ascii_word_boundary_runs、zero_min_match_spans/replace_family_spans/char_bounded_spec 族。PR #32 CI 8/8 后合并；`moon publish` 成功；干净项目安装 0.7.0（/tmp/verify07，native/js/wasm-gc 各 7/7）——\p{Number}+ 于 a²b→aQb（content Q）、\b 包裹 ASCII 类于 x_1y→Q、惰性 a{2,3}?/a{2}?、{,2}、\d 保持 Nd、\n{2} 转义基，全部与 HF 0.22.2 一致。
