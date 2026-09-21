@@ -222,3 +222,14 @@ test "replace decoder escaped bases compute" {
   let nl = Decoder::Replace(pattern="\\n{2}", content="#")
   @test.assert_eq(nl.decode(["z\n\nz"]), "z#z")
 }
+
+///|
+/// Decoder per-token lazy suffixes (probed 0.22.2 via JSON Regex).
+test "replace decoder lazy suffixes" {
+  let zm = Decoder::Replace(pattern="a{0,2}?", content="#")
+  @test.assert_eq(zm.decode(["zaaz"]), "#z#a#a#z#")
+  let ex = Decoder::Replace(pattern="a{2}?", content="#")
+  @test.assert_eq(ex.decode(["zaaz"]), "#z#z#")
+  let rg = Decoder::Replace(pattern="a{2,3}?", content="#")
+  @test.assert_eq(rg.decode(["zaaaz"]), "z#az")
+}

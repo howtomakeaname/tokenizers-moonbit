@@ -1386,3 +1386,114 @@ test "escaped bases load; a{,} is a literal that loads" {
     true,
   )
 }
+
+///|
+/// LAZY quantifier suffixes under global replace (probed 0.22.2, three
+/// families):
+///   `{0-族}?`  (`{0}?`/`{,n}?`/`{0,n}?`/`{0,}?`/`{00}?) == `{0}`
+///   `{n}?`    exact — exact-n block when the run reaches n, otherwise
+///             the empty-match walk ('zaaz' -> '#z#z#' but 'za' -> '#z#a#')
+///   `{n,m}?`/`{n,}?` == greedy exact `{n}` (block n, remainder kept,
+///             NO empty matches)
+test "lazy quantifier suffixes collapse per probed families" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  // zero-min lazy == {0}
+  @test.assert_eq(n("a{,2}?").normalize("zaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{0,2}?").normalize("zaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{0}?").normalize("zaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{0,}?").normalize("zaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{,2}?").normalize("zaaaaz"), "#z#a#a#a#a#z#")
+  @test.assert_eq(n("\\s{0,2}?").normalize("x  y"), "#x# # #y#")
+  @test.assert_eq(n("a{00}?").normalize("zaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("\\n{0,2}?").normalize("z\n\nz"), "#z#\n#\n#z#")
+  @test.assert_eq(n("a{,2}?").normalize("za{,2}z"), "#z#a#{#,#2#}#z#")
+  // lazy exact {n}?
+  @test.assert_eq(n("a{2}?").normalize("zaaz"), "#z#z#")
+  @test.assert_eq(n("a{2}?").normalize("zaaaaz"), "#z##z#")
+  @test.assert_eq(n("a{2}?").normalize("za"), "#z#a#")
+  @test.assert_eq(n("a{2}?").normalize("z"), "#z#")
+  @test.assert_eq(n("a{2}?").normalize("aa"), "#")
+  @test.assert_eq(n("a{2}?").normalize("aab"), "#b#")
+  @test.assert_eq(n("a{3}?").normalize("zaaz"), "#z#a#a#z#")
+  @test.assert_eq(n("a{3}?").normalize("zaaaz"), "#z#z#")
+  @test.assert_eq(n("a{4}?").normalize("aa aa"), "#a#a# #a#a#")
+  @test.assert_eq(n("a{1}?").normalize("zaaz"), "#z##z#")
+  @test.assert_eq(n("\\n{2}?").normalize("z\n\n\nz"), "#z#\n#z#")
+  @test.assert_eq(n("5{2}?").normalize("z5555y"), "#z##y#")
+  // lazy ranged {n,m}? / {n,}? == exact {n}, no empty matches
+  @test.assert_eq(n("a{2,3}?").normalize("zaaz"), "z#z")
+  @test.assert_eq(n("a{2,3}?").normalize("zaaaz"), "z#az")
+  @test.assert_eq(n("a{2,3}?").normalize("zaaaaz"), "z##z")
+  @test.assert_eq(n("a{2,3}?").normalize("zaaaaaaaaz"), "z####z")
+  @test.assert_eq(n("a{2,3}?").normalize("zaz"), "zaz")
+  @test.assert_eq(n("a{2,}?").normalize("zaaaz"), "z#az")
+  @test.assert_eq(n("a{2,}?").normalize("zaz"), "zaz")
+  @test.assert_eq(n("a{3,4}?").normalize("zaaaaaaz"), "z##z")
+  @test.assert_eq(n("\\s{2,3}?").normalize("x    y"), "x##y")
+  @test.assert_eq(n("\\n{2,}?").normalize("z\n\n\n\nz"), "z##z")
+  @test.assert_eq(n("\\t{2,3}?").normalize("a\t\t\tb"), "a#\tb")
+  // aligned agrees; load path accepts all three families
+  @test.assert_eq(n("a{2}?").normalize_aligned("zaaz").0, "#z#z#")
+  @test.assert_eq(n("a{2,3}?").normalize_aligned("zaaaz").0, "z#az")
+  let loaded = @normalizer.Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{2,3}?\"},\"content\":\"#\"}",
+    ),
+  )
+  @test.assert_eq(loaded.normalize("zaaaz"), "z#az")
+  let le = @normalizer.Normalizer::from_json(
+    @json.parse(
+      "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"a{2}?\"},\"content\":\"#\"}",
+    ),
+  )
+  @test.assert_eq(le.normalize("zaaz"), "#z#z#")
+  @test.assert_eq(@common.lazy_normalize("a{,2}?"), Some("a{0}"))
+  @test.assert_eq(@common.lazy_normalize("a{2,3}?"), Some("a{2}"))
+  @test.assert_eq(@common.lazy_normalize("a{2,}?"), Some("a{2}"))
+  @test.assert_eq(@common.lazy_normalize("a{2}?"), None) // own family
+  @test.assert_eq(@common.lazy_exact_spec("a{2}?"), Some((-1, Some('a'), 2)))
+  @test.assert_eq(@common.lazy_exact_spec("a{2}"), None)
+}
+
+///|
+/// Lazy-bound validation hardening (review fixes): leading-zero values
+/// route by VALUE (`a{02}?` is exact-2 lazy, probed: 'zaaz' -> '#z#z#',
+/// 'zaaaz' -> '#z#a#z#'), invalid tails stay literals (`a{0,2x}?` gate
+/// false), the 100000 cap covers `{0,N}?`, escaped-brace bases and
+/// reversed ranges fail explicitly.
+test "lazy bound validation follows parsed values" {
+  @test.assert_eq(@common.is_supported_replace_regex("a{02}?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a{02,3}?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a{0,2x}?"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a{0,100001}?"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\{0,2}?"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a{3,2}?"), false)
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("a{02}?").normalize("zaaz"), "#z#z#")
+  @test.assert_eq(n("a{02}?").normalize("zaaaz"), "#z#a#z#")
+  @test.assert_eq(n("a{0002}?").normalize("zaaz"), "#z#z#")
+  @test.assert_eq(n("a{02,3}?").normalize("zaaaz"), "z#az")
+  @test.assert_eq(@common.lazy_exact_spec("a{02}?"), Some((-1, Some('a'), 2)))
+  @test.assert_eq(@common.lazy_exact_spec("a{00}?"), None)
+  @test.assert_eq(@common.lazy_normalize("a{02,3}?"), Some("a{2}"))
+}
+
+///|
+/// Escaped-backslash lazy bases (even backslash run before `{` — the
+/// brace is a real quantifier; probed 0.22.2) vs escaped-brace bases
+/// (odd run — literal pattern). Review fix: the guard counts parity.
+test "backslash parity guards escaped-brace vs escaped-backslash lazy" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\\\{0,2}?").normalize("z\\\\z"), "#z#\\#\\#z#")
+  @test.assert_eq(n("\\\\{2}?").normalize("z\\\\z"), "#z#z#")
+  @test.assert_eq(n("\\\\{2,3}?").normalize("z\\\\\\\\z"), "z##z")
+  @test.assert_eq(n("\\\\{0}?").normalize("z\\z"), "#z#\\#z#")
+  // odd run: escaped brace — literal, gate rejects
+  @test.assert_eq(@common.is_supported_replace_regex("\\{0,2}?"), false)
+}

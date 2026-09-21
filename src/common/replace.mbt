@@ -853,6 +853,25 @@ pub fn replace_family_spans(
   chars : Array[Char],
   pattern : String,
 ) -> Array[Span]? {
+  // lazy suffixes collapse to their greedy equivalents first (probed
+  // 0.22.2 — see lazy_normalize); unsupported bounds fall through
+  // untouched and fail explicitly downstream
+  let pattern = match lazy_normalize(pattern) {
+    Some(p) => p
+    None => pattern
+  }
+  match lazy_exact_spec(pattern) {
+    Some((kind, literal, n)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { bounded_regex_kind_pred(kind, x) }
+      }
+      return Some(lazy_exact_match_spans(chars, pred, n))
+    }
+    None => ()
+  }
   if pattern.contains("{") {
     match bounded_regex_kind(pattern) {
       Some((kind, max_run)) =>
@@ -982,4 +1001,63 @@ fn ascii_word_boundary_run_matches(chars : Array[Char]) -> Array[Span] {
 pub fn replace_ascii_word_boundary_runs(s : String, content : String) -> String {
   let chars = s.to_array()
   replace_spans(chars, ascii_word_boundary_run_matches(chars), content)
+}
+
+///|
+/// LAZY exact `base{n}?` match spans (probed 0.22.2): at each position
+/// an exact-n block when the run reaches n, otherwise the zero-min
+/// empty-match walk (skip empty adjacent to prev_end, copy one char,
+/// end-of-string empty only when not adjacent).
+fn lazy_exact_match_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  n : Int,
+) -> Array[Span] {
+  let out : Array[Span] = []
+  let len = chars.length()
+  if len == 0 {
+    return out
+  }
+  let mut p = 0
+  let mut prev_end = -1
+  while p <= len {
+    if p == len {
+      if p != prev_end {
+        out.push({ start: p, stop: p, })
+      }
+      break
+    }
+    if pred(chars[p]) {
+      let mut g = p
+      while g < len && pred(chars[g]) {
+        g = g + 1
+      }
+      if g - p >= n {
+        out.push({ start: p, stop: p + n, })
+        prev_end = p + n
+        p = p + n
+        continue
+      }
+    }
+    if p == prev_end {
+      p = p + 1
+      continue
+    }
+    out.push({ start: p, stop: p, })
+    prev_end = p
+    p = p + 1
+  }
+  out
+}
+
+///|
+/// LAZY exact `base{n}?` replace (normalizer/decoder hardcode path).
+pub fn replace_lazy_exact_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  n : Int,
+) -> String {
+  let chars = s.to_array()
+  replace_spans(chars, lazy_exact_match_spans(chars, pred, n), content)
 }
