@@ -896,3 +896,241 @@ fn trailing_run_match_multiline(
   }
   out
 }
+
+///|
+/// PER-BRANCH anchored alternation `^foo|bar$` (no group wrapper —
+/// onig binds anchors to their branch: (^foo)|(bar$); probed 0.22.2:
+/// on 'foo\nfoobar' -> '#\n##'). Each branch strips its own unescaped
+/// leading '^' / trailing '$' and must be a pure literal. Returns
+/// (literal, start_anchor, end_anchor) per branch.
+fn regex_literal_branch_alternatives_spec(
+  pattern : String,
+) -> (Array[(String, Bool, Bool)], Bool, Bool)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  if n == 0 {
+    return None
+  }
+  // a TOP-LEVEL pipe selects the per-branch reading (a single outer
+  // group wrapper like ^(?:foo|bar)$ has none — it keeps the grouped
+  // global-anchor path). Depth tracking so inner groups don't count.
+  let mut depth = 0
+  let mut has_top_pipe = false
+  let mut i = 0
+  while i < n {
+    if chars[i] == '\\' {
+      i = i + 2 // skip the escaped char too (a '\\(' is not a group)
+      continue
+    }
+    if chars[i] == '(' {
+      depth = depth + 1
+    } else if chars[i] == ')' && depth > 0 {
+      depth = depth - 1
+    } else if chars[i] == '|' && depth == 0 {
+      has_top_pipe = true
+      break
+    }
+    i = i + 1
+  }
+  if !has_top_pipe {
+    return None
+  }
+  let word_start = n > 2 && chars[0] == '\\' && chars[1] == 'b'
+  let word_end = n > 2 && chars[n - 1] == 'b' && chars[n - 2] == '\\'
+  let lo = if word_start { 2 } else { 0 }
+  let hi = if word_end { n - 2 } else { n }
+  if lo >= hi {
+    return None
+  }
+  // split top-level unescaped '|' into segments, then parse each
+  let branches : Array[(String, Bool, Bool)] = []
+  let mut seg_lo = lo
+  let mut i = lo
+  while i <= hi {
+    if i == hi || (chars[i] == '|' && !is_escaped_at(chars, i)) {
+      // segment [seg_lo, i)
+      let mut s = seg_lo
+      let mut e = i
+      if s >= e {
+        return None
+      }
+      // strip an optional (?:...) wrapper around the branch
+      if e - s > 4 &&
+        chars[s] == '(' &&
+        chars[s + 1] == '?' &&
+        chars[s + 2] == ':' &&
+        chars[e - 1] == ')' {
+        s = s + 3
+        e = e - 1
+      }
+      let b_start = chars[s] == '^' && !is_escaped_at(chars, s)
+      if b_start {
+        s = s + 1
+      }
+      let b_end = chars[e - 1] == '$' && !is_escaped_at(chars, e - 1)
+      if b_end {
+        e = e - 1
+      }
+      if s >= e {
+        return None
+      }
+      // parse the literal body [s, e)
+      let lit : Array[Char] = []
+      let mut k = s
+      while k < e {
+        let c = chars[k]
+        if c == '\\' {
+          if k + 1 >= e {
+            return None
+          }
+          let nx = chars[k + 1]
+          if is_regex_escaped_literal(nx) {
+            lit.push(nx)
+          } else if nx == 'n' {
+            lit.push('\n')
+          } else if nx == 'r' {
+            lit.push('\r')
+          } else if nx == 't' {
+            lit.push('\t')
+          } else {
+            return None
+          }
+          k = k + 2
+        } else if is_regex_operator(c) {
+          return None
+        } else {
+          lit.push(c)
+          k = k + 1
+        }
+      }
+      if lit.length() == 0 {
+        return None
+      }
+      branches.push((chars_to_string(lit), b_start, b_end))
+      seg_lo = i + 1
+    }
+    i = i + 1
+  }
+  if branches.length() < 2 {
+    return None
+  }
+  Some((branches, word_start, word_end))
+}
+
+///|
+/// PER-BRANCH anchored alternation matching: candidates from every
+/// branch (line-anchored / plain-occurrence per its flags) merge by
+/// (start, branch declaration order) and emit greedily non-overlapping
+/// — onig find_iter semantics with alternation declaration-order ties.
+fn literal_branch_alternation_matches(
+  chars : Array[Char],
+  branches : Array[(String, Bool, Bool)],
+  word_start : Bool,
+  word_end : Bool,
+) -> Array[Span] {
+  let n = chars.length()
+  // candidates: (start, branch_idx, stop)
+  let cands : Array[(Int, Int, Int)] = []
+  for bi, branch in branches {
+    let (lit, b_start, b_end) = branch
+    let pat = lit.to_array()
+    let m = pat.length()
+    if m == 0 || m > n {
+      continue
+    }
+    if b_start && b_end {
+      // whole-line equality from a line start to any line end
+      let mut ls = 0
+      let mut j = 0
+      let mut at_line_start = true
+      while j <= n {
+        if at_line_start && ls < n {
+          let le = ls + m
+          if le <= n &&
+            (le == n || chars[le] == '\n') &&
+            chars_match_at(chars, ls, pat) &&
+            literal_word_boundaries_match(chars, ls, le, word_start, word_end) {
+            cands.push((ls, bi, le))
+          }
+          at_line_start = false
+        }
+        if j == n {
+          break
+        }
+        if chars[j] == '\n' {
+          ls = j + 1
+          at_line_start = true
+        }
+        j = j + 1
+      }
+    } else if b_start {
+      let mut ls = 0
+      let mut j = 0
+      let mut at_line_start = true
+      while j <= n {
+        if at_line_start && ls + m <= n && ls < n {
+          if chars_match_at(chars, ls, pat) &&
+            literal_word_boundaries_match(
+              chars,
+              ls,
+              ls + m,
+              word_start,
+              word_end,
+            ) {
+            cands.push((ls, bi, ls + m))
+          }
+          at_line_start = false
+        }
+        if j == n {
+          break
+        }
+        if chars[j] == '\n' {
+          ls = j + 1
+          at_line_start = true
+        }
+        j = j + 1
+      }
+    } else if b_end {
+      // ending at a line end; leftmost start for a single literal is
+      // the unique position le-m per line end
+      let mut j = 0
+      while j <= n {
+        let is_end = j == n || chars[j] == '\n'
+        if is_end && j - m >= 0 {
+          let st = j - m
+          if chars_match_at(chars, st, pat) &&
+            literal_word_boundaries_match(chars, st, j, word_start, word_end) {
+            cands.push((st, bi, j))
+          }
+        }
+        if j == n {
+          break
+        }
+        j = j + 1
+      }
+    } else {
+      // plain occurrences: collect EVERY position (the greedy merge
+      // owns overlap suppression — a local skip here would lose
+      // occurrences an earlier branch's match shadows, probed:
+      // `ax|xxx` on "axxxx" must give '##')
+      let mut p = 0
+      while p + m <= n {
+        if chars_match_at(chars, p, pat) &&
+          literal_word_boundaries_match(chars, p, p + m, word_start, word_end) {
+          cands.push((p, bi, p + m))
+        }
+        p = p + 1
+      }
+    }
+  }
+  cands.sort_by((a, b) => if a.0 != b.0 { a.0 - b.0 } else { a.1 - b.1 })
+  let out : Array[Span] = []
+  let mut last_end = 0
+  for c in cands {
+    if c.0 >= last_end {
+      out.push({ start: c.0, stop: c.2, })
+      last_end = c.2
+    }
+  }
+  out
+}

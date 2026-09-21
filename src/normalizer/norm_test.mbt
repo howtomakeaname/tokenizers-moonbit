@@ -1761,3 +1761,86 @@ test "end-anchored alternation ties break by declaration order" {
   @test.assert_eq(n("(?:b|ab)$").normalize("ab"), "#")
   @test.assert_eq(n("(?:b|xb)$").normalize("axb"), "a#")
 }
+
+///|
+/// Dot-base whole-line family (probed 0.22.2): `.` matches any char
+/// EXCEPT newline (onig default — `^.{3,2}$` on 'a\nb' is unchanged),
+/// dot-sequences are fixed-length windows (`^..$`), quantified forms
+/// carry lo/hi (`^.{1,3}$`), reversed windows swap like other \n-free
+/// bases.
+test "dot-base whole-line windows" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^.$").normalize("a\nab\nb"), "#\nab\n#")
+  @test.assert_eq(n("^.$").normalize("\n"), "\n")
+  @test.assert_eq(n("^..$").normalize("ab\ncd\nabc"), "#\n#\nabc")
+  @test.assert_eq(n("^.{1,3}$").normalize("ab\nabcd\nx"), "#\nabcd\n#")
+  @test.assert_eq(n("^.{2,}$").normalize("ab\nabc\na"), "#\n#\na")
+  @test.assert_eq(n("^...$").normalize("abc\nab"), "#\nab")
+  @test.assert_eq(n("^.{3,2}$").normalize("ab\ncd"), "#\n#")
+  @test.assert_eq(n("^.{3,2}$").normalize("a\nb"), "a\nb")
+  @test.assert_eq(n("^.{4,2}$").normalize("abc\nd"), "#\nd")
+  @test.assert_eq(n("^.{2,3}$").normalize("ab\nabc\nabcd"), "#\n#\nabcd")
+  @test.assert_eq(n("^.$").normalize_aligned("a\nab\nb").0, "#\nab\n#")
+  @test.assert_eq(@common.double_anchored_spec("^..$"), Some((30, None, 2, 2)))
+}
+
+///|
+/// PER-BRANCH anchors on alternations (probed 0.22.2): onig binds
+/// them per branch — `^foo|bar$` == (^foo)|(bar$), so on
+/// 'foo\nfoobar' BOTH line-start foos match AND the trailing bar of
+/// foobar ('#\n##'). Branches may be (?:...)-wrapped; ties at the same
+/// start follow declaration order; merged matches never overlap.
+test "per-branch anchored alternations" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^foo|bar$").normalize("foo\nfoobar"), "#\n##")
+  @test.assert_eq(n("^foo|bar$").normalize("bar\nxbar"), "#\nx#")
+  @test.assert_eq(n("^foo|^bar").normalize("foo\nbar\nxb"), "#\n#\nxb")
+  @test.assert_eq(n("foo$|bar$").normalize("xfoo\nxbar"), "x#\nx#")
+  @test.assert_eq(n("^foo|bar").normalize("foox\nxbar"), "#x\nx#")
+  @test.assert_eq(n("(?:^foo)|(?:bar$)").normalize("foo\nfoobar"), "#\n##")
+  @test.assert_eq(n("^a|^b").normalize("a\nb\nc"), "#\n#\nc")
+  @test.assert_eq(
+    n("^foo|bar$|baz").normalize("foo\nbar\nbaz\nxbaz"),
+    "#\n#\n#\nx#",
+  )
+  @test.assert_eq(n("^foo|bar$").normalize_aligned("foo\nfoobar").0, "#\n##")
+  // grouped global-anchor form keeps its old semantics (whole group)
+  @test.assert_eq(
+    n("^(?:foo|bar)$").normalize("foo\nbar\nfoobar"),
+    "#\n#\nfoobar",
+  )
+}
+
+///|
+/// Branch declaration-order ties at the same start (probed 0.22.2).
+test "branch ties follow declaration order" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^ab|a").normalize("ab"), "#")
+  @test.assert_eq(n("a|^ab").normalize("ab"), "#b")
+}
+
+///|
+/// Review fixes: plain branches collect every occurrence (the greedy
+/// merge owns overlap suppression — `ax|xxx` on 'axxxx' -> '##'), and
+/// quantified multi-dot windows fail explicitly (a trailing quantifier
+/// binds to the LAST dot: `^..+$` is >=2 chars/line, out of scope).
+test "branch merge owns overlap; quantified multi-dot rejects" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("ax|xxx").normalize("axxxx"), "##")
+  @test.assert_eq(n("xxx|ax").normalize("axxxx"), "##")
+  @test.assert_eq(n("foo|bar").normalize("foobar"), "##")
+  @test.assert_eq(n("ab|b").normalize("abab"), "##")
+  @test.assert_eq(n("aa|a").normalize("aaa"), "##")
+  @test.assert_eq(@common.is_supported_replace_regex("^..+$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^..{2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^..$"), true)
+  @test.assert_eq(n("^..$").normalize("ab\nabc"), "#\nabc")
+}
