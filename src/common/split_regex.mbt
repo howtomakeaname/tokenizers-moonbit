@@ -259,8 +259,11 @@ pub fn simple_split_regex_matches(
     Some(run_matches(chars, fn(c) { is_word_char_class(c) }))
   } else if pattern == "[^\\w]+" || pattern == "[\\W]+" {
     Some(run_matches(chars, fn(c) { !is_word_char_class(c) }))
-  } else if pattern == "[A-Za-z0-9_]+" || pattern == "\\b[A-Za-z0-9_]+\\b" {
+  } else if pattern == "[A-Za-z0-9_]+" {
     Some(run_matches(chars, fn(c) { is_ascii_word_char(c) }))
+  } else if pattern == "\\b[A-Za-z0-9_]+\\b" {
+    // \b boundaries use the UNICODE word set (bare table incl. quirks)
+    Some(ascii_word_boundary_run_matches(chars))
   } else if pattern == "^\\w+" {
     Some(leading_run_match_multiline(chars, fn(c) { is_word_char(c) }))
   } else if pattern == "^[\\w]+" || pattern == "^[^\\W]+" {
