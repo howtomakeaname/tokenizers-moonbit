@@ -1052,7 +1052,7 @@ fn literal_branch_alternation_matches(
     we : Bool,
     pos : Int,
   ) -> Bool {
-    let line_start_ok = !bs || pos == 0 || chars[pos - 1] == '\n'
+    let line_start_ok = !bs || (pos < n && (pos == 0 || chars[pos - 1] == '\n'))
     let line_end_ok = !be || pos == n || chars[pos] == '\n'
     let word_ok = (!ws || regex_word_boundary_at(chars, pos)) &&
       (!we || regex_word_boundary_at(chars, pos))
@@ -1110,6 +1110,102 @@ fn literal_branch_alternation_matches(
     if !consumed {
       p = p + 1
     }
+  }
+  out
+}
+
+///|
+/// A BARE assertion sequence — nothing but zero-width assertions
+/// (`^`, `$`, `\b` in any order/quantity, e.g. `\b$`, `^\b`, `\b\b`,
+/// `$\b`, `^\b$`, `^$`) — matches zero-width at every position where
+/// ALL assertions hold (probed 0.22.2: `\b$` on 'ab\ncd' ->
+/// 'ab#\ncd#' — line ends that are word boundaries; `^\b` on ' ab'
+/// unchanged — leading space is not a word char). Returns the four
+/// flags; the empty-input string never matches.
+fn regex_literal_assertions_spec(pattern : String) -> (Bool, Bool, Bool, Bool)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  if n == 0 {
+    return None
+  }
+  let mut bs = false
+  let mut be = false
+  let mut ws = false
+  let mut we = false
+  let mut count = 0
+  let mut i = 0
+  while i < n {
+    if chars[i] == '^' && !is_escaped_at(chars, i) {
+      bs = true
+      count = count + 1
+      i = i + 1
+    } else if chars[i] == '$' && !is_escaped_at(chars, i) {
+      be = true
+      count = count + 1
+      i = i + 1
+    } else if chars[i] == '\\' &&
+      i + 1 < n &&
+      chars[i + 1] == 'b' &&
+      !is_escaped_at(chars, i) {
+      // `\b\b` requires the boundary at both faces — same predicate at
+      // one position, so a single flag suffices
+      ws = true
+      we = true
+      count = count + 1
+      i = i + 2
+    } else {
+      return None
+    }
+  }
+  if count == 0 {
+    return None
+  }
+  Some((bs, be, ws, we))
+}
+
+///|
+/// Zero-width assertion-sequence spans: every position where all the
+/// assertions hold, walked with the zero-min prev_end rules (an
+/// adjacent empty abandons the position; empty input never matches).
+fn assertion_sequence_matches(
+  chars : Array[Char],
+  bs : Bool,
+  be : Bool,
+  ws : Bool,
+  we : Bool,
+) -> Array[Span] {
+  let n = chars.length()
+  let out : Array[Span] = []
+  if n == 0 {
+    return out
+  }
+  fn holds(pos : Int) -> Bool {
+    // multiline ^ does NOT match the string-end position (probed:
+    // '^$' on 'ab\n' unchanged; '^' on 'ab' -> '#ab' with no end hit)
+    let line_start_ok = !bs || (pos < n && (pos == 0 || chars[pos - 1] == '\n'))
+    let line_end_ok = !be || pos == n || chars[pos] == '\n'
+    let word_ok = (!ws || regex_word_boundary_at(chars, pos)) &&
+      (!we || regex_word_boundary_at(chars, pos))
+    line_start_ok && line_end_ok && word_ok
+  }
+  let mut p = 0
+  let mut prev_end = -1
+  while p <= n {
+    if p == n {
+      if holds(p) && p != prev_end {
+        out.push({ start: p, stop: p, })
+      }
+      break
+    }
+    if holds(p) {
+      if p != prev_end {
+        out.push({ start: p, stop: p, })
+        prev_end = p
+      }
+      p = p + 1 // adjacent or not: the position is consumed either way
+      continue
+    }
+    p = p + 1
   }
   out
 }
