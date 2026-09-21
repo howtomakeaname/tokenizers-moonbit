@@ -532,9 +532,8 @@ fn matches_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
 /// 1 <= n <= m <= 4. Returns (base char, lo, hi); `hi` = -1 for `{n,}`
 /// (unbounded above). Returns None for any other shape.
 /// HF probes: `a{2}` on "zaaz" -> "z#z", `a{2,3}` on "zaaaay" -> "z#ay",
-/// `a{1}` on "zaaz" -> "z##z". Metacharacter bases are excluded
-/// (mirrors char_bounded_quantifier_shape): `.{n}` is any-char in HF;
-/// `?{n}`/`+{n}`/etc. are construction errors.
+/// `a{1}` on "zaaz" -> "z##z". Metacharacter bases are excluded:
+/// `.{n}` is any-char in HF; `?{n}`/`+{n}`/etc. are construction errors.
 pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
   let chars = pattern.to_array()
   let n = chars.length()
