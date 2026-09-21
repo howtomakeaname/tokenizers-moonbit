@@ -530,6 +530,12 @@ pub fn lazy_normalize(pattern : String) -> String? {
   if open < 1 {
     return None
   }
+  // escaped-brace bases (e.g. `\\{0,2}?`) are literal patterns, not
+  // quantified bases — leave them to the literal path (probed: main
+  // rejects them and that matches the fail-explicitly policy)
+  if chars[open - 1] == '\\' {
+    return None
+  }
   let inner : Array[Char] = []
   let mut q = open + 1
   while q < stop {
@@ -545,34 +551,55 @@ pub fn lazy_normalize(pattern : String) -> String? {
   if m == 0 {
     return None
   }
-  // leading comma: {,digits}? == {0}
+  // parse the first number (leading zeros allowed; value-routed below)
+  let first = parse_capped_digits(inner, 0, m)
+  // {,n}? — comma-open: {,digits}? == {0}; {,}? is not a quantifier
   if inner[0] == ',' {
-    if parse_capped_digits(inner, 1, m) is Some((_, j)) && j == m {
-      return Some(base + "{0}")
+    match parse_capped_digits(inner, 1, m) {
+      Some((_, j)) => if j == m { return Some(base + "{0}") }
+      None => ()
     }
     return None
   }
-  // {0-族}: leading zeros then either end or ',...'
-  if inner[0] == '0' {
-    return Some(base + "{0}") // {0...}? and {0...,...}? all == {0}
-  }
-  // first number >= 1
-  match parse_capped_digits(inner, 0, m) {
-    Some((lo, j)) => {
+  match first {
+    Some((v, j)) => {
+      if v == 0 {
+        // zero-min lazy: {0} / {00} / {0,} / {0,digits} all == {0},
+        // but the tail must be a VALID quantifier tail (digit-only,
+        // capped) — probed: {0,2x}? is a literal in HF
+        if j == m {
+          return Some(base + "{0}")
+        }
+        if inner[j] == ',' {
+          if j + 1 == m {
+            return Some(base + "{0}") // {0,}?
+          }
+          match parse_capped_digits(inner, j + 1, m) {
+            Some((_, k2)) =>
+              if k2 == m {
+                return Some(base + "{0}") // {0,digits}?
+              }
+            None => ()
+          }
+        }
+        return None // invalid tail: literal, not a quantifier
+      }
+      // v >= 1 (leading zeros already folded into the value)
       if j == m {
-        // exact {n}? has its OWN family (exact-n blocks PLUS empty
-        // matches — probed: 'za' -> '#z#a#'); left unclaimed here so
-        // lazy_exact_spec and its engine handle it
+        // exact {n}? is the lazy-exact family, not ours
         return None
       }
       if inner[j] == ',' {
         if j + 1 == m {
-          return Some(base + "{" + lo.to_string() + "}") // {n,}? == {n}
+          return Some(base + "{" + v.to_string() + "}") // {n,}? == {n}
         }
         match parse_capped_digits(inner, j + 1, m) {
-          Some((_, k2)) =>
+          Some((hi, k2)) =>
             if k2 == m {
-              return Some(base + "{" + lo.to_string() + "}") // {n,m}? == {n}
+              if hi < v {
+                return None // reversed range: HF swaps; we fail explicitly
+              }
+              return Some(base + "{" + v.to_string() + "}") // {n,m}? == {n}
             }
           None => ()
         }
@@ -718,9 +745,10 @@ pub fn lazy_exact_spec(pattern : String) -> (Int, Char?, Int)? {
     q = q + 1
   }
   let m = inner.length()
-  if m == 0 || inner[0] == '0' || inner[0] == ',' {
-    return None // zero-min lazy shapes / comma-open belong to lazy_normalize
+  if m == 0 || inner[0] == ',' {
+    return None // comma-open belongs to lazy_normalize
   }
+  // route by VALUE: {02}? is exact-2 lazy (probed), {00}? is {0} (not ours)
   match parse_capped_digits(inner, 0, m) {
     Some((v, j)) => if j == m && v >= 1 { return zero_min_base(open, chars, v) }
     None => ()
