@@ -18,7 +18,7 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.1**（2026-09-21，0.9.0 后含 PR #42 空分支零下限语义）。0.9.1 后待办见 §2 队列。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.2**（2026-09-22，0.9.1 后含 PR #43 裸断言序列 + 零下限窗）。0.9.2 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
