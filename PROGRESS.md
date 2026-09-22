@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-22 发版 0.10.3（已发布，干净验证 4/4×三后端）**：0.10.2 后 PR #55 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify0103 干净验证（`\B\w{5}` 非边界窗、`\ba{2}?` 回归、`^\w{1,2}` 回归、`\w{5}` 回归）。
+
 - **2026-09-22 PR #55**（4 commit，一轮评审 APPROVE）：`\B` 非边界族（windows + lazy-exact）。`\B`→`\b` 改写 + 共享 `boundary_window_parse`（\b 零下限收窄留在 \b 侧 caller——提取经验证行为保持，168 拼写 sweep byte-identical）。**尾 \B 规则与 \b 结构不同**：左扫贪婪、尾 \B 回缩长度至端点为非边界（`\w{5}\B` 于 'zaaaaaz' → (0,5) → '#az'，而 \b 是钉 run 尾）。专设引擎；`\Ba{2}?` 可选组反向；精确 `{0}` 内部空（'zaaz'→'z#a#a#z'）；**\B 零下限区间拒绝**（与 \b 同型的 walk-vs-scan 分歧，HF 逐位重启贪婪扫描）。评审 1263 cell 三方对拍（949 normalizer + 949 decoder 零分歧，main-vs-PR 零回归）；515/515（native/js）、双扫描全绿。遗留（评审记录）：混合锚 `\ba{2}\B`、plus 惰性锚定 `\B\w+?`。
 
 - **2026-09-22 发版 0.10.2（已发布，干净验证 4/4×三后端）**：0.10.1 后 PR #54 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify0102 干净验证（`\ba{2}?` 惰性 exact、`^\w{1,2}` 回归、`\b\w{5}` 回归、`\w{5}` 回归）。
