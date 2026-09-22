@@ -1516,7 +1516,7 @@ pub fn boundary_lazy_exact_spec(
     chars[n - 2] == '\\' &&
     !is_escaped_at(chars, n - 2)
   let cut = if has_trailing_b { n - 2 } else { n }
-  if cut < 6 || chars[cut - 1] != '?' || chars[cut - 2] != '}' {
+  if cut < 5 || chars[cut - 1] != '?' || chars[cut - 2] != '}' {
     return None
   }
   // reuse boundary_window_spec on the '?'-REMOVED pattern (keeping a

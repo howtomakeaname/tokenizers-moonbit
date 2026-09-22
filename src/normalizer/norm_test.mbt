@@ -2332,3 +2332,22 @@ test "boundary lazy-exact quantifiers" {
   @test.assert_eq(@common.is_supported_replace_regex("\\w{2}?\\b"), true)
   @test.assert_eq(@common.is_supported_replace_regex("\\ba{100001}?"), false)
 }
+
+///|
+/// we-only single-char-base spellings load (review fix: the cut<6
+/// guard wrongly rejected `a{2}?\b`); every want probed 0.22.2.
+test "boundary lazy-exact we-only single-char base" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("a{2}?\\b").normalize("zaaaz"), "#zaaaz#")
+  @test.assert_eq(n("a{2}?\\b").normalize("aaa"), "#a#")
+  @test.assert_eq(n("a{2}?\\b").normalize("aa"), "#")
+  @test.assert_eq(n("a{2}?\\b").normalize("aaaa"), "#aa#")
+  @test.assert_eq(n("a{2}?\\b").normalize("ab"), "#ab#")
+  @test.assert_eq(n("a{3}?\\b").normalize("aaa"), "#")
+  @test.assert_eq(n("z{2}?\\b").normalize("ab"), "#ab#")
+  @test.assert_eq(@common.is_supported_replace_regex("a{2}?\\b"), true)
+  // the literal-backslash tail is NOT the anchor — stays rejected
+  @test.assert_eq(@common.is_supported_replace_regex("a{2}?\\\\b"), false)
+}
