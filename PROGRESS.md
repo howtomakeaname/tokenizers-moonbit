@@ -18,7 +18,7 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.4**（2026-09-22，0.9.3 后含 PR #46 `[\r\n]` 逐字符修复）。0.9.4 后待办见 §2 队列。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.5**（2026-09-22，0.9.4 后含 PR #48 裸类/`[\s]+` 门表扩展）。0.9.5 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-22 PR #48**（2 commit，评审 agent 超时 → 按自验 + CI 8/8 合入）：issue #47——裸单字符类 + `[\s]+` 门表扩展。Split 门 OR `bare_class_kind`（裸拼写 `\s`/`[\s]`/`\d`/`\w`/`[0-9]`/`[\p{L}]`… 路由到 PR #46 的 `exact_one_matches` 逐字符）；`[\s]+` 进 Split 空白 run 行 + Replace 门（replace 侧裸类本来就经 `bare_class_kind` exact-1 正确——缺口只在 Split 加载拒绝与 `[\s]+`）。自验对拍 HF：量化拼写未被误抢（`\s{2}` 仍走量化表）、`[\s]+` 全 behavior×invert 于 CRLF 混合输入、近族回归（`[\r\n]` 逐字符/`\w+` 整段）；498/498（native/js）、双扫描全绿。
+
 - **2026-09-22 发版 0.9.4（已发布，干净验证 4/4×三后端）**：0.9.3 后 PR #46 单批（`[\r\n]` 逐字符）。直接推 main：bump + `moon publish` 成功 + /tmp/verify094 干净验证（逐字符/整段回归/窗口/经典）。
 
 - **2026-09-22 PR #46**（3 commit，一轮评审 APPROVE）：issue #45——`[\r\n]` 无 `+` 拼写误入 run_matches 整段分支。改为新 `exact_one_matches` 逐字符（HF 'a\n\nb' Isolated → a, \n(1,2), \n(2,3), b；5 behavior × 2 invert 全对拍，21 分歧 cell 清零）；`+` 拼写保持整段。**顺带修复** replace 侧字面 CR/LF 拼写（原先也走整段分支，评审发现后补锁定）。评审 868 cell 零分歧（含相邻拼写 450 cell 回归）；494/494（native/js）、双扫描全绿。遗留：issue #47（裸单字符类 `\s`/`[\s]`/`\d`/`\w`/`[0-9]`/`[\p{L}]` 与 `[\s]+` 加载拒绝——与 #45 同型的门表缺口）。
