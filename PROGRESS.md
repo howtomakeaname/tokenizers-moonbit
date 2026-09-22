@@ -18,7 +18,7 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.2**（2026-09-22，0.9.1 后含 PR #43 裸断言序列 + 零下限窗）。0.9.2 后待办见 §2 队列。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.3**（2026-09-22，0.9.2 后含 PR #44 Split 断言/窗口路径 + invert flag 折叠重写）。0.9.3 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-22 PR #44**（4 commit，三轮评审）：Split pre-tokenizer 路径的断言/窗口 pattern + **apply_split_matches 按 HF 源码模型重写**。①裸断言序列（`\b$`/`^`/`^$`）、双锚整行窗（`^.{0,2}$`）、逐分支锚 alternation 进 Split 门与 matcher（原先加载成功但整串透传）；②评审 B1：合并语义改为**词锚定**——behavior 统一作用于匹配段、mwp 的匹配段只并入紧邻前词（空词仍作锚）、mwn 连续匹配各自独立；③评审 B2（评审者拉取 HF v0.22.2 Rust 源码定模）：**invert = 交错 gap/match 条目表（零宽匹配保留为条目）的逐条 flag 取反 + 折叠**（非补集区域）——Contiguous 合并同 flag 连续段（零宽翻转词截断分隔符链）。三轮累计 ~5,700 对拍：11 pattern × 5 behavior × 2 invert × 10 输入 550/550（首版 519/550）+ 经典 pattern 200/200；63 个分歧 cell（31 B1 + 32 B2）全部修复并按偏移锁定。492/492（native/js）、双扫描全绿。遗留：issue #45（`[\r\n]` 无 + 应逐字符）、GPT2 扫描器忽略非 Isolated 行为（设计决策）。
+
 - **2026-09-22 发版 0.9.2（已发布，干净验证 5/5×三后端）**：0.9.1 后 PR #43 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify092 干净验证（`\b$` 序列、`^` 串尾规则、零下限空行窗、逗号开、逐分支锚回归）。
 
 - **2026-09-22 PR #43**（6 commit，一轮评审 + 自验）：裸断言序列 + 双锚零下限窗。①纯零宽断言 pattern（`\b$`/`^\b`/`\b\b`/`$\b`/`^\b$`/`^$`/`^`）= 全 AND 断言位置的空匹配游走（HF `\b$` 于 'ab\ncd'→'ab#\ncd#'）；**统一规则：multiline `^` 永不匹配串尾位置**（`^$` 于 '\n\n'→'#\n#\n' 两次非三次；应用于空分支 matcher）；②双锚零下限窗（`^.{0,2}$`/`^a{0}$`/`^.{0,}$`/逗号开 `^{,m}$`）空行匹配（串尾空行被 `^` 规则排除）、逗号开经正常基解析（`double_anchored_base` 提取）。评审三项 blocking：接线漏提交（死代码+decoder abort——commit 分组失误）、**nl-pred brace 窗整体显式拒绝**（连续换行下任何模型都与 HF 分歧：`^\s{1,2}$` 于 'a\n\nb' HF 零匹配；连 PR #34 已验证形状都特异，探针 30+ 无法归纳稳定规则；`+`/量化-less 形保持 PR#34/#36 已验行为）。复评 agent 超时，按 round-1 评审已验证的 34/34 锁定值 + CI 8/8 + 自验探针全绿合入。489/489（native/js）、双扫描全绿。遗留（评审记录）：`^.{0,100000}$` cap 窗口、`^{,}$` 字面分歧、reversed `{0,n}` 注释 stale、Split 路径的断言/窗口 pattern。
