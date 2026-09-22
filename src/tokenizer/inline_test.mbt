@@ -282,3 +282,118 @@ test "split invert folds per-entry flags" {
   }
   go()
 }
+
+///|
+/// `[\r\n]` without `+` matches SINGLE chars (issue #45; probed 0.22.2
+/// across every behavior/invert — Isolated on 'a\n\nb' -> a, \n(1,2),
+/// \n(2,3), b; the previous run-matching lump also broke removed/mwp/
+/// mwn). The `+` spellings keep maximal runs.
+test "split bracket crlf no-plus matches single chars" {
+  fn go() -> Unit raise {
+    fn mk(
+      pat : String,
+      beh : String,
+      inv : Bool,
+    ) -> @tokenizer.Tokenizer raise {
+      @tokenizer.Tokenizer::from_str(
+        "{\"version\":\"1.0\",\"pre_tokenizer\":{\"type\":\"Split\",\"pattern\":{\"Regex\":\"" +
+        pat +
+        "\"},\"behavior\":\"" +
+        beh +
+        "\",\"invert\":" +
+        (if inv { "true" } else { "false" }) +
+        "},\"model\":{\"type\":\"WordLevel\",\"vocab\":{\"<unk>\":0},\"unk_token\":\"<unk>\"}}",
+      )
+    }
+    fn offs(
+      t : @tokenizer.Tokenizer,
+      text : String,
+    ) -> Array[(Int, Int)] raise {
+      t.encode(text).get_offsets()
+    }
+    fn eq(a : Array[(Int, Int)], b : Array[(Int, Int)]) -> Bool {
+      if a.length() != b.length() {
+        return false
+      }
+      for i in 0..<a.length() {
+        if a[i] != b[i] {
+          return false
+        }
+      }
+      true
+    }
+    @test.assert_eq(
+      eq(offs(mk("[\\\\r\\\\n]", "Isolated", false), "a\n\nb"), [
+        (0, 1),
+        (1, 2),
+        (2, 3),
+        (3, 4),
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("[\\\\r\\\\n]", "Removed", false), "a\n\nb"), [(0, 1), (3, 4)]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("[\\\\r\\\\n]", "Contiguous", false), "a\n\nb"), [
+        (0, 1),
+        (1, 3),
+        (3, 4),
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("[\\\\r\\\\n]", "MergedWithPrevious", false), "a\n\nb"), [
+        (0, 2),
+        (2, 3),
+        (3, 4),
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("[\\\\r\\\\n]", "MergedWithNext", false), "a\n\nb"), [
+        (0, 1),
+        (1, 2),
+        (2, 4),
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("[\\\\r\\\\n]", "MergedWithPrevious", true), "a\n\nb"), [
+        (0, 1),
+        (1, 2),
+        (2, 4),
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("[\\\\r\\\\n]", "MergedWithNext", true), "a\n\nb"), [
+        (0, 2),
+        (2, 3),
+        (3, 4),
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("[\\\\r\\\\n]", "Isolated", false), "a\r\r\nb"), [
+        (0, 1),
+        (1, 2),
+        (2, 3),
+        (3, 4),
+        (4, 5),
+      ]),
+      true,
+    )
+    // the + spellings keep maximal runs
+    @test.assert_eq(
+      eq(offs(mk("[\\\\r\\\\n]+", "Isolated", false), "a\n\nb"), [
+        (0, 1),
+        (1, 3),
+        (3, 4),
+      ]),
+      true,
+    )
+  }
+  go()
+}
