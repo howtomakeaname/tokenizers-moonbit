@@ -277,3 +277,15 @@ test "replace decoder bare assertion sequences" {
   let c = Decoder::Replace(pattern="^", content="#")
   @test.assert_eq(c.decode(["ab"]), "#ab")
 }
+
+///|
+/// Bare classes and the bracket `\s` per-run spelling decode per token
+/// (issue #47; HF JSON Regex decoder probed 0.22.2).
+test "replace decoder bare classes and bracket ws" {
+  let ws = Decoder::Replace(pattern="\\s", content="#")
+  @test.assert_eq(ws.decode(["a b  2²"]), "a#b##2²")
+  let bws = Decoder::Replace(pattern="[\\s]+", content="#")
+  @test.assert_eq(bws.decode(["a b  2²"]), "a#b#2²")
+  let w = Decoder::Replace(pattern="\\w", content="#")
+  @test.assert_eq(w.decode(["a b2²"]), "# ###")
+}

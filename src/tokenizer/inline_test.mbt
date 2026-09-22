@@ -397,3 +397,53 @@ test "split bracket crlf no-plus matches single chars" {
   }
   go()
 }
+
+///|
+/// Bare single-char classes and the bracket `\s` per-run spelling
+/// claim the Split path (issue #47; probed 0.22.2: `\s` Isolated on
+/// 'a b' -> a, ' '(1,2), b; `[\s]+` behaves as runs).
+test "split bare classes and bracket ws" {
+  fn go() -> Unit raise {
+    fn mk(pat : String) -> @tokenizer.Tokenizer raise {
+      @tokenizer.Tokenizer::from_str(
+        "{\"version\":\"1.0\",\"pre_tokenizer\":{\"type\":\"Split\",\"pattern\":{\"Regex\":\"" +
+        pat +
+        "\"},\"behavior\":\"Isolated\",\"invert\":false},\"model\":{\"type\":\"WordLevel\",\"vocab\":{\"<unk>\":0},\"unk_token\":\"<unk>\"}}",
+      )
+    }
+    fn offs(
+      t : @tokenizer.Tokenizer,
+      text : String,
+    ) -> Array[(Int, Int)] raise {
+      t.encode(text).get_offsets()
+    }
+    fn eq(a : Array[(Int, Int)], b : Array[(Int, Int)]) -> Bool {
+      if a.length() != b.length() {
+        return false
+      }
+      for i in 0..<a.length() {
+        if a[i] != b[i] {
+          return false
+        }
+      }
+      true
+    }
+    @test.assert_eq(
+      eq(offs(mk("\\\\s"), "a b"), [(0, 1), (1, 2), (2, 3)]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("[\\\\s]+"), "a  b"), [(0, 1), (1, 3), (3, 4)]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("\\\\w"), "a b"), [(0, 1), (1, 2), (2, 3)]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("\\\\d"), "a1b"), [(0, 1), (1, 2), (2, 3)]),
+      true,
+    )
+  }
+  go()
+}

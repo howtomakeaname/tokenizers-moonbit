@@ -419,6 +419,10 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if bare_class_kind(pattern) is Some(_) {
     return true
   }
+  // bracket \s per-run spelling (issue #47)
+  if pattern == "[\\s]+" {
+    return true
+  }
   // single-char literal bounded quantifiers within the 1..4 window
   if char_bounded_spec(pattern) is Some(_) {
     return true
