@@ -652,7 +652,36 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
   // or `{,m}` — onig treats a comma-open bound as min 0 (probed 0.22.2:
   // `a{,2}` on 'zaaz' -> '#z#z#', `a{,0}` == `a{0}`); the empty `{,}` is
   // NOT a quantifier (literal — probed: 'zaaz' unchanged) and falls to
-  // the literal path.
+  // the literal path. `{n,0}` also lands here — onig swaps it to
+  // `{0,n}` (probed: `a{2,0}` on 'zaaaz' -> '#z##z#' == `a{0,2}`),
+  // handled by the n-comma-zero branch below.
+  let n_zero : Int? = if chars[open + 1] >= '1' && chars[open + 1] <= '9' {
+    // `{n,0}` shape: digits, ',', '0', '}' — parse v then require ,0)
+    let mut v = 0
+    let mut k = open + 1
+    while k < n - 1 && chars[k] >= '0' && chars[k] <= '9' {
+      v = v * 10 + (chars[k].to_int() - '0'.to_int())
+      if v > 100000 {
+        return None
+      }
+      k = k + 1
+    }
+    if k + 1 == n - 2 && chars[k] == ',' && chars[k + 1] == '0' {
+      Some(v)
+    } else {
+      None
+    }
+  } else {
+    None
+  }
+  match n_zero {
+    Some(v) =>
+      return match zero_min_base(open, chars, v) {
+        Some((kk, lit, _)) => Some((kk, lit, v))
+        None => None
+      }
+    None => ()
+  }
   let max : Int = if chars[open + 1] == ',' {
     if open + 2 == n - 1 {
       return None // {,}
