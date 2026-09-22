@@ -1323,7 +1323,11 @@ pub fn boundary_window_spec(
   // per position — '\\ba{0,2}\\b' on 'aab' -> '#aab#' — a different
   // engine capability); the anchored {n,0} swap is rejected in the
   // swap branch
-  if we && lo == 0 && hi != 0 {
+  // any-anchor zero-min ranges reject (round-2: ws-only also diverges —
+  // HF backtracks per position and emits the empty at boundaries the
+  // pre-filtered walk suppressed, '\b\w{0,2}' on 'zaaz' -> '#az#');
+  // only exact {0} stays
+  if (ws || we) && lo == 0 && hi != 0 {
     return None
   }
   // base resolution (class / literal / escaped)

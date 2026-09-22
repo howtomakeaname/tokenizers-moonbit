@@ -2221,9 +2221,11 @@ test "boundary-windowed quantifiers" {
   @test.assert_eq(n("\\w{2,4}\\b").normalize("zaaaaz ab"), "za# #")
   @test.assert_eq(n("\\ba{2,4}").normalize("zaaaaz"), "zaaaaz")
   @test.assert_eq(n("\\baa\\b").normalize("zaa aa"), "zaa #")
-  // ws-only zero-min stays ('\\ba{0,2}' on 'zaaz' — empty walk with
-  // boundary-gated empties)
-  @test.assert_eq(n("\\ba{0,2}").normalize("zaaz"), "#zaaz#")
+  // round-2: ws-only zero-min ranges also diverge (HF '\\b\\w{0,2}'
+  // on 'zaaz' -> '#az#' — per-position backtracking); only exact {0}
+  // stays
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{0,2}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\w{0,2}"), false)
   @test.assert_eq(n("\\ba{2,}\\b").normalize("ab abc"), "ab abc")
   @test.assert_eq(
     n("\\ba{2,4}\\b").normalize("a aa aaa aaaa aaaaa"),
