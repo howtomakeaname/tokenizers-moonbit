@@ -2151,3 +2151,32 @@ test "n-comma-zero routes to zero-min engine" {
   @test.assert_eq(@common.is_supported_replace_regex("\\w{5,0}"), true)
   @test.assert_eq(@common.is_supported_replace_regex("a{100001,0}"), false)
 }
+
+///|
+/// `{n,0}` zero-tail variants and boundary shapes (probed 0.22.2):
+/// `a{2,00}` == `a{2,0}` (trailing zeros), `a{02,0}` == `a{0,2}`
+/// (leading zero in n); `a{2,0,}`/`a{2,0x}` are literals; `a{,0}` and
+/// `a{0,0}` == `a{0}`; the anchored form is unchanged.
+test "n-comma-zero zero variants" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("a{2,00}").normalize("zaaaz"), "#z##z#")
+  @test.assert_eq(n("a{02,0}").normalize("zaaaz"), "#z##z#")
+  @test.assert_eq(n("a{2,0,}").normalize("zaaaz"), "zaaaz")
+  @test.assert_eq(n("a{2,0x}").normalize("zaaaz"), "zaaaz")
+  @test.assert_eq(n("a{,0}").normalize("zaaaz"), "#z#a#a#a#z#")
+  @test.assert_eq(n("a{0,0}").normalize("zaaaz"), "#z#a#a#a#z#")
+  @test.assert_eq(n("^a{2,0}$").normalize("zaaaz"), "zaaaz")
+  @test.assert_eq(@common.is_supported_replace_regex("a{2,00}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a{02,0}"), true)
+  // pair-equivalence spot checks
+  @test.assert_eq(
+    n("\\w{5,0}").normalize("zz abcdefg zz"),
+    n("\\w{0,5}").normalize("zz abcdefg zz"),
+  )
+  @test.assert_eq(
+    n("\\s{5,0}").normalize("a     b"),
+    n("\\s{0,5}").normalize("a     b"),
+  )
+}

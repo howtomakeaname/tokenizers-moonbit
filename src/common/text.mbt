@@ -655,7 +655,7 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
   // the literal path. `{n,0}` also lands here — onig swaps it to
   // `{0,n}` (probed: `a{2,0}` on 'zaaaz' -> '#z##z#' == `a{0,2}`),
   // handled by the n-comma-zero branch below.
-  let n_zero : Int? = if chars[open + 1] >= '1' && chars[open + 1] <= '9' {
+  let n_zero : Int? = if chars[open + 1] >= '0' && chars[open + 1] <= '9' {
     // `{n,0}` shape: digits, ',', '0', '}' — parse v then require ,0)
     let mut v = 0
     let mut k = open + 1
@@ -666,8 +666,17 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
       }
       k = k + 1
     }
-    if k + 1 == n - 2 && chars[k] == ',' && chars[k + 1] == '0' {
-      Some(v)
+    // after ',': zeros only (probed: a{2,00} == a{2,0} in HF)
+    if k < n - 1 && chars[k] == ',' {
+      let mut z = k + 1
+      while z < n - 1 && chars[z] == '0' {
+        z = z + 1
+      }
+      if z == n - 1 && z > k + 1 {
+        Some(v)
+      } else {
+        None
+      }
     } else {
       None
     }
