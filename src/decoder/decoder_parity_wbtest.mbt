@@ -289,3 +289,13 @@ test "replace decoder bare classes and bracket ws" {
   let w = Decoder::Replace(pattern="\\w", content="#")
   @test.assert_eq(w.decode(["a b2²"]), "# ###")
 }
+
+///|
+/// Windows above 4 decode per token with the same block semantics
+/// (HF JSON Regex decoder probed 0.22.2).
+test "replace decoder windows above four" {
+  let d = Decoder::Replace(pattern="a{5}", content="#")
+  @test.assert_eq(d.decode(["zaaaaaaz"]), "z#az")
+  let da = Decoder::Replace(pattern="^a{5}$", content="#")
+  @test.assert_eq(da.decode(["aaaaa\naaaa"]), "#\naaaa")
+}
