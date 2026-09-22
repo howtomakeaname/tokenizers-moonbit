@@ -18,7 +18,7 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.6**（2026-09-22，0.9.5 后含 PR #49 窗口 100000 上限 + 逆序交换）。0.9.6 后待办见 §2 队列。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.7**（2026-09-22，0.9.6 后含 PR #50 通用类窗口）。0.9.7 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-22 PR #50**（3 commit，一轮评审 APPROVE）：非锚类窗口通用化——最后一个**结构性**缺口关闭。新 `class_bounded_spec`：`BASE{n}/{n,}/{n,m}` 通用数值解析（基经 `bare_class_kind`、窗口经 `parse_capped_digits`、cap 100000、逆序交换、`{n,0}` 拒绝——与字面族规则一致）路由到共享 block 引擎，**涵盖硬编码 {1,2}/{1,3}/{1,4} 拼写表的全部纯窗形**（评审证明 kinds 与 ascii override 交互一致、block ≡ 四个 run 函数）。四点接线（replace_family_spans/replace 门/Split 门+matcher）。HF 实证：`\w{5}` 于 'zz abcdefg 9912345 zz'→'zz #fg #45 zz'；Split 分隔符也走块语义（189 Split cell 全对）。评审 650+ cell 零回归（≤4 子集、锚定/零下限/惰性 dispatch 全部 byte-identical to main）。502/502（native/js）、双扫描全绿。遗留（评审记录，均 pre-existing）：`{n,0}` 可路由到零下限引擎（候选后续）、`\b\w{5}` 边界前缀窗、单锚窗口 `^\w{1,2}`、`\w{5x}` 字面回退。
+
 - **2026-09-22 发版 0.9.6（已发布，干净验证 4/4×三后端）**：0.9.5 后 PR #49 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify096 干净验证（`^a{5}$` 窗、`a{5}` 块、`a{6,4}` 交换、裸 `\s` Split 回归）。
 
 - **2026-09-22 PR #49**（4 commit，两轮评审）：字面量词窗口上限 1..4 → **onig 100000**。char_bounded_spec（非锚 replace/decoder）与 double_anchored_brace（锚定整行）cap 放开（`a{5}`/`^a{5}$`/`^a{4,6}$`/前导零/逗号开/零下限全算，块语义不变）；**非锚逆序 `{n,m}` n>m 现交换**（`a{6,4}` ≡ `{4,6}` 块，探针 run 0-8 + 双块 case）；cap 边界 `{100001}` 双侧加载报错（中环 cap 防 Int 回绕——**顺带修复 main 既有溢出**：`a{4294967300}` 回绕成 4 静默错算）。评审一项 blocking：`{n,0}` 交换缺零守卫（空匹配插入语义，`a{2,0}` 静默错）→ 与锚定族同规则拒绝。评审 ~335 cell（119 自动匹配 + 边界/逆序/守卫交互）；500/500（native/js）、双扫描全绿。遗留（记录）：非锚**类**窗口 >4（`\w{5}`——走硬编码拼写表）、`a{100001x}` 字面回退分歧（pre-existing）。
