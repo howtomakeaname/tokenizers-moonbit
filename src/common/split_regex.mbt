@@ -93,6 +93,18 @@ pub fn simple_split_regex_matches(
     }
     None => ()
   }
+  // bare single-char classes match per char (issue #47; probed 0.22.2:
+  // '\s' Isolated on 'a b' -> a, ' '(1,2), b)
+  match bare_class_kind(pattern) {
+    Some(kind) =>
+      return Some(
+        exact_one_matches(chars, fn(c) { bounded_regex_kind_pred(kind, c) }),
+      )
+    None => ()
+  }
+  if pattern == "[\\s]+" {
+    return Some(run_matches(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
+  }
   // PER-BRANCH anchors first: `^foo|bar$` binds anchors per branch —
   // the global-anchor reading below would misread it (probed 0.22.2)
   match regex_literal_branch_alternatives_spec(pattern) {
