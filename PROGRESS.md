@@ -18,7 +18,7 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.3**（2026-09-22，0.9.2 后含 PR #44 Split 断言/窗口路径 + invert flag 折叠重写）。0.9.3 后待办见 §2 队列。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.9.4**（2026-09-22，0.9.3 后含 PR #46 `[\r\n]` 逐字符修复）。0.9.4 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-22 PR #46**（3 commit，一轮评审 APPROVE）：issue #45——`[\r\n]` 无 `+` 拼写误入 run_matches 整段分支。改为新 `exact_one_matches` 逐字符（HF 'a\n\nb' Isolated → a, \n(1,2), \n(2,3), b；5 behavior × 2 invert 全对拍，21 分歧 cell 清零）；`+` 拼写保持整段。**顺带修复** replace 侧字面 CR/LF 拼写（原先也走整段分支，评审发现后补锁定）。评审 868 cell 零分歧（含相邻拼写 450 cell 回归）；494/494（native/js）、双扫描全绿。遗留：issue #47（裸单字符类 `\s`/`[\s]`/`\d`/`\w`/`[0-9]`/`[\p{L}]` 与 `[\s]+` 加载拒绝——与 #45 同型的门表缺口）。
+
 - **2026-09-22 发版 0.9.3（已发布，干净验证 4/4×三后端）**：0.9.2 后 PR #44 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify093 干净验证（窗口 Split Isolated、`\b$` contiguous+invert、逐分支锚 mwp、经典 `\s+` 回归——按偏移对拍）。
 
 - **2026-09-22 PR #44**（4 commit，三轮评审）：Split pre-tokenizer 路径的断言/窗口 pattern + **apply_split_matches 按 HF 源码模型重写**。①裸断言序列（`\b$`/`^`/`^$`）、双锚整行窗（`^.{0,2}$`）、逐分支锚 alternation 进 Split 门与 matcher（原先加载成功但整串透传）；②评审 B1：合并语义改为**词锚定**——behavior 统一作用于匹配段、mwp 的匹配段只并入紧邻前词（空词仍作锚）、mwn 连续匹配各自独立；③评审 B2（评审者拉取 HF v0.22.2 Rust 源码定模）：**invert = 交错 gap/match 条目表（零宽匹配保留为条目）的逐条 flag 取反 + 折叠**（非补集区域）——Contiguous 合并同 flag 连续段（零宽翻转词截断分隔符链）。三轮累计 ~5,700 对拍：11 pattern × 5 behavior × 2 invert × 10 输入 550/550（首版 519/550）+ 经典 pattern 200/200；63 个分歧 cell（31 B1 + 32 B2）全部修复并按偏移锁定。492/492（native/js）、双扫描全绿。遗留：issue #45（`[\r\n]` 无 + 应逐字符）、GPT2 扫描器忽略非 Isolated 行为（设计决策）。
