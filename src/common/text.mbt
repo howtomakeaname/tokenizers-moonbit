@@ -439,6 +439,10 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if single_anchor_window_spec(pattern) is Some(_) {
     return true
   }
+  // lazy-exact anchored (\ba{2}?, \w{2}?\b ...)
+  if boundary_lazy_exact_spec(pattern) is Some(_) {
+    return true
+  }
   // zero-minimum quantifiers: a{0} / a{0,m} / a{0,} and class bases
   if zero_min_quantifier_spec(pattern) is Some(_) {
     return true
@@ -1487,5 +1491,58 @@ pub fn single_anchor_window_spec(
       }
       None
     }
+  }
+}
+
+///|
+/// Lazy-exact anchored spellings `[\b]BASE{n}?[\b]` (probed 0.22.2):
+/// onig parses `X{n}?` as the OPTIONAL group `(X{n})?` — an exact-n
+/// block when it fits the anchors, an EMPTY at anchor positions when
+/// it does not ('\ba{2}?' on 'aaa' -> '#a#'; '\ba{2}?\b' on 'aaaa' ->
+/// '#aaaa#' — the block fails the end anchor, both boundary empties
+/// fire). Only EXACT {n}? — the range lazy forms ({n,m}?, {n,}?) are
+/// plain lazy quantifiers without the empty fallback and reject.
+pub fn boundary_lazy_exact_spec(
+  pattern : String,
+) -> (Int, Char?, Int, Bool, Bool)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  if n < 6 {
+    return None
+  }
+  // the '?' sits right after the closing '}' — a trailing \b may
+  // follow it ('\w{2}?\b'); strip the optional trailing \b first
+  let has_trailing_b = chars[n - 1] == 'b' &&
+    chars[n - 2] == '\\' &&
+    !is_escaped_at(chars, n - 2)
+  let cut = if has_trailing_b { n - 2 } else { n }
+  if cut < 5 || chars[cut - 1] != '?' || chars[cut - 2] != '}' {
+    return None
+  }
+  // reuse boundary_window_spec on the '?'-REMOVED pattern (keeping a
+  // trailing \b so the we flag survives), then require the exact
+  let stripped : Array[Char] = []
+  let mut si = 0
+  while si < cut - 1 {
+    stripped.push(chars[si])
+    si = si + 1
+  }
+  let mut ti = cut
+  while ti < n {
+    stripped.push(chars[ti])
+    ti = ti + 1
+  }
+  let sb = StringBuilder()
+  for c in stripped {
+    sb.write_char(c)
+  }
+  match boundary_window_spec(sb.to_string()) {
+    Some((kind, literal, lo, hi, ws, we)) =>
+      if lo >= 1 && hi == lo {
+        Some((kind, literal, lo, ws, we))
+      } else {
+        None // ranges: lazy quantifier, not the optional group
+      }
+    None => None
   }
 }

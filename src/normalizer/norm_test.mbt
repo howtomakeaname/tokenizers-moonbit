@@ -2296,3 +2296,58 @@ test "single-anchor nl-pred bases" {
   @test.assert_eq(n("^\\W{2}").normalize("!\n\na"), "#\na")
   @test.assert_eq(n("^[\\r\\n]{2,}").normalize("\n\n\nb"), "#b")
 }
+
+///|
+/// Lazy-exact anchored `[\b]BASE{n}?[\b]` (probed 0.22.2): onig
+/// parses `X{n}?` as the OPTIONAL group `(X{n})?` — the exact-n block
+/// when it fits both anchors, an EMPTY at anchor positions otherwise
+/// ('\ba{2}?' on 'aaa' -> '#a#'; '\ba{2}?\b' on 'aaaa' -> '#aaaa#'
+/// — the block fails the end anchor, both boundary empties fire).
+/// Range-lazy anchored shapes ({n,m}?, {n,}?) collapse via
+/// lazy_normalize to the {n} window (no empty fallback, HF-verified).
+test "boundary lazy-exact quantifiers" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\b\\w{2}?").normalize("ab cd"), "# #")
+  @test.assert_eq(n("\\ba{2}?").normalize("aaa"), "#a#")
+  @test.assert_eq(n("\\b\\w{5}?").normalize("zaaaaaz"), "#az#")
+  @test.assert_eq(n("\\w{2}?\\b").normalize("ab cd"), "# #")
+  @test.assert_eq(n("\\ba{2}?\\b").normalize("aa aaa"), "# #aaa#")
+  @test.assert_eq(n("\\ba{2}?").normalize("zaaaz"), "#zaaaz#")
+  @test.assert_eq(n("\\w{5}?\\b").normalize("zaaaaaz"), "#za#")
+  @test.assert_eq(n("\\ba{2}?").normalize(""), "")
+  @test.assert_eq(n("\\ba{2}?\\b").normalize("aaaa"), "#aaaa#")
+  @test.assert_eq(n("\\b\\w{2}?").normalize("a b"), "#a# #b#")
+  @test.assert_eq(n("\\ba{3}?").normalize("aaaaaa"), "#aaa#")
+  @test.assert_eq(n("\\ba{2}?\\b").normalize("a aa aaa"), "#a# # #aaa#")
+  @test.assert_eq(n("\\b\\w{2}?").normalize("ab"), "#")
+  @test.assert_eq(n("\\ba{2}?").normalize("a"), "#a#")
+  @test.assert_eq(n("\\b\\w{2}?").normalize("abcde ab"), "#cde# #")
+  @test.assert_eq(n("\\w{2}?\\b").normalize("zz abcd"), "# #ab#")
+  @test.assert_eq(n("\\ba{2,4}?").normalize("aaaa"), "#aa")
+  @test.assert_eq(n("\\ba{2,}?").normalize("aaa aa"), "#a #")
+  @test.assert_eq(n("\\b\\w{2}?").normalize_aligned("ab cd").0, "# #")
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{2}?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{2}?\\b"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{100001}?"), false)
+}
+
+///|
+/// we-only single-char-base spellings load (review fix: the cut<6
+/// guard wrongly rejected `a{2}?\b`); every want probed 0.22.2.
+test "boundary lazy-exact we-only single-char base" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("a{2}?\\b").normalize("zaaaz"), "#zaaaz#")
+  @test.assert_eq(n("a{2}?\\b").normalize("aaa"), "#a#")
+  @test.assert_eq(n("a{2}?\\b").normalize("aa"), "#")
+  @test.assert_eq(n("a{2}?\\b").normalize("aaaa"), "#aa#")
+  @test.assert_eq(n("a{2}?\\b").normalize("ab"), "#ab#")
+  @test.assert_eq(n("a{3}?\\b").normalize("aaa"), "#")
+  @test.assert_eq(n("z{2}?\\b").normalize("ab"), "#ab#")
+  @test.assert_eq(@common.is_supported_replace_regex("a{2}?\\b"), true)
+  // the literal-backslash tail is NOT the anchor — stays rejected
+  @test.assert_eq(@common.is_supported_replace_regex("a{2}?\\\\b"), false)
+}

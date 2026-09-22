@@ -10,6 +10,8 @@ pub fn anchored_regex_kind(String) -> (Int, Bool)?
 
 pub fn bare_class_kind(String) -> Int?
 
+pub fn boundary_lazy_exact_spec(String) -> (Int, Char?, Int, Bool, Bool)?
+
 pub fn boundary_window_spec(String) -> (Int, Char?, Int, Int, Bool, Bool)?
 
 pub fn bounded_regex_kind(String) -> (Int, Int)?
@@ -83,6 +85,8 @@ pub fn ranged_regex_kind(String) -> (Int, Int, Int)?
 pub fn replace_anchored_simple_regex(String, String, String) -> String?
 
 pub fn replace_ascii_word_boundary_runs(String, String) -> String
+
+pub fn replace_boundary_lazy_exact_runs(String, String, (Char) -> Bool, Int, Bool, Bool) -> String
 
 pub fn replace_boundary_window_runs(String, String, (Char) -> Bool, Int, Int, Bool, Bool) -> String
 
