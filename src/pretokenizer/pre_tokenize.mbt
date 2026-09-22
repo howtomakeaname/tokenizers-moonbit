@@ -132,6 +132,14 @@ fn is_known_passthrough_split_regex(pattern : String) -> Bool {
 }
 
 ///|
+/// HF Split semantics (probed 0.22.2): behavior applies to the
+/// MATCHED parts uniformly; `invert` only swaps which spans count as
+/// matched (the gaps). Word-anchored merging: a matched part under
+/// MergedWithPrevious attaches to the immediately preceding word
+/// (piece = word+match; an EMPTY word still anchors, yielding the
+/// match alone as a fresh piece); under MergedWithNext the mirror.
+/// Adjacent matched parts merge under Contiguous; empty spans produce
+/// no visible piece but still act as split points/anchors.
 fn apply_split_matches(
   chars : Array[Char],
   matches : Array[@common.Span],
@@ -139,99 +147,162 @@ fn apply_split_matches(
   invert : Bool,
   base_offset : Int,
 ) -> Array[@types.Split] {
+  // invert: the gaps become the matched parts
+  let spans : Array[@common.Span] = if invert {
+    let inv : Array[@common.Span] = []
+    let mut cursor = 0
+    for m in matches {
+      if cursor < m.start {
+        inv.push({ start: cursor, stop: m.start, })
+      }
+      cursor = m.stop
+    }
+    if cursor < chars.length() {
+      inv.push({ start: cursor, stop: chars.length(), })
+    }
+    inv
+  } else {
+    matches
+  }
   let out : Array[@types.Split] = []
-  let mut cursor = 0
-  let mut pending_next : @common.Span? = None
-  let mut pending_contiguous : @common.Span? = None
-  fn emit_span(span : @common.Span) -> Unit {
-    if span.stop <= span.start {
+  fn emit(start : Int, stop : Int) -> Unit {
+    if stop <= start {
       return
     }
     out.push({
-      value: substr(chars, span.start, span.stop),
-      offsets: (base_offset + span.start, base_offset + span.stop),
+      value: substr(chars, start, stop),
+      offsets: (base_offset + start, base_offset + stop),
     })
   }
-  fn flush_contiguous() -> Unit {
-    match pending_contiguous {
-      Some(p) => {
-        emit_span(p)
-        pending_contiguous = None
+  // walk: words (gaps of the effective match list) and matches in
+  // positional order
+  let mut prev_word : Int? = None // mwp anchor (kept even when empty)
+  let mut pending_delim : (Int, Int)? = None // mwn match awaiting a word
+  let mut contig_start : Int? = None // Contiguous run start
+  let mut contig_stop = 0
+  fn flush_contig() -> Unit {
+    match contig_start {
+      Some(cs) => {
+        emit(cs, contig_stop)
+        contig_start = None
       }
       None => ()
     }
   }
-  fn emit_non_delim(span : @common.Span) -> Unit {
-    flush_contiguous()
-    match pending_next {
-      Some(p) => {
-        out.push({
-          value: substr(chars, p.start, p.stop) +
-          substr(chars, span.start, span.stop),
-          offsets: (base_offset + p.start, base_offset + span.stop),
-        })
-        pending_next = None
+  fn flush_pending() -> Unit {
+    match pending_delim {
+      Some((ps, pe)) => {
+        emit(ps, pe)
+        pending_delim = None
       }
-      None => emit_span(span)
+      None => ()
     }
   }
-  fn emit_delim(span : @common.Span) -> Unit {
+  fn on_word(ws : Int, we : Int) -> Unit {
     match behavior {
-      Removed => ()
-      Isolated => emit_span(span)
-      Contiguous =>
-        match pending_contiguous {
-          Some(p) =>
-            if p.stop == span.start {
-              pending_contiguous = Some({ start: p.start, stop: span.stop, })
-            } else {
-              emit_span(p)
-              pending_contiguous = Some(span)
-            }
-          None => pending_contiguous = Some(span)
-        }
-      MergedWithPrevious =>
-        if out.length() > 0 {
-          let idx = out.length() - 1
-          let prev = out[idx]
-          out[idx] = {
-            value: prev.value + substr(chars, span.start, span.stop),
-            offsets: (prev.offsets.0, base_offset + span.stop),
+      Removed => {
+        flush_contig()
+        prev_word = None
+        emit(ws, we)
+      }
+      Isolated | Contiguous => {
+        flush_contig()
+        prev_word = None
+        match pending_delim {
+          Some((ps, _)) => {
+            emit(ps, we)
+            pending_delim = None
           }
-        } else {
-          emit_span(span)
+          None => emit(ws, we)
         }
-      MergedWithNext => pending_next = Some(span)
-    }
-  }
-  for m in matches {
-    if cursor < m.start {
-      let gap = @common.Span::{ start: cursor, stop: m.start, }
-      if invert {
-        emit_delim(gap)
-      } else {
-        emit_non_delim(gap)
+      }
+      MergedWithPrevious => {
+        flush_contig()
+        prev_word = Some(ws) // awaits the following match (or end-flush)
+      }
+      MergedWithNext => {
+        flush_contig()
+        prev_word = None
+        match pending_delim {
+          Some((ps, _)) => {
+            emit(ps, we)
+            pending_delim = None
+          }
+          None => emit(ws, we)
+        }
       }
     }
-    if invert {
-      emit_non_delim(m)
-    } else {
-      emit_delim(m)
+  }
+  fn on_match(ms : Int, me : Int) -> Unit {
+    match behavior {
+      Removed => {
+        flush_contig()
+        prev_word = None
+      }
+      Isolated => {
+        flush_contig()
+        match prev_word {
+          Some(_) => prev_word = None // consumed as anchor (may be empty word)
+          None => ()
+        }
+        emit(ms, me)
+      }
+      Contiguous => {
+        prev_word = None
+        match contig_start {
+          Some(_) =>
+            if contig_stop == ms {
+              contig_stop = me
+            } else {
+              flush_contig()
+              contig_start = Some(ms)
+              contig_stop = me
+            }
+          None => {
+            flush_contig()
+            contig_start = Some(ms)
+            contig_stop = me
+          }
+        }
+      }
+      MergedWithPrevious =>
+        match prev_word {
+          Some(ws) => {
+            emit(ws, me)
+            prev_word = None
+          }
+          None => emit(ms, me)
+        }
+      MergedWithNext => {
+        flush_contig()
+        // consecutive matches: the previous pending one stands alone
+        flush_pending()
+        pending_delim = Some((ms, me))
+      }
     }
+  }
+  // interleave words and matches in positional order
+  let mut cursor = 0
+  for m in spans {
+    if cursor < m.start {
+      on_word(cursor, m.start)
+    }
+    on_match(m.start, m.stop)
     cursor = m.stop
   }
   if cursor < chars.length() {
-    let tail = @common.Span::{ start: cursor, stop: chars.length(), }
-    if invert {
-      emit_delim(tail)
-    } else {
-      emit_non_delim(tail)
-    }
+    on_word(cursor, chars.length())
   }
-  flush_contiguous()
-  match pending_next {
-    Some(p) => emit_span(p)
-    None => ()
+  flush_contig()
+  flush_pending()
+  // a trailing word under MergedWithPrevious still emits alone
+  match behavior {
+    MergedWithPrevious =>
+      match prev_word {
+        Some(ws) => emit(ws, chars.length())
+        None => ()
+      }
+    _ => ()
   }
   out
 }
