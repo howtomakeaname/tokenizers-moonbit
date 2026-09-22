@@ -620,8 +620,14 @@ pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
         return None
       }
       // reversed {n,m} with n > m: onig swaps the window (probed:
-      // a{6,4} on 'zaaaaaaz' -> 'z#z' == the {4,6} blocks)
+      // a{6,4} on 'zaaaaaaz' -> 'z#z' == the {4,6} blocks). A {n,0}
+      // swap has EMPTY-MATCH insertion semantics this engine lacks —
+      // reject (the anchored family's rule; probed: a{2,0} on 'zaaaz'
+      // -> '#z##z#' in HF)
       if hi < lo {
+        if hi == 0 {
+          return None
+        }
         let t = lo
         lo = hi
         hi = t

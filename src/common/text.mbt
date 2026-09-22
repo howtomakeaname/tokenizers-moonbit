@@ -423,7 +423,7 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if pattern == "[\\s]+" {
     return true
   }
-  // single-char literal bounded quantifiers within the 1..4 window
+  // single-char literal bounded quantifiers within the onig 100000 bound
   if char_bounded_spec(pattern) is Some(_) {
     return true
   }

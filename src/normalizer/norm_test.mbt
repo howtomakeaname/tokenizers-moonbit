@@ -2080,3 +2080,13 @@ test "literal quantifier windows above four compute" {
   @test.assert_eq(@common.is_supported_replace_regex("a{100001}"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\w{5}"), false)
 }
+
+///|
+/// Reversed `{n,0}` stays rejected (review fix): its `{0,n}` swap has
+/// empty-match insertion semantics the block engine lacks (probed:
+/// `a{2,0}` on 'zaaaz' -> '#z##z#' in HF) — fail loud like `^a{2,0}$`.
+test "reversed zero swap rejects" {
+  @test.assert_eq(@common.is_supported_replace_regex("a{2,0}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\n{2,0}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a{3,0}"), false)
+}
