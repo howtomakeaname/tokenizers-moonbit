@@ -893,6 +893,19 @@ pub fn replace_family_spans(
     }
     None => ()
   }
+  // lazy-exact anchored (\ba{2}?, \w{2}?\b ...)
+  match boundary_lazy_exact_spec(pattern) {
+    Some((kind, literal, n, ws, we)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { bounded_regex_kind_pred(kind, x) }
+      }
+      return Some(boundary_lazy_exact_spans(chars, pred, n, ws, we))
+    }
+    None => ()
+  }
   // single-anchor windows (^\w{1,2}, \w{1,2}$)
   match single_anchor_window_spec(pattern) {
     Some((kind, literal, lo, hi, leading)) => {
@@ -1498,6 +1511,85 @@ pub fn replace_single_anchor_window_runs(
   replace_spans(
     chars,
     single_anchor_window_spans(chars, pred, lo, hi, leading),
+    content,
+  )
+}
+
+///|
+/// Lazy-exact anchored spans (probed 0.22.2): at each position the
+/// block attempt requires the START flags at p and the END flags at
+/// p+n; on failure an EMPTY fires when the start flags hold at p and
+/// p is not prev_end-adjacent. Leftmost non-overlapping walk.
+fn boundary_lazy_exact_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  n : Int,
+  ws : Bool,
+  we : Bool,
+) -> Array[Span] {
+  let len = chars.length()
+  let out : Array[Span] = []
+  if len == 0 {
+    return out
+  }
+  fn start_ok(p : Int) -> Bool {
+    !ws || regex_word_boundary_at(chars, p)
+  }
+  fn end_ok(q : Int) -> Bool {
+    !we || regex_word_boundary_at(chars, q)
+  }
+  let mut p = 0
+  let mut prev_end = -1
+  while p <= len {
+    if p == len {
+      if start_ok(p) && end_ok(p) && p != prev_end {
+        out.push({ start: p, stop: p, })
+      }
+      break
+    }
+    // block attempt (p, p+n)
+    let mut fits = p + n <= len
+    if fits {
+      let mut k = p
+      while k < p + n {
+        if !pred(chars[k]) {
+          fits = false
+          break
+        }
+        k = k + 1
+      }
+    }
+    if fits && start_ok(p) && end_ok(p + n) {
+      out.push({ start: p, stop: p + n, })
+      prev_end = p + n
+      p = p + n
+      continue
+    }
+    if start_ok(p) && end_ok(p) && p != prev_end {
+      out.push({ start: p, stop: p, })
+      prev_end = p
+      p = p + 1
+      continue
+    }
+    p = p + 1
+  }
+  out
+}
+
+///|
+/// Lazy-exact anchored replace (replace chains).
+pub fn replace_boundary_lazy_exact_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  n : Int,
+  ws : Bool,
+  we : Bool,
+) -> String {
+  let chars = s.to_array()
+  replace_spans(
+    chars,
+    boundary_lazy_exact_spans(chars, pred, n, ws, we),
     content,
   )
 }
