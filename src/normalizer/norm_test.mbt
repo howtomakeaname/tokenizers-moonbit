@@ -2351,3 +2351,45 @@ test "boundary lazy-exact we-only single-char base" {
   // the literal-backslash tail is NOT the anchor — stays rejected
   @test.assert_eq(@common.is_supported_replace_regex("a{2}?\\\\b"), false)
 }
+
+///|
+/// Non-boundary (`\B`) windows and lazy-exact (probed 0.22.2):
+/// leftmost-greedy scan — a start `\B` filters scan positions
+/// ('\B\w{5}' on 'zaaaaaz' -> 'z#z', blocks start MID-word); an end
+/// `\B` backtracks the block length until the end position is a
+/// non-boundary ('\w{5}\B' on 'zaaaaaz' -> (0,5) -> '#az'). Exact
+/// {0} walks the empty rules inverted ('\B\w{0}' on 'zaaz' ->
+/// 'z#a#a#z', empties at every interior non-boundary); zero-min
+/// RANGES reject — the same walk-vs-scan divergence as the \b family.
+test "nonboundary windows and lazy-exact" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\B\\w{5}").normalize("zaaaaaz"), "z#z")
+  @test.assert_eq(n("\\B\\w{2,4}").normalize("zaaaaz"), "z#z")
+  @test.assert_eq(n("\\B\\w{2}").normalize("zaaz"), "z#z")
+  @test.assert_eq(n("\\w{5}\\B").normalize("zaaaaaz"), "#az")
+  @test.assert_eq(n("\\B\\w{5}\\B").normalize("zaaaaaaz"), "z#az")
+  @test.assert_eq(n("\\B\\d{3}").normalize("z12345z"), "z#45z")
+  @test.assert_eq(n("\\B\\w{2,}").normalize("zaaaaz"), "z#")
+  @test.assert_eq(n("\\Ba{2}").normalize("zaaz aa"), "z#z aa")
+  @test.assert_eq(n("\\B\\w{2}\\B").normalize("zaaaaz"), "z##z")
+  @test.assert_eq(n("\\B\\w{5}").normalize("abcdef"), "a#")
+  @test.assert_eq(n("\\B\\w{5}").normalize("aaaaaa"), "a#")
+  @test.assert_eq(n("\\B\\w{0}").normalize("zaaz"), "z#a#a#z")
+  @test.assert_eq(n("\\B\\w{1,2}").normalize("zaaaaz"), "z###")
+  @test.assert_eq(n("\\B\\w{3}").normalize("ab cde"), "ab cde")
+  @test.assert_eq(n("\\B5{2}").normalize("z5555y"), "z##y")
+  @test.assert_eq(n("\\B\\w{2}\\B").normalize("zaaz"), "z#z")
+  @test.assert_eq(n("\\Ba{2}?").normalize("zaaz"), "z#z")
+  @test.assert_eq(n("\\B\\w{5}").normalize_aligned("zaaaaaz").0, "z#z")
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{5}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{100001}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\w+?"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{0,2}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{0,2}\\B"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{0,2}\\B"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{0,}\\B"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{2,0}\\B"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\Ba{0,2}\\B"), false)
+}

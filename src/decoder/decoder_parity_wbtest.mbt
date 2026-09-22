@@ -349,3 +349,13 @@ test "replace decoder boundary lazy-exact" {
   let w = Decoder::Replace(pattern="\\w{2}?\\b", content="#")
   @test.assert_eq(w.decode(["ab cd"]), "# #")
 }
+
+///|
+/// Non-boundary windows decode per token (HF JSON Regex decoder
+/// probed 0.22.2).
+test "replace decoder nonboundary windows" {
+  let d = Decoder::Replace(pattern="\\B\\w{5}", content="#")
+  @test.assert_eq(d.decode(["zaaaaaz"]), "z#z")
+  let e = Decoder::Replace(pattern="\\Ba{2}?", content="#")
+  @test.assert_eq(e.decode(["zaaz"]), "z#z")
+}
