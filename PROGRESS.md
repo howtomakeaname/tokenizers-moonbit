@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-22 发版 0.9.4（已发布，干净验证 4/4×三后端）**：0.9.3 后 PR #46 单批（`[\r\n]` 逐字符）。直接推 main：bump + `moon publish` 成功 + /tmp/verify094 干净验证（逐字符/整段回归/窗口/经典）。
+
 - **2026-09-22 PR #46**（3 commit，一轮评审 APPROVE）：issue #45——`[\r\n]` 无 `+` 拼写误入 run_matches 整段分支。改为新 `exact_one_matches` 逐字符（HF 'a\n\nb' Isolated → a, \n(1,2), \n(2,3), b；5 behavior × 2 invert 全对拍，21 分歧 cell 清零）；`+` 拼写保持整段。**顺带修复** replace 侧字面 CR/LF 拼写（原先也走整段分支，评审发现后补锁定）。评审 868 cell 零分歧（含相邻拼写 450 cell 回归）；494/494（native/js）、双扫描全绿。遗留：issue #47（裸单字符类 `\s`/`[\s]`/`\d`/`\w`/`[0-9]`/`[\p{L}]` 与 `[\s]+` 加载拒绝——与 #45 同型的门表缺口）。
 
 - **2026-09-22 发版 0.9.3（已发布，干净验证 4/4×三后端）**：0.9.2 后 PR #44 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify093 干净验证（窗口 Split Isolated、`\b$` contiguous+invert、逐分支锚 mwp、经典 `\s+` 回归——按偏移对拍）。
