@@ -1105,6 +1105,16 @@ fn double_anchored_line_spans(
   let mut p = 0
   while p < n {
     let at_line_start = p == 0 || chars[p - 1] == '\n'
+    // zero-min window: an EMPTY line matches zero-width — but only
+    // when the predicate EXCLUDES '\n' (otherwise the greedy scan
+    // below spans the newlines: probed '^\s{0,}$' on '\n\n' -> '#'
+    // one span, while '^a{0,2}$' -> '#\n#\n' per empty line); and
+    // never at the string end (loop guard p < n)
+    if at_line_start && lo == 0 && chars[p] == '\n' && (!pred('\n') || hi == 0) {
+      out.push({ start: p, stop: p, })
+      p = p + 1
+      continue
+    }
     if at_line_start && pred(chars[p]) {
       let mut g = p
       while g < n && pred(chars[g]) {

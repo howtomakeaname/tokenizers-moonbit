@@ -72,6 +72,12 @@ pub fn simple_split_regex_matches(
       )
     None => ()
   }
+  // bare assertion sequences (`\b$`, `^\b`, `^$`...) are zero-width
+  match regex_literal_assertions_spec(pattern) {
+    Some((bs, be, ws, we)) =>
+      return Some(assertion_sequence_matches(chars, bs, be, ws, we))
+    None => ()
+  }
   // PER-BRANCH anchors first: `^foo|bar$` binds anchors per branch —
   // the global-anchor reading below would misread it (probed 0.22.2)
   match regex_literal_branch_alternatives_spec(pattern) {

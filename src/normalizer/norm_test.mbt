@@ -1917,3 +1917,96 @@ test "empty branches walk the zero-min rules" {
   @test.assert_eq(n("a||b").normalize_aligned("a b").0, "# #b#")
   @test.assert_eq(@common.is_supported_replace_regex("^|a"), true)
 }
+
+///|
+/// BARE assertion sequences (`\b$`, `^\b`, `\b\b`, `$\b`, `^\b$`,
+/// `^$`, `^`): zero-width at every position where ALL assertions hold,
+/// walked with the zero-min rules. Multiline `^` never matches the
+/// string-end position (probed: `^$` on 'ab\n' unchanged, `^` on
+/// 'ab' -> '#ab' with no end hit). Every want probed 0.22.2.
+test "bare assertion sequences walk zero-min positions" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\b$").normalize("ab\ncd"), "ab#\ncd#")
+  @test.assert_eq(n("\\b$").normalize("ab"), "ab#")
+  @test.assert_eq(n("\\b$").normalize("a b"), "a b#")
+  @test.assert_eq(n("\\b$").normalize(""), "")
+  @test.assert_eq(n("\\b$").normalize("!!"), "!!")
+  @test.assert_eq(n("^\\b").normalize("ab\ncd"), "#ab\n#cd")
+  @test.assert_eq(n("^\\b").normalize(" ab"), " ab")
+  @test.assert_eq(n("\\b\\b").normalize("ab"), "#ab#")
+  @test.assert_eq(n("\\b").normalize("ab"), "#ab#")
+  @test.assert_eq(n("^\\b$").normalize("ab"), "ab")
+  @test.assert_eq(n("$\\b").normalize("ab"), "ab#")
+  @test.assert_eq(n("^$").normalize("a\n"), "a\n")
+  @test.assert_eq(n("^$").normalize("a\n\n"), "a\n#\n")
+  @test.assert_eq(n("^$").normalize("x\n\ny"), "x\n#\ny")
+  @test.assert_eq(n("^").normalize("ab"), "#ab")
+  @test.assert_eq(n("a|^$").normalize("ab"), "#b")
+  @test.assert_eq(n("^|").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("^\\b").normalize("ab"), "#ab")
+  @test.assert_eq(n("^$").normalize("\n\n"), "#\n#\n")
+  @test.assert_eq(n("\\b$").normalize_aligned("ab\ncd").0, "ab#\ncd#")
+}
+
+///|
+/// ZERO-MIN double-anchored windows (`^.{0,2}$`, `^a{0}$`, `^.{0,}$`,
+/// comma-open `^{,m}$`): empty lines match (probed), the string-end
+/// empty line never does (the `^` rule), and literal/class bases carry
+/// the window through comma-open bounds.
+test "zero-min double-anchored windows match empty lines" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^.{0,2}$").normalize("ab\nabc\n\na"), "#\nabc\n#\n#")
+  @test.assert_eq(n("^.{0,2}$").normalize("\n"), "#\n")
+  @test.assert_eq(n("^.{0,2}$").normalize(""), "")
+  @test.assert_eq(n("^.{0}$").normalize("a\n\nb"), "a\n#\nb")
+  @test.assert_eq(n("^.{0}$").normalize("a\n"), "a\n")
+  @test.assert_eq(n("^.{0}$").normalize("\n\n\n"), "#\n#\n#\n")
+  @test.assert_eq(n("^.{0,}$").normalize("ab\n\na"), "#\n#\n#")
+  @test.assert_eq(n("^.{,2}$").normalize("ab\nabc"), "#\nabc")
+  @test.assert_eq(n("^.{0,2}$").normalize("ab\n\n"), "#\n#\n")
+  @test.assert_eq(n("^a{0}$").normalize("a\n\n"), "a\n#\n")
+  @test.assert_eq(n("^a{0}$").normalize("\n\n"), "#\n#\n")
+  @test.assert_eq(n("^a{,2}$").normalize("zaaaz"), "zaaaz")
+  @test.assert_eq(n("^5{,2}$").normalize("55\n555\n"), "#\n555\n")
+  @test.assert_eq(n("^\\s{,2}$").normalize(" x\n  y"), " x\n  y")
+  @test.assert_eq(n("^\\d{,3}$").normalize("12\n1234\n"), "#\n1234\n")
+  @test.assert_eq(
+    n("^.{0,2}$").normalize_aligned("ab\nabc\n\na").0,
+    "#\nabc\n#\n#",
+  )
+}
+
+///|
+/// \n-matching predicates under zero-min windows: the greedy scan
+/// spans newlines (one whole match, probed `^\s{0,2}$` on `'\n\n'` →
+/// `'#'`), except exact-zero (`^\s{0}$` → `'#\n#\n'` per empty line —
+/// hi == 0 keeps the empty-line path). Review fix.
+test "nl-pred window classes reject explicitly" {
+  // ANY window over a \n-matching predicate fails at load — probed
+  // 0.22.2 shows idiosyncratic consecutive-newline anchor behavior on
+  // every bound (\\s{1,2}$ on 'a\\n\\nb' matches nothing while a
+  // greedy-backtracking model matches [1,2)); reject beats silently
+  // approximating. \\n-excluding predicates keep their windows.
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{0,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{0}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{1,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{2,4}$"), false)
+  //  and quantifier-less nl-pred forms keep their PR#34/#36 behavior
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s+$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\n+$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\n{2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\D{0,}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{,2}$"), false)
+  // `+` and quantifier-less nl-pred forms keep their PR#34/#36 behavior
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s+$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\n+$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\w{1,3}$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^.{0,2}$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^a{0,2}$"), true)
+}
