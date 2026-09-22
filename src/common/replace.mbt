@@ -587,10 +587,15 @@ pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
   let mut lo_digits = 0
   while i < n && chars[i] >= '0' && chars[i] <= '9' {
     lo = lo * 10 + (chars[i].to_int() - '0'.to_int())
+    if lo > 100000 {
+      return None
+    }
     lo_digits = lo_digits + 1
     i = i + 1
   }
-  if lo_digits == 0 || lo == 0 || lo > 4 {
+  // onig's real repeat bound is 100000 (probed: a{100000} loads,
+  // a{100001} errors) — windows above 4 compute like any other
+  if lo_digits == 0 || lo == 0 || lo > 100000 {
     return None
   }
   let mut hi = lo
@@ -605,11 +610,21 @@ pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
       hi = 0
       while i < n && chars[i] >= '0' && chars[i] <= '9' {
         hi = hi * 10 + (chars[i].to_int() - '0'.to_int())
+        if hi > 100000 {
+          return None
+        }
         hi_digits = hi_digits + 1
         i = i + 1
       }
-      if hi_digits == 0 || hi < lo || hi > 4 {
+      if hi_digits == 0 || hi > 100000 {
         return None
+      }
+      // reversed {n,m} with n > m: onig swaps the window (probed:
+      // a{6,4} on 'zaaaaaaz' -> 'z#z' == the {4,6} blocks)
+      if hi < lo {
+        let t = lo
+        lo = hi
+        hi = t
       }
     }
   } else if i != n - 1 {
