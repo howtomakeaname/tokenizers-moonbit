@@ -2241,3 +2241,41 @@ test "boundary-windowed quantifiers" {
   @test.assert_eq(@common.is_supported_replace_regex("\\ba{2,4}\\b"), true)
   @test.assert_eq(@common.is_supported_replace_regex("\\b\\w{100001}"), false)
 }
+
+///|
+/// Single-anchor windows `^BASE{...}` / `BASE{...}$` (probed 0.22.2,
+/// 19 cells): the anchor pins the block to each line start (greedy
+/// within the window from the anchor) or line end (the block ENDS at
+/// the anchor, greedily the largest len <= min(hi, run)); the pred
+/// must hold AT the anchor position ('^\w{1,2}' on '  ab cd'
+/// unchanged — the line starts with a space). Zero-min and {n,0}
+/// forms reject (empty walks are position-global, not anchor-pinned).
+test "single-anchor windows" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^\\w{1,2}").normalize("abcdef\nabcdef"), "#cdef\n#cdef")
+  @test.assert_eq(n("\\w{1,2}$").normalize("abcdef\nabcdef"), "abcd#\nabcd#")
+  @test.assert_eq(n("^\\w{5}").normalize("abcdefg\nab"), "#fg\nab")
+  @test.assert_eq(n("\\w{5}$").normalize("abcdefg\nab"), "ab#\nab")
+  @test.assert_eq(n("^\\d{2,4}").normalize("z12345\n123456"), "z12345\n#56")
+  @test.assert_eq(n("^a{2}").normalize("zaaz\naa"), "zaaz\n#")
+  @test.assert_eq(n("^\\w{5,}").normalize("abcdefg\nab"), "#\nab")
+  @test.assert_eq(n("^a{2,4}").normalize("aaa\nzaaaa\naa"), "#\nzaaaa\n#")
+  @test.assert_eq(n("a{2,4}$").normalize("aaa\nzaaaa\naa"), "#\nz#\n#")
+  @test.assert_eq(n("^\\w{2}").normalize("a\nab\nabc"), "a\n#\n#c")
+  @test.assert_eq(n("^5{3}").normalize("5555\n55"), "#5\n55")
+  @test.assert_eq(n("^\\w{1,2}").normalize("  ab cd"), "  ab cd")
+  @test.assert_eq(n("\\w{1,2}$").normalize("ab cd  "), "ab cd  ")
+  @test.assert_eq(n("^\\w{1,2}").normalize(""), "")
+  @test.assert_eq(n("a{2}$").normalize("zaa\naa\naaa"), "z#\n#\na#")
+  @test.assert_eq(n("\\w{2,4}$").normalize("z abcd"), "z #")
+  @test.assert_eq(n("^\\w{2,}").normalize("a\nab\nabc\nabcd"), "a\n#\n#\n#")
+  @test.assert_eq(n("^a{100000}").normalize("aa"), "aa")
+  @test.assert_eq(n("^\\w{1,2}").normalize_aligned("abcdef").0, "#cdef")
+  @test.assert_eq(@common.is_supported_replace_regex("^\\w{1,2}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a{2,4}$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^a{0,2}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a{0,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^a{2,0}"), false)
+}
