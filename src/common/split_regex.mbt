@@ -105,9 +105,8 @@ pub fn simple_split_regex_matches(
   if pattern == "[\\s]+" {
     return Some(run_matches(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
   }
-  // generic class windows: block spans for any bound (probed 0.22.2:
-  // '\w{5}' Isolated on 'zz abcdefg 9912345 zz' splits 'zz',' #fg
-  // ',' #45 ',' zz' — the block semantics apply to Split too)
+  // generic class windows: block spans for any bound — the block
+  // semantics apply to Split delimiters too
   match class_bounded_spec(pattern) {
     Some((kind, lo, hi)) =>
       return Some(
