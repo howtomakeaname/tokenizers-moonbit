@@ -319,3 +319,13 @@ test "replace decoder n-comma-zero" {
   let w = Decoder::Replace(pattern="\\w{5,0}", content="#")
   @test.assert_eq(w.decode(["zz abcdefg zz"]), "# ## #")
 }
+
+///|
+/// Boundary-windowed quantifiers decode per token (HF JSON Regex
+/// decoder probed 0.22.2).
+test "replace decoder boundary windows" {
+  let d = Decoder::Replace(pattern="\\b\\w{5}", content="#")
+  @test.assert_eq(d.decode(["zaaaaaz"]), "#az")
+  let b = Decoder::Replace(pattern="\\ba{2,4}\\b", content="#")
+  @test.assert_eq(b.decode(["zaaaz aa"]), "zaaaz #")
+}

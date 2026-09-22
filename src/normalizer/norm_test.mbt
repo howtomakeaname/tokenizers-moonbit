@@ -2180,3 +2180,54 @@ test "n-comma-zero zero variants" {
     n("\\s{0,5}").normalize("a     b"),
   )
 }
+
+///|
+/// Boundary-windowed quantifiers (probed 0.22.2, 24 cells): an end
+/// `\b` forces the block to end on a WORD boundary — a literal-'a'
+/// run ending on a word char ('aa' inside 'aaz') is not a boundary —
+/// so with both anchors only whole words in the window match; with
+/// only the start `\b` the block runs greedily from a word start;
+/// with only the end `\b` the block spans the run's last window.
+/// Zero-min forms ({0}, {0,m}, {n,0}) walk the empty rules with
+/// every empty requiring its boundary predicates.
+test "boundary-windowed quantifiers" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\ba{2}\\b").normalize("zaaz aaz aa"), "zaaz aaz #")
+  @test.assert_eq(n("\\ba{2,0}\\b").normalize("zaaz"), "#zaaz#")
+  @test.assert_eq(n("\\b\\w{5}\\b").normalize("zz abcdefg zz"), "zz abcdefg zz")
+  @test.assert_eq(n("\\b\\w{5}").normalize("zaaaaaz"), "#az")
+  @test.assert_eq(n("\\w{5}\\b").normalize("zaaaaaz"), "za#")
+  @test.assert_eq(n("\\w{5}\\b").normalize("zaaaaaaz"), "zaa#")
+  @test.assert_eq(
+    n("\\ba{2,4}\\b").normalize("zaaaz aa aaaa zaa"),
+    "zaaaz # # zaa",
+  )
+  @test.assert_eq(n("\\b\\d{5}\\b").normalize("z12345z 12345"), "z12345z #")
+  @test.assert_eq(n("\\ba{5}\\b").normalize("zaaaaaz"), "zaaaaaz")
+  @test.assert_eq(
+    n("\\b\\w{2,4}\\b").normalize("ab abc abcd abcde"),
+    "# # # abcde",
+  )
+  @test.assert_eq(n("\\ba{2,}\\b").normalize("zaaaaz aa"), "zaaaaz #")
+  @test.assert_eq(n("\\ba{2}\\b").normalize("aaa aa"), "aaa #")
+  @test.assert_eq(n("\\w{2,4}\\b").normalize("zaaaaz ab"), "za# #")
+  @test.assert_eq(n("\\ba{2,4}").normalize("zaaaaz"), "zaaaaz")
+  @test.assert_eq(n("\\baa\\b").normalize("zaa aa"), "zaa #")
+  @test.assert_eq(n("\\ba{0,2}\\b").normalize("zaaz"), "#zaaz#")
+  @test.assert_eq(n("\\ba{2,}\\b").normalize("ab abc"), "ab abc")
+  @test.assert_eq(
+    n("\\ba{2,4}\\b").normalize("a aa aaa aaaa aaaaa"),
+    "a # # # aaaaa",
+  )
+  @test.assert_eq(n("\\b\\w{2,4}\\b").normalize("中a ab abc"), "# # #")
+  @test.assert_eq(n("\\ba{2,4}\\b").normalize("²aa aa"), "²aa #")
+  @test.assert_eq(n("\\w{2,4}\\b").normalize("ab1 abc12"), "# a#")
+  @test.assert_eq(n("\\ba{2,}\\b").normalize("aa aaaa aaaaa"), "# # #")
+  @test.assert_eq(n("\\ba{0}\\b").normalize("ab cd"), "#ab# #cd#")
+  @test.assert_eq(n("\\b\\w{5}").normalize_aligned("zaaaaaz").0, "#az")
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\w{5}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{2,4}\\b"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\w{100001}"), false)
+}
