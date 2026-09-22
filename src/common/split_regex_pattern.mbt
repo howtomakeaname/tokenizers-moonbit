@@ -2,6 +2,12 @@
 pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   regex_literal_spec(pattern) is Some(_) ||
   regex_literal_alternatives_spec(pattern) is Some(_) ||
+  // bare assertion sequences (\b$, ^\b, ^$, ^) and double-anchored
+  // whole-line windows (^.{0,2}$, ^a{2,4}$) match through the same
+  // engines the replace chains use
+  regex_literal_assertions_spec(pattern) is Some(_) ||
+  double_anchored_spec(pattern) is Some(_) ||
+  regex_literal_branch_alternatives_spec(pattern) is Some(_) ||
   is_simple_space_regex_pattern(pattern) ||
   is_exact_regex_pattern(pattern) ||
   is_min_regex_pattern(pattern) ||
