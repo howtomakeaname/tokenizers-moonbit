@@ -309,3 +309,13 @@ test "replace decoder generic class windows" {
   let r = Decoder::Replace(pattern="\\w{6,4}", content="#")
   @test.assert_eq(r.decode(["zz abcdefg zz"]), "zz #g zz")
 }
+
+///|
+/// `{n,0}` decodes per token with zero-min semantics (HF JSON Regex
+/// decoder probed 0.22.2: `a{2,0}` on ["zaaaz"] -> '#z##z#').
+test "replace decoder n-comma-zero" {
+  let d = Decoder::Replace(pattern="a{2,0}", content="#")
+  @test.assert_eq(d.decode(["zaaaz"]), "#z##z#")
+  let w = Decoder::Replace(pattern="\\w{5,0}", content="#")
+  @test.assert_eq(w.decode(["zz abcdefg zz"]), "# ## #")
+}

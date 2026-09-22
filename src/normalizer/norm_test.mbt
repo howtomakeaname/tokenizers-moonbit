@@ -2087,9 +2087,9 @@ test "literal quantifier windows above four compute" {
 /// empty-match insertion semantics the block engine lacks (probed:
 /// `a{2,0}` on 'zaaaz' -> '#z##z#' in HF) — fail loud like `^a{2,0}$`.
 test "reversed zero swap rejects" {
-  @test.assert_eq(@common.is_supported_replace_regex("a{2,0}"), false)
-  @test.assert_eq(@common.is_supported_replace_regex("\\n{2,0}"), false)
-  @test.assert_eq(@common.is_supported_replace_regex("a{3,0}"), false)
+  // superseded: {n,0} now routes to the zero-min engine (see the
+  // n-comma-zero test); only {100001,0} rejects at the cap
+  @test.assert_eq(@common.is_supported_replace_regex("a{100001,0}"), false)
 }
 
 ///|
@@ -2124,4 +2124,59 @@ test "generic class windows any bound" {
   @test.assert_eq(@common.is_supported_replace_regex("\\w{2,100001}"), false)
   // the hardcoded <=4 rows still compute identically
   @test.assert_eq(n("\\w{1,2}").normalize("abcdef"), "###")
+}
+
+///|
+/// `{n,0}` lands in the zero-min engine — onig swaps it to `{0,n}`
+/// (probed 0.22.2 side-by-side: `\s{5,0}` == `\s{0,5}`, `\d{5,0}` ==
+/// `\d{0,5}`, `\w{5,0}` == `\w{0,5}`, `a{2,0}` == `a{0,2}` on every
+/// input; the earlier "reversed zero swap rejects" tests flip to
+/// supported).
+test "n-comma-zero routes to zero-min engine" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("a{2,0}").normalize("zaaaz"), "#z##z#")
+  @test.assert_eq(n("a{2,0}").normalize("abcd"), "#b#c#d#")
+  @test.assert_eq(n("\\w{5,0}").normalize("zz abcdefg zz"), "# ## #")
+  @test.assert_eq(n("a{3,0}").normalize("zzaaazz"), "#z#z#z#z#")
+  @test.assert_eq(n("\\w{5,0}").normalize("aa"), "#")
+  @test.assert_eq(n("\\n{2,0}").normalize("z\n\nz"), "#z#z#")
+  @test.assert_eq(n("a{100000,0}").normalize("aa"), "#")
+  @test.assert_eq(n("5{3,0}").normalize("z555y"), "#z#y#")
+  @test.assert_eq(n("\\s{5,0}").normalize("a     b"), "#a#b#")
+  @test.assert_eq(n("\\d{5,0}").normalize("z12345z"), "#z#z#")
+  @test.assert_eq(n("a{2,0}").normalize_aligned("zaaaz").0, "#z##z#")
+  @test.assert_eq(@common.is_supported_replace_regex("a{2,0}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{5,0}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a{100001,0}"), false)
+}
+
+///|
+/// `{n,0}` zero-tail variants and boundary shapes (probed 0.22.2):
+/// `a{2,00}` == `a{2,0}` (trailing zeros), `a{02,0}` == `a{0,2}`
+/// (leading zero in n); `a{2,0,}`/`a{2,0x}` are literals; `a{,0}` and
+/// `a{0,0}` == `a{0}`; the anchored form is unchanged.
+test "n-comma-zero zero variants" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("a{2,00}").normalize("zaaaz"), "#z##z#")
+  @test.assert_eq(n("a{02,0}").normalize("zaaaz"), "#z##z#")
+  @test.assert_eq(n("a{2,0,}").normalize("zaaaz"), "zaaaz")
+  @test.assert_eq(n("a{2,0x}").normalize("zaaaz"), "zaaaz")
+  @test.assert_eq(n("a{,0}").normalize("zaaaz"), "#z#a#a#a#z#")
+  @test.assert_eq(n("a{0,0}").normalize("zaaaz"), "#z#a#a#a#z#")
+  @test.assert_eq(n("^a{2,0}$").normalize("zaaaz"), "zaaaz")
+  @test.assert_eq(@common.is_supported_replace_regex("a{2,00}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a{02,0}"), true)
+  // pair-equivalence spot checks
+  @test.assert_eq(
+    n("\\w{5,0}").normalize("zz abcdefg zz"),
+    n("\\w{0,5}").normalize("zz abcdefg zz"),
+  )
+  @test.assert_eq(
+    n("\\s{5,0}").normalize("a     b"),
+    n("\\s{0,5}").normalize("a     b"),
+  )
 }
