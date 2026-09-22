@@ -2020,3 +2020,24 @@ test "replace literal bracket crlf is per char" {
   @test.assert_eq(n.normalize("a\r\r\nb"), "a###b")
   @test.assert_eq(n.normalize("a\n\nb"), "a##b")
 }
+
+///|
+/// Bare classes were already correct on the replace side (bare_class_kind
+/// exact-1); the gap was `[\s]+` (gate-rejected) — now routed through
+/// the whitespace-run family (issue #47; all wants probed 0.22.2).
+test "replace bare classes and bracket ws spelling" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\s").normalize("a b2²"), "a#b2²")
+  @test.assert_eq(n("[\\s]").normalize("a b2²"), "a#b2²")
+  @test.assert_eq(n("\\w").normalize("a b2²"), "# ###")
+  @test.assert_eq(n("[0-9]").normalize("a b2²"), "a b#²")
+  @test.assert_eq(n("[\\p{L}]").normalize("a b2²"), "# #2²")
+  @test.assert_eq(n("[^\\w]").normalize("a b2²"), "a#b2#")
+  @test.assert_eq(n("\\p{N}").normalize("a b2²"), "a b##")
+  @test.assert_eq(n("[\\s]+").normalize("a b  2²"), "a#b#2²")
+  @test.assert_eq(n("[\\s]+").normalize_aligned("a b  2²").0, "a#b#2²")
+  @test.assert_eq(@common.is_supported_replace_regex("[\\s]+"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\s"), true)
+}
