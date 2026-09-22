@@ -81,3 +81,104 @@ test "split assertion and window patterns" {
   }
   go()
 }
+
+///|
+/// Word-anchored Split merging (review B1 fix, all wants probed 0.22.2
+/// via pre_tokenize_str): behavior applies to the MATCHED parts
+/// uniformly (invert only swaps which spans are matched); a matched
+/// part under MergedWithPrevious attaches to the immediately
+/// preceding word — an EMPTY word still anchors, so the part becomes
+/// a fresh piece; consecutive matches never merge into one another.
+test "split word-anchored merging matches hf" {
+  fn go() -> Unit raise {
+    fn mk(
+      pat : String,
+      beh : String,
+      inv : Bool,
+    ) -> @tokenizer.Tokenizer raise {
+      @tokenizer.Tokenizer::from_str(
+        "{\"version\":\"1.0\",\"pre_tokenizer\":{\"type\":\"Split\",\"pattern\":{\"Regex\":\"" +
+        pat +
+        "\"},\"behavior\":\"" +
+        beh +
+        "\",\"invert\":" +
+        (if inv { "true" } else { "false" }) +
+        "},\"model\":{\"type\":\"WordLevel\",\"vocab\":{\"<unk>\":0},\"unk_token\":\"<unk>\"}}",
+      )
+    }
+    fn pieces(t : @tokenizer.Tokenizer, text : String) -> Array[String] raise {
+      let enc = t.encode(text)
+      let src = text.to_array()
+      let out : Array[String] = []
+      for o in enc.get_offsets() {
+        let sb = StringBuilder()
+        for k in o.0..<o.1 {
+          sb.write_char(src[k])
+        }
+        out.push(sb.to_string())
+      }
+      out
+    }
+    fn eq(a : Array[String], b : Array[String]) -> Bool {
+      if a.length() != b.length() {
+        return false
+      }
+      for i in 0..<a.length() {
+        if a[i] != b[i] {
+          return false
+        }
+      }
+      true
+    }
+    // empty words anchor mwp under invert
+    @test.assert_eq(
+      eq(pieces(mk("\\\\b$", "MergedWithPrevious", true), "ab\ncd"), [
+        "ab", "\ncd",
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(pieces(mk("^", "MergedWithPrevious", true), "ab\ncd"), ["ab\n", "cd"]),
+      true,
+    )
+    // word-anchored merging + consecutive matches stand alone
+    @test.assert_eq(
+      eq(pieces(mk("^foo|bar$", "MergedWithPrevious", false), "foo\nfoobar"), [
+        "foo", "\nfoo", "bar",
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(pieces(mk("^foo|bar$", "MergedWithNext", false), "foo\nfoobar"), [
+        "foo\n", "foo", "bar",
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(pieces(mk("^foo|bar$", "Contiguous", true), "foo\nfoobar"), [
+        "foo", "\n", "foobar",
+      ]),
+      true,
+    )
+    // window patterns under every behavior
+    @test.assert_eq(
+      eq(pieces(mk("^.{0,2}$", "MergedWithPrevious", false), "ab\nabc\n\na"), [
+        "ab", "\nabc\n", "\na",
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(pieces(mk("^.{0,2}$", "MergedWithNext", false), "ab\nabc\n\na"), [
+        "ab\nabc\n", "\n", "a",
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(pieces(mk("^.{0,2}$", "Removed", false), "ab\nabc\n\na"), [
+        "\nabc\n", "\n",
+      ]),
+      true,
+    )
+  }
+  go()
+}
