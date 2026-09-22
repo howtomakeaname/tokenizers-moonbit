@@ -329,3 +329,13 @@ test "replace decoder boundary windows" {
   let b = Decoder::Replace(pattern="\\ba{2,4}\\b", content="#")
   @test.assert_eq(b.decode(["zaaaz aa"]), "zaaaz #")
 }
+
+///|
+/// Single-anchor windows decode per token with the same line-anchor
+/// block semantics (HF JSON Regex decoder probed 0.22.2).
+test "replace decoder single-anchor windows" {
+  let d = Decoder::Replace(pattern="^\\w{1,2}", content="#")
+  @test.assert_eq(d.decode(["abcdef\nabcdef"]), "#cdef\n#cdef")
+  let t = Decoder::Replace(pattern="\\w{1,2}$", content="#")
+  @test.assert_eq(t.decode(["abcdef"]), "abcd#")
+}
