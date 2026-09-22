@@ -167,6 +167,34 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     Some(p) => p
     None => pattern
   }
+  match @common.nonboundary_window_spec(pattern) {
+    Some((kind, literal, lo, hi, ws, we)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { @common.bounded_regex_kind_pred(kind, x) }
+      }
+      return @common.replace_nonboundary_window_runs(
+        s, content, pred, lo, hi, ws, we,
+      )
+    }
+    None => ()
+  }
+  match @common.nonboundary_lazy_exact_spec(pattern) {
+    Some((kind, literal, n, ws, we)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { @common.bounded_regex_kind_pred(kind, x) }
+      }
+      return @common.replace_nonboundary_lazy_exact_runs(
+        s, content, pred, n, ws, we,
+      )
+    }
+    None => ()
+  }
   match @common.boundary_lazy_exact_spec(pattern) {
     Some((kind, literal, n, ws, we)) => {
       let pred : (Char) -> Bool = if kind == -1 {
