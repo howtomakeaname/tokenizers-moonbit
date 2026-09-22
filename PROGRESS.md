@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-22 发版 0.9.7（已发布，干净验证 4/4×三后端）**：0.9.6 后 PR #50 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify097 干净验证（`\w{5}` 类窗、`\d{5}` 块、`^a{5}$` 锚定窗、裸 `\s` Split 回归）。
+
 - **2026-09-22 PR #50**（3 commit，一轮评审 APPROVE）：非锚类窗口通用化——最后一个**结构性**缺口关闭。新 `class_bounded_spec`：`BASE{n}/{n,}/{n,m}` 通用数值解析（基经 `bare_class_kind`、窗口经 `parse_capped_digits`、cap 100000、逆序交换、`{n,0}` 拒绝——与字面族规则一致）路由到共享 block 引擎，**涵盖硬编码 {1,2}/{1,3}/{1,4} 拼写表的全部纯窗形**（评审证明 kinds 与 ascii override 交互一致、block ≡ 四个 run 函数）。四点接线（replace_family_spans/replace 门/Split 门+matcher）。HF 实证：`\w{5}` 于 'zz abcdefg 9912345 zz'→'zz #fg #45 zz'；Split 分隔符也走块语义（189 Split cell 全对）。评审 650+ cell 零回归（≤4 子集、锚定/零下限/惰性 dispatch 全部 byte-identical to main）。502/502（native/js）、双扫描全绿。遗留（评审记录，均 pre-existing）：`{n,0}` 可路由到零下限引擎（候选后续）、`\b\w{5}` 边界前缀窗、单锚窗口 `^\w{1,2}`、`\w{5x}` 字面回退。
 
 - **2026-09-22 发版 0.9.6（已发布，干净验证 4/4×三后端）**：0.9.5 后 PR #49 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify096 干净验证（`^a{5}$` 窗、`a{5}` 块、`a{6,4}` 交换、裸 `\s` Split 回归）。
