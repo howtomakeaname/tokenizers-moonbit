@@ -267,3 +267,13 @@ test "replace decoder empty branches" {
   let e = Decoder::Replace(pattern="a|", content="#")
   @test.assert_eq(e.decode(["ab"]), "#b#")
 }
+
+///|
+/// Bare assertion sequences decode per token (round-1 decoder-abort
+/// fix verification: `\b$` on ["ab\ncd"] -> "ab#\ncd#").
+test "replace decoder bare assertion sequences" {
+  let d = Decoder::Replace(pattern="\\b$", content="#")
+  @test.assert_eq(d.decode(["ab\ncd"]), "ab#\ncd#")
+  let c = Decoder::Replace(pattern="^", content="#")
+  @test.assert_eq(c.decode(["ab"]), "#ab")
+}
