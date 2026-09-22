@@ -132,14 +132,19 @@ fn is_known_passthrough_split_regex(pattern : String) -> Bool {
 }
 
 ///|
-/// HF Split semantics (probed 0.22.2): behavior applies to the
-/// MATCHED parts uniformly; `invert` only swaps which spans count as
-/// matched (the gaps). Word-anchored merging: a matched part under
-/// MergedWithPrevious attaches to the immediately preceding word
-/// (piece = word+match; an EMPTY word still anchors, yielding the
-/// match alone as a fresh piece); under MergedWithNext the mirror.
-/// Adjacent matched parts merge under Contiguous; empty spans produce
-/// no visible piece but still act as split points/anchors.
+/// HF Split semantics (v0.22.2 source `normalizer.rs split`): the
+/// matcher yields an INTERLEAVED list of (span, is_match) entries —
+/// gaps flagged false, matches flagged true, ZERO-WIDTH matches
+/// included as entries; `invert` negates every flag (no complement
+/// region computation). The behavior folds that list:
+///   Isolated — every non-empty entry emits
+///   Removed — flag-true entries drop
+///   Contiguous — runs of consecutive entries with EQUAL flags merge
+///   MergedWithPrevious — a match extends the previous accumulated
+///     span iff the previous ENTRY was flagged false (an empty word
+///     still anchors); otherwise it starts a new piece
+///   MergedWithNext — the mirror: a match merges with the following
+///     word entry; consecutive matches stand alone
 fn apply_split_matches(
   chars : Array[Char],
   matches : Array[@common.Span],
@@ -147,23 +152,21 @@ fn apply_split_matches(
   invert : Bool,
   base_offset : Int,
 ) -> Array[@types.Split] {
-  // invert: the gaps become the matched parts
-  let spans : Array[@common.Span] = if invert {
-    let inv : Array[@common.Span] = []
-    let mut cursor = 0
-    for m in matches {
-      if cursor < m.start {
-        inv.push({ start: cursor, stop: m.start, })
-      }
-      cursor = m.stop
+  // interleaved (start, stop, is_match) entries; zero-width matches
+  // kept, zero-width gaps skipped
+  let entries : Array[(Int, Int, Bool)] = []
+  let mut cursor = 0
+  for m in matches {
+    if m.start > cursor {
+      entries.push((cursor, m.start, false))
     }
-    if cursor < chars.length() {
-      inv.push({ start: cursor, stop: chars.length(), })
-    }
-    inv
-  } else {
-    matches
+    entries.push((m.start, m.stop, true))
+    cursor = m.stop
   }
+  if chars.length() > cursor {
+    entries.push((cursor, chars.length(), false))
+  }
+  let flag_of = fn(b : Bool) -> Bool { if invert { !b } else { b } }
   let out : Array[@types.Split] = []
   fn emit(start : Int, stop : Int) -> Unit {
     if stop <= start {
@@ -174,135 +177,82 @@ fn apply_split_matches(
       offsets: (base_offset + start, base_offset + stop),
     })
   }
-  // walk: words (gaps of the effective match list) and matches in
-  // positional order
-  let mut prev_word : Int? = None // mwp anchor (kept even when empty)
-  let mut pending_delim : (Int, Int)? = None // mwn match awaiting a word
-  let mut contig_start : Int? = None // Contiguous run start
-  let mut contig_stop = 0
-  fn flush_contig() -> Unit {
-    match contig_start {
-      Some(cs) => {
-        emit(cs, contig_stop)
-        contig_start = None
-      }
-      None => ()
-    }
-  }
-  fn flush_pending() -> Unit {
-    match pending_delim {
-      Some((ps, pe)) => {
-        emit(ps, pe)
-        pending_delim = None
-      }
-      None => ()
-    }
-  }
-  fn on_word(ws : Int, we : Int) -> Unit {
-    match behavior {
-      Removed => {
-        flush_contig()
-        prev_word = None
-        emit(ws, we)
-      }
-      Isolated | Contiguous => {
-        flush_contig()
-        prev_word = None
-        match pending_delim {
-          Some((ps, _)) => {
-            emit(ps, we)
-            pending_delim = None
-          }
-          None => emit(ws, we)
-        }
-      }
-      MergedWithPrevious => {
-        flush_contig()
-        prev_word = Some(ws) // awaits the following match (or end-flush)
-      }
-      MergedWithNext => {
-        flush_contig()
-        prev_word = None
-        match pending_delim {
-          Some((ps, _)) => {
-            emit(ps, we)
-            pending_delim = None
-          }
-          None => emit(ws, we)
-        }
-      }
-    }
-  }
-  fn on_match(ms : Int, me : Int) -> Unit {
-    match behavior {
-      Removed => {
-        flush_contig()
-        prev_word = None
-      }
-      Isolated => {
-        flush_contig()
-        match prev_word {
-          Some(_) => prev_word = None // consumed as anchor (may be empty word)
-          None => ()
-        }
-        emit(ms, me)
-      }
-      Contiguous => {
-        prev_word = None
-        match contig_start {
-          Some(_) =>
-            if contig_stop == ms {
-              contig_stop = me
-            } else {
-              flush_contig()
-              contig_start = Some(ms)
-              contig_stop = me
-            }
-          None => {
-            flush_contig()
-            contig_start = Some(ms)
-            contig_stop = me
-          }
-        }
-      }
-      MergedWithPrevious =>
-        match prev_word {
-          Some(ws) => {
-            emit(ws, me)
-            prev_word = None
-          }
-          None => emit(ms, me)
-        }
-      MergedWithNext => {
-        flush_contig()
-        // consecutive matches: the previous pending one stands alone
-        flush_pending()
-        pending_delim = Some((ms, me))
-      }
-    }
-  }
-  // interleave words and matches in positional order
-  let mut cursor = 0
-  for m in spans {
-    if cursor < m.start {
-      on_word(cursor, m.start)
-    }
-    on_match(m.start, m.stop)
-    cursor = m.stop
-  }
-  if cursor < chars.length() {
-    on_word(cursor, chars.length())
-  }
-  flush_contig()
-  flush_pending()
-  // a trailing word under MergedWithPrevious still emits alone
   match behavior {
-    MergedWithPrevious =>
-      match prev_word {
-        Some(ws) => emit(ws, chars.length())
+    Isolated =>
+      for e in entries {
+        emit(e.0, e.1)
+      }
+    Removed =>
+      for e in entries {
+        if !flag_of(e.2) {
+          emit(e.0, e.1)
+        }
+      }
+    Contiguous => {
+      let mut i = 0
+      let n = entries.length()
+      while i < n {
+        let f = flag_of(entries[i].2)
+        let run_start = entries[i].0
+        let mut run_stop = entries[i].1
+        let mut j = i + 1
+        while j < n && flag_of(entries[j].2) == f {
+          run_stop = entries[j].1
+          j = j + 1
+        }
+        emit(run_start, run_stop)
+        i = j
+      }
+    }
+    MergedWithPrevious => {
+      // a match extends the open piece iff the previous ENTRY was
+      // flagged false (an empty word still anchors)
+      let mut piece_start : Int? = None
+      let mut piece_stop = 0
+      let mut prev_flag : Bool? = None
+      for e in entries {
+        let f = flag_of(e.2)
+        match piece_start {
+          Some(ps) =>
+            if !(f && prev_flag == Some(false)) {
+              emit(ps, piece_stop)
+              piece_start = Some(e.0)
+            }
+          None => piece_start = Some(e.0)
+        }
+        piece_stop = e.1
+        prev_flag = Some(f)
+      }
+      match piece_start {
+        Some(ps) => emit(ps, piece_stop)
         None => ()
       }
-    _ => ()
+    }
+    _ => {
+      // MergedWithNext: a match merges with the FOLLOWING word entry
+      let n = entries.length()
+      let mut i = 0
+      while i < n {
+        let e = entries[i]
+        if flag_of(e.2) {
+          // match: merge with next word if one follows
+          if i + 1 < n && !flag_of(entries[i + 1].2) {
+            emit(e.0, entries[i + 1].1)
+            i = i + 2
+          } else {
+            emit(e.0, e.1)
+            i = i + 1
+          }
+        } else {
+          // word: emitted alone unless consumed by a preceding match
+          // (handled above); check it was not already consumed by
+          // looking back — matches consume forward, so a word here was
+          // not consumed
+          emit(e.0, e.1)
+          i = i + 1
+        }
+      }
+    }
   }
   out
 }

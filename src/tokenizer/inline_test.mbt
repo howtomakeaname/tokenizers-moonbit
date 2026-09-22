@@ -182,3 +182,103 @@ test "split word-anchored merging matches hf" {
   }
   go()
 }
+
+///|
+/// The invert flag model (review B2 fix): HF negates per-entry flags
+/// on the interleaved gap/match list (zero-width matches included as
+/// entries) and folds the behavior over it — no complement regions.
+/// Locks the round-2 regression corner (offsets, probed 0.22.2).
+test "split invert folds per-entry flags" {
+  fn go() -> Unit raise {
+    fn mk(
+      pat : String,
+      beh : String,
+      inv : Bool,
+    ) -> @tokenizer.Tokenizer raise {
+      @tokenizer.Tokenizer::from_str(
+        "{\"version\":\"1.0\",\"pre_tokenizer\":{\"type\":\"Split\",\"pattern\":{\"Regex\":\"" +
+        pat +
+        "\"},\"behavior\":\"" +
+        beh +
+        "\",\"invert\":" +
+        (if inv { "true" } else { "false" }) +
+        "},\"model\":{\"type\":\"WordLevel\",\"vocab\":{\"<unk>\":0},\"unk_token\":\"<unk>\"}}",
+      )
+    }
+    fn offs(
+      t : @tokenizer.Tokenizer,
+      text : String,
+    ) -> Array[(Int, Int)] raise {
+      t.encode(text).get_offsets()
+    }
+    fn eq(a : Array[(Int, Int)], b : Array[(Int, Int)]) -> Bool {
+      if a.length() != b.length() {
+        return false
+      }
+      for i in 0..<a.length() {
+        if a[i] != b[i] {
+          return false
+        }
+      }
+      true
+    }
+    @test.assert_eq(
+      eq(offs(mk("\\\\b$", "Contiguous", true), "ab\ncd"), [(0, 2), (2, 5)]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("\\\\b$", "Isolated", true), "ab\ncd"), [(0, 2), (2, 5)]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("^foo|bar$", "Isolated", true), "foo\nfoobar"), [
+        (0, 3),
+        (3, 4),
+        (4, 7),
+        (7, 10),
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("^foo|bar$", "Removed", true), "foo\nfoobar"), [
+        (0, 3),
+        (4, 7),
+        (7, 10),
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("^foo|bar$", "MergedWithPrevious", true), "foo\nfoobar"), [
+        (0, 4),
+        (4, 7),
+        (7, 10),
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("^foo|bar$", "MergedWithNext", true), "foo\nfoobar"), [
+        (0, 3),
+        (3, 7),
+        (7, 10),
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("^.{0,2}$", "Contiguous", true), "ab\ncd"), [
+        (0, 2),
+        (2, 3),
+        (3, 5),
+      ]),
+      true,
+    )
+    @test.assert_eq(
+      eq(offs(mk("^.{0,2}$", "MergedWithNext", true), "ab\nabc\n\na"), [
+        (0, 2),
+        (2, 7),
+        (7, 9),
+      ]),
+      true,
+    )
+  }
+  go()
+}
