@@ -431,6 +431,10 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if class_bounded_spec(pattern) is Some(_) {
     return true
   }
+  // boundary-windowed quantifiers (\b\w{5}, \w{5}\b ...)
+  if boundary_window_spec(pattern) is Some(_) {
+    return true
+  }
   // zero-minimum quantifiers: a{0} / a{0,m} / a{0,} and class bases
   if zero_min_quantifier_spec(pattern) is Some(_) {
     return true
@@ -1178,5 +1182,151 @@ fn mixed_complement_ordering_kind(base : String) -> Int? {
     | "[^\\p{Number}\\s\\p{Letter}]"
     | "[^\\p{Number}\\p{Letter}\\s]" => Some(21)
     _ => None
+  }
+}
+
+///|
+/// Word-boundary-windowed quantifiers: `[\b]BASE{n|n,m|n,|0-m}[\b]`
+/// with at least one `\b` (probed 0.22.2: '\b\w{5}' on 'zaaaaaz' ->
+/// '#az' — greedy block from a word start; '\w{5}\b' on 'zaaaaaaz'
+/// (6-word run) -> 'zaa#' — the block backtracks to END on the run's
+/// boundary, i.e. it spans the last window of the run; both anchors
+/// whole words only, '\ba{2}\b' on 'aaa aa' -> 'aaa #'). BASE is a
+/// bare class or a single literal/escaped char; window 1..100000 or
+/// zero-min {0,m}/{n,0}. Returns (kind, literal, lo, hi, wb_start,
+/// wb_end); hi = -1 unbounded.
+pub fn boundary_window_spec(
+  pattern : String,
+) -> (Int, Char?, Int, Int, Bool, Bool)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  // leading \b
+  let ws = n >= 2 && chars[0] == '\\' && chars[1] == 'b'
+  let body_lo = if ws { 2 } else { 0 }
+  // trailing \b
+  let we = n - body_lo >= 2 &&
+    chars[n - 1] == 'b' &&
+    chars[n - 2] == '\\' &&
+    !is_escaped_at(chars, n - 2)
+  let body_hi = if we { n - 2 } else { n }
+  if body_lo >= body_hi {
+    return None
+  }
+  if !ws && !we {
+    return None
+  }
+  // BODY = BASE + quantifier brace (last '{' closing at body end)
+  let mut open = -1
+  let mut i = body_lo
+  while i < body_hi {
+    if chars[i] == '{' {
+      open = i
+    }
+    i = i + 1
+  }
+  if open < body_lo + 1 || chars[body_hi - 1] != '}' {
+    return None
+  }
+  let base_sb = StringBuilder()
+  let mut k = body_lo
+  while k < open {
+    base_sb.write_char(chars[k])
+    k = k + 1
+  }
+  let base = base_sb.to_string()
+  let inner : Array[Char] = []
+  let mut j = open + 1
+  while j < body_hi - 1 {
+    inner.push(chars[j])
+    j = j + 1
+  }
+  let m = inner.length()
+  // window: {n} | {n,m} | {n,} | {n,0} (== {0,n}) | {0,m} | {,m}
+  let mut lo : Int = 0
+  let mut hi : Int = 0
+  match parse_capped_digits(inner, 0, m) {
+    Some((v, dz)) =>
+      if dz == m {
+        if v > 100000 {
+          return None
+        }
+        // v == 0 (exact {0}) is the zero-min empty walk — the boundary
+        // filter gates the empty positions (probed: '\ba{0}\b' on
+        // 'ab cd' -> '#ab# #cd#')
+        lo = v
+        hi = v
+      } else if inner[dz] == ',' && dz + 1 == m {
+        if v > 100000 {
+          return None
+        }
+        lo = v
+        hi = -1
+      } else if inner[dz] == ',' {
+        match parse_capped_digits(inner, dz + 1, m) {
+          Some((w, dw)) =>
+            if dw == m && v <= 100000 && w <= 100000 {
+              if w < v {
+                // {n,0}: swap to {0,n} (probed); {n,m<n> nonzero swaps
+                if w == 0 {
+                  lo = 0
+                  hi = v
+                } else {
+                  lo = w
+                  hi = v
+                }
+              } else if v == 0 {
+                lo = 0
+                hi = w
+              } else {
+                lo = v
+                hi = w
+              }
+            } else {
+              return None
+            }
+          None => return None
+        }
+      } else {
+        return None
+      }
+    None =>
+      // comma-open {,m} == {0,m}
+      if m > 1 && inner[0] == ',' {
+        match parse_capped_digits(inner, 1, m) {
+          Some((w, dw)) =>
+            if dw == m && w <= 100000 {
+              lo = 0
+              hi = w
+            } else {
+              return None
+            }
+          None => return None
+        }
+      } else {
+        return None
+      }
+  }
+  // base resolution (class / literal / escaped)
+  match bare_class_kind(base) {
+    Some(kind) => Some((kind, None, lo, hi, ws, we))
+    None => {
+      let bc = base.to_array()
+      if bc.length() == 2 && bc[0] == '\\' {
+        let lit : Char? = match bc[1] {
+          'n' => Some('\n')
+          't' => Some('\t')
+          'r' => Some('\r')
+          _ => None
+        }
+        match lit {
+          Some(c) => return Some((-1, Some(c), lo, hi, ws, we))
+          None => return None
+        }
+      }
+      if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
+        return Some((-1, Some(bc[0]), lo, hi, ws, we))
+      }
+      None
+    }
   }
 }
