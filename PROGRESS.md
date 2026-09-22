@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-22 发版 0.9.3（已发布，干净验证 4/4×三后端）**：0.9.2 后 PR #44 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify093 干净验证（窗口 Split Isolated、`\b$` contiguous+invert、逐分支锚 mwp、经典 `\s+` 回归——按偏移对拍）。
+
 - **2026-09-22 PR #44**（4 commit，三轮评审）：Split pre-tokenizer 路径的断言/窗口 pattern + **apply_split_matches 按 HF 源码模型重写**。①裸断言序列（`\b$`/`^`/`^$`）、双锚整行窗（`^.{0,2}$`）、逐分支锚 alternation 进 Split 门与 matcher（原先加载成功但整串透传）；②评审 B1：合并语义改为**词锚定**——behavior 统一作用于匹配段、mwp 的匹配段只并入紧邻前词（空词仍作锚）、mwn 连续匹配各自独立；③评审 B2（评审者拉取 HF v0.22.2 Rust 源码定模）：**invert = 交错 gap/match 条目表（零宽匹配保留为条目）的逐条 flag 取反 + 折叠**（非补集区域）——Contiguous 合并同 flag 连续段（零宽翻转词截断分隔符链）。三轮累计 ~5,700 对拍：11 pattern × 5 behavior × 2 invert × 10 输入 550/550（首版 519/550）+ 经典 pattern 200/200；63 个分歧 cell（31 B1 + 32 B2）全部修复并按偏移锁定。492/492（native/js）、双扫描全绿。遗留：issue #45（`[\r\n]` 无 + 应逐字符）、GPT2 扫描器忽略非 Isolated 行为（设计决策）。
 
 - **2026-09-22 发版 0.9.2（已发布，干净验证 5/5×三后端）**：0.9.1 后 PR #43 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify092 干净验证（`\b$` 序列、`^` 串尾规则、零下限空行窗、逗号开、逐分支锚回归）。
