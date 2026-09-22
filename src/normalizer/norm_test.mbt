@@ -2279,3 +2279,20 @@ test "single-anchor windows" {
   @test.assert_eq(@common.is_supported_replace_regex("a{0,2}$"), false)
   @test.assert_eq(@common.is_supported_replace_regex("^a{2,0}"), false)
 }
+
+///|
+/// Trailing nl-pred bases reject (review fix); leading nl-pred bases
+/// stay — probed 0.22.2.
+test "single-anchor nl-pred bases" {
+  @test.assert_eq(@common.is_supported_replace_regex("\\s{2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\D{2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\n{2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\s{2}"), true)
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^\\D{2}").normalize("a\n\nb"), "##")
+  @test.assert_eq(n("^\\s{2,4}").normalize("\n\n\n\n\n\n"), "##")
+  @test.assert_eq(n("^\\W{2}").normalize("!\n\na"), "#\na")
+  @test.assert_eq(n("^[\\r\\n]{2,}").normalize("\n\n\nb"), "#b")
+}

@@ -1451,12 +1451,28 @@ pub fn single_anchor_window_spec(
     None => return None
   }
   match bare_class_kind(base) {
-    Some(kind) => Some((kind, None, lo, hi, leading))
+    Some(kind) =>
+      if !leading && bounded_regex_kind_pred(kind, '\n') {
+        // TRAILING nl-pred bases reject: line-end-anchored blocks over
+        // newline-matching predicates diverge on consecutive-newline
+        // inputs (probed: '\s{2}$' on 'a \n' -> 'a#' in HF, our
+        // line-end model no-ops) — the double-anchor family's rule.
+        // LEADING nl-pred bases stay (probed correct incl. runs
+        // spanning newlines: '^\D{2}' on 'a\n\nb' -> '##').
+        None
+      } else {
+        Some((kind, None, lo, hi, leading))
+      }
     None => {
       let bc = base.to_array()
       if bc.length() == 2 && bc[0] == '\\' {
         let lit : Char? = match bc[1] {
-          'n' => Some('\n')
+          'n' =>
+            if !leading {
+              None // trailing '\n' base shares the nl-pred rejection
+            } else {
+              Some('\n')
+            }
           't' => Some('\t')
           'r' => Some('\r')
           _ => None
