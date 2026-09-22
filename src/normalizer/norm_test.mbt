@@ -2041,3 +2041,42 @@ test "replace bare classes and bracket ws spelling" {
   @test.assert_eq(@common.is_supported_replace_regex("[\\s]+"), true)
   @test.assert_eq(@common.is_supported_replace_regex("\\s"), true)
 }
+
+///|
+/// Literal-quantifier windows above 4 (probed 0.22.2): onig's real
+/// repeat bound is 100000 — `a{5}`/`^a{5}$`/`^a{4,6}$`/leading-zero
+/// `a{05}`/reversed `a{6,4}` (swapped to {4,6} blocks) all compute
+/// with the same engines; `{100001}` errors at load on both sides.
+/// Unanchored CLASS windows >4 (`\w{5}`) remain rejected — they route
+/// through the hardcoded quantifier spelling tables.
+test "literal quantifier windows above four compute" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(
+    n("^a{5}$").normalize("aaaaa\naaaa\naaaaaa"),
+    "#\naaaa\naaaaaa",
+  )
+  @test.assert_eq(n("^\\w{5}$").normalize("aaaaa\naa"), "#\naa")
+  @test.assert_eq(
+    n("^a{4,6}$").normalize("aaa\naaaa\naaaaaaa"),
+    "aaa\n#\naaaaaaa",
+  )
+  @test.assert_eq(n("^a{05}$").normalize("aaaaa\naaa"), "#\naaa")
+  @test.assert_eq(n("^.{5}$").normalize("abcde\nabcd"), "#\nabcd")
+  @test.assert_eq(n("^5{5}$").normalize("55555\n555"), "#\n555")
+  @test.assert_eq(n("^a{2,5}$").normalize("aaaa\na"), "#\na")
+  @test.assert_eq(n("^a{6,4}$").normalize("aaaa\naaaaaa"), "#\n#")
+  @test.assert_eq(n("^a{0,5}$").normalize("aaa\naaaaaa\n\n"), "#\naaaaaa\n#\n")
+  @test.assert_eq(n("a{5}").normalize("zaaaaaaz"), "z#az")
+  @test.assert_eq(n("a{4,6}").normalize("zaaaaaz"), "z#z")
+  @test.assert_eq(n("a{05}").normalize("zaaaaaz"), "z#z")
+  @test.assert_eq(n("a{6,4}").normalize("zaaaaaaz"), "z#z")
+  @test.assert_eq(n("a{100000,}").normalize("aaa"), "aaa")
+  @test.assert_eq(n("^a{5}$").normalize_aligned("aaaaa\naaaa").0, "#\naaaa")
+  @test.assert_eq(@common.is_supported_replace_regex("^a{5}$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^\\w{5}$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^a{100001}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a{100001}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{5}"), false)
+}
