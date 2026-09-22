@@ -2195,7 +2195,13 @@ test "boundary-windowed quantifiers" {
     @normalizer.Normalizer::Replace(pattern=p, content="#")
   }
   @test.assert_eq(n("\\ba{2}\\b").normalize("zaaz aaz aa"), "zaaz aaz #")
-  @test.assert_eq(n("\\ba{2,0}\\b").normalize("zaaz"), "#zaaz#")
+  // anchored {0,m}/{n,0} with an end \b reject (review F1/F2: HF
+  // backtracks greedy-then-empty per position — '\ba{0,2}\\b' on
+  // 'aab' -> '#aab#' — a different engine capability)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{0,2}\\b"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a{0,2}\\b"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{2,0}\\b"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{2,0}"), false)
   @test.assert_eq(n("\\b\\w{5}\\b").normalize("zz abcdefg zz"), "zz abcdefg zz")
   @test.assert_eq(n("\\b\\w{5}").normalize("zaaaaaz"), "#az")
   @test.assert_eq(n("\\w{5}\\b").normalize("zaaaaaz"), "za#")
@@ -2215,7 +2221,9 @@ test "boundary-windowed quantifiers" {
   @test.assert_eq(n("\\w{2,4}\\b").normalize("zaaaaz ab"), "za# #")
   @test.assert_eq(n("\\ba{2,4}").normalize("zaaaaz"), "zaaaaz")
   @test.assert_eq(n("\\baa\\b").normalize("zaa aa"), "zaa #")
-  @test.assert_eq(n("\\ba{0,2}\\b").normalize("zaaz"), "#zaaz#")
+  // ws-only zero-min stays ('\\ba{0,2}' on 'zaaz' — empty walk with
+  // boundary-gated empties)
+  @test.assert_eq(n("\\ba{0,2}").normalize("zaaz"), "#zaaz#")
   @test.assert_eq(n("\\ba{2,}\\b").normalize("ab abc"), "ab abc")
   @test.assert_eq(
     n("\\ba{2,4}\\b").normalize("a aa aaa aaaa aaaaa"),

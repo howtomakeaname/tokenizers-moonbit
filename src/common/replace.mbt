@@ -1347,18 +1347,10 @@ fn boundary_window_spans(
     )
     let out : Array[Span] = []
     for sp in base {
-      if sp.start == sp.stop {
-        let ok = (!ws || regex_word_boundary_at(chars, sp.start)) &&
-          (!we || regex_word_boundary_at(chars, sp.stop))
-        if ok {
-          out.push(sp)
-        }
-      } else {
-        let ok = (!ws || regex_word_boundary_at(chars, sp.start)) &&
-          (!we || regex_word_boundary_at(chars, sp.stop))
-        if ok {
-          out.push(sp)
-        }
+      let ok = (!ws || regex_word_boundary_at(chars, sp.start)) &&
+        (!we || regex_word_boundary_at(chars, sp.stop))
+      if ok {
+        out.push(sp)
       }
     }
     return out

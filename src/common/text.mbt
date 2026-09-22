@@ -1266,8 +1266,13 @@ pub fn boundary_window_spec(
           Some((w, dw)) =>
             if dw == m && v <= 100000 && w <= 100000 {
               if w < v {
-                // {n,0}: swap to {0,n} (probed); {n,m<n> nonzero swaps
+                // {n,0}: swap to {0,n} (probed); under ANY anchor the
+                // empty fallback is suppressed ('a{2,0}' on 'aaa' ->
+                // '#a#') — reject loudly (nonzero swaps unaffected)
                 if w == 0 {
+                  if ws || we {
+                    return None
+                  }
                   lo = 0
                   hi = v
                 } else {
@@ -1305,6 +1310,21 @@ pub fn boundary_window_spec(
       } else {
         return None
       }
+  }
+  // zero-min windows with an END anchor diverge from the empty-walk
+  // model (HF backtracks greedy-then-empty per position: '\ba{0,2}\b'
+  // on 'aab' -> '#aab#'; runs longer than the cap keep both edge
+  // empties) and anchored {n,0} suppresses the empty fallback — both
+  // are engine capabilities this family lacks, so reject them loudly
+  // (probed 0.22.2; lo >= 1 windows and ws-only zero-min stay)
+  // {0} EXACT with anchors stays (pure empty walk, boundary filter —
+  // probed: '\\ba{0}\\b' on 'ab cd' -> '#ab# #cd#'); {0,m} m>=1 and
+  // {0,} with an END anchor reject (HF backtracks greedy-then-empty
+  // per position — '\\ba{0,2}\\b' on 'aab' -> '#aab#' — a different
+  // engine capability); the anchored {n,0} swap is rejected in the
+  // swap branch
+  if we && lo == 0 && hi != 0 {
+    return None
   }
   // base resolution (class / literal / escaped)
   match bare_class_kind(base) {
