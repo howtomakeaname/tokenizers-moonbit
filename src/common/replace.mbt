@@ -893,6 +893,19 @@ pub fn replace_family_spans(
     }
     None => ()
   }
+  // single-anchor windows (^\w{1,2}, \w{1,2}$)
+  match single_anchor_window_spec(pattern) {
+    Some((kind, literal, lo, hi, leading)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { bounded_regex_kind_pred(kind, x) }
+      }
+      return Some(single_anchor_window_spans(chars, pred, lo, hi, leading))
+    }
+    None => ()
+  }
   // boundary-windowed quantifiers (\b\w{5}, \w{5}\b, \ba{2,4}\b)
   match boundary_window_spec(pattern) {
     Some((kind, literal, lo, hi, ws, we)) => {
@@ -1406,6 +1419,85 @@ pub fn replace_boundary_window_runs(
   replace_spans(
     chars,
     boundary_window_spans(chars, pred, lo, hi, ws, we),
+    content,
+  )
+}
+
+///|
+/// Single-anchor window spans: at each line start (leading) a greedy
+/// block from the anchor within the window; at each line end
+/// (trailing) the block ENDS at the anchor — greedily the largest
+/// len <= min(hi, run reaching the anchor) (probed: '\w{5}$' on
+/// 'abcdefg' -> 'ab#'; '^a{2,4}' on 'zaaaa' -> unchanged, the anchor
+/// pins the start and 'z' fails the pred).
+fn single_anchor_window_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+  leading : Bool,
+) -> Array[Span] {
+  let n = chars.length()
+  let out : Array[Span] = []
+  if leading {
+    let mut p = 0
+    while p < n {
+      let at_line_start = p == 0 || chars[p - 1] == '\n'
+      if at_line_start && pred(chars[p]) {
+        let mut g = p
+        while g < n && pred(chars[g]) {
+          g = g + 1
+        }
+        let len = if hi < 0 || g - p < hi { g - p } else { hi }
+        if len >= lo {
+          out.push({ start: p, stop: p + len, })
+          p = p + len
+          continue
+        }
+      }
+      p = p + 1
+    }
+    return out
+  }
+  // trailing: the block ENDS at each line end i — greedily the
+  // largest len <= min(hi, run reaching i) with start > floor (the
+  // line start after the previous line end)
+  let mut floor = 0
+  let mut i = 0
+  while i <= n {
+    let at_line_end = i == n || chars[i] == '\n'
+    if at_line_end {
+      let cap = if hi < 0 { n } else { hi }
+      let mut start = i
+      while start > floor && pred(chars[start - 1]) && i - start < cap {
+        start = start - 1
+      }
+      if i - start >= lo && start < i {
+        out.push({ start, stop: i, })
+        floor = i
+      } else {
+        floor = i + 1
+      }
+    }
+    i = i + 1
+  }
+  out
+}
+
+///|
+/// Single-anchor window replace (replace chains).
+pub fn replace_single_anchor_window_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+  leading : Bool,
+) -> String {
+  let chars = s.to_array()
+  replace_spans(
+    chars,
+    single_anchor_window_spans(chars, pred, lo, hi, leading),
     content,
   )
 }

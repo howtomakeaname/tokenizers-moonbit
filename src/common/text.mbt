@@ -435,6 +435,10 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if boundary_window_spec(pattern) is Some(_) {
     return true
   }
+  // single-anchor windows (^\w{1,2}, \w{1,2}$)
+  if single_anchor_window_spec(pattern) is Some(_) {
+    return true
+  }
   // zero-minimum quantifiers: a{0} / a{0,m} / a{0,} and class bases
   if zero_min_quantifier_spec(pattern) is Some(_) {
     return true
@@ -1349,6 +1353,121 @@ pub fn boundary_window_spec(
       }
       if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
         return Some((-1, Some(bc[0]), lo, hi, ws, we))
+      }
+      None
+    }
+  }
+}
+
+///|
+/// SINGLE-anchor windows `^BASE{n|n,m|n,}` / `BASE{...}$` (probed
+/// 0.22.2): at each LINE start (or end) a block within the window,
+/// greedy from the anchor — `^\w{1,2}` on 'abcdef\nabcdef' ->
+/// '#cdef\n#cdef'; `\w{1,2}$` -> 'abcd#\nabcd#'; `{n,m}` blocks
+/// greedily from the anchor (`^a{2,4}` on 'zaaaa' run of 4 mid-word:
+/// no match — the anchor pins the block start to the line start, and
+/// 'z' fails the pred). Zero-min forms reject (their empty-walk is
+/// position-global, not anchor-pinned: '^a{0,2}' on 'zaaaz' ->
+/// '#zaaaz' — an empty at EVERY non-adjacent position).
+pub fn single_anchor_window_spec(
+  pattern : String,
+) -> (Int, Char?, Int, Int, Bool)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  if n < 5 || (chars[0] != '^' && chars[n - 1] != '$') {
+    return None
+  }
+  let leading = chars[0] == '^' && chars[n - 1] != '$'
+  let trailing = !leading && chars[n - 1] == '$'
+  if !leading && !trailing {
+    return None
+  }
+  let body_lo = if leading { 1 } else { 0 }
+  let body_hi = if trailing { n - 1 } else { n }
+  // BASE + brace at the end of the body
+  let mut open = -1
+  let mut i = body_lo
+  while i < body_hi {
+    if chars[i] == '{' {
+      open = i
+    }
+    i = i + 1
+  }
+  if open < body_lo + 1 || chars[body_hi - 1] != '}' {
+    return None
+  }
+  let base_sb = StringBuilder()
+  let mut k = body_lo
+  while k < open {
+    base_sb.write_char(chars[k])
+    k = k + 1
+  }
+  let base = base_sb.to_string()
+  let inner : Array[Char] = []
+  let mut j = open + 1
+  while j < body_hi - 1 {
+    inner.push(chars[j])
+    j = j + 1
+  }
+  let m = inner.length()
+  let mut lo : Int = 0
+  let mut hi : Int = 0
+  match parse_capped_digits(inner, 0, m) {
+    Some((v, dz)) =>
+      if dz == m {
+        if v < 1 || v > 100000 {
+          return None
+        }
+        lo = v
+        hi = v
+      } else if inner[dz] == ',' && dz + 1 == m {
+        if v < 1 || v > 100000 {
+          return None
+        }
+        lo = v
+        hi = -1
+      } else if inner[dz] == ',' {
+        match parse_capped_digits(inner, dz + 1, m) {
+          Some((w, dw)) =>
+            if dw == m && v >= 1 && v <= 100000 && w <= 100000 {
+              if w < v {
+                if w == 0 {
+                  return None // {n,0}: empty semantics, reject
+                }
+                lo = w
+                hi = v
+              } else {
+                lo = v
+                hi = w
+              }
+            } else {
+              return None
+            }
+          None => return None
+        }
+      } else {
+        return None
+      }
+    None => return None
+  }
+  match bare_class_kind(base) {
+    Some(kind) => Some((kind, None, lo, hi, leading))
+    None => {
+      let bc = base.to_array()
+      if bc.length() == 2 && bc[0] == '\\' {
+        let lit : Char? = match bc[1] {
+          'n' => Some('\n')
+          't' => Some('\t')
+          'r' => Some('\r')
+          _ => None
+        }
+        match lit {
+          Some(c) => return Some((-1, Some(c), lo, hi, leading))
+          None => return None
+        }
+      }
+      if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
+        return Some((-1, Some(bc[0]), lo, hi, leading))
       }
       None
     }
