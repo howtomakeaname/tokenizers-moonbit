@@ -919,6 +919,31 @@ pub fn replace_family_spans(
     }
     None => ()
   }
+  // non-boundary (\B) windows and lazy-exact
+  match nonboundary_window_spec(pattern) {
+    Some((kind, literal, lo, hi, ws, we)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { bounded_regex_kind_pred(kind, x) }
+      }
+      return Some(nonboundary_window_spans(chars, pred, lo, hi, ws, we))
+    }
+    None => ()
+  }
+  match nonboundary_lazy_exact_spec(pattern) {
+    Some((kind, literal, n, ws, we)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { bounded_regex_kind_pred(kind, x) }
+      }
+      return Some(nonboundary_lazy_exact_spans(chars, pred, n, ws, we))
+    }
+    None => ()
+  }
   // boundary-windowed quantifiers (\b\w{5}, \w{5}\b, \ba{2,4}\b)
   match boundary_window_spec(pattern) {
     Some((kind, literal, lo, hi, ws, we)) => {
@@ -1356,6 +1381,31 @@ fn boundary_window_spans(
   ws : Bool,
   we : Bool,
 ) -> Array[Span] {
+  boundary_window_impl(chars, pred, lo, hi, ws, we, false)
+}
+
+///|
+/// Shared engine: `invert` flips every word-boundary test to the
+/// non-boundary (\B) predicate — probed 0.22.2: '\B\w{5}' on
+/// 'zaaaaaz' -> 'z#z' (blocks start at NON-boundaries, mid-word);
+/// zero-min \B walks the empty rules inverted ('\B\w{0}' on
+/// 'zaaz' -> 'z#a#a#z').
+fn boundary_window_impl(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+  ws : Bool,
+  we : Bool,
+  invert : Bool,
+) -> Array[Span] {
+  fn holds(pos : Int) -> Bool {
+    if invert {
+      !regex_word_boundary_at(chars, pos)
+    } else {
+      regex_word_boundary_at(chars, pos)
+    }
+  }
   let n = chars.length()
   if n == 0 {
     return []
@@ -1373,8 +1423,7 @@ fn boundary_window_spans(
     )
     let out : Array[Span] = []
     for sp in base {
-      let ok = (!ws || regex_word_boundary_at(chars, sp.start)) &&
-        (!we || regex_word_boundary_at(chars, sp.stop))
+      let ok = (!ws || holds(sp.start)) && (!we || holds(sp.stop))
       if ok {
         out.push(sp)
       }
@@ -1385,7 +1434,7 @@ fn boundary_window_spans(
   let mut p = 0
   while p < n {
     if pred(chars[p]) {
-      let start_ok = !ws || regex_word_boundary_at(chars, p)
+      let start_ok = !ws || holds(p)
       if start_ok {
         let mut g = p
         while g < n && pred(chars[g]) {
@@ -1395,9 +1444,7 @@ fn boundary_window_spans(
           // the run end must ALSO be a word boundary — a literal-'a'
           // run ending on a word char (e.g. 'aa' inside 'aaz') is not
           let len = g - p
-          if len >= lo &&
-            (hi < 0 || len <= hi) &&
-            regex_word_boundary_at(chars, g) {
+          if len >= lo && (hi < 0 || len <= hi) && holds(g) {
             out.push({ start: p, stop: g, })
             p = g
             continue
@@ -1590,6 +1637,160 @@ pub fn replace_boundary_lazy_exact_runs(
   replace_spans(
     chars,
     boundary_lazy_exact_spans(chars, pred, n, ws, we),
+    content,
+  )
+}
+
+///|
+/// Non-boundary (\B) window spans — leftmost-greedy scan (probed
+/// 0.22.2): from each position a greedy block within the window; an
+/// end \B backtracks the length down to lo until the end position is
+/// a NON-boundary ('\w{5}\B' on 'zaaaaaz' -> (0,5) -> '#az'); a
+/// start \B only filters scan positions ('\B\w{5}' -> 'z#z').
+/// Zero-min walks the empty rules inverted ('\B\w{0}' on 'zaaz' ->
+/// 'z#a#a#z', empties at 1 and 2).
+pub fn nonboundary_window_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+  ws : Bool,
+  we : Bool,
+) -> Array[Span] {
+  let n = chars.length()
+  let out : Array[Span] = []
+  if n == 0 {
+    return out
+  }
+  fn holds(pos : Int) -> Bool {
+    !regex_word_boundary_at(chars, pos)
+  }
+  if lo == 0 {
+    let cap : Int? = if hi < 0 { None } else { Some(hi) }
+    let base = zero_min_match_spans(chars, pred, cap)
+    for sp in base {
+      let ok = (!ws || holds(sp.start)) && (!we || holds(sp.stop))
+      if ok {
+        out.push(sp)
+      }
+    }
+    return out
+  }
+  let mut p = 0
+  while p < n {
+    if pred(chars[p]) && (!ws || holds(p)) {
+      let mut g = p
+      while g < n && pred(chars[g]) {
+        g = g + 1
+      }
+      let mut len = if hi < 0 || g - p < hi { g - p } else { hi }
+      // end \B: shrink until the end position is a non-boundary
+      while len >= lo && we && !holds(p + len) {
+        len = len - 1
+      }
+      if len >= lo {
+        out.push({ start: p, stop: p + len, })
+        p = p + len
+        continue
+      }
+    }
+    p = p + 1
+  }
+  out
+}
+
+///|
+/// Non-boundary (\\B) window replace.
+pub fn replace_nonboundary_window_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+  ws : Bool,
+  we : Bool,
+) -> String {
+  let chars = s.to_array()
+  replace_spans(
+    chars,
+    nonboundary_window_spans(chars, pred, lo, hi, ws, we),
+    content,
+  )
+}
+
+///|
+/// Non-boundary lazy-exact spans (the optional-group walk with the
+/// inverted predicate).
+fn nonboundary_lazy_exact_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  n : Int,
+  ws : Bool,
+  we : Bool,
+) -> Array[Span] {
+  // mirror boundary_lazy_exact_spans with inverted boundary checks
+  let len = chars.length()
+  let out : Array[Span] = []
+  if len == 0 {
+    return out
+  }
+  fn start_ok(p : Int) -> Bool {
+    !ws || !regex_word_boundary_at(chars, p)
+  }
+  fn end_ok(q : Int) -> Bool {
+    !we || !regex_word_boundary_at(chars, q)
+  }
+  let mut p = 0
+  let mut prev_end = -1
+  while p <= len {
+    if p == len {
+      if start_ok(p) && end_ok(p) && p != prev_end {
+        out.push({ start: p, stop: p, })
+      }
+      break
+    }
+    let mut fits = p + n <= len
+    if fits {
+      let mut k = p
+      while k < p + n {
+        if !pred(chars[k]) {
+          fits = false
+          break
+        }
+        k = k + 1
+      }
+    }
+    if fits && start_ok(p) && end_ok(p + n) {
+      out.push({ start: p, stop: p + n, })
+      prev_end = p + n
+      p = p + n
+      continue
+    }
+    if start_ok(p) && end_ok(p) && p != prev_end {
+      out.push({ start: p, stop: p, })
+      prev_end = p
+      p = p + 1
+      continue
+    }
+    p = p + 1
+  }
+  out
+}
+
+///|
+/// Non-boundary lazy-exact replace.
+pub fn replace_nonboundary_lazy_exact_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  n : Int,
+  ws : Bool,
+  we : Bool,
+) -> String {
+  let chars = s.to_array()
+  replace_spans(
+    chars,
+    nonboundary_lazy_exact_spans(chars, pred, n, ws, we),
     content,
   )
 }

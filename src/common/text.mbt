@@ -443,6 +443,13 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if boundary_lazy_exact_spec(pattern) is Some(_) {
     return true
   }
+  // non-boundary (\B) windows and lazy-exact
+  if nonboundary_window_spec(pattern) is Some(_) {
+    return true
+  }
+  if nonboundary_lazy_exact_spec(pattern) is Some(_) {
+    return true
+  }
   // zero-minimum quantifiers: a{0} / a{0,m} / a{0,} and class bases
   if zero_min_quantifier_spec(pattern) is Some(_) {
     return true
@@ -1206,6 +1213,29 @@ fn mixed_complement_ordering_kind(base : String) -> Int? {
 pub fn boundary_window_spec(
   pattern : String,
 ) -> (Int, Char?, Int, Int, Bool, Bool)? {
+  match boundary_window_parse(pattern) {
+    Some((kind, literal, lo, hi, ws, we)) => {
+      // any-anchor zero-min ranges reject (round-2: ws-only also
+      // diverges — HF backtracks per position and emits the empty at
+      // boundaries the pre-filtered walk suppressed, '\b\w{0,2}' on
+      // 'zaaz' -> '#az#'); only exact {0} stays. The \B family
+      // bypasses this — its inverted probes match the walk+filter
+      // model ('\B\w{0,2}' on 'zaaaz' -> 'z##').
+      if (ws || we) && lo == 0 && hi != 0 {
+        return None
+      }
+      Some((kind, literal, lo, hi, ws, we))
+    }
+    None => None
+  }
+}
+
+///|
+/// The raw parse shared by the \b and \B families (narrowing guards
+/// live in the callers).
+fn boundary_window_parse(
+  pattern : String,
+) -> (Int, Char?, Int, Int, Bool, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
   // leading \b
@@ -1325,19 +1355,6 @@ pub fn boundary_window_spec(
   // empties) and anchored {n,0} suppresses the empty fallback — both
   // are engine capabilities this family lacks, so reject them loudly
   // (probed 0.22.2; lo >= 1 windows and ws-only zero-min stay)
-  // {0} EXACT with anchors stays (pure empty walk, boundary filter —
-  // probed: '\\ba{0}\\b' on 'ab cd' -> '#ab# #cd#'); {0,m} m>=1 and
-  // {0,} with an END anchor reject (HF backtracks greedy-then-empty
-  // per position — '\\ba{0,2}\\b' on 'aab' -> '#aab#' — a different
-  // engine capability); the anchored {n,0} swap is rejected in the
-  // swap branch
-  // any-anchor zero-min ranges reject (round-2: ws-only also diverges —
-  // HF backtracks per position and emits the empty at boundaries the
-  // pre-filtered walk suppressed, '\b\w{0,2}' on 'zaaz' -> '#az#');
-  // only exact {0} stays
-  if (ws || we) && lo == 0 && hi != 0 {
-    return None
-  }
   // base resolution (class / literal / escaped)
   match bare_class_kind(base) {
     Some(kind) => Some((kind, None, lo, hi, ws, we))
@@ -1545,4 +1562,102 @@ pub fn boundary_lazy_exact_spec(
       }
     None => None
   }
+}
+
+///|
+/// Non-boundary (\\B) windows: substitute \\B -> \\b and delegate to
+/// boundary_window_spec for the parse (anchor flags carry the same
+/// positions); the engine inverts every boundary test. Zero-min
+/// RANGE rejection mirrors the \\b family.
+pub fn nonboundary_window_spec(
+  pattern : String,
+) -> (Int, Char?, Int, Int, Bool, Bool)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  if n < 5 {
+    return None
+  }
+  // require at least one \\B anchor (backslash + 'B'); reject any bare \b
+  let mut has_nb = false
+  let mut i = 0
+  while i < n {
+    if chars[i] == '\\' && i + 1 < n && chars[i + 1] == 'B' {
+      has_nb = true
+    }
+    if chars[i] == '\\' && i + 1 < n && chars[i + 1] == 'b' {
+      return None
+    }
+    i = i + 1
+  }
+  if !has_nb {
+    return None
+  }
+  // rewrite \\B -> \\b and delegate
+  let sb = StringBuilder()
+  let mut k = 0
+  while k < n {
+    if chars[k] == '\\' && k + 1 < n && chars[k + 1] == 'B' {
+      sb.write_char('\\')
+      sb.write_char('b')
+      k = k + 2
+    } else {
+      sb.write_char(chars[k])
+      k = k + 1
+    }
+  }
+  match boundary_window_parse(sb.to_string()) {
+    Some((kind, literal, lo, hi, ws, we)) => {
+      // zero-min RANGES reject — the same walk-vs-scan divergence as
+      // the \b family round-2 (HF restarts the greedy scan at each
+      // anchor-failing position, the pre-filtered walk cannot:
+      // '\B\w{0,2}' on 'zaaaz' -> 'z##' vs our 'za##'); exact {0}
+      // stays (walk+filter verified: '\B\w{0}' on 'zaaz' ->
+      // 'z#a#a#z', empties at every interior non-boundary)
+      if (ws || we) && lo == 0 && hi != 0 {
+        return None
+      }
+      Some((kind, literal, lo, hi, ws, we))
+    }
+    None => None
+  }
+}
+
+///|
+/// Non-boundary lazy-exact `\\Ba{2}?` / `a{2}?\\B` (probed: same
+/// optional-group semantics with the inverted predicate).
+pub fn nonboundary_lazy_exact_spec(
+  pattern : String,
+) -> (Int, Char?, Int, Bool, Bool)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  if n < 6 {
+    return None
+  }
+  let mut has_nb = false
+  let mut i = 0
+  while i < n {
+    if chars[i] == '\\' && i + 1 < n && chars[i + 1] == 'B' {
+      has_nb = true
+    }
+    if chars[i] == '\\' && i + 1 < n && chars[i + 1] == 'b' {
+      return None
+    }
+    i = i + 1
+  }
+  if !has_nb {
+    return None
+  }
+  let sb = StringBuilder()
+  let mut k = 0
+  while k < n {
+    if chars[k] == '\\' && k + 1 < n && chars[k + 1] == 'B' {
+      sb.write_char('\\')
+      sb.write_char('b')
+      k = k + 2
+    } else {
+      sb.write_char(chars[k])
+      k = k + 1
+    }
+  }
+  boundary_lazy_exact_spec(sb.to_string())
 }
