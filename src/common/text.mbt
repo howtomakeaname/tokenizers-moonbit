@@ -932,7 +932,7 @@ fn double_anchored_brace(
     if inner.length() > 1 && inner[0] == ',' {
       match parse_capped_digits(inner, 1, inner.length()) {
         Some((w, k2)) =>
-          if k2 == inner.length() && w <= 4 {
+          if k2 == inner.length() && w <= 100000 {
             lo = 0
             hi = w
             base_end = open
@@ -955,14 +955,14 @@ fn double_anchored_brace(
     match parse_capped_digits(inner, 0, m) {
       Some((v, j)) =>
         if j == m {
-          if v > 4 {
+          if v > 100000 {
             return None
           }
           lo = v
           hi = v
         } else if inner[j] == ',' {
           if j + 1 == m {
-            if v > 4 {
+            if v > 100000 {
               return None
             }
             lo = v
@@ -970,7 +970,7 @@ fn double_anchored_brace(
           } else {
             match parse_capped_digits(inner, j + 1, m) {
               Some((w, k2)) =>
-                if k2 == m && v <= 4 && w <= 4 {
+                if k2 == m && v <= 100000 && w <= 100000 {
                   // reversed {n,m} with n > m: onig swaps to an ATOMIC
                   // {m,n} window (probed: ^a{3,2}$ on 'aa'/'aaa' ->
                   // '#', 'aaaa' unchanged == the {2,3} window; ^a{2,0}$
