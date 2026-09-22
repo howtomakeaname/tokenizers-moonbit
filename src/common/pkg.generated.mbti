@@ -18,6 +18,8 @@ pub fn char_bounded_spec(String) -> (Char, Int, Int)?
 
 pub fn char_string(Char) -> String
 
+pub fn class_bounded_spec(String) -> (Int, Int, Int)?
+
 pub fn double_anchored_spec(String) -> (Int, Char?, Int, Int)?
 
 pub fn exact_regex_kind(String) -> (Int, Int)?
@@ -87,6 +89,8 @@ pub fn replace_bounded_simple_regex(String, String, String) -> String?
 pub fn replace_char_bounded_runs(String, String, String) -> String?
 
 pub fn replace_char_runs(String, String, (Char) -> Bool) -> String
+
+pub fn replace_class_bounded_runs(String, String, String) -> String?
 
 pub fn replace_double_anchored_line_runs(String, String, (Char) -> Bool, Int, Int) -> String
 

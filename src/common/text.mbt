@@ -427,6 +427,10 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if char_bounded_spec(pattern) is Some(_) {
     return true
   }
+  // generic class windows (\w{5} ...) up to the same bound
+  if class_bounded_spec(pattern) is Some(_) {
+    return true
+  }
   // zero-minimum quantifiers: a{0} / a{0,m} / a{0,} and class bases
   if zero_min_quantifier_spec(pattern) is Some(_) {
     return true

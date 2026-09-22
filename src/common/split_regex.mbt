@@ -105,6 +105,21 @@ pub fn simple_split_regex_matches(
   if pattern == "[\\s]+" {
     return Some(run_matches(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
   }
+  // generic class windows: block spans for any bound (probed 0.22.2:
+  // '\w{5}' Isolated on 'zz abcdefg 9912345 zz' splits 'zz',' #fg
+  // ',' #45 ',' zz' — the block semantics apply to Split too)
+  match class_bounded_spec(pattern) {
+    Some((kind, lo, hi)) =>
+      return Some(
+        block_match_spans(
+          chars,
+          fn(c) { bounded_regex_kind_pred(kind, c) },
+          lo,
+          hi,
+        ),
+      )
+    None => ()
+  }
   // PER-BRANCH anchors first: `^foo|bar$` binds anchors per branch —
   // the global-anchor reading below would misread it (probed 0.22.2)
   match regex_literal_branch_alternatives_spec(pattern) {
