@@ -18,7 +18,7 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.10.2**（2026-09-22，0.10.1 后含 PR #54 边界惰性 exact）。0.10.2 后待办见 §2 队列。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.10.3**（2026-09-22，0.10.2 后含 PR #55 \\B 非边界族）。0.10.3 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-22 PR #55**（4 commit，一轮评审 APPROVE）：`\B` 非边界族（windows + lazy-exact）。`\B`→`\b` 改写 + 共享 `boundary_window_parse`（\b 零下限收窄留在 \b 侧 caller——提取经验证行为保持，168 拼写 sweep byte-identical）。**尾 \B 规则与 \b 结构不同**：左扫贪婪、尾 \B 回缩长度至端点为非边界（`\w{5}\B` 于 'zaaaaaz' → (0,5) → '#az'，而 \b 是钉 run 尾）。专设引擎；`\Ba{2}?` 可选组反向；精确 `{0}` 内部空（'zaaz'→'z#a#a#z'）；**\B 零下限区间拒绝**（与 \b 同型的 walk-vs-scan 分歧，HF 逐位重启贪婪扫描）。评审 1263 cell 三方对拍（949 normalizer + 949 decoder 零分歧，main-vs-PR 零回归）；515/515（native/js）、双扫描全绿。遗留（评审记录）：混合锚 `\ba{2}\B`、plus 惰性锚定 `\B\w+?`。
+
 - **2026-09-22 发版 0.10.2（已发布，干净验证 4/4×三后端）**：0.10.1 后 PR #54 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify0102 干净验证（`\ba{2}?` 惰性 exact、`^\w{1,2}` 回归、`\b\w{5}` 回归、`\w{5}` 回归）。
 
 - **2026-09-22 PR #54**（4 commit，两轮评审）：边界惰性 exact `\ba{2}?` / `\w{2}?\b`。onig 把 `X{n}?` 解析为**可选组** `(X{n})?`——块命中双锚时替换、否则在锚位置插空、无其他回退（`\ba{2}?` 于 'aaa'→'#a#'；`\ba{2}?\b` 于 'aaaa'→'#aaaa#' 块失败尾锚两空齐发；`\w{5}?\b` 于 'zaaaaaz'→'#za#' 块须终于 EOS 词边界）。实现委托 boundary_window_spec 于去 `?` 串（**保留尾 \b 使 we flag 存活**——两次自验修 strip 边界算术）+ 专属引擎。**意外发现**：区间惰性锚定形（`{n,m}?`/`{n,}?`）早已经 lazy_normalize 折叠到 `{n}` 窗正确工作（无空回退）——我首版电池误断言不支持，探针纠正自己。评审 F1：`cut<6` 误拒 we-only 单字符基 `a{2}?\b`（HF 可算）→ cut 降至 5 + 7 cell 锁定。两轮 ~330 cell；513/513（native/js）、双扫描全绿。遗留（评审记录）：`a{2}?\\b` 字面反斜杠尾、`\b\w+?` plus 惰性锚定、重复锚。
