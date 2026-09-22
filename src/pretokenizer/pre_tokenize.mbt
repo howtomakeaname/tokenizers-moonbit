@@ -132,6 +132,19 @@ fn is_known_passthrough_split_regex(pattern : String) -> Bool {
 }
 
 ///|
+/// HF Split semantics (v0.22.2 source `normalizer.rs split`): the
+/// matcher yields an INTERLEAVED list of (span, is_match) entries —
+/// gaps flagged false, matches flagged true, ZERO-WIDTH matches
+/// included as entries; `invert` negates every flag (no complement
+/// region computation). The behavior folds that list:
+///   Isolated — every non-empty entry emits
+///   Removed — flag-true entries drop
+///   Contiguous — runs of consecutive entries with EQUAL flags merge
+///   MergedWithPrevious — a match extends the previous accumulated
+///     span iff the previous ENTRY was flagged false (an empty word
+///     still anchors); otherwise it starts a new piece
+///   MergedWithNext — the mirror: a match merges with the following
+///     word entry; consecutive matches stand alone
 fn apply_split_matches(
   chars : Array[Char],
   matches : Array[@common.Span],
@@ -139,99 +152,107 @@ fn apply_split_matches(
   invert : Bool,
   base_offset : Int,
 ) -> Array[@types.Split] {
-  let out : Array[@types.Split] = []
+  // interleaved (start, stop, is_match) entries; zero-width matches
+  // kept, zero-width gaps skipped
+  let entries : Array[(Int, Int, Bool)] = []
   let mut cursor = 0
-  let mut pending_next : @common.Span? = None
-  let mut pending_contiguous : @common.Span? = None
-  fn emit_span(span : @common.Span) -> Unit {
-    if span.stop <= span.start {
+  for m in matches {
+    if m.start > cursor {
+      entries.push((cursor, m.start, false))
+    }
+    entries.push((m.start, m.stop, true))
+    cursor = m.stop
+  }
+  if chars.length() > cursor {
+    entries.push((cursor, chars.length(), false))
+  }
+  let flag_of = fn(b : Bool) -> Bool { if invert { !b } else { b } }
+  let out : Array[@types.Split] = []
+  fn emit(start : Int, stop : Int) -> Unit {
+    if stop <= start {
       return
     }
     out.push({
-      value: substr(chars, span.start, span.stop),
-      offsets: (base_offset + span.start, base_offset + span.stop),
+      value: substr(chars, start, stop),
+      offsets: (base_offset + start, base_offset + stop),
     })
   }
-  fn flush_contiguous() -> Unit {
-    match pending_contiguous {
-      Some(p) => {
-        emit_span(p)
-        pending_contiguous = None
+  match behavior {
+    Isolated =>
+      for e in entries {
+        emit(e.0, e.1)
       }
-      None => ()
-    }
-  }
-  fn emit_non_delim(span : @common.Span) -> Unit {
-    flush_contiguous()
-    match pending_next {
-      Some(p) => {
-        out.push({
-          value: substr(chars, p.start, p.stop) +
-          substr(chars, span.start, span.stop),
-          offsets: (base_offset + p.start, base_offset + span.stop),
-        })
-        pending_next = None
-      }
-      None => emit_span(span)
-    }
-  }
-  fn emit_delim(span : @common.Span) -> Unit {
-    match behavior {
-      Removed => ()
-      Isolated => emit_span(span)
-      Contiguous =>
-        match pending_contiguous {
-          Some(p) =>
-            if p.stop == span.start {
-              pending_contiguous = Some({ start: p.start, stop: span.stop, })
-            } else {
-              emit_span(p)
-              pending_contiguous = Some(span)
-            }
-          None => pending_contiguous = Some(span)
+    Removed =>
+      for e in entries {
+        if !flag_of(e.2) {
+          emit(e.0, e.1)
         }
-      MergedWithPrevious =>
-        if out.length() > 0 {
-          let idx = out.length() - 1
-          let prev = out[idx]
-          out[idx] = {
-            value: prev.value + substr(chars, span.start, span.stop),
-            offsets: (prev.offsets.0, base_offset + span.stop),
+      }
+    Contiguous => {
+      let mut i = 0
+      let n = entries.length()
+      while i < n {
+        let f = flag_of(entries[i].2)
+        let run_start = entries[i].0
+        let mut run_stop = entries[i].1
+        let mut j = i + 1
+        while j < n && flag_of(entries[j].2) == f {
+          run_stop = entries[j].1
+          j = j + 1
+        }
+        emit(run_start, run_stop)
+        i = j
+      }
+    }
+    MergedWithPrevious => {
+      // a match extends the open piece iff the previous ENTRY was
+      // flagged false (an empty word still anchors)
+      let mut piece_start : Int? = None
+      let mut piece_stop = 0
+      let mut prev_flag : Bool? = None
+      for e in entries {
+        let f = flag_of(e.2)
+        match piece_start {
+          Some(ps) =>
+            if !(f && prev_flag == Some(false)) {
+              emit(ps, piece_stop)
+              piece_start = Some(e.0)
+            }
+          None => piece_start = Some(e.0)
+        }
+        piece_stop = e.1
+        prev_flag = Some(f)
+      }
+      match piece_start {
+        Some(ps) => emit(ps, piece_stop)
+        None => ()
+      }
+    }
+    _ => {
+      // MergedWithNext: a match merges with the FOLLOWING word entry
+      let n = entries.length()
+      let mut i = 0
+      while i < n {
+        let e = entries[i]
+        if flag_of(e.2) {
+          // match: merge with next word if one follows
+          if i + 1 < n && !flag_of(entries[i + 1].2) {
+            emit(e.0, entries[i + 1].1)
+            i = i + 2
+          } else {
+            emit(e.0, e.1)
+            i = i + 1
           }
         } else {
-          emit_span(span)
+          // word: emitted alone unless consumed by a preceding match
+          // (handled above); check it was not already consumed by
+          // looking back — matches consume forward, so a word here was
+          // not consumed
+          emit(e.0, e.1)
+          i = i + 1
         }
-      MergedWithNext => pending_next = Some(span)
-    }
-  }
-  for m in matches {
-    if cursor < m.start {
-      let gap = @common.Span::{ start: cursor, stop: m.start, }
-      if invert {
-        emit_delim(gap)
-      } else {
-        emit_non_delim(gap)
       }
     }
-    if invert {
-      emit_non_delim(m)
-    } else {
-      emit_delim(m)
-    }
-    cursor = m.stop
-  }
-  if cursor < chars.length() {
-    let tail = @common.Span::{ start: cursor, stop: chars.length(), }
-    if invert {
-      emit_delim(tail)
-    } else {
-      emit_non_delim(tail)
-    }
-  }
-  flush_contiguous()
-  match pending_next {
-    Some(p) => emit_span(p)
-    None => ()
   }
   out
 }
