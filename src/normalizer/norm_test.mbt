@@ -2010,3 +2010,13 @@ test "nl-pred window classes reject explicitly" {
   @test.assert_eq(@common.is_supported_replace_regex("^.{0,2}$"), true)
   @test.assert_eq(@common.is_supported_replace_regex("^a{0,2}$"), true)
 }
+
+///|
+/// Replace-side literal-char spelling `[\r\n]` (raw CR/LF in the
+/// pattern string) is per-char like the escaped spelling (review
+/// note; HF probed 0.22.2: 'a\r\r\nb' -> 'a###b').
+test "replace literal bracket crlf is per char" {
+  let n = @normalizer.Normalizer::Replace(pattern="[\r\n]", content="#")
+  @test.assert_eq(n.normalize("a\r\r\nb"), "a###b")
+  @test.assert_eq(n.normalize("a\n\nb"), "a##b")
+}

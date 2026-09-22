@@ -260,10 +260,11 @@ pub fn simple_split_regex_matches(
         exact_run=4,
       ),
     )
-  } else if pattern == "[\\r\\n]" ||
-    pattern == "[\r\n]" ||
-    pattern == "[\\r\\n]+" ||
-    pattern == "[\r\n]+" {
+  } else if pattern == "[\\r\\n]" || pattern == "[\r\n]" {
+    // no-plus spelling matches SINGLE chars (probed 0.22.2: 'a\n\nb'
+    // Isolated -> a, \n(1,2), \n(2,3), b) — not maximal runs
+    Some(exact_one_matches(chars, fn(c) { c == '\r' || c == '\n' }))
+  } else if pattern == "[\\r\\n]+" || pattern == "[\r\n]+" {
     Some(run_matches(chars, fn(c) { c == '\r' || c == '\n' }))
   } else if pattern == "[\\r\\n]{2,}" || pattern == "[\r\n]{2,}" {
     Some(run_matches_min(chars, fn(c) { c == '\r' || c == '\n' }, min_run=2))
@@ -710,3 +711,15 @@ pub extend Regex with @debug.Debug::{to_repr}
 
 ///|
 pub extend Regex with Eq::{equal, not_equal}
+
+///|
+/// Exact-1 per-character spans (a bare class with no quantifier).
+fn exact_one_matches(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] {
+  let out : Array[Span] = []
+  for i, c in chars {
+    if pred(c) {
+      out.push({ start: i, stop: i + 1, })
+    }
+  }
+  out
+}
