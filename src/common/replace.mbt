@@ -893,6 +893,19 @@ pub fn replace_family_spans(
     }
     None => ()
   }
+  // boundary-windowed quantifiers (\b\w{5}, \w{5}\b, \ba{2,4}\b)
+  match boundary_window_spec(pattern) {
+    Some((kind, literal, lo, hi, ws, we)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { bounded_regex_kind_pred(kind, x) }
+      }
+      return Some(boundary_window_spans(chars, pred, lo, hi, ws, we))
+    }
+    None => ()
+  }
   // generic class windows (\w{5}, \d{4,6}, [\p{L}]{5,} ... — any
   // bound up to onig 100000) precede the hardcoded {1,2}/{1,3}/{1,4}
   // spelling tables, which they subsume for the plain forms
@@ -1296,4 +1309,103 @@ pub fn replace_class_bounded_runs(
     }
     None => None
   }
+}
+
+///|
+/// Boundary-windowed block spans (probed 0.22.2): with an end `\b`
+/// the block must END on a word boundary — since positions inside a
+/// predicate run are never boundaries, the block spans the FULL
+/// remaining run (len = run_end - pos) when it fits the window, and
+/// the scan advances one char otherwise (leftmost non-overlapping,
+/// '\w{5}\b' on the 6-word run 'zaaaaaaz' -> span (2,7) -> 'zaa#');
+/// with only a start `\b` the block starts at a word boundary and
+/// consumes greedily within the window; with both, only whole words
+/// in the window match. Zero-min windows walk the empty rules with
+/// every empty requiring its boundary predicates at the position.
+fn boundary_window_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+  ws : Bool,
+  we : Bool,
+) -> Array[Span] {
+  let n = chars.length()
+  if n == 0 {
+    return []
+  }
+  if lo == 0 {
+    // zero-min: reuse the empty-walk spans, boundary-filtered
+    let base = zero_min_match_spans(
+      chars,
+      pred,
+      if hi < 0 {
+        None
+      } else {
+        Some(hi)
+      },
+    )
+    let out : Array[Span] = []
+    for sp in base {
+      let ok = (!ws || regex_word_boundary_at(chars, sp.start)) &&
+        (!we || regex_word_boundary_at(chars, sp.stop))
+      if ok {
+        out.push(sp)
+      }
+    }
+    return out
+  }
+  let out : Array[Span] = []
+  let mut p = 0
+  while p < n {
+    if pred(chars[p]) {
+      let start_ok = !ws || regex_word_boundary_at(chars, p)
+      if start_ok {
+        let mut g = p
+        while g < n && pred(chars[g]) {
+          g = g + 1
+        }
+        if we {
+          // the run end must ALSO be a word boundary — a literal-'a'
+          // run ending on a word char (e.g. 'aa' inside 'aaz') is not
+          let len = g - p
+          if len >= lo &&
+            (hi < 0 || len <= hi) &&
+            regex_word_boundary_at(chars, g) {
+            out.push({ start: p, stop: g, })
+            p = g
+            continue
+          }
+        } else {
+          let len = if hi < 0 || g - p < hi { g - p } else { hi }
+          if len >= lo {
+            out.push({ start: p, stop: p + len, })
+            p = p + len
+            continue
+          }
+        }
+      }
+    }
+    p = p + 1
+  }
+  out
+}
+
+///|
+/// Boundary-windowed replace (replace chains).
+pub fn replace_boundary_window_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+  ws : Bool,
+  we : Bool,
+) -> String {
+  let chars = s.to_array()
+  replace_spans(
+    chars,
+    boundary_window_spans(chars, pred, lo, hi, ws, we),
+    content,
+  )
 }
