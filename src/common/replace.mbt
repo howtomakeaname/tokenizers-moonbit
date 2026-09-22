@@ -893,6 +893,21 @@ pub fn replace_family_spans(
     }
     None => ()
   }
+  // generic class windows (\w{5}, \d{4,6}, [\p{L}]{5,} ... — any
+  // bound up to onig 100000) precede the hardcoded {1,2}/{1,3}/{1,4}
+  // spelling tables, which they subsume for the plain forms
+  match class_bounded_spec(pattern) {
+    Some((kind, lo, hi)) =>
+      return Some(
+        block_match_spans(
+          chars,
+          fn(c) { bounded_regex_kind_pred(kind, c) },
+          lo,
+          hi,
+        ),
+      )
+    None => ()
+  }
   if pattern.contains("{") {
     match bounded_regex_kind(pattern) {
       Some((kind, max_run)) =>
@@ -1175,4 +1190,110 @@ pub fn replace_double_anchored_line_runs(
 ) -> String {
   let chars = s.to_array()
   replace_spans(chars, double_anchored_line_spans(chars, pred, lo, hi), content)
+}
+
+///|
+/// Generic unanchored CLASS-quantifier spec: `BASE{n}`, `BASE{n,}`,
+/// `BASE{n,m}` (leading zeros allowed; window 1..100000 = onig's real
+/// bound, `{100001}` rejects; reversed n > m swaps like the literal
+/// family, `{n,0}` rejects — empty-match semantics). BASE resolves via
+/// bare_class_kind (\w, \d, [0-9], [\w], \p{N}, [\p{L}] ...). Replaces
+/// the hardcoded {1,2}/{1,3}/{1,4} spelling tables for the plain
+/// window forms; anchored/zero-min shapes keep their own parsers.
+pub fn class_bounded_spec(pattern : String) -> (Int, Int, Int)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  // find the LAST '{' whose body closes at the end; base = everything
+  // before it (must resolve as a bare class)
+  let mut open = -1
+  for i in 0..<n {
+    if chars[i] == '{' {
+      open = i
+    }
+  }
+  if open < 2 || chars[n - 1] != '}' {
+    return None
+  }
+  // base must be a bare class spelling — reject literal chars so the
+  // literal family (char_bounded_spec) keeps owning them
+  let base_sb = StringBuilder()
+  for i in 0..<open {
+    base_sb.write_char(chars[i])
+  }
+  let base = base_sb.to_string()
+  match bare_class_kind(base) {
+    Some(kind) => {
+      let inner : Array[Char] = []
+      let mut k = open + 1
+      while k < n - 1 {
+        inner.push(chars[k])
+        k = k + 1
+      }
+      let m = inner.length()
+      match parse_capped_digits(inner, 0, m) {
+        Some((v, j)) => {
+          if j == m {
+            if v < 1 || v > 100000 {
+              return None
+            }
+            return Some((kind, v, v))
+          }
+          if inner[j] == ',' {
+            if j + 1 == m {
+              if v < 1 || v > 100000 {
+                return None
+              }
+              return Some((kind, v, -1))
+            }
+            match parse_capped_digits(inner, j + 1, m) {
+              Some((w, k2)) =>
+                if k2 == m && v >= 1 && v <= 100000 && w <= 100000 {
+                  if w < v {
+                    if w == 0 {
+                      return None // {n,0}: empty-match semantics
+                    }
+                    return Some((kind, w, v)) // reversed swap
+                  }
+                  return Some((kind, v, w))
+                } else {
+                  return None
+                }
+              None => return None
+            }
+          }
+          None
+        }
+        None => None
+      }
+    }
+    None => None
+  }
+}
+
+///|
+/// Generic class-window replace (block semantics identical to the
+/// literal family).
+pub fn replace_class_bounded_runs(
+  s : String,
+  pattern : String,
+  content : String,
+) -> String? {
+  match class_bounded_spec(pattern) {
+    Some((kind, lo, hi)) => {
+      let chars = s.to_array()
+      Some(
+        replace_spans(
+          chars,
+          block_match_spans(
+            chars,
+            fn(c) { bounded_regex_kind_pred(kind, c) },
+            lo,
+            hi,
+          ),
+          content,
+        ),
+      )
+    }
+    None => None
+  }
 }

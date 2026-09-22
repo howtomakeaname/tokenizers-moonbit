@@ -299,3 +299,13 @@ test "replace decoder windows above four" {
   let da = Decoder::Replace(pattern="^a{5}$", content="#")
   @test.assert_eq(da.decode(["aaaaa\naaaa"]), "#\naaaa")
 }
+
+///|
+/// Generic class windows decode per token (HF JSON Regex decoder
+/// probed 0.22.2: \w{5} on "zz abcdefg" -> "zz #fg").
+test "replace decoder generic class windows" {
+  let d = Decoder::Replace(pattern="\\w{5}", content="#")
+  @test.assert_eq(d.decode(["zz abcdefg"]), "zz #fg")
+  let r = Decoder::Replace(pattern="\\w{6,4}", content="#")
+  @test.assert_eq(r.decode(["zz abcdefg zz"]), "zz #g zz")
+}

@@ -10,6 +10,8 @@ pub fn is_simple_split_regex_pattern(pattern : String) -> Bool {
   regex_literal_branch_alternatives_spec(pattern) is Some(_) ||
   // bare single-char classes match per char (issue #47; probed 0.22.2)
   bare_class_kind(pattern) is Some(_) ||
+  // generic class windows (\w{5} as Split delimiters)
+  class_bounded_spec(pattern) is Some(_) ||
   pattern == "[\\s]+" ||
   is_simple_space_regex_pattern(pattern) ||
   is_exact_regex_pattern(pattern) ||

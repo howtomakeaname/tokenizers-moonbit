@@ -2078,7 +2078,8 @@ test "literal quantifier windows above four compute" {
   @test.assert_eq(@common.is_supported_replace_regex("^\\w{5}$"), true)
   @test.assert_eq(@common.is_supported_replace_regex("^a{100001}$"), false)
   @test.assert_eq(@common.is_supported_replace_regex("a{100001}"), false)
-  @test.assert_eq(@common.is_supported_replace_regex("\\w{5}"), false)
+  // (class windows \w{5} moved to the generic parser in the next
+  // batch — supported now)
 }
 
 ///|
@@ -2089,4 +2090,38 @@ test "reversed zero swap rejects" {
   @test.assert_eq(@common.is_supported_replace_regex("a{2,0}"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\n{2,0}"), false)
   @test.assert_eq(@common.is_supported_replace_regex("a{3,0}"), false)
+}
+
+///|
+/// Generic class windows (probed 0.22.2): `\w{5}`/`\s{5}`/`\d{5}`/
+/// bracket/property spellings with ANY bound up to onig 100000 parse
+/// numerically (`class_bounded_spec` — base via bare_class_kind,
+/// window via parse_capped_digits) and run the shared block engine —
+/// replacing the hardcoded {1,2}/{1,3}/{1,4} spelling tables for the
+/// plain forms. Reversed `{6,4}` swaps; `{n,0}` and `{100001}` reject.
+test "generic class windows any bound" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(
+    n("\\w{5}").normalize("zz abcdefg 9912345 zz"),
+    "zz #fg #45 zz",
+  )
+  @test.assert_eq(n("\\s{5}").normalize("a     b"), "a#b")
+  @test.assert_eq(n("\\d{5}").normalize("z12345z 1234"), "z#z 1234")
+  @test.assert_eq(n("[0-9]{5}").normalize("z12345z"), "z#z")
+  @test.assert_eq(n("[\\w]{5}").normalize("zz abcdefg"), "zz #fg")
+  @test.assert_eq(n("\\w{4,6}").normalize("zz abcdefg zz"), "zz #g zz")
+  @test.assert_eq(n("\\w{5,}").normalize("zz abcdefg zz"), "zz # zz")
+  @test.assert_eq(n("\\w{05}").normalize("abcdefg"), "#fg")
+  @test.assert_eq(n("\\W{5}").normalize("z!!!!!z"), "z#z")
+  @test.assert_eq(n("\\p{N}{5}").normalize("z12345z"), "z#z")
+  @test.assert_eq(n("[\\p{L}]{5}").normalize("zz abcdefg"), "zz #fg")
+  @test.assert_eq(n("\\w{6,4}").normalize("zz abcdefg zz"), "zz #g zz")
+  @test.assert_eq(n("\\w{5}").normalize_aligned("zz abcdefg").0, "zz #fg")
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{5}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{100001}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{2,100001}"), false)
+  // the hardcoded <=4 rows still compute identically
+  @test.assert_eq(n("\\w{1,2}").normalize("abcdef"), "###")
 }

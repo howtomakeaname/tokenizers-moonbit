@@ -105,6 +105,20 @@ pub fn simple_split_regex_matches(
   if pattern == "[\\s]+" {
     return Some(run_matches(chars, fn(c) { is_unicode_whitespace(c.to_int()) }))
   }
+  // generic class windows: block spans for any bound — the block
+  // semantics apply to Split delimiters too
+  match class_bounded_spec(pattern) {
+    Some((kind, lo, hi)) =>
+      return Some(
+        block_match_spans(
+          chars,
+          fn(c) { bounded_regex_kind_pred(kind, c) },
+          lo,
+          hi,
+        ),
+      )
+    None => ()
+  }
   // PER-BRANCH anchors first: `^foo|bar$` binds anchors per branch —
   // the global-anchor reading below would misread it (probed 0.22.2)
   match regex_literal_branch_alternatives_spec(pattern) {
