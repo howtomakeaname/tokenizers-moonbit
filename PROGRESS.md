@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-22 发版 0.9.5（已发布，干净验证 4/4×三后端）**：0.9.4 后 PR #48 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify095 干净验证（裸 `\s` Split 逐字符、`[\s]+` 整段、`[\r\n]` 回归、经典 `\s+`）。
+
 - **2026-09-22 PR #48**（2 commit，评审 agent 超时 → 按自验 + CI 8/8 合入）：issue #47——裸单字符类 + `[\s]+` 门表扩展。Split 门 OR `bare_class_kind`（裸拼写 `\s`/`[\s]`/`\d`/`\w`/`[0-9]`/`[\p{L}]`… 路由到 PR #46 的 `exact_one_matches` 逐字符）；`[\s]+` 进 Split 空白 run 行 + Replace 门（replace 侧裸类本来就经 `bare_class_kind` exact-1 正确——缺口只在 Split 加载拒绝与 `[\s]+`）。自验对拍 HF：量化拼写未被误抢（`\s{2}` 仍走量化表）、`[\s]+` 全 behavior×invert 于 CRLF 混合输入、近族回归（`[\r\n]` 逐字符/`\w+` 整段）；498/498（native/js）、双扫描全绿。
 
 - **2026-09-22 发版 0.9.4（已发布，干净验证 4/4×三后端）**：0.9.3 后 PR #46 单批（`[\r\n]` 逐字符）。直接推 main：bump + `moon publish` 成功 + /tmp/verify094 干净验证（逐字符/整段回归/窗口/经典）。
