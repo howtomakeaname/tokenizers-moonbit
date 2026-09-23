@@ -2385,11 +2385,104 @@ test "nonboundary windows and lazy-exact" {
   @test.assert_eq(n("\\B\\w{5}").normalize_aligned("zaaaaaz").0, "z#z")
   @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{5}"), true)
   @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{100001}"), false)
-  @test.assert_eq(@common.is_supported_replace_regex("\\B\\w+?"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\w+?"), true)
   @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{0,2}"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\w{0,2}\\B"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{0,2}\\B"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{0,}\\B"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\B\\w{2,0}\\B"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\Ba{0,2}\\B"), false)
+}
+
+///|
+/// Anchored plus windows and mixed \b+\B anchors (probed 0.22.2): the
+/// greedy '\b\w+' == '\b\w{1,}' (whole words from each boundary); the
+/// lazy '\b\w+?' == '\b\w{1}' (one char — the empty continuation stops
+/// the lazy group at its minimum), EXCEPT before a genuine \b trail
+/// where it ascends to the run end ('\ba+?\b' on 'aaa' -> '#', ==
+/// '\ba+\b'); a \B trail keeps the one-char pin ('\ba+?\B' on 'aaaa'
+/// -> '#aaa'). Mixed anchors gate the start by one kind, run greedy
+/// within the window, then shrink one char at a time until the OTHER
+/// kind holds at the end ('\ba{2,4}\B' on 'aaaa' -> '#a': greedy 4
+/// ends on the EOS boundary, 3 lands on the interior non-boundary).
+test "anchored plus windows and mixed anchors" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  // greedy plus == {1,}
+  @test.assert_eq(n("\\b\\w+").normalize("hello world"), "# #")
+  @test.assert_eq(n("\\b\\w+").normalize("zaaaaz"), "#")
+  @test.assert_eq(n("\\b\\w+").normalize("aaa bbb ccc"), "# # #")
+  @test.assert_eq(n("\\ba+").normalize("aaa bbb ccc"), "# bbb ccc")
+  @test.assert_eq(n("\\ba+").normalize("ab\ncd"), "#b\ncd")
+  @test.assert_eq(n("\\B\\w+").normalize("hello world"), "h# w#")
+  @test.assert_eq(n("\\B\\w+").normalize("zaaaaz"), "z#")
+  @test.assert_eq(n("\\Ba+").normalize("zaaaaz"), "z#z")
+  @test.assert_eq(n("\\Ba+").normalize("abcabc"), "abc#bc")
+  // lazy plus == {1} (one char per anchor-valid start)
+  @test.assert_eq(n("\\b\\w+?").normalize("hello world"), "#ello #orld")
+  @test.assert_eq(n("\\b\\w+?").normalize("aaa"), "#aa")
+  @test.assert_eq(n("\\ba+?").normalize("aaa"), "#aa")
+  @test.assert_eq(n("\\B\\w+?").normalize("hello world"), "h#### w####")
+  @test.assert_eq(n("\\B\\w+?").normalize("zaaaaz"), "z#####")
+  @test.assert_eq(n("\\Ba+?").normalize("zaaaaz"), "z####z")
+  // both-anchored plus: lazy before a genuine \b trail == run end
+  @test.assert_eq(n("\\b\\w+\\b").normalize("hello world"), "# #")
+  @test.assert_eq(n("\\B\\w+\\B").normalize("hello world"), "h#o w#d")
+  @test.assert_eq(n("\\ba+\\b").normalize("aaa"), "#")
+  @test.assert_eq(n("\\ba+?\\b").normalize("aaa"), "#")
+  @test.assert_eq(n("\\ba+?\\b").normalize("z aa z"), "z # z")
+  @test.assert_eq(n("\\ba+?\\B").normalize("aaaa"), "#aaa")
+  // mixed anchors: greedy window, shrink until the other kind holds
+  @test.assert_eq(n("\\ba{2}\\B").normalize("aaa"), "#a")
+  @test.assert_eq(n("\\ba{2}\\B").normalize("aaa bbb ccc"), "#a bbb ccc")
+  @test.assert_eq(n("\\ba{2}\\B").normalize("aa\\bb"), "aa\\bb")
+  @test.assert_eq(n("\\b\\w{2}\\B").normalize("hello world"), "#llo #rld")
+  @test.assert_eq(n("\\b\\w{2,4}\\B").normalize("hello world"), "#o #d")
+  @test.assert_eq(n("\\b\\w{2,4}\\B").normalize("zaaaaz"), "#az")
+  @test.assert_eq(n("\\ba{2,4}\\B").normalize("aaaa"), "#a")
+  @test.assert_eq(n("\\ba{2,4}\\B").normalize("aaaaa"), "#a")
+  @test.assert_eq(n("\\Ba{2,4}\\b").normalize("zaaaa z"), "z# z")
+  @test.assert_eq(n("\\B\\w{2,4}\\b").normalize("hello world"), "h# w#")
+  @test.assert_eq(n("\\B\\w{2,4}\\b").normalize("zaaaaz"), "za#")
+  @test.assert_eq(n("\\B\\w{2,4}\\b").normalize("mIx"), "m#")
+  // mixed plus spellings
+  @test.assert_eq(n("\\ba+\\B").normalize("aa"), "#a")
+  @test.assert_eq(n("\\ba+\\B").normalize("ab cd ef"), "#b cd ef")
+  @test.assert_eq(n("\\b\\w+\\B").normalize("ab cd ef"), "#b #d #f")
+  @test.assert_eq(n("\\b\\w+\\B").normalize("zaaaaz"), "#z")
+  @test.assert_eq(n("\\b\\w+\\B").normalize("12 34"), "#2 #4")
+  @test.assert_eq(n("\\b\\w+?\\B").normalize("aaaa"), "#aaa")
+  @test.assert_eq(n("\\B\\w+?\\b").normalize("aaaa"), "a#")
+  @test.assert_eq(n("\\B\\w+?\\b").normalize("hello world"), "h# w#")
+  // aligned path agrees on the new families
+  @test.assert_eq(n("\\b\\w+").normalize_aligned("hello world").0, "# #")
+  @test.assert_eq(n("\\ba{2}\\B").normalize_aligned("aaa").0, "#a")
+  // support gate: plus and mixed claim their spellings; the star and
+  // possessive forms stay loud rejects
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\w+"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\w+?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\w+"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba+"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\Ba+?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\w+\\b"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\w+\\B"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba+?\\b"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{2}\\B"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\Ba{2}\\b"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\w{2,4}\\B"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba+\\B"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\w+?\\B"), true)
+  // escaped-punctuation bases ('\b\++' etc.) stay outside this
+  // family — the parse's escape map is \n/\t/\r only
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\++"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba*"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba*?"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba++"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba?+"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{0,2}\\B"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{0}\\B"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{2}?\\B"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\Ba{2}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\ba{2}b"), false)
 }
