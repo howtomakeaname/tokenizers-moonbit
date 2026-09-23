@@ -1456,12 +1456,22 @@ fn boundary_window_impl(
           g = g + 1
         }
         if we {
-          // the run end must ALSO be a word boundary — a literal-'a'
-          // run ending on a word char (e.g. 'aa' inside 'aaz') is not
-          let len = g - p
-          if len >= lo && (hi < 0 || len <= hi) && holds(g) {
-            out.push({ start: p, stop: g, })
-            p = g
+          // greedy within the window, then shrink one char at a time
+          // until the end position is a boundary. For uniform bases
+          // the interior never holds \b, so this equals the historical
+          // full-run check — but MIXED word-ness classes (\S, \D,
+          // [^0-9] ...) hold \b at interior run positions and HF
+          // backtracks exactly this way ('\b\S+\b' on 'a\nb, c' ->
+          // '#\n#, #': the 'b,' run shrinks to 'b'; '\b\S{1,2}\b' on
+          // 'ab,' -> '#,': the hi cap shrinks the run BEFORE the
+          // boundary test)
+          let mut len = if hi < 0 || g - p < hi { g - p } else { hi }
+          while len >= lo && !holds(p + len) {
+            len = len - 1
+          }
+          if len >= lo {
+            out.push({ start: p, stop: p + len, })
+            p = p + len
             continue
           }
         } else {

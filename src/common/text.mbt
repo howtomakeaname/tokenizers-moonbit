@@ -1270,6 +1270,7 @@ fn boundary_window_parse(
   let base_sb = StringBuilder()
   let mut lo : Int = 0
   let mut hi : Int = 0
+  let mut lazy_flag = false
   if chars[body_hi - 1] != '}' {
     // plus spelling: 'X+?' lazy (ends '?', preceded by '+') or 'X+'
     // greedy — any other tail ('a*', 'a?', 'ab' ...) is not this
@@ -1298,6 +1299,7 @@ fn boundary_window_parse(
       k = k + 1
     }
     if lazy_plus {
+      lazy_flag = true
       lo = 1
       hi = if we && b_trail { -1 } else { 1 }
     } else {
@@ -1405,7 +1407,8 @@ fn boundary_window_parse(
   // (probed 0.22.2; lo >= 1 windows and ws-only zero-min stay)
   // base resolution (class / literal / escaped)
   let base = base_sb.to_string()
-  match bare_class_kind(base) {
+  let resolved : (Int, Char?, Int, Int, Bool, Bool)? = match
+    bare_class_kind(base) {
     Some(kind) => Some((kind, None, lo, hi, ws, we))
     None => {
       let bc = base.to_array()
@@ -1417,15 +1420,45 @@ fn boundary_window_parse(
           _ => None
         }
         match lit {
-          Some(c) => return Some((-1, Some(c), lo, hi, ws, we))
-          None => return None
+          Some(c) => Some((-1, Some(c), lo, hi, ws, we))
+          None => None
         }
+      } else if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
+        Some((-1, Some(bc[0]), lo, hi, ws, we))
+      } else {
+        None
       }
-      if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
-        return Some((-1, Some(bc[0]), lo, hi, ws, we))
-      }
-      None
     }
+  }
+  // lazy plus before a trailing anchor over a MIXED word-ness class:
+  // the class matches both word and non-word chars, so \b can hold at
+  // interior run positions and HF's lazy ascent stops at the FIRST
+  // trail-satisfying end — the one-char pin and the run-end/open
+  // window both miss it (probed 0.22.2: '\b\S+?\b' on 'a,b' ->
+  // '###'; '\b[^A-Za-z0-9_]+?\b' on '\u00e9\u00e9,x' -> '##x';
+  // '\b\P{S}+?\b' on 'ab,x' -> '###'). Loud reject; the no-trail
+  // lazy pin ('\b\S+?' on 'a,b' -> '###') and every greedy/brace
+  // form on the same bases stay exact
+  if lazy_flag && we {
+    match resolved {
+      Some((kind, None, _, _, _, _)) =>
+        if mixed_wordness_class_kind(kind) {
+          return None
+        }
+      _ => ()
+    }
+  }
+  resolved
+}
+
+///|
+/// Classes whose predicate matches BOTH word and non-word chars
+/// (complement classes and punctuation) — runs of them can hold \b
+/// at interior positions, which breaks the lazy-plus reductions.
+fn mixed_wordness_class_kind(kind : Int) -> Bool {
+  match kind {
+    8 | 12 | 14 | 16 | 17 | 18 | 19 | 23 | 25 | 29 => true
+    _ => false
   }
 }
 
