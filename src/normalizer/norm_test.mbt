@@ -2515,6 +2515,10 @@ test "anchored plus windows and mixed anchors" {
   @test.assert_eq(n("\\b\\S+?").normalize("ab cd"), "#b #d")
   @test.assert_eq(n("\\B\\S+?").normalize("a,b"), "a,b")
   @test.assert_eq(n("\\b\\S+").normalize("a,b"), "#")
+  // greedy + end-\b over mixed classes: hi-capped greedy, then shrink
+  // (the pre-main divergence the round-1 fix closed)
+  @test.assert_eq(n("\\b\\S+\\b").normalize("a\nb, c"), "#\n#, #")
+  @test.assert_eq(n("\\b\\S{1,2}\\b").normalize("ab,"), "#,")
   // uniform non-word / letter / symbol bases keep the lazy+\b trail
   @test.assert_eq(n("\\b\\W+?\\b").normalize("a,b"), "a#b")
   @test.assert_eq(n("\\b\\p{L}+?\\b").normalize("ab cd"), "# #")
