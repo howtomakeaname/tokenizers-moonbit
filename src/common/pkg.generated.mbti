@@ -80,6 +80,8 @@ pub fn literal_matches(Array[Char], String) -> Array[Span]?
 
 pub fn min_regex_kind(String) -> (Int, Int)?
 
+pub fn mixed_anchor_window_spec(String) -> (Int, Char?, Int, Int, Bool, Bool)?
+
 pub fn nonboundary_lazy_exact_spec(String) -> (Int, Char?, Int, Bool, Bool)?
 
 pub fn nonboundary_window_spans(Array[Char], (Char) -> Bool, Int, Int, Bool, Bool) -> Array[Span]
@@ -119,6 +121,8 @@ pub fn replace_leading_runs(String, String, (Char) -> Bool) -> String
 pub fn replace_literal(String, String, String) -> String
 
 pub fn replace_min_char_runs(String, String, (Char) -> Bool, min_run~ : Int) -> String
+
+pub fn replace_mixed_anchor_window_runs(String, String, (Char) -> Bool, Int, Int, Bool, Bool) -> String
 
 pub fn replace_nonboundary_lazy_exact_runs(String, String, (Char) -> Bool, Int, Bool, Bool) -> String
 

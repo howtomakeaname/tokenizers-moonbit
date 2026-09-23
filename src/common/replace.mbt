@@ -944,6 +944,21 @@ pub fn replace_family_spans(
     }
     None => ()
   }
+  // mixed-anchor (\bX{..}\B, \BX{..}\b) windows
+  match mixed_anchor_window_spec(pattern) {
+    Some((kind, literal, lo, hi, lead_nb, trail_nb)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { bounded_regex_kind_pred(kind, x) }
+      }
+      return Some(
+        mixed_anchor_window_spans(chars, pred, lo, hi, lead_nb, trail_nb),
+      )
+    }
+    None => ()
+  }
   // boundary-windowed quantifiers (\b\w{5}, \w{5}\b, \ba{2,4}\b)
   match boundary_window_spec(pattern) {
     Some((kind, literal, lo, hi, ws, we)) => {
@@ -1441,12 +1456,22 @@ fn boundary_window_impl(
           g = g + 1
         }
         if we {
-          // the run end must ALSO be a word boundary — a literal-'a'
-          // run ending on a word char (e.g. 'aa' inside 'aaz') is not
-          let len = g - p
-          if len >= lo && (hi < 0 || len <= hi) && holds(g) {
-            out.push({ start: p, stop: g, })
-            p = g
+          // greedy within the window, then shrink one char at a time
+          // until the end position is a boundary. For uniform bases
+          // the interior never holds \b, so this equals the historical
+          // full-run check — but MIXED word-ness classes (\S, \D,
+          // [^0-9] ...) hold \b at interior run positions and HF
+          // backtracks exactly this way ('\b\S+\b' on 'a\nb, c' ->
+          // '#\n#, #': the 'b,' run shrinks to 'b'; '\b\S{1,2}\b' on
+          // 'ab,' -> '#,': the hi cap shrinks the run BEFORE the
+          // boundary test)
+          let mut len = if hi < 0 || g - p < hi { g - p } else { hi }
+          while len >= lo && !holds(p + len) {
+            len = len - 1
+          }
+          if len >= lo {
+            out.push({ start: p, stop: p + len, })
+            p = p + len
             continue
           }
         } else {
@@ -1714,6 +1739,81 @@ pub fn replace_nonboundary_window_runs(
   replace_spans(
     chars,
     nonboundary_window_spans(chars, pred, lo, hi, ws, we),
+    content,
+  )
+}
+
+///|
+/// Mixed-anchor window spans: the start is gated by one anchor kind
+/// (\b or \B), the block runs greedy capped by the window, then
+/// shrinks one char at a time until the OTHER kind holds at the end
+/// (probed: '\ba{2,4}\B' on 'aaaa' -> (0,3) — greedy 4 ends on the
+/// EOS boundary, 3 lands on the interior non-boundary;
+/// '\B\w{2,4}\b' on 'hello world' -> (1,5) where greedy held).
+fn mixed_anchor_window_spans(
+  chars : Array[Char],
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+  lead_nb : Bool,
+  trail_nb : Bool,
+) -> Array[Span] {
+  let n = chars.length()
+  let out : Array[Span] = []
+  if n == 0 {
+    return out
+  }
+  fn lead_holds(pos : Int) -> Bool {
+    if lead_nb {
+      !regex_word_boundary_at(chars, pos)
+    } else {
+      regex_word_boundary_at(chars, pos)
+    }
+  }
+  fn trail_holds(pos : Int) -> Bool {
+    if trail_nb {
+      !regex_word_boundary_at(chars, pos)
+    } else {
+      regex_word_boundary_at(chars, pos)
+    }
+  }
+  let mut p = 0
+  while p < n {
+    if pred(chars[p]) && lead_holds(p) {
+      let mut g = p
+      while g < n && pred(chars[g]) {
+        g = g + 1
+      }
+      let mut len = if hi < 0 || g - p < hi { g - p } else { hi }
+      while len >= lo && !trail_holds(p + len) {
+        len = len - 1
+      }
+      if len >= lo {
+        out.push({ start: p, stop: p + len, })
+        p = p + len
+        continue
+      }
+    }
+    p = p + 1
+  }
+  out
+}
+
+///|
+/// Mixed-anchor (\\b + \\B) window replace.
+pub fn replace_mixed_anchor_window_runs(
+  s : String,
+  content : String,
+  pred : (Char) -> Bool,
+  lo : Int,
+  hi : Int,
+  lead_nb : Bool,
+  trail_nb : Bool,
+) -> String {
+  let chars = s.to_array()
+  replace_spans(
+    chars,
+    mixed_anchor_window_spans(chars, pred, lo, hi, lead_nb, trail_nb),
     content,
   )
 }

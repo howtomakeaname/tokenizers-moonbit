@@ -237,6 +237,20 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     }
     None => ()
   }
+  match @common.mixed_anchor_window_spec(pattern) {
+    Some((kind, literal, lo, hi, lead_nb, trail_nb)) => {
+      let pred : (Char) -> Bool = if kind == -1 {
+        let c = literal.unwrap_or('\u{0}')
+        fn(x) { x == c }
+      } else {
+        fn(x) { @common.bounded_regex_kind_pred(kind, x) }
+      }
+      return @common.replace_mixed_anchor_window_runs(
+        s, content, pred, lo, hi, lead_nb, trail_nb,
+      )
+    }
+    None => ()
+  }
   match @common.lazy_exact_spec(pattern) {
     Some((kind, literal, lo, hi)) => {
       let pred : (Char) -> Bool = if kind == -1 {
