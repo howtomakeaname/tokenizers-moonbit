@@ -450,6 +450,10 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if nonboundary_lazy_exact_spec(pattern) is Some(_) {
     return true
   }
+  // mixed-anchor (\b + \B) windows and their plus spellings
+  if mixed_anchor_window_spec(pattern) is Some(_) {
+    return true
+  }
   // zero-minimum quantifiers: a{0} / a{0,m} / a{0,} and class bases
   if zero_min_quantifier_spec(pattern) is Some(_) {
     return true
@@ -1213,7 +1217,7 @@ fn mixed_complement_ordering_kind(base : String) -> Int? {
 pub fn boundary_window_spec(
   pattern : String,
 ) -> (Int, Char?, Int, Int, Bool, Bool)? {
-  match boundary_window_parse(pattern) {
+  match boundary_window_parse(pattern, true) {
     Some((kind, literal, lo, hi, ws, we)) => {
       // any-anchor zero-min ranges reject (round-2: ws-only also
       // diverges — HF backtracks per position and emits the empty at
@@ -1232,9 +1236,15 @@ pub fn boundary_window_spec(
 
 ///|
 /// The raw parse shared by the \b and \B families (narrowing guards
-/// live in the callers).
+/// live in the callers). `b_trail` says a trailing anchor in the
+/// ORIGINAL spelling is a genuine \b (not a \B rewritten to \b by the
+/// non-boundary/mixed callers) — the lazy plus picks its window by
+/// trail kind: an end \b needs the run-end form ('\ba+?\b' on 'aaa'
+/// -> '#', lazy ascends to the run end where \b first holds), an end
+/// \B or no trail pins one char ('\ba+?\B' on 'aaaa' -> '#aaa').
 fn boundary_window_parse(
   pattern : String,
+  b_trail : Bool,
 ) -> (Int, Char?, Int, Int, Bool, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
@@ -1253,101 +1263,139 @@ fn boundary_window_parse(
   if !ws && !we {
     return None
   }
-  // BODY = BASE + quantifier brace (last '{' closing at body end)
-  let mut open = -1
-  let mut i = body_lo
-  while i < body_hi {
-    if chars[i] == '{' {
-      open = i
-    }
-    i = i + 1
-  }
-  if open < body_lo + 1 || chars[body_hi - 1] != '}' {
-    return None
-  }
+  // BODY = BASE + quantifier: a brace (last '{' closing at body end)
+  // or a plus — probed 0.22.2: '\b\w+' == '\b\w{1,}' and the lazy
+  // '\b\w+?' == '\b\w{1}' (the empty continuation stops the lazy group
+  // at its minimum, one char per boundary start)
   let base_sb = StringBuilder()
-  let mut k = body_lo
-  while k < open {
-    base_sb.write_char(chars[k])
-    k = k + 1
-  }
-  let base = base_sb.to_string()
-  let inner : Array[Char] = []
-  let mut j = open + 1
-  while j < body_hi - 1 {
-    inner.push(chars[j])
-    j = j + 1
-  }
-  let m = inner.length()
-  // window: {n} | {n,m} | {n,} | {n,0} (== {0,n}) | {0,m} | {,m}
   let mut lo : Int = 0
   let mut hi : Int = 0
-  match parse_capped_digits(inner, 0, m) {
-    Some((v, dz)) =>
-      if dz == m {
-        if v > 100000 {
-          return None
-        }
-        // v == 0 (exact {0}) is the zero-min empty walk — the boundary
-        // filter gates the empty positions (probed: '\ba{0}\b' on
-        // 'ab cd' -> '#ab# #cd#')
-        lo = v
-        hi = v
-      } else if inner[dz] == ',' && dz + 1 == m {
-        if v > 100000 {
-          return None
-        }
-        lo = v
-        hi = -1
-      } else if inner[dz] == ',' {
-        match parse_capped_digits(inner, dz + 1, m) {
-          Some((w, dw)) =>
-            if dw == m && v <= 100000 && w <= 100000 {
-              if w < v {
-                // {n,0}: swap to {0,n} (probed); under ANY anchor the
-                // empty fallback is suppressed ('a{2,0}' on 'aaa' ->
-                // '#a#') — reject loudly (nonzero swaps unaffected)
-                if w == 0 {
-                  if ws || we {
-                    return None
+  if chars[body_hi - 1] != '}' {
+    // plus spelling: 'X+?' lazy (ends '?', preceded by '+') or 'X+'
+    // greedy — any other tail ('a*', 'a?', 'ab' ...) is not this
+    // family; a BARE '+*?' base is rejected too — those spellings are
+    // possessive quantifiers in onig, not a literal base
+    let lazy_plus = chars[body_hi - 1] == '?' &&
+      body_hi - 2 >= body_lo &&
+      chars[body_hi - 2] == '+'
+    let greedy_plus = chars[body_hi - 1] == '+'
+    if !lazy_plus && !greedy_plus {
+      return None
+    }
+    let base_end = if lazy_plus { body_hi - 2 } else { body_hi - 1 }
+    if base_end <= body_lo {
+      return None
+    }
+    if base_end - body_lo == 1 {
+      let c = chars[base_end - 1]
+      if c == '+' || c == '*' || c == '?' {
+        return None
+      }
+    }
+    let mut k = body_lo
+    while k < base_end {
+      base_sb.write_char(chars[k])
+      k = k + 1
+    }
+    if lazy_plus {
+      lo = 1
+      hi = if we && b_trail { -1 } else { 1 }
+    } else {
+      lo = 1
+      hi = -1
+    }
+  } else {
+    let mut open = -1
+    let mut i = body_lo
+    while i < body_hi {
+      if chars[i] == '{' {
+        open = i
+      }
+      i = i + 1
+    }
+    if open < body_lo + 1 {
+      return None
+    }
+    let mut k = body_lo
+    while k < open {
+      base_sb.write_char(chars[k])
+      k = k + 1
+    }
+    let inner : Array[Char] = []
+    let mut j = open + 1
+    while j < body_hi - 1 {
+      inner.push(chars[j])
+      j = j + 1
+    }
+    let m = inner.length()
+    // window: {n} | {n,m} | {n,} | {n,0} (== {0,n}) | {0,m} | {,m}
+    match parse_capped_digits(inner, 0, m) {
+      Some((v, dz)) =>
+        if dz == m {
+          if v > 100000 {
+            return None
+          }
+          // v == 0 (exact {0}) is the zero-min empty walk — the boundary
+          // filter gates the empty positions (probed: '\ba{0}\b' on
+          // 'ab cd' -> '#ab# #cd#')
+          lo = v
+          hi = v
+        } else if inner[dz] == ',' && dz + 1 == m {
+          if v > 100000 {
+            return None
+          }
+          lo = v
+          hi = -1
+        } else if inner[dz] == ',' {
+          match parse_capped_digits(inner, dz + 1, m) {
+            Some((w, dw)) =>
+              if dw == m && v <= 100000 && w <= 100000 {
+                if w < v {
+                  // {n,0}: swap to {0,n} (probed); under ANY anchor the
+                  // empty fallback is suppressed ('a{2,0}' on 'aaa' ->
+                  // '#a#') — reject loudly (nonzero swaps unaffected)
+                  if w == 0 {
+                    if ws || we {
+                      return None
+                    }
+                    lo = 0
+                    hi = v
+                  } else {
+                    lo = w
+                    hi = v
                   }
+                } else if v == 0 {
                   lo = 0
-                  hi = v
+                  hi = w
                 } else {
-                  lo = w
-                  hi = v
+                  lo = v
+                  hi = w
                 }
-              } else if v == 0 {
+              } else {
+                return None
+              }
+            None => return None
+          }
+        } else {
+          return None
+        }
+      None =>
+        // comma-open {,m} == {0,m}
+        if m > 1 && inner[0] == ',' {
+          match parse_capped_digits(inner, 1, m) {
+            Some((w, dw)) =>
+              if dw == m && w <= 100000 {
                 lo = 0
                 hi = w
               } else {
-                lo = v
-                hi = w
+                return None
               }
-            } else {
-              return None
-            }
-          None => return None
+            None => return None
+          }
+        } else {
+          return None
         }
-      } else {
-        return None
-      }
-    None =>
-      // comma-open {,m} == {0,m}
-      if m > 1 && inner[0] == ',' {
-        match parse_capped_digits(inner, 1, m) {
-          Some((w, dw)) =>
-            if dw == m && w <= 100000 {
-              lo = 0
-              hi = w
-            } else {
-              return None
-            }
-          None => return None
-        }
-      } else {
-        return None
-      }
+    }
   }
   // zero-min windows with an END anchor diverge from the empty-walk
   // model (HF backtracks greedy-then-empty per position: '\ba{0,2}\b'
@@ -1356,6 +1404,7 @@ fn boundary_window_parse(
   // are engine capabilities this family lacks, so reject them loudly
   // (probed 0.22.2; lo >= 1 windows and ws-only zero-min stay)
   // base resolution (class / literal / escaped)
+  let base = base_sb.to_string()
   match bare_class_kind(base) {
     Some(kind) => Some((kind, None, lo, hi, ws, we))
     None => {
@@ -1574,7 +1623,9 @@ pub fn nonboundary_window_spec(
 ) -> (Int, Char?, Int, Int, Bool, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
-  if n < 5 {
+  // 4 chars is the shortest live spelling ('\Ba+' since the plus
+  // quantifier landed)
+  if n < 4 {
     return None
   }
   // require at least one \\B anchor (backslash + 'B'); reject any bare \b
@@ -1605,7 +1656,7 @@ pub fn nonboundary_window_spec(
       k = k + 1
     }
   }
-  match boundary_window_parse(sb.to_string()) {
+  match boundary_window_parse(sb.to_string(), false) {
     Some((kind, literal, lo, hi, ws, we)) => {
       // zero-min RANGES reject — the same walk-vs-scan divergence as
       // the \b family round-2 (HF restarts the greedy scan at each
@@ -1660,4 +1711,70 @@ pub fn nonboundary_lazy_exact_spec(
     }
   }
   boundary_lazy_exact_spec(sb.to_string())
+}
+
+///|
+/// Mixed-anchor windows `\\bX{n|n,m|n,|+}\\B` / `\\BX{...}\\b` (probed
+/// 0.22.2): the start is gated by one anchor kind, the block runs
+/// greedy within the window, then shrinks one char at a time until the
+/// OTHER kind holds at the end ('\\ba{2,4}\\B' on 'aaaa' -> '#a':
+/// greedy 4 ends on the EOS boundary, 3 lands on the interior
+/// non-boundary). Same-kind pairs stay with the \\b / \\B families;
+/// zero-min rejects (the walk-vs-scan divergence — and a mixed {0}
+/// asserts \\b and \\B at one position, which never holds).
+pub fn mixed_anchor_window_spec(
+  pattern : String,
+) -> (Int, Char?, Int, Int, Bool, Bool)? {
+  let chars = pattern.to_array()
+  let n = chars.length()
+  if n < 6 {
+    return None
+  }
+  if chars[0] != '\\' || (chars[1] != 'b' && chars[1] != 'B') {
+    return None
+  }
+  let trail_ok = chars[n - 2] == '\\' &&
+    (chars[n - 1] == 'b' || chars[n - 1] == 'B') &&
+    !is_escaped_at(chars, n - 2)
+  if !trail_ok {
+    return None
+  }
+  let lead_nb = chars[1] == 'B'
+  let trail_nb = chars[n - 1] == 'B'
+  if lead_nb == trail_nb {
+    return None
+  }
+  // no stray anchor inside the body (the rewrite below would corrupt
+  // it into a leading/trailing marker)
+  let mut i = 2
+  while i < n - 2 {
+    if chars[i] == '\\' &&
+      i + 1 < n - 2 &&
+      (chars[i + 1] == 'b' || chars[i + 1] == 'B') {
+      return None
+    }
+    i = i + 1
+  }
+  // rewrite \B -> \b and delegate for the base/quantifier parse
+  let sb = StringBuilder()
+  let mut k = 0
+  while k < n {
+    if chars[k] == '\\' && k + 1 < n && chars[k + 1] == 'B' {
+      sb.write_char('\\')
+      sb.write_char('b')
+      k = k + 2
+    } else {
+      sb.write_char(chars[k])
+      k = k + 1
+    }
+  }
+  match boundary_window_parse(sb.to_string(), !trail_nb) {
+    Some((kind, literal, lo, hi, _ws, _we)) =>
+      if lo == 0 {
+        None
+      } else {
+        Some((kind, literal, lo, hi, lead_nb, trail_nb))
+      }
+    None => None
+  }
 }
