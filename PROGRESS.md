@@ -18,7 +18,7 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.10.3**（2026-09-22，0.10.2 后含 PR #55 \\B 非边界族）。0.10.3 后待办见 §2 队列。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.11.0**（2026-09-22，0.10.3 后含 PR #56 锚定 plus 拼写 + 混合锚窗口）。0.11.0 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
@@ -37,6 +37,7 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-22 PR #56**（6 commit，两轮评审，round-2 APPROVE）：锚定 **plus 拼写** + **混合 \b+\B 锚窗口**。探针定真值：`\bX+`≡`\bX{1,}`、`\bX+?`≡`\bX{1}`（空续接使惰性组停在最小值），**真 \b 尾锚例外**（`\ba+?\b` 于 'aaa'→'#'，惰性升到 run 尾；`b_trail` 参数分流 \b/\B/混合三路调用）；混合锚 = 起点一种锚门控 → 窗口内贪婪 → 逐字符回缩到另一锚成立（`\ba{2,4}\B` 于 'aaaa'→'#a'），新 `mixed_anchor_window_spec`/`mixed_anchor_window_spans` + 四处 dispatch。**评审两轮抓真问题**：round-1 发现混合词性基类（`\S`/`\D`/`[^0-9]`/`\P{…}`/`\p{P}`/`[^A-Za-z0-9_]`，kind 集 {8,12,14,16,17,18,19,23,25,29}）内部可持 \b——惰性+尾锚显式拒绝（我补探 19/25 两 kind 亦发散）；并顺藤发现 **main 上既有分歧**：\b 族 we 路径只测 full-run 尾、混合基贪婪窗需 hi 封顶后回缩（`\b\S+\b` 于 'a\nb, c'→'#\n#, #'）——统一 greedy-cap+shrink，均匀基字节等价（评审 A/B 2303 行 byte-identical 佐证）。round-2 独立对拍 3825+343 单元零分歧。星号/占有量词/混合零下限/`\ba{2}?\B`/`\b\++` 保持显式拒绝；`\w{5x}` 类确认 HF 为字面量 concat no-op（拒绝对齐无碍）。支持位 pin 测试提交前抓到 plus 分支吞任意非 `}` 尾的真 bug（`\ba*` 误判 `{1,}`）。四后端 517/496 全绿 + 双扫描 1134/1134 + 100/100。
 - **2026-09-22 发版 0.10.3（已发布，干净验证 4/4×三后端）**：0.10.2 后 PR #55 单批。直接推 main：bump + `moon publish` 成功 + /tmp/verify0103 干净验证（`\B\w{5}` 非边界窗、`\ba{2}?` 回归、`^\w{1,2}` 回归、`\w{5}` 回归）。
 
 - **2026-09-22 PR #55**（4 commit，一轮评审 APPROVE）：`\B` 非边界族（windows + lazy-exact）。`\B`→`\b` 改写 + 共享 `boundary_window_parse`（\b 零下限收窄留在 \b 侧 caller——提取经验证行为保持，168 拼写 sweep byte-identical）。**尾 \B 规则与 \b 结构不同**：左扫贪婪、尾 \B 回缩长度至端点为非边界（`\w{5}\B` 于 'zaaaaaz' → (0,5) → '#az'，而 \b 是钉 run 尾）。专设引擎；`\Ba{2}?` 可选组反向；精确 `{0}` 内部空（'zaaz'→'z#a#a#z'）；**\B 零下限区间拒绝**（与 \b 同型的 walk-vs-scan 分歧，HF 逐位重启贪婪扫描）。评审 1263 cell 三方对拍（949 normalizer + 949 decoder 零分歧，main-vs-PR 零回归）；515/515（native/js）、双扫描全绿。遗留（评审记录）：混合锚 `\ba{2}\B`、plus 惰性锚定 `\B\w+?`。
