@@ -2485,4 +2485,38 @@ test "anchored plus windows and mixed anchors" {
   @test.assert_eq(@common.is_supported_replace_regex("\\ba{2}?\\B"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\b\\Ba{2}"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\ba{2}b"), false)
+  // lazy plus before a trailing anchor over a MIXED word-ness class:
+  // HF's lazy ascent stops at the first interior boundary — loud
+  // reject (round-1 review); the no-trail pin and uniform bases stay
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\S+?\\b"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\S+?\\B"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\S+?\\b"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\S+?\\B"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\D+?\\b"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b[^0-9]+?\\b"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\P{N}+?\\b"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\P{L}+?\\b"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\P{P}+?\\b"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\P{S}+?\\b"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\p{P}+?\\b"), false)
+  @test.assert_eq(
+    @common.is_supported_replace_regex("\\b[^A-Za-z0-9_]+?\\b"),
+    false,
+  )
+  @test.assert_eq(
+    @common.is_supported_replace_regex("\\b[^A-Za-z]+?\\b"),
+    false,
+  )
+  // no-trail lazy pin is base-independent ('a,b' -> every \S char sits
+  // between boundaries); greedy + stays exact on mixed bases
+  @test.assert_eq(@common.is_supported_replace_regex("\\b\\S+?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\B\\S+?"), true)
+  @test.assert_eq(n("\\b\\S+?").normalize("a,b"), "###")
+  @test.assert_eq(n("\\b\\S+?").normalize("ab cd"), "#b #d")
+  @test.assert_eq(n("\\B\\S+?").normalize("a,b"), "a,b")
+  @test.assert_eq(n("\\b\\S+").normalize("a,b"), "#")
+  // uniform non-word / letter / symbol bases keep the lazy+\b trail
+  @test.assert_eq(n("\\b\\W+?\\b").normalize("a,b"), "a#b")
+  @test.assert_eq(n("\\b\\p{L}+?\\b").normalize("ab cd"), "# #")
+  @test.assert_eq(n("\\b\\p{S}+?\\b").normalize("a+b"), "a#b")
 }
