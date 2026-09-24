@@ -251,6 +251,13 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     }
     None => ()
   }
+  match @common.bracket_set_spec(pattern) {
+    Some((members, negated, lo, hi)) =>
+      return @common.replace_bracket_set_runs(
+        s, content, members, negated, lo, hi,
+      )
+    None => ()
+  }
   match @common.lazy_exact_spec(pattern) {
     Some((kind, literal, lo, hi)) => {
       let pred : (Char) -> Bool = if kind == -1 {

@@ -959,6 +959,28 @@ pub fn replace_family_spans(
     }
     None => ()
   }
+  // general bracket sets ([abc], [a-c], [a\w], [^\w-] ... with an
+  // optional quantifier)
+  match bracket_set_spec(pattern) {
+    Some((members, negated, lo, hi)) => {
+      let pred = fn(c) { bracket_set_holds(members, negated, c) }
+      if lo == 0 {
+        return Some(
+          zero_min_match_spans(
+            chars,
+            pred,
+            if hi < 0 {
+              None
+            } else {
+              Some(hi)
+            },
+          ),
+        )
+      }
+      return Some(block_match_spans(chars, pred, lo, hi))
+    }
+    None => ()
+  }
   // boundary-windowed quantifiers (\b\w{5}, \w{5}\b, \ba{2,4}\b)
   match boundary_window_spec(pattern) {
     Some((kind, literal, lo, hi, ws, we)) => {
@@ -1797,6 +1819,28 @@ fn mixed_anchor_window_spans(
     p = p + 1
   }
   out
+}
+
+///|
+/// General bracket-set replace: the composed per-char predicate over
+/// block windows (unquantified == (1,1) per-char, '+': (1,-1) greedy
+/// runs, braces exact/ranged — probed 0.22.2).
+pub fn replace_bracket_set_runs(
+  s : String,
+  content : String,
+  members : Array[BracketMember],
+  negated : Bool,
+  lo : Int,
+  hi : Int,
+) -> String {
+  let chars = s.to_array()
+  let pred = fn(c) { bracket_set_holds(members, negated, c) }
+  let spans = if lo == 0 {
+    zero_min_match_spans(chars, pred, if hi < 0 { None } else { Some(hi) })
+  } else {
+    block_match_spans(chars, pred, lo, hi)
+  }
+  replace_spans(chars, spans, content)
 }
 
 ///|

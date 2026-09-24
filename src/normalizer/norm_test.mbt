@@ -2596,3 +2596,99 @@ test "dot single-anchor windows" {
   @test.assert_eq(@common.is_supported_replace_regex("^.."), true)
   @test.assert_eq(@common.is_supported_replace_regex("^."), true)
 }
+
+///|
+/// General bracket character classes (probed 0.22.2): literals,
+/// literal ranges, escaped literals and CLASS-context shortcuts
+/// ('[a\w]' on 'a²b' -> '#²#' — the class-context \w excludes the
+/// onig quirks) union into one per-char predicate; '^' complements
+/// INCLUDING '\n' ('[^a]' on 'ab\ncd' -> 'a####'). Leading/trailing
+/// '-' are literals; shortcut range endpoints reject (onig load
+/// errors). Quantifiers: none/(1,1) per-char, '+'/(1,-1) runs,
+/// braces, lazy '+?' == (1,1), and zero-min tails ride the empty
+/// walk. Double tails: unanchored 'X+??' == 'X{0,1}' (optional lazy
+/// group, EMPTY fallback where the pred fails: '\w+??' on '-ab' ->
+/// '#-##'), 'X+?+' == greedy; anchored '+??' rejects (anchor-pinned
+/// empties are the rejected zero-min capability).
+test "general bracket sets and double tails" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+
+  @test.assert_eq(n("[a\\w]").normalize("a-b"), "#-#")
+  @test.assert_eq(n("[a\\w]").normalize("a²b"), "#²#")
+  @test.assert_eq(n("[a\\w]").normalize("ab cd"), "## ##")
+  @test.assert_eq(n("[\\da]").normalize("abcdef"), "#bcdef")
+  @test.assert_eq(n("[\\da]").normalize("-ab"), "-#b")
+  @test.assert_eq(n("[\\w-]").normalize("a-b"), "###")
+  @test.assert_eq(n("[\\w-]").normalize("-"), "#")
+  @test.assert_eq(n("[abc]").normalize("abcdef"), "###def")
+  @test.assert_eq(n("[abc]").normalize("0a9"), "0#9")
+  @test.assert_eq(n("[a-c]").normalize("ab\ncd"), "##\n#d")
+  @test.assert_eq(n("[^a]").normalize("ab\ncd"), "a####")
+  @test.assert_eq(n("[^a]").normalize("-"), "#")
+  @test.assert_eq(n("[-a]").normalize("a-b"), "##b")
+  @test.assert_eq(n("[a-]").normalize("ab-"), "#b#")
+  @test.assert_eq(n("[a-z]").normalize("x y_z1"), "# #_#1")
+  @test.assert_eq(n("[éü]").normalize("aéb"), "a#b")
+  @test.assert_eq(n("[^\\w-]").normalize("a,b;c!"), "a#b#c#")
+  @test.assert_eq(n("[a\\w]+").normalize("a-b"), "#-#")
+  @test.assert_eq(n("[a\\w]+").normalize("ab\ncd"), "#\n#")
+  @test.assert_eq(n("[a\\w]{2,4}").normalize("abcdef"), "##")
+  @test.assert_eq(n("[a\\w]{2,4}").normalize("a-b"), "a-b")
+  @test.assert_eq(n("[a\\w]{2,4}").normalize("x y_z1"), "x #")
+  @test.assert_eq(n("[abc]+").normalize("abcdef"), "#def")
+  @test.assert_eq(n("[^a]+").normalize("abcdef"), "a#")
+  @test.assert_eq(n("[^a]").normalize("abcdef"), "a#####")
+  @test.assert_eq(n("[a-z]{2,}").normalize("ab\ncd"), "#\n#")
+  @test.assert_eq(n("[abc]+?").normalize("aaa"), "###")
+  @test.assert_eq(n("[abc]+?").normalize("abcdef"), "###def")
+  @test.assert_eq(n("[^a]+?").normalize("abc"), "a##")
+  @test.assert_eq(n("[\\w-]+").normalize("a-b c"), "# #")
+  @test.assert_eq(n("[\\w\\d]").normalize("a1"), "##")
+  @test.assert_eq(n("[\\w\\d]").normalize("²"), "²")
+  @test.assert_eq(n("[^\\w\\s]").normalize("a b,c"), "a b#c")
+  // double tails
+  @test.assert_eq(n("\\w+??").normalize("a-b"), "#-#")
+  @test.assert_eq(n("\\w+??").normalize("abcdef"), "######")
+  // bare LITERAL plus forms stay loud rejects (a gap recorded in
+  // PROGRESS: HF computes per-char 'a+??' == 'a' replace)
+  // the gate fix also claims the bare LITERAL lazy-optional: 'a+??'
+  // == 'a{1}?' (block-or-empty == per-char here, probed)
+  @test.assert_eq(@common.is_supported_replace_regex("a+??"), true)
+  @test.assert_eq(n("a+??").normalize("aaa"), "###")
+  @test.assert_eq(@common.is_supported_replace_regex("^.+??"), false)
+  @test.assert_eq(n("^.+?+").normalize("ab\ncd"), "#\n#")
+  // gates
+  @test.assert_eq(@common.is_supported_replace_regex("[abc]"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[^a]"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]+"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[abc]+?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[\\w]"), true)
+  // zero-min set tails ride the empty walk (probed)
+  @test.assert_eq(n("[a\\w]?").normalize("-a-"), "#-#-#")
+  @test.assert_eq(n("[a\\w]*").normalize("xay"), "#")
+  @test.assert_eq(n("[a\\w]{0,2}").normalize("xaay"), "##")
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]*"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{0,2}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[c-a]"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("[\\d-a]"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\+??"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{2,4}?"), true)
+  // round-1 review fixes: gate agrees with the engines on X+??, the
+  // \p{...} member parse, and raw '&&' (onig intersection) rejects
+  @test.assert_eq(@common.is_supported_replace_regex("\\w+??"), true)
+  @test.assert_eq(n("\\w+??").normalize("-ab"), "#-##")
+  @test.assert_eq(@common.is_supported_replace_regex("[\\p{L}a]"), true)
+  @test.assert_eq(n("[\\p{L}a]").normalize("abcd"), "####")
+  @test.assert_eq(n("[a\\p{N}]").normalize("a1b"), "##b")
+  @test.assert_eq(@common.is_supported_replace_regex("[a&&b]"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("[a-w&&c-z]"), false)
+  // declared loud gaps (recorded in PROGRESS): comma-open and {n,0}
+  // brace forms on sets, bracket-base X+?? products
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{,2}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{2,0}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]+??"), false)
+}
