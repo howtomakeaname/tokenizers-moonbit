@@ -231,7 +231,7 @@ fn bracket_body_members(
 /// canonical kind spellings and reject here to avoid double-claiming.
 pub fn bracket_set_spec(
   pattern : String,
-) -> (Array[BracketMember], Bool, Int, Int)? {
+) -> (Array[BracketMember], Bool, Int, Int, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
   if n < 3 || chars[0] != '[' {
@@ -267,15 +267,29 @@ pub fn bracket_set_spec(
   let mut lo : Int = 1
   let mut hi : Int = 1
   if q < n {
-    // lazy exact '{1}?' == the optional one-char group == {0,1} (the
-    // '+??' rewrite lands here); larger lazy-n optional groups are
-    // the kind/literal lazy-exact engine and stay rejected for sets
-    if q == n - 4 &&
+    // lazy exact '{n}?' == the optional group (X{n})?: the block
+    // when it fits, an empty otherwise — the '+??' rewrite lands here
+    // at n == 1 (probed == the {0,1} walk). Rides the shared
+    // lazy_ranged_or_empty engine with the composed set pred
+    if q < n - 3 &&
       chars[q] == '{' &&
-      chars[q + 1] == '1' &&
-      chars[q + 2] == '}' &&
+      chars[n - 2] == '}' &&
       chars[n - 1] == '?' {
-      return Some((members, negated, 0, 1))
+      let inner2 : Array[Char] = []
+      let mut t2 = q + 1
+      while t2 < n - 2 {
+        inner2.push(chars[t2])
+        t2 = t2 + 1
+      }
+      let m2 = inner2.length()
+      match parse_capped_digits(inner2, 0, m2) {
+        Some((v, dz)) =>
+          if dz == m2 && v >= 1 && v <= 100000 {
+            return Some((members, negated, v, v, true))
+          }
+        None => ()
+      }
+      return None
     }
     if chars[n - 1] == '}' {
       let mut open = -1
@@ -372,5 +386,5 @@ pub fn bracket_set_spec(
       return None
     }
   }
-  Some((members, negated, lo, hi))
+  Some((members, negated, lo, hi, false))
 }

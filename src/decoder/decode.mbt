@@ -524,9 +524,15 @@ fn replace_all(s : String, pattern : String, content : String) -> String {
     None => ()
   }
   match @common.bracket_set_spec(pattern) {
-    Some((members, negated, lo, hi)) =>
+    Some((members, negated, lo, hi, lazy_group)) =>
       return @common.replace_bracket_set_runs(
-        s, content, members, negated, lo, hi,
+        s,
+        content,
+        members,
+        negated,
+        lo,
+        hi,
+        lazy_group~,
       )
     None => ()
   }

@@ -557,9 +557,23 @@ fn parse_capped_digits(arr : Array[Char], k : Int, until : Int) -> (Int, Int)? {
 /// Returns the equivalent greedy pattern for the downstream families,
 /// or None when the pattern has no lazy suffix / the bound is out of
 /// the onig 100000 window (the gate then rejects).
+fn last_char_index(s : String, c : Char) -> Int? {
+  let a = s.to_array()
+  let mut idx : Int? = None
+  for i in 0..<a.length() {
+    if a[i] == c {
+      idx = Some(i)
+    }
+  }
+  idx
+}
+
+///|
 pub fn lazy_normalize(pattern : String) -> String? {
-  // one step at a time — each rewrite strictly shortens the pattern,
-  // so the loop terminates ('\w+??' -> '\w+?' -> '\w')
+  // one step at a time — the loop terminates because no output ends
+  // in a bare '+', '*' or '?' stack the rules would re-consume
+  // ('\w+??' -> '\w+?' -> '\w'; 'X+*' lengthens but lands on '{0,}')
+
   match lazy_normalize_step(pattern) {
     Some(first) => {
       let mut cur = first
@@ -580,6 +594,132 @@ pub fn lazy_normalize(pattern : String) -> String? {
 fn lazy_normalize_step(pattern : String) -> String? {
   let chars = pattern.to_array()
   let n = chars.length()
+  // possessive and repeated quantifier tails over an UNESCAPED plus
+  // (probed 0.22.2): 'X++' == 'X+' (end-of-pattern possessive ==
+  // greedy), 'X+*' == 'X*' zero-min walk, and 'X+{n}'/'{n,m}'/
+  // '{n,}' == 'X{n,}' ((X+){n} = n-or-more, the inner bound vanishes)
+  if n >= 3 && chars[n - 2] == '+' && !is_escaped_at(chars, n - 2) {
+    if chars[n - 1] == '+' {
+      return Some(pattern[:n - 1].to_owned())
+    }
+    if chars[n - 1] == '*' {
+      // 'X+*' == 'X{0,}' (the star spelling itself is not a family;
+      // the brace form rides the zero-min walk)
+      return Some(pattern[:n - 2].to_owned() + "{0,}")
+    }
+  }
+  // 'X+{n}' / 'X+{n,m}' / 'X+{n,}' == 'X{n,}' — (X+){n} is
+  // n-or-more, the inner bound vanishes (probed: 'a+{2}' on 'a' ->
+  // 'a', on 'aaa' -> '#'; '\w+{2}' on 'abcd' -> '#'). The plus sits
+  // right before the final brace.
+  if n >= 4 && chars[n - 1] == '}' {
+    match last_char_index(pattern, '{') {
+      Some(o) => {
+        // 'X++{n}' — the plus before the brace is the possessive
+        // marker, and possessive-then-brace NEVER matches in onig
+        // (probed: 'a++{2}' on 'aaa' -> unchanged) — skip so it
+        // rejects loudly instead of computing the greedy rewrite
+        let possessive_mark = o >= 3 &&
+          chars[o - 2] == '+' &&
+          !is_escaped_at(chars, o - 2)
+        let plus_ok = o >= 2 &&
+          chars[o - 1] == '+' &&
+          !is_escaped_at(chars, o - 1) &&
+          !possessive_mark
+        if plus_ok {
+          let base = pattern[:o - 1].to_owned()
+          let inner = pattern[o + 1:n - 1]
+          let m2 = inner.length()
+          // '{n}' | '{n,m}' | '{n,}' — take the FIRST number; the
+          // (X+){...} bound collapses to n-or-more
+          match parse_capped_digits(inner.to_array(), 0, m2) {
+            Some((num, dz)) => {
+              let valid = dz == m2 ||
+                (
+                  inner[dz] == ',' &&
+                  (
+                    dz + 1 == m2 ||
+                    (
+                      parse_capped_digits(inner.to_array(), dz + 1, m2)
+                      is Some((_, dw2)) &&
+                      dw2 == m2
+                    )
+                  )
+                )
+              if valid && num >= 1 && num <= 100000 {
+                return Some(base + "{" + num.to_string() + ",}")
+              }
+            }
+            None => ()
+          }
+        }
+      }
+      None => ()
+    }
+  }
+  // brace double-lazy: '{n}??' == '{0}' (ALL-empty walk, probed:
+  // '\w{2}??' on 'ab' -> '#a#b#') while '{n,m}??'/'{n,}??' collapse
+  // to the OPTIONAL-GROUP '{n}?' ('\w{2,3}??' on 'aaa' -> '#a#' with
+  // the trailing empty — greedy '{2}' would give '#a')
+  if n >= 5 && chars[n - 1] == '?' && chars[n - 2] == '?' && chars[n - 3] == '}' {
+    let open = last_char_index(pattern, '{')
+    match open {
+      Some(o) => {
+        let inner = pattern[o + 1:n - 3]
+        let has_comma = inner.contains(",")
+        match parse_capped_digits(inner.to_array(), 0, inner.length()) {
+          Some((v, dz)) => {
+            let m2 = inner.length()
+            // the remainder must be a well-formed quantifier tail —
+            // HF treats malformed braces ('{2,3x}', '{2,x}', spaces)
+            // as LITERALS and '{n,100001}' errors (round-1 review)
+            let mut reversed = false
+            let tail_ok = if !has_comma {
+              dz == m2
+            } else {
+              let upper_ok = if dz + 1 == m2 {
+                true
+              } else {
+                match parse_capped_digits(inner.to_array(), dz + 1, m2) {
+                  Some((up, dw2)) =>
+                    if dw2 == m2 && up <= 100000 {
+                      // REVERSED bounds: onig swaps {n,m<n} to {m,n}
+                      // and the double-lazy then walks all-empty
+                      // (probed: '\w{3,2}??' on 'aaa' -> '#a#a#a#')
+                      if up < v {
+                        reversed = true
+                      }
+                      true
+                    } else {
+                      false
+                    }
+                  None => false
+                }
+              }
+              dz >= 1 && inner[dz] == ',' && upper_ok
+            }
+            if reversed {
+              return Some(pattern[:o].to_owned() + "{0}")
+            }
+            if !tail_ok {
+              return None
+            }
+            let base = pattern[:o].to_owned()
+            if !has_comma {
+              return Some(base + "{0}")
+            }
+            if v >= 1 {
+              return Some(base + "{" + v.to_string() + "}?")
+            }
+            // '{0,m}??' == the all-empty '{0}' like its kin
+            return Some(base + "{0}")
+          }
+          None => ()
+        }
+      }
+      None => ()
+    }
+  }
   // double tails over an UNESCAPED quantifier plus (probed 0.22.2):
   // 'X+??' == 'X+?' (the second '?' absorbs; '\w+??' on 'abcdef' ->
   // '######') and 'X+?+' == 'X' greedy ('^.+?+' on 'abcdef' -> '#').
@@ -607,6 +747,20 @@ fn lazy_normalize_step(pattern : String) -> String? {
       // 'X+?+' collapses to the GREEDY plus (probed: '^.+?+' on
       // 'a\n\nb' == '^.+' -> '#\n\n#')
       return Some(pattern[:n - 3].to_owned() + "+")
+    }
+  }
+  // quest/star possessives: 'X?+' == 'X?' and 'X*+' == 'X*' (probed:
+  // 'a?+' on 'bab' -> '#b#b#' == the {0,1} walk; possessive marking
+  // is irrelevant at end-of-pattern)
+  if n >= 3 && chars[n - 1] == '+' {
+    if chars[n - 2] == '?' && !is_escaped_at(chars, n - 2) {
+      // 'X?+' == 'X{0,1}' (emit the brace spelling; 'X?' is not a
+      // family spelling)
+      return Some(pattern[:n - 2].to_owned() + "{0,1}")
+    }
+    if chars[n - 2] == '*' && !is_escaped_at(chars, n - 2) {
+      // 'X*+' == 'X{0,}'
+      return Some(pattern[:n - 2].to_owned() + "{0,}")
     }
   }
   // BARE-class lazy plus == the unquantified class (per-char — one

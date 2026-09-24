@@ -1005,8 +1005,11 @@ pub fn replace_family_spans(
   // general bracket sets ([abc], [a-c], [a\w], [^\w-] ... with an
   // optional quantifier)
   match bracket_set_spec(pattern) {
-    Some((members, negated, lo, hi)) => {
+    Some((members, negated, lo, hi, lazy_group)) => {
       let pred = fn(c) { bracket_set_holds(members, negated, c) }
+      if lazy_group {
+        return Some(lazy_ranged_or_empty_spans(chars, pred, lo, hi))
+      }
       if lo == 0 {
         return Some(
           zero_min_match_spans(
@@ -1207,6 +1210,21 @@ fn lazy_ranged_or_empty_spans(
   lo : Int,
   hi : Int,
 ) -> Array[Span] {
+  // a REVERSED-bound swap can arrive with lo == 0 ('\w{2,0}?' ==
+  // the {0,2} walk, probed: 'aaa' -> '##'); delegate — walking the
+  // optional-group loop with lo == 0 would emit empty spans forever
+  // (a hostile tokenizer.json could hang normalize)
+  if lo <= 0 {
+    return zero_min_match_spans(
+      chars,
+      pred,
+      if hi < 0 {
+        None
+      } else {
+        Some(hi)
+      },
+    )
+  }
   let out : Array[Span] = []
   let len = chars.length()
   if len == 0 {
@@ -1347,15 +1365,45 @@ pub fn replace_double_anchored_line_runs(
 pub fn class_bounded_spec(pattern : String) -> (Int, Int, Int)? {
   let chars = pattern.to_array()
   let n = chars.length()
+  // plus tail: 'CLASS+' == 'CLASS{1,}' greedy runs — also claims the
+  // unanchored DOT '.+' (kind 30, '.' != '\n'; probed: '.+' on
+  // 'a\nb' -> '#\n#'), matching the block engine
+  if n >= 2 && chars[n - 1] == '+' {
+    let base_sb = StringBuilder()
+    for i in 0..<(n - 1) {
+      base_sb.write_char(chars[i])
+    }
+    let base = base_sb.to_string()
+    let kind : Int? = if base == "." {
+      Some(30)
+    } else {
+      match bare_class_kind(base) {
+        Some(k) => Some(k)
+        None => None
+      }
+    }
+    // the '+' must be a quantifier, not part of an escaped base
+    match kind {
+      Some(k) =>
+        if !is_escaped_at(chars, n - 1) {
+          return Some((k, 1, -1))
+        } else {
+          return None
+        }
+      None => ()
+    }
+    return None
+  }
   // find the LAST '{' whose body closes at the end; base = everything
-  // before it (must resolve as a bare class)
+  // before it (must resolve as a bare class; a 1-char base is fine —
+  // only the dot resolves, literals fall to bare_class_kind's None)
   let mut open = -1
   for i in 0..<n {
     if chars[i] == '{' {
       open = i
     }
   }
-  if open < 2 || chars[n - 1] != '}' {
+  if open < 1 || chars[n - 1] != '}' {
     return None
   }
   // base must be a bare class spelling — reject literal chars so the
@@ -1365,7 +1413,17 @@ pub fn class_bounded_spec(pattern : String) -> (Int, Int, Int)? {
     base_sb.write_char(chars[i])
   }
   let base = base_sb.to_string()
-  match bare_class_kind(base) {
+  // the unanchored DOT base rides the same window (kind 30, '.' !=
+  // '\n'; probed: '.{2,}' == dot greedy runs)
+  let base_kind : Int? = if base == "." {
+    Some(30)
+  } else {
+    match bare_class_kind(base) {
+      Some(k) => Some(k)
+      None => None
+    }
+  }
+  match base_kind {
     Some(kind) => {
       let inner : Array[Char] = []
       let mut k = open + 1
@@ -1875,10 +1933,13 @@ pub fn replace_bracket_set_runs(
   negated : Bool,
   lo : Int,
   hi : Int,
+  lazy_group? : Bool = false,
 ) -> String {
   let chars = s.to_array()
   let pred = fn(c) { bracket_set_holds(members, negated, c) }
-  let spans = if lo == 0 {
+  let spans = if lazy_group {
+    lazy_ranged_or_empty_spans(chars, pred, lo, hi)
+  } else if lo == 0 {
     zero_min_match_spans(chars, pred, if hi < 0 { None } else { Some(hi) })
   } else {
     block_match_spans(chars, pred, lo, hi)
