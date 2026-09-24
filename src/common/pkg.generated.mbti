@@ -20,7 +20,7 @@ pub fn bounded_regex_kind_pred(Int, Char) -> Bool
 
 pub fn bracket_set_holds(Array[BracketMember], Bool, Char) -> Bool
 
-pub fn bracket_set_spec(String) -> (Array[BracketMember], Bool, Int, Int)?
+pub fn bracket_set_spec(String) -> (Array[BracketMember], Bool, Int, Int, Bool)?
 
 pub fn char_bounded_spec(String) -> (Char, Int, Int)?
 
@@ -106,7 +106,7 @@ pub fn replace_bounded_char_runs(String, String, (Char) -> Bool, max_run~ : Int)
 
 pub fn replace_bounded_simple_regex(String, String, String) -> String?
 
-pub fn replace_bracket_set_runs(String, String, Array[BracketMember], Bool, Int, Int) -> String
+pub fn replace_bracket_set_runs(String, String, Array[BracketMember], Bool, Int, Int, lazy_group? : Bool) -> String
 
 pub fn replace_char_bounded_runs(String, String, String) -> String?
 
