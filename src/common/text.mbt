@@ -1477,7 +1477,7 @@ pub fn single_anchor_window_spec(
 ) -> (Int, Char?, Int, Int, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
-  if n < 5 || (chars[0] != '^' && chars[n - 1] != '$') {
+  if n < 2 || (chars[0] != '^' && chars[n - 1] != '$') {
     return None
   }
   let leading = chars[0] == '^' && chars[n - 1] != '$'
@@ -1487,71 +1487,140 @@ pub fn single_anchor_window_spec(
   }
   let body_lo = if leading { 1 } else { 0 }
   let body_hi = if trailing { n - 1 } else { n }
-  // BASE + brace at the end of the body
-  let mut open = -1
-  let mut i = body_lo
-  while i < body_hi {
-    if chars[i] == '{' {
-      open = i
-    }
-    i = i + 1
-  }
-  if open < body_lo + 1 || chars[body_hi - 1] != '}' {
-    return None
-  }
+  // BASE + quantifier: a brace (last '{' closing at body end), a plus
+  // ('^.+' == '^.{1,}'; the lazy '^.+?' == '^.{1}' — but a TRAILING
+  // anchor forces the lazy ascent to the line end, '.+?$' == '.{1,}$',
+  // mirroring the \b-trail rule), or a bare all-dots sequence
+  // ('^..' == '^.{2}', probed identical)
   let base_sb = StringBuilder()
-  let mut k = body_lo
-  while k < open {
-    base_sb.write_char(chars[k])
-    k = k + 1
-  }
-  let base = base_sb.to_string()
-  let inner : Array[Char] = []
-  let mut j = open + 1
-  while j < body_hi - 1 {
-    inner.push(chars[j])
-    j = j + 1
-  }
-  let m = inner.length()
   let mut lo : Int = 0
   let mut hi : Int = 0
-  match parse_capped_digits(inner, 0, m) {
-    Some((v, dz)) =>
-      if dz == m {
-        if v < 1 || v > 100000 {
-          return None
-        }
-        lo = v
-        hi = v
-      } else if inner[dz] == ',' && dz + 1 == m {
-        if v < 1 || v > 100000 {
-          return None
-        }
-        lo = v
-        hi = -1
-      } else if inner[dz] == ',' {
-        match parse_capped_digits(inner, dz + 1, m) {
-          Some((w, dw)) =>
-            if dw == m && v >= 1 && v <= 100000 && w <= 100000 {
-              if w < v {
-                if w == 0 {
-                  return None // {n,0}: empty semantics, reject
-                }
-                lo = w
-                hi = v
-              } else {
-                lo = v
-                hi = w
-              }
-            } else {
-              return None
-            }
-          None => return None
-        }
-      } else {
+  let mut dot_seq : Int? = None
+  if chars[body_hi - 1] != '}' {
+    let lazy_plus = chars[body_hi - 1] == '?' &&
+      body_hi - 2 >= body_lo &&
+      chars[body_hi - 2] == '+'
+    let greedy_plus = chars[body_hi - 1] == '+'
+    if lazy_plus || greedy_plus {
+      let base_end = if lazy_plus { body_hi - 2 } else { body_hi - 1 }
+      if base_end <= body_lo {
         return None
       }
-    None => return None
+      if base_end - body_lo == 1 {
+        let c = chars[base_end - 1]
+        if c == '+' || c == '*' || c == '?' {
+          return None // possessive spellings, not a literal base
+        }
+      }
+      let mut k = body_lo
+      while k < base_end {
+        base_sb.write_char(chars[k])
+        k = k + 1
+      }
+      lo = 1
+      hi = if lazy_plus && leading { 1 } else { -1 }
+    } else {
+      // bare body: only an all-dots sequence is a window (a
+      // quantifier binds the LAST dot, so quantified multi-dot
+      // spellings never arrive here — they reject in the brace branch)
+      let mut k = body_lo
+      let mut all_dots = true
+      while k < body_hi {
+        if chars[k] != '.' {
+          all_dots = false
+          break
+        }
+        k = k + 1
+      }
+      if !all_dots || body_hi <= body_lo {
+        return None
+      }
+      let mut k = body_lo
+      while k < body_hi {
+        base_sb.write_char(chars[k])
+        k = k + 1
+      }
+      dot_seq = Some(body_hi - body_lo)
+      lo = body_hi - body_lo
+      hi = lo
+    }
+  } else {
+    let mut open = -1
+    let mut i = body_lo
+    while i < body_hi {
+      if chars[i] == '{' {
+        open = i
+      }
+      i = i + 1
+    }
+    if open < body_lo + 1 {
+      return None
+    }
+    let mut k = body_lo
+    while k < open {
+      base_sb.write_char(chars[k])
+      k = k + 1
+    }
+    let inner : Array[Char] = []
+    let mut j = open + 1
+    while j < body_hi - 1 {
+      inner.push(chars[j])
+      j = j + 1
+    }
+    let m = inner.length()
+    match parse_capped_digits(inner, 0, m) {
+      Some((v, dz)) =>
+        if dz == m {
+          if v < 1 || v > 100000 {
+            return None
+          }
+          lo = v
+          hi = v
+        } else if inner[dz] == ',' && dz + 1 == m {
+          if v < 1 || v > 100000 {
+            return None
+          }
+          lo = v
+          hi = -1
+        } else if inner[dz] == ',' {
+          match parse_capped_digits(inner, dz + 1, m) {
+            Some((w, dw)) =>
+              if dw == m && v >= 1 && v <= 100000 && w <= 100000 {
+                if w < v {
+                  if w == 0 {
+                    return None // {n,0}: empty semantics, reject
+                  }
+                  lo = w
+                  hi = v
+                } else {
+                  lo = v
+                  hi = w
+                }
+              } else {
+                return None
+              }
+            None => return None
+          }
+        } else {
+          return None
+        }
+      None => return None
+    }
+  }
+  let base = base_sb.to_string()
+  // dot base (kind 30, '.' = any char except \n — the pred never
+  // matches '\n' so the trailing nl-pred guard below is exempt):
+  // a single '.' arrives with a brace/plus; an all-dots sequence
+  // arrives bare with lo/hi already pinned to its length
+  match dot_seq {
+    Some(k) => {
+      ignore(base)
+      return Some((30, None, k, k, leading))
+    }
+    None => ()
+  }
+  if base == "." {
+    return Some((30, None, lo, hi, leading))
   }
   match bare_class_kind(base) {
     Some(kind) =>
