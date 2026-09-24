@@ -435,6 +435,10 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
   if boundary_window_spec(pattern) is Some(_) {
     return true
   }
+  // general bracket sets ([abc], [a-c], [a\w], [^\w-] ...)
+  if bracket_set_spec(pattern) is Some(_) {
+    return true
+  }
   // single-anchor windows (^\w{1,2}, \w{1,2}$)
   if single_anchor_window_spec(pattern) is Some(_) {
     return true
@@ -548,8 +552,67 @@ fn parse_capped_digits(arr : Array[Char], k : Int, until : Int) -> (Int, Int)? {
 /// or None when the pattern has no lazy suffix / the bound is out of
 /// the onig 100000 window (the gate then rejects).
 pub fn lazy_normalize(pattern : String) -> String? {
+  // one step at a time — each rewrite strictly shortens the pattern,
+  // so the loop terminates ('\w+??' -> '\w+?' -> '\w')
+  match lazy_normalize_step(pattern) {
+    Some(first) => {
+      let mut cur = first
+      let keep = true
+      while keep {
+        match lazy_normalize_step(cur) {
+          Some(next) => cur = next
+          None => break
+        }
+      }
+      Some(cur)
+    }
+    None => None
+  }
+}
+
+///|
+fn lazy_normalize_step(pattern : String) -> String? {
   let chars = pattern.to_array()
   let n = chars.length()
+  // double tails over an UNESCAPED quantifier plus (probed 0.22.2):
+  // 'X+??' == 'X+?' (the second '?' absorbs; '\w+??' on 'abcdef' ->
+  // '######') and 'X+?+' == 'X' greedy ('^.+?+' on 'abcdef' -> '#').
+  // An ESCAPED plus is a literal base — '\+??' is the lazy OPTIONAL
+  // of a literal plus (empty insertions) and stays rejected
+  if n >= 4 && chars[n - 3] == '+' && !is_escaped_at(chars, n - 3) {
+    if chars[n - 2] == '?' && chars[n - 1] == '?' {
+      // the double '??' is an OPTIONAL lazy group '(X+?)?', not a
+      // plain lazy plus (probed: '\w+??' on '-ab' -> '#-##', empty
+      // fallback where the pred fails) == 'X{1}?' == 'X{0,1}'. Only
+      // UNANCHORED bases rewrite — the anchored optional ('^.+??' on
+      // 'a\n\nb' -> '#\n#\n#') walks anchor-pinned empties, a
+      // capability the anchored families reject loudly
+      let base = pattern[:n - 3].to_owned()
+      let anchored = base.contains("^") ||
+        base.contains("$") ||
+        base.contains("\\b") ||
+        base.contains("\\B")
+      if !anchored {
+        return Some(base + "{1}?")
+      }
+      return None
+    }
+    if chars[n - 2] == '?' && chars[n - 1] == '+' {
+      // 'X+?+' collapses to the GREEDY plus (probed: '^.+?+' on
+      // 'a\n\nb' == '^.+' -> '#\n\n#')
+      return Some(pattern[:n - 3].to_owned() + "+")
+    }
+  }
+  // BARE-class lazy plus == the unquantified class (per-char — one
+  // char per position, probed: '\w+?' on 'abcdef' -> '######');
+  // anchored and bracket forms fail the bare-class prefix test and
+  // stay with their own families
+  if n >= 4 && chars[n - 1] == '?' && chars[n - 2] == '+' {
+    let base = pattern[:n - 2].to_owned()
+    if bare_class_kind(base) is Some(_) {
+      return Some(base)
+    }
+  }
   if n < 5 || chars[n - 1] != '?' || chars[n - 2] != '}' {
     return None
   }

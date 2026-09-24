@@ -18,6 +18,10 @@ pub fn bounded_regex_kind(String) -> (Int, Int)?
 
 pub fn bounded_regex_kind_pred(Int, Char) -> Bool
 
+pub fn bracket_set_holds(Array[BracketMember], Bool, Char) -> Bool
+
+pub fn bracket_set_spec(String) -> (Array[BracketMember], Bool, Int, Int)?
+
 pub fn char_bounded_spec(String) -> (Char, Int, Int)?
 
 pub fn char_string(Char) -> String
@@ -102,6 +106,8 @@ pub fn replace_bounded_char_runs(String, String, (Char) -> Bool, max_run~ : Int)
 
 pub fn replace_bounded_simple_regex(String, String, String) -> String?
 
+pub fn replace_bracket_set_runs(String, String, Array[BracketMember], Bool, Int, Int) -> String
+
 pub fn replace_char_bounded_runs(String, String, String) -> String?
 
 pub fn replace_char_runs(String, String, (Char) -> Bool) -> String
@@ -157,6 +163,12 @@ pub fn zero_min_quantifier_spec(String) -> (Int, Char?, Int)?
 // Errors
 
 // Types and methods
+pub(all) enum BracketMember {
+  MKind(Int)
+  MChar(Char)
+  MRange(Char, Char)
+}
+
 pub(all) enum PatternKind {
   StringPattern
   RegexPattern
