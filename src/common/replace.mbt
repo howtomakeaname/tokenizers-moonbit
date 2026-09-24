@@ -1210,6 +1210,21 @@ fn lazy_ranged_or_empty_spans(
   lo : Int,
   hi : Int,
 ) -> Array[Span] {
+  // a REVERSED-bound swap can arrive with lo == 0 ('\w{2,0}?' ==
+  // the {0,2} walk, probed: 'aaa' -> '##'); delegate — walking the
+  // optional-group loop with lo == 0 would emit empty spans forever
+  // (a hostile tokenizer.json could hang normalize)
+  if lo <= 0 {
+    return zero_min_match_spans(
+      chars,
+      pred,
+      if hi < 0 {
+        None
+      } else {
+        Some(hi)
+      },
+    )
+  }
   let out : Array[Span] = []
   let len = chars.length()
   if len == 0 {

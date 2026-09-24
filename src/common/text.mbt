@@ -673,6 +673,7 @@ fn lazy_normalize_step(pattern : String) -> String? {
             // the remainder must be a well-formed quantifier tail —
             // HF treats malformed braces ('{2,3x}', '{2,x}', spaces)
             // as LITERALS and '{n,100001}' errors (round-1 review)
+            let mut reversed = false
             let tail_ok = if !has_comma {
               dz == m2
             } else {
@@ -680,11 +681,25 @@ fn lazy_normalize_step(pattern : String) -> String? {
                 true
               } else {
                 match parse_capped_digits(inner.to_array(), dz + 1, m2) {
-                  Some((up, dw2)) => dw2 == m2 && up <= 100000
+                  Some((up, dw2)) =>
+                    if dw2 == m2 && up <= 100000 {
+                      // REVERSED bounds: onig swaps {n,m<n} to {m,n}
+                      // and the double-lazy then walks all-empty
+                      // (probed: '\w{3,2}??' on 'aaa' -> '#a#a#a#')
+                      if up < v {
+                        reversed = true
+                      }
+                      true
+                    } else {
+                      false
+                    }
                   None => false
                 }
               }
               dz >= 1 && inner[dz] == ',' && upper_ok
+            }
+            if reversed {
+              return Some(pattern[:o].to_owned() + "{0}")
             }
             if !tail_ok {
               return None
