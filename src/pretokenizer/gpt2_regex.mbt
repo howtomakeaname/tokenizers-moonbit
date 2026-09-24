@@ -110,6 +110,66 @@ pub fn gpt2_split(text : String) -> Array[String] {
 ///
 /// This differs from GPT-2 by not attaching leading spaces to following words
 /// and by emitting single digits. Whitespace is removed by the Split stage.
+
+///|
+/// Positioned CLIP matches (the scanner SKIPS whitespace, so the
+/// pieces are not contiguous — spans carry the real offsets).
+pub fn clip_split_spans(text : String) -> Array[@common.Span] {
+  let chars = text.to_array()
+  let n = chars.length()
+  let out : Array[@common.Span] = []
+  let mut i = 0
+  while i < n {
+    let start = i
+    if is_space(chars[i]) {
+      i = i + 1
+      continue
+    }
+    let special = match_clip_special(chars, i, n)
+    if special > 0 {
+      out.push({ start, stop: i + special, })
+      i = i + special
+      continue
+    }
+    let contr = match_contraction(chars, i, n)
+    if contr > 0 {
+      out.push({ start, stop: i + contr, })
+      i = i + contr
+      continue
+    }
+    let c = chars[i]
+    if is_letter(c) {
+      let mut j = i
+      while j < n && is_letter(chars[j]) {
+        j = j + 1
+      }
+      out.push({ start, stop: j, })
+      i = j
+      continue
+    }
+    if is_number(c) {
+      out.push({ start, stop: i + 1, })
+      i = i + 1
+      continue
+    }
+    let mut j = i
+    while j < n &&
+          !is_space(chars[j]) &&
+          !is_letter(chars[j]) &&
+          !is_number(chars[j]) {
+      j = j + 1
+    }
+    if j > i {
+      out.push({ start, stop: j, })
+      i = j
+      continue
+    }
+    i = i + 1
+  }
+  out
+}
+
+///|
 pub fn clip_split(text : String) -> Array[String] {
   let chars = text.to_array()
   let n = chars.length()

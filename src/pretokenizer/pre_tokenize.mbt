@@ -88,7 +88,27 @@ fn split_pre_tokenize(
       text, pattern, behavior, invert, regex, base_offset,
     )
   }
-  pieces_to_splits(pieces, base_offset)
+  // the hardcoded scanners emit the MATCH pieces (full coverage —
+  // the whitespace/gap branches of these patterns consume everything);
+  // behavior/invert fold on top exactly like the generic path
+  // (probed 0.22.2: Split(gpt2-pattern, 'removed') -> [], mwp/mwn ==
+  // isolated when no gaps exist, contiguous -> one whole piece)
+  let chars = text.to_array()
+  // CLIP's scanner skips whitespace (gaps) — its spans carry real
+  // offsets; the other scanners emit contiguous full-coverage pieces
+  let matches : Array[@common.Span] = if is_clip_pattern(pattern) {
+    clip_split_spans(text)
+  } else {
+    let spans : Array[@common.Span] = []
+    let mut cursor = 0
+    for p in pieces {
+      let len = p.char_length()
+      spans.push({ start: cursor, stop: cursor + len, })
+      cursor = cursor + len
+    }
+    spans
+  }
+  apply_split_matches(chars, matches, behavior, invert, base_offset)
 }
 
 ///|
@@ -307,23 +327,6 @@ fn is_clip_pattern(p : String) -> Bool {
   p.contains("<\\|startoftext\\|>") &&
   p.contains("[\\p{L}]+") &&
   p.contains("[\\p{N}]")
-}
-
-// Turn raw piece strings into Splits with running char offsets.
-
-///|
-fn pieces_to_splits(
-  pieces : Array[String],
-  base_offset : Int,
-) -> Array[@types.Split] {
-  let out : Array[@types.Split] = []
-  let mut cursor = base_offset
-  for p in pieces {
-    let len = p.char_length()
-    out.push({ value: p, offsets: (cursor, cursor + len), })
-    cursor = cursor + len
-  }
-  out
 }
 
 ///|
