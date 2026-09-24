@@ -2805,4 +2805,15 @@ test "zero-min gap closures" {
   @test.assert_eq(@common.is_supported_replace_regex("a+*+"), true)
   @test.assert_eq(@common.is_supported_replace_regex("a??+"), true)
   @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{2}?+"), true)
+  // round-1 review: ranged '?+' stays loud (HF computes n-block
+  // chains); malformed '+{0,...}' tails stay literal; '}??+' drops
+  // the marker; '.{2,0}' rides the reversed-zero via zero_min_base
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{2,3}?+"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{2,}?+"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a+{0,x}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a+{0,100001}"), false)
+  @test.assert_eq(n("\\w{0,3}?+").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("\\w{2}??+").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("\\w{2,3}??+").normalize("aaa"), "#a#")
+  @test.assert_eq(n(".{2,0}").normalize("a\nb"), "#\n#")
 }
