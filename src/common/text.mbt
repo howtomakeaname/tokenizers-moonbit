@@ -634,6 +634,34 @@ fn lazy_normalize_step(pattern : String) -> String? {
           // (X+){...} bound collapses to n-or-more
           match parse_capped_digits(inner.to_array(), 0, m2) {
             Some((num, dz)) => {
+              // zero bounds: '(X+){0}' == the all-empty '{0}' and
+              // '(X+){0,m}' == the '{0,}' star walk (probed: 'a+{0,2}'
+              // on 'aaa' -> '#', on 'bab' -> '#b#b#')
+              if num == 0 {
+                if dz == m2 {
+                  return Some(base + "{0}")
+                }
+                // '{0,}' == the star walk; '{0,d}' all-digits
+                // d <= 100000 (d == 0 is the all-empty '{0}': zero
+                // reps); malformed tails are HF literals and
+                // oversized bounds are HF errors (round-1/2 review)
+                if inner[dz] == ',' && dz + 1 == m2 {
+                  return Some(base + "{0,}")
+                }
+                if inner[dz] == ',' && dz + 1 < m2 {
+                  match parse_capped_digits(inner.to_array(), dz + 1, m2) {
+                    Some((up2, dw3)) =>
+                      if dw3 == m2 && up2 <= 100000 {
+                        if up2 == 0 {
+                          return Some(base + "{0}")
+                        }
+                        return Some(base + "{0,}")
+                      }
+                    None => ()
+                  }
+                }
+                return None
+              }
               let valid = dz == m2 ||
                 (
                   inner[dz] == ',' &&
@@ -666,6 +694,18 @@ fn lazy_normalize_step(pattern : String) -> String? {
     match open {
       Some(o) => {
         let inner = pattern[o + 1:n - 3]
+        // comma-open '{,m}??' == '{0,m}??' == the all-empty '{0}'
+        // (probed: '\w{,3}??' on 'aaa' -> '#a#a#a#')
+        if inner.length() > 1 && inner[0] == ',' {
+          match parse_capped_digits(inner.to_array(), 1, inner.length()) {
+            Some((_, dw)) =>
+              if dw == inner.length() {
+                return Some(pattern[:o].to_owned() + "{0}")
+              }
+            None => ()
+          }
+          return None
+        }
         let has_comma = inner.contains(",")
         match parse_capped_digits(inner.to_array(), 0, inner.length()) {
           Some((v, dz)) => {
@@ -747,6 +787,75 @@ fn lazy_normalize_step(pattern : String) -> String? {
       // 'X+?+' collapses to the GREEDY plus (probed: '^.+?+' on
       // 'a\n\nb' == '^.+' -> '#\n\n#')
       return Some(pattern[:n - 3].to_owned() + "+")
+    }
+  }
+  // possessive-marked LAZY tails (probed 0.22.2): 'X+*+' == the star
+  // walk 'X{0,}', 'X+??+' walks one char per rep '{0,1}', plain
+  // 'X??+' == all-empty 'X{0}', and a
+  // possessive marker on a brace-lazy optional drops ('{n}?+' ==
+  // '{n}?'); these previously produced dead intermediates no family
+  // claimed (PR #60 round-2 review)
+  if n >= 4 && chars[n - 1] == '+' {
+    if chars[n - 2] == '*' &&
+      chars[n - 3] == '+' &&
+      !is_escaped_at(chars, n - 3) {
+      return Some(pattern[:n - 3].to_owned() + "{0,}")
+    }
+    if chars[n - 2] == '?' {
+      // '}??+' — the possessive marker on a double-lazy brace: drop
+      // it and let the double-lazy rules handle the rest
+      if n >= 5 && chars[n - 3] == '?' && chars[n - 4] == '}' {
+        return Some(pattern[:n - 1].to_owned())
+      }
+      if n >= 5 &&
+        chars[n - 3] == '?' &&
+        chars[n - 4] == '+' &&
+        !is_escaped_at(chars, n - 4) {
+        // '(X+??)+' walks one char per rep (probed: 'a+??+' on
+        // 'aaa' -> '###', unlike the 'X+*+' star run)
+        return Some(pattern[:n - 4].to_owned() + "{0,1}")
+      }
+      if chars[n - 3] == '?' && !is_escaped_at(chars, n - 3) {
+        return Some(pattern[:n - 3].to_owned() + "{0}")
+      }
+      if chars[n - 3] == '}' {
+        // drop the possessive '+' only where the lazy kin is exact
+        // or zero-min; RANGED inners compute n-block CHAINS in HF
+        // ('\w{2,3}?+' on 'aaaa' -> '#') and stay loud (round-1)
+        match last_char_index(pattern, '{') {
+          Some(o2) => {
+            let inner2 = pattern[o2 + 1:n - 3]
+            let m3 = inner2.length()
+            let droppable = match
+              parse_capped_digits(inner2.to_array(), 0, m3) {
+              Some((v3, dz3)) =>
+                if dz3 == m3 {
+                  true // exact {n}
+                } else if v3 == 0 && inner2[dz3] == ',' {
+                  true // zero-min {0,m}/{0,}
+                } else if inner2[dz3] == ',' {
+                  // REVERSED inners drop too — the downstream
+                  // chains compute them ('{2,0}?+' -> the {0,n}
+                  // walk, '{3,2}?+' -> lazy_exact reversed);
+                  // well-formed ranges compute n-block CHAINS and
+                  // stay loud
+                  match parse_capped_digits(inner2.to_array(), dz3 + 1, m3) {
+                    Some((up3, dw4)) => dw4 == m3 && up3 < v3
+                    None => false
+                  }
+                } else {
+                  false
+                }
+              None => false
+            }
+            if droppable {
+              return Some(pattern[:n - 1].to_owned())
+            }
+            return None
+          }
+          None => return None
+        }
+      }
     }
   }
   // quest/star possessives: 'X?+' == 'X?' and 'X*+' == 'X*' (probed:
@@ -862,7 +971,13 @@ fn lazy_normalize_step(pattern : String) -> String? {
           Some((hi, k2)) =>
             if k2 == m {
               if hi < v {
-                return None // reversed range: HF swaps; we fail explicitly
+                // reversed with a ZERO upper: onig swaps to '{0,v}'
+                // and the lazy rides the zero-min walk (probed:
+                // '[a\w]{2,0}?' on 'aaa' -> '##')
+                if hi == 0 {
+                  return Some(base + "{0," + v.to_string() + "}")
+                }
+                return None // nonzero reversed: HF swaps; we fail explicitly
               }
               return Some(base + "{" + v.to_string() + "}") // {n,m}? == {n}
             }
@@ -993,6 +1108,11 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
     base_sb.write_char(chars[i])
   }
   let base = base_sb.to_string()
+  // the unanchored DOT base rides the same zero-min walk (kind 30,
+  // '.' != '\n'; probed: '.{0,2}' on 'a\nb' -> '#\n#')
+  if base == "." {
+    return Some((30, None, max))
+  }
   match bare_class_kind(base) {
     Some(kind) => Some((kind, None, max))
     None => {
@@ -1098,6 +1218,11 @@ fn zero_min_base(
     base_sb.write_char(chars[i])
   }
   let base = base_sb.to_string()
+  // the unanchored DOT base rides the same walk (kind 30; also
+  // serves the {n,0} branch and lazy_exact — round-1 review)
+  if base == "." {
+    return Some((30, None, max))
+  }
   match bare_class_kind(base) {
     Some(kind) => Some((kind, None, max))
     None => {

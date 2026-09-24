@@ -2765,3 +2765,64 @@ test "general bracket sets and double tails" {
   @test.assert_eq(@common.is_supported_replace_regex("\\w++"), true)
   @test.assert_eq(@common.is_supported_replace_regex("a*"), false)
 }
+
+///|
+/// Zero-min gap closures (probed 0.22.2): dot windows '.{0,2}'/
+/// '.{0}'/'.{,2}' ride the zero-min walk via a '.' base in
+/// zero_min_base (kind 30, pred excludes '\n'); '(X+){0}' == the
+/// all-empty '{0}' while '(X+){0,m}' == the '{0,}' star walk;
+/// comma-open '{,m}??' == all-empty; reversed-zero '{n,0}?' == the
+/// '{0,n}' walk; possessive-marked lazy tails collapse
+/// ('X+*+' == star, 'X+??+' == one char per rep '{0,1}', 'X??+' ==
+/// all-empty, '{n}?+' == '{n}?') instead of dying as dead rewrites.
+test "zero-min gap closures" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n(".{0,2}").normalize("aaa"), "##")
+  @test.assert_eq(n(".{0,2}").normalize("a\nb"), "#\n#")
+  @test.assert_eq(n(".{0}").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n(".{,2}").normalize("aaa"), "##")
+  @test.assert_eq(n("a+{0}").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("a+{0}").normalize("bab"), "#b#a#b#")
+  @test.assert_eq(n("a+{0,2}").normalize("aaa"), "#")
+  @test.assert_eq(n("a+{0,2}").normalize("bab"), "#b#b#")
+  @test.assert_eq(n("\\w{,3}??").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("[a\\w]{2,0}?").normalize("aaa"), "##")
+  @test.assert_eq(n("[a\\w]{2,0}?").normalize("-ab-"), "#-#-#")
+  @test.assert_eq(n("a+*+").normalize("bab"), "#b#b#")
+  @test.assert_eq(n("a+*+").normalize("aaa"), "#")
+  @test.assert_eq(n("a??+").normalize("bab"), "#b#a#b#")
+  @test.assert_eq(n("[a\\w]{2}?+").normalize("xay"), "#y#")
+  @test.assert_eq(n("a+??+").normalize("bab"), "#b#b#")
+  @test.assert_eq(n("\\w+*+").normalize("a-b"), "#-#")
+  @test.assert_eq(@common.is_supported_replace_regex(".{0,2}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex(".{0}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex(".{,2}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a+{0}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{,3}??"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{2,0}?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a+*+"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a??+"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{2}?+"), true)
+  // round-1 review: ranged '?+' stays loud (HF computes n-block
+  // chains); malformed '+{0,...}' tails stay literal; '}??+' drops
+  // the marker; '.{2,0}' rides the reversed-zero via zero_min_base
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{2,3}?+"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{2,}?+"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a+{0,x}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a+{0,100001}"), false)
+  @test.assert_eq(n("\\w{0,3}?+").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("\\w{2}??+").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("\\w{2,3}??+").normalize("aaa"), "#a#")
+  @test.assert_eq(n(".{2,0}").normalize("a\nb"), "#\n#")
+  // round-2 fixes: '{0,}' star walk restored, '{0,0}' == all-empty,
+  // reversed '?+' inners drop again (well-formed ranges stay loud)
+  @test.assert_eq(n("a+{0,}").normalize("aaa"), "#")
+  @test.assert_eq(n("a+{0,}").normalize("bab"), "#b#b#")
+  @test.assert_eq(n(".+{0,}").normalize("a\nb"), "#\n#")
+  @test.assert_eq(n("a+{0,0}").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("\\w{2,0}?+").normalize("aaa"), "##")
+  @test.assert_eq(n("\\w{3,2}?+").normalize("aaaa"), "#a#")
+  @test.assert_eq(@common.is_supported_replace_regex("a+{0,}"), true)
+}
