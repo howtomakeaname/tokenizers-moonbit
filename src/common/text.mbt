@@ -641,13 +641,20 @@ fn lazy_normalize_step(pattern : String) -> String? {
                 if dz == m2 {
                   return Some(base + "{0}")
                 }
-                // '{0,}' or '{0,d}' with an all-digits d <= 100000 —
-                // malformed tails are HF literals and oversized
-                // bounds are HF errors (round-1 review)
+                // '{0,}' == the star walk; '{0,d}' all-digits
+                // d <= 100000 (d == 0 is the all-empty '{0}': zero
+                // reps); malformed tails are HF literals and
+                // oversized bounds are HF errors (round-1/2 review)
+                if inner[dz] == ',' && dz + 1 == m2 {
+                  return Some(base + "{0,}")
+                }
                 if inner[dz] == ',' && dz + 1 < m2 {
                   match parse_capped_digits(inner.to_array(), dz + 1, m2) {
                     Some((up2, dw3)) =>
                       if dw3 == m2 && up2 <= 100000 {
+                        if up2 == 0 {
+                          return Some(base + "{0}")
+                        }
                         return Some(base + "{0,}")
                       }
                     None => ()
@@ -826,6 +833,16 @@ fn lazy_normalize_step(pattern : String) -> String? {
                   true // exact {n}
                 } else if v3 == 0 && inner2[dz3] == ',' {
                   true // zero-min {0,m}/{0,}
+                } else if inner2[dz3] == ',' {
+                  // REVERSED inners drop too — the downstream
+                  // chains compute them ('{2,0}?+' -> the {0,n}
+                  // walk, '{3,2}?+' -> lazy_exact reversed);
+                  // well-formed ranges compute n-block CHAINS and
+                  // stay loud
+                  match parse_capped_digits(inner2.to_array(), dz3 + 1, m3) {
+                    Some((up3, dw4)) => dw4 == m3 && up3 < v3
+                    None => false
+                  }
                 } else {
                   false
                 }
