@@ -570,8 +570,10 @@ fn last_char_index(s : String, c : Char) -> Int? {
 
 ///|
 pub fn lazy_normalize(pattern : String) -> String? {
-  // one step at a time — each rewrite strictly shortens the pattern,
-  // so the loop terminates ('\w+??' -> '\w+?' -> '\w')
+  // one step at a time — the loop terminates because no output ends
+  // in a bare '+', '*' or '?' stack the rules would re-consume
+  // ('\w+??' -> '\w+?' -> '\w'; 'X+*' lengthens but lands on '{0,}')
+
   match lazy_normalize_step(pattern) {
     Some(first) => {
       let mut cur = first
@@ -612,8 +614,19 @@ fn lazy_normalize_step(pattern : String) -> String? {
   // right before the final brace.
   if n >= 4 && chars[n - 1] == '}' {
     match last_char_index(pattern, '{') {
-      Some(o) =>
-        if o >= 2 && chars[o - 1] == '+' && !is_escaped_at(chars, o - 1) {
+      Some(o) => {
+        // 'X++{n}' — the plus before the brace is the possessive
+        // marker, and possessive-then-brace NEVER matches in onig
+        // (probed: 'a++{2}' on 'aaa' -> unchanged) — skip so it
+        // rejects loudly instead of computing the greedy rewrite
+        let possessive_mark = o >= 3 &&
+          chars[o - 2] == '+' &&
+          !is_escaped_at(chars, o - 2)
+        let plus_ok = o >= 2 &&
+          chars[o - 1] == '+' &&
+          !is_escaped_at(chars, o - 1) &&
+          !possessive_mark
+        if plus_ok {
           let base = pattern[:o - 1].to_owned()
           let inner = pattern[o + 1:n - 1]
           let m2 = inner.length()
@@ -640,6 +653,7 @@ fn lazy_normalize_step(pattern : String) -> String? {
             None => ()
           }
         }
+      }
       None => ()
     }
   }
@@ -655,18 +669,35 @@ fn lazy_normalize_step(pattern : String) -> String? {
         let has_comma = inner.contains(",")
         match parse_capped_digits(inner.to_array(), 0, inner.length()) {
           Some((v, dz)) => {
-            let base = pattern[:o].to_owned()
-            if !has_comma && dz == inner.length() {
-              return Some(base + "{0}")
-            }
-            if has_comma && dz >= 1 {
-              if v >= 1 {
-                return Some(base + "{" + v.to_string() + "}?")
+            let m2 = inner.length()
+            // the remainder must be a well-formed quantifier tail —
+            // HF treats malformed braces ('{2,3x}', '{2,x}', spaces)
+            // as LITERALS and '{n,100001}' errors (round-1 review)
+            let tail_ok = if !has_comma {
+              dz == m2
+            } else {
+              let upper_ok = if dz + 1 == m2 {
+                true
+              } else {
+                match parse_capped_digits(inner.to_array(), dz + 1, m2) {
+                  Some((up, dw2)) => dw2 == m2 && up <= 100000
+                  None => false
+                }
               }
-              // '{0,m}??' == the all-empty '{0}' like its kin
+              dz >= 1 && inner[dz] == ',' && upper_ok
+            }
+            if !tail_ok {
+              return None
+            }
+            let base = pattern[:o].to_owned()
+            if !has_comma {
               return Some(base + "{0}")
             }
-            return None
+            if v >= 1 {
+              return Some(base + "{" + v.to_string() + "}?")
+            }
+            // '{0,m}??' == the all-empty '{0}' like its kin
+            return Some(base + "{0}")
           }
           None => ()
         }
