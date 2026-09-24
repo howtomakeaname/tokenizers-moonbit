@@ -641,8 +641,17 @@ fn lazy_normalize_step(pattern : String) -> String? {
                 if dz == m2 {
                   return Some(base + "{0}")
                 }
-                if inner[dz] == ',' {
-                  return Some(base + "{0,}")
+                // '{0,}' or '{0,d}' with an all-digits d <= 100000 —
+                // malformed tails are HF literals and oversized
+                // bounds are HF errors (round-1 review)
+                if inner[dz] == ',' && dz + 1 < m2 {
+                  match parse_capped_digits(inner.to_array(), dz + 1, m2) {
+                    Some((up2, dw3)) =>
+                      if dw3 == m2 && up2 <= 100000 {
+                        return Some(base + "{0,}")
+                      }
+                    None => ()
+                  }
                 }
                 return None
               }
@@ -786,6 +795,11 @@ fn lazy_normalize_step(pattern : String) -> String? {
       return Some(pattern[:n - 3].to_owned() + "{0,}")
     }
     if chars[n - 2] == '?' {
+      // '}??+' — the possessive marker on a double-lazy brace: drop
+      // it and let the double-lazy rules handle the rest
+      if n >= 5 && chars[n - 3] == '?' && chars[n - 4] == '}' {
+        return Some(pattern[:n - 1].to_owned())
+      }
       if n >= 5 &&
         chars[n - 3] == '?' &&
         chars[n - 4] == '+' &&
@@ -798,7 +812,32 @@ fn lazy_normalize_step(pattern : String) -> String? {
         return Some(pattern[:n - 3].to_owned() + "{0}")
       }
       if chars[n - 3] == '}' {
-        return Some(pattern[:n - 1].to_owned())
+        // drop the possessive '+' only where the lazy kin is exact
+        // or zero-min; RANGED inners compute n-block CHAINS in HF
+        // ('\w{2,3}?+' on 'aaaa' -> '#') and stay loud (round-1)
+        match last_char_index(pattern, '{') {
+          Some(o2) => {
+            let inner2 = pattern[o2 + 1:n - 3]
+            let m3 = inner2.length()
+            let droppable = match
+              parse_capped_digits(inner2.to_array(), 0, m3) {
+              Some((v3, dz3)) =>
+                if dz3 == m3 {
+                  true // exact {n}
+                } else if v3 == 0 && inner2[dz3] == ',' {
+                  true // zero-min {0,m}/{0,}
+                } else {
+                  false
+                }
+              None => false
+            }
+            if droppable {
+              return Some(pattern[:n - 1].to_owned())
+            }
+            return None
+          }
+          None => return None
+        }
       }
     }
   }
@@ -1162,6 +1201,11 @@ fn zero_min_base(
     base_sb.write_char(chars[i])
   }
   let base = base_sb.to_string()
+  // the unanchored DOT base rides the same walk (kind 30; also
+  // serves the {n,0} branch and lazy_exact — round-1 review)
+  if base == "." {
+    return Some((30, None, max))
+  }
   match bare_class_kind(base) {
     Some(kind) => Some((kind, None, max))
     None => {
