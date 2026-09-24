@@ -2740,6 +2740,16 @@ test "general bracket sets and double tails" {
   @test.assert_eq(@common.is_supported_replace_regex("\\ba++"), true)
   // still rejected: possessive before a shrink-needing trailing anchor
   @test.assert_eq(@common.is_supported_replace_regex("\\ba++\\B"), false)
+  // round-1 review fixes: malformed braces stay literal (loud),
+  // possessive-then-brace never matches (loud)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{2,3x}??"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{2,x}??"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{0,m}??"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{2,100001}??"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a++{2}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w++{2}"), false)
+  @test.assert_eq(n("\\w{2,3}??").normalize("aaa"), "#a#")
+  @test.assert_eq(n("\\w{0,3}??").normalize("aaa"), "#a#a#a#")
   // PR #60: unanchored dot plus joins the class runs (kind 30)
   @test.assert_eq(n(".+").normalize("a\nb"), "#\n#")
   @test.assert_eq(n(".+").normalize("a"), "#")
