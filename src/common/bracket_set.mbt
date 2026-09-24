@@ -267,6 +267,16 @@ pub fn bracket_set_spec(
   let mut lo : Int = 1
   let mut hi : Int = 1
   if q < n {
+    // lazy exact '{1}?' == the optional one-char group == {0,1} (the
+    // '+??' rewrite lands here); larger lazy-n optional groups are
+    // the kind/literal lazy-exact engine and stay rejected for sets
+    if q == n - 4 &&
+      chars[q] == '{' &&
+      chars[q + 1] == '1' &&
+      chars[q + 2] == '}' &&
+      chars[n - 1] == '?' {
+      return Some((members, negated, 0, 1))
+    }
     if chars[n - 1] == '}' {
       let mut open = -1
       let mut j = q
@@ -305,10 +315,16 @@ pub fn bracket_set_spec(
               Some((w, dw)) =>
                 if dw == m && v <= 100000 && w <= 100000 {
                   if w < v {
+                    // {n,0} == {0,n} for sets (probed: '[a\w]{2,0}' ==
+                    // '[a\w]{,2}' == the {0,2} empty walk); NONZERO
+                    // reversed bounds keep the window swap (probed:
+                    // '[a\w]{2,1}' == '[a\w]{1,2}' — round-1 review
+                    // caught this branch clobbering them)
                     if w == 0 {
-                      return None // {n,0}: empty semantics
+                      lo = 0
+                    } else {
+                      lo = w
                     }
-                    lo = w
                     hi = v
                   } else {
                     lo = v
@@ -322,7 +338,23 @@ pub fn bracket_set_spec(
           } else {
             return None
           }
-        None => return None
+        None =>
+          // comma-open '{,m}' == {0,m} (probed, the sibling family's
+          // rule)
+          if m > 1 && inner[0] == ',' {
+            match parse_capped_digits(inner, 1, m) {
+              Some((w, dw)) =>
+                if dw == m && w <= 100000 {
+                  lo = 0
+                  hi = w
+                } else {
+                  return None
+                }
+              None => return None
+            }
+          } else {
+            return None
+          }
       }
     } else if q == n - 1 && chars[q] == '+' {
       lo = 1

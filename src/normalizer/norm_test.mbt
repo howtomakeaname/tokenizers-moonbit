@@ -2686,9 +2686,34 @@ test "general bracket sets and double tails" {
   @test.assert_eq(n("[a\\p{N}]").normalize("a1b"), "##b")
   @test.assert_eq(@common.is_supported_replace_regex("[a&&b]"), false)
   @test.assert_eq(@common.is_supported_replace_regex("[a-w&&c-z]"), false)
-  // declared loud gaps (recorded in PROGRESS): comma-open and {n,0}
-  // brace forms on sets, bracket-base X+?? products
-  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{,2}"), false)
-  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{2,0}"), false)
-  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]+??"), false)
+  // PR #59: the declared gaps close — comma-open/{n,0} set forms ==
+  // {0,m} empty walk (probed), and the bracket '+??' chain now lands
+  // via the '{1}?' == {0,1} acceptance
+  @test.assert_eq(n("[a\\w]{,2}").normalize("abcdef"), "###")
+  @test.assert_eq(n("[a\\w]{2,0}").normalize("a-b"), "#-#")
+  @test.assert_eq(n("[abc]{,3}").normalize("xay"), "#x#y#")
+  @test.assert_eq(n("[a\\w]+??").normalize("a-b"), "#-#")
+  @test.assert_eq(n("[a\\w]+??").normalize("-ab"), "#-##")
+  @test.assert_eq(n("[a\\w]{1}?").normalize("-ab"), "#-##")
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{,2}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{2,0}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]+??"), true)
+  // bare literal plus (char_bounded family): 'a+' == 'a{1,}', lazy
+  // 'a+?' == 'a{1}' per-char (probed)
+  @test.assert_eq(n("a+").normalize("aaa"), "#")
+  @test.assert_eq(n("a+").normalize("a-b"), "#-b")
+  @test.assert_eq(n("a+?").normalize("aaa"), "###")
+  @test.assert_eq(n("\\n+").normalize("z\n\nz"), "z#z")
+  @test.assert_eq(@common.is_supported_replace_regex("a+"), true)
+  // nonzero reversed set bounds keep the WINDOW swap (round-1
+  // review: the {n,0} branch briefly clobbered them)
+  @test.assert_eq(n("[a\\w]{2,1}").normalize("-a-"), "-#-")
+  @test.assert_eq(n("[a\\w]{3,1}").normalize("-abcd-"), "-##-")
+  @test.assert_eq(n("[a\\w]{2,1}").normalize("..."), "...")
+  @test.assert_eq(@common.is_supported_replace_regex("a+?"), true)
+  // still rejected: larger lazy-n optional groups on sets, escaped
+  // metachar plus bases, dot/star/quest bases
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{2}?"), false)
+  @test.assert_eq(@common.is_supported_replace_regex(".+"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a*"), false)
 }
