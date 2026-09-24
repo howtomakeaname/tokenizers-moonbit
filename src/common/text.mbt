@@ -388,6 +388,12 @@ pub fn is_supported_replace_regex(pattern : String) -> Bool {
     Some(p) => p
     None => pattern
   }
+  // the normalize step can land in the lazy-exact family ('\w+??' ->
+  // '\w{1}?' -> '\w{0,1}'); re-check so the load gate agrees with
+  // the engine chains (round-1 review finding)
+  if lazy_exact_spec(pattern) is Some(_) {
+    return true
+  }
   if pattern.is_empty() {
     // Degenerate: the chain returns the input unchanged (documented
     // divergence from HF's insert-between-chars); keep loadable.

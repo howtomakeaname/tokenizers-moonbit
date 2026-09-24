@@ -130,6 +130,7 @@ fn bracket_body_members(
         'p' | 'P' =>
           // \p{Name} — copy up to the closing '}'
           if j + 1 < close && chars[j + 1] == '{' {
+            spelling.write_char('{')
             let mut k = j + 2
             while k < close && chars[k] != '}' {
               spelling.write_char(chars[k])
@@ -173,6 +174,13 @@ fn bracket_body_members(
       }
     }
     if first == ']' || first == '[' {
+      return None
+    }
+    // raw '&&' is onig char-class INTERSECTION ('[a-w&&c-z]' — a
+    // different operator, probed: HF computes intersections while a
+    // union parse silently diverges) — reject loudly; an escaped '\&'
+    // stays a literal member
+    if first == '&' && i + 1 < close && chars[i + 1] == '&' {
       return None
     }
     members.push(MChar(first))
