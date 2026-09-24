@@ -2653,7 +2653,10 @@ test "general bracket sets and double tails" {
   @test.assert_eq(n("\\w+??").normalize("abcdef"), "######")
   // bare LITERAL plus forms stay loud rejects (a gap recorded in
   // PROGRESS: HF computes per-char 'a+??' == 'a' replace)
-  @test.assert_eq(@common.is_supported_replace_regex("a+??"), false)
+  // the gate fix also claims the bare LITERAL lazy-optional: 'a+??'
+  // == 'a{1}?' (block-or-empty == per-char here, probed)
+  @test.assert_eq(@common.is_supported_replace_regex("a+??"), true)
+  @test.assert_eq(n("a+??").normalize("aaa"), "###")
   @test.assert_eq(@common.is_supported_replace_regex("^.+??"), false)
   @test.assert_eq(n("^.+?+").normalize("ab\ncd"), "#\n#")
   // gates
@@ -2674,4 +2677,18 @@ test "general bracket sets and double tails" {
   @test.assert_eq(@common.is_supported_replace_regex("[\\d-a]"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\+??"), false)
   @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{2,4}?"), true)
+  // round-1 review fixes: gate agrees with the engines on X+??, the
+  // \p{...} member parse, and raw '&&' (onig intersection) rejects
+  @test.assert_eq(@common.is_supported_replace_regex("\\w+??"), true)
+  @test.assert_eq(n("\\w+??").normalize("-ab"), "#-##")
+  @test.assert_eq(@common.is_supported_replace_regex("[\\p{L}a]"), true)
+  @test.assert_eq(n("[\\p{L}a]").normalize("abcd"), "####")
+  @test.assert_eq(n("[a\\p{N}]").normalize("a1b"), "##b")
+  @test.assert_eq(@common.is_supported_replace_regex("[a&&b]"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("[a-w&&c-z]"), false)
+  // declared loud gaps (recorded in PROGRESS): comma-open and {n,0}
+  // brace forms on sets, bracket-base X+?? products
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{,2}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]{2,0}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("[a\\w]+??"), false)
 }
