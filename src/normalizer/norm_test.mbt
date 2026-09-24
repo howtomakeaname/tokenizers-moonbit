@@ -2750,6 +2750,13 @@ test "general bracket sets and double tails" {
   @test.assert_eq(@common.is_supported_replace_regex("\\w++{2}"), false)
   @test.assert_eq(n("\\w{2,3}??").normalize("aaa"), "#a#")
   @test.assert_eq(n("\\w{0,3}??").normalize("aaa"), "#a#a#a#")
+  // round-2 review: REVERSED double-lazy bounds walk all-empty
+  // ('\\w{3,2}??' == the '{0}' walk, probed), and the pre-existing
+  // '{n,0}?' hang is fixed by delegating lo==0 to the {0,n} walk
+  @test.assert_eq(n("\\w{2,0}??").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("\\w{3,2}??").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("\\w{2,0}?").normalize("aaa"), "##")
+  @test.assert_eq(n("a{2,0}?").normalize("aaa"), "##")
   // PR #60: unanchored dot plus joins the class runs (kind 30)
   @test.assert_eq(n(".+").normalize("a\nb"), "#\n#")
   @test.assert_eq(n(".+").normalize("a"), "#")
