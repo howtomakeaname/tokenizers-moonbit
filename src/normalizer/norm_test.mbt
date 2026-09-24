@@ -2524,3 +2524,75 @@ test "anchored plus windows and mixed anchors" {
   @test.assert_eq(n("\\b\\p{L}+?\\b").normalize("ab cd"), "# #")
   @test.assert_eq(n("\\b\\p{S}+?\\b").normalize("a+b"), "a#b")
 }
+
+///|
+/// Dot-base single-anchor windows (probed 0.22.2): '.' matches any
+/// char EXCEPT newline, so the window runs to the line end — leading
+/// greedy from each line start ('^.{2}' on 'ab\ncd' -> '#\n#'),
+/// trailing ends AT the line end ('.{2}$' on 'abc\n' -> 'a#\n';
+/// '\r' stays in its line, 'aa\r\nbb' -> 'a#\n#'). Plus spellings
+/// follow the anchored-lazy rule: '^.+?' == '^.{1}' (one char per
+/// line start) but '.+?$' == '.{1,}$' (the line-end anchor forces the
+/// lazy ascent to the line end). Bare all-dots sequences are exact
+/// windows ('^..' == '^.{2}'). Zero-min stays the family's loud
+/// reject; a bare unanchored '.' is out of scope (kind 30 is only
+/// dispatched under a line anchor).
+test "dot single-anchor windows" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^.{2}").normalize("abcdef"), "#cdef")
+  @test.assert_eq(n("^.{2}").normalize("ab\ncd"), "#\n#")
+  @test.assert_eq(n("^.{2}").normalize("a\nbb\nccc"), "a\n#\n#c")
+  @test.assert_eq(n("^.{2}").normalize("x\ny\nz"), "x\ny\nz")
+  @test.assert_eq(n("^.{2}").normalize("日本語\nテスト"), "#語\n#ト")
+  @test.assert_eq(n("^.{2}").normalize("\n\n"), "\n\n")
+  @test.assert_eq(n("^.{2}").normalize("a\n\nb"), "a\n\nb")
+  @test.assert_eq(n("^.{2}").normalize("tab\there"), "#b\there")
+  @test.assert_eq(n("^.{2}").normalize("  ab  "), "#ab  ")
+  @test.assert_eq(n("^.{2}").normalize("a.b\nc,d"), "#b\n#d")
+  @test.assert_eq(n("^.{2}").normalize("aa\r\nbb"), "#\r\n#")
+  @test.assert_eq(n("^.{2}").normalize("é\nüü"), "é\n#")
+  @test.assert_eq(n("^.{1}").normalize("x\ny\nz"), "#\n#\n#")
+  @test.assert_eq(n("^.{1}").normalize("a\n\nb"), "#\n\n#")
+  @test.assert_eq(n("^.{1,2}").normalize("a\nbb\nccc"), "#\n#\n#c")
+  @test.assert_eq(n("^.{2,}").normalize("abcdef"), "#")
+  @test.assert_eq(n("^.{2,}").normalize("a\nbb\nccc"), "a\n#\n#")
+  @test.assert_eq(n("^.{2,}").normalize("日本語\nテスト"), "#\n#")
+  @test.assert_eq(n("^.{2,4}").normalize("abcdef"), "#ef")
+  @test.assert_eq(n("^.{2,4}").normalize("tab\there"), "#here")
+  @test.assert_eq(n("^.{2,4}").normalize("  ab  "), "#  ")
+  @test.assert_eq(n(".{2}$").normalize("abcdef"), "abcd#")
+  @test.assert_eq(n(".{2}$").normalize("a\nbb\nccc"), "a\n#\nc#")
+  @test.assert_eq(n(".{2}$").normalize("日本語\nテスト"), "日#\nテ#")
+  @test.assert_eq(n(".{2}$").normalize("\n\n"), "\n\n")
+  @test.assert_eq(n(".{2}$").normalize("tab\there"), "tab\the#")
+  @test.assert_eq(n(".{2}$").normalize("abc\n"), "a#\n")
+  @test.assert_eq(n(".{2}$").normalize("  ab  "), "  ab#")
+  @test.assert_eq(n(".{2}$").normalize("aa\r\nbb"), "a#\n#")
+  @test.assert_eq(n(".{1,2}$").normalize("a\n\nb"), "#\n\n#")
+  @test.assert_eq(n(".{2,4}$").normalize("abcdef"), "ab#")
+  @test.assert_eq(n(".{2,4}$").normalize("tab\there"), "tab\t#")
+  @test.assert_eq(n(".{2,}$").normalize("abcdef"), "#")
+  @test.assert_eq(n("^.+").normalize("abcdef"), "#")
+  @test.assert_eq(n("^.+").normalize("a\n\nb"), "#\n\n#")
+  @test.assert_eq(n("^.+").normalize("\n\n"), "\n\n")
+  @test.assert_eq(n("^.+").normalize("日本語\nテスト"), "#\n#")
+  @test.assert_eq(n(".+$").normalize("ab\ncd"), "#\n#")
+  @test.assert_eq(n("^.+?").normalize("ab\ncd"), "#b\n#d")
+  @test.assert_eq(n("^.+?").normalize("x\ny\nz"), "#\n#\n#")
+  @test.assert_eq(n(".+?$").normalize("abcdef"), "#")
+  @test.assert_eq(n(".+?$").normalize("ab\ncd"), "#\n#")
+  @test.assert_eq(n("^..").normalize("日本語\nテスト"), "#語\n#ト")
+  @test.assert_eq(n("^.").normalize("ab\ncd"), "#b\n#d")
+  @test.assert_eq(n("^\\w+?").normalize("ab\ncd"), "#b\n#d")
+  @test.assert_eq(@common.is_supported_replace_regex("^.{0,2}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex(".{0,2}$"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^.{2}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex(".{2}$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^.+"), true)
+  @test.assert_eq(@common.is_supported_replace_regex(".+$"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^.+?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^.."), true)
+  @test.assert_eq(@common.is_supported_replace_regex("^."), true)
+}
