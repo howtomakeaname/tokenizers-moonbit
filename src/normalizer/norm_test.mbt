@@ -2816,4 +2816,13 @@ test "zero-min gap closures" {
   @test.assert_eq(n("\\w{2}??+").normalize("aaa"), "#a#a#a#")
   @test.assert_eq(n("\\w{2,3}??+").normalize("aaa"), "#a#")
   @test.assert_eq(n(".{2,0}").normalize("a\nb"), "#\n#")
+  // round-2 fixes: '{0,}' star walk restored, '{0,0}' == all-empty,
+  // reversed '?+' inners drop again (well-formed ranges stay loud)
+  @test.assert_eq(n("a+{0,}").normalize("aaa"), "#")
+  @test.assert_eq(n("a+{0,}").normalize("bab"), "#b#b#")
+  @test.assert_eq(n(".+{0,}").normalize("a\nb"), "#\n#")
+  @test.assert_eq(n("a+{0,0}").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("\\w{2,0}?+").normalize("aaa"), "##")
+  @test.assert_eq(n("\\w{3,2}?+").normalize("aaaa"), "#a#")
+  @test.assert_eq(@common.is_supported_replace_regex("a+{0,}"), true)
 }
