@@ -316,9 +316,15 @@ pub fn bracket_set_spec(
                 if dw == m && v <= 100000 && w <= 100000 {
                   if w < v {
                     // {n,0} == {0,n} for sets (probed: '[a\w]{2,0}' ==
-                    // '[a\w]{,2}' == the {0,2} empty walk); nonzero
-                    // swaps keep the class-window behavior
-                    lo = 0
+                    // '[a\w]{,2}' == the {0,2} empty walk); NONZERO
+                    // reversed bounds keep the window swap (probed:
+                    // '[a\w]{2,1}' == '[a\w]{1,2}' — round-1 review
+                    // caught this branch clobbering them)
+                    if w == 0 {
+                      lo = 0
+                    } else {
+                      lo = w
+                    }
                     hi = v
                   } else {
                     lo = v
