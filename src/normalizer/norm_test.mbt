@@ -2705,6 +2705,11 @@ test "general bracket sets and double tails" {
   @test.assert_eq(n("a+?").normalize("aaa"), "###")
   @test.assert_eq(n("\\n+").normalize("z\n\nz"), "z#z")
   @test.assert_eq(@common.is_supported_replace_regex("a+"), true)
+  // nonzero reversed set bounds keep the WINDOW swap (round-1
+  // review: the {n,0} branch briefly clobbered them)
+  @test.assert_eq(n("[a\\w]{2,1}").normalize("-a-"), "-#-")
+  @test.assert_eq(n("[a\\w]{3,1}").normalize("-abcd-"), "-##-")
+  @test.assert_eq(n("[a\\w]{2,1}").normalize("..."), "...")
   @test.assert_eq(@common.is_supported_replace_regex("a+?"), true)
   // still rejected: larger lazy-n optional groups on sets, escaped
   // metachar plus bases, dot/star/quest bases
