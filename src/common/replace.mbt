@@ -542,6 +542,49 @@ pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
   // \r \\ \. — probed 0.22.2: `\\n{2}` on "z\n\nz" -> 'z#z').
   // Escaped bases skip the metachar exclusion: the escape makes them
   // literal (`. {n}` is any-char in HF, `\\.{2}` is a literal dot).
+  // Plus tails: 'c+' == 'c{1,}' and the lazy 'c+?' == 'c{1}' (probed
+  // 0.22.2: 'a+' on 'aaa' -> '#', 'a+?' -> '###').
+  if chars[n - 1] == '+' ||
+    (n >= 3 && chars[n - 1] == '?' && chars[n - 2] == '+') {
+    let lazy_tail = chars[n - 1] == '?'
+    let base_end = if lazy_tail { n - 2 } else { n - 1 }
+    if base_end == 1 {
+      let c = chars[0]
+      let plain = c != '\\' &&
+        c != '[' &&
+        c != ']' &&
+        c != '.' &&
+        c != '^' &&
+        c != '$' &&
+        c != '*' &&
+        c != '+' &&
+        c != '?' &&
+        c != '(' &&
+        c != ')' &&
+        c != '|' &&
+        c != '{' &&
+        c != '}'
+      if plain {
+        return Some((c, 1, if lazy_tail { 1 } else { -1 }))
+      }
+      return None
+    }
+    if base_end == 2 && chars[0] == '\\' {
+      let c : Char? = match chars[1] {
+        'n' => Some('\n')
+        't' => Some('\t')
+        'r' => Some('\r')
+        '\\' => Some('\\')
+        '.' => Some('.')
+        _ => None
+      }
+      match c {
+        Some(x) => return Some((x, 1, if lazy_tail { 1 } else { -1 }))
+        None => return None
+      }
+    }
+    return None
+  }
   if n < 4 || chars[n - 1] != '}' {
     return None
   }
