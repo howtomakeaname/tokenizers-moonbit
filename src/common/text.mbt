@@ -962,6 +962,24 @@ fn lazy_normalize_step(pattern : String) -> String? {
       return Some(pattern[:n - 2].to_owned() + "{0,}")
     }
   }
+  // literal-o escapes whose brace forms are onig OCTAL (round-1
+  // review: '\o{101}' == 'A', '\o{0,2}' errors): rewrite the
+  // non-brace spellings to their claimable bare-literal forms
+  if pattern == "\\o" {
+    return Some("o")
+  }
+  if pattern == "\\o?" {
+    return Some("o{0,1}")
+  }
+  if n >= 4 &&
+    chars[0] == '\\' &&
+    chars[1] == 'o' &&
+    chars[2] == '{' &&
+    chars[3] == ',' &&
+    chars[n - 1] == '}' {
+    // '\o{,m}' — the escape ends at the comma; literal-o {0,m}
+    return Some("o{0," + pattern[4:n - 1].to_owned() + "}")
+  }
   // the OPTIONAL '?' tail == '{0,1}' for ANY base (probed 0.22.2:
   // 'a?' on 'b' -> '#b#', '\g?' on 'q' -> '#q#'). Runs AFTER the
   // possessive/double-lazy blocks so '??'/'?+' tails keep their own
@@ -1102,13 +1120,16 @@ fn lazy_normalize_step(pattern : String) -> String? {
 /// their existing explicit arms and loud rejects.
 pub fn escaped_letter_literal(c : Char) -> Char? {
   match c {
+    // ('o' EXCLUDED here: '\o{...}' is onig's OCTAL escape
+    // ('\o{101}' == 'A', '\o{0}' == NUL; comma/range forms error)
+    // — literal-o only via the plus map, bare spellings, and the
+    // '?'/comma-open rewrites; brace forms stay loud)
     'g'
     | 'i'
     | 'j'
     | 'k'
     | 'l'
     | 'm'
-    | 'o'
     | 'q'
     // ('x' EXCLUDED: bare '\x' is literal x but ANY quantified
     // form never matches — probed; loud-stance quirk)

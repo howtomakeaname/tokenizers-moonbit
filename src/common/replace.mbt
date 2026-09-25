@@ -577,8 +577,11 @@ pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
         '\\' => Some('\\')
         '.' => Some('.')
         // escaped literal plus ('\+{2}' on '+ ++ ' -> '+ # ',
-        // probed); unknown-escape letters ride the shared helper
+        // probed); unknown-escape letters ride the shared helper;
+        // literal 'o' re-added HERE ONLY ('\o+' is literal-o — the
+        // brace map must stay octal-free)
         '+' => Some('+')
+        'o' => Some('o')
         _ => escaped_letter_literal(chars[1])
       }
       match c {
