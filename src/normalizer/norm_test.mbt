@@ -2995,4 +2995,5 @@ test "anchored letters and remaining gap closures" {
   // stay loud (the prefix must not be silently dropped)
   @test.assert_eq(@common.is_supported_replace_regex("ab??"), false)
   @test.assert_eq(@common.is_supported_replace_regex("^a??"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\??"), false)
 }
