@@ -2948,6 +2948,10 @@ test "unknown-escape literal family" {
   @test.assert_eq(@common.is_supported_replace_regex("\\o{0}"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\o{101}"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\o{0,2}"), false)
+  // round-2: malformed comma tails are HF literals — loud
+  @test.assert_eq(@common.is_supported_replace_regex("\\o{,}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\o{,2x}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\o{1}"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\o+"), true)
   @test.assert_eq(@common.is_supported_replace_regex("\\o?"), true)
   @test.assert_eq(@common.is_supported_replace_regex("\\x+"), false)
