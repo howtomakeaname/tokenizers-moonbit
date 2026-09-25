@@ -62,99 +62,46 @@ pub fn Model::train_unigram_from_tokens(
   seed_size? : Int = 1000000,
 ) -> Model {
   ignore(show_progress)
+  ignore(min_frequency)
   let unk_token = match unk_piece {
     Some(piece) => Some(piece)
     None => unk_token
   }
   let word_counts : Map[String, Int] = Map([])
   let word_order : Array[String] = []
-  let char_counts : Map[String, Int] = Map([])
-  let char_order : Array[String] = []
-  let piece_counts : Map[String, Int] = Map([])
-  let piece_order : Array[String] = []
   for tokens in tokenized_texts {
     for tok in tokens {
       bump_count(word_counts, word_order, tok)
-      for c in tok.to_array() {
-        bump_count(char_counts, char_order, char_string(c))
-      }
-      add_unigram_subpieces(tok, max_piece_length, piece_counts, piece_order)
     }
   }
-
-  let vocab : Map[String, (Int, Double)] = Map([])
-  let vocab_r : Array[String?] = []
-  fn add_token(tok : String, score : Double) -> Int? {
-    if vocab.contains(tok) || !under_vocab_limit(vocab_r.length(), vocab_size) {
-      return None
-    }
-    let id = vocab_r.length()
-    vocab[tok] = (id, score)
-    vocab_r.push(Some(tok))
-    Some(id)
-  }
-
-  let mut unk_id : Int? = None
-  match unk_token {
-    Some(unk) =>
-      if !array_contains_string(special_tokens, unk) {
-        unk_id = add_token(unk, 0.0)
-      }
-    None => ()
-  }
-  for tok in special_tokens {
-    let id = add_token(tok, 0.0)
-    match unk_token {
-      Some(unk) =>
-        if tok == unk {
-          match id {
-            Some(n) => unk_id = Some(n)
-            None =>
-              match vocab.get(tok) {
-                Some(p) => unk_id = Some(p.0)
-                None => ()
-              }
-          }
-        }
-      None => ()
-    }
-  }
-
-  let char_seed_start = vocab_r.length()
-  for tok in initial_alphabet {
-    match initial_alphabet_piece(tok) {
-      Some(piece) => ignore(add_token(piece, -10.0))
-      None => ()
-    }
-  }
-  let chars = sorted_wordlevel_candidates(char_order, char_counts, 1)
-  for item in chars {
-    ignore(add_token(item.0, -10.0))
-  }
-  let char_seed_count = vocab_r.length() - char_seed_start
-
-  let candidates = select_unigram_candidates(
-    piece_order,
-    piece_counts,
+  // Real EM training (hf-tokenizers 0.22.2 do_train port)
+  let (em_pieces, em_unk) = unigram_do_train(
     word_order,
     word_counts,
-    min_frequency,
-    max_piece_length,
-    current_size=vocab_r.length(),
-    vocab_size~,
-    shrinking_factor~,
-    n_sub_iterations~,
-    seed_size~,
-    char_seed_count~,
+    vocab_size,
+    shrinking_factor,
+    n_sub_iterations,
+    match max_piece_length {
+      Some(m) => m
+      None => 16
+    },
+    seed_size,
+    special_tokens,
+    unk_token,
+    initial_alphabet,
   )
-  for item in candidates {
-    ignore(add_token(item.token, item.score))
+  let vocab : Map[String, (Int, Double)] = Map([])
+  let vocab_r : Array[String?] = []
+  let mut em_i = 0
+  while em_i < em_pieces.length() {
+    vocab[em_pieces[em_i].token] = (em_i, em_pieces[em_i].score)
+    vocab_r.push(Some(em_pieces[em_i].token))
+    em_i += 1
   }
-
   Unigram({
     vocab,
     vocab_r,
-    unk_id,
+    unk_id: em_unk,
     byte_fallback,
     fuse_unk,
     alpha: None,
@@ -162,222 +109,6 @@ pub fn Model::train_unigram_from_tokens(
     cache: {},
     cache_capacity: None,
   })
-}
-
-///|
-priv struct UnigramTrainCandidate {
-  token : String
-  freq : Int
-  score : Double
-  length : Int
-  kind_rank : Int
-}
-
-///|
-fn select_unigram_candidates(
-  piece_order : Array[String],
-  piece_counts : Map[String, Int],
-  word_order : Array[String],
-  word_counts : Map[String, Int],
-  min_frequency : Int,
-  max_piece_length : Int?,
-  current_size~ : Int,
-  vocab_size~ : Int?,
-  shrinking_factor~ : Double,
-  n_sub_iterations~ : Int,
-  seed_size~ : Int,
-  char_seed_count~ : Int,
-) -> Array[UnigramTrainCandidate] {
-  let candidates : Array[UnigramTrainCandidate] = []
-  for
-    item in sorted_wordlevel_candidates(
-      piece_order, piece_counts, min_frequency,
-    ) {
-    candidates.push({
-      token: item.0,
-      freq: item.1,
-      score: unigram_piece_score(item.1),
-      length: item.0.char_length(),
-      kind_rank: 1,
-    })
-  }
-  for
-    item in sorted_wordlevel_candidates(word_order, word_counts, min_frequency) {
-    if unigram_piece_within_limit(item.0, max_piece_length) {
-      candidates.push({
-        token: item.0,
-        freq: item.1,
-        score: unigram_word_score(item.1),
-        length: item.0.char_length(),
-        kind_rank: 0,
-      })
-    }
-  }
-  candidates.sort_by(unigram_candidate_compare)
-  let seed_target = unigram_seed_candidate_target(
-    seed_size,
-    char_seed_count,
-    candidates.length(),
-  )
-  let target = unigram_candidate_target(current_size, vocab_size, seed_target)
-  unigram_shrink_candidates(
-    candidates, target, shrinking_factor, n_sub_iterations,
-  )
-}
-
-///|
-fn unigram_seed_candidate_target(
-  seed_size : Int,
-  char_seed_count : Int,
-  available : Int,
-) -> Int {
-  let remaining = seed_size - char_seed_count
-  if remaining <= 0 {
-    0
-  } else if remaining < available {
-    remaining
-  } else {
-    available
-  }
-}
-
-///|
-fn unigram_candidate_target(
-  current_size : Int,
-  vocab_size : Int?,
-  available : Int,
-) -> Int {
-  match vocab_size {
-    None => available
-    Some(limit) =>
-      if limit <= 0 {
-        available
-      } else if limit <= current_size {
-        0
-      } else {
-        let remaining = limit - current_size
-        if remaining < available {
-          remaining
-        } else {
-          available
-        }
-      }
-  }
-}
-
-///|
-fn unigram_shrink_candidates(
-  ranked : Array[UnigramTrainCandidate],
-  target : Int,
-  shrinking_factor : Double,
-  n_sub_iterations : Int,
-) -> Array[UnigramTrainCandidate] {
-  if target <= 0 || ranked.length() == 0 {
-    return []
-  }
-  let factor = normalize_shrinking_factor(shrinking_factor)
-  let rounds = if n_sub_iterations < 0 { 0 } else { n_sub_iterations }
-  let mut keep = ranked.length()
-  for _ in 0..<rounds {
-    if keep <= target {
-      break
-    }
-    let next = (keep.to_double() * factor).to_int()
-    keep = if next < target {
-      target
-    } else if next >= keep {
-      keep - 1
-    } else {
-      next
-    }
-  }
-  if keep > target {
-    keep = target
-  }
-  let out : Array[UnigramTrainCandidate] = []
-  for i in 0..<keep {
-    out.push(ranked[i])
-  }
-  out
-}
-
-///|
-fn normalize_shrinking_factor(factor : Double) -> Double {
-  if factor > 0.0 && factor < 1.0 {
-    factor
-  } else {
-    0.75
-  }
-}
-
-///|
-fn unigram_candidate_compare(
-  a : UnigramTrainCandidate,
-  b : UnigramTrainCandidate,
-) -> Int {
-  if a.score > b.score {
-    -1
-  } else if a.score < b.score {
-    1
-  } else if a.freq != b.freq {
-    b.freq.compare(a.freq)
-  } else if a.kind_rank != b.kind_rank {
-    a.kind_rank.compare(b.kind_rank)
-  } else if a.length != b.length {
-    b.length.compare(a.length)
-  } else {
-    a.token.compare(b.token)
-  }
-}
-
-///|
-fn unigram_word_score(freq : Int) -> Double {
-  // Keep scores deterministic and simple: frequent words get slightly better
-  // scores, and all whole words beat character-piece paths.
-  freq.to_double()
-}
-
-///|
-fn unigram_piece_score(freq : Int) -> Double {
-  -5.0 + freq.to_double() / 1000.0
-}
-
-///|
-fn unigram_piece_within_limit(piece : String, max_piece_length : Int?) -> Bool {
-  match max_piece_length {
-    None => true
-    Some(n) => n <= 0 || piece.char_length() <= n
-  }
-}
-
-///|
-fn add_unigram_subpieces(
-  tok : String,
-  max_piece_length : Int?,
-  counts : Map[String, Int],
-  order : Array[String],
-) -> Unit {
-  let chars = tok.to_array()
-  let n = chars.length()
-  if n <= 2 {
-    return
-  }
-  let max_len = match max_piece_length {
-    Some(limit) => if limit <= 0 { n - 1 } else { limit }
-    None => 16
-  }
-  let hi = if max_len >= n { n - 1 } else { max_len }
-  if hi < 2 {
-    return
-  }
-  for start in 0..<n {
-    for len in 2..<=hi {
-      let stop = start + len
-      if stop <= n {
-        bump_count(counts, order, slice_train(chars, start, stop))
-      }
-    }
-  }
 }
 
 ///|

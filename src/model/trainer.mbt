@@ -568,16 +568,6 @@ fn limit_alphabet_candidates(
 }
 
 ///|
-fn array_contains_string(values : Array[String], target : String) -> Bool {
-  for value in values {
-    if value == target {
-      return true
-    }
-  }
-  false
-}
-
-///|
 fn add_bpe_alphabet(
   tok : String,
   prefix : String?,
