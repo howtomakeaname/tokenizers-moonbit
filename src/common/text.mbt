@@ -622,22 +622,49 @@ fn lazy_normalize_step(pattern : String) -> String? {
         let possessive_mark = o >= 3 &&
           chars[o - 2] == '+' &&
           !is_escaped_at(chars, o - 2)
-        // 'X++{0}' — zero reps of the possessive group is the
-        // all-empty '{0}' (probed: 'a++{0}'/'a++{00}' on 'aaa' ->
-        // '#a#a#a#'); '(X++){0,m}' == the '{0,}' star walk (probed:
-        // 'a++{0,2}' on 'bab' -> '#b#b#'); nonzero exact bounds
-        // still never match and reject loudly
+        // Possessive-group braces (probed 0.22.2, round-1 review):
+        // '{0}'/'{00}' == zero reps == all-empty '{0}'; '(X++){0,m}'
+        // == the '{0,}' star walk, '{0,0}' == zero reps == '{0}';
+        // '{1}'/'{01}'/'{1,m}' == plain greedy 'X+' (one rep needs
+        // no repeat of the possessive); exact n >= 2 NEVER matches
+        // in onig and rejects loudly; malformed tails are HF
+        // literals and oversized bounds are HF errors
         if possessive_mark {
           let inner_p = pattern[o + 1:n - 1]
           let mp = inner_p.length()
           match parse_capped_digits(inner_p.to_array(), 0, mp) {
-            Some((v4, dz4)) =>
-              if v4 == 0 && (dz4 == mp || inner_p[dz4] == ',') {
-                if dz4 == mp {
-                  return Some(pattern[:o - 2].to_owned() + "{0}")
+            Some((v4, dz4)) => {
+              let base_p = pattern[:o - 2].to_owned()
+              let upper_ok = if dz4 + 1 == mp {
+                true
+              } else {
+                match parse_capped_digits(inner_p.to_array(), dz4 + 1, mp) {
+                  Some((up4, dw5)) => dw5 == mp && up4 <= 100000
+                  None => false
                 }
-                return Some(pattern[:o - 2].to_owned() + "{0,}")
               }
+              let tail_ok = dz4 == mp || (inner_p[dz4] == ',' && upper_ok)
+              if !tail_ok {
+                return None
+              }
+              if v4 == 0 {
+                if dz4 == mp {
+                  return Some(base_p + "{0}")
+                }
+                match parse_capped_digits(inner_p.to_array(), dz4 + 1, mp) {
+                  Some((up4, dw5)) =>
+                    if dw5 == mp && up4 == 0 {
+                      return Some(base_p + "{0}")
+                    }
+                  None => ()
+                }
+                return Some(base_p + "{0,}")
+              }
+              if v4 == 1 {
+                return Some(base_p + "+")
+              }
+              return None // n >= 2: never matches, loud
+            }
             None => ()
           }
         }
