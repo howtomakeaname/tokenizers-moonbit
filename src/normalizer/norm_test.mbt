@@ -2990,4 +2990,9 @@ test "anchored letters and remaining gap closures" {
   @test.assert_eq(n("\\q??").normalize("qq"), "#q#q#")
   @test.assert_eq(n("[a\\w]??").normalize("ab"), "#a#b#")
   @test.assert_eq(@common.is_supported_replace_regex("ab?"), false)
+  // round-1 review: the plain 'a??' rule is n==3 ONLY — multi-char
+  // tails ('ab??', '^a??') parse as prefix + lazy-optional in HF and
+  // stay loud (the prefix must not be silently dropped)
+  @test.assert_eq(@common.is_supported_replace_regex("ab??"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("^a??"), false)
 }
