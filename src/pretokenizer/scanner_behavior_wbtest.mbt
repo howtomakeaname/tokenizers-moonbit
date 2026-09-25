@@ -1,11 +1,13 @@
 // Split behavior/invert now folds on the HARDCODED scanners too
-// (gpt2/qwen/o200k/clip/cjk/digit-triplet previously short-circuited
-// straight to pieces_to_splits, silently ignoring the configured
-// behavior — probed 0.22.2: Split(gpt2-pattern,'removed') -> [],
-// mwp/mwn == isolated when the full-coverage match list has no gaps,
-// contiguous -> one whole piece; CLIP's real config is Removed +
-// invert=true = keep-matches-only, and its scanner skips whitespace
-// so a positioned span variant carries the real offsets)
+// (they previously short-circuited straight to pieces_to_splits,
+// silently ignoring the configured behavior — probed 0.22.2:
+// Split(gpt2-pattern,'removed') -> [], mwp/mwn == isolated when the
+// full-coverage match list has no gaps, contiguous -> one whole
+// piece; CLIP's real config is Removed + invert=true =
+// keep-matches-only, and its scanner skips whitespace so a
+// positioned span variant carries the real offsets). The
+// digit-triplet/cjk scanners leave regex gaps — their flags are only
+// exact under Isolated (the only real-world config; PROGRESS gap)
 
 ///|
 fn beh_check(

@@ -82,17 +82,22 @@ fn split_pre_tokenize(
   } else if is_gpt2_pattern(pattern) {
     gpt2_split(text)
   } else if is_clip_pattern(pattern) {
-    clip_split(text)
+    [] // clip routes through clip_split_spans below (avoid a
+    // duplicate scan — round-1 review nit)
   } else {
     return split_with_simple_pattern(
       text, pattern, behavior, invert, regex, base_offset,
     )
   }
-  // the hardcoded scanners emit the MATCH pieces (full coverage —
-  // the whitespace/gap branches of these patterns consume everything);
-  // behavior/invert fold on top exactly like the generic path
-  // (probed 0.22.2: Split(gpt2-pattern, 'removed') -> [], mwp/mwn ==
-  // isolated when no gaps exist, contiguous -> one whole piece)
+  // the gpt2/qwen/o200k scanners emit MATCH pieces with FULL
+  // coverage (their whitespace branches consume everything), so
+  // behavior/invert fold exactly like the generic path (probed
+  // 0.22.2: Split(gpt2-pattern, 'removed') -> [], mwp/mwn ==
+  // isolated when no gaps exist, contiguous -> one whole piece).
+  // digit-triplet and cjk-range pieces are NOT all matches (their
+  // patterns leave gaps) — flagging every piece as a match is only
+  // exact under Isolated, the sole real-world config for these
+  // patterns; recorded in PROGRESS as a known flag-semantics gap
   let chars = text.to_array()
   // CLIP's scanner skips whitespace (gaps) — its spans carry real
   // offsets; the other scanners emit contiguous full-coverage pieces
