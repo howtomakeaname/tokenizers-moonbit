@@ -2826,3 +2826,30 @@ test "zero-min gap closures" {
   @test.assert_eq(n("\\w{3,2}?+").normalize("aaaa"), "#a#")
   @test.assert_eq(@common.is_supported_replace_regex("a+{0,}"), true)
 }
+
+///|
+/// Final recorded-gap closures (probed 0.22.2): the escaped literal
+/// plus base ('\+{0}' all-empty walk; also unblocks '\+??+'/'\+*+'
+/// which the possessive-lazy rules then fold), possessive+ZERO brace
+/// ('a++{0}' == zero reps == all-empty — nonzero bounds still never
+/// match), and the digit-triplet scanner now flags ONLY its digit
+/// chunks as matches (the pattern leaves regex gaps — probed
+/// Split('\p{N}{1,3}', 'removed') on 'abc12345de' -> ['abc','de']).
+/// Equal-bound and ranged '?+' stay loud: fresh-object probing shows
+/// they are the n-block CHAIN family ('\w{2,2}?+' on 'abab' -> '#'
+/// as ONE match), deliberately unimplemented.
+test "final loud-gap closures" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\+{0}").normalize("+"), "#+#")
+  @test.assert_eq(n("\\+{0}").normalize("a+b"), "#a#+#b#")
+  @test.assert_eq(n("\\+??+").normalize("a+b"), "#a#+#b#")
+  @test.assert_eq(n("\\+*+").normalize("a+b"), "#a#b#")
+  @test.assert_eq(n("a++{0}").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("a++{0}").normalize("bab"), "#b#a#b#")
+  @test.assert_eq(@common.is_supported_replace_regex("\\+{0}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a++{0}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a++{2}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{2,2}?+"), false)
+}

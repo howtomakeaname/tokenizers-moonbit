@@ -26,6 +26,32 @@ fn beh_check(
 }
 
 ///|
+fn dcheck(
+  pat : String,
+  beh : SplitBehavior,
+  inv : Bool,
+  inp : String,
+  expect : Array[String],
+) -> Unit raise {
+  let got = split_pre_tokenize(inp, pat, beh, inv, true, 0)
+  let vals : Array[String] = []
+  for p in got {
+    vals.push(p.value)
+  }
+  @test.assert_eq(vals, expect)
+}
+
+///|
+test "digit-triplet flags only its digit chunks" {
+  // the pattern leaves regex gaps — the non-digit pieces are NOT
+  // matches (probed 0.22.2 under every behavior x invert)
+  dcheck("\\p{N}{1,3}", Removed, false, "abc12345de", ["abc", "de"])
+  dcheck("\\p{N}{1,3}", Isolated, false, "abc12 345", ["abc", "12", " ", "345"])
+  dcheck("\\p{N}{1,3}", Removed, true, "abc12345de", ["123", "45"])
+  dcheck("\\p{N}{1,3}", Contiguous, false, "12  345", ["12", "  ", "345"])
+}
+
+///|
 test "scanner split behaviors honor the config" {
   beh_check(
     "'s|'t|'re|'ve|'m|'ll|'d| ?\\p{L}+| ?\\p{N}+| ?[^\\s\\p{L}\\p{N}]+|\\s+(?!\\S)|\\s+",
