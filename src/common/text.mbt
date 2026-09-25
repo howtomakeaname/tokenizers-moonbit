@@ -977,8 +977,22 @@ fn lazy_normalize_step(pattern : String) -> String? {
     chars[2] == '{' &&
     chars[3] == ',' &&
     chars[n - 1] == '}' {
-    // '\o{,m}' — the escape ends at the comma; literal-o {0,m}
-    return Some("o{0," + pattern[4:n - 1].to_owned() + "}")
+    // '\o{,m}' with an ALL-DIGIT m — the escape ends at the comma;
+    // literal-o {0,m}. Malformed tails ('\o{,}', '\o{,2x}') are HF
+    // literals and stay loud (round-2 review)
+    let mut all_digits = true
+    let mut k4 = 4
+    while k4 < n - 1 {
+      if chars[k4] < '0' || chars[k4] > '9' {
+        all_digits = false
+        break
+      }
+      k4 = k4 + 1
+    }
+    if all_digits && n >= 6 {
+      return Some("o{0," + pattern[4:n - 1].to_owned() + "}")
+    }
+    return None
   }
   // the OPTIONAL '?' tail == '{0,1}' for ANY base (probed 0.22.2:
   // 'a?' on 'b' -> '#b#', '\g?' on 'q' -> '#q#'). Runs AFTER the
