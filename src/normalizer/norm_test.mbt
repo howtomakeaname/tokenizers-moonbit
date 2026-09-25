@@ -2852,4 +2852,12 @@ test "final loud-gap closures" {
   @test.assert_eq(@common.is_supported_replace_regex("a++{0}"), true)
   @test.assert_eq(@common.is_supported_replace_regex("a++{2}"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\w{2,2}?+"), false)
+  // possessive+zero edges (self-caught before review): leading-zero
+  // '{00}', comma '{0,m}' == the star walk, escaped-plus greedy
+  @test.assert_eq(n("a++{00}").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("a++{0,2}").normalize("bab"), "#b#b#")
+  @test.assert_eq(n("\\w++{0}").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("\\+{2}").normalize("+ ++ "), "+ # ")
+  @test.assert_eq(n("\\+").normalize("+"), "#")
+  @test.assert_eq(@common.is_supported_replace_regex("a++{0,2}"), true)
 }
