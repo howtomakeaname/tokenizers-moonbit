@@ -100,9 +100,31 @@ fn split_pre_tokenize(
   // patterns; recorded in PROGRESS as a known flag-semantics gap
   let chars = text.to_array()
   // CLIP's scanner skips whitespace (gaps) — its spans carry real
-  // offsets; the other scanners emit contiguous full-coverage pieces
+  // offsets; the digit-triplet pattern matches ONLY its digit-chunk
+  // pieces (the rest are regex gaps — probed: Split('\p{N}{1,3}',
+  // 'removed') on 'abc12345de' -> ['abc','de']); the other scanners
+  // emit contiguous full-coverage pieces
   let matches : Array[@common.Span] = if is_clip_pattern(pattern) {
     clip_split_spans(text)
+  } else if is_digit_triplet_pattern(pattern) {
+    let spans : Array[@common.Span] = []
+    let mut cursor = 0
+    for p in pieces {
+      let len = p.char_length()
+      let parr = p.to_array()
+      let mut all_digits = len > 0
+      for c in parr {
+        if !is_number(c) {
+          all_digits = false
+          break
+        }
+      }
+      if all_digits {
+        spans.push({ start: cursor, stop: cursor + len, })
+      }
+      cursor = cursor + len
+    }
+    spans
   } else {
     let spans : Array[@common.Span] = []
     let mut cursor = 0
