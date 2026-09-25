@@ -623,10 +623,23 @@ fn lazy_normalize_step(pattern : String) -> String? {
           chars[o - 2] == '+' &&
           !is_escaped_at(chars, o - 2)
         // 'X++{0}' — zero reps of the possessive group is the
-        // all-empty '{0}' (probed: 'a++{0}' on 'aaa' -> '#a#a#a#');
-        // nonzero bounds still never match and reject loudly
-        if possessive_mark && pattern[o + 1:n - 1] == "0" {
-          return Some(pattern[:o - 2].to_owned() + "{0}")
+        // all-empty '{0}' (probed: 'a++{0}'/'a++{00}' on 'aaa' ->
+        // '#a#a#a#'); '(X++){0,m}' == the '{0,}' star walk (probed:
+        // 'a++{0,2}' on 'bab' -> '#b#b#'); nonzero exact bounds
+        // still never match and reject loudly
+        if possessive_mark {
+          let inner_p = pattern[o + 1:n - 1]
+          let mp = inner_p.length()
+          match parse_capped_digits(inner_p.to_array(), 0, mp) {
+            Some((v4, dz4)) =>
+              if v4 == 0 && (dz4 == mp || inner_p[dz4] == ',') {
+                if dz4 == mp {
+                  return Some(pattern[:o - 2].to_owned() + "{0}")
+                }
+                return Some(pattern[:o - 2].to_owned() + "{0,}")
+              }
+            None => ()
+          }
         }
         let plus_ok = o >= 2 &&
           chars[o - 1] == '+' &&
