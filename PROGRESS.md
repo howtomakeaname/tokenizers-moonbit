@@ -18,7 +18,7 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.13.1**（2026-09-24，0.13.0 后含 PR #61 零下限缺口关闭）。0.13.1 后待办见 §2 队列。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.14.0**（2026-09-24，0.13.1 后含 PR #62 扫描器 behavior/invert 对齐）。0.14.0 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
@@ -37,6 +37,7 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-09-24 PR #62**（3 commit，一轮评审 APPROVE——首任评审 agent 因 API 连接故障中止后重启；554 行为×invert 差分电池 + 575 输入 gpt2_split 对抗 fuzz）：**GPT2 非 Isolated 对齐（最后一个行为级缺口关闭）**。探针证明扫描器核心本就精确——gpt2_split vs HF Split(pattern, Isolated) 在 575 对抗输入（空白 lookahead 回溯、缩约、Unicode 边角）零分歧；真正缺口是**硬编码扫描器（gpt2/qwen/o200k/clip/cjk/digit-triplet）短路直通 pieces_to_splits、静默忽略配置的 behavior/invert**。修复：扫描器 pieces 即匹配列表，经 apply_split_matches（PR #44 逐条 flag 折叠模型）按配置折叠——探针：gpt2-pattern removed→[]（空白分支全覆盖无 gap）、mwp/mwn 无 gap 时=isolated、contiguous→整块；**CLIP 真实配置（openai/clip tokenizer.json）= Split(pattern, Removed, invert=true) = 只留匹配**，且其扫描器跳过空白（有 gap）→ 新增定位版 clip_split_spans 承载真实偏移（朴素游标 span 会错——clip parity fixture 当场抓住）。遗留（评审记录）：digit-triplet/cjk 的 pieces 并非全是正则匹配（其模式留 gap），flag 语义仅在 Isolated（唯一真实世界配置）下精确——PROGRESS 记录为已知缺口。四后端 521/498 绿；金标 380 电池 + 评审 554 电池 + 575 fuzz 零分歧；CI 8/8。
 - **2026-09-24 发版 0.13.1（已发布，干净验证 5/5×三后端）**：0.13.0 后 PR #61 单批。直接推 main：bump + `moon publish` 200 OK + /tmp/verify0131 干净验证（`.{0,2}`、`a+{0,2}`、`\w{,3}??`、`[a\w]{2,0}?`、`a+??+`——五代表行为 token 级与 HF 一致）。
 - **2026-09-24 PR #61**（6 commit，三轮评审，round-3 APPROVE，两轮 ~1500 单元电池零失配）：**零下限走查缺口关闭**。点基入 `zero_min_base`（kind 30，服务全部三处调用点——`.{0,2}`/`.{0}`/`.{,2}`/`.{2,0}` 均走零下限走查）；`(X+){0}`≡全空 `{0}`、`(X+){0,m}`≡`{0,}` 星号走查（`{0,0}` 零次重复=全空，round-2 修正）；comma-open `{,m}??`≡全空；逆序零 `{n,0}?` 映射 `{0,n}` 走查（原拒绝）；占有惰性尾折叠（`X+*+`≡星、`X+??+`≡逐字符 `{0,1}`——金标 sweep 自纠、`X??+`≡全空、`}??+` 弃标记、`{n}?+` 仅精确/零下限/逆序内体可弃——**良构区间 `{n,m}?+` HF 计算 n-块链，保持响亮拒绝**）。**评审三轮战果**：R1 抓 `}?+` 弃标记过宽（区间形静默错）与 `+{0,x}` 畸形尾未校验；R2 抓 `{0,}` 空上界回归、`{0,0}` 应全空、逆序 `?+` 应保留；三轮后规则内部分类一致（点基三调用点、量词尾全校验、逆序/零/区间 `?+` 正确三分）。遗留响亮缺口：`\w{2,2}?+` 等值界、`\+{0}`/`\+??+` 转义加号字面量基、三重栈 `a+?+*` 等、`a++{0}` 占有+零大括号。四后端 520/497 绿；金标 231 单元（自纠一处）+ 评审独立 ~1500×2 单元；CI 8/8。
 - **2026-09-24 发版 0.13.0（已发布，干净验证 5/5×三后端）**：0.12.1 后 PR #60 单批。直接推 main：bump + `moon publish` 200 OK + /tmp/verify0130 干净验证（`\w++`、`a+{2}`、`[a\w]{2}?`、`.+`、`\w{2,0}?`（原挂死形，现正确计算）——五代表行为 token 级与 HF 一致）。
