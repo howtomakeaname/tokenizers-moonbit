@@ -2958,3 +2958,36 @@ test "unknown-escape literal family" {
   @test.assert_eq(@common.is_supported_replace_regex("\\z"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\c{0}"), false)
 }
+
+///|
+/// Anchored letter escapes + remaining loud-gap closures (probed
+/// 0.22.2): the anchor families' escape maps delegate to the letter
+/// helper ('^\q{2}$' on 'qq' -> '#'; '\b\q{2}' on ' qq ' -> ' # ';
+/// '\B\q{2}' on 'aqqb' -> 'a#b'); '[\o]' is literal-o when NOT
+/// followed by '{' (the octal form stays loud); '\X*' star tails
+/// over escaped letters rewrite to the bare '{0,}' walk; the plain
+/// and escaped and bracket double-optionals ('a??', '\q??',
+/// '[a\w]??') == all-empty '{0}'. 'ab?' (multi-char + optional)
+/// stays loud as its own family.
+test "anchored letters and remaining gap closures" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("^\\q{2}$").normalize("qq"), "#")
+  @test.assert_eq(n("^\\q{2}$").normalize("aqq"), "aqq")
+  @test.assert_eq(n("\\b\\q{2}").normalize(" qq "), " # ")
+  @test.assert_eq(n("\\q{2}\\b").normalize(" qq "), " # ")
+  @test.assert_eq(n("\\B\\q{2}").normalize("aqqb"), "a#b")
+  @test.assert_eq(n("^\\q{2}").normalize("qqq"), "#q")
+  @test.assert_eq(n("\\q{2}$").normalize("aqq"), "a#")
+  @test.assert_eq(n("[\\o]").normalize("aoob"), "a##b")
+  @test.assert_eq(n("[\\og]").normalize("aogb"), "a##b")
+  @test.assert_eq(@common.is_supported_replace_regex("[\\o{2}]"), false)
+  @test.assert_eq(n("\\o*").normalize("aoob"), "#a#b#")
+  @test.assert_eq(n("\\q*").normalize("aqqb"), "#a#b#")
+  @test.assert_eq(n("\\e*").normalize("ae\u{1b}b"), "#a#e#b#")
+  @test.assert_eq(n("a??").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("\\q??").normalize("qq"), "#q#q#")
+  @test.assert_eq(n("[a\\w]??").normalize("ab"), "#a#b#")
+  @test.assert_eq(@common.is_supported_replace_regex("ab?"), false)
+}
