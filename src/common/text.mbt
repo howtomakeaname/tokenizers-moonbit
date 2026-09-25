@@ -1010,10 +1010,9 @@ fn lazy_normalize_step(pattern : String) -> String? {
   }
   // the plain DOUBLE-optional 'a??' == the all-empty '{0}' walk
   // (probed: 'ab' -> '#a#b#') — same rule as the brace '{n}??'
-  if n >= 3 &&
+  if n == 3 &&
     chars[n - 1] == '?' &&
     chars[n - 2] == '?' &&
-    chars[n - 3] != '\\' &&
     !is_escaped_at(chars, n - 3) &&
     chars[n - 3] != '}' &&
     chars[n - 3] != '+' {
