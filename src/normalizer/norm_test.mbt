@@ -2860,4 +2860,14 @@ test "final loud-gap closures" {
   @test.assert_eq(n("\\+{2}").normalize("+ ++ "), "+ # ")
   @test.assert_eq(n("\\+").normalize("+"), "#")
   @test.assert_eq(@common.is_supported_replace_regex("a++{0,2}"), true)
+  // round-1 review: '{0,0}' == zero reps; malformed/oversized tails
+  // stay literal/error; '{1}'/'{01}'/'{1,m}' == plain greedy 'X+';
+  // exact n >= 2 never matches (loud)
+  @test.assert_eq(n("a++{0,0}").normalize("bab"), "#b#a#b#")
+  @test.assert_eq(n("a++{1}").normalize("bab"), "b#b")
+  @test.assert_eq(n("a++{1,2}").normalize("bab"), "b#b")
+  @test.assert_eq(n("\\w++{1}").normalize("aaa"), "#")
+  @test.assert_eq(@common.is_supported_replace_regex("a++{0,x}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a++{0,100001}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a++{2,3}"), false)
 }
