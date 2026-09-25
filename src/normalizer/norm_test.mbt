@@ -2870,4 +2870,13 @@ test "final loud-gap closures" {
   @test.assert_eq(@common.is_supported_replace_regex("a++{0,x}"), false)
   @test.assert_eq(@common.is_supported_replace_regex("a++{0,100001}"), false)
   @test.assert_eq(@common.is_supported_replace_regex("a++{2,3}"), false)
+  // round-2 review: REVERSED possessive and kin bounds — upper==0
+  // is the star walk, nonzero reversed is the swapped 1-or-more
+  // greedy ('a++{2,1}'/'a+{2,1}' on 'bab' -> 'b#b'); the kin
+  // ('a+{1,0}') was a SILENT-WRONG on main
+  @test.assert_eq(n("a++{1,0}").normalize("bab"), "#b#b#")
+  @test.assert_eq(n("a++{2,1}").normalize("bab"), "b#b")
+  @test.assert_eq(n("a+{1,0}").normalize("bab"), "#b#b#")
+  @test.assert_eq(n("a+{2,1}").normalize("bab"), "b#b")
+  @test.assert_eq(n("\\w+{1,0}").normalize("aaa"), "#")
 }
