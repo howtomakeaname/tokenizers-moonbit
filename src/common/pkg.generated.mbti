@@ -30,6 +30,8 @@ pub fn class_bounded_spec(String) -> (Int, Int, Int)?
 
 pub fn double_anchored_spec(String) -> (Int, Char?, Int, Int)?
 
+pub fn escaped_letter_literal(Char) -> Char?
+
 pub fn exact_regex_kind(String) -> (Int, Int)?
 
 pub fn is_anchored_regex_pattern(String) -> Bool
