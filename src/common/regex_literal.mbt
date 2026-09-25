@@ -84,7 +84,13 @@ fn parse_regex_literal_body(chars : Array[Char]) -> String? {
       } else if next == 't' {
         sb.write_char('\t')
       } else {
-        return None
+        match escaped_letter_literal(next) {
+          // unknown-escape letters are literal (probed 0.22.2:
+          // '\q' on 'aqa' -> 'a#a'); class/anchor letters (d s w
+          // b z ...) and error letters (c p u ...) stay rejected
+          Some(c2) => sb.write_char(c2)
+          None => return None
+        }
       }
       i = i + 2
     } else if is_regex_operator(c) {

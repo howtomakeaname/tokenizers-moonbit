@@ -38,6 +38,14 @@ fn bracket_shortcut_kind(spelling : String) -> Int? {
 /// punctuation that must be escaped to be literal; anything else
 /// rejects loudly (unknown onig escape semantics).
 fn bracket_escaped_literal(c : Char) -> Char? {
+  match escaped_letter_literal(c) {
+    Some(x) => Some(x)
+    None => bracket_escaped_literal_known(c)
+  }
+}
+
+///|
+fn bracket_escaped_literal_known(c : Char) -> Char? {
   match c {
     'n' => Some('\n')
     't' => Some('\t')

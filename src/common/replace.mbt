@@ -577,9 +577,9 @@ pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
         '\\' => Some('\\')
         '.' => Some('.')
         // escaped literal plus ('\+{2}' on '+ ++ ' -> '+ # ',
-        // probed — consistent with the zero-min family's new '+')
+        // probed); unknown-escape letters ride the shared helper
         '+' => Some('+')
-        _ => None
+        _ => escaped_letter_literal(chars[1])
       }
       match c {
         Some(x) => return Some((x, 1, if lazy_tail { 1 } else { -1 }))
@@ -605,7 +605,11 @@ pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
       '\\' => '\\'
       '.' => '.'
       '+' => '+'
-      _ => return None
+      _ =>
+        match escaped_letter_literal(chars[1]) {
+          Some(x) => x
+          None => return None
+        }
     }
   } else {
     return None
