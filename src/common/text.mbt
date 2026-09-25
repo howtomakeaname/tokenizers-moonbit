@@ -622,6 +622,12 @@ fn lazy_normalize_step(pattern : String) -> String? {
         let possessive_mark = o >= 3 &&
           chars[o - 2] == '+' &&
           !is_escaped_at(chars, o - 2)
+        // 'X++{0}' — zero reps of the possessive group is the
+        // all-empty '{0}' (probed: 'a++{0}' on 'aaa' -> '#a#a#a#');
+        // nonzero bounds still never match and reject loudly
+        if possessive_mark && pattern[o + 1:n - 1] == "0" {
+          return Some(pattern[:o - 2].to_owned() + "{0}")
+        }
         let plus_ok = o >= 2 &&
           chars[o - 1] == '+' &&
           !is_escaped_at(chars, o - 1) &&
@@ -826,8 +832,8 @@ fn lazy_normalize_step(pattern : String) -> String? {
           Some(o2) => {
             let inner2 = pattern[o2 + 1:n - 3]
             let m3 = inner2.length()
-            let droppable = match
-              parse_capped_digits(inner2.to_array(), 0, m3) {
+            let parsed_head = parse_capped_digits(inner2.to_array(), 0, m3)
+            let droppable = match parsed_head {
               Some((v3, dz3)) =>
                 if dz3 == m3 {
                   true // exact {n}
@@ -836,9 +842,12 @@ fn lazy_normalize_step(pattern : String) -> String? {
                 } else if inner2[dz3] == ',' {
                   // REVERSED inners drop too — the downstream
                   // chains compute them ('{2,0}?+' -> the {0,n}
-                  // walk, '{3,2}?+' -> lazy_exact reversed);
-                  // well-formed ranges compute n-block CHAINS and
-                  // stay loud
+                  // walk, '{3,2}?+' -> lazy_exact reversed). EQUAL
+                  // and well-formed ranges compute n-block CHAINS
+                  // ('\w{2,2}?+' on 'abab' -> '#' — one whole
+                  // floor(L/n)*n match; re-probed deterministically,
+                  // an earlier shared-object probe misread it as the
+                  // optional group) and stay loud
                   match parse_capped_digits(inner2.to_array(), dz3 + 1, m3) {
                     Some((up3, dw4)) => dw4 == m3 && up3 < v3
                     None => false
@@ -1126,6 +1135,9 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
           'r' => Some((-1, Some('\r'), max))
           '\\' => Some((-1, Some('\\'), max))
           '.' => Some((-1, Some('.'), max))
+          // escaped literal plus (probed: '\\+{0}' on '+' ->
+          // '#+#'); other metachars stay rejected pending probes
+          '+' => Some((-1, Some('+'), max))
           _ => None
         }
       } else if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
@@ -1234,6 +1246,8 @@ fn zero_min_base(
           'r' => Some((-1, Some('\r'), max))
           '\\' => Some((-1, Some('\\'), max))
           '.' => Some((-1, Some('.'), max))
+          // escaped literal plus (probed: '\\+{0}' on '+' -> '#+#')
+          '+' => Some((-1, Some('+'), max))
           _ => None
         }
       } else if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
