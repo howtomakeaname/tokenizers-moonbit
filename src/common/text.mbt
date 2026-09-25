@@ -1013,6 +1013,7 @@ fn lazy_normalize_step(pattern : String) -> String? {
   if n == 3 &&
     chars[n - 1] == '?' &&
     chars[n - 2] == '?' &&
+    chars[n - 3] != '\\' &&
     !is_escaped_at(chars, n - 3) &&
     chars[n - 3] != '}' &&
     chars[n - 3] != '+' {
