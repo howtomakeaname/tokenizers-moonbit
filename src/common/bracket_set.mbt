@@ -48,6 +48,9 @@ fn bracket_escaped_literal(c : Char) -> Char? {
 fn bracket_escaped_literal_known(c : Char) -> Char? {
   match c {
     'n' => Some('\n')
+    // literal 'o' when NOT followed by '{' (the call site guards
+    // the octal form — probed: '[\o]' on 'aoob' -> 'a##b')
+    'o' => Some('o')
     't' => Some('\t')
     'r' => Some('\r')
     '-'
@@ -174,6 +177,11 @@ fn bracket_body_members(
       }
       match bracket_escaped_literal(chars[j]) {
         Some(c) => {
+          // '\o{...}' inside a class is the OCTAL escape (probed:
+          // '[\o{2}]' == class {\x02}) — not a literal member
+          if c == 'o' && j + 1 < close && chars[j + 1] == '{' {
+            return None
+          }
           members.push(MChar(c))
           i = j + 1
           continue
