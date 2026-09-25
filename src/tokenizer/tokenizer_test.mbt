@@ -4171,7 +4171,7 @@ test "Tokenizer convenience trainers default vocab_size mirrors HF caps" {
   let many_unigram = numbered_special_tokens("<uni", 8001)
   @test.assert_eq(
     @tokenizer.Tokenizer::train_unigram([], special_tokens=many_unigram).get_vocab_size(),
-    8000,
+    8001,
   )
   @test.assert_eq(
     @tokenizer.Tokenizer::train_unigram(
@@ -4959,7 +4959,7 @@ test "train_unigram prefers learned whole words" {
   @test.assert_eq(default_tok.get_model().unk_id(), None)
   @test.assert_eq(default_tok.token_to_id("<unk>"), None)
   let default_known = default_tok.encode("hello", add_special_tokens=false)
-  @test.assert_eq(default_known.tokens, ["hello"])
+  @test.assert_eq(default_known.tokens, ["hel", "l", "o"])
   let mut default_unknown_raised = false
   try default_tok.encode("hello z", add_special_tokens=false) |> ignore catch {
     @types.VocabError(msg) =>
@@ -4976,9 +4976,11 @@ test "train_unigram prefers learned whole words" {
   )
   @test.assert_eq(tok.token_to_id("<unk>"), Some(0))
   @test.assert_eq(tok.token_to_id("<pad>"), Some(1))
-  assert_true(tok.token_to_id("hello") is Some(_))
+  // HF EM: whole words with freq 1 are never seeded; 'hel' wins
+  @test.assert_eq(tok.token_to_id("hello"), None)
+  assert_true(tok.token_to_id("hel") is Some(_))
   let enc = tok.encode("hello help", add_special_tokens=false)
-  @test.assert_eq(enc.tokens, ["hello", "help"])
+  @test.assert_eq(enc.tokens, ["hel", "l", "o", "hel", "p"])
 }
 
 ///|
@@ -4997,7 +4999,7 @@ test "train_unigram supports custom pretokenizer and reload" {
   )
   let loaded = @tokenizer.Tokenizer::from_str(tok.to_json())
   @test.assert_eq(loaded.encode("moon,bit", add_special_tokens=false).tokens, [
-    "moon", "bit",
+    "m", "o", "o", "n", "b", "i", "t",
   ])
 }
 
@@ -5009,9 +5011,13 @@ test "train_unigram respects vocab_size cap" {
     special_tokens=["<pad>"],
     vocab_size=Some(4),
   )
-  @test.assert_eq(tok.get_vocab_size(), 4)
+  // HF finalize keeps required chars beyond the cap (5 > 4; probed)
+  @test.assert_eq(tok.get_vocab_size(), 5)
   @test.assert_eq(tok.token_to_id("<unk>"), Some(0))
   @test.assert_eq(tok.token_to_id("<pad>"), Some(1))
+  @test.assert_eq(tok.token_to_id("a"), Some(2))
+  @test.assert_eq(tok.token_to_id("b"), Some(3))
+  @test.assert_eq(tok.token_to_id("c"), Some(4))
   @test.assert_eq(tok.token_to_id("ab"), None)
 }
 
@@ -5027,9 +5033,9 @@ test "train_unigram ranks deterministic candidates before applying vocab cap" {
   )
   @test.assert_eq(tok.get_vocab_size(), 6)
   @test.assert_eq(tok.token_to_id("<unk>"), Some(0))
-  assert_true(tok.token_to_id("alpha") is Some(_))
+  @test.assert_eq(tok.token_to_id("alpha"), None)
   @test.assert_eq(tok.encode("alpha", add_special_tokens=false).tokens, [
-    "alpha",
+    "alp", "h", "a",
   ])
 }
 
@@ -5047,10 +5053,11 @@ test "train_unigram supports unk_piece and max_piece_length" {
   @test.assert_eq(tok.token_to_id("<UNK>"), Some(0))
   @test.assert_eq(tok.token_to_id("<pad>"), Some(1))
   @test.assert_eq(tok.token_to_id("hello"), None)
-  @test.assert_eq(tok.token_to_id("he") is Some(_), true)
-  @test.assert_eq(tok.token_to_id("ll") is Some(_), true)
+  @test.assert_eq(tok.token_to_id("he"), None)
+  @test.assert_eq(tok.token_to_id("ll"), None)
+  @test.assert_eq(tok.token_to_id("el"), None)
   let enc = tok.encode("hello", add_special_tokens=false)
-  @test.assert_eq(enc.tokens, ["h", "el", "lo"])
+  @test.assert_eq(enc.tokens, ["h", "e", "l", "l", "o"])
   for token in enc.tokens {
     @test.assert_eq(token.char_length() <= 2, true)
   }
@@ -5072,12 +5079,13 @@ test "train_unigram preserves initial alphabet" {
     @model.Model::train_wordlevel_from_tokens([[]]),
   ).train_from_iterator(["aa aa"], trainer)
   @test.assert_eq(tok.token_to_id("<unk>"), Some(0))
-  @test.assert_eq(tok.token_to_id("z"), Some(1))
-  // HF keeps only the first character from each initial_alphabet string.
-  @test.assert_eq(tok.token_to_id("x"), Some(2))
+  // port pins the deterministic first-seen order (HF's own id order
+  // here is HashSet-random; the SET matches exactly — probed 0.22.2)
+  @test.assert_eq(tok.token_to_id("a"), Some(1))
+  @test.assert_eq(tok.token_to_id("x"), Some(3))
+  @test.assert_eq(tok.token_to_id("z"), Some(5))
   @test.assert_eq(tok.token_to_id("xy"), None)
-  @test.assert_eq(tok.token_to_id("a"), Some(3))
-  @test.assert_eq(tok.token_to_id("aa"), None)
+  @test.assert_eq(tok.token_to_id("aa"), Some(2))
 }
 
 ///|
@@ -5103,9 +5111,11 @@ test "train_unigram seed_size caps ranked seeds after characters" {
   )
   @test.assert_eq(with_top_seed.token_to_id("a") is Some(_), true)
   @test.assert_eq(with_top_seed.token_to_id("b") is Some(_), true)
-  @test.assert_eq(with_top_seed.token_to_id("ab") is Some(_), true)
+  // even at seed_size=3 'ab' stays out — freq-1 substrings never
+  // enter the ESA seed (internal nodes only; probed 0.22.2)
+  @test.assert_eq(with_top_seed.token_to_id("ab"), None)
   @test.assert_eq(with_top_seed.encode("ab", add_special_tokens=false).tokens, [
-    "ab",
+    "a", "b",
   ])
 }
 
@@ -5148,7 +5158,7 @@ test "Trainer unigram preserves AddedToken metadata and advanced knobs" {
   @test.assert_eq(trained.token_to_id("moon"), None)
   @test.assert_eq(
     trained.encode("moon <extra>", add_special_tokens=false).tokens,
-    ["mo", "on", "<extra>"],
+    ["m", "o", "o", "n", "<extra>"],
   )
 }
 
