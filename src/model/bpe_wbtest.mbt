@@ -305,7 +305,9 @@ test "model trainer convenience methods cap default vocab size" {
     special_tokens=specials_8001,
     show_progress=false,
   )
-  @test.assert_eq(unigram.get_vocab_size(), 8000)
+  // HF do_train semantics: with more specials than vocab_size the
+  // piece cap goes negative and never triggers — all specials kept
+  @test.assert_eq(unigram.get_vocab_size(), 8001)
   let unigram_unlimited = Model::train_unigram(
     [],
     special_tokens=specials_8001,
@@ -319,7 +321,7 @@ test "model trainer convenience methods cap default vocab size" {
     special_tokens=specials_8001,
     show_progress=false,
   )
-  @test.assert_eq(unigram_from_tokens.get_vocab_size(), 8000)
+  @test.assert_eq(unigram_from_tokens.get_vocab_size(), 8001)
   let unigram_from_tokens_unlimited = Model::train_unigram_from_tokens(
     [],
     special_tokens=specials_8001,
