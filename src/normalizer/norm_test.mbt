@@ -2889,48 +2889,68 @@ test "final loud-gap closures" {
 
 ///|
 /// Unknown-escape literal family (probed 0.22.2, fresh objects, all
-/// ASCII letters swept): 16 letters are the letter itself
-/// (g i j k l m o q E F I J L Q T U V), four are control chars
-/// ('\a' BEL, '\e' ESC, '\f' FF, '\v' VT). '\x' is a QUIRK (bare =
-/// literal x, any quantifier never matches) and stays loud; the
-/// assertion letters (b z A G K Y Z y), class letters (d s w D S W
-/// H N R X O), and error letters (c C p P u M) keep their existing
-/// families. The optional '?' tail == '{0,1}' for any base (fresh
-/// probes: 'a?' on 'b' -> '#b#', '\g?' -> '#q#').
+/// ASCII letters swept; round-1 review hardened): 15 letters are the
+/// letter itself (g i j k l m q E F I J L Q T U V), four are control
+/// chars ('\a' BEL, '\e' ESC, '\f' FF, '\v' VT). 'o' is onig's OCTAL
+/// escape under braces ('\o{101}' == 'A', '\o{0,2}' errors) —
+/// literal-o only via bare/'+'/'?'/'{,m}' spellings. '\x' is a quirk
+/// (bare literal-x; '+'/'{n}' never match; '?' walks empty — loud
+/// here). '\p'/'\P'/'\u' compute bare (brace forms error); '\c'
+/// never-matches; '\h' is a hex-digit class (loud, pre-existing).
+/// The optional '?' tail == '{0,1}' for any base.
 test "unknown-escape literal family" {
   let n = fn(p : String) -> @normalizer.Normalizer {
     @normalizer.Normalizer::Replace(pattern=p, content="#")
   }
-  @test.assert_eq(n("\\{0}").normalize("ab"), "ab")
-  @test.assert_eq(n("\\q").normalize("aqb"), "a#b")
-  @test.assert_eq(n("\\+").normalize("xxqq"), "xxqq")
-  @test.assert_eq(n("\\{{2}}").normalize("aqqb"), "aqqb")
-  @test.assert_eq(n("\\?").normalize("z"), "z")
-  @test.assert_eq(n("\\{0}").normalize("ab"), "ab")
-  @test.assert_eq(n("\\g").normalize("agb"), "a#b")
-  @test.assert_eq(n("\\+").normalize("xxgg"), "xxgg")
-  @test.assert_eq(n("\\{{2}}").normalize("aggb"), "aggb")
-  @test.assert_eq(n("\\?").normalize("z"), "z")
-  @test.assert_eq(n("\\{0}").normalize("ab"), "ab")
-  @test.assert_eq(n("\\Q").normalize("aQb"), "a#b")
-  @test.assert_eq(n("\\+").normalize("xxQQ"), "xxQQ")
-  @test.assert_eq(n("\\{{2}}").normalize("aQQb"), "aQQb")
-  @test.assert_eq(n("\\?").normalize("z"), "z")
-  @test.assert_eq(n("\\{0}").normalize("ab"), "ab")
-  @test.assert_eq(n("\\e").normalize("aeb"), "aeb")
-  @test.assert_eq(n("\\+").normalize("xxee"), "xxee")
-  @test.assert_eq(n("\\{{2}}").normalize("aeeb"), "aeeb")
-  @test.assert_eq(n("\\?").normalize("z"), "z")
+  @test.assert_eq(n("\\q{0}").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("\\q{2}").normalize("aqqb"), "a#b")
+  @test.assert_eq(n("\\q+").normalize("aqqb"), "a#b")
+  @test.assert_eq(n("\\q?").normalize("zqz"), "#z#z#")
+  @test.assert_eq(n("\\g{0}").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("\\g{2}").normalize("aggb"), "a#b")
+  @test.assert_eq(n("\\g+").normalize("aggb"), "a#b")
+  @test.assert_eq(n("\\g?").normalize("zgz"), "#z#z#")
+  @test.assert_eq(n("\\i{0}").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("\\i{2}").normalize("aiib"), "a#b")
+  @test.assert_eq(n("\\i+").normalize("aiib"), "a#b")
+  @test.assert_eq(n("\\i?").normalize("ziz"), "#z#z#")
+  @test.assert_eq(n("\\Q{0}").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("\\Q{2}").normalize("aQQb"), "a#b")
+  @test.assert_eq(n("\\Q+").normalize("aQQb"), "a#b")
+  @test.assert_eq(n("\\Q?").normalize("zQz"), "#z#z#")
+  @test.assert_eq(n("\\T{0}").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("\\T{2}").normalize("aTTb"), "a#b")
+  @test.assert_eq(n("\\T+").normalize("aTTb"), "a#b")
+  @test.assert_eq(n("\\T?").normalize("zTz"), "#z#z#")
+  @test.assert_eq(n("\\e{0}").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("\\e{2}").normalize("x\u{1b}\u{1b}y"), "x#y")
+  @test.assert_eq(n("\\e+").normalize("x\u{1b}\u{1b}y"), "x#y")
+  @test.assert_eq(n("\\e?").normalize("z\u{1b}z"), "#z#z#")
+  @test.assert_eq(n("\\a{0}").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("\\a{2}").normalize("x\u{7}\u{7}y"), "x#y")
+  @test.assert_eq(n("\\a+").normalize("x\u{7}\u{7}y"), "x#y")
+  @test.assert_eq(n("\\a?").normalize("z\u{7}z"), "#z#z#")
+  @test.assert_eq(n("\\v{0}").normalize("ab"), "#a#b#")
+  @test.assert_eq(n("\\v{2}").normalize("x\u{b}\u{b}y"), "x#y")
+  @test.assert_eq(n("\\v+").normalize("x\u{b}\u{b}y"), "x#y")
+  @test.assert_eq(n("\\v?").normalize("z\u{b}z"), "#z#z#")
+  @test.assert_eq(n("\\o").normalize("aoob"), "a##b")
+  @test.assert_eq(n("\\o+").normalize("aoob"), "a#b")
+  @test.assert_eq(n("\\o?").normalize("zo z"), "#z# #z#")
+  @test.assert_eq(n("\\o{,2}").normalize("aoob"), "#a#b#")
   @test.assert_eq(n("\\q").normalize("aqa"), "a#a")
-  @test.assert_eq(n("\\i").normalize("aib"), "a#b")
   @test.assert_eq(n("[\\q]").normalize("aqb"), "a#b")
   @test.assert_eq(n("a?").normalize("b"), "#b#")
   @test.assert_eq(n("\\w?").normalize("ab"), "##")
   @test.assert_eq(n("\\g?").normalize("q"), "#q#")
   @test.assert_eq(@common.is_supported_replace_regex("\\q"), true)
-  @test.assert_eq(@common.is_supported_replace_regex("\\q{0}"), true)
   @test.assert_eq(@common.is_supported_replace_regex("a?"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\o{0}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\o{101}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\o{0,2}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\o+"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("\\o?"), true)
   @test.assert_eq(@common.is_supported_replace_regex("\\x+"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\z"), false)
-  @test.assert_eq(@common.is_supported_replace_regex("\\c"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\c{0}"), false)
 }
