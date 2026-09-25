@@ -2,6 +2,7 @@
 package "howtomakeaname/tokenizers-moonbit/pretokenizer"
 
 import {
+  "howtomakeaname/tokenizers-moonbit/common",
   "howtomakeaname/tokenizers-moonbit/types",
   "moonbitlang/core/debug",
 }
@@ -14,6 +15,8 @@ pub fn byte_level_decode_str(String) -> String
 pub fn byte_level_encode_str(String) -> String
 
 pub fn clip_split(String) -> Array[String]
+
+pub fn clip_split_spans(String) -> Array[@common.Span]
 
 pub fn gpt2_split(String) -> Array[String]
 

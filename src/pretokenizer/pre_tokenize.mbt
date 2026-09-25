@@ -82,13 +82,38 @@ fn split_pre_tokenize(
   } else if is_gpt2_pattern(pattern) {
     gpt2_split(text)
   } else if is_clip_pattern(pattern) {
-    clip_split(text)
+    [] // clip routes through clip_split_spans below (avoid a
+    // duplicate scan — round-1 review nit)
   } else {
     return split_with_simple_pattern(
       text, pattern, behavior, invert, regex, base_offset,
     )
   }
-  pieces_to_splits(pieces, base_offset)
+  // the gpt2/qwen/o200k scanners emit MATCH pieces with FULL
+  // coverage (their whitespace branches consume everything), so
+  // behavior/invert fold exactly like the generic path (probed
+  // 0.22.2: Split(gpt2-pattern, 'removed') -> [], mwp/mwn ==
+  // isolated when no gaps exist, contiguous -> one whole piece).
+  // digit-triplet and cjk-range pieces are NOT all matches (their
+  // patterns leave gaps) — flagging every piece as a match is only
+  // exact under Isolated, the sole real-world config for these
+  // patterns; recorded in PROGRESS as a known flag-semantics gap
+  let chars = text.to_array()
+  // CLIP's scanner skips whitespace (gaps) — its spans carry real
+  // offsets; the other scanners emit contiguous full-coverage pieces
+  let matches : Array[@common.Span] = if is_clip_pattern(pattern) {
+    clip_split_spans(text)
+  } else {
+    let spans : Array[@common.Span] = []
+    let mut cursor = 0
+    for p in pieces {
+      let len = p.char_length()
+      spans.push({ start: cursor, stop: cursor + len, })
+      cursor = cursor + len
+    }
+    spans
+  }
+  apply_split_matches(chars, matches, behavior, invert, base_offset)
 }
 
 ///|
@@ -307,23 +332,6 @@ fn is_clip_pattern(p : String) -> Bool {
   p.contains("<\\|startoftext\\|>") &&
   p.contains("[\\p{L}]+") &&
   p.contains("[\\p{N}]")
-}
-
-// Turn raw piece strings into Splits with running char offsets.
-
-///|
-fn pieces_to_splits(
-  pieces : Array[String],
-  base_offset : Int,
-) -> Array[@types.Split] {
-  let out : Array[@types.Split] = []
-  let mut cursor = base_offset
-  for p in pieces {
-    let len = p.char_length()
-    out.push({ value: p, offsets: (cursor, cursor + len), })
-    cursor = cursor + len
-  }
-  out
 }
 
 ///|
