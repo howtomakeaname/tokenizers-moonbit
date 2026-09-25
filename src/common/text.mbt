@@ -962,6 +962,17 @@ fn lazy_normalize_step(pattern : String) -> String? {
       return Some(pattern[:n - 2].to_owned() + "{0,}")
     }
   }
+  // the OPTIONAL '?' tail == '{0,1}' for ANY base (probed 0.22.2:
+  // 'a?' on 'b' -> '#b#', '\g?' on 'q' -> '#q#'). Runs AFTER the
+  // possessive/double-lazy blocks so '??'/'?+' tails keep their own
+  // rules; the char before must not itself be a quantifier or a
+  // closing brace ('{n}?' is the lazy-exact family)
+  if n >= 2 && chars[n - 1] == '?' && !is_escaped_at(chars, n - 1) {
+    let prev = chars[n - 2]
+    if prev != '?' && prev != '+' && prev != '*' && prev != '}' {
+      return Some(pattern[:n - 1].to_owned() + "{0,1}")
+    }
+  }
   // BARE-class lazy plus == the unquantified class (per-char — one
   // char per position, probed: '\w+?' on 'abcdef' -> '######');
   // anchored and bracket forms fail the bare-class prefix test and
@@ -1077,6 +1088,44 @@ fn lazy_normalize_step(pattern : String) -> String? {
       None
     }
     None => None
+  }
+}
+
+///|
+/// Unknown-escape literal classes (probed 0.22.2, fresh objects, all
+/// ASCII letters swept): these escaped letters are LITERAL — the
+/// letter itself ('\\q' == 'q': '\\q' on 'aqa' -> 'a#a'; 17 letters
+/// g i j k l m o q x E F I J L Q T U V) or a control char ('\\a' BEL,
+/// '\\e' ESC, '\\f' FF, '\\v' VT — no-ops on ordinary text). Known
+/// escapes (n t r and the class/anchor letters d s w b z A Z ...) and
+/// onig ERROR letters (c C p P u M ...) are NOT here — callers keep
+/// their existing explicit arms and loud rejects.
+pub fn escaped_letter_literal(c : Char) -> Char? {
+  match c {
+    'g'
+    | 'i'
+    | 'j'
+    | 'k'
+    | 'l'
+    | 'm'
+    | 'o'
+    | 'q'
+    // ('x' EXCLUDED: bare '\x' is literal x but ANY quantified
+    // form never matches — probed; loud-stance quirk)
+    | 'E'
+    | 'F'
+    | 'I'
+    | 'J'
+    | 'L'
+    | 'Q'
+    | 'T'
+    | 'U'
+    | 'V' => Some(c)
+    'a' => Some('\u{7}')
+    'e' => Some('\u{1B}')
+    'f' => Some('\u{C}')
+    'v' => Some('\u{B}')
+    _ => None
   }
 }
 
@@ -1210,16 +1259,20 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
       if bc.length() == 2 && bc[0] == '\\' {
         // escaped literal base (probed 0.22.2: `\\n{0,2}` on "z\n\nz"
         // -> '#z#z#', `\\t{2}`/`\\\\{2}`/`\\.{2}` all compute)
-        match bc[1] {
-          'n' => Some((-1, Some('\n'), max))
-          't' => Some((-1, Some('\t'), max))
-          'r' => Some((-1, Some('\r'), max))
-          '\\' => Some((-1, Some('\\'), max))
-          '.' => Some((-1, Some('.'), max))
-          // escaped literal plus (probed: '\\+{0}' on '+' ->
-          // '#+#'); other metachars stay rejected pending probes
-          '+' => Some((-1, Some('+'), max))
-          _ => None
+        match escaped_letter_literal(bc[1]) {
+          Some(c) => Some((-1, Some(c), max))
+          None =>
+            match bc[1] {
+              'n' => Some((-1, Some('\n'), max))
+              't' => Some((-1, Some('\t'), max))
+              'r' => Some((-1, Some('\r'), max))
+              '\\' => Some((-1, Some('\\'), max))
+              '.' => Some((-1, Some('.'), max))
+              // escaped literal plus (probed: '\\+{0}' on '+' ->
+              // '#+#'); other metachars stay rejected pending probes
+              '+' => Some((-1, Some('+'), max))
+              _ => None
+            }
         }
       } else if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
         Some((-1, Some(bc[0]), max))
@@ -1321,15 +1374,19 @@ fn zero_min_base(
     None => {
       let bc = base.to_array()
       if bc.length() == 2 && bc[0] == '\\' {
-        match bc[1] {
-          'n' => Some((-1, Some('\n'), max))
-          't' => Some((-1, Some('\t'), max))
-          'r' => Some((-1, Some('\r'), max))
-          '\\' => Some((-1, Some('\\'), max))
-          '.' => Some((-1, Some('.'), max))
-          // escaped literal plus (probed: '\\+{0}' on '+' -> '#+#')
-          '+' => Some((-1, Some('+'), max))
-          _ => None
+        match escaped_letter_literal(bc[1]) {
+          Some(c) => Some((-1, Some(c), max))
+          None =>
+            match bc[1] {
+              'n' => Some((-1, Some('\n'), max))
+              't' => Some((-1, Some('\t'), max))
+              'r' => Some((-1, Some('\r'), max))
+              '\\' => Some((-1, Some('\\'), max))
+              '.' => Some((-1, Some('.'), max))
+              // escaped literal plus (probed: '\\+{0}' on '+' -> '#+#')
+              '+' => Some((-1, Some('+'), max))
+              _ => None
+            }
         }
       } else if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
         Some((-1, Some(bc[0]), max))
