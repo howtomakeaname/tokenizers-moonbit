@@ -647,10 +647,11 @@ fn lazy_normalize_step(pattern : String) -> String? {
               if !tail_ok {
                 return None
               }
-              // REVERSED bounds (probed, round-2): upper == 0 -> the
-              // '{0,}' star walk; 0 < upper < v -> the swapped range
-              // is 1-or-more reps -> plain greedy ('a++{2,1}' on
-              // 'bab' -> 'b#b')
+              // REVERSED bounds (probed, rounds 2-3): upper == 0 ->
+              // the '{0,}' star walk; upper == 1 -> the swapped
+              // range is 1-or-more reps -> plain greedy ('a++{2,1}'
+              // on 'bab' -> 'b#b'); upper >= 2 NEVER matches (the
+              // swapped minimum needs >= 2 possessive reps) — loud
               if dz4 < mp && inner_p[dz4] == ',' && dz4 + 1 < mp {
                 match parse_capped_digits(inner_p.to_array(), dz4 + 1, mp) {
                   Some((up5, dw6)) =>
@@ -658,7 +659,10 @@ fn lazy_normalize_step(pattern : String) -> String? {
                       if up5 == 0 {
                         return Some(base_p + "{0,}")
                       }
-                      return Some(base_p + "+")
+                      if up5 == 1 {
+                        return Some(base_p + "+")
+                      }
+                      return None
                     }
                   None => ()
                 }
@@ -696,11 +700,12 @@ fn lazy_normalize_step(pattern : String) -> String? {
           // (X+){...} bound collapses to n-or-more
           match parse_capped_digits(inner.to_array(), 0, m2) {
             Some((num, dz)) => {
-              // REVERSED bounds (probed, round-2 review — this was a
+              // REVERSED bounds (probed, rounds 2-3 — this was a
               // silent-wrong on main): upper == 0 -> the '{0,}' star
-              // walk; 0 < upper < num -> the swapped range is
-              // 1-or-more reps -> plain greedy ('a+{2,1}' on 'bab'
-              // -> 'b#b')
+              // walk; upper == 1 -> plain greedy ('a+{2,1}' on
+              // 'bab' -> 'b#b'); upper >= 2 -> the swapped-minimum
+              // window 'X{up,}' ('a+{3,2}' == 'a{2,}': 'bab'
+              // unchanged, 'aabaa' -> '#b#')
               if dz < m2 && inner[dz] == ',' && dz + 1 < m2 {
                 match parse_capped_digits(inner.to_array(), dz + 1, m2) {
                   Some((up2b, dw2b)) =>
@@ -708,7 +713,10 @@ fn lazy_normalize_step(pattern : String) -> String? {
                       if up2b == 0 {
                         return Some(base + "{0,}")
                       }
-                      return Some(base + "+")
+                      if up2b == 1 {
+                        return Some(base + "+")
+                      }
+                      return Some(base + "{" + up2b.to_string() + ",}")
                     }
                   None => ()
                 }
