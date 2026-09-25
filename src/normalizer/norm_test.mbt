@@ -2879,4 +2879,10 @@ test "final loud-gap closures" {
   @test.assert_eq(n("a+{1,0}").normalize("bab"), "#b#b#")
   @test.assert_eq(n("a+{2,1}").normalize("bab"), "b#b")
   @test.assert_eq(n("\\w+{1,0}").normalize("aaa"), "#")
+  // round-3: upper >= 2 reversed — possessive NEVER matches (loud);
+  // kin == the swapped-minimum window 'X{up,}'
+  @test.assert_eq(@common.is_supported_replace_regex("a++{3,2}"), false)
+  @test.assert_eq(n("a+{3,2}").normalize("bab"), "bab")
+  @test.assert_eq(n("a+{3,2}").normalize("aabaa"), "#b#")
+  @test.assert_eq(n("\\w+{3,2}").normalize("ab"), "#")
 }
