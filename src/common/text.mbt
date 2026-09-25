@@ -647,6 +647,22 @@ fn lazy_normalize_step(pattern : String) -> String? {
               if !tail_ok {
                 return None
               }
+              // REVERSED bounds (probed, round-2): upper == 0 -> the
+              // '{0,}' star walk; 0 < upper < v -> the swapped range
+              // is 1-or-more reps -> plain greedy ('a++{2,1}' on
+              // 'bab' -> 'b#b')
+              if dz4 < mp && inner_p[dz4] == ',' && dz4 + 1 < mp {
+                match parse_capped_digits(inner_p.to_array(), dz4 + 1, mp) {
+                  Some((up5, dw6)) =>
+                    if dw6 == mp && up5 < v4 {
+                      if up5 == 0 {
+                        return Some(base_p + "{0,}")
+                      }
+                      return Some(base_p + "+")
+                    }
+                  None => ()
+                }
+              }
               if v4 == 0 {
                 if dz4 == mp {
                   return Some(base_p + "{0}")
@@ -680,6 +696,23 @@ fn lazy_normalize_step(pattern : String) -> String? {
           // (X+){...} bound collapses to n-or-more
           match parse_capped_digits(inner.to_array(), 0, m2) {
             Some((num, dz)) => {
+              // REVERSED bounds (probed, round-2 review — this was a
+              // silent-wrong on main): upper == 0 -> the '{0,}' star
+              // walk; 0 < upper < num -> the swapped range is
+              // 1-or-more reps -> plain greedy ('a+{2,1}' on 'bab'
+              // -> 'b#b')
+              if dz < m2 && inner[dz] == ',' && dz + 1 < m2 {
+                match parse_capped_digits(inner.to_array(), dz + 1, m2) {
+                  Some((up2b, dw2b)) =>
+                    if dw2b == m2 && up2b < num && up2b <= 100000 {
+                      if up2b == 0 {
+                        return Some(base + "{0,}")
+                      }
+                      return Some(base + "+")
+                    }
+                  None => ()
+                }
+              }
               // zero bounds: '(X+){0}' == the all-empty '{0}' and
               // '(X+){0,m}' == the '{0,}' star walk (probed: 'a+{0,2}'
               // on 'aaa' -> '#', on 'bab' -> '#b#b#')
