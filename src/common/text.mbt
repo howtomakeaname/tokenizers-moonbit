@@ -994,6 +994,48 @@ fn lazy_normalize_step(pattern : String) -> String? {
     }
     return None
   }
+  // STAR tails over escaped-letter bases (probed: '\q*' on 'aqqb'
+  // -> '#a#b#' — the {0,} empty walk; '\o*' likewise — the octal
+  // escape cannot start with '*' so no guard needed): rewrite to
+  // the brace spelling on the bare literal
+  if n == 3 && chars[2] == '*' && chars[0] == '\\' {
+    match escaped_letter_literal(chars[1]) {
+      Some(c) => return Some(c.to_string() + "{0,}")
+      None =>
+        // literal 'o' (the octal escape cannot start with '*')
+        if chars[1] == 'o' {
+          return Some("o{0,}")
+        }
+    }
+  }
+  // the plain DOUBLE-optional 'a??' == the all-empty '{0}' walk
+  // (probed: 'ab' -> '#a#b#') — same rule as the brace '{n}??'
+  if n >= 3 &&
+    chars[n - 1] == '?' &&
+    chars[n - 2] == '?' &&
+    chars[n - 3] != '\\' &&
+    !is_escaped_at(chars, n - 3) &&
+    chars[n - 3] != '}' &&
+    chars[n - 3] != '+' {
+    let base_ch = chars[n - 3]
+    if !is_regex_operator(base_ch) {
+      return Some(base_ch.to_string() + "{0}")
+    }
+  }
+  // the ESCAPED-letter double-optional '\q??' and the BRACKET-set
+  // double-optional '[..]??' == all-empty '{0}' walks (probed: 'qq'
+  // -> '#q#q#')
+  if chars[n - 1] == '?' && chars[n - 2] == '?' {
+    if n == 4 && chars[0] == '\\' {
+      match escaped_letter_literal(chars[1]) {
+        Some(c) => return Some(c.to_string() + "{0}")
+        None => ()
+      }
+    }
+    if n >= 4 && chars[0] == '[' && chars[n - 3] == ']' {
+      return Some(pattern[:n - 2].to_owned() + "{0}")
+    }
+  }
   // the OPTIONAL '?' tail == '{0,1}' for ANY base (probed 0.22.2:
   // 'a?' on 'b' -> '#b#', '\g?' on 'q' -> '#q#'). Runs AFTER the
   // possessive/double-lazy blocks so '??'/'?+' tails keep their own
@@ -1697,7 +1739,9 @@ fn double_anchored_base(
           | '$'
           | '-'
           | '\\' => Some(bsc[1])
-          _ => None
+          // unknown-escape letters (probed: '^\q{2}$' on 'qq' ->
+          // '#')
+          _ => escaped_letter_literal(bsc[1])
         }
         match lit {
           Some(c) => return Some((-1, Some(c), lo, hi))
@@ -1952,7 +1996,9 @@ fn boundary_window_parse(
           'n' => Some('\n')
           't' => Some('\t')
           'r' => Some('\r')
-          _ => None
+          // unknown-escape letters (probed: '\b\q{2}' on ' qq '
+          // -> ' # '; '\B\q{2}' on 'aqqb' -> 'a#b')
+          _ => escaped_letter_literal(bc[1])
         }
         match lit {
           Some(c) => Some((-1, Some(c), lo, hi, ws, we))
@@ -2182,7 +2228,9 @@ pub fn single_anchor_window_spec(
             }
           't' => Some('\t')
           'r' => Some('\r')
-          _ => None
+          // unknown-escape letters (probed: '^\q{2}' on 'qqq' ->
+          // '#q'); control chars keep the nl-pred rule for 'n' only
+          _ => escaped_letter_literal(bc[1])
         }
         match lit {
           Some(c) => return Some((-1, Some(c), lo, hi, leading))
