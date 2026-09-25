@@ -576,6 +576,9 @@ pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
         'r' => Some('\r')
         '\\' => Some('\\')
         '.' => Some('.')
+        // escaped literal plus ('\+{2}' on '+ ++ ' -> '+ # ',
+        // probed — consistent with the zero-min family's new '+')
+        '+' => Some('+')
         _ => None
       }
       match c {
@@ -601,6 +604,7 @@ pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
       'r' => '\r'
       '\\' => '\\'
       '.' => '.'
+      '+' => '+'
       _ => return None
     }
   } else {

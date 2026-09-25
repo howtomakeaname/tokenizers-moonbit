@@ -2826,3 +2826,63 @@ test "zero-min gap closures" {
   @test.assert_eq(n("\\w{3,2}?+").normalize("aaaa"), "#a#")
   @test.assert_eq(@common.is_supported_replace_regex("a+{0,}"), true)
 }
+
+///|
+/// Final recorded-gap closures (probed 0.22.2): the escaped literal
+/// plus base ('\+{0}' all-empty walk; also unblocks '\+??+'/'\+*+'
+/// which the possessive-lazy rules then fold), possessive+ZERO brace
+/// ('a++{0}' == zero reps == all-empty — nonzero bounds still never
+/// match), and the digit-triplet scanner now flags ONLY its digit
+/// chunks as matches (the pattern leaves regex gaps — probed
+/// Split('\p{N}{1,3}', 'removed') on 'abc12345de' -> ['abc','de']).
+/// Equal-bound and ranged '?+' stay loud: fresh-object probing shows
+/// they are the n-block CHAIN family ('\w{2,2}?+' on 'abab' -> '#'
+/// as ONE match), deliberately unimplemented.
+test "final loud-gap closures" {
+  let n = fn(p : String) -> @normalizer.Normalizer {
+    @normalizer.Normalizer::Replace(pattern=p, content="#")
+  }
+  @test.assert_eq(n("\\+{0}").normalize("+"), "#+#")
+  @test.assert_eq(n("\\+{0}").normalize("a+b"), "#a#+#b#")
+  @test.assert_eq(n("\\+??+").normalize("a+b"), "#a#+#b#")
+  @test.assert_eq(n("\\+*+").normalize("a+b"), "#a#b#")
+  @test.assert_eq(n("a++{0}").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("a++{0}").normalize("bab"), "#b#a#b#")
+  @test.assert_eq(@common.is_supported_replace_regex("\\+{0}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a++{0}"), true)
+  @test.assert_eq(@common.is_supported_replace_regex("a++{2}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("\\w{2,2}?+"), false)
+  // possessive+zero edges (self-caught before review): leading-zero
+  // '{00}', comma '{0,m}' == the star walk, escaped-plus greedy
+  @test.assert_eq(n("a++{00}").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("a++{0,2}").normalize("bab"), "#b#b#")
+  @test.assert_eq(n("\\w++{0}").normalize("aaa"), "#a#a#a#")
+  @test.assert_eq(n("\\+{2}").normalize("+ ++ "), "+ # ")
+  @test.assert_eq(n("\\+").normalize("+"), "#")
+  @test.assert_eq(@common.is_supported_replace_regex("a++{0,2}"), true)
+  // round-1 review: '{0,0}' == zero reps; malformed/oversized tails
+  // stay literal/error; '{1}'/'{01}'/'{1,m}' == plain greedy 'X+';
+  // exact n >= 2 never matches (loud)
+  @test.assert_eq(n("a++{0,0}").normalize("bab"), "#b#a#b#")
+  @test.assert_eq(n("a++{1}").normalize("bab"), "b#b")
+  @test.assert_eq(n("a++{1,2}").normalize("bab"), "b#b")
+  @test.assert_eq(n("\\w++{1}").normalize("aaa"), "#")
+  @test.assert_eq(@common.is_supported_replace_regex("a++{0,x}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a++{0,100001}"), false)
+  @test.assert_eq(@common.is_supported_replace_regex("a++{2,3}"), false)
+  // round-2 review: REVERSED possessive and kin bounds — upper==0
+  // is the star walk, nonzero reversed is the swapped 1-or-more
+  // greedy ('a++{2,1}'/'a+{2,1}' on 'bab' -> 'b#b'); the kin
+  // ('a+{1,0}') was a SILENT-WRONG on main
+  @test.assert_eq(n("a++{1,0}").normalize("bab"), "#b#b#")
+  @test.assert_eq(n("a++{2,1}").normalize("bab"), "b#b")
+  @test.assert_eq(n("a+{1,0}").normalize("bab"), "#b#b#")
+  @test.assert_eq(n("a+{2,1}").normalize("bab"), "b#b")
+  @test.assert_eq(n("\\w+{1,0}").normalize("aaa"), "#")
+  // round-3: upper >= 2 reversed — possessive NEVER matches (loud);
+  // kin == the swapped-minimum window 'X{up,}'
+  @test.assert_eq(@common.is_supported_replace_regex("a++{3,2}"), false)
+  @test.assert_eq(n("a+{3,2}").normalize("bab"), "bab")
+  @test.assert_eq(n("a+{3,2}").normalize("aabaa"), "#b#")
+  @test.assert_eq(n("\\w+{3,2}").normalize("ab"), "#")
+}

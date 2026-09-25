@@ -622,6 +622,72 @@ fn lazy_normalize_step(pattern : String) -> String? {
         let possessive_mark = o >= 3 &&
           chars[o - 2] == '+' &&
           !is_escaped_at(chars, o - 2)
+        // Possessive-group braces (probed 0.22.2, round-1 review):
+        // '{0}'/'{00}' == zero reps == all-empty '{0}'; '(X++){0,m}'
+        // == the '{0,}' star walk, '{0,0}' == zero reps == '{0}';
+        // '{1}'/'{01}'/'{1,m}' == plain greedy 'X+' (one rep needs
+        // no repeat of the possessive); exact n >= 2 NEVER matches
+        // in onig and rejects loudly; malformed tails are HF
+        // literals and oversized bounds are HF errors
+        if possessive_mark {
+          let inner_p = pattern[o + 1:n - 1]
+          let mp = inner_p.length()
+          match parse_capped_digits(inner_p.to_array(), 0, mp) {
+            Some((v4, dz4)) => {
+              let base_p = pattern[:o - 2].to_owned()
+              let upper_ok = if dz4 + 1 == mp {
+                true
+              } else {
+                match parse_capped_digits(inner_p.to_array(), dz4 + 1, mp) {
+                  Some((up4, dw5)) => dw5 == mp && up4 <= 100000
+                  None => false
+                }
+              }
+              let tail_ok = dz4 == mp || (inner_p[dz4] == ',' && upper_ok)
+              if !tail_ok {
+                return None
+              }
+              // REVERSED bounds (probed, rounds 2-3): upper == 0 ->
+              // the '{0,}' star walk; upper == 1 -> the swapped
+              // range is 1-or-more reps -> plain greedy ('a++{2,1}'
+              // on 'bab' -> 'b#b'); upper >= 2 NEVER matches (the
+              // swapped minimum needs >= 2 possessive reps) — loud
+              if dz4 < mp && inner_p[dz4] == ',' && dz4 + 1 < mp {
+                match parse_capped_digits(inner_p.to_array(), dz4 + 1, mp) {
+                  Some((up5, dw6)) =>
+                    if dw6 == mp && up5 < v4 {
+                      if up5 == 0 {
+                        return Some(base_p + "{0,}")
+                      }
+                      if up5 == 1 {
+                        return Some(base_p + "+")
+                      }
+                      return None
+                    }
+                  None => ()
+                }
+              }
+              if v4 == 0 {
+                if dz4 == mp {
+                  return Some(base_p + "{0}")
+                }
+                match parse_capped_digits(inner_p.to_array(), dz4 + 1, mp) {
+                  Some((up4, dw5)) =>
+                    if dw5 == mp && up4 == 0 {
+                      return Some(base_p + "{0}")
+                    }
+                  None => ()
+                }
+                return Some(base_p + "{0,}")
+              }
+              if v4 == 1 {
+                return Some(base_p + "+")
+              }
+              return None // n >= 2: never matches, loud
+            }
+            None => ()
+          }
+        }
         let plus_ok = o >= 2 &&
           chars[o - 1] == '+' &&
           !is_escaped_at(chars, o - 1) &&
@@ -634,6 +700,27 @@ fn lazy_normalize_step(pattern : String) -> String? {
           // (X+){...} bound collapses to n-or-more
           match parse_capped_digits(inner.to_array(), 0, m2) {
             Some((num, dz)) => {
+              // REVERSED bounds (probed, rounds 2-3 — this was a
+              // silent-wrong on main): upper == 0 -> the '{0,}' star
+              // walk; upper == 1 -> plain greedy ('a+{2,1}' on
+              // 'bab' -> 'b#b'); upper >= 2 -> the swapped-minimum
+              // window 'X{up,}' ('a+{3,2}' == 'a{2,}': 'bab'
+              // unchanged, 'aabaa' -> '#b#')
+              if dz < m2 && inner[dz] == ',' && dz + 1 < m2 {
+                match parse_capped_digits(inner.to_array(), dz + 1, m2) {
+                  Some((up2b, dw2b)) =>
+                    if dw2b == m2 && up2b < num && up2b <= 100000 {
+                      if up2b == 0 {
+                        return Some(base + "{0,}")
+                      }
+                      if up2b == 1 {
+                        return Some(base + "+")
+                      }
+                      return Some(base + "{" + up2b.to_string() + ",}")
+                    }
+                  None => ()
+                }
+              }
               // zero bounds: '(X+){0}' == the all-empty '{0}' and
               // '(X+){0,m}' == the '{0,}' star walk (probed: 'a+{0,2}'
               // on 'aaa' -> '#', on 'bab' -> '#b#b#')
@@ -826,8 +913,8 @@ fn lazy_normalize_step(pattern : String) -> String? {
           Some(o2) => {
             let inner2 = pattern[o2 + 1:n - 3]
             let m3 = inner2.length()
-            let droppable = match
-              parse_capped_digits(inner2.to_array(), 0, m3) {
+            let parsed_head = parse_capped_digits(inner2.to_array(), 0, m3)
+            let droppable = match parsed_head {
               Some((v3, dz3)) =>
                 if dz3 == m3 {
                   true // exact {n}
@@ -836,9 +923,12 @@ fn lazy_normalize_step(pattern : String) -> String? {
                 } else if inner2[dz3] == ',' {
                   // REVERSED inners drop too — the downstream
                   // chains compute them ('{2,0}?+' -> the {0,n}
-                  // walk, '{3,2}?+' -> lazy_exact reversed);
-                  // well-formed ranges compute n-block CHAINS and
-                  // stay loud
+                  // walk, '{3,2}?+' -> lazy_exact reversed). EQUAL
+                  // and well-formed ranges compute n-block CHAINS
+                  // ('\w{2,2}?+' on 'abab' -> '#' — one whole
+                  // floor(L/n)*n match; re-probed deterministically,
+                  // an earlier shared-object probe misread it as the
+                  // optional group) and stay loud
                   match parse_capped_digits(inner2.to_array(), dz3 + 1, m3) {
                     Some((up3, dw4)) => dw4 == m3 && up3 < v3
                     None => false
@@ -1126,6 +1216,9 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
           'r' => Some((-1, Some('\r'), max))
           '\\' => Some((-1, Some('\\'), max))
           '.' => Some((-1, Some('.'), max))
+          // escaped literal plus (probed: '\\+{0}' on '+' ->
+          // '#+#'); other metachars stay rejected pending probes
+          '+' => Some((-1, Some('+'), max))
           _ => None
         }
       } else if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
@@ -1234,6 +1327,8 @@ fn zero_min_base(
           'r' => Some((-1, Some('\r'), max))
           '\\' => Some((-1, Some('\\'), max))
           '.' => Some((-1, Some('.'), max))
+          // escaped literal plus (probed: '\\+{0}' on '+' -> '#+#')
+          '+' => Some((-1, Some('+'), max))
           _ => None
         }
       } else if bc.length() == 1 && !is_regex_operator(bc[0]) && bc[0] != '\\' {
