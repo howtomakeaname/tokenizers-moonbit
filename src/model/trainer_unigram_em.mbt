@@ -1075,6 +1075,12 @@ fn unigram_do_train(
     Some(vs) => vs
     None => pieces.length()
   }
+  // DIVERGENCE (documented, round-1 review): Rust errors when
+  // required_chars exceeds vocab_size ('The vocabulary is not large
+  // enough to contain all chars'); the MoonBit training API has no
+  // error channel, so the port trains on and finalize keeps the
+  // chars beyond the cap (probed: wikitext 5K/vocab300 -> 535-piece
+  // vocab where HF raises)
   let desired = eff_vocab_size * 11 / 10
   // required chars: first-seen order (HF: HashSet order — its own runs vary)
   let required_chars : Array[String] = []
@@ -1098,13 +1104,10 @@ fn unigram_do_train(
       None => ()
     }
   }
-  if pieces.length() <= desired {
-    return em_finalize(
-      pieces, required_chars, vocab_size, special_tokens, unk_token,
-    )
-  }
-  // EM loop (HF loops until pieces <= desired; each round strictly
-  // shrinks via the M-step 0.5 threshold or prune, so it terminates)
+  // EM loop — Rust do_train ALWAYS runs n_sub_iterations E/M rounds
+  // BEFORE the first size check (round-1 review: an early exit here
+  // shipped raw to_log_prob seed scores where HF ships post-EM
+  // digamma scores — up to 4.5 nats off on small corpora)
   let mut iter_guard = 0
   while iter_guard < 512 {
     iter_guard += 1
