@@ -5081,11 +5081,11 @@ test "train_unigram preserves initial alphabet" {
   @test.assert_eq(tok.token_to_id("<unk>"), Some(0))
   // port pins the deterministic first-seen order (HF's own id order
   // here is HashSet-random; the SET matches exactly — probed 0.22.2)
-  @test.assert_eq(tok.token_to_id("a"), Some(1))
+  @test.assert_eq(tok.token_to_id("aa"), Some(1))
   @test.assert_eq(tok.token_to_id("x"), Some(3))
+  @test.assert_eq(tok.token_to_id("a"), Some(4))
   @test.assert_eq(tok.token_to_id("z"), Some(5))
   @test.assert_eq(tok.token_to_id("xy"), None)
-  @test.assert_eq(tok.token_to_id("aa"), Some(2))
 }
 
 ///|
