@@ -5319,6 +5319,22 @@ test "Hub repo id validation matches huggingface_hub rules" {
     ] {
     @test.assert_eq(@tokenizer.Tokenizer::is_valid_hub_identifier(id), true)
   }
+  // \w counterexamples probed against Python re: combining marks,
+  // connector punctuation, and symbols are NOT \w; No numerals are
+  let mn_id = "repo\u{0301}"
+  let pc_id = "a\u{203F}b"
+  let so_id = "\u{24B6}model"
+  @test.assert_eq(@tokenizer.Tokenizer::is_valid_hub_identifier(mn_id), false)
+  @test.assert_eq(@tokenizer.Tokenizer::is_valid_hub_identifier(pc_id), false)
+  @test.assert_eq(@tokenizer.Tokenizer::is_valid_hub_identifier(so_id), false)
+  @test.assert_eq(
+    @tokenizer.Tokenizer::is_valid_hub_identifier("a\u{00BC}b"),
+    true,
+  )
+  @test.assert_eq(
+    @tokenizer.Tokenizer::is_valid_hub_identifier("\u{09F4}x"),
+    true,
+  )
   // invalid shapes
   for
     id in [

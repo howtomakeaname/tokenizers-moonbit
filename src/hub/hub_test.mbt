@@ -1257,3 +1257,60 @@ test "Hub error messages reproduce huggingface_hub exception texts" {
   @test.assert_eq(meta.request_id, Some("rid-42"))
   @test.assert_eq(meta.resolved_revision, Some("86b5e0934494"))
 }
+
+///|
+test "revision segments percent-encode like Python quote(safe=\"\")" {
+  let plan = @hub.plan_tokenizer_json_request(
+    "org/model",
+    options=@hub.HubDownloadOptions::new(revision="rev!!bad"),
+  )
+  @test.assert_eq(
+    plan.url.has_suffix("/resolve/rev%21%21bad/tokenizer.json"),
+    true,
+  )
+  let dotdot = @hub.plan_tokenizer_json_request(
+    "org/model",
+    options=@hub.HubDownloadOptions::new(revision="../main"),
+  )
+  @test.assert_eq(
+    dotdot.url.has_suffix("/resolve/..%2Fmain/tokenizer.json"),
+    true,
+  )
+  let unicode_rev = @hub.plan_tokenizer_json_request(
+    "org/model",
+    options=@hub.HubDownloadOptions::new(revision="世"),
+  )
+  @test.assert_eq(
+    unicode_rev.url.has_suffix("/resolve/%E4%B8%96/tokenizer.json"),
+    true,
+  )
+  // plain refs stay readable
+  let plain = @hub.plan_tokenizer_json_request(
+    "org/model",
+    options=@hub.HubDownloadOptions::new(revision="refs/pr/7"),
+  )
+  @test.assert_eq(
+    plain.url.has_suffix("/resolve/refs%2Fpr%2F7/tokenizer.json"),
+    true,
+  )
+}
+
+///|
+async test "offline from_pretrained still validates repo ids first" {
+  let mut validation_first = false
+  try
+    @hub.from_pretrained(
+      "bad!!repo",
+      options=@hub.HubDownloadOptions::new(
+        cache_dir=Some("_build/hub_validation"),
+        local_files_only=true,
+      ),
+    )
+    |> ignore
+  catch {
+    @types.ParseError(msg) =>
+      validation_first = msg.contains("Repo id must use alphanumeric chars")
+    _ => ()
+  }
+  @test.assert_eq(validation_first, true)
+}
