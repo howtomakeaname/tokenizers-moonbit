@@ -450,10 +450,12 @@ priv struct EmCands {
 
 ///|
 /// Memoized populate universe for one string, computed against the SEED
-/// piece set. Piece sets only ever shrink between EM generations (M-step
-/// and prune both filter), so filtering these candidates by liveness
-/// reproduces the per-generation probe results with the identical
-/// (pos asc, len asc) insertion order — no string work per round.
+/// piece set. LOAD-BEARING INVARIANT: piece sets only ever shrink
+/// between EM generations (M-step drops expected<0.5, prune filters by
+/// loss; finalize's required-char additions run after the last EM
+/// populate) — a mid-EM addition would be silently skipped by the
+/// liveness map (em_alive's None branch), so revisit this cache if the
+/// trainer ever grows pieces inside the loop.
 fn em_build_cands(
   word : Array[Char],
   seed_index : Map[String, Int],
@@ -513,7 +515,12 @@ fn em_cands_get(ctx : EmCtx, word : String) -> EmCands {
 
 ///|
 priv struct EmCtx {
+  // last-wins token -> seed id; values can reach seed_len-1 when the
+  // corpus contains a literal "<UNK>" (the seed's 0th placeholder
+  // collides with an ESA-emitted substring), so liveness is sized by
+  // seed_len, NOT by the map's distinct-entry count
   seed_index : Map[String, Int]
+  seed_len : Int
   seed_cap : Map[Int, Int]
   cands : Map[String, EmCands]
   max_len : Int
@@ -523,7 +530,7 @@ priv struct EmCtx {
 /// seed id -> current piece id (or -1 when the piece is dead this
 /// generation)
 fn em_alive(pieces : Array[EmPiece], ctx : EmCtx) -> Array[Int] {
-  let alive : Array[Int] = Array::make(ctx.seed_index.length(), -1)
+  let alive : Array[Int] = Array::make(ctx.seed_len, -1)
   let mut i = 0
   while i < pieces.length() {
     match ctx.seed_index.get(pieces[i].token) {
@@ -1348,6 +1355,7 @@ fn unigram_do_train(
   }
   let ctx : EmCtx = {
     seed_index,
+    seed_len: pieces.length(),
     seed_cap: em_first_char_cap(seed_index),
     cands: Map([]),
     max_len: max_piece_length,

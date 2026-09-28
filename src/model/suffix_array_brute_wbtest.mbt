@@ -52,6 +52,7 @@ fn debug_string(a : Array[Int]) -> String {
 ///|
 test "doubling_suffix_array matches brute force" {
   let cases = [
+    ("", true),
     ("banana", true),
     ("abracadabra", true),
     ("mississippi", true),

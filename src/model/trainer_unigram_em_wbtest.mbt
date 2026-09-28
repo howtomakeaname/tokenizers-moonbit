@@ -56,3 +56,31 @@ test "unigram EM trainer produces HF-shaped vocab" {
   @test.assert_eq(vocab.contains("ing"), true)
   @test.assert_eq(vocab.contains("ed"), true)
 }
+
+// Duplicate seed token: a literal "<UNK>" in the corpus makes the ESA
+// seed emit "<UNK>" as a substring piece, colliding with the 0th
+// placeholder. Liveness must be sized by the seed piece count (incl.
+// duplicates), not the distinct-token count — this corpus crashed with
+// an out-of-bounds panic before that fix (main trains it fine via
+// last-wins piece_ids).
+
+///|
+test "unigram EM trainer survives duplicate seed token" {
+  let corpus : Array[String] = [
+    "<UNK>alpha beta gamma delta", "<UNK>omega psi chi phi", "<UNK>alpha psi chi delta",
+    "beta gamma omega phi", "<UNK>omega beta delta gamma alpha psi chi phi beta gamma",
+  ]
+  let m = Model::train_unigram(
+    corpus,
+    special_tokens=["<unk>"],
+    unk_token=Some("<unk>"),
+    vocab_size=Some(40),
+    show_progress=false,
+  )
+  let vocab = m.get_vocab()
+  // seed itself tops out at 22 pieces on this tiny corpus, so the
+  // trainer correctly returns fewer than the requested 40 (HF behaves
+  // the same; it cannot invent pieces)
+  @test.assert_eq(vocab.length(), 22)
+  @test.assert_eq(vocab.get("<unk>"), Some(0))
+}
