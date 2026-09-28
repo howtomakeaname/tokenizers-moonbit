@@ -5331,6 +5331,36 @@ test "Hub repo id validation matches huggingface_hub rules" {
     @tokenizer.Tokenizer::is_valid_hub_identifier("a\u{00BC}b"),
     true,
   )
+  // round-2 review counterexamples: letters Python accepts that a
+  // \p{L} block approximation missed, and marks/symbols it must reject
+  @test.assert_eq(
+    @tokenizer.Tokenizer::is_valid_hub_identifier("\u{00B5}"),
+    true,
+  )
+  @test.assert_eq(
+    @tokenizer.Tokenizer::is_valid_hub_identifier("\u{067E}\u{06CC}"),
+    true,
+  )
+  @test.assert_eq(
+    @tokenizer.Tokenizer::is_valid_hub_identifier("\u{FF21}\u{FF22}"),
+    true,
+  )
+  @test.assert_eq(
+    @tokenizer.Tokenizer::is_valid_hub_identifier("\u{0400}\u{0500}"),
+    true,
+  )
+  @test.assert_eq(
+    @tokenizer.Tokenizer::is_valid_hub_identifier("a\u{0591}"),
+    false,
+  )
+  @test.assert_eq(
+    @tokenizer.Tokenizer::is_valid_hub_identifier("\u{0E3F}x"),
+    false,
+  )
+  @test.assert_eq(
+    @tokenizer.Tokenizer::is_valid_hub_identifier("\u{1680}x"),
+    false,
+  )
   @test.assert_eq(
     @tokenizer.Tokenizer::is_valid_hub_identifier("\u{09F4}x"),
     true,
