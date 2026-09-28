@@ -303,7 +303,7 @@ priv struct EmPiece {
 /// Training lattice over char positions: nodes carry piece ids; built per
 /// word on demand (the corpus loop reuses the arrays).
 priv struct EmLattice {
-  word : Array[Char]
+  mut word : Array[Char]
   // flat node storage: id, pos, len, score; index 0 = bos, 1 = eos
   ids : Array[Int]
   poss : Array[Int]
@@ -321,6 +321,9 @@ priv struct EmLattice {
   beta : Array[Double]
   // k-best validity: node has a DISTINCT second-best path
   has2 : Array[Bool]
+  // nbest2 candidate scratch (reused across nodes)
+  nb_s : Array[Double]
+  nb_p : Array[Int]
 }
 
 ///|
@@ -351,8 +354,63 @@ fn em_lattice_new(word : Array[Char], bos_id : Int, eos_id : Int) -> EmLattice {
     alpha: [],
     beta: [],
     has2: [false, false],
+    nb_s: [],
+    nb_p: [],
   }
   lat
+}
+
+///|
+/// Per-word reset for a pooled lattice: node arrays truncate back to
+/// bos/eos and position lists clear in place, so steady-state word
+/// loops allocate nothing.
+fn em_lattice_reset(
+  lat : EmLattice,
+  word : Array[Char],
+  bos_id : Int,
+  eos_id : Int,
+) -> Unit {
+  let n = word.length()
+  lat.word = word
+  lat.ids.truncate(2)
+  lat.poss.truncate(2)
+  lat.lens.truncate(2)
+  lat.scores.truncate(2)
+  lat.bt1.truncate(2)
+  lat.bt1_prev.truncate(2)
+  lat.bt2.truncate(2)
+  lat.bt2_prev.truncate(2)
+  lat.has2.truncate(2)
+  lat.ids[0] = bos_id
+  lat.ids[1] = eos_id
+  lat.poss[0] = 0
+  lat.poss[1] = n
+  lat.scores[0] = 0.0
+  lat.scores[1] = 0.0
+  lat.bt1[0] = 0.0
+  lat.bt1[1] = 0.0
+  lat.bt1_prev[0] = -1
+  lat.bt1_prev[1] = -1
+  lat.bt2[0] = 0.0
+  lat.bt2[1] = 0.0
+  lat.bt2_prev[0] = -1
+  lat.bt2_prev[1] = -1
+  lat.has2[0] = false
+  lat.has2[1] = false
+  while lat.begin_nodes.length() < n + 1 {
+    lat.begin_nodes.push([])
+    lat.end_nodes.push([])
+  }
+  let mut i = 0
+  while i <= n {
+    lat.begin_nodes[i].clear()
+    lat.end_nodes[i].clear()
+    i += 1
+  }
+  lat.begin_nodes[n].push(1)
+  lat.end_nodes[0].push(0)
+  lat.alpha.clear()
+  lat.beta.clear()
 }
 
 ///|
@@ -380,38 +438,130 @@ fn em_lattice_insert(
 ///|
 /// populate_nodes: trie common-prefix search == try every piece length
 /// 1..=max_len at each position; unk inserted when no single-char node.
-fn em_populate_nodes(
-  lat : EmLattice,
-  piece_ids : Map[String, Int],
-  piece_scores : Array[Double],
-  unk_id : Int?,
-  unk_score : Double,
+priv struct EmCands {
+  // CSR layout: candidates at position pos are lens/sids[starts[pos]..
+  // starts[pos+1]), ordered by ascending length exactly like the probe
+  // loop that produced them
+  starts : Array[Int]
+  lens : Array[Int]
+  sids : Array[Int]
+  chars : Array[Char]
+}
+
+///|
+/// Memoized populate universe for one string, computed against the SEED
+/// piece set. Piece sets only ever shrink between EM generations (M-step
+/// and prune both filter), so filtering these candidates by liveness
+/// reproduces the per-generation probe results with the identical
+/// (pos asc, len asc) insertion order — no string work per round.
+fn em_build_cands(
+  word : Array[Char],
+  seed_index : Map[String, Int],
+  seed_cap : Map[Int, Int],
   max_len : Int,
-) -> Unit {
-  let n = lat.word.length()
+) -> EmCands {
+  let n = word.length()
+  let starts : Array[Int] = [0]
+  let lens : Array[Int] = []
+  let sids : Array[Int] = []
+  let sb = StringBuilder()
   let mut pos = 0
   while pos < n {
-    let mut has_single = false
+    let base_limit = if max_len < n - pos { max_len } else { n - pos }
+    let limit = match seed_cap.get(word[pos].to_int()) {
+      Some(c) => if c < base_limit { c } else { base_limit }
+      None => 0
+    }
     let mut len = 1
-    let limit = if max_len < n - pos { max_len } else { n - pos }
     while len <= limit {
-      let sb = StringBuilder()
+      sb.reset()
       let mut k = pos
       while k < pos + len {
-        sb.write_char(lat.word[k])
+        sb.write_char(word[k])
         k += 1
       }
-      let key = sb.to_string()
-      match piece_ids.get(key) {
-        Some(id) => {
-          em_lattice_insert(lat, pos, len, piece_scores[id], id)
-          if !has_single && len == 1 {
-            has_single = true
-          }
+      match seed_index.get(sb.to_string()) {
+        Some(sid) => {
+          lens.push(len)
+          sids.push(sid)
         }
         None => ()
       }
       len += 1
+    }
+    starts.push(lens.length())
+    pos += 1
+  }
+  { starts, lens, sids, chars: word, }
+}
+
+///|
+fn em_cands_get(ctx : EmCtx, word : String) -> EmCands {
+  match ctx.cands.get(word) {
+    Some(c) => c
+    None => {
+      let chars : Array[Char] = []
+      for ch in word {
+        chars.push(ch)
+      }
+      let c = em_build_cands(chars, ctx.seed_index, ctx.seed_cap, ctx.max_len)
+      ctx.cands[word] = c
+      c
+    }
+  }
+}
+
+///|
+priv struct EmCtx {
+  seed_index : Map[String, Int]
+  seed_cap : Map[Int, Int]
+  cands : Map[String, EmCands]
+  max_len : Int
+}
+
+///|
+/// seed id -> current piece id (or -1 when the piece is dead this
+/// generation)
+fn em_alive(pieces : Array[EmPiece], ctx : EmCtx) -> Array[Int] {
+  let alive : Array[Int] = Array::make(ctx.seed_index.length(), -1)
+  let mut i = 0
+  while i < pieces.length() {
+    match ctx.seed_index.get(pieces[i].token) {
+      Some(sid) => alive[sid] = i
+      None => ()
+    }
+    i += 1
+  }
+  alive
+}
+
+///|
+/// Lattice fill from memoized candidates: identical nodes and insertion
+/// order to probing piece_ids directly (see em_build_cands).
+fn em_populate_cached(
+  lat : EmLattice,
+  cands : EmCands,
+  alive : Array[Int],
+  piece_scores : Array[Double],
+  unk_id : Int?,
+  unk_score : Double,
+) -> Unit {
+  let n = cands.chars.length()
+  let mut pos = 0
+  while pos < n {
+    let mut has_single = false
+    let mut j = cands.starts[pos]
+    let end = cands.starts[pos + 1]
+    while j < end {
+      let aid = alive[cands.sids[j]]
+      if aid >= 0 {
+        let len = cands.lens[j]
+        em_lattice_insert(lat, pos, len, piece_scores[aid], aid)
+        if !has_single && len == 1 {
+          has_single = true
+        }
+      }
+      j += 1
     }
     if !has_single {
       match unk_id {
@@ -421,6 +571,26 @@ fn em_populate_nodes(
     }
     pos += 1
   }
+}
+
+///|
+/// Build the first-char length cap for a piece set (candidate probing
+/// never needs to run past the longest piece sharing its start char).
+fn em_first_char_cap(piece_ids : Map[String, Int]) -> Map[Int, Int] {
+  let cap : Map[Int, Int] = Map([])
+  for kv in piece_ids {
+    let ca = kv.0.to_array()
+    if ca.length() == 0 {
+      continue
+    }
+    let key = ca[0].to_int()
+    let l = ca.length()
+    match cap.get(key) {
+      Some(v) => if l > v { cap[key] = l }
+      None => cap[key] = l
+    }
+  }
+  cap
 }
 
 ///|
@@ -491,17 +661,19 @@ fn em_nbest2(lat : EmLattice) -> Array[Array[Int]] {
       return []
     }
     for rnode in lat.begin_nodes[pos] {
-      // gather candidates: (score, prev, slot)
-      let c_score : Array[Double] = []
-      let c_prev : Array[Int] = []
+      // gather candidates: (score, prev, slot) — scratch reused per node
+      lat.nb_s.clear()
+      lat.nb_p.clear()
       for lnode in lat.end_nodes[pos] {
-        c_score.push(lat.bt1[lnode] + lat.scores[rnode])
-        c_prev.push(lnode)
+        lat.nb_s.push(lat.bt1[lnode] + lat.scores[rnode])
+        lat.nb_p.push(lnode)
         if lat.has2[lnode] {
-          c_score.push(lat.bt2[lnode] + lat.scores[rnode])
-          c_prev.push(lnode)
+          lat.nb_s.push(lat.bt2[lnode] + lat.scores[rnode])
+          lat.nb_p.push(lnode)
         }
       }
+      let c_score = lat.nb_s
+      let c_prev = lat.nb_p
       // top-2 selection (stable: first encountered wins ties)
       let mut b0 = -1
       let mut b1 = -1
@@ -768,11 +940,11 @@ fn em_seed_pieces(
 fn em_e_step(
   word_order : Array[String],
   word_counts : Map[String, Int],
-  piece_ids : Map[String, Int],
+  ctx : EmCtx,
+  alive : Array[Int],
   piece_scores : Array[Double],
   min_score : Double,
   unk_id : Int,
-  max_piece_length : Int,
 ) -> Array[Double] {
   let expected : Array[Double] = []
   let mut i = 0
@@ -781,21 +953,21 @@ fn em_e_step(
     i += 1
   }
   let unk_score = min_score - 10.0
+  let lat = em_lattice_new(
+    [],
+    piece_scores.length() + 1,
+    piece_scores.length() + 2,
+  )
   for word in word_order {
     let freq = word_counts.get(word).unwrap_or(0).to_double()
-    let lat = em_lattice_new(
-      word.to_array(),
+    let cands = em_cands_get(ctx, word)
+    em_lattice_reset(
+      lat,
+      cands.chars,
       piece_scores.length() + 1,
       piece_scores.length() + 2,
     )
-    em_populate_nodes(
-      lat,
-      piece_ids,
-      piece_scores,
-      Some(unk_id),
-      unk_score,
-      max_piece_length,
-    )
+    em_populate_cached(lat, cands, alive, piece_scores, Some(unk_id), unk_score)
     ignore(em_populate_marginal(lat, freq, expected))
   }
   expected
@@ -844,18 +1016,17 @@ fn em_prune_pieces(
   pieces : Array[EmPiece],
   word_order : Array[String],
   word_counts : Map[String, Int],
+  ctx : EmCtx,
   vocab_size : Int,
   shrinking_factor : Double,
-  max_piece_length : Int,
 ) -> Array[EmPiece] {
   let npieces = pieces.length()
   let bos_id = npieces + 1
   let eos_id = npieces + 2
-  let piece_ids : Map[String, Int] = Map([])
+  let alive = em_alive(pieces, ctx)
   let piece_scores : Array[Double] = []
   let mut i = 0
   while i < npieces {
-    piece_ids[pieces[i].token] = i
     piece_scores.push(pieces[i].score)
     i += 1
   }
@@ -877,6 +1048,7 @@ fn em_prune_pieces(
     i += 1
   }
   // 1) 2-best segmentation of each piece
+  let lat = em_lattice_new([], bos_id, eos_id)
   let mut id = 0
   while id < npieces {
     if id == 0 {
@@ -884,15 +1056,9 @@ fn em_prune_pieces(
       id += 1
       continue
     }
-    let lat = em_lattice_new(pieces[id].token.to_array(), bos_id, eos_id)
-    em_populate_nodes(
-      lat,
-      piece_ids,
-      piece_scores,
-      Some(0),
-      unk_score,
-      max_piece_length,
-    )
+    let cands = em_cands_get(ctx, pieces[id].token)
+    em_lattice_reset(lat, cands.chars, bos_id, eos_id)
+    em_populate_cached(lat, cands, alive, piece_scores, Some(0), unk_score)
     let nbests = em_nbest2(lat)
     if nbests.length() == 1 {
       always_keep[id] = true
@@ -920,15 +1086,9 @@ fn em_prune_pieces(
   while si < word_order.length() {
     let word = word_order[si]
     let count = word_counts.get(word).unwrap_or(0).to_double()
-    let lat = em_lattice_new(word.to_array(), bos_id, eos_id)
-    em_populate_nodes(
-      lat,
-      piece_ids,
-      piece_scores,
-      Some(0),
-      unk_score,
-      max_piece_length,
-    )
+    let cands = em_cands_get(ctx, word)
+    em_lattice_reset(lat, cands.chars, bos_id, eos_id)
+    em_populate_cached(lat, cands, alive, piece_scores, Some(0), unk_score)
     vsum += count
     match em_viterbi(lat) {
       Some(path) =>
@@ -1177,6 +1337,21 @@ fn unigram_do_train(
       None => ()
     }
   }
+  // populate memoization: the seed piece set is the universe — M-step
+  // and prune only ever REMOVE pieces, so per-string candidate lists
+  // computed once against it stay valid across all EM generations
+  let seed_index : Map[String, Int] = Map([])
+  let mut si = 0
+  while si < pieces.length() {
+    seed_index[pieces[si].token] = si
+    si += 1
+  }
+  let ctx : EmCtx = {
+    seed_index,
+    seed_cap: em_first_char_cap(seed_index),
+    cands: Map([]),
+    max_len: max_piece_length,
+  }
   // EM loop — Rust do_train ALWAYS runs n_sub_iterations E/M rounds
   // BEFORE the first size check (round-1 review: an early exit here
   // shipped raw to_log_prob seed scores where HF ships post-EM
@@ -1188,20 +1363,19 @@ fn unigram_do_train(
     let mut sub = 0
     while sub < n_sub_iterations {
       sub += 1
-      let piece_ids : Map[String, Int] = Map([])
       let piece_scores : Array[Double] = []
       let mut min_score = 1.0 / 0.0
       let mut i = 0
       while i < pieces.length() {
-        piece_ids[pieces[i].token] = i
         piece_scores.push(pieces[i].score)
         if pieces[i].score < min_score {
           min_score = pieces[i].score
         }
         i += 1
       }
+      let alive = em_alive(pieces, ctx)
       let expected = em_e_step(
-        word_order, word_counts, piece_ids, piece_scores, min_score, 0, max_piece_length,
+        word_order, word_counts, ctx, alive, piece_scores, min_score, 0,
       )
       pieces = em_m_step(pieces, expected)
     }
@@ -1209,7 +1383,7 @@ fn unigram_do_train(
       break
     }
     pieces = em_prune_pieces(
-      pieces, word_order, word_counts, eff_vocab_size, shrinking_factor, max_piece_length,
+      pieces, word_order, word_counts, ctx, eff_vocab_size, shrinking_factor,
     )
   }
   em_finalize(pieces, required_chars, vocab_size, special_tokens, unk_token)
