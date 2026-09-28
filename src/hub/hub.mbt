@@ -105,6 +105,9 @@ fn is_truthy_env(value : String) -> Bool {
 /// `If-None-Match`, and optional Range resume headers without performing IO.
 pub struct HubRequestPlan {
   url : String
+  // request context for huggingface_hub-style error messages
+  model_id : String
+  revision : String
   headers : Map[String, String]
   cache_paths : @tokenizer.PretrainedCachePaths?
   cache_metadata : @tokenizer.PretrainedCacheMetadata?
@@ -126,6 +129,11 @@ pub struct HubResponseMetadata {
   content_range_end : Int?
   content_range_total : Int?
   accept_ranges : Bool
+  // Hub error classification headers (probed: 404 responses carry
+  // x-error-code EntryNotFound/RevisionNotFound, 401 gated repos carry
+  // GatedRepo, and every response carries x-request-id)
+  x_error_code : String?
+  request_id : String?
 } derive(Debug, Eq)
 
 ///|
@@ -138,6 +146,8 @@ pub fn HubResponseMetadata::new(
   content_range_end? : Int? = None,
   content_range_total? : Int? = None,
   accept_ranges? : Bool = false,
+  x_error_code? : String? = None,
+  request_id? : String? = None,
 ) -> HubResponseMetadata {
   {
     status,
@@ -148,6 +158,8 @@ pub fn HubResponseMetadata::new(
     content_range_end,
     content_range_total,
     accept_ranges,
+    x_error_code,
+    request_id,
   }
 }
 
@@ -193,6 +205,57 @@ pub struct HubHeadResult {
   decision : HubResponseDecision
   final_url : String
 } derive(Debug, Eq)
+
+///|
+/// huggingface_hub-style error message for a non-success Hub response,
+/// reproducing the Python exception texts (probed against the installed
+/// tokenizers 0.22.2 + huggingface_hub pair):
+///
+/// - 401/403 + `GatedRepo` -> GatedRepoError text
+/// - 401/403 otherwise -> RepositoryNotFoundError text (the Hub answers
+///   401 without an error code for missing repos on unauthenticated
+///   requests)
+/// - 404 + `RevisionNotFound` -> RevisionNotFoundError text
+/// - 404 otherwise -> EntryNotFoundError text
+///
+/// The `(Request ID: ...)` segment mirrors the `x-request-id` response
+/// header and is omitted when the header is absent.
+pub fn hub_http_error_message(
+  status : Int,
+  url : String,
+  x_error_code? : String? = None,
+  request_id? : String? = None,
+  model_id? : String? = None,
+  revision? : String? = None,
+) -> String {
+  let status_line = match request_id {
+    Some(rid) => "\{status} Client Error. (Request ID: \{rid})"
+    None => "\{status} Client Error."
+  }
+  let body = if status == 401 || status == 403 {
+    match x_error_code {
+      Some(code) if code == "GatedRepo" =>
+        "Cannot access gated repo for url \{url}.\nAccess to model \{model_id.unwrap_or("")} is restricted. You must have access to it and be authenticated to access it. Please log in."
+      _ =>
+        "Repository Not Found for url: \{url}.\nPlease make sure you specified the correct `repo_id` and `repo_type`.\nIf you are trying to access a private or gated repo, make sure you are authenticated. For more details, see https://huggingface.co/docs/huggingface_hub/authentication\nInvalid username or password."
+    }
+  } else if status == 404 {
+    match x_error_code {
+      Some(code) if code == "RevisionNotFound" =>
+        match revision {
+          Some(rev) =>
+            "Revision Not Found for url: \{url}.\nInvalid rev id: \{rev}"
+          None => "Revision Not Found for url: \{url}."
+        }
+      _ => "Entry Not Found for url: \{url}."
+    }
+  } else {
+    // unmapped statuses: huggingface_hub raises HTTPStatusError with
+    // the server body, which a HEAD/decision plan does not carry
+    ""
+  }
+  status_line + (if body.is_empty() { "" } else { "\n\n" + body })
+}
 
 ///|
 /// Local-only diagnostic for non-success Hub HTTP statuses. This helper performs
@@ -251,6 +314,8 @@ fn plan_hub_file_request_unchecked(
   if filename != "tokenizer.json" {
     return {
       url,
+      model_id,
+      revision: options.revision,
       headers,
       cache_paths: None,
       cache_metadata: None,
@@ -302,6 +367,8 @@ fn plan_hub_file_request_unchecked(
   }
   {
     url,
+    model_id,
+    revision: options.revision,
     headers,
     cache_paths: paths,
     cache_metadata: cached,
@@ -355,6 +422,8 @@ pub fn HubResponseMetadata::from_headers(
     content_range_end,
     content_range_total,
     accept_ranges,
+    x_error_code: header(headers, "x-error-code"),
+    request_id: header(headers, "x-request-id"),
   }
 }
 
@@ -441,8 +510,14 @@ pub fn decide_tokenizer_json_response(
     etag,
     expected_size: metadata.content_length,
     range_start: None,
-    message: "Hub response cannot be applied to tokenizer cache: " +
-    hub_http_status_diagnostic(metadata.status),
+    message: hub_http_error_message(
+      metadata.status,
+      plan.url,
+      x_error_code=metadata.x_error_code,
+      request_id=metadata.request_id,
+      model_id=Some(plan.model_id),
+      revision=Some(plan.revision),
+    ),
   }
 }
 
@@ -501,8 +576,14 @@ pub fn decide_tokenizer_json_head_response(
     etag,
     expected_size: metadata.content_length,
     range_start: None,
-    message: "Hub HEAD response cannot validate tokenizer cache: " +
-    hub_http_status_diagnostic(metadata.status),
+    message: hub_http_error_message(
+      metadata.status,
+      plan.url,
+      x_error_code=metadata.x_error_code,
+      request_id=metadata.request_id,
+      model_id=Some(plan.model_id),
+      revision=Some(plan.revision),
+    ),
   }
 }
 

@@ -220,8 +220,10 @@ pub async fn from_pretrained(
     }
   }
   if options.local_files_only {
+    // huggingface_hub's LocalEntryNotFoundError text for an offline
+    // cache miss
     raise @types.ParseError(
-      "from_pretrained local cache miss and local_files_only=true: \{model_id}",
+      "An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.",
     )
   }
   validate_hub_request(model_id, options.revision)

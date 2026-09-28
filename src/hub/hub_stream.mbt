@@ -429,8 +429,11 @@ pub async fn download_tokenizer_json(
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
   validate_hub_request(model_id, options.revision)
-  reject_local_files_only_direct_download(options.local_files_only)
   let plan = plan_tokenizer_json_request(model_id, options~)
+  reject_local_files_only_direct_download(
+    options.local_files_only,
+    url=Some(plan.url),
+  )
   async_download_with_redirects(
     model_id,
     options,
@@ -453,8 +456,11 @@ pub async fn download_hub_file(
   if filename == "tokenizer.json" {
     return download_tokenizer_json(model_id, options~)
   }
-  reject_local_files_only_direct_download(options.local_files_only)
   let plan = plan_hub_file_request(model_id, filename, options~)
+  reject_local_files_only_direct_download(
+    options.local_files_only,
+    url=Some(plan.url),
+  )
   async_download_file_with_redirects(
     options,
     plan,
@@ -470,8 +476,11 @@ pub async fn head_tokenizer_json(
   options? : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubHeadResult raise @types.TokenizerError {
   validate_hub_request(model_id, options.revision)
-  reject_local_files_only_direct_download(options.local_files_only)
   let plan = head_tokenizer_json_request(model_id, options~)
+  reject_local_files_only_direct_download(
+    options.local_files_only,
+    url=Some(plan.url),
+  )
   async_head_with_redirects(plan, max_redirects=options.max_redirects)
 }
 
