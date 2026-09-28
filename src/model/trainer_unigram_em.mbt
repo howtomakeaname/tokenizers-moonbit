@@ -1356,6 +1356,7 @@ fn unigram_do_train(
   // BEFORE the first size check (round-1 review: an early exit here
   // shipped raw to_log_prob seed scores where HF ships post-EM
   // digamma scores — up to 4.5 nats off on small corpora)
+  let dbg = @sys.get_env_var("EM_TRACE") is Some(_)
   let mut iter_guard = 0
   while iter_guard < 512 {
     iter_guard += 1
@@ -1378,6 +1379,16 @@ fn unigram_do_train(
         word_order, word_counts, ctx, alive, piece_scores, min_score, 0,
       )
       pieces = em_m_step(pieces, expected)
+      if dbg {
+        println(
+          "[em] round " +
+          iter_guard.to_string() +
+          "." +
+          sub.to_string() +
+          " pieces=" +
+          pieces.length().to_string(),
+        )
+      }
     }
     if pieces.length() <= desired {
       break
@@ -1385,6 +1396,9 @@ fn unigram_do_train(
     pieces = em_prune_pieces(
       pieces, word_order, word_counts, ctx, eff_vocab_size, shrinking_factor,
     )
+    if dbg {
+      println("[em] prune -> pieces=" + pieces.length().to_string())
+    }
   }
   em_finalize(pieces, required_chars, vocab_size, special_tokens, unk_token)
 }
