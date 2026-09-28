@@ -96,7 +96,8 @@ test "Hub cache application validates model id and revision" {
     )
     |> ignore
   catch {
-    @types.ParseError(msg) => bad_model = msg.contains("Model")
+    @types.ParseError(msg) =>
+      bad_model = msg.contains("Repo id must use alphanumeric chars")
     _ => ()
   }
   @test.assert_eq(bad_model, true)
@@ -578,17 +579,20 @@ test "Hub response decision handles cache and range statuses" {
     @hub.HubResponseMetadata::new(401),
   )
   @test.assert_eq(unauthorized.can_use_cache(), false)
+  // exact huggingface_hub RepositoryNotFoundError text (the Hub answers
+  // 401 with no error code for missing repos on unauthenticated requests)
   @test.assert_eq(
     unauthorized.message,
-    "Hub response cannot be applied to tokenizer cache: HTTP 401 (private or gated repository; provide a valid Hub token)",
+    "401 Client Error.\n\nRepository Not Found for url: https://huggingface.co/org/response-decision-tokenizer/resolve/main/tokenizer.json.\nPlease make sure you specified the correct `repo_id` and `repo_type`.\nIf you are trying to access a private or gated repo, make sure you are authenticated. For more details, see https://huggingface.co/docs/huggingface_hub/authentication\nInvalid username or password.",
   )
   let missing = @hub.decide_tokenizer_json_response(
     plan,
     @hub.HubResponseMetadata::new(404),
   )
+  // 404 without an error code maps to EntryNotFoundError text
   @test.assert_eq(
     missing.message,
-    "Hub response cannot be applied to tokenizer cache: HTTP 404 (missing repository, revision, or tokenizer.json file)",
+    "404 Client Error.\n\nEntry Not Found for url: https://huggingface.co/org/response-decision-tokenizer/resolve/main/tokenizer.json.",
   )
 }
 
@@ -709,18 +713,14 @@ test "Hub HEAD plan and decision validate cached metadata" {
   )
   @test.assert_eq(unsupported.can_use_cache(), false)
   @test.assert_eq(unsupported.should_write_full_body(), false)
-  @test.assert_eq(
-    unsupported.message,
-    "Hub HEAD response cannot validate tokenizer cache: HTTP 405",
-  )
+  // unmapped statuses keep a bare status line (Python raises
+  // HTTPStatusError with the server body, which HEAD plans lack)
+  @test.assert_eq(unsupported.message, "405 Client Error.")
   let unavailable = @hub.decide_tokenizer_json_head_response(
     head_plan,
     @hub.HubResponseMetadata::new(503),
   )
-  @test.assert_eq(
-    unavailable.message,
-    "Hub HEAD response cannot validate tokenizer cache: HTTP 503 (Hub service unavailable; retry later)",
-  )
+  @test.assert_eq(unavailable.message, "503 Client Error.")
 }
 
 ///|
@@ -1054,7 +1054,7 @@ async test "direct Hub network APIs reject local_files_only" {
     @hub.download_tokenizer_json("bert-base-uncased", options~) |> ignore
   catch {
     @types.ParseError(msg) =>
-      download_rejected = msg.contains("local_files_only=true")
+      download_rejected = msg.contains("offline mode is enabled")
     _ => ()
   }
   @test.assert_eq(download_rejected, true)
@@ -1062,7 +1062,7 @@ async test "direct Hub network APIs reject local_files_only" {
   let mut head_rejected = false
   try @hub.head_tokenizer_json("bert-base-uncased", options~) |> ignore catch {
     @types.ParseError(msg) =>
-      head_rejected = msg.contains("local_files_only=true")
+      head_rejected = msg.contains("offline mode is enabled")
     _ => ()
   }
   @test.assert_eq(head_rejected, true)
@@ -1073,7 +1073,7 @@ async test "direct Hub network APIs reject local_files_only" {
     |> ignore
   catch {
     @types.ParseError(msg) =>
-      sidecar_rejected = msg.contains("local_files_only=true")
+      sidecar_rejected = msg.contains("offline mode is enabled")
     _ => ()
   }
   @test.assert_eq(sidecar_rejected, true)
@@ -1174,7 +1174,7 @@ async test "from_pretrained honors local_files_only cache hit and miss" {
   catch {
     @types.ParseError(msg) =>
       missed = msg.contains(
-        "from_pretrained local cache miss and local_files_only=true",
+        "we cannot find the requested files in the local cache",
       )
     _ => ()
   }
@@ -1193,4 +1193,67 @@ async test "optional online Hub smoke" {
     ),
   )
   assert_true(tok.get_vocab_size() > 0)
+}
+
+///|
+test "Hub error messages reproduce huggingface_hub exception texts" {
+  let url = "https://huggingface.co/meta-llama/Llama-3.1-8B/resolve/main/tokenizer.json"
+  // gated repo (401 + GatedRepo code, with request id)
+  @test.assert_eq(
+    @hub.hub_http_error_message(
+      401,
+      url,
+      x_error_code=Some("GatedRepo"),
+      request_id=Some("Root=1-abc;uuid-1"),
+      model_id=Some("meta-llama/Llama-3.1-8B"),
+    ),
+    "401 Client Error. (Request ID: Root=1-abc;uuid-1)\n\nCannot access gated repo for url \{url}.\nAccess to model meta-llama/Llama-3.1-8B is restricted. You must have access to it and be authenticated to access it. Please log in.",
+  )
+  // missing repo on unauthenticated request: 401 without a code
+  let missing_url = "https://huggingface.co/nonexistent-org-zz9x8/nonexistent-repo-abc7/resolve/main/tokenizer.json"
+  @test.assert_eq(
+    @hub.hub_http_error_message(
+      401,
+      missing_url,
+      model_id=Some("nonexistent-org-zz9x8/nonexistent-repo-abc7"),
+    ),
+    "401 Client Error.\n\nRepository Not Found for url: \{missing_url}.\nPlease make sure you specified the correct `repo_id` and `repo_type`.\nIf you are trying to access a private or gated repo, make sure you are authenticated. For more details, see https://huggingface.co/docs/huggingface_hub/authentication\nInvalid username or password.",
+  )
+  // missing revision (404 + RevisionNotFound code)
+  let rev_url = "https://huggingface.co/bert-base-uncased/resolve/no-such-rev-xyz/tokenizer.json"
+  @test.assert_eq(
+    @hub.hub_http_error_message(
+      404,
+      rev_url,
+      x_error_code=Some("RevisionNotFound"),
+      revision=Some("no-such-rev-xyz"),
+    ),
+    "404 Client Error.\n\nRevision Not Found for url: \{rev_url}.\nInvalid rev id: no-such-rev-xyz",
+  )
+  // missing file (404 + EntryNotFound code)
+  let entry_url = "https://huggingface.co/bert-base-uncased/resolve/main/definitely-missing-file.json"
+  @test.assert_eq(
+    @hub.hub_http_error_message(
+      404,
+      entry_url,
+      x_error_code=Some("EntryNotFound"),
+    ),
+    "404 Client Error.\n\nEntry Not Found for url: \{entry_url}.",
+  )
+  // 403 gated without code still lands on the RepositoryNotFound text
+  @test.assert_eq(
+    @hub.hub_http_error_message(403, url).contains(
+      "Repository Not Found for url:",
+    ),
+    true,
+  )
+  // response headers feed the builder: x-error-code + x-request-id
+  let meta = @hub.HubResponseMetadata::from_headers(404, {
+    "X-Error-Code": "RevisionNotFound",
+    "X-Request-Id": "rid-42",
+    "x-repo-commit": "86b5e0934494",
+  })
+  @test.assert_eq(meta.x_error_code, Some("RevisionNotFound"))
+  @test.assert_eq(meta.request_id, Some("rid-42"))
+  @test.assert_eq(meta.resolved_revision, Some("86b5e0934494"))
 }

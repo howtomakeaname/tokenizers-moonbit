@@ -53,12 +53,16 @@ fn validate_hub_filename(filename : String) -> Unit raise @types.TokenizerError 
 }
 
 ///|
+/// huggingface_hub's OfflineModeIsEnabled text, raised when outgoing
+/// traffic is disabled and a network attempt would have been made.
 fn reject_local_files_only_direct_download(
   local_files_only : Bool,
+  url? : String? = None,
 ) -> Unit raise @types.TokenizerError {
   if local_files_only {
+    let target = url.unwrap_or("the Hub")
     raise @types.ParseError(
-      "Hub network request disabled because local_files_only=true",
+      "Cannot reach \{target}: offline mode is enabled. To disable it, please unset the `HF_HUB_OFFLINE` environment variable.",
     )
   }
 }
