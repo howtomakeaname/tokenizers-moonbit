@@ -69,14 +69,59 @@ fn reject_local_files_only_direct_download(
 
 ///|
 fn encode_hub_revision_segment(revision : String) -> String {
+  // Python builds resolve URLs with quote(revision, safe=""): only
+  // unreserved characters pass through, '/' included in the escaping
+  // (probed: '../main' -> '..%2Fmain', 'rev!!bad' -> 'rev%21%21bad')
   let sb = StringBuilder()
   for c in revision {
-    match c {
-      '/' => sb.write_string("%2F")
-      _ => sb.write_char(c)
+    let code = c.to_int()
+    if is_unreserved_url_char(c) {
+      sb.write_char(c)
+    } else {
+      for b in utf8_bytes(code) {
+        sb.write_string("%")
+        sb.write_string(hex_digit((b >> 4) & 0xF))
+        sb.write_string(hex_digit(b & 0xF))
+      }
     }
   }
   sb.to_string()
+}
+
+///|
+fn is_unreserved_url_char(c : Char) -> Bool {
+  let code = c.to_int()
+  (code >= 0x41 && code <= 0x5A) ||
+  (code >= 0x61 && code <= 0x7A) ||
+  (code >= 0x30 && code <= 0x39) ||
+  c == '-' ||
+  c == '.' ||
+  c == '_' ||
+  c == '~'
+}
+
+///|
+fn hex_digit(v : Int) -> String {
+  let digits = "0123456789ABCDEF".to_array()
+  digits[v].to_string()
+}
+
+///|
+fn utf8_bytes(code : Int) -> Array[Int] {
+  if code < 0x80 {
+    [code]
+  } else if code < 0x800 {
+    [0xC0 | (code >> 6), 0x80 | (code & 0x3F)]
+  } else if code < 0x10000 {
+    [0xE0 | (code >> 12), 0x80 | ((code >> 6) & 0x3F), 0x80 | (code & 0x3F)]
+  } else {
+    [
+      0xF0 | (code >> 18),
+      0x80 | ((code >> 12) & 0x3F),
+      0x80 | ((code >> 6) & 0x3F),
+      0x80 | (code & 0x3F),
+    ]
+  }
 }
 
 ///|

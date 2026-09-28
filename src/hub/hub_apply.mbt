@@ -195,6 +195,10 @@ pub async fn from_pretrained(
       cache_dir=options.cache_dir,
     )
   }
+  // huggingface_hub validates the repo id before any cache lookup or
+  // offline handling (probed: HF_HUB_OFFLINE=1 + invalid id raises
+  // HFValidationError first)
+  validate_hub_request(model_id, options.revision)
   try
     @tokenizer.Tokenizer::from_pretrained_cached(
       model_id,
@@ -226,7 +230,6 @@ pub async fn from_pretrained(
       "An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.",
     )
   }
-  validate_hub_request(model_id, options.revision)
   let result = download_tokenizer_json(model_id, options~)
   @tokenizer.Tokenizer::from_pretrained_downloaded(
     model_id,

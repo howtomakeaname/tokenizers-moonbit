@@ -92,9 +92,12 @@ fn repo_id_part_ok(
 }
 
 ///|
-/// Python regex \w semantics over the empirical unicode table.
+/// Python regex \w semantics (probed: str isalnum or '_'): unicode
+/// letters, unicode numbers, and underscore. Deliberately NOT the
+/// onig \w table — Python rejects combining marks, connector
+/// punctuation, and symbols that onig accepts.
 fn is_hub_word_char(c : Char) -> Bool {
-  @common.is_word_char(c)
+  @common.is_unicode_letter(c) || @common.is_unicode_number(c) || c == '_'
 }
 
 ///|
