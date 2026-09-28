@@ -65,52 +65,124 @@ fn em_digamma(x_in : Double) -> Double {
 /// corpus for seed generation is the distinct-word flat string).
 fn doubling_suffix_array(chars : Array[Int]) -> Array[Int] {
   let n = chars.length()
-  let sa : Array[Int] = []
+  if n == 0 {
+    return []
+  }
+  if n == 1 {
+    return [0]
+  }
+  // dense alphabet: suffix comparisons only need the RANK, so map the
+  // chars to 0..m-1 first (counting-sort buckets stay O(n) wide)
+  let sorted : Array[Int] = []
+  let mut i = 0
+  while i < n {
+    sorted.push(chars[i])
+    i += 1
+  }
+  sorted.sort_by(fn(a, b) { if a < b { -1 } else if a > b { 1 } else { 0 } })
+  // value -> dense id (rank must be indexed by ORIGINAL position)
+  let dense : Map[Int, Int] = Map([])
+  let mut m = 0
+  let mut i = 0
+  while i < n {
+    if i > 0 && sorted[i] != sorted[i - 1] {
+      m += 1
+      dense[sorted[i]] = m
+    }
+    i += 1
+  }
+  dense[sorted[0]] = 0
+  m += 1
   let rank : Array[Int] = []
   let mut i = 0
   while i < n {
-    sa.push(i)
-    rank.push(chars[i])
+    rank.push(dense.get(chars[i]).unwrap_or(0))
     i += 1
   }
-  let tmp : Array[Int] = []
+  // initial order: counting sort by the (dense) char rank
+  let sa : Array[Int] = Array::make(n, 0)
+  let cnt : Array[Int] = Array::make(m + 1, 0)
   let mut i = 0
   while i < n {
-    tmp.push(0)
+    cnt[rank[i] + 1] += 1
     i += 1
   }
-  let mut k = 1
-  let cmp = fn(a : Int, b : Int) -> Int {
-    if rank[a] != rank[b] {
-      if rank[a] < rank[b] {
-        -1
-      } else {
-        1
-      }
-    } else {
-      let ra = if a + k < n { rank[a + k] } else { -1 }
-      let rb = if b + k < n { rank[b + k] } else { -1 }
-      if ra < rb {
-        -1
-      } else if ra > rb {
-        1
-      } else {
-        0
-      }
-    }
+  let mut i = 1
+  while i < m + 1 {
+    cnt[i] += cnt[i - 1]
+    i += 1
   }
-  let cmp_fn = fn(a : Int, b : Int) -> Int { cmp(a, b) }
-  while k < n {
-    sa.sort_by(fn(a, b) { cmp_fn(a, b) })
-    // recompute ranks
+  let mut i = 0
+  while i < n {
+    sa[cnt[rank[i]]] = i
+    cnt[rank[i]] += 1
+    i += 1
+  }
+  // prefix doubling with two-pass stable counting sorts per round
+  // (LSD by second key rank[i+k], then by rank[i]) — O(n) per
+  // round instead of the closure-comparator sort's O(n log n)
+  let tmp : Array[Int] = Array::make(n, 0)
+  let key2 : Array[Int] = Array::make(n, 0)
+  let mut k = 1
+  let mut done = false
+  while k < n && !done {
+    // second keys
+    let mut i = 0
+    while i < n {
+      key2[i] = if i + k < n { rank[i + k] + 1 } else { 0 }
+      i += 1
+    }
+    // pass 1: stable counting sort sa by key2 (range 0..m)
+    let cnt2 : Array[Int] = Array::make(m + 2, 0)
+    let mut i = 0
+    while i < n {
+      cnt2[key2[sa[i]] + 1] += 1
+      i += 1
+    }
+    let mut i = 1
+    while i < m + 2 {
+      cnt2[i] += cnt2[i - 1]
+      i += 1
+    }
+    let mut i = n - 1
+    while i >= 0 {
+      let b2 = key2[sa[i]] + 1
+      cnt2[b2] -= 1
+      tmp[cnt2[b2]] = sa[i]
+      i -= 1
+    }
+    // pass 2: stable counting sort tmp by rank (range 0..m-1)
+    let cnt1 : Array[Int] = Array::make(m + 1, 0)
+    let mut i = 0
+    while i < n {
+      cnt1[rank[tmp[i]] + 1] += 1
+      i += 1
+    }
+    let mut i = 1
+    while i < m + 1 {
+      cnt1[i] += cnt1[i - 1]
+      i += 1
+    }
+    let mut i = n - 1
+    while i >= 0 {
+      let b1 = rank[tmp[i]] + 1
+      cnt1[b1] -= 1
+      sa[cnt1[b1]] = tmp[i]
+      i -= 1
+    }
+    // recompute ranks from adjacent comparisons
     tmp[sa[0]] = 0
     let mut r = 0
     let mut i = 1
     while i < n {
-      if cmp(sa[i - 1], sa[i]) != 0 {
+      let a = sa[i - 1]
+      let b = sa[i]
+      let ra = if a + k < n { rank[a + k] } else { -1 }
+      let rb = if b + k < n { rank[b + k] } else { -1 }
+      if rank[a] != rank[b] || ra != rb {
         r += 1
       }
-      tmp[sa[i]] = r
+      tmp[b] = r
       i += 1
     }
     let mut i = 0
@@ -119,8 +191,9 @@ fn doubling_suffix_array(chars : Array[Int]) -> Array[Int] {
       i += 1
     }
     if r == n - 1 {
-      break
+      done = true
     }
+    m = r + 1
     k = k * 2
   }
   sa
