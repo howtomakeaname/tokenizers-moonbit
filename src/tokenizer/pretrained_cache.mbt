@@ -110,7 +110,7 @@ pub fn Tokenizer::from_pretrained_cache_paths(
   cache_dir? : String? = None,
 ) -> PretrainedCachePaths? {
   if !is_valid_hub_identifier(model_id) ||
-    !is_valid_hub_identifier(revision) ||
+    !is_safe_hub_revision_path(revision) ||
     !valid_optional_hub_revision(resolved_revision) {
     return None
   }
@@ -547,7 +547,7 @@ pub fn Tokenizer::from_pretrained_resolution_hint(
     Some(c) => Some(c)
     None => default_hub_cache_dir()
   }
-  if !is_valid_hub_identifier(model_id) || !is_valid_hub_identifier(revision) {
+  if !is_valid_hub_identifier(model_id) || !is_safe_hub_revision_path(revision) {
     return {
       model_id,
       revision,
