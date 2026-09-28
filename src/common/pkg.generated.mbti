@@ -56,6 +56,8 @@ pub fn is_min_regex_pattern(String) -> Bool
 
 pub fn is_not_whitespace_letter_or_number(Char) -> Bool
 
+pub fn is_python_word_char(Char) -> Bool
+
 pub fn is_ranged_regex_pattern(String) -> Bool
 
 pub fn is_simple_split_regex_pattern(String) -> Bool

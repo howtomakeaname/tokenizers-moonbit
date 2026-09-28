@@ -92,6 +92,31 @@ pub fn is_word_char_class(c : Char) -> Bool {
 /// Probed against 0.22.2: `²` (No) and `Ⅰ` (Nl) match `\p{N}` but NOT
 /// `\d` (which stays Nd-only via `is_decimal_number`) — the spellings
 /// are distinct kinds and must not share this predicate.
+
+///|
+/// Python `re` \w word-char test (General Category L ∪ N plus '_',
+/// empirical table) — used by Hub repo-id validation. Deliberately
+/// distinct from `is_word_char` (onig \w, which also accepts combining
+/// marks, connector punctuation, and symbols).
+pub fn is_python_word_char(c : Char) -> Bool {
+  let u = c.to_int()
+  let mut lo = 0
+  let mut hi = python_word_ranges.length() - 1
+  while lo <= hi {
+    let mid = (lo + hi) / 2
+    let (start, stop) = python_word_ranges[mid]
+    if u < start {
+      hi = mid - 1
+    } else if u > stop {
+      lo = mid + 1
+    } else {
+      return true
+    }
+  }
+  false
+}
+
+///|
 pub fn is_unicode_number(c : Char) -> Bool {
   let u = c.to_int()
   let mut lo = 0
