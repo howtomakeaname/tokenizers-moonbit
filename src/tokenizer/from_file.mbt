@@ -479,6 +479,12 @@ fn resolve_pretrained_path(
   match resolve_hub_cache_path(path, revision~, cache_dir~) {
     Some(p) => p
     None => {
+      // huggingface_hub raises its repo-id validation error before any
+      // cache or network attempt (probed: empty ids, 'a/b/c', 'org/'...)
+      match hub_repo_id_error(path) {
+        Some(msg) => raise @types.ParseError(msg)
+        None => ()
+      }
       let hint = Tokenizer::from_pretrained_resolution_hint(
         path,
         revision~,

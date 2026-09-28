@@ -51,6 +51,8 @@ pub fn from_pretrained_ref_revision(String, revision? : String, cache_dir? : Str
 
 pub fn from_pretrained_resolution_hint(String, revision? : String, cache_dir? : String?) -> PretrainedResolutionHint
 
+pub fn is_safe_hub_revision_path(String) -> Bool
+
 pub fn is_valid_hub_identifier(String) -> Bool
 
 pub fn validate_hub_model_id(String) -> Unit raise @types.TokenizerError

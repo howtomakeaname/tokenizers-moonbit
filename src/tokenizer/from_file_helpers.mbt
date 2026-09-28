@@ -1,26 +1,100 @@
 ///|
+/// Whether `value` is a valid Hub repo id under huggingface_hub's
+/// client-side rules (probed against the installed Python pair):
+/// at most one '/'-separated namespace, each part nonempty starting
+/// and ending with a word character, inner chars word/'-'/'.', the
+/// name part at most 96 chars, no "--"/".." anywhere, no ".git" tail.
 pub fn is_valid_hub_identifier(value : String) -> Bool {
-  if value.is_empty() || value.has_prefix("/") || value.has_suffix("/") {
-    return false
+  hub_repo_id_error(value) is None
+}
+
+///|
+/// Exact huggingface_hub `HFValidationError` message for an invalid
+/// repo id, in the library's checked order; None when the id is valid.
+fn hub_repo_id_error(value : String) -> String? {
+  if slash_count(value) > 1 {
+    return Some(
+      "Repo id must be in the form 'repo_name' or 'namespace/repo_name': '\{value}'. Use `repo_type` argument if needed.",
+    )
   }
-  let mut segment_len = 0
-  let mut segment = StringBuilder()
+  if !repo_id_parts_shape_ok(value) {
+    return Some(
+      "Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: '\{value}'.",
+    )
+  }
+  if value.contains("--") || value.contains("..") {
+    return Some("Cannot have -- or .. in repo_id: '\{value}'.")
+  }
+  if value.has_suffix(".git") {
+    return Some("Repo_id cannot end by '.git': '\{value}'.")
+  }
+  None
+}
+
+///|
+fn slash_count(value : String) -> Int {
+  let mut n = 0
   for c in value {
-    if !is_hub_identifier_char(c) {
-      return false
-    }
     if c == '/' {
-      if !valid_hub_path_segment(segment.to_string()) {
+      n += 1
+    }
+  }
+  n
+}
+
+///|
+/// huggingface_hub's REPO_ID_REGEX: optional namespace part + a name
+/// part of 1..96 chars, each part beginning and ending on a word
+/// boundary (i.e. a word char) with word/'-'/'.' inside.
+fn repo_id_parts_shape_ok(value : String) -> Bool {
+  let chars = value.to_array()
+  let n = chars.length()
+  let mut start = 0
+  let mut i = 0
+  while i < n {
+    if chars[i] == '/' {
+      // namespace part: [start, i)
+      if !repo_id_part_ok(chars, start, i, -1) {
         return false
       }
-      segment = StringBuilder()
-      segment_len = 0
-    } else {
-      segment.write_char(c)
-      segment_len = segment_len + 1
+      start = i + 1
     }
+    i += 1
   }
-  segment_len > 0 && valid_hub_path_segment(segment.to_string())
+  // name part: [start, n), length 1..=96
+  if n - start < 1 || n - start > 96 {
+    return false
+  }
+  repo_id_part_ok(chars, start, n, -1)
+}
+
+///|
+fn repo_id_part_ok(
+  chars : Array[Char],
+  start : Int,
+  end : Int,
+  _max : Int,
+) -> Bool {
+  if end <= start {
+    return false
+  }
+  if !is_hub_word_char(chars[start]) || !is_hub_word_char(chars[end - 1]) {
+    return false
+  }
+  let mut i = start + 1
+  while i < end - 1 {
+    if !is_hub_word_char(chars[i]) && chars[i] != '-' && chars[i] != '.' {
+      return false
+    }
+    i += 1
+  }
+  true
+}
+
+///|
+/// Python regex \w semantics over the empirical unicode table.
+fn is_hub_word_char(c : Char) -> Bool {
+  @common.is_word_char(c)
 }
 
 ///|
@@ -43,10 +117,19 @@ pub fn Tokenizer::validate_hub_model_id(
 }
 
 ///|
+/// huggingface_hub performs no client-side revision charset validation
+/// (probed: 'rev!!bad' and '../main' are URL-encoded and rejected by
+/// the server), so arbitrary characters pass. Structural safety is
+/// still enforced because this library writes revisions into local
+/// cache paths (refs/<revision>, snapshots/<revision>).
 pub fn validate_hub_revision(
   revision : String,
 ) -> Unit raise @types.TokenizerError {
-  validate_hub_identifier(revision, "Revision")
+  if !is_safe_hub_revision_path(revision) {
+    raise @types.ParseError(
+      "Revision \"\{revision}\" is not a safe cache path (empty, '.', or '..' segments)",
+    )
+  }
 }
 
 ///|
@@ -61,30 +144,43 @@ fn validate_hub_identifier(
   value : String,
   label : String,
 ) -> Unit raise @types.TokenizerError {
-  if !is_valid_hub_identifier(value) {
-    raise @types.ParseError(
-      "\{label} \"\{value}\" contains invalid characters, expected only alphanumeric or '-', '_', '.', '/'",
-    )
+  match hub_repo_id_error(value) {
+    Some(msg) => raise @types.ParseError(msg)
+    None => ()
   }
+  ignore(label)
 }
 
 ///|
+/// Structural path safety for revisions used inside the local cache
+/// tree (huggingface_hub writes refs/<revision> and
+/// snapshots/<revision> literally, including nested 'refs/pr/7'):
+/// nonempty, no leading/trailing '/', no empty/'.'/'..' segments.
+/// This is NOT repo-id validation.
 fn valid_optional_hub_revision(value : String?) -> Bool {
   match value {
-    Some(v) => v.is_empty() || is_valid_hub_identifier(v)
+    Some(v) => v.is_empty() || is_safe_hub_revision_path(v)
     None => true
   }
 }
 
 ///|
-fn is_hub_identifier_char(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') ||
-  (c >= 'A' && c <= 'Z') ||
-  (c >= '0' && c <= '9') ||
-  c == '-' ||
-  c == '_' ||
-  c == '.' ||
-  c == '/'
+pub fn is_safe_hub_revision_path(value : String) -> Bool {
+  if value.is_empty() || value.has_prefix("/") || value.has_suffix("/") {
+    return false
+  }
+  let mut segment = StringBuilder()
+  for c in value {
+    if c == '/' {
+      if !valid_hub_path_segment(segment.to_string()) {
+        return false
+      }
+      segment = StringBuilder()
+    } else {
+      segment.write_char(c)
+    }
+  }
+  valid_hub_path_segment(segment.to_string())
 }
 
 ///|

@@ -3413,9 +3413,10 @@ test "Hub identifier validation accepts HF-safe ids and revisions" {
     @tokenizer.Tokenizer::is_valid_hub_identifier("org/model_1.0"),
     true,
   )
+  // huggingface_hub rejects multi-slash ids client-side (form error)
   @test.assert_eq(
     @tokenizer.Tokenizer::is_valid_hub_identifier("refs/pr/7"),
-    true,
+    false,
   )
   @test.assert_eq(
     @tokenizer.Tokenizer::is_valid_hub_identifier("feature/foo"),
@@ -3466,7 +3467,8 @@ test "Hub validation rejects unsafe cache writes without rejecting local paths" 
     )
     |> ignore
   catch {
-    @types.ParseError(msg) => bad_model = msg.contains("expected only")
+    @types.ParseError(msg) =>
+      bad_model = msg.contains("Repo id must use alphanumeric chars")
     _ => ()
   }
   @test.assert_eq(bad_model, true)
@@ -5305,4 +5307,116 @@ test "Encoding with_ids, with_tokens, with_offsets and set_* aliases" {
     _ => raised_offsets = true
   }
   @test.assert_eq(raised_offsets, true)
+}
+
+///|
+test "Hub repo id validation matches huggingface_hub rules" {
+  // valid shapes (probed against the installed Python pair)
+  for
+    id in [
+      "foo", "foo/bar", "123", "Foo-BAR_foo.bar123", "世界", "世/界", "_lead",
+      "trail_", "a-b-c", "x-x-x",
+    ] {
+    @test.assert_eq(@tokenizer.Tokenizer::is_valid_hub_identifier(id), true)
+  }
+  // invalid shapes
+  for
+    id in [
+      "",
+      "bad!!repo",
+      "a/b/c",
+      "org/",
+      "/repo",
+      "org/re po",
+      "../etc/passwd",
+      ".repo_id",
+      "-lead",
+      ".trail",
+      "foo--bar",
+      "a..b",
+      "ns/re--po",
+      "x.git",
+      repeat_char('x', 97),
+    ] {
+    @test.assert_eq(@tokenizer.Tokenizer::is_valid_hub_identifier(id), false)
+  }
+  // 96 chars is the boundary
+  @test.assert_eq(
+    @tokenizer.Tokenizer::is_valid_hub_identifier(repeat_char('x', 96)),
+    true,
+  )
+}
+
+///|
+fn repeat_char(c : Char, n : Int) -> String {
+  let sb = StringBuilder()
+  let mut i = 0
+  while i < n {
+    sb.write_char(c)
+    i += 1
+  }
+  sb.to_string()
+}
+
+///|
+test "Hub repo id validation messages match huggingface_hub texts" {
+  fn msg_of(id : String) -> String {
+    try {
+      @tokenizer.validate_hub_model_id(id)
+      "NO-ERROR"
+    } catch {
+      @types.ParseError(msg) => msg
+      _ => "OTHER-ERROR"
+    }
+  }
+  @test.assert_eq(
+    msg_of("a/b/c"),
+    "Repo id must be in the form 'repo_name' or 'namespace/repo_name': 'a/b/c'. Use `repo_type` argument if needed.",
+  )
+  @test.assert_eq(
+    msg_of("org/"),
+    "Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'org/'.",
+  )
+  @test.assert_eq(
+    msg_of("foo--bar"),
+    "Cannot have -- or .. in repo_id: 'foo--bar'.",
+  )
+  @test.assert_eq(msg_of("a..b"), "Cannot have -- or .. in repo_id: 'a..b'.")
+  @test.assert_eq(msg_of("x.git"), "Repo_id cannot end by '.git': 'x.git'.")
+  // ordered: the form error wins over charset for multi-slash ids
+  @test.assert_eq(
+    msg_of("../etc/passwd"),
+    "Repo id must be in the form 'repo_name' or 'namespace/repo_name': '../etc/passwd'. Use `repo_type` argument if needed.",
+  )
+}
+
+///|
+test "from_pretrained surfaces repo id validation errors" {
+  try {
+    @tokenizer.Tokenizer::from_pretrained("bad!!repo") |> ignore
+    @test.assert_eq("raised", "NO-ERROR")
+  } catch {
+    @types.ParseError(msg) =>
+      @test.assert_eq(
+        msg, "Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'bad!!repo'.",
+      )
+    _ => @test.assert_eq("raised", "OTHER-ERROR")
+  }
+}
+
+///|
+test "revision validation accepts any charset, rejects unsafe paths" {
+  // huggingface_hub does no client-side charset validation (probed:
+  // 'rev!!bad' URL-encodes and fails server-side); the port only
+  // guards the local cache tree it writes revisions into
+  @tokenizer.validate_hub_revision("rev!!bad")
+  @tokenizer.validate_hub_revision("main")
+  @tokenizer.validate_hub_revision("refs/pr/7")
+  @tokenizer.Tokenizer::validate_hub_revision("a b@c")
+  let mut raised = false
+  try @tokenizer.validate_hub_revision("../main") |> ignore catch {
+    @types.ParseError(_) => raised = true
+    _ => ()
+  }
+  @test.assert_eq(raised, true)
 }
