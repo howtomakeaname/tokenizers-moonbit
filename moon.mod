@@ -1,6 +1,6 @@
 name = "howtomakeaname/tokenizers-moonbit"
 
-version = "0.16.2"
+version = "0.16.3"
 
 import {
   "moonbitlang/x@0.4.45",
