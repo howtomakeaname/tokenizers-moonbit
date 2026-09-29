@@ -2997,3 +2997,28 @@ test "anchored letters and remaining gap closures" {
   @test.assert_eq(@common.is_supported_replace_regex("^a??"), false)
   @test.assert_eq(@common.is_supported_replace_regex("\\??"), false)
 }
+
+///|
+test "Replace regex malformed brace tails are HF literals" {
+  // probed 0.22.2: onig treats 'a{2,4x}' as the LITERAL pattern
+  // ('za{2,4x}z' -> 'z#z', 'aaa' unchanged, 'a{2,4}x' input proves it
+  // is not the a{2,4}+x concatenation); the port must load these and
+  // fall through to literal replace, not compute the window
+  fn norm(p : String, input : String) -> String raise {
+    let j = "{\"type\":\"Replace\",\"pattern\":{\"Regex\":\"" +
+      p +
+      "\"},\"content\":\"#\"}"
+    let n = @normalizer.Normalizer::from_json(@json.parse(j))
+    n.normalize_str(input)
+  }
+  @test.assert_eq(norm("a{2,4x}", "za{2,4x}z"), "z#z")
+  @test.assert_eq(norm("a{2,4x}", "aaa"), "aaa")
+  @test.assert_eq(norm("a{2,4x}", "a{2,4}x"), "a{2,4}x")
+  @test.assert_eq(norm("a{2,4x}", "a{2,4x}a{2,4x}"), "##")
+  @test.assert_eq(norm("a{2x}", "za{2x}z"), "z#z")
+  @test.assert_eq(norm("a{2x}", "aa"), "aa")
+  @test.assert_eq(norm("x{3,5q}", "zx{3,5q}z"), "z#z")
+  @test.assert_eq(norm("x{3,q}", "zx{3,q}z"), "z#z")
+  @test.assert_eq(norm("a{4,2x}", "za{4,2x}z"), "z#z")
+  @test.assert_eq(norm("a{4,2x}", "aaaaaa"), "aaaaaa")
+}

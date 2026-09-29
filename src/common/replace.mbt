@@ -673,6 +673,13 @@ pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
       if hi_digits == 0 || hi > 100000 {
         return None
       }
+      // the hi digits must run into the closing brace: a malformed
+      // tail like 'a{2,4x}' is an HF LITERAL (probed: 'za{2,4x}z' ->
+      // 'z#z', 'aaa' unchanged) — returning None drops the pattern to
+      // the literal replace fallback, which reproduces that exactly
+      if i != n - 1 {
+        return None
+      }
       // reversed {n,m} with n > m: onig swaps the window (probed:
       // a{6,4} on 'zaaaaaaz' -> 'z#z' == the {4,6} blocks). A {n,0}
       // swap has EMPTY-MATCH insertion semantics this engine lacks —
