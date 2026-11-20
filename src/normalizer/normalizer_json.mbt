@@ -78,7 +78,7 @@ pub fn Normalizer::to_json(self : Normalizer) -> String? {
       clean_text~,
       handle_chinese_chars~,
       strip_accents~,
-      lowercase~
+      lowercase~,
     ) =>
       Some(
         bert_normalizer_to_json(
@@ -284,7 +284,7 @@ fn parse_precompiled_charsmap(
   if trie_size < 0 || trie_size % 4 != 0 || 4 + trie_size > bytes.length() {
     raise @types.ParseError("invalid precompiled_charsmap trie length")
   }
-  let trie : Array[Int] = []
+  let trie : Array[Int32] = []
   let units = trie_size / 4
   for i in 0..<units {
     guard read_le_u32(bytes, 4 + i * 4) is Some(unit) else {
@@ -295,7 +295,7 @@ fn parse_precompiled_charsmap(
   if trie.length() == 0 {
     raise @types.ParseError("invalid precompiled_charsmap empty trie")
   }
-  let normalized : Array[Int] = []
+  let normalized : Array[Int32] = []
   for i in (4 + trie_size)..<bytes.length() {
     normalized.push(bytes[i])
   }
@@ -303,7 +303,7 @@ fn parse_precompiled_charsmap(
 }
 
 ///|
-fn read_le_u32(bytes : Array[Int], offset : Int) -> Int? {
+fn read_le_u32(bytes : Array[Int32], offset : Int32) -> Int32? {
   if offset < 0 || offset + 4 > bytes.length() {
     return None
   }
@@ -316,8 +316,8 @@ fn read_le_u32(bytes : Array[Int], offset : Int) -> Int? {
 }
 
 ///|
-fn decode_base64(s : String) -> Array[Int] raise @types.TokenizerError {
-  let out : Array[Int] = []
+fn decode_base64(s : String) -> Array[Int32] raise @types.TokenizerError {
+  let out : Array[Int32] = []
   let mut acc = 0
   let mut bits = 0
   for c in s {
@@ -342,7 +342,7 @@ fn decode_base64(s : String) -> Array[Int] raise @types.TokenizerError {
 }
 
 ///|
-fn base64_value(c : Char) -> Int {
+fn base64_value(c : Char) -> Int32 {
   let u = c.to_int()
   if u >= 65 && u <= 90 {
     u - 65

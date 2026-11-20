@@ -12,7 +12,7 @@
 
 ///|
 priv struct CharTrie {
-  children : Array[Map[Char, Int]]
+  children : Array[Map[Char, Int32]]
   terminal : Array[String?]
 }
 
@@ -47,11 +47,11 @@ fn CharTrie::insert(self : CharTrie, content : String) -> Unit {
 fn CharTrie::longest_match(
   self : CharTrie,
   chars : Array[Char],
-  start : Int,
-) -> (String, Int)? {
+  start : Int32,
+) -> (String, Int32)? {
   let mut node = 0
   let mut i = start
-  let mut last : (String, Int)? = None
+  let mut last : (String, Int32)? = None
   while i < chars.length() {
     match self.children[node].get(chars[i]) {
       None => break
@@ -72,6 +72,7 @@ fn CharTrie::longest_match(
 /// Public HF-style added token configuration. `Tokenizer::add_tokens` and
 /// `Tokenizer::add_special_tokens` convert these into the internal
 /// `AddedVocabulary` trie entries used by the encode pipeline.
+#derive(Debug, Eq)
 pub struct AddedToken {
   content : String
   single_word : Bool
@@ -79,12 +80,13 @@ pub struct AddedToken {
   rstrip : Bool
   normalized : Bool
   special : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 /// Serializable/interoperable snapshot of an added token. This mirrors the
 /// fields used by HuggingFace tokenizers and lets Python binding layers pickle
 /// or tuple-convert an `AddedToken` without depending on MoonBit record layout.
+#derive(Debug, Eq)
 pub struct AddedTokenState {
   content : String
   single_word : Bool
@@ -92,16 +94,16 @@ pub struct AddedTokenState {
   rstrip : Bool
   normalized : Bool
   special : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn AddedToken::new(
   content : String,
-  single_word? : Bool = false,
-  lstrip? : Bool = false,
-  rstrip? : Bool = false,
-  normalized? : Bool? = None,
-  special? : Bool = false,
+  single_word~ : Bool = false,
+  lstrip~ : Bool = false,
+  rstrip~ : Bool = false,
+  normalized~ : Bool? = None,
+  special~ : Bool = false,
 ) -> AddedToken {
   let normalized = match normalized {
     Some(v) => v
@@ -416,22 +418,23 @@ pub fn AddedToken::set_normalized_alias(
 
 ///|
 /// Per-token configuration parsed from tokenizer.json "added_tokens".
+#derive(Debug, Eq)
 struct AddedTokenInfo {
-  id : Int
+  id : Int32
   content : String
   single_word : Bool
   lstrip : Bool
   rstrip : Bool
   normalized : Bool
   special : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 /// The added-vocabulary state attached to a Tokenizer.
 struct AddedVocabulary {
   by_content : Map[String, AddedTokenInfo]
-  id_to_content : Map[Int, String]
-  id_to_token : Map[Int, AddedTokenInfo]
+  id_to_content : Map[Int32, String]
+  id_to_token : Map[Int32, AddedTokenInfo]
   // Tokens matched against the *original* text (normalized == false).
   non_normalized : CharTrie
   // Tokens matched against the *normalized* text (normalized == true).  HF
@@ -449,14 +452,15 @@ struct AddedVocabulary {
 
 ///|
 /// A segment of the input produced by extraction.
+#derive(Debug, Eq)
 enum Segment {
   // A matched added/special token; emitted directly, bypassing the model.  The
   // value is the matched surface after lstrip/rstrip/normalization, matching HF's
   // `Token.value` for inline added tokens.
-  Special(info~ : AddedTokenInfo, value~ : String, offsets~ : (Int, Int))
+  Special(info~ : AddedTokenInfo, value~ : String, offsets~ : (Int32, Int32))
   // Ordinary text to be normalized + pre-tokenized + modeled.
-  Normal(text~ : String, base_offset~ : Int)
-} derive(Debug, Eq)
+  Normal(text~ : String, base_offset~ : Int32)
+}
 
 ///|
 /// Build an AddedVocabulary from parsed token infos.

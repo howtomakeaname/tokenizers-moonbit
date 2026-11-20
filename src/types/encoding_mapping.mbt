@@ -1,7 +1,7 @@
 ///|
 /// Return the input sequence id that produced token `token`, or `None` for
 /// special/padding tokens and out-of-range indices.
-pub fn Encoding::token_to_sequence(self : Encoding, token : Int) -> Int? {
+pub fn Encoding::token_to_sequence(self : Encoding, token : Int32) -> Int32? {
   if token < 0 || token >= self.sequence_ids.length() {
     None
   } else {
@@ -11,7 +11,7 @@ pub fn Encoding::token_to_sequence(self : Encoding, token : Int) -> Int? {
 
 ///|
 /// Python-binding getter alias for `token_to_sequence`.
-pub fn Encoding::get_token_sequence(self : Encoding, token : Int) -> Int? {
+pub fn Encoding::get_token_sequence(self : Encoding, token : Int32) -> Int32? {
   self.token_to_sequence(token)
 }
 
@@ -20,8 +20,8 @@ pub fn Encoding::get_token_sequence(self : Encoding, token : Int) -> Int? {
 /// `Encoding.token_to_chars`. Special/padding tokens return `None`.
 pub fn Encoding::token_to_chars(
   self : Encoding,
-  token : Int,
-) -> (Int, (Int, Int))? {
+  token : Int32,
+) -> (Int32, (Int32, Int32))? {
   match self.token_to_sequence(token) {
     Some(seq) => Some((seq, self.offsets[token]))
     None => None
@@ -32,14 +32,17 @@ pub fn Encoding::token_to_chars(
 /// Python-binding getter alias for `token_to_chars`.
 pub fn Encoding::get_token_chars(
   self : Encoding,
-  token : Int,
-) -> (Int, (Int, Int))? {
+  token : Int32,
+) -> (Int32, (Int32, Int32))? {
   self.token_to_chars(token)
 }
 
 ///|
 /// Convenience alias returning only the char/byte offsets for a token.
-pub fn Encoding::token_to_offsets(self : Encoding, token : Int) -> (Int, Int)? {
+pub fn Encoding::token_to_offsets(
+  self : Encoding,
+  token : Int32,
+) -> (Int32, Int32)? {
   match self.token_to_chars(token) {
     Some((_, offsets)) => Some(offsets)
     None => None
@@ -50,14 +53,17 @@ pub fn Encoding::token_to_offsets(self : Encoding, token : Int) -> (Int, Int)? {
 /// HF Python shape helper returning only `(start, end)` for a token.
 pub fn Encoding::token_to_char_offsets(
   self : Encoding,
-  token : Int,
-) -> (Int, Int)? {
+  token : Int32,
+) -> (Int32, Int32)? {
   self.token_to_offsets(token)
 }
 
 ///|
 /// Get the word that contains the token at index `token`.
-pub fn Encoding::token_to_word(self : Encoding, token : Int) -> (Int, Int)? {
+pub fn Encoding::token_to_word(
+  self : Encoding,
+  token : Int32,
+) -> (Int32, Int32)? {
   match self.token_to_sequence(token) {
     Some(seq) =>
       if token >= 0 && token < self.word_ids.length() {
@@ -74,13 +80,16 @@ pub fn Encoding::token_to_word(self : Encoding, token : Int) -> (Int, Int)? {
 
 ///|
 /// Python-binding getter alias for `token_to_word`.
-pub fn Encoding::get_token_word(self : Encoding, token : Int) -> (Int, Int)? {
+pub fn Encoding::get_token_word(
+  self : Encoding,
+  token : Int32,
+) -> (Int32, Int32)? {
   self.token_to_word(token)
 }
 
 ///|
 /// HF Python shape helper returning only the word index for a token.
-pub fn Encoding::token_to_word_index(self : Encoding, token : Int) -> Int? {
+pub fn Encoding::token_to_word_index(self : Encoding, token : Int32) -> Int32? {
   match self.token_to_word(token) {
     Some((_, word)) => Some(word)
     None => None
@@ -91,11 +100,11 @@ pub fn Encoding::token_to_word_index(self : Encoding, token : Int) -> Int? {
 /// Get the half-open token range `[start, end)` for `word` in `sequence_id`.
 pub fn Encoding::word_to_tokens(
   self : Encoding,
-  word : Int,
-  sequence_id? : Int = 0,
-) -> (Int, Int)? {
-  let mut start : Int? = None
-  let mut stop : Int? = None
+  word : Int32,
+  sequence_id~ : Int32 = 0,
+) -> (Int32, Int32)? {
+  let mut start : Int32? = None
+  let mut stop : Int32? = None
   for i in 0..<self.word_ids.length() {
     if self.sequence_ids[i] == Some(sequence_id) &&
       self.word_ids[i] == Some(word) {
@@ -115,9 +124,9 @@ pub fn Encoding::word_to_tokens(
 /// Python-binding getter alias for `word_to_tokens`.
 pub fn Encoding::get_word_tokens(
   self : Encoding,
-  word : Int,
-  sequence_id? : Int = 0,
-) -> (Int, Int)? {
+  word : Int32,
+  sequence_id~ : Int32 = 0,
+) -> (Int32, Int32)? {
   self.word_to_tokens(word, sequence_id~)
 }
 
@@ -125,9 +134,9 @@ pub fn Encoding::get_word_tokens(
 /// HF Python naming alias for `word_to_tokens(..., sequence_index=...)`.
 pub fn Encoding::word_to_tokens_by_sequence_index(
   self : Encoding,
-  word : Int,
-  sequence_index? : Int = 0,
-) -> (Int, Int)? {
+  word : Int32,
+  sequence_index~ : Int32 = 0,
+) -> (Int32, Int32)? {
   self.word_to_tokens(word, sequence_id=sequence_index)
 }
 
@@ -135,9 +144,9 @@ pub fn Encoding::word_to_tokens_by_sequence_index(
 /// Get character/byte offsets covering `word` in `sequence_id`.
 pub fn Encoding::word_to_chars(
   self : Encoding,
-  word : Int,
-  sequence_id? : Int = 0,
-) -> (Int, Int)? {
+  word : Int32,
+  sequence_id~ : Int32 = 0,
+) -> (Int32, Int32)? {
   match self.word_to_tokens(word, sequence_id~) {
     Some((start, stop)) =>
       if stop > start {
@@ -153,9 +162,9 @@ pub fn Encoding::word_to_chars(
 /// Python-binding getter alias for `word_to_chars`.
 pub fn Encoding::get_word_chars(
   self : Encoding,
-  word : Int,
-  sequence_id? : Int = 0,
-) -> (Int, Int)? {
+  word : Int32,
+  sequence_id~ : Int32 = 0,
+) -> (Int32, Int32)? {
   self.word_to_chars(word, sequence_id~)
 }
 
@@ -163,9 +172,9 @@ pub fn Encoding::get_word_chars(
 /// HF Python naming alias for `word_to_chars(..., sequence_index=...)`.
 pub fn Encoding::word_to_chars_by_sequence_index(
   self : Encoding,
-  word : Int,
-  sequence_index? : Int = 0,
-) -> (Int, Int)? {
+  word : Int32,
+  sequence_index~ : Int32 = 0,
+) -> (Int32, Int32)? {
   self.word_to_chars(word, sequence_id=sequence_index)
 }
 
@@ -173,9 +182,9 @@ pub fn Encoding::word_to_chars_by_sequence_index(
 /// Naming alias for binding layers that expose offsets instead of chars.
 pub fn Encoding::word_to_offsets(
   self : Encoding,
-  word : Int,
-  sequence_id? : Int = 0,
-) -> (Int, Int)? {
+  word : Int32,
+  sequence_id~ : Int32 = 0,
+) -> (Int32, Int32)? {
   self.word_to_chars(word, sequence_id~)
 }
 
@@ -184,9 +193,9 @@ pub fn Encoding::word_to_offsets(
 /// Offsets are half-open: `[start, end)`, matching HF tokenizers.
 pub fn Encoding::char_to_token(
   self : Encoding,
-  pos : Int,
-  sequence_id? : Int = 0,
-) -> Int? {
+  pos : Int32,
+  sequence_id~ : Int32 = 0,
+) -> Int32? {
   for i in 0..<self.offsets.length() {
     guard self.sequence_ids[i] is Some(seq) else { continue }
     if seq != sequence_id {
@@ -204,9 +213,9 @@ pub fn Encoding::char_to_token(
 /// Python-binding getter alias for `char_to_token`.
 pub fn Encoding::get_char_token(
   self : Encoding,
-  pos : Int,
-  sequence_id? : Int = 0,
-) -> Int? {
+  pos : Int32,
+  sequence_id~ : Int32 = 0,
+) -> Int32? {
   self.char_to_token(pos, sequence_id~)
 }
 
@@ -214,9 +223,9 @@ pub fn Encoding::get_char_token(
 /// HF Python naming alias for `char_to_token(..., sequence_index=...)`.
 pub fn Encoding::char_to_token_by_sequence_index(
   self : Encoding,
-  pos : Int,
-  sequence_index? : Int = 0,
-) -> Int? {
+  pos : Int32,
+  sequence_index~ : Int32 = 0,
+) -> Int32? {
   self.char_to_token(pos, sequence_id=sequence_index)
 }
 
@@ -224,9 +233,9 @@ pub fn Encoding::char_to_token_by_sequence_index(
 /// Get the word id containing position `pos` in `sequence_id`.
 pub fn Encoding::char_to_word(
   self : Encoding,
-  pos : Int,
-  sequence_id? : Int = 0,
-) -> Int? {
+  pos : Int32,
+  sequence_id~ : Int32 = 0,
+) -> Int32? {
   match self.char_to_token(pos, sequence_id~) {
     Some(tok) =>
       match self.token_to_word(tok) {
@@ -241,9 +250,9 @@ pub fn Encoding::char_to_word(
 /// Python-binding getter alias for `char_to_word`.
 pub fn Encoding::get_char_word(
   self : Encoding,
-  pos : Int,
-  sequence_id? : Int = 0,
-) -> Int? {
+  pos : Int32,
+  sequence_id~ : Int32 = 0,
+) -> Int32? {
   self.char_to_word(pos, sequence_id~)
 }
 
@@ -251,9 +260,9 @@ pub fn Encoding::get_char_word(
 /// HF Python naming alias for `char_to_word(..., sequence_index=...)`.
 pub fn Encoding::char_to_word_by_sequence_index(
   self : Encoding,
-  pos : Int,
-  sequence_index? : Int = 0,
-) -> Int? {
+  pos : Int32,
+  sequence_index~ : Int32 = 0,
+) -> Int32? {
   self.char_to_word(pos, sequence_id=sequence_index)
 }
 

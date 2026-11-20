@@ -4,13 +4,13 @@
 pub fn Model::from_bpe_files(
   vocab_path : String,
   merges_path : String,
-  unk_token? : String? = Some("[UNK]"),
-  continuing_subword_prefix? : String? = None,
-  end_of_word_suffix? : String? = None,
-  fuse_unk? : Bool = false,
-  byte_fallback? : Bool = false,
-  ignore_merges? : Bool = false,
-  dropout? : Double? = None,
+  unk_token~ : String? = Some("[UNK]"),
+  continuing_subword_prefix~ : String? = None,
+  end_of_word_suffix~ : String? = None,
+  fuse_unk~ : Bool = false,
+  byte_fallback~ : Bool = false,
+  ignore_merges~ : Bool = false,
+  dropout~ : Double? = None,
 ) -> Model raise @types.TokenizerError {
   let obj : Map[String, Json] = {
     "vocab": read_vocab_json(vocab_path, "BPE vocab"),
@@ -39,13 +39,13 @@ pub fn Model::from_bpe_files(
 pub fn Model::bpe_read_file(
   vocab_path : String,
   merges_path : String,
-  unk_token? : String? = Some("[UNK]"),
-  continuing_subword_prefix? : String? = None,
-  end_of_word_suffix? : String? = None,
-  fuse_unk? : Bool = false,
-  byte_fallback? : Bool = false,
-  ignore_merges? : Bool = false,
-  dropout? : Double? = None,
+  unk_token~ : String? = Some("[UNK]"),
+  continuing_subword_prefix~ : String? = None,
+  end_of_word_suffix~ : String? = None,
+  fuse_unk~ : Bool = false,
+  byte_fallback~ : Bool = false,
+  ignore_merges~ : Bool = false,
+  dropout~ : Double? = None,
 ) -> Model raise @types.TokenizerError {
   Model::from_bpe_files(
     vocab_path,
@@ -65,13 +65,13 @@ pub fn Model::bpe_read_file(
 pub fn Model::bpe_from_file(
   vocab_path : String,
   merges_path : String,
-  unk_token? : String? = Some("[UNK]"),
-  continuing_subword_prefix? : String? = None,
-  end_of_word_suffix? : String? = None,
-  fuse_unk? : Bool = false,
-  byte_fallback? : Bool = false,
-  ignore_merges? : Bool = false,
-  dropout? : Double? = None,
+  unk_token~ : String? = Some("[UNK]"),
+  continuing_subword_prefix~ : String? = None,
+  end_of_word_suffix~ : String? = None,
+  fuse_unk~ : Bool = false,
+  byte_fallback~ : Bool = false,
+  ignore_merges~ : Bool = false,
+  dropout~ : Double? = None,
 ) -> Model raise @types.TokenizerError {
   Model::bpe_read_file(
     vocab_path,
@@ -89,10 +89,10 @@ pub fn Model::bpe_from_file(
 ///|
 pub fn Model::from_wordpiece_file(
   vocab_path : String,
-  unk_token? : String = "[UNK]",
-  continuing_subword_prefix? : String = "##",
-  end_of_word_suffix? : String? = None,
-  max_input_chars_per_word? : Int = 100,
+  unk_token~ : String = "[UNK]",
+  continuing_subword_prefix~ : String = "##",
+  end_of_word_suffix~ : String? = None,
+  max_input_chars_per_word~ : Int32 = 100,
 ) -> Model raise @types.TokenizerError {
   let (vocab, vocab_r) = read_vocab_txt(vocab_path)
   WordPiece(WordPieceModel::{
@@ -111,10 +111,10 @@ pub fn Model::from_wordpiece_file(
 /// HF-style `models.WordPiece.read_file` / `from_file` naming alias.
 pub fn Model::wordpiece_read_file(
   vocab_path : String,
-  unk_token? : String = "[UNK]",
-  continuing_subword_prefix? : String = "##",
-  end_of_word_suffix? : String? = None,
-  max_input_chars_per_word? : Int = 100,
+  unk_token~ : String = "[UNK]",
+  continuing_subword_prefix~ : String = "##",
+  end_of_word_suffix~ : String? = None,
+  max_input_chars_per_word~ : Int32 = 100,
 ) -> Model raise @types.TokenizerError {
   Model::from_wordpiece_file(
     vocab_path,
@@ -129,10 +129,10 @@ pub fn Model::wordpiece_read_file(
 /// HF-style `models.WordPiece.from_file` naming alias.
 pub fn Model::wordpiece_from_file(
   vocab_path : String,
-  unk_token? : String = "[UNK]",
-  continuing_subword_prefix? : String = "##",
-  end_of_word_suffix? : String? = None,
-  max_input_chars_per_word? : Int = 100,
+  unk_token~ : String = "[UNK]",
+  continuing_subword_prefix~ : String = "##",
+  end_of_word_suffix~ : String? = None,
+  max_input_chars_per_word~ : Int32 = 100,
 ) -> Model raise @types.TokenizerError {
   Model::wordpiece_read_file(
     vocab_path,
@@ -146,7 +146,7 @@ pub fn Model::wordpiece_from_file(
 ///|
 pub fn Model::from_wordlevel_file(
   vocab_path : String,
-  unk_token? : String = "[UNK]",
+  unk_token~ : String = "[UNK]",
 ) -> Model raise @types.TokenizerError {
   let obj : Map[String, Json] = {
     "vocab": read_vocab_json(vocab_path, "WordLevel vocab"),
@@ -159,7 +159,7 @@ pub fn Model::from_wordlevel_file(
 /// HF-style `models.WordLevel.read_file` / `from_file` naming alias.
 pub fn Model::wordlevel_read_file(
   vocab_path : String,
-  unk_token? : String = "[UNK]",
+  unk_token~ : String = "[UNK]",
 ) -> Model raise @types.TokenizerError {
   Model::from_wordlevel_file(vocab_path, unk_token~)
 }
@@ -168,7 +168,7 @@ pub fn Model::wordlevel_read_file(
 /// HF-style `models.WordLevel.from_file` naming alias.
 pub fn Model::wordlevel_from_file(
   vocab_path : String,
-  unk_token? : String = "[UNK]",
+  unk_token~ : String = "[UNK]",
 ) -> Model raise @types.TokenizerError {
   Model::wordlevel_read_file(vocab_path, unk_token~)
 }
@@ -207,8 +207,8 @@ fn read_vocab_json(
 ///|
 fn read_bpe_merges_file(
   path : String,
-) -> Map[(String, String), Int] raise @types.TokenizerError {
-  let merges : Map[(String, String), Int] = Map([])
+) -> Map[(String, String), Int32] raise @types.TokenizerError {
+  let merges : Map[(String, String), Int32] = Map([])
   let mut rank = 0
   for line in split_artifact_lines(read_model_artifact(path)) {
     let line = strip_trailing_cr(line)
@@ -224,8 +224,8 @@ fn read_bpe_merges_file(
 ///|
 fn read_vocab_txt(
   path : String,
-) -> (Map[String, Int], Array[String?]) raise @types.TokenizerError {
-  let vocab : Map[String, Int] = Map([])
+) -> (Map[String, Int32], Array[String?]) raise @types.TokenizerError {
+  let vocab : Map[String, Int32] = Map([])
   let vocab_r : Array[String?] = []
   let mut id = 0
   for line in split_artifact_lines(read_model_artifact(path)) {

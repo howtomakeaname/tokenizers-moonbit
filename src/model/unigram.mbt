@@ -20,7 +20,7 @@ let unk_penalty : Double = 1.0e4
 pub fn UnigramModel::tokenize(
   self : UnigramModel,
   word : String,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Array[@types.Token] raise @types.TokenizerError {
   // Use sampling when alpha is set and > 0
   match self.alpha {
@@ -140,7 +140,7 @@ pub fn UnigramModel::tokenize(
 ///|
 fn shift_unigram_tokens(
   tokens : Array[@types.Token],
-  offset : Int,
+  offset : Int32,
 ) -> Array[@types.Token] {
   if offset == 0 {
     return tokens.copy()
@@ -178,7 +178,7 @@ fn UnigramModel::expand_byte_fallback(
 fn UnigramModel::try_byte_fallback(
   self : UnigramModel,
   surface : String,
-  offsets : (Int, Int),
+  offsets : (Int32, Int32),
 ) -> Array[@types.Token]? {
   let bytes = @utf8.encode(surface)
   let toks : Array[@types.Token] = []
@@ -197,7 +197,7 @@ fn UnigramModel::try_byte_fallback(
 ///|
 fn fuse_unigram_unk(
   toks : Array[@types.Token],
-  uid : Int,
+  uid : Int32,
 ) -> Array[@types.Token] {
   let out : Array[@types.Token] = []
   for t in toks {
@@ -216,7 +216,7 @@ fn fuse_unigram_unk(
 }
 
 ///|
-fn make_piece(chars : Array[Char], start : Int, stop : Int) -> String {
+fn make_piece(chars : Array[Char], start : Int32, stop : Int32) -> String {
   let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
@@ -251,8 +251,8 @@ fn UnigramModel::tokenize_with_sampling(
   self : UnigramModel,
   word : String,
   alpha : Double,
-  nbest_size : Int?,
-  offset : Int,
+  nbest_size : Int32?,
+  offset : Int32,
 ) -> Array[@types.Token] {
   let chars = word.to_array()
   let n = chars.length()
@@ -262,9 +262,12 @@ fn UnigramModel::tokenize_with_sampling(
 
   // Build lattice: for each position, collect all possible pieces
   // pieces[end] = [(start, id, score, piece)]
-  let pieces : Array[Array[(Int, Int, Double, String)]] = Array::make(n + 1, [])
+  let pieces : Array[Array[(Int32, Int32, Double, String)]] = Array::make(
+    n + 1,
+    [],
+  )
   for end in 1..<=n {
-    let row : Array[(Int, Int, Double, String)] = []
+    let row : Array[(Int32, Int32, Double, String)] = []
     for start in 0..<end {
       let piece = make_piece(chars, start, end)
       match self.vocab.get(piece) {
@@ -285,7 +288,7 @@ fn UnigramModel::tokenize_with_sampling(
   }
 
   // Choose sampling strategy based on nbest_size
-  let result_rev : Array[(Int, Int, String)] = match nbest_size {
+  let result_rev : Array[(Int32, Int32, String)] = match nbest_size {
     Some(nb) if nb > 0 =>
       // N-best mode: enumerate top-N paths via beam search, then sample
       sample_nbest(pieces, n, nb, alpha)
@@ -330,21 +333,21 @@ fn UnigramModel::tokenize_with_sampling(
 /// Enumerates up to `nbest_size` complete paths, scores them, and samples
 /// using softmax with `alpha` as temperature.
 fn sample_nbest(
-  pieces : Array[Array[(Int, Int, Double, String)]],
-  n : Int,
-  nbest_size : Int,
+  pieces : Array[Array[(Int32, Int32, Double, String)]],
+  n : Int32,
+  nbest_size : Int32,
   alpha : Double,
-) -> Array[(Int, Int, String)] {
+) -> Array[(Int32, Int32, String)] {
   // Beam search: at each position, keep top-N partial paths
   // paths[end] = [(score, path)] where path = [(start, id, piece), ...]
-  let beams : Array[Array[(Double, Array[(Int, Int, String)])]] = Array::make(
+  let beams : Array[Array[(Double, Array[(Int32, Int32, String)])]] = Array::make(
     n + 1,
     [],
   )
   beams[0] = [(0.0, [])]
 
   for end in 1..<=n {
-    let candidates : Array[(Double, Array[(Int, Int, String)])] = []
+    let candidates : Array[(Double, Array[(Int32, Int32, String)])] = []
     for cand in pieces[end] {
       let start = cand.0
       let id = cand.1
@@ -354,7 +357,7 @@ fn sample_nbest(
         let prev_score = beam_item.0
         let prev_path = beam_item.1
         let new_score = prev_score + score
-        let new_path : Array[(Int, Int, String)] = []
+        let new_path : Array[(Int32, Int32, String)] = []
         for item in prev_path {
           new_path.push(item)
         }
@@ -369,7 +372,7 @@ fn sample_nbest(
     } else {
       candidates.length()
     }
-    let beam : Array[(Double, Array[(Int, Int, String)])] = []
+    let beam : Array[(Double, Array[(Int32, Int32, String)])] = []
     for i in 0..<keep {
       beam.push(candidates[i])
     }
@@ -394,10 +397,10 @@ fn sample_nbest(
 ///|
 /// Forward-backward sampling: sample from the full distribution at each position.
 fn sample_forward_backward(
-  pieces : Array[Array[(Int, Int, Double, String)]],
-  n : Int,
+  pieces : Array[Array[(Int32, Int32, Double, String)]],
+  n : Int32,
   alpha : Double,
-) -> Array[(Int, Int, String)] {
+) -> Array[(Int32, Int32, String)] {
   // Forward pass: compute log partition function at each position
   let forward = Array::make(n + 1, neg_inf)
   forward[0] = 0.0
@@ -412,7 +415,7 @@ fn sample_forward_backward(
   }
 
   // Backward pass: sample tokens from right to left
-  let result_rev : Array[(Int, Int, String)] = []
+  let result_rev : Array[(Int32, Int32, String)] = []
   let mut pos = n
   while pos > 0 {
     if forward[pos] == neg_inf {
@@ -444,7 +447,7 @@ fn sample_forward_backward(
 
 ///|
 /// Sample an index from log probabilities using softmax sampling.
-fn sample_from_log_probs(log_probs : Array[Double]) -> Int {
+fn sample_from_log_probs(log_probs : Array[Double]) -> Int32 {
   let n = log_probs.length()
   if n == 0 {
     return 0

@@ -82,7 +82,7 @@ fn load_model(name : String) -> @tokenizer.Tokenizer? raise {
 fn must_encode(
   tok : @tokenizer.Tokenizer,
   text : String,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding {
   tok.encode(text, add_special_tokens~) catch {
     _ => abort("benchmark encode failed")
@@ -93,7 +93,7 @@ fn must_encode(
 fn must_encode_fast(
   tok : @tokenizer.Tokenizer,
   text : String,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding {
   tok.encode_fast(text, add_special_tokens~) catch {
     _ => abort("benchmark encode_fast failed")
@@ -104,7 +104,7 @@ fn must_encode_fast(
 fn must_encode_with_byte_offsets(
   tok : @tokenizer.Tokenizer,
   text : String,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding {
   tok.encode_with_byte_offsets(text, add_special_tokens~) catch {
     _ => abort("benchmark encode_with_byte_offsets failed")
@@ -115,7 +115,7 @@ fn must_encode_with_byte_offsets(
 fn must_encode_batch(
   tok : @tokenizer.Tokenizer,
   batch : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] {
   tok.encode_batch(batch, add_special_tokens~) catch {
     _ => abort("benchmark encode_batch failed")
@@ -126,7 +126,7 @@ fn must_encode_batch(
 fn must_encode_batch_fast(
   tok : @tokenizer.Tokenizer,
   batch : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] {
   tok.encode_batch_fast(batch, add_special_tokens~) catch {
     _ => abort("benchmark encode_batch_fast failed")
@@ -137,7 +137,7 @@ fn must_encode_batch_fast(
 fn must_encode_pair_batch(
   tok : @tokenizer.Tokenizer,
   batch : Array[(String, String)],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] {
   tok.encode_pair_batch(batch, add_special_tokens~) catch {
     _ => abort("benchmark encode_pair_batch failed")
@@ -148,7 +148,7 @@ fn must_encode_pair_batch(
 fn must_encode_pair_batch_fast(
   tok : @tokenizer.Tokenizer,
   batch : Array[(String, String)],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] {
   tok.encode_pair_batch_fast(batch, add_special_tokens~) catch {
     _ => abort("benchmark encode_pair_batch_fast failed")
@@ -159,7 +159,7 @@ fn must_encode_pair_batch_fast(
 fn must_encode_pretokenized(
   tok : @tokenizer.Tokenizer,
   words : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding {
   tok.encode_pretokenized(words, add_special_tokens~) catch {
     _ => abort("benchmark encode_pretokenized failed")
@@ -170,7 +170,7 @@ fn must_encode_pretokenized(
 fn must_encode_pretokenized_with_byte_offsets(
   tok : @tokenizer.Tokenizer,
   words : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding {
   tok.encode_pretokenized_with_byte_offsets(words, add_special_tokens~) catch {
     _ => abort("benchmark encode_pretokenized_with_byte_offsets failed")
@@ -181,7 +181,7 @@ fn must_encode_pretokenized_with_byte_offsets(
 fn must_encode_pretokenized_batch(
   tok : @tokenizer.Tokenizer,
   batch : Array[Array[String]],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] {
   tok.encode_pretokenized_batch(batch, add_special_tokens~) catch {
     _ => abort("benchmark encode_pretokenized_batch failed")
@@ -192,7 +192,7 @@ fn must_encode_pretokenized_batch(
 fn must_encode_pretokenized_pair_batch(
   tok : @tokenizer.Tokenizer,
   batch : Array[(Array[String], Array[String])],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] {
   tok.encode_pretokenized_pair_batch(batch, add_special_tokens~) catch {
     _ => abort("benchmark encode_pretokenized_pair_batch failed")
@@ -205,7 +205,7 @@ fn bench_encode_case(
   model : String,
   case_name : String,
   text : String,
-  add_special_tokens? : Bool = false,
+  add_special_tokens~ : Bool = false,
 ) -> Unit raise {
   guard load_model(model) is Some(tok) else { return }
   b.bench(name="\{model}-encode-\{case_name}", fn() {
@@ -219,7 +219,7 @@ fn bench_encode_fast_case(
   model : String,
   case_name : String,
   text : String,
-  add_special_tokens? : Bool = false,
+  add_special_tokens~ : Bool = false,
 ) -> Unit raise {
   guard load_model(model) is Some(tok) else { return }
   b.bench(name="\{model}-encode-fast-\{case_name}", fn() {

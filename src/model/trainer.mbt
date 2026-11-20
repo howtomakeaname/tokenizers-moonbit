@@ -9,11 +9,11 @@
 ///|
 pub fn Model::train_wordlevel(
   texts : Array[String],
-  unk_token? : String = "[UNK]",
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  vocab_size? : Int? = Some(30000),
-  show_progress? : Bool = true,
+  unk_token~ : String = "[UNK]",
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  vocab_size~ : Int32? = Some(30000),
+  show_progress~ : Bool = true,
 ) -> Model {
   ignore(show_progress)
   let tokenized : Array[Array[String]] = []
@@ -36,14 +36,14 @@ pub fn Model::train_wordlevel(
 /// ordered by frequency descending with lexical tie-breaks.
 pub fn Model::train_wordlevel_from_tokens(
   tokenized_texts : Array[Array[String]],
-  unk_token? : String = "[UNK]",
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  vocab_size? : Int? = Some(30000),
-  show_progress? : Bool = true,
+  unk_token~ : String = "[UNK]",
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  vocab_size~ : Int32? = Some(30000),
+  show_progress~ : Bool = true,
 ) -> Model {
   ignore(show_progress)
-  let counts : Map[String, Int] = Map([])
+  let counts : Map[String, Int32] = Map([])
   let order : Array[String] = []
   for tokens in tokenized_texts {
     for tok in tokens {
@@ -57,7 +57,7 @@ pub fn Model::train_wordlevel_from_tokens(
     }
   }
 
-  let vocab : Map[String, Int] = Map([])
+  let vocab : Map[String, Int32] = Map([])
   let vocab_r : Array[String?] = []
   fn add_token(tok : String) -> Unit {
     if vocab.contains(tok) {
@@ -84,10 +84,10 @@ pub fn Model::train_wordlevel_from_tokens(
 ///|
 fn sorted_wordlevel_candidates(
   order : Array[String],
-  counts : Map[String, Int],
-  min_frequency : Int,
-) -> Array[(String, Int)] {
-  let candidates : Array[(String, Int)] = []
+  counts : Map[String, Int32],
+  min_frequency : Int32,
+) -> Array[(String, Int32)] {
+  let candidates : Array[(String, Int32)] = []
   for tok in order {
     match counts.get(tok) {
       Some(n) => if n >= min_frequency { candidates.push((tok, n)) }
@@ -105,7 +105,7 @@ fn sorted_wordlevel_candidates(
 }
 
 ///|
-fn under_vocab_limit(current_size : Int, vocab_size : Int?) -> Bool {
+fn under_vocab_limit(current_size : Int32, vocab_size : Int32?) -> Bool {
   match vocab_size {
     Some(limit) => limit <= 0 || current_size < limit
     None => true
@@ -122,17 +122,17 @@ fn under_vocab_limit(current_size : Int, vocab_size : Int?) -> Bool {
 /// unseen words can still fall back to character pieces when the alphabet fits.
 pub fn Model::train_wordpiece(
   texts : Array[String],
-  unk_token? : String = "[UNK]",
-  continuing_subword_prefix? : String = "##",
-  end_of_word_suffix? : String? = None,
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  vocab_size? : Int? = Some(30000),
-  max_input_chars_per_word? : Int = 100,
-  max_token_length? : Int? = None,
-  initial_alphabet? : Array[String] = [],
-  limit_alphabet? : Int? = None,
-  show_progress? : Bool = true,
+  unk_token~ : String = "[UNK]",
+  continuing_subword_prefix~ : String = "##",
+  end_of_word_suffix~ : String? = None,
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  vocab_size~ : Int32? = Some(30000),
+  max_input_chars_per_word~ : Int32 = 100,
+  max_token_length~ : Int32? = None,
+  initial_alphabet~ : Array[String] = [],
+  limit_alphabet~ : Int32? = None,
+  show_progress~ : Bool = true,
 ) -> Model {
   ignore(show_progress)
   let tokenized : Array[Array[String]] = []
@@ -159,22 +159,22 @@ pub fn Model::train_wordpiece(
 /// Train a deterministic WordPiece model from pre-tokenized token streams.
 pub fn Model::train_wordpiece_from_tokens(
   tokenized_texts : Array[Array[String]],
-  unk_token? : String = "[UNK]",
-  continuing_subword_prefix? : String = "##",
-  end_of_word_suffix? : String? = None,
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  vocab_size? : Int? = Some(30000),
-  max_input_chars_per_word? : Int = 100,
-  max_token_length? : Int? = None,
-  initial_alphabet? : Array[String] = [],
-  limit_alphabet? : Int? = None,
-  show_progress? : Bool = true,
+  unk_token~ : String = "[UNK]",
+  continuing_subword_prefix~ : String = "##",
+  end_of_word_suffix~ : String? = None,
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  vocab_size~ : Int32? = Some(30000),
+  max_input_chars_per_word~ : Int32 = 100,
+  max_token_length~ : Int32? = None,
+  initial_alphabet~ : Array[String] = [],
+  limit_alphabet~ : Int32? = None,
+  show_progress~ : Bool = true,
 ) -> Model {
   ignore(show_progress)
-  let word_counts : Map[String, Int] = Map([])
+  let word_counts : Map[String, Int32] = Map([])
   let word_order : Array[String] = []
-  let piece_counts : Map[String, Int] = Map([])
+  let piece_counts : Map[String, Int32] = Map([])
   let piece_order : Array[String] = []
   for tokens in tokenized_texts {
     for tok in tokens {
@@ -185,7 +185,7 @@ pub fn Model::train_wordpiece_from_tokens(
     }
   }
 
-  let vocab : Map[String, Int] = Map([])
+  let vocab : Map[String, Int32] = Map([])
   let vocab_r : Array[String?] = []
   fn add_token(tok : String) -> Unit {
     if vocab.contains(tok) || !under_vocab_limit(vocab.length(), vocab_size) {
@@ -232,7 +232,7 @@ pub fn Model::train_wordpiece_from_tokens(
 
 ///|
 fn bump_count(
-  counts : Map[String, Int],
+  counts : Map[String, Int32],
   order : Array[String],
   tok : String,
 ) -> Unit {
@@ -250,7 +250,7 @@ fn add_wordpiece_alphabet(
   tok : String,
   prefix : String,
   suffix : String?,
-  counts : Map[String, Int],
+  counts : Map[String, Int32],
   order : Array[String],
 ) -> Unit {
   let chars = tok.to_array()
@@ -277,7 +277,10 @@ fn wordpiece_word_token(tok : String, suffix : String?) -> String {
 }
 
 ///|
-fn wordpiece_train_token_allowed(tok : String, max_token_length : Int?) -> Bool {
+fn wordpiece_train_token_allowed(
+  tok : String,
+  max_token_length : Int32?,
+) -> Bool {
   match max_token_length {
     None => true
     Some(n) => n <= 0 || tok.char_length() <= n
@@ -300,21 +303,21 @@ fn char_string(c : Char) -> String {
 /// to preserve an existing model configuration across retraining.
 pub fn Model::train_bpe(
   texts : Array[String],
-  unk_token? : String? = None,
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  vocab_size? : Int? = Some(30000),
-  continuing_subword_prefix? : String? = None,
-  end_of_word_suffix? : String? = None,
-  fuse_unk? : Bool = false,
-  initial_alphabet? : Array[String] = [],
-  limit_alphabet? : Int? = None,
-  max_token_length? : Int? = None,
-  byte_fallback? : Bool = false,
-  ignore_merges? : Bool = false,
-  dropout? : Double? = None,
-  cache_capacity? : Int? = None,
-  show_progress? : Bool = true,
+  unk_token~ : String? = None,
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  vocab_size~ : Int32? = Some(30000),
+  continuing_subword_prefix~ : String? = None,
+  end_of_word_suffix~ : String? = None,
+  fuse_unk~ : Bool = false,
+  initial_alphabet~ : Array[String] = [],
+  limit_alphabet~ : Int32? = None,
+  max_token_length~ : Int32? = None,
+  byte_fallback~ : Bool = false,
+  ignore_merges~ : Bool = false,
+  dropout~ : Double? = None,
+  cache_capacity~ : Int32? = None,
+  show_progress~ : Bool = true,
 ) -> Model {
   ignore(show_progress)
   let tokenized : Array[Array[String]] = []
@@ -345,26 +348,26 @@ pub fn Model::train_bpe(
 /// Train a deterministic BPE model from pre-tokenized token streams.
 pub fn Model::train_bpe_from_tokens(
   tokenized_texts : Array[Array[String]],
-  unk_token? : String? = None,
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  vocab_size? : Int? = Some(30000),
-  continuing_subword_prefix? : String? = None,
-  end_of_word_suffix? : String? = None,
-  fuse_unk? : Bool = false,
-  initial_alphabet? : Array[String] = [],
-  limit_alphabet? : Int? = None,
-  max_token_length? : Int? = None,
-  byte_fallback? : Bool = false,
-  ignore_merges? : Bool = false,
-  dropout? : Double? = None,
-  cache_capacity? : Int? = None,
-  show_progress? : Bool = true,
+  unk_token~ : String? = None,
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  vocab_size~ : Int32? = Some(30000),
+  continuing_subword_prefix~ : String? = None,
+  end_of_word_suffix~ : String? = None,
+  fuse_unk~ : Bool = false,
+  initial_alphabet~ : Array[String] = [],
+  limit_alphabet~ : Int32? = None,
+  max_token_length~ : Int32? = None,
+  byte_fallback~ : Bool = false,
+  ignore_merges~ : Bool = false,
+  dropout~ : Double? = None,
+  cache_capacity~ : Int32? = None,
+  show_progress~ : Bool = true,
 ) -> Model {
   ignore(show_progress)
-  let word_counts : Map[String, Int] = Map([])
+  let word_counts : Map[String, Int32] = Map([])
   let word_order : Array[String] = []
-  let alphabet_counts : Map[String, Int] = Map([])
+  let alphabet_counts : Map[String, Int32] = Map([])
   let alphabet_order : Array[String] = []
   for tokens in tokenized_texts {
     for tok in tokens {
@@ -375,7 +378,7 @@ pub fn Model::train_bpe_from_tokens(
     }
   }
 
-  let vocab : Map[String, Int] = Map([])
+  let vocab : Map[String, Int32] = Map([])
   let vocab_r : Array[String?] = []
   fn add_token(tok : String) -> Bool {
     if vocab.contains(tok) || !under_vocab_limit(vocab.length(), vocab_size) {
@@ -402,7 +405,7 @@ pub fn Model::train_bpe_from_tokens(
   }
 
   let words : Array[Array[String]] = []
-  let freqs : Array[Int] = []
+  let freqs : Array[Int32] = []
   for word in word_order {
     match word_counts.get(word) {
       Some(n) => {
@@ -417,7 +420,7 @@ pub fn Model::train_bpe_from_tokens(
     }
   }
 
-  let merges : Map[(String, String), Int] = Map([])
+  let merges : Map[(String, String), Int32] = Map([])
   while under_vocab_limit(vocab.length(), vocab_size) {
     let pair = best_bpe_pair(
       words, freqs, min_frequency, max_token_length, continuing_subword_prefix,
@@ -464,7 +467,7 @@ fn normalize_bpe_dropout(dropout : Double?) -> Double? {
 }
 
 ///|
-fn normalize_bpe_cache_capacity(capacity : Int?) -> Int? {
+fn normalize_bpe_cache_capacity(capacity : Int32?) -> Int32? {
   match capacity {
     Some(n) => Some(if n > 0 { n } else { 0 })
     None => None
@@ -510,11 +513,11 @@ fn initial_alphabet_piece(s : String) -> String? {
 ///|
 fn limited_trainer_alphabet(
   corpus_order : Array[String],
-  corpus_counts : Map[String, Int],
+  corpus_counts : Map[String, Int32],
   initial_alphabet : Array[String],
-  limit : Int?,
-) -> Array[(String, Int)] {
-  let counts : Map[String, Int] = Map([])
+  limit : Int32?,
+) -> Array[(String, Int32)] {
+  let counts : Map[String, Int32] = Map([])
   let order : Array[String] = []
   for item in sorted_wordlevel_candidates(corpus_order, corpus_counts, 1) {
     counts[item.0] = item.1
@@ -539,15 +542,15 @@ fn limited_trainer_alphabet(
 }
 
 ///|
-fn initial_alphabet_priority() -> Int {
+fn initial_alphabet_priority() -> Int32 {
   2147483647
 }
 
 ///|
 fn limit_alphabet_candidates(
-  candidates : Array[(String, Int)],
-  limit : Int?,
-) -> Array[(String, Int)] {
+  candidates : Array[(String, Int32)],
+  limit : Int32?,
+) -> Array[(String, Int32)] {
   match limit {
     None => candidates
     Some(n) =>
@@ -558,7 +561,7 @@ fn limit_alphabet_candidates(
           candidates
         }
       } else {
-        let out : Array[(String, Int)] = []
+        let out : Array[(String, Int32)] = []
         for i in 0..<n {
           out.push(candidates[i])
         }
@@ -572,7 +575,7 @@ fn add_bpe_alphabet(
   tok : String,
   prefix : String?,
   suffix : String?,
-  counts : Map[String, Int],
+  counts : Map[String, Int32],
   order : Array[String],
 ) -> Unit {
   let symbols = bpe_initial_symbols(tok, prefix, suffix)
@@ -612,12 +615,12 @@ fn bpe_initial_symbols(
 ///|
 fn best_bpe_pair(
   words : Array[Array[String]],
-  freqs : Array[Int],
-  min_frequency : Int,
-  max_token_length : Int?,
+  freqs : Array[Int32],
+  min_frequency : Int32,
+  max_token_length : Int32?,
   continuing_subword_prefix : String?,
 ) -> (String, String)? {
-  let counts : Map[(String, String), Int] = Map([])
+  let counts : Map[(String, String), Int32] = Map([])
   let order : Array[(String, String)] = []
   for i, parts in words {
     if parts.length() < 2 {
@@ -656,7 +659,7 @@ fn best_bpe_pair(
 ///|
 fn bpe_merged_token_allowed(
   pair : (String, String),
-  max_token_length : Int?,
+  max_token_length : Int32?,
   continuing_subword_prefix : String?,
 ) -> Bool {
   match max_token_length {

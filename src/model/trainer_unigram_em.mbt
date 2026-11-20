@@ -63,7 +63,7 @@ fn em_digamma(x_in : Double) -> Double {
 ///|
 /// Suffix array via prefix doubling (O(n log n) comparisons; the
 /// corpus for seed generation is the distinct-word flat string).
-fn doubling_suffix_array(chars : Array[Int]) -> Array[Int] {
+fn doubling_suffix_array(chars : Array[Int32]) -> Array[Int32] {
   let n = chars.length()
   if n == 0 {
     return []
@@ -73,7 +73,7 @@ fn doubling_suffix_array(chars : Array[Int]) -> Array[Int] {
   }
   // dense alphabet: suffix comparisons only need the RANK, so map the
   // chars to 0..m-1 first (counting-sort buckets stay O(n) wide)
-  let sorted : Array[Int] = []
+  let sorted : Array[Int32] = []
   let mut i = 0
   while i < n {
     sorted.push(chars[i])
@@ -81,7 +81,7 @@ fn doubling_suffix_array(chars : Array[Int]) -> Array[Int] {
   }
   sorted.sort_by(fn(a, b) { if a < b { -1 } else if a > b { 1 } else { 0 } })
   // value -> dense id (rank must be indexed by ORIGINAL position)
-  let dense : Map[Int, Int] = Map([])
+  let dense : Map[Int32, Int32] = Map([])
   let mut m = 0
   let mut i = 0
   while i < n {
@@ -93,15 +93,15 @@ fn doubling_suffix_array(chars : Array[Int]) -> Array[Int] {
   }
   dense[sorted[0]] = 0
   m += 1
-  let rank : Array[Int] = []
+  let rank : Array[Int32] = []
   let mut i = 0
   while i < n {
     rank.push(dense.get(chars[i]).unwrap_or(0))
     i += 1
   }
   // initial order: counting sort by the (dense) char rank
-  let sa : Array[Int] = Array::make(n, 0)
-  let cnt : Array[Int] = Array::make(m + 1, 0)
+  let sa : Array[Int32] = Array::make(n, 0)
+  let cnt : Array[Int32] = Array::make(m + 1, 0)
   let mut i = 0
   while i < n {
     cnt[rank[i] + 1] += 1
@@ -121,8 +121,8 @@ fn doubling_suffix_array(chars : Array[Int]) -> Array[Int] {
   // prefix doubling with two-pass stable counting sorts per round
   // (LSD by second key rank[i+k], then by rank[i]) — O(n) per
   // round instead of the closure-comparator sort's O(n log n)
-  let tmp : Array[Int] = Array::make(n, 0)
-  let key2 : Array[Int] = Array::make(n, 0)
+  let tmp : Array[Int32] = Array::make(n, 0)
+  let key2 : Array[Int32] = Array::make(n, 0)
   let mut k = 1
   let mut done = false
   while k < n && !done {
@@ -133,7 +133,7 @@ fn doubling_suffix_array(chars : Array[Int]) -> Array[Int] {
       i += 1
     }
     // pass 1: stable counting sort sa by key2 (range 0..m)
-    let cnt2 : Array[Int] = Array::make(m + 2, 0)
+    let cnt2 : Array[Int32] = Array::make(m + 2, 0)
     let mut i = 0
     while i < n {
       cnt2[key2[sa[i]] + 1] += 1
@@ -152,7 +152,7 @@ fn doubling_suffix_array(chars : Array[Int]) -> Array[Int] {
       i -= 1
     }
     // pass 2: stable counting sort tmp by rank (range 0..m-1)
-    let cnt1 : Array[Int] = Array::make(m + 1, 0)
+    let cnt1 : Array[Int32] = Array::make(m + 1, 0)
     let mut i = 0
     while i < n {
       cnt1[rank[tmp[i]] + 1] += 1
@@ -201,10 +201,10 @@ fn doubling_suffix_array(chars : Array[Int]) -> Array[Int] {
 
 ///|
 /// Kasai LCP: h[i] = LCP(suffix sa[i-1], suffix sa[i]); h[0] = 0.
-fn kasai_lcp(chars : Array[Int], sa : Array[Int]) -> Array[Int] {
+fn kasai_lcp(chars : Array[Int32], sa : Array[Int32]) -> Array[Int32] {
   let n = chars.length()
-  let h : Array[Int] = []
-  let inv : Array[Int] = []
+  let h : Array[Int32] = []
+  let inv : Array[Int32] = []
   let mut i = 0
   while i < n {
     h.push(0)
@@ -239,15 +239,15 @@ fn kasai_lcp(chars : Array[Int], sa : Array[Int]) -> Array[Int] {
 ///|
 /// One substring record from the enhanced suffix array tree enumeration.
 priv struct EsaNode {
-  offset : Int // start position of the substring
-  len : Int // substring length
-  freq : Int // number of occurrences (suffix interval size)
+  offset : Int32 // start position of the substring
+  len : Int32 // substring length
+  freq : Int32 // number of occurrences (suffix interval size)
 }
 
 ///|
 /// Enhanced suffix array enumeration (esaxx-rs suffixtree walk over
 /// SA + LCP): yields internal-node substrings in the Rust order.
-fn esa_nodes(chars : Array[Int]) -> Array[EsaNode] {
+fn esa_nodes(chars : Array[Int32]) -> Array[EsaNode] {
   let n = chars.length()
   if n == 0 {
     return []
@@ -256,8 +256,8 @@ fn esa_nodes(chars : Array[Int]) -> Array[EsaNode] {
   let lcp = kasai_lcp(chars, sa)
   let out : Array[EsaNode] = []
   // stack of (left_boundary, lcp_depth); walk matches esaxx-rs
-  let stack_l : Array[Int] = [-1]
-  let stack_d : Array[Int] = [-1]
+  let stack_l : Array[Int32] = [-1]
+  let stack_d : Array[Int32] = [-1]
   let mut node_count = 0
   let mut i = 0
   let mut done = false
@@ -305,17 +305,17 @@ priv struct EmPiece {
 priv struct EmLattice {
   mut word : Array[Char]
   // flat node storage: id, pos, len, score; index 0 = bos, 1 = eos
-  ids : Array[Int]
-  poss : Array[Int]
-  lens : Array[Int]
+  ids : Array[Int32]
+  poss : Array[Int32]
+  lens : Array[Int32]
   scores : Array[Double]
-  begin_nodes : Array[Array[Int]] // per position: node indices
-  end_nodes : Array[Array[Int]]
+  begin_nodes : Array[Array[Int32]] // per position: node indices
+  end_nodes : Array[Array[Int32]]
   // viterbi backtrace
   bt1 : Array[Double]
-  bt1_prev : Array[Int]
+  bt1_prev : Array[Int32]
   bt2 : Array[Double]
-  bt2_prev : Array[Int]
+  bt2_prev : Array[Int32]
   // marginal
   alpha : Array[Double]
   beta : Array[Double]
@@ -323,14 +323,18 @@ priv struct EmLattice {
   has2 : Array[Bool]
   // nbest2 candidate scratch (reused across nodes)
   nb_s : Array[Double]
-  nb_p : Array[Int]
+  nb_p : Array[Int32]
 }
 
 ///|
-fn em_lattice_new(word : Array[Char], bos_id : Int, eos_id : Int) -> EmLattice {
+fn em_lattice_new(
+  word : Array[Char],
+  bos_id : Int32,
+  eos_id : Int32,
+) -> EmLattice {
   let n = word.length()
-  let begin : Array[Array[Int]] = []
-  let end : Array[Array[Int]] = []
+  let begin : Array[Array[Int32]] = []
+  let end : Array[Array[Int32]] = []
   let mut i = 0
   while i < n + 1 {
     begin.push([])
@@ -367,8 +371,8 @@ fn em_lattice_new(word : Array[Char], bos_id : Int, eos_id : Int) -> EmLattice {
 fn em_lattice_reset(
   lat : EmLattice,
   word : Array[Char],
-  bos_id : Int,
-  eos_id : Int,
+  bos_id : Int32,
+  eos_id : Int32,
 ) -> Unit {
   let n = word.length()
   lat.word = word
@@ -416,10 +420,10 @@ fn em_lattice_reset(
 ///|
 fn em_lattice_insert(
   lat : EmLattice,
-  pos : Int,
-  len : Int,
+  pos : Int32,
+  len : Int32,
   score : Double,
-  id : Int,
+  id : Int32,
 ) -> Unit {
   let idx = lat.ids.length()
   lat.ids.push(id)
@@ -442,9 +446,9 @@ priv struct EmCands {
   // CSR layout: candidates at position pos are lens/sids[starts[pos]..
   // starts[pos+1]), ordered by ascending length exactly like the probe
   // loop that produced them
-  starts : Array[Int]
-  lens : Array[Int]
-  sids : Array[Int]
+  starts : Array[Int32]
+  lens : Array[Int32]
+  sids : Array[Int32]
   chars : Array[Char]
 }
 
@@ -458,14 +462,14 @@ priv struct EmCands {
 /// trainer ever grows pieces inside the loop.
 fn em_build_cands(
   word : Array[Char],
-  seed_index : Map[String, Int],
-  seed_cap : Map[Int, Int],
-  max_len : Int,
+  seed_index : Map[String, Int32],
+  seed_cap : Map[Int32, Int32],
+  max_len : Int32,
 ) -> EmCands {
   let n = word.length()
-  let starts : Array[Int] = [0]
-  let lens : Array[Int] = []
-  let sids : Array[Int] = []
+  let starts : Array[Int32] = [0]
+  let lens : Array[Int32] = []
+  let sids : Array[Int32] = []
   let sb = StringBuilder()
   let mut pos = 0
   while pos < n {
@@ -519,18 +523,18 @@ priv struct EmCtx {
   // corpus contains a literal "<UNK>" (the seed's 0th placeholder
   // collides with an ESA-emitted substring), so liveness is sized by
   // seed_len, NOT by the map's distinct-entry count
-  seed_index : Map[String, Int]
-  seed_len : Int
-  seed_cap : Map[Int, Int]
+  seed_index : Map[String, Int32]
+  seed_len : Int32
+  seed_cap : Map[Int32, Int32]
   cands : Map[String, EmCands]
-  max_len : Int
+  max_len : Int32
 }
 
 ///|
 /// seed id -> current piece id (or -1 when the piece is dead this
 /// generation)
-fn em_alive(pieces : Array[EmPiece], ctx : EmCtx) -> Array[Int] {
-  let alive : Array[Int] = Array::make(ctx.seed_len, -1)
+fn em_alive(pieces : Array[EmPiece], ctx : EmCtx) -> Array[Int32] {
+  let alive : Array[Int32] = Array::make(ctx.seed_len, -1)
   let mut i = 0
   while i < pieces.length() {
     match ctx.seed_index.get(pieces[i].token) {
@@ -548,9 +552,9 @@ fn em_alive(pieces : Array[EmPiece], ctx : EmCtx) -> Array[Int] {
 fn em_populate_cached(
   lat : EmLattice,
   cands : EmCands,
-  alive : Array[Int],
+  alive : Array[Int32],
   piece_scores : Array[Double],
-  unk_id : Int?,
+  unk_id : Int32?,
   unk_score : Double,
 ) -> Unit {
   let n = cands.chars.length()
@@ -583,8 +587,8 @@ fn em_populate_cached(
 ///|
 /// Build the first-char length cap for a piece set (candidate probing
 /// never needs to run past the longest piece sharing its start char).
-fn em_first_char_cap(piece_ids : Map[String, Int]) -> Map[Int, Int] {
-  let cap : Map[Int, Int] = Map([])
+fn em_first_char_cap(piece_ids : Map[String, Int32]) -> Map[Int32, Int32] {
+  let cap : Map[Int32, Int32] = Map([])
   for kv in piece_ids {
     let ca = kv.0.to_array()
     if ca.length() == 0 {
@@ -602,7 +606,7 @@ fn em_first_char_cap(piece_ids : Map[String, Int]) -> Map[Int, Int] {
 
 ///|
 /// Viterbi best path (Rust: strict > keeps the first best on ties).
-fn em_viterbi(lat : EmLattice) -> Array[Int]? {
+fn em_viterbi(lat : EmLattice) -> Array[Int32]? {
   let n = lat.word.length()
   let mut pos = 0
   while pos <= n {
@@ -641,14 +645,14 @@ fn em_viterbi(lat : EmLattice) -> Array[Int]? {
   if lat.bt1_prev[eos] == -1 {
     return None
   }
-  let path : Array[Int] = []
+  let path : Array[Int32] = []
   let mut node = lat.bt1_prev[eos]
   while node != -1 && lat.bt1_prev[node] != -1 {
     path.push(node)
     node = lat.bt1_prev[node]
   }
   // reverse
-  let out : Array[Int] = []
+  let out : Array[Int32] = []
   let mut i = path.length() - 1
   while i >= 0 {
     out.push(path[i])
@@ -660,7 +664,7 @@ fn em_viterbi(lat : EmLattice) -> Array[Int]? {
 ///|
 /// 2-best Viterbi (used by prune as nbest(2)); returns up to two paths,
 /// best first. Candidates per node: both slots of every predecessor.
-fn em_nbest2(lat : EmLattice) -> Array[Array[Int]] {
+fn em_nbest2(lat : EmLattice) -> Array[Array[Int32]] {
   let n = lat.word.length()
   let mut pos = 0
   while pos <= n {
@@ -712,14 +716,14 @@ fn em_nbest2(lat : EmLattice) -> Array[Array[Int]] {
   if lat.bt1_prev[eos] == -1 {
     return []
   }
-  let results : Array[Array[Int]] = []
+  let results : Array[Array[Int32]] = []
   let mut slot = 0
   while slot < 2 {
     let prev_arr = if slot == 0 { lat.bt1_prev } else { lat.bt2_prev }
     if slot == 1 && !lat.has2[eos] {
       break
     }
-    let path : Array[Int] = []
+    let path : Array[Int32] = []
     // mixed-slot walk: follow eos's slot link, then best links below
     // (the second-best path deviates from best at one edge chain)
     let mut node = prev_arr[eos]
@@ -727,7 +731,7 @@ fn em_nbest2(lat : EmLattice) -> Array[Array[Int]] {
       path.push(node)
       node = lat.bt1_prev[node]
     }
-    let out : Array[Int] = []
+    let out : Array[Int32] = []
     let mut i = path.length() - 1
     while i >= 0 {
       out.push(path[i])
@@ -816,14 +820,14 @@ fn em_populate_marginal(
 /// substrings (freq*len desc, string desc), capped at seed_size; to_log_prob.
 fn em_seed_pieces(
   word_order : Array[String],
-  word_counts : Map[String, Int],
-  max_piece_length : Int,
-  seed_size : Int,
+  word_counts : Map[String, Int32],
+  max_piece_length : Int32,
+  seed_size : Int32,
 ) -> Array[EmPiece] {
   // flat string of '\0'-joined distinct words + char counts weighted by freq
-  let flat : Array[Int] = []
-  let char_counts : Map[Int, Int] = Map([])
-  let char_list : Array[Int] = []
+  let flat : Array[Int32] = []
+  let char_counts : Map[Int32, Int32] = Map([])
+  let char_list : Array[Int32] = []
   for word in word_order {
     let n = word_counts.get(word).unwrap_or(0)
     let wcs = word.to_array()
@@ -843,7 +847,7 @@ fn em_seed_pieces(
   }
   let pieces : Array[EmPiece] = []
   // chars: Reverse((count, char)) — count desc, char code desc on ties
-  let char_items : Array[(Int, Int)] = []
+  let char_items : Array[(Int32, Int32)] = []
   for cp in char_list {
     char_items.push((char_counts.get(cp).unwrap_or(0), cp))
   }
@@ -872,7 +876,7 @@ fn em_seed_pieces(
   }
   // substrings from the ESA tree
   let nodes = esa_nodes(flat)
-  let subs : Array[(Int, String)] = []
+  let subs : Array[(Int32, String)] = []
   for node in nodes {
     if node.len <= 1 {
       continue
@@ -946,12 +950,12 @@ fn em_seed_pieces(
 /// E-step: expected piece counts over distinct words (deterministic order).
 fn em_e_step(
   word_order : Array[String],
-  word_counts : Map[String, Int],
+  word_counts : Map[String, Int32],
   ctx : EmCtx,
-  alive : Array[Int],
+  alive : Array[Int32],
   piece_scores : Array[Double],
   min_score : Double,
-  unk_id : Int,
+  unk_id : Int32,
 ) -> Array[Double] {
   let expected : Array[Double] = []
   let mut i = 0
@@ -1022,9 +1026,9 @@ fn em_m_step(
 fn em_prune_pieces(
   pieces : Array[EmPiece],
   word_order : Array[String],
-  word_counts : Map[String, Int],
+  word_counts : Map[String, Int32],
   ctx : EmCtx,
-  vocab_size : Int,
+  vocab_size : Int32,
   shrinking_factor : Double,
 ) -> Array[EmPiece] {
   let npieces = pieces.length()
@@ -1047,7 +1051,7 @@ fn em_prune_pieces(
   }
   let unk_score = min_score - 10.0
   let always_keep : Array[Bool] = []
-  let alternatives : Array[Array[Int]] = []
+  let alternatives : Array[Array[Int32]] = []
   let mut i = 0
   while i < npieces {
     always_keep.push(true)
@@ -1081,7 +1085,7 @@ fn em_prune_pieces(
   }
   // 2) viterbi frequencies over the words + inverted sentence lists
   let freq : Array[Double] = []
-  let inverted : Array[Array[Int]] = []
+  let inverted : Array[Array[Int32]] = []
   let mut i = 0
   while i < npieces {
     freq.push(0.0)
@@ -1118,7 +1122,7 @@ fn em_prune_pieces(
   let new_pieces : Array[EmPiece] = [
     { token: pieces[0].token, score: pieces[0].score, },
   ]
-  let candidates : Array[(Int, Double)] = []
+  let candidates : Array[(Int32, Double)] = []
   let mut id = 1
   while id < npieces {
     let token = pieces[id].token
@@ -1181,10 +1185,10 @@ fn em_prune_pieces(
 fn em_finalize(
   pieces : Array[EmPiece],
   required_chars : Array[String],
-  vocab_size : Int?,
+  vocab_size : Int32?,
   special_tokens : Array[String],
   unk_token : String?,
-) -> (Array[EmPiece], Int?) {
+) -> (Array[EmPiece], Int32?) {
   let min_score_penalty_delta = 0.0001
   let mut min_score_penalty = 0.0
   let out : Array[EmPiece] = []
@@ -1218,9 +1222,9 @@ fn em_finalize(
     }
   }
   // unk placement
-  let (unk_id, need_add_unk) : (Int?, Bool) = match unk_token {
+  let (unk_id, need_add_unk) : (Int32?, Bool) = match unk_token {
     Some(unk) => {
-      let mut found : Int? = None
+      let mut found : Int32? = None
       let mut i = 0
       while i < special_tokens.length() {
         if special_tokens[i] == unk {
@@ -1292,16 +1296,16 @@ fn em_finalize(
 /// The full do_train pipeline over counted words.
 fn unigram_do_train(
   word_order : Array[String],
-  word_counts : Map[String, Int],
-  vocab_size : Int?,
+  word_counts : Map[String, Int32],
+  vocab_size : Int32?,
   shrinking_factor : Double,
-  n_sub_iterations : Int,
-  max_piece_length : Int,
-  seed_size : Int,
+  n_sub_iterations : Int32,
+  max_piece_length : Int32,
+  seed_size : Int32,
   special_tokens : Array[String],
   unk_token : String?,
   initial_alphabet : Array[String],
-) -> (Array[EmPiece], Int?) {
+) -> (Array[EmPiece], Int32?) {
   // seed
   let mut pieces : Array[EmPiece] = [{ token: "<UNK>", score: 0.0 / 0.0, }]
   let seed = em_seed_pieces(
@@ -1347,7 +1351,7 @@ fn unigram_do_train(
   // populate memoization: the seed piece set is the universe — M-step
   // and prune only ever REMOVE pieces, so per-string candidate lists
   // computed once against it stay valid across all EM generations
-  let seed_index : Map[String, Int] = Map([])
+  let seed_index : Map[String, Int32] = Map([])
   let mut si = 0
   while si < pieces.length() {
     seed_index[pieces[si].token] = si
@@ -1364,7 +1368,7 @@ fn unigram_do_train(
   // BEFORE the first size check (round-1 review: an early exit here
   // shipped raw to_log_prob seed scores where HF ships post-EM
   // digamma scores — up to 4.5 nats off on small corpora)
-  let dbg = @sys.get_env_var("EM_TRACE") is Some(_)
+  let dbg = @env.get_env_var("EM_TRACE") is Some(_)
   let mut iter_guard = 0
   while iter_guard < 512 {
     iter_guard += 1
@@ -1412,7 +1416,7 @@ fn unigram_do_train(
 }
 
 ///|
-fn em_double_to_int(x : Double) -> Int {
+fn em_double_to_int(x : Double) -> Int32 {
   // Rust `as usize` truncates toward zero
   if x >= 2147483647.0 {
     2147483647

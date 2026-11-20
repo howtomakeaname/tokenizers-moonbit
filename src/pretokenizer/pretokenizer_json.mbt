@@ -103,7 +103,7 @@ fn delimiter_to_json(delimiter : Char) -> String {
 }
 
 ///|
-fn fixed_length_to_json(length : Int) -> String {
+fn fixed_length_to_json(length : Int32) -> String {
   "{\"type\":\"FixedLength\",\"length\":" + length.to_string() + "}"
 }
 
@@ -189,7 +189,7 @@ fn bool_json(b : Bool) -> String {
 }
 
 ///|
-fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
+fn write_control_escape(sb : StringBuilder, u : Int32) -> Unit {
   let digits = "0123456789ABCDEF".to_array()
   sb.write_string("\\u00")
   sb.write_char(digits[u / 16 % 16])

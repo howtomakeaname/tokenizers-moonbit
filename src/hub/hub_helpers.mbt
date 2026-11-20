@@ -57,7 +57,7 @@ fn validate_hub_filename(filename : String) -> Unit raise @types.TokenizerError 
 /// traffic is disabled and a network attempt would have been made.
 fn reject_local_files_only_direct_download(
   local_files_only : Bool,
-  url? : String? = None,
+  url~ : String? = None,
 ) -> Unit raise @types.TokenizerError {
   if local_files_only {
     let target = url.unwrap_or("the Hub")
@@ -101,13 +101,13 @@ fn is_unreserved_url_char(c : Char) -> Bool {
 }
 
 ///|
-fn hex_digit(v : Int) -> String {
+fn hex_digit(v : Int32) -> String {
   let digits = "0123456789ABCDEF".to_array()
   digits[v].to_string()
 }
 
 ///|
-fn utf8_bytes(code : Int) -> Array[Int] {
+fn utf8_bytes(code : Int32) -> Array[Int32] {
   if code < 0x80 {
     [code]
   } else if code < 0x800 {
@@ -129,7 +129,7 @@ async fn async_download_with_redirects(
   model_id : String,
   options : HubDownloadOptions,
   plan : HubRequestPlan,
-  max_redirects~ : Int,
+  max_redirects~ : Int32,
 ) -> HubDownloadResult raise @types.TokenizerError {
   let mut current = plan.url
   let mut remaining = max_redirects
@@ -207,7 +207,7 @@ async fn async_download_with_redirects(
 async fn async_download_file_with_redirects(
   options : HubDownloadOptions,
   plan : HubRequestPlan,
-  max_redirects~ : Int,
+  max_redirects~ : Int32,
 ) -> HubDownloadResult raise @types.TokenizerError {
   let mut current = plan.url
   let mut remaining = max_redirects
@@ -267,7 +267,7 @@ async fn async_download_file_with_redirects(
 async fn read_hub_response_stream_bytes(
   client : @http.Client,
   url : String,
-  chunk_size : Int,
+  chunk_size : Int32,
 ) -> Array[Bytes] raise @types.TokenizerError {
   let chunks : Array[Bytes] = []
   let max_len = positive_stream_chunk_size(chunk_size)
@@ -287,7 +287,7 @@ async fn read_hub_response_stream_bytes(
 ///|
 async fn async_head_with_redirects(
   plan : HubRequestPlan,
-  max_redirects~ : Int,
+  max_redirects~ : Int32,
 ) -> HubHeadResult raise @types.TokenizerError {
   let mut current = plan.url
   let mut remaining = max_redirects
@@ -348,11 +348,14 @@ fn require_response_body(
 }
 
 ///|
-fn headers_without_range(headers : Map[String, String]) -> Map[String, String] {
-  let out : Map[String, String] = Map([])
+fn headers_without_range(
+  headers : Map[@http.CaseInsensitiveString, String],
+) -> Map[@http.CaseInsensitiveString, String] {
+  let out : Map[@http.CaseInsensitiveString, String] = Map([])
   for kv in headers.to_array() {
-    let key_lower = kv.0.to_lower()
-    if key_lower != "range" && key_lower != "if-range" {
+    // CaseInsensitiveString compares ASCII-case-insensitively, so literal
+    // keys match regardless of the original header spelling.
+    if kv.0 != "range" && kv.0 != "if-range" {
       out[kv.0] = kv.1
     }
   }
@@ -360,14 +363,16 @@ fn headers_without_range(headers : Map[String, String]) -> Map[String, String] {
 }
 
 ///|
-fn build_headers(options : HubDownloadOptions) -> Map[String, String] {
+fn build_headers(
+  options : HubDownloadOptions,
+) -> Map[@http.CaseInsensitiveString, String] {
   // Keep close to HuggingFace Hub/tokenizers client requests: a tokenizers- and
   // hf_hub-flavoured User-Agent (native only), broad Accept, and optional bearer
   // token. Do not add library-specific identifiers here; the intent is to match
   // HuggingFace client traffic as closely as possible. Avoid Host/Content-Length/
   // Connection/Accept-Encoding because the HTTP runtime owns them and JS fetch
   // forbids several of these headers.
-  let out : Map[String, String] = { "Accept": "*/*" }
+  let out : Map[@http.CaseInsensitiveString, String] = { "Accept": "*/*" }
   if user_agent_header_allowed() {
     match options.user_agent {
       Some(ua) => if !ua.is_empty() { out["User-Agent"] = ua }
@@ -387,11 +392,11 @@ fn build_headers(options : HubDownloadOptions) -> Map[String, String] {
 
 ///|
 fn resolve_auth_token() -> String? {
-  match @sys.get_env_var("HF_TOKEN") {
+  match @env.get_env_var("HF_TOKEN") {
     Some(t) => if !t.is_empty() { return Some(t) }
     None => ()
   }
-  match @sys.get_env_var("HF_TOKEN_PATH") {
+  match @env.get_env_var("HF_TOKEN_PATH") {
     Some(path) =>
       if !path.is_empty() {
         match read_token_file(path) {
@@ -401,7 +406,7 @@ fn resolve_auth_token() -> String? {
       }
     None => ()
   }
-  match @sys.get_env_var("HF_HOME") {
+  match @env.get_env_var("HF_HOME") {
     Some(home) =>
       if !home.is_empty() {
         match read_token_file(home + "/token") {
@@ -465,26 +470,17 @@ fn user_agent_header_allowed() -> Bool {
 }
 
 ///|
-fn header(headers : Map[String, String], name : String) -> String? {
-  match headers.get(name) {
-    Some(v) => return Some(v)
-    None => ()
-  }
-  let lower = name.to_lower()
-  match headers.get(lower) {
-    Some(v) => return Some(v)
-    None => ()
-  }
-  for kv in headers {
-    if kv.0.to_lower() == lower {
-      return Some(kv.1)
-    }
-  }
-  None
+fn header(
+  headers : Map[@http.CaseInsensitiveString, String],
+  name : String,
+) -> String? {
+  // The header map keys are case-insensitive already, so a single lookup
+  // covers the mixed-case spellings previously handled by manual fallbacks.
+  headers.get(@http.CaseInsensitiveString(name))
 }
 
 ///|
-fn parse_non_negative_int(s : String) -> Int? {
+fn parse_non_negative_int(s : String) -> Int32? {
   let chars = s.to_array()
   if chars.length() == 0 {
     return None
@@ -501,7 +497,7 @@ fn parse_non_negative_int(s : String) -> Int? {
 }
 
 ///|
-fn parse_content_range(s : String) -> (Int?, Int?, Int?) {
+fn parse_content_range(s : String) -> (Int32?, Int32?, Int32?) {
   let prefix = "bytes "
   if !s.has_prefix(prefix) {
     return (None, None, None)
@@ -530,7 +526,7 @@ fn parse_content_range(s : String) -> (Int?, Int?, Int?) {
 }
 
 ///|
-fn parse_content_range_total(s : String) -> Int? {
+fn parse_content_range_total(s : String) -> Int32? {
   if s == "*" {
     None
   } else {
@@ -539,7 +535,7 @@ fn parse_content_range_total(s : String) -> Int? {
 }
 
 ///|
-fn find_char(chars : Array[Char], target : Char) -> Int {
+fn find_char(chars : Array[Char], target : Char) -> Int32 {
   for i, c in chars {
     if c == target {
       return i
@@ -549,7 +545,7 @@ fn find_char(chars : Array[Char], target : Char) -> Int {
 }
 
 ///|
-fn is_redirect(code : Int) -> Bool {
+fn is_redirect(code : Int32) -> Bool {
   code == 301 || code == 302 || code == 303 || code == 307 || code == 308
 }
 
@@ -631,7 +627,7 @@ fn trim_trailing_slash(s : String) -> String {
 }
 
 ///|
-fn string_slice(chars : Array[Char], start : Int, stop : Int) -> String {
+fn string_slice(chars : Array[Char], start : Int32, stop : Int32) -> String {
   let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])

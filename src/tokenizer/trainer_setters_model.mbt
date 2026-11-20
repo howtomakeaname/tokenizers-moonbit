@@ -164,7 +164,7 @@ pub fn Trainer::set_shrinking_factor_alias(
 
 ///|
 /// Set max_piece_length. Returns a new Trainer; only Unigram supports it.
-pub fn Trainer::set_max_piece_length(self : Trainer, val : Int?) -> Trainer {
+pub fn Trainer::set_max_piece_length(self : Trainer, val : Int32?) -> Trainer {
   match self {
     UnigramTrainer(
       unk_token~,
@@ -204,14 +204,14 @@ pub fn Trainer::set_max_piece_length(self : Trainer, val : Int?) -> Trainer {
 /// Python/property-style setter alias for max_piece_length.
 pub fn Trainer::set_max_piece_length_alias(
   self : Trainer,
-  val : Int?,
+  val : Int32?,
 ) -> Trainer {
   self.set_max_piece_length(val)
 }
 
 ///|
 /// Set n_sub_iterations. Returns a new Trainer; only Unigram supports it.
-pub fn Trainer::set_n_sub_iterations(self : Trainer, val : Int) -> Trainer {
+pub fn Trainer::set_n_sub_iterations(self : Trainer, val : Int32) -> Trainer {
   match self {
     UnigramTrainer(
       unk_token~,
@@ -251,14 +251,14 @@ pub fn Trainer::set_n_sub_iterations(self : Trainer, val : Int) -> Trainer {
 /// Python/property-style setter alias for n_sub_iterations.
 pub fn Trainer::set_n_sub_iterations_alias(
   self : Trainer,
-  val : Int,
+  val : Int32,
 ) -> Trainer {
   self.set_n_sub_iterations(val)
 }
 
 ///|
 /// Set seed_size. Returns a new Trainer; only Unigram supports it.
-pub fn Trainer::set_seed_size(self : Trainer, val : Int) -> Trainer {
+pub fn Trainer::set_seed_size(self : Trainer, val : Int32) -> Trainer {
   match self {
     UnigramTrainer(
       unk_token~,
@@ -296,7 +296,7 @@ pub fn Trainer::set_seed_size(self : Trainer, val : Int) -> Trainer {
 
 ///|
 /// Python/property-style setter alias for seed_size.
-pub fn Trainer::set_seed_size_alias(self : Trainer, val : Int) -> Trainer {
+pub fn Trainer::set_seed_size_alias(self : Trainer, val : Int32) -> Trainer {
   self.set_seed_size(val)
 }
 

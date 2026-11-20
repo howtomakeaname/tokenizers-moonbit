@@ -8,7 +8,7 @@
 ///|
 /// Inclusive [start, stop] codepoint ranges of Unicode P*
 /// (Punctuation) characters, sorted ascending.
-pub fn unicode_punct_ranges() -> Array[(Int, Int)] {
+pub fn unicode_punct_ranges() -> Array[(Int32, Int32)] {
   [
     (33, 35),
     (37, 42),

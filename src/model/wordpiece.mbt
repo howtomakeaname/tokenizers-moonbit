@@ -10,7 +10,7 @@
 pub fn WordPieceModel::tokenize(
   self : WordPieceModel,
   word : String,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Array[@types.Token] raise @types.TokenizerError {
   let chars = word.to_array()
   let n = chars.length()
@@ -82,7 +82,7 @@ pub fn WordPieceModel::tokenize(
 ///|
 fn WordPieceModel::require_unk_id(
   self : WordPieceModel,
-) -> Int raise @types.TokenizerError {
+) -> Int32 raise @types.TokenizerError {
   match self.vocab.get(self.unk_token) {
     Some(uid) => uid
     None =>
@@ -95,7 +95,7 @@ fn WordPieceModel::require_unk_id(
 ///|
 fn shift_wordpiece_tokens(
   tokens : Array[@types.Token],
-  offset : Int,
+  offset : Int32,
 ) -> Array[@types.Token] {
   if offset == 0 {
     return tokens.copy()
@@ -108,7 +108,7 @@ fn shift_wordpiece_tokens(
 }
 
 ///|
-fn make_sub(chars : Array[Char], start : Int, stop : Int) -> String {
+fn make_sub(chars : Array[Char], start : Int32, stop : Int32) -> String {
   let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
@@ -119,8 +119,8 @@ fn make_sub(chars : Array[Char], start : Int, stop : Int) -> String {
 ///|
 fn make_wordpiece_candidate(
   chars : Array[Char],
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
   continuing_subword_prefix : String,
   end_of_word_suffix : String?,
 ) -> String {

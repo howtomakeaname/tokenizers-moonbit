@@ -7,10 +7,11 @@ pub struct NormalizedString {
 ///|
 /// Serializable/interoperable snapshot of a `NormalizedString` for Python
 /// binding pickle/state transfer.
+#derive(Debug, Eq)
 pub struct NormalizedStringState {
   original : String
   normalized : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NormalizedString::new(s : String) -> NormalizedString {
@@ -114,13 +115,13 @@ pub fn NormalizedString::to_string(self : NormalizedString) -> String {
 }
 
 ///|
-pub fn NormalizedString::len(self : NormalizedString) -> Int {
+pub fn NormalizedString::len(self : NormalizedString) -> Int32 {
   self.normalized.char_length()
 }
 
 ///|
 /// Python `__len__`-style alias for `len`.
-pub fn NormalizedString::__len__(self : NormalizedString) -> Int {
+pub fn NormalizedString::__len__(self : NormalizedString) -> Int32 {
   self.len()
 }
 
@@ -128,7 +129,7 @@ pub fn NormalizedString::__len__(self : NormalizedString) -> Int {
 /// HF-style single-index access for Python binding shims.
 pub fn NormalizedString::get_item(
   self : NormalizedString,
-  index : Int,
+  index : Int32,
 ) -> NormalizedString? {
   if index < 0 {
     return None
@@ -147,7 +148,7 @@ pub fn NormalizedString::get_item(
 /// Python `__getitem__`-style alias for `get_item`.
 pub fn NormalizedString::__getitem__(
   self : NormalizedString,
-  index : Int,
+  index : Int32,
 ) -> NormalizedString? {
   self.get_item(index)
 }
@@ -257,8 +258,8 @@ pub fn NormalizedString::prepend(
 ///|
 pub fn NormalizedString::slice(
   self : NormalizedString,
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
 ) -> NormalizedString {
   let chars = self.normalized.to_array()
   let a = clamp_int(start, 0, chars.length())

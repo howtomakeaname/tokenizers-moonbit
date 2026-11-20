@@ -4,7 +4,7 @@ pub(all) enum BracketMember {
   /// Shortcut class member — CLASS-context kinds: `\w` inside brackets
   /// is the quirk-free word table (26, probed: '[a\w]' on 'a²b' ->
   /// '#²#' while bare '\w' matches '²'), `\d` 11, `\s` 1, `\p{...}` 7+
-  MKind(Int)
+  MKind(Int32)
   /// Single literal char (escaped or raw)
   MChar(Char)
   /// Inclusive literal range a-z (reversed ranges reject: onig raises
@@ -13,7 +13,7 @@ pub(all) enum BracketMember {
 }
 
 ///|
-fn bracket_shortcut_kind(spelling : String) -> Int? {
+fn bracket_shortcut_kind(spelling : String) -> Int32? {
   match spelling {
     "\\w" => Some(26)
     "\\W" => Some(27)
@@ -114,8 +114,8 @@ pub fn bracket_set_holds(
 /// endpoints are onig load errors — '[\d-a]').
 fn bracket_body_members(
   chars : Array[Char],
-  start : Int,
-  close : Int,
+  start : Int32,
+  close : Int32,
 ) -> (Array[BracketMember], Bool)? {
   let negated = start < close && chars[start] == '^'
   let mut i = if negated { start + 1 } else { start }
@@ -247,7 +247,7 @@ fn bracket_body_members(
 /// canonical kind spellings and reject here to avoid double-claiming.
 pub fn bracket_set_spec(
   pattern : String,
-) -> (Array[BracketMember], Bool, Int, Int, Bool)? {
+) -> (Array[BracketMember], Bool, Int32, Int32, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
   if n < 3 || chars[0] != '[' {
@@ -280,8 +280,8 @@ pub fn bracket_set_spec(
   }
   // quantifier after ']'
   let q = close + 1
-  let mut lo : Int = 1
-  let mut hi : Int = 1
+  let mut lo : Int32 = 1
+  let mut hi : Int32 = 1
   if q < n {
     // lazy exact '{n}?' == the optional group (X{n})?: the block
     // when it fits, an empty otherwise — the '+??' rewrite lands here

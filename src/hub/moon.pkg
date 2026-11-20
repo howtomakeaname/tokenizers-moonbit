@@ -5,7 +5,7 @@ import {
   "moonbitlang/async/http",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/x/fs",
-  "moonbitlang/x/sys",
+  "moonbitlang/core/env",
 }
 
 import {

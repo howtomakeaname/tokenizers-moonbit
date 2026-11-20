@@ -1,8 +1,8 @@
 ///|
 pub fn PostProcessor::added_tokens(
   self : PostProcessor,
-  pair? : Bool = false,
-) -> Int {
+  pair~ : Bool = false,
+) -> Int32 {
   match self {
     TemplateProcessing(single~, pair=pair_template, special_tokens~) =>
       count_specials(if pair { pair_template } else { single }, special_tokens)
@@ -23,8 +23,8 @@ pub fn PostProcessor::added_tokens(
 /// HF Python binding alias for `added_tokens(pair=is_pair)`.
 pub fn PostProcessor::num_special_tokens_to_add(
   self : PostProcessor,
-  is_pair? : Bool = false,
-) -> Int {
+  is_pair~ : Bool = false,
+) -> Int32 {
   self.added_tokens(pair=is_pair)
 }
 
@@ -32,7 +32,7 @@ pub fn PostProcessor::num_special_tokens_to_add(
 fn count_specials(
   pieces : Array[Piece],
   special_tokens : Map[String, SpecialToken],
-) -> Int {
+) -> Int32 {
   let mut n = 0
   for p in pieces {
     match p {
@@ -109,7 +109,7 @@ pub fn PostProcessor::from_json(
 fn parse_token_id_pair(
   obj : Map[String, Json],
   key : String,
-) -> (String, Int) raise @types.TokenizerError {
+) -> (String, Int32) raise @types.TokenizerError {
   match obj.get(key) {
     Some(Array([String(tok), Number(id, ..)])) => (tok, id.to_int())
     _ => raise @types.ParseError("post_processor.\{key} must be [token, id]")
@@ -213,7 +213,7 @@ fn split_template_ws(s : String) -> Array[String] {
 }
 
 ///|
-fn split_template_type(tok : String) -> (String, Int) {
+fn split_template_type(tok : String) -> (String, Int32) {
   let chars = tok.to_array()
   for i in 0..<chars.length() {
     if chars[i] == ':' {
@@ -227,7 +227,7 @@ fn split_template_type(tok : String) -> (String, Int) {
 }
 
 ///|
-fn parse_decimal(s : String) -> Int {
+fn parse_decimal(s : String) -> Int32 {
   let mut out = 0
   for c in s {
     if c >= '0' && c <= '9' {
@@ -253,7 +253,7 @@ fn is_template_ws(c : Char) -> Bool {
 }
 
 ///|
-fn slice_chars(chars : Array[Char], start : Int, stop : Int) -> String {
+fn slice_chars(chars : Array[Char], start : Int32, stop : Int32) -> String {
   let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
@@ -283,7 +283,7 @@ fn write_repr_string(sb : StringBuilder, s : String) -> Unit {
 }
 
 ///|
-fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
+fn write_control_escape(sb : StringBuilder, u : Int32) -> Unit {
   let hex = "0123456789ABCDEF".to_array()
   sb.write_string("\\u00")
   sb.write_char(hex[u / 16 % 16])
@@ -303,7 +303,7 @@ fn parse_special_tokens(
     let (key, v) = kv
     let vobj = @types.as_object(v, "special_token")
     let id = @types.get_str(vobj, "id", default=key)
-    let ids : Array[Int] = []
+    let ids : Array[Int32] = []
     match vobj.get("ids") {
       Some(Array(a)) =>
         for x in a {

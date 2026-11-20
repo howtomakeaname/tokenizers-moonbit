@@ -3,11 +3,11 @@
 ///|
 fn mk_unigram(
   vocab : Array[(String, Double)],
-  unk_id : Int?,
+  unk_id : Int32?,
   byte_fallback : Bool,
   fuse_unk : Bool,
 ) -> Model {
-  let v : Map[String, (Int, Double)] = Map([])
+  let v : Map[String, (Int32, Double)] = Map([])
   let vr : Array[String?] = []
   for i, kv in vocab {
     v[kv.0] = (i, kv.1)
@@ -32,7 +32,7 @@ fn unigram_surfaces(tokens : Array[@types.Token]) -> Array[String] {
 }
 
 ///|
-fn unigram_ids(tokens : Array[@types.Token]) -> Array[Int] {
+fn unigram_ids(tokens : Array[@types.Token]) -> Array[Int32] {
   tokens.map(t => t.id)
 }
 
@@ -119,7 +119,7 @@ test "unigram alpha/nbest_size default to None" {
 ///|
 test "unigram alpha/nbest_size JSON round-trip" {
   // Create a model with alpha and nbest_size set
-  let v : Map[String, (Int, Double)] = Map([])
+  let v : Map[String, (Int32, Double)] = Map([])
   let vr : Array[String?] = []
   v["a"] = (0, 0.0)
   v["b"] = (1, -1.0)
@@ -167,7 +167,7 @@ test "unigram alpha=0.0 behaves like Viterbi" {
 ///|
 test "unigram alpha sampling produces valid tokens" {
   // Create a model with alpha > 0 to enable sampling
-  let v : Map[String, (Int, Double)] = Map([])
+  let v : Map[String, (Int32, Double)] = Map([])
   let vr : Array[String?] = []
   v["hello"] = (0, -1.0)
   v["world"] = (1, -2.0)
@@ -201,7 +201,7 @@ test "unigram alpha sampling produces valid tokens" {
 ///|
 test "unigram nbest_size sampling produces valid tokens" {
   // Create a model with alpha > 0 and nbest_size > 0 to enable N-best sampling
-  let v : Map[String, (Int, Double)] = Map([])
+  let v : Map[String, (Int32, Double)] = Map([])
   let vr : Array[String?] = []
   v["hello"] = (0, -1.0)
   v["world"] = (1, -2.0)

@@ -117,7 +117,7 @@ pub fn Trainer::set_unk_token_alias(self : Trainer, val : String?) -> Trainer {
 
 ///|
 /// Set min_frequency. Returns a new Trainer; all variants support it.
-pub fn Trainer::set_min_frequency(self : Trainer, val : Int) -> Trainer {
+pub fn Trainer::set_min_frequency(self : Trainer, val : Int32) -> Trainer {
   match self {
     WordLevelTrainer(
       unk_token~,
@@ -228,7 +228,7 @@ pub fn Trainer::set_min_frequency(self : Trainer, val : Int) -> Trainer {
 
 ///|
 /// Python/property-style setter alias for min_frequency.
-pub fn Trainer::set_min_frequency_alias(self : Trainer, val : Int) -> Trainer {
+pub fn Trainer::set_min_frequency_alias(self : Trainer, val : Int32) -> Trainer {
   self.set_min_frequency(val)
 }
 
@@ -480,7 +480,7 @@ pub fn Trainer::set_special_added_tokens_alias(
 
 ///|
 /// Set vocab_size. Returns a new Trainer; all variants support it.
-pub fn Trainer::set_vocab_size(self : Trainer, val : Int?) -> Trainer {
+pub fn Trainer::set_vocab_size(self : Trainer, val : Int32?) -> Trainer {
   match self {
     WordLevelTrainer(
       unk_token~,
@@ -591,7 +591,7 @@ pub fn Trainer::set_vocab_size(self : Trainer, val : Int?) -> Trainer {
 
 ///|
 /// Python/property-style setter alias for vocab_size.
-pub fn Trainer::set_vocab_size_alias(self : Trainer, val : Int?) -> Trainer {
+pub fn Trainer::set_vocab_size_alias(self : Trainer, val : Int32?) -> Trainer {
   self.set_vocab_size(val)
 }
 

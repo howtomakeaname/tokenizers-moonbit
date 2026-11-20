@@ -9,17 +9,17 @@
 pub struct DecodeStream {
   tokenizer : Tokenizer
   skip_special_tokens : Bool
-  ids : Array[Int]
+  ids : Array[Int32]
   prefix : String
-  prefix_index : Int
+  prefix_index : Int32
 }
 
 ///|
 /// Decode a list of token ids back into a string.
 pub fn Tokenizer::decode(
   self : Tokenizer,
-  ids : Array[Int],
-  skip_special_tokens? : Bool = true,
+  ids : Array[Int32],
+  skip_special_tokens~ : Bool = true,
 ) -> String {
   self.decode_with_hooks_impl(ids, self.component_hooks, skip_special_tokens~)
 }
@@ -31,9 +31,9 @@ pub fn Tokenizer::decode(
 /// tokenizer's typed decoder or direct token concatenation.
 pub fn Tokenizer::decode_with_hooks(
   self : Tokenizer,
-  ids : Array[Int],
+  ids : Array[Int32],
   hooks : TokenizerComponentHooks,
-  skip_special_tokens? : Bool = true,
+  skip_special_tokens~ : Bool = true,
 ) -> String {
   self.decode_with_hooks_impl(
     ids,
@@ -45,7 +45,7 @@ pub fn Tokenizer::decode_with_hooks(
 ///|
 fn Tokenizer::decode_with_hooks_impl(
   self : Tokenizer,
-  ids : Array[Int],
+  ids : Array[Int32],
   hooks : TokenizerComponentHooks,
   skip_special_tokens~ : Bool,
 ) -> String {
@@ -77,8 +77,8 @@ fn Tokenizer::decode_with_hooks_impl(
 /// Python binding alias for `decode` when exposing ids-specific method names.
 pub fn Tokenizer::decode_ids(
   self : Tokenizer,
-  ids : Array[Int],
-  skip_special_tokens? : Bool = true,
+  ids : Array[Int32],
+  skip_special_tokens~ : Bool = true,
 ) -> String {
   self.decode(ids, skip_special_tokens~)
 }
@@ -91,8 +91,8 @@ pub fn Tokenizer::decode_ids(
 /// cache used on the forward path.
 pub fn Tokenizer::decode_batch(
   self : Tokenizer,
-  batch : Array[Array[Int]],
-  skip_special_tokens? : Bool = true,
+  batch : Array[Array[Int32]],
+  skip_special_tokens~ : Bool = true,
 ) -> Array[String] {
   let out : Array[String] = []
   let cache : Map[String, String] = Map([])
@@ -114,8 +114,8 @@ pub fn Tokenizer::decode_batch(
 /// Python binding alias for `decode_batch`.
 pub fn Tokenizer::batch_decode(
   self : Tokenizer,
-  batch : Array[Array[Int]],
-  skip_special_tokens? : Bool = true,
+  batch : Array[Array[Int32]],
+  skip_special_tokens~ : Bool = true,
 ) -> Array[String] {
   self.decode_batch(batch, skip_special_tokens~)
 }
@@ -124,8 +124,8 @@ pub fn Tokenizer::batch_decode(
 /// Python binding alias for `decode_batch` with explicit ids naming.
 pub fn Tokenizer::decode_ids_batch(
   self : Tokenizer,
-  batch : Array[Array[Int]],
-  skip_special_tokens? : Bool = true,
+  batch : Array[Array[Int32]],
+  skip_special_tokens~ : Bool = true,
 ) -> Array[String] {
   self.decode_batch(batch, skip_special_tokens~)
 }
@@ -135,8 +135,8 @@ pub fn Tokenizer::decode_ids_batch(
 /// synchronous implementation on all MoonBit targets.
 pub fn Tokenizer::async_decode(
   self : Tokenizer,
-  ids : Array[Int],
-  skip_special_tokens? : Bool = true,
+  ids : Array[Int32],
+  skip_special_tokens~ : Bool = true,
 ) -> String {
   self.decode(ids, skip_special_tokens~)
 }
@@ -146,8 +146,8 @@ pub fn Tokenizer::async_decode(
 /// caching and output order from `decode_batch`.
 pub fn Tokenizer::async_decode_batch(
   self : Tokenizer,
-  batch : Array[Array[Int]],
-  skip_special_tokens? : Bool = true,
+  batch : Array[Array[Int32]],
+  skip_special_tokens~ : Bool = true,
 ) -> Array[String] {
   self.decode_batch(batch, skip_special_tokens~)
 }
@@ -158,7 +158,7 @@ pub fn Tokenizer::async_decode_batch(
 /// (for example ByteFallback or Strip/ByteLevel decoder state).
 pub fn Tokenizer::decode_stream(
   self : Tokenizer,
-  skip_special_tokens? : Bool = true,
+  skip_special_tokens~ : Bool = true,
 ) -> DecodeStream {
   {
     tokenizer: self,
@@ -174,7 +174,7 @@ pub fn Tokenizer::decode_stream(
 /// `chunk` is `None` until the buffered ids decode to a valid text extension.
 pub fn DecodeStream::step(
   self : DecodeStream,
-  id : Int,
+  id : Int32,
 ) -> (DecodeStream, String?) {
   let ids = self.ids.copy()
   let mut prefix = self.prefix
@@ -236,7 +236,7 @@ pub fn DecodeStream::step(
 }
 
 ///|
-fn ids_key(ids : Array[Int]) -> String {
+fn ids_key(ids : Array[Int32]) -> String {
   let sb = StringBuilder()
   for id in ids {
     sb.write_string(id.to_string())
@@ -246,7 +246,7 @@ fn ids_key(ids : Array[Int]) -> String {
 }
 
 ///|
-fn char_len(s : String) -> Int {
+fn char_len(s : String) -> Int32 {
   s.to_array().length()
 }
 
@@ -283,8 +283,8 @@ fn suffix_after_prefix(s : String, prefix : String) -> String {
 }
 
 ///|
-fn slice_ids(ids : Array[Int], start : Int, stop : Int) -> Array[Int] {
-  let out : Array[Int] = []
+fn slice_ids(ids : Array[Int32], start : Int32, stop : Int32) -> Array[Int32] {
+  let out : Array[Int32] = []
   let lo = if start < 0 { 0 } else { start }
   let hi = if stop > ids.length() { ids.length() } else { stop }
   for i in lo..<hi {

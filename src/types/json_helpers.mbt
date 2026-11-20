@@ -72,7 +72,11 @@ pub fn get_bool(obj : Map[String, Json], key : String, default~ : Bool) -> Bool 
 
 ///|
 /// Int field with a default (JSON numbers are doubles).
-pub fn get_int(obj : Map[String, Json], key : String, default~ : Int) -> Int {
+pub fn get_int(
+  obj : Map[String, Json],
+  key : String,
+  default~ : Int32,
+) -> Int32 {
   match obj.get(key) {
     Some(Number(n, ..)) => n.to_int()
     _ => default
@@ -81,7 +85,7 @@ pub fn get_int(obj : Map[String, Json], key : String, default~ : Int) -> Int {
 
 ///|
 /// Optional int field.
-pub fn get_int_opt(obj : Map[String, Json], key : String) -> Int? {
+pub fn get_int_opt(obj : Map[String, Json], key : String) -> Int32? {
   match obj.get(key) {
     Some(Number(n, ..)) => Some(n.to_int())
     _ => None

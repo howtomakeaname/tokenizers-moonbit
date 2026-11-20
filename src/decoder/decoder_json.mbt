@@ -73,7 +73,7 @@ fn bpe_decoder_to_json(suffix : String) -> String {
 }
 
 ///|
-fn strip_to_json(content : Char, start : Int, stop : Int) -> String {
+fn strip_to_json(content : Char, start : Int32, stop : Int32) -> String {
   let sb = StringBuilder()
   sb.write_string("{\"type\":\"Strip\",\"content\":")
   write_json_char(sb, content)

@@ -7,18 +7,20 @@
 /// HF-style text input sequence: either a raw string or an already
 /// pre-tokenized word array. This lets callers use one `encode_input` API instead
 /// of selecting among raw / pair / pre-tokenized method families manually.
+#derive(Debug, Eq)
 pub enum TextInputSequence {
   Text(String)
   PreTokenized(Array[String])
-} derive(Debug, Eq)
+}
 
 ///|
 /// HF-style unified encode input. `SingleInput` maps to `Tokenizer.encode` or
 /// `encode_pretokenized`; `PairInput` maps to the corresponding pair variants.
+#derive(Debug, Eq)
 pub enum EncodeInput {
   SingleInput(TextInputSequence)
   PairInput(TextInputSequence, TextInputSequence)
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn TextInputSequence::text(text : String) -> TextInputSequence {
@@ -68,7 +70,7 @@ pub fn EncodeInput::mixed_pair(
 pub fn Tokenizer::encode_input(
   self : Tokenizer,
   input : EncodeInput,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   match input {
     SingleInput(seq) => self.encode_sequence(seq, add_special_tokens~)
@@ -82,7 +84,7 @@ pub fn Tokenizer::encode_input(
 pub fn Tokenizer::encode_input_fast(
   self : Tokenizer,
   input : EncodeInput,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   match input {
     SingleInput(seq) => self.encode_sequence_fast(seq, add_special_tokens~)
@@ -98,8 +100,8 @@ pub fn Tokenizer::encode_input_fast(
 pub fn Tokenizer::encode_sequence_input(
   self : Tokenizer,
   sequence : TextInputSequence,
-  pair? : TextInputSequence? = None,
-  add_special_tokens? : Bool = true,
+  pair~ : TextInputSequence? = None,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   match pair {
     Some(second) =>
@@ -114,8 +116,8 @@ pub fn Tokenizer::encode_sequence_input(
 pub fn Tokenizer::encode_sequence_input_fast(
   self : Tokenizer,
   sequence : TextInputSequence,
-  pair? : TextInputSequence? = None,
-  add_special_tokens? : Bool = true,
+  pair~ : TextInputSequence? = None,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   match pair {
     Some(second) =>
@@ -130,7 +132,7 @@ pub fn Tokenizer::encode_sequence_input_fast(
 pub fn Tokenizer::encode_input_batch(
   self : Tokenizer,
   inputs : Array[EncodeInput],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   if inputs.length() == 0 {
     return []
@@ -160,7 +162,7 @@ pub fn Tokenizer::encode_input_batch(
 pub fn Tokenizer::batch_encode_plus(
   self : Tokenizer,
   inputs : Array[EncodeInput],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_input_batch(inputs, add_special_tokens~)
 }
@@ -169,7 +171,7 @@ pub fn Tokenizer::batch_encode_plus(
 pub fn Tokenizer::encode_input_batch_fast(
   self : Tokenizer,
   inputs : Array[EncodeInput],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   if inputs.length() == 0 {
     return []
@@ -198,7 +200,7 @@ pub fn Tokenizer::encode_input_batch_fast(
 pub fn Tokenizer::batch_encode_plus_fast(
   self : Tokenizer,
   inputs : Array[EncodeInput],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_input_batch_fast(inputs, add_special_tokens~)
 }
@@ -210,7 +212,7 @@ pub fn Tokenizer::batch_encode_plus_fast(
 pub fn Tokenizer::async_encode(
   self : Tokenizer,
   input : EncodeInput,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.encode_input(input, add_special_tokens~)
 }
@@ -219,7 +221,7 @@ pub fn Tokenizer::async_encode(
 pub fn Tokenizer::async_encode_fast(
   self : Tokenizer,
   input : EncodeInput,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.encode_input_fast(input, add_special_tokens~)
 }
@@ -228,7 +230,7 @@ pub fn Tokenizer::async_encode_fast(
 pub fn Tokenizer::async_encode_batch(
   self : Tokenizer,
   inputs : Array[EncodeInput],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_input_batch(inputs, add_special_tokens~)
 }
@@ -237,7 +239,7 @@ pub fn Tokenizer::async_encode_batch(
 pub fn Tokenizer::async_encode_batch_fast(
   self : Tokenizer,
   inputs : Array[EncodeInput],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_input_batch_fast(inputs, add_special_tokens~)
 }
@@ -448,7 +450,7 @@ fn text_sequence_cache_key(seq : TextInputSequence) -> String {
 pub fn Tokenizer::encode(
   self : Tokenizer,
   text : String,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   // Special tokens present in the text are always recognized as single tokens;
   // add_special_tokens only controls whether post-processors inject new
@@ -470,7 +472,7 @@ pub fn Tokenizer::encode(
 pub fn Tokenizer::encode_fast(
   self : Tokenizer,
   text : String,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.finalize_padding(
     self.process_single_raw(
@@ -490,7 +492,7 @@ pub fn Tokenizer::encode_with_hooks(
   self : Tokenizer,
   text : String,
   hooks : TokenizerComponentHooks,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   let effective_hooks = self.component_hooks.overlay(hooks)
   self.finalize_padding(
@@ -512,7 +514,7 @@ pub fn Tokenizer::encode_with_hooks_fast(
   self : Tokenizer,
   text : String,
   hooks : TokenizerComponentHooks,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   let effective_hooks = self.component_hooks.overlay(hooks)
   self.finalize_padding(
@@ -534,7 +536,7 @@ pub fn Tokenizer::encode_with_hooks_fast(
 pub fn Tokenizer::encode_text(
   self : Tokenizer,
   text : String,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.encode(text, add_special_tokens~)
 }
@@ -544,7 +546,7 @@ pub fn Tokenizer::encode_text(
 pub fn Tokenizer::encode_text_fast(
   self : Tokenizer,
   text : String,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.encode_fast(text, add_special_tokens~)
 }
@@ -555,7 +557,7 @@ pub fn Tokenizer::encode_text_fast(
 pub fn Tokenizer::encode_with_byte_offsets(
   self : Tokenizer,
   text : String,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   encoding_with_byte_offsets(self.encode(text, add_special_tokens~), text)
 }
@@ -568,7 +570,7 @@ pub fn Tokenizer::encode_with_byte_offsets(
 pub fn Tokenizer::encode_pretokenized(
   self : Tokenizer,
   words : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.finalize_padding(
     self.process_single_raw(
@@ -584,7 +586,7 @@ pub fn Tokenizer::encode_pretokenized(
 pub fn Tokenizer::encode_pretokenized_fast(
   self : Tokenizer,
   words : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.finalize_padding(
     self.process_single_raw(
@@ -600,7 +602,7 @@ pub fn Tokenizer::encode_pretokenized_fast(
 pub fn Tokenizer::encode_pretokenized_with_byte_offsets(
   self : Tokenizer,
   words : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   encoding_with_byte_offsets(
     self.encode_pretokenized(words, add_special_tokens~),
@@ -616,7 +618,7 @@ pub fn Tokenizer::encode_pretokenized_pair(
   self : Tokenizer,
   words_a : Array[String],
   words_b : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.finalize_padding(
     self.encode_pretokenized_pair_unpadded(
@@ -633,7 +635,7 @@ pub fn Tokenizer::encode_pretokenized_pair_fast(
   self : Tokenizer,
   words_a : Array[String],
   words_b : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.finalize_padding(
     self.encode_pretokenized_pair_unpadded_fast(
@@ -651,7 +653,7 @@ pub fn Tokenizer::encode_pretokenized_pair_with_byte_offsets(
   self : Tokenizer,
   words_a : Array[String],
   words_b : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   encoding_with_pair_byte_offsets(
     self.encode_pretokenized_pair(words_a, words_b, add_special_tokens~),

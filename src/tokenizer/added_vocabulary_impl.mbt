@@ -5,8 +5,8 @@ fn AddedVocabulary::new_with_normalizer(
   normalizer : @normalizer.Normalizer?,
 ) -> AddedVocabulary {
   let by_content : Map[String, AddedTokenInfo] = Map([])
-  let id_to_content : Map[Int, String] = Map([])
-  let id_to_token : Map[Int, AddedTokenInfo] = Map([])
+  let id_to_content : Map[Int32, String] = Map([])
+  let id_to_token : Map[Int32, AddedTokenInfo] = Map([])
   let match_to_token : Map[String, AddedTokenInfo] = Map([])
   let non_normalized = CharTrie::new()
   let normalized = CharTrie::new()
@@ -59,18 +59,21 @@ fn AddedVocabulary::with_normalizer(
 }
 
 ///|
-fn AddedVocabulary::id_to_token(self : AddedVocabulary, id : Int) -> String? {
+fn AddedVocabulary::id_to_token(self : AddedVocabulary, id : Int32) -> String? {
   self.id_to_content.get(id)
 }
 
 ///|
-fn AddedVocabulary::token_to_id(self : AddedVocabulary, token : String) -> Int? {
+fn AddedVocabulary::token_to_id(
+  self : AddedVocabulary,
+  token : String,
+) -> Int32? {
   self.by_content.get(token).map(t => t.id)
 }
 
 ///|
-fn AddedVocabulary::get_vocab(self : AddedVocabulary) -> Map[String, Int] {
-  let out : Map[String, Int] = Map([])
+fn AddedVocabulary::get_vocab(self : AddedVocabulary) -> Map[String, Int32] {
+  let out : Map[String, Int32] = Map([])
   for kv in self.by_content.to_array() {
     out[kv.0] = kv.1.id
   }
@@ -89,8 +92,8 @@ fn AddedVocabulary::to_infos(self : AddedVocabulary) -> Array[AddedTokenInfo] {
 ///|
 fn AddedVocabulary::get_added_tokens_decoder(
   self : AddedVocabulary,
-) -> Map[Int, AddedToken] {
-  let out : Map[Int, AddedToken] = Map([])
+) -> Map[Int32, AddedToken] {
+  let out : Map[Int32, AddedToken] = Map([])
   for kv in self.id_to_token.to_array() {
     out[kv.0] = kv.1.to_added_token()
   }
@@ -127,7 +130,7 @@ fn AddedTokenInfo::to_added_token(self : AddedTokenInfo) -> AddedToken {
 
 ///|
 /// Whether the given id is a special added token.
-fn AddedVocabulary::is_special_id(self : AddedVocabulary, id : Int) -> Bool {
+fn AddedVocabulary::is_special_id(self : AddedVocabulary, id : Int32) -> Bool {
   match self.id_to_content.get(id) {
     Some(content) =>
       match self.by_content.get(content) {
@@ -148,7 +151,7 @@ fn AddedVocabulary::split_with(
   self : AddedVocabulary,
   trie : CharTrie,
   text : String,
-  base : Int,
+  base : Int32,
   keep_special : Bool,
 ) -> Array[Segment] {
   let chars = text.to_array()
@@ -158,7 +161,7 @@ fn AddedVocabulary::split_with(
   let mut buf_start = 0
   let mut i = 0
   // Flush the normal run [buf_start, upto) and move buf_start to `from`.
-  fn flush(upto : Int, from : Int) -> Unit {
+  fn flush(upto : Int32, from : Int32) -> Unit {
     if upto > buf_start {
       let sb = StringBuilder()
       for k in buf_start..<upto {
@@ -245,7 +248,7 @@ fn AddedVocabulary::extract_stage1(
 fn AddedVocabulary::extract_stage1_at(
   self : AddedVocabulary,
   text : String,
-  base~ : Int,
+  base~ : Int32,
   keep_special~ : Bool,
 ) -> Array[Segment] {
   if !self.has_any {
@@ -259,7 +262,7 @@ fn AddedVocabulary::extract_stage1_at(
 fn AddedVocabulary::extract_stage2(
   self : AddedVocabulary,
   normalized_text : String,
-  base : Int,
+  base : Int32,
   keep_special~ : Bool,
 ) -> Array[Segment] {
   if !self.has_any {
@@ -279,7 +282,11 @@ fn char_str(c : Char) -> String {
 }
 
 ///|
-fn char_range_string(chars : Array[Char], start : Int, stop : Int) -> String {
+fn char_range_string(
+  chars : Array[Char],
+  start : Int32,
+  stop : Int32,
+) -> String {
   let sb = StringBuilder()
   for k in start..<stop {
     sb.write_char(chars[k])

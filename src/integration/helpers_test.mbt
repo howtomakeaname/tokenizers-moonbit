@@ -13,8 +13,8 @@ fn load_text(path : String) -> String? {
 }
 
 ///|
-fn parse_int_array(obj : Map[String, Json], key : String) -> Array[Int] {
-  let out : Array[Int] = []
+fn parse_int_array(obj : Map[String, Json], key : String) -> Array[Int32] {
+  let out : Array[Int32] = []
   match obj.get(key) {
     Some(Array(a)) =>
       for x in a {

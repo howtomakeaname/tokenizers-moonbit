@@ -22,7 +22,7 @@ let parity_models : Array[String] = [
 // Run parity for one model; returns (ran, mismatches).
 
 ///|
-fn run_parity(name : String) -> (Bool, Int) raise {
+fn run_parity(name : String) -> (Bool, Int32) raise {
   let model_path = "tests/data/\{name}.full.json"
   let parity_path = "tests/data/parity/\{name}.json"
   guard load_text(model_path) is Some(model_json) else { return (false, 0) }

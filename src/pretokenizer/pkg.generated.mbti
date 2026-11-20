@@ -5,6 +5,7 @@ import {
   "howtomakeaname/tokenizers-moonbit/common",
   "howtomakeaname/tokenizers-moonbit/types",
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -36,7 +37,7 @@ pub fn o200k_split(String) -> Array[String]
 
 pub fn qwen_split(String) -> Array[String]
 
-pub fn qwen_split_max_digits(String, max_digits~ : Int) -> Array[String]
+pub fn qwen_split_max_digits(String, max_digits~ : Int32) -> Array[String]
 
 // Errors
 
@@ -51,13 +52,13 @@ pub enum PreTokenizer {
   BertPreTokenizer
   Digits(individual_digits~ : Bool)
   Delimiter(delimiter~ : Char)
-  FixedLength(length~ : Int)
+  FixedLength(length~ : Int32)
   UnicodeScripts
   Sequence(Array[PreTokenizer])
 }
-pub fn PreTokenizer::__getitem__(Self, Int) -> Self?
+pub fn PreTokenizer::__getitem__(Self, Int32) -> Self?
 pub fn PreTokenizer::__getstate__(Self) -> PreTokenizerState raise @types.TokenizerError
-pub fn PreTokenizer::__len__(Self) -> Int
+pub fn PreTokenizer::__len__(Self) -> Int32
 pub fn PreTokenizer::__repr__(Self) -> String raise @types.TokenizerError
 pub fn PreTokenizer::__setstate__(PreTokenizerState) -> Self raise @types.TokenizerError
 pub fn PreTokenizer::__str__(Self) -> String raise @types.TokenizerError
@@ -70,16 +71,16 @@ pub fn PreTokenizer::byte_level_alphabet() -> Array[String]
 pub fn PreTokenizer::char_delimiter_split(Char) -> Self
 pub fn PreTokenizer::delimiter(Self) -> Char?
 pub fn PreTokenizer::digits(individual_digits? : Bool) -> Self
-pub fn PreTokenizer::fixed_length(length? : Int) -> Self
-pub fn PreTokenizer::from_json(Json) -> Self raise @types.TokenizerError
+pub fn PreTokenizer::fixed_length(length? : Int32) -> Self
+pub fn PreTokenizer::from_json(@json.Json) -> Self raise @types.TokenizerError
 pub fn PreTokenizer::from_state(PreTokenizerState) -> Self raise @types.TokenizerError
 pub fn PreTokenizer::get_add_prefix_space(Self) -> Bool?
 pub fn PreTokenizer::get_behavior(Self) -> SplitBehavior?
 pub fn PreTokenizer::get_delimiter(Self) -> Char?
 pub fn PreTokenizer::get_individual_digits(Self) -> Bool?
 pub fn PreTokenizer::get_invert(Self) -> Bool?
-pub fn PreTokenizer::get_item(Self, Int) -> Self?
-pub fn PreTokenizer::get_length(Self) -> Int?
+pub fn PreTokenizer::get_item(Self, Int32) -> Self?
+pub fn PreTokenizer::get_length(Self) -> Int32?
 pub fn PreTokenizer::get_pattern(Self) -> String?
 pub fn PreTokenizer::get_pre_tokenizers(Self) -> Array[Self]
 pub fn PreTokenizer::get_prepend_scheme(Self) -> String?
@@ -92,11 +93,11 @@ pub fn PreTokenizer::get_use_regex(Self) -> Bool?
 pub fn PreTokenizer::individual_digits(Self) -> Bool?
 pub fn PreTokenizer::invert(Self) -> Bool?
 pub fn PreTokenizer::kind(Self) -> String
-pub fn PreTokenizer::length(Self) -> Int?
+pub fn PreTokenizer::length(Self) -> Int32?
 pub fn PreTokenizer::metaspace(replacement? : Char, prepend_scheme? : String, split? : Bool) -> Self
 pub fn PreTokenizer::pattern(Self) -> String?
-pub fn PreTokenizer::pre_tokenize(Self, String, base_offset? : Int) -> Array[@types.Split]
-pub fn PreTokenizer::pre_tokenize_str(Self, String) -> Array[(String, (Int, Int))]
+pub fn PreTokenizer::pre_tokenize(Self, String, base_offset? : Int32) -> Array[@types.Split]
+pub fn PreTokenizer::pre_tokenize_str(Self, String) -> Array[(String, (Int32, Int32))]
 pub fn PreTokenizer::pre_tokenizers(Self) -> Array[Self]
 pub fn PreTokenizer::prepend_scheme(Self) -> String?
 pub fn PreTokenizer::punctuation(behavior? : SplitBehavior) -> Self
@@ -113,8 +114,8 @@ pub fn PreTokenizer::set_individual_digits(Self, Bool) -> Self
 pub fn PreTokenizer::set_individual_digits_alias(Self, Bool) -> Self
 pub fn PreTokenizer::set_invert(Self, Bool) -> Self
 pub fn PreTokenizer::set_invert_alias(Self, Bool) -> Self
-pub fn PreTokenizer::set_length(Self, Int) -> Self
-pub fn PreTokenizer::set_length_alias(Self, Int) -> Self
+pub fn PreTokenizer::set_length(Self, Int32) -> Self
+pub fn PreTokenizer::set_length_alias(Self, Int32) -> Self
 pub fn PreTokenizer::set_prepend_scheme(Self, String) -> Self
 pub fn PreTokenizer::set_prepend_scheme_alias(Self, String) -> Self
 pub fn PreTokenizer::set_replacement(Self, Char) -> Self
@@ -134,21 +135,23 @@ pub fn PreTokenizer::use_regex(Self) -> Bool?
 pub fn PreTokenizer::whitespace() -> Self
 pub fn PreTokenizer::whitespace_split() -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct PreTokenizerState {
   json : String
-} derive(Eq, @debug.Debug)
+}
 pub fn PreTokenizerState::equal(Self, Self) -> Bool
 pub fn PreTokenizerState::new(String) -> Self
 pub fn PreTokenizerState::not_equal(Self, Self) -> Bool
 pub fn PreTokenizerState::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub enum SplitBehavior {
   Removed
   Isolated
   MergedWithPrevious
   MergedWithNext
   Contiguous
-} derive(Eq, @debug.Debug)
+}
 pub fn SplitBehavior::contiguous() -> Self
 pub fn SplitBehavior::equal(Self, Self) -> Bool
 pub fn SplitBehavior::isolated() -> Self

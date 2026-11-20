@@ -2,45 +2,49 @@
 // PaddingParams.
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum PaddingStrategy {
   BatchLongest
-  Fixed(Int)
-} derive(Debug, Eq)
+  Fixed(Int32)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum PaddingDirection {
   Left
   Right
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct PaddingParams {
   strategy : PaddingStrategy
   direction : PaddingDirection
-  pad_id : Int
-  pad_type_id : Int
+  pad_id : Int32
+  pad_type_id : Int32
   pad_token : String
-  pad_to_multiple_of : Int?
-} derive(Debug, Eq)
+  pad_to_multiple_of : Int32?
+}
 
 ///|
 /// Serializable/interoperable snapshot of padding parameters for Python binding
 /// and pickle/state migration layers.
+#derive(Debug, Eq)
 pub(all) struct PaddingParamsState {
   strategy : PaddingStrategy
   direction : PaddingDirection
-  pad_id : Int
-  pad_type_id : Int
+  pad_id : Int32
+  pad_type_id : Int32
   pad_token : String
-  pad_to_multiple_of : Int?
-} derive(Debug, Eq)
+  pad_to_multiple_of : Int32?
+}
 
 ///|
 /// Default padding: right direction, pad id/token 0 / "[PAD]".
 pub fn PaddingParams::new(
   strategy : PaddingStrategy,
-  pad_id? : Int = 0,
-  pad_token? : String = "[PAD]",
+  pad_id~ : Int32 = 0,
+  pad_token~ : String = "[PAD]",
 ) -> PaddingParams {
   {
     strategy,
@@ -66,7 +70,7 @@ pub fn PaddingParams::from_state(state : PaddingParamsState) -> PaddingParams {
 
 ///|
 pub fn PaddingParams::from_tuple(
-  t : (PaddingStrategy, PaddingDirection, Int, Int, String, Int?),
+  t : (PaddingStrategy, PaddingDirection, Int32, Int32, String, Int32?),
 ) -> PaddingParams {
   {
     strategy: t.0,
@@ -81,7 +85,7 @@ pub fn PaddingParams::from_tuple(
 ///|
 pub fn PaddingParams::as_tuple(
   self : PaddingParams,
-) -> (PaddingStrategy, PaddingDirection, Int, Int, String, Int?) {
+) -> (PaddingStrategy, PaddingDirection, Int32, Int32, String, Int32?) {
   (
     self.strategy,
     self.direction,
@@ -120,9 +124,9 @@ pub fn PaddingParams::__setstate__(state : PaddingParamsState) -> PaddingParams 
 /// Convenience constructor for fixed-length padding, mirroring HF's
 /// `enable_padding(length=...)` workflow.
 pub fn PaddingParams::fixed(
-  length : Int,
-  pad_id? : Int = 0,
-  pad_token? : String = "[PAD]",
+  length : Int32,
+  pad_id~ : Int32 = 0,
+  pad_token~ : String = "[PAD]",
 ) -> PaddingParams {
   PaddingParams::new(Fixed(length), pad_id~, pad_token~)
 }
@@ -130,8 +134,8 @@ pub fn PaddingParams::fixed(
 ///|
 /// Convenience constructor for batch-longest padding.
 pub fn PaddingParams::batch_longest(
-  pad_id? : Int = 0,
-  pad_token? : String = "[PAD]",
+  pad_id~ : Int32 = 0,
+  pad_token~ : String = "[PAD]",
 ) -> PaddingParams {
   PaddingParams::new(BatchLongest, pad_id~, pad_token~)
 }
@@ -155,7 +159,7 @@ pub fn PaddingParams::with_direction_hf(
 ///|
 pub fn PaddingParams::with_pad_type_id(
   self : PaddingParams,
-  pad_type_id : Int,
+  pad_type_id : Int32,
 ) -> PaddingParams {
   { ..self, pad_type_id, }
 }
@@ -163,7 +167,7 @@ pub fn PaddingParams::with_pad_type_id(
 ///|
 pub fn PaddingParams::with_pad_to_multiple_of(
   self : PaddingParams,
-  pad_to_multiple_of : Int?,
+  pad_to_multiple_of : Int32?,
 ) -> PaddingParams {
   { ..self, pad_to_multiple_of, }
 }
@@ -202,22 +206,22 @@ pub fn PaddingParams::get_direction_string(self : PaddingParams) -> String {
 }
 
 ///|
-pub fn PaddingParams::get_pad_id(self : PaddingParams) -> Int {
+pub fn PaddingParams::get_pad_id(self : PaddingParams) -> Int32 {
   self.pad_id
 }
 
 ///|
-pub fn PaddingParams::pad_id(self : PaddingParams) -> Int {
+pub fn PaddingParams::pad_id(self : PaddingParams) -> Int32 {
   self.pad_id
 }
 
 ///|
-pub fn PaddingParams::get_pad_type_id(self : PaddingParams) -> Int {
+pub fn PaddingParams::get_pad_type_id(self : PaddingParams) -> Int32 {
   self.pad_type_id
 }
 
 ///|
-pub fn PaddingParams::pad_type_id(self : PaddingParams) -> Int {
+pub fn PaddingParams::pad_type_id(self : PaddingParams) -> Int32 {
   self.pad_type_id
 }
 
@@ -232,12 +236,12 @@ pub fn PaddingParams::pad_token(self : PaddingParams) -> String {
 }
 
 ///|
-pub fn PaddingParams::get_pad_to_multiple_of(self : PaddingParams) -> Int? {
+pub fn PaddingParams::get_pad_to_multiple_of(self : PaddingParams) -> Int32? {
   self.pad_to_multiple_of
 }
 
 ///|
-pub fn PaddingParams::pad_to_multiple_of(self : PaddingParams) -> Int? {
+pub fn PaddingParams::pad_to_multiple_of(self : PaddingParams) -> Int32? {
   self.pad_to_multiple_of
 }
 
@@ -253,7 +257,7 @@ fn parse_padding_param_direction_hf(
 }
 
 ///|
-fn round_up(n : Int, multiple : Int) -> Int {
+fn round_up(n : Int32, multiple : Int32) -> Int32 {
   if multiple <= 0 || n % multiple == 0 {
     n
   } else {
@@ -267,7 +271,7 @@ fn round_up(n : Int, multiple : Int) -> Int {
 /// `Encoding::pad`, which pads all overflowings before the main encoding.
 fn pad_encoding(
   enc : @types.Encoding,
-  target_len : Int,
+  target_len : Int32,
   params : PaddingParams,
 ) -> @types.Encoding {
   let padded_windows = enc.overflowing.map(w => {
@@ -281,11 +285,11 @@ fn pad_encoding(
   let pad_ids = Array::make(pad, params.pad_id)
   let pad_types = Array::make(pad, params.pad_type_id)
   let pad_toks = Array::make(pad, params.pad_token)
-  let pad_offs : Array[(Int, Int)] = Array::make(pad, (0, 0))
+  let pad_offs : Array[(Int32, Int32)] = Array::make(pad, (0, 0))
   let pad_special = Array::make(pad, 1)
   let pad_attn = Array::make(pad, 0)
-  let pad_seq : Array[Int?] = Array::make(pad, None)
-  let pad_word : Array[Int?] = Array::make(pad, None)
+  let pad_seq : Array[Int32?] = Array::make(pad, None)
+  let pad_word : Array[Int32?] = Array::make(pad, None)
   match params.direction {
     Right =>
       {

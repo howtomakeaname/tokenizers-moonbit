@@ -302,8 +302,8 @@ fn decode_replace_ranged_char_runs_direct(
   tokens : Array[String],
   content : String,
   pred : (Char) -> Bool,
-  min_run~ : Int,
-  max_run~ : Int,
+  min_run~ : Int32,
+  max_run~ : Int32,
 ) -> String {
   let sb = StringBuilder()
   let mut run = 0
@@ -353,7 +353,7 @@ fn decode_replace_min_char_runs_direct(
   tokens : Array[String],
   content : String,
   pred : (Char) -> Bool,
-  min_run~ : Int,
+  min_run~ : Int32,
 ) -> String {
   let sb = StringBuilder()
   let mut run = 0
@@ -398,8 +398,8 @@ fn decode_replace_min_char_runs_direct(
 fn decode_replace_punct_symbol_ranged_direct(
   tokens : Array[String],
   content : String,
-  min_run~ : Int,
-  max_run~ : Int,
+  min_run~ : Int32,
+  max_run~ : Int32,
 ) -> String {
   let sb = StringBuilder()
   let mut run = 0
@@ -463,7 +463,7 @@ fn is_punctuation_or_symbol_fast(c : Char) -> Bool {
 fn decode_replace_min_non_digit_direct(
   tokens : Array[String],
   content : String,
-  min_run~ : Int,
+  min_run~ : Int32,
 ) -> String {
   let sb = StringBuilder()
   let mut run = 0
@@ -508,8 +508,8 @@ fn decode_replace_min_non_digit_direct(
 fn decode_replace_not_whitespace_letter_number_ranged_direct(
   tokens : Array[String],
   content : String,
-  min_run~ : Int,
-  max_run~ : Int,
+  min_run~ : Int32,
+  max_run~ : Int32,
 ) -> String {
   let sb = StringBuilder()
   let mut run = 0
@@ -557,7 +557,7 @@ fn decode_replace_not_whitespace_letter_number_ranged_direct(
 ///|
 fn write_ranged_pending_chars(
   sb : StringBuilder,
-  run : Int,
+  run : Int32,
   c0 : Char,
   c1 : Char,
   c2 : Char,
@@ -675,7 +675,7 @@ fn decode_replace_min_runs_direct(
   tokens : Array[String],
   content : String,
   pred : (Char) -> Bool,
-  min_run~ : Int,
+  min_run~ : Int32,
 ) -> String {
   let sb = StringBuilder()
   for t in tokens {

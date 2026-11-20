@@ -106,7 +106,7 @@ fn parse_regex_literal_body(chars : Array[Char]) -> String? {
 ///|
 fn regex_literal_wrapper_bounds(
   chars : Array[Char],
-) -> (Int, Int, Bool, Bool, Bool, Bool)? {
+) -> (Int32, Int32, Bool, Bool, Bool, Bool)? {
   let mut start = 0
   let mut stop = chars.length()
   let mut anchored_start = false
@@ -209,7 +209,7 @@ fn regex_literal_alternatives_spec(
 }
 
 ///|
-fn is_escaped_at(chars : Array[Char], index : Int) -> Bool {
+fn is_escaped_at(chars : Array[Char], index : Int32) -> Bool {
   if index <= 0 || index >= chars.length() {
     return false
   }
@@ -237,7 +237,7 @@ fn regex_alternation_body(chars : Array[Char]) -> Array[Char] {
 }
 
 ///|
-fn char_slice(chars : Array[Char], start : Int, stop : Int) -> Array[Char] {
+fn char_slice(chars : Array[Char], start : Int32, stop : Int32) -> Array[Char] {
   let out : Array[Char] = []
   let lo = if start < 0 { 0 } else { start }
   let hi = if stop > chars.length() { chars.length() } else { stop }
@@ -275,10 +275,10 @@ fn has_unescaped_pipe(chars : Array[Char]) -> Bool {
 fn literal_alternation_matches(
   chars : Array[Char],
   alternatives : Array[String],
-  anchored_start? : Bool = false,
-  anchored_end? : Bool = false,
-  word_start? : Bool = false,
-  word_end? : Bool = false,
+  anchored_start~ : Bool = false,
+  anchored_end~ : Bool = false,
+  word_start~ : Bool = false,
+  word_end~ : Bool = false,
 ) -> Array[Span] {
   let pats = alternatives.map(alt => alt.to_array())
   if anchored_start || anchored_end {
@@ -295,7 +295,7 @@ fn literal_alternation_matches(
   let n = chars.length()
   let mut i = 0
   while i < n {
-    let mut matched_len : Int? = None
+    let mut matched_len : Int32? = None
     for pat in pats {
       let m = pat.length()
       if m > 0 &&
@@ -336,7 +336,7 @@ fn literal_alternation_matches_anchored(
   word_end~ : Bool,
 ) -> Array[Span] {
   let n = chars.length()
-  let is_line_end = fn(e : Int) -> Bool { e == n || chars[e] == '\n' }
+  let is_line_end = fn(e : Int32) -> Bool { e == n || chars[e] == '\n' }
   let out : Array[Span] = []
   if anchored_start && anchored_end {
     // from each line start, the literal must end exactly at A line end
@@ -437,8 +437,8 @@ fn literal_alternation_matches_anchored(
 ///|
 fn literal_word_boundaries_match(
   chars : Array[Char],
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
   word_start : Bool,
   word_end : Bool,
 ) -> Bool {
@@ -447,7 +447,7 @@ fn literal_word_boundaries_match(
 }
 
 ///|
-fn regex_word_boundary_at(chars : Array[Char], pos : Int) -> Bool {
+fn regex_word_boundary_at(chars : Array[Char], pos : Int32) -> Bool {
   let left = pos > 0 && pos <= chars.length() && is_word_char(chars[pos - 1])
   let right = pos >= 0 && pos < chars.length() && is_word_char(chars[pos])
   left != right
@@ -524,7 +524,7 @@ fn run_matches(chars : Array[Char], pred : (Char) -> Bool) -> Array[Span] {
 fn run_matches_min(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  min_run~ : Int,
+  min_run~ : Int32,
 ) -> Array[Span] {
   let out : Array[Span] = []
   let n = chars.length()
@@ -549,7 +549,7 @@ fn run_matches_min(
 fn run_matches_exact(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  exact_run~ : Int,
+  exact_run~ : Int32,
 ) -> Array[Span] {
   let out : Array[Span] = []
   if exact_run <= 0 {
@@ -581,7 +581,7 @@ fn run_matches_exact(
 fn run_matches_bounded(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  max_run~ : Int,
+  max_run~ : Int32,
 ) -> Array[Span] {
   let out : Array[Span] = []
   if max_run <= 0 {
@@ -609,8 +609,8 @@ fn run_matches_bounded(
 fn run_matches_ranged(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  min_run~ : Int,
-  max_run~ : Int,
+  min_run~ : Int32,
+  max_run~ : Int32,
 ) -> Array[Span] {
   let out : Array[Span] = []
   if min_run <= 0 || max_run < min_run {
@@ -717,7 +717,7 @@ fn simple_ranged_regex_matches(
 ///|
 fn number_run_matches(
   chars : Array[Char],
-  max_digits~ : Int,
+  max_digits~ : Int32,
   pred~ : (Char) -> Bool,
 ) -> Array[Span] {
   let out : Array[Span] = []
@@ -742,7 +742,7 @@ fn number_run_matches(
 ///|
 fn number_exact_matches(
   chars : Array[Char],
-  exact_digits~ : Int,
+  exact_digits~ : Int32,
   pred~ : (Char) -> Bool,
 ) -> Array[Span] {
   let out : Array[Span] = []
@@ -772,7 +772,7 @@ fn number_exact_matches(
 }
 
 ///|
-fn chars_match_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
+fn chars_match_at(src : Array[Char], at : Int32, pat : Array[Char]) -> Bool {
   for k in 0..<pat.length() {
     if src[at + k] != pat[k] {
       return false
@@ -784,7 +784,7 @@ fn chars_match_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
 ///|
 /// Whether the `{` at `i` begins a valid quantifier `{n}` / `{n,}` /
 /// `{n,m}` (a `}` alone can never begin one).
-fn at_quantifier_brace(chars : Array[Char], i : Int) -> Bool {
+fn at_quantifier_brace(chars : Array[Char], i : Int32) -> Bool {
   if chars[i] != '{' {
     return false
   }
@@ -1056,7 +1056,7 @@ fn literal_branch_alternation_matches(
     be : Bool,
     ws : Bool,
     we : Bool,
-    pos : Int,
+    pos : Int32,
   ) -> Bool {
     let line_start_ok = !bs || (pos < n && (pos == 0 || chars[pos - 1] == '\n'))
     let line_end_ok = !be || pos == n || chars[pos] == '\n'
@@ -1185,7 +1185,7 @@ fn assertion_sequence_matches(
   if n == 0 {
     return out
   }
-  fn holds(pos : Int) -> Bool {
+  fn holds(pos : Int32) -> Bool {
     // multiline ^ does NOT match the string-end position (probed:
     // '^$' on 'ab\n' unchanged; '^' on 'ab' -> '#ab' with no end hit)
     let line_start_ok = !bs || (pos < n && (pos == 0 || chars[pos - 1] == '\n'))

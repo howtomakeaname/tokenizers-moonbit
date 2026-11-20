@@ -1,24 +1,26 @@
 ///|
+#derive(Debug, Eq)
 pub(all) struct Token {
-  id : Int
+  id : Int32
   value : String
-  offsets : (Int, Int)
-} derive(Debug, Eq)
+  offsets : (Int32, Int32)
+}
 
 ///|
 /// Serializable/interoperable snapshot of a model token.
+#derive(Debug, Eq)
 pub(all) struct TokenState {
-  id : Int
+  id : Int32
   value : String
-  offsets : (Int, Int)
-} derive(Debug, Eq)
+  offsets : (Int32, Int32)
+}
 
 ///|
 /// Build a model token from its id, surface value and half-open offsets.
 pub fn Token::new(
-  id : Int,
+  id : Int32,
   value : String,
-  offsets? : (Int, Int) = (0, 0),
+  offsets~ : (Int32, Int32) = (0, 0),
 ) -> Token {
   { id, value, offsets, }
 }
@@ -26,7 +28,7 @@ pub fn Token::new(
 ///|
 /// Build a token from the common HF-style tuple representation
 /// `(id, value, offsets)`.
-pub fn Token::from_tuple(t : (Int, String, (Int, Int))) -> Token {
+pub fn Token::from_tuple(t : (Int32, String, (Int32, Int32))) -> Token {
   { id: t.0, value: t.1, offsets: t.2, }
 }
 
@@ -38,7 +40,7 @@ pub fn Token::from_state(state : TokenState) -> Token {
 
 ///|
 /// Return `(id, value, offsets)`, useful for tests and simple interop layers.
-pub fn Token::as_tuple(self : Token) -> (Int, String, (Int, Int)) {
+pub fn Token::as_tuple(self : Token) -> (Int32, String, (Int32, Int32)) {
   (self.id, self.value, self.offsets)
 }
 
@@ -83,13 +85,13 @@ pub fn Token::__repr__(self : Token) -> String {
 }
 
 ///|
-pub fn Token::get_id(self : Token) -> Int {
+pub fn Token::get_id(self : Token) -> Int32 {
   self.id
 }
 
 ///|
 /// Python/property-style alias for `get_id`.
-pub fn Token::id(self : Token) -> Int {
+pub fn Token::id(self : Token) -> Int32 {
   self.get_id()
 }
 
@@ -105,40 +107,42 @@ pub fn Token::value(self : Token) -> String {
 }
 
 ///|
-pub fn Token::get_offsets(self : Token) -> (Int, Int) {
+pub fn Token::get_offsets(self : Token) -> (Int32, Int32) {
   self.offsets
 }
 
 ///|
 /// Python/property-style alias for `get_offsets`.
-pub fn Token::offsets(self : Token) -> (Int, Int) {
+pub fn Token::offsets(self : Token) -> (Int32, Int32) {
   self.get_offsets()
 }
 
 ///|
 /// An intermediate piece produced by pre-tokenization: a substring plus the
 /// char offsets it occupies in the original (normalized) text.
+#derive(Debug, Eq)
 pub(all) struct Split {
   value : String
-  offsets : (Int, Int)
-} derive(Debug, Eq)
+  offsets : (Int32, Int32)
+}
 
 ///|
 /// Serializable/interoperable snapshot of a pre-tokenizer split.
+#derive(Debug, Eq)
 pub(all) struct SplitState {
   value : String
-  offsets : (Int, Int)
-} derive(Debug, Eq)
+  offsets : (Int32, Int32)
+}
 
 ///|
 /// Build a split from its value and half-open offsets.
-pub fn Split::new(value : String, offsets? : (Int, Int) = (0, 0)) -> Split {
+pub fn Split::new(value : String, offsets~ : (Int32, Int32) = (0, 0)) -> Split {
   { value, offsets, }
 }
 
 ///|
 /// Build a split from the common tuple representation `(value, offsets)`.
-pub fn Split::from_tuple(t : (String, (Int, Int))) -> Split {
+pub fn Split::from_tuple(t : (String, (Int32, Int32))) -> Split {
   { value: t.0, offsets: t.1, }
 }
 
@@ -150,7 +154,7 @@ pub fn Split::from_state(state : SplitState) -> Split {
 
 ///|
 /// Return `(value, offsets)` for simple binding shims.
-pub fn Split::as_tuple(self : Split) -> (String, (Int, Int)) {
+pub fn Split::as_tuple(self : Split) -> (String, (Int32, Int32)) {
   (self.value, self.offsets)
 }
 
@@ -204,13 +208,13 @@ pub fn Split::value(self : Split) -> String {
 }
 
 ///|
-pub fn Split::get_offsets(self : Split) -> (Int, Int) {
+pub fn Split::get_offsets(self : Split) -> (Int32, Int32) {
   self.offsets
 }
 
 ///|
 /// Python/property-style alias for `get_offsets`.
-pub fn Split::offsets(self : Split) -> (Int, Int) {
+pub fn Split::offsets(self : Split) -> (Int32, Int32) {
   self.get_offsets()
 }
 

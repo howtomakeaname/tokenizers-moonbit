@@ -13,24 +13,24 @@
 // cp -> decomposition (fully recursive)
 
 ///|
-let canon_decomp : Ref[Map[Int, Array[Int]]?] = { val: None, }
+let canon_decomp : Ref[Map[Int32, Array[Int32]]?] = { val: None, }
 
 ///|
-let compat_decomp : Ref[Map[Int, Array[Int]]?] = { val: None, }
+let compat_decomp : Ref[Map[Int32, Array[Int32]]?] = { val: None, }
 
 // cp -> combining class (absent => 0)
 
 ///|
-let ccc_table : Ref[Map[Int, Int]?] = { val: None, }
+let ccc_table : Ref[Map[Int32, Int32]?] = { val: None, }
 
 // (a,b) packed as a*0x110000+b -> composed cp
 
 ///|
-let comp_table : Ref[Map[Int, Int]?] = { val: None, }
+let comp_table : Ref[Map[Int32, Int32]?] = { val: None, }
 
 ///|
-fn parse_decomp(raw : String) -> Map[Int, Array[Int]] {
-  let m : Map[Int, Array[Int]] = Map([])
+fn parse_decomp(raw : String) -> Map[Int32, Array[Int32]] {
+  let m : Map[Int32, Array[Int32]] = Map([])
   for line in raw.split("\n") {
     let s = line.to_owned()
     if s == "" {
@@ -44,7 +44,7 @@ fn parse_decomp(raw : String) -> Map[Int, Array[Int]] {
       None => continue
     }
     let cp = hex_to_int(key_view.to_owned())
-    let seq : Array[Int] = []
+    let seq : Array[Int32] = []
     for tok in rest.split(" ") {
       let t = tok.to_owned()
       if t != "" {
@@ -57,7 +57,7 @@ fn parse_decomp(raw : String) -> Map[Int, Array[Int]] {
 }
 
 ///|
-fn canon_map() -> Map[Int, Array[Int]] {
+fn canon_map() -> Map[Int32, Array[Int32]] {
   match canon_decomp.val {
     Some(m) => m
     None => {
@@ -69,7 +69,7 @@ fn canon_map() -> Map[Int, Array[Int]] {
 }
 
 ///|
-fn compat_map() -> Map[Int, Array[Int]] {
+fn compat_map() -> Map[Int32, Array[Int32]] {
   match compat_decomp.val {
     Some(m) => m
     None => {
@@ -81,11 +81,11 @@ fn compat_map() -> Map[Int, Array[Int]] {
 }
 
 ///|
-fn ccc_map() -> Map[Int, Int] {
+fn ccc_map() -> Map[Int32, Int32] {
   match ccc_table.val {
     Some(m) => m
     None => {
-      let m : Map[Int, Int] = Map([])
+      let m : Map[Int32, Int32] = Map([])
       for line in ccc_raw().split("\n") {
         let s = line.to_owned()
         if s == "" {
@@ -105,18 +105,18 @@ fn ccc_map() -> Map[Int, Int] {
 }
 
 ///|
-fn comp_map() -> Map[Int, Int] {
+fn comp_map() -> Map[Int32, Int32] {
   match comp_table.val {
     Some(m) => m
     None => {
-      let m : Map[Int, Int] = Map([])
+      let m : Map[Int32, Int32] = Map([])
       for line in composition_raw().split("\n") {
         let s = line.to_owned()
         if s == "" {
           continue
         }
         // "a b cp"
-        let toks : Array[Int] = []
+        let toks : Array[Int32] = []
         for tok in s.split(" ") {
           let t = tok.to_owned()
           if t != "" {
@@ -134,7 +134,7 @@ fn comp_map() -> Map[Int, Int] {
 }
 
 ///|
-fn ccc_of(cp : Int) -> Int {
+fn ccc_of(cp : Int32) -> Int32 {
   ccc_map().get(cp).unwrap_or(0)
 }
 
@@ -149,7 +149,7 @@ pub fn normalize_unicode(
   // 1. Decompose into a flat list of code points.
   let table = if compat { compat_map() } else { canon_map() }
   let cm = canon_map()
-  let decomposed : Array[Int] = []
+  let decomposed : Array[Int32] = []
   for c in input {
     decompose_cp(c.to_int(), table, cm, compat, decomposed)
   }
@@ -171,11 +171,11 @@ pub fn normalize_unicode(
 
 ///|
 fn decompose_cp(
-  cp : Int,
-  table : Map[Int, Array[Int]],
-  cm : Map[Int, Array[Int]],
+  cp : Int32,
+  table : Map[Int32, Array[Int32]],
+  cm : Map[Int32, Array[Int32]],
   compat : Bool,
-  out : Array[Int],
+  out : Array[Int32],
 ) -> Unit {
   ignore(cm)
   ignore(compat)
@@ -204,7 +204,7 @@ fn decompose_cp(
 // within each run, preserving order of equal-CCC marks.
 
 ///|
-fn canonical_order(cps : Array[Int]) -> Unit {
+fn canonical_order(cps : Array[Int32]) -> Unit {
   let n = cps.length()
   let mut i = 1
   while i < n {
@@ -233,13 +233,13 @@ fn canonical_order(cps : Array[Int]) -> Unit {
 // and try to compose it with each following combining mark / starter.
 
 ///|
-fn canonical_compose(cps : Array[Int]) -> Array[Int] {
+fn canonical_compose(cps : Array[Int32]) -> Array[Int32] {
   let n = cps.length()
   if n == 0 {
     return []
   }
   let cmp = comp_map()
-  let out : Array[Int] = []
+  let out : Array[Int32] = []
   let mut starter = cps[0]
   let mut starter_idx = 0
   out.push(starter)
@@ -275,7 +275,7 @@ fn canonical_compose(cps : Array[Int]) -> Array[Int] {
 }
 
 ///|
-fn hex_to_int(s : String) -> Int {
+fn hex_to_int(s : String) -> Int32 {
   let mut v = 0
   for c in s {
     let d = if c >= '0' && c <= '9' {
@@ -293,7 +293,7 @@ fn hex_to_int(s : String) -> Int {
 }
 
 ///|
-fn str_to_int(s : String) -> Int {
+fn str_to_int(s : String) -> Int32 {
   let mut v = 0
   for c in s {
     if c >= '0' && c <= '9' {
@@ -313,11 +313,11 @@ pub fn normalize_unicode_aligned(
   input : String,
   compat~ : Bool,
   compose~ : Bool,
-) -> (String, Array[(Int, Int)]) {
+) -> (String, Array[(Int32, Int32)]) {
   let table = if compat { compat_map() } else { canon_map() }
   let cm = canon_map()
-  let cps : Array[Int] = []
-  let spans : Array[(Int, Int)] = []
+  let cps : Array[Int32] = []
+  let spans : Array[(Int32, Int32)] = []
   for i, c in input {
     let before = cps.length()
     decompose_cp(c.to_int(), table, cm, compat, cps)
@@ -341,7 +341,10 @@ pub fn normalize_unicode_aligned(
 }
 
 ///|
-fn canonical_order_aligned(cps : Array[Int], spans : Array[(Int, Int)]) -> Unit {
+fn canonical_order_aligned(
+  cps : Array[Int32],
+  spans : Array[(Int32, Int32)],
+) -> Unit {
   let n = cps.length()
   let mut i = 1
   while i < n {
@@ -370,16 +373,16 @@ fn canonical_order_aligned(cps : Array[Int], spans : Array[(Int, Int)]) -> Unit 
 
 ///|
 fn canonical_compose_aligned(
-  cps : Array[Int],
-  spans : Array[(Int, Int)],
-) -> (Array[Int], Array[(Int, Int)]) {
+  cps : Array[Int32],
+  spans : Array[(Int32, Int32)],
+) -> (Array[Int32], Array[(Int32, Int32)]) {
   let n = cps.length()
   if n == 0 {
     return ([], [])
   }
   let cmp = comp_map()
-  let out : Array[Int] = []
-  let ospans : Array[(Int, Int)] = []
+  let out : Array[Int32] = []
+  let ospans : Array[(Int32, Int32)] = []
   let mut starter = cps[0]
   let mut starter_idx = 0
   let mut starter_span = spans[0]

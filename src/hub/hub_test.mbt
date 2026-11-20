@@ -56,13 +56,13 @@ test "download options default to online main revision" {
 
 ///|
 test "download options honor Hub environment defaults" {
-  @sys.set_env_var("HF_ENDPOINT", "https://env-hf.example")
-  @sys.set_env_var("HF_HUB_OFFLINE", "1")
+  @env.set_env_var("HF_ENDPOINT", "https://env-hf.example")
+  @env.set_env_var("HF_HUB_OFFLINE", "1")
   let env_opts = @hub.HubDownloadOptions::new()
   @test.assert_eq(env_opts.endpoint, "https://env-hf.example")
   @test.assert_eq(env_opts.local_files_only, true)
   for value in ["TRUE", "Yes", "ON"] {
-    @sys.set_env_var("HF_HUB_OFFLINE", value)
+    @env.set_env_var("HF_HUB_OFFLINE", value)
     @test.assert_eq(@hub.HubDownloadOptions::new().local_files_only, true)
   }
 
@@ -73,8 +73,8 @@ test "download options honor Hub environment defaults" {
   @test.assert_eq(explicit.endpoint, "https://explicit-hf.example")
   @test.assert_eq(explicit.local_files_only, false)
 
-  @sys.set_env_var("HF_ENDPOINT", "")
-  @sys.set_env_var("HF_HUB_OFFLINE", "false")
+  @env.set_env_var("HF_ENDPOINT", "")
+  @env.set_env_var("HF_HUB_OFFLINE", "false")
   let reset = @hub.HubDownloadOptions::new()
   @test.assert_eq(reset.endpoint, "https://huggingface.co")
   @test.assert_eq(reset.local_files_only, false)
@@ -273,7 +273,7 @@ test "Hub sidecar download result writes raw file into cache" {
 
 ///|
 test "Hub request headers avoid empty auth and optional user agent" {
-  @sys.set_env_var("HF_TOKEN", "env-token")
+  @env.set_env_var("HF_TOKEN", "env-token")
   let no_auth = @hub.plan_tokenizer_json_request(
     "bert-base-uncased",
     options=@hub.HubDownloadOptions::new(token=Some(""), user_agent=None),
@@ -301,8 +301,8 @@ test "Hub request headers avoid empty auth and optional user agent" {
   @fs.write_string_to_file("_build/hub_token_path", " file-token \n") catch {
     _ => ()
   }
-  @sys.set_env_var("HF_TOKEN", "")
-  @sys.set_env_var("HF_TOKEN_PATH", "_build/hub_token_path")
+  @env.set_env_var("HF_TOKEN", "")
+  @env.set_env_var("HF_TOKEN_PATH", "_build/hub_token_path")
   let from_token_path = @hub.plan_tokenizer_json_request(
     "bert-base-uncased",
     options=@hub.HubDownloadOptions::new(user_agent=None),
@@ -312,7 +312,7 @@ test "Hub request headers avoid empty auth and optional user agent" {
     Some("Bearer file-token"),
   )
 
-  @sys.set_env_var("HF_TOKEN", "env-token")
+  @env.set_env_var("HF_TOKEN", "env-token")
   let from_env_token = @hub.plan_tokenizer_json_request(
     "bert-base-uncased",
     options=@hub.HubDownloadOptions::new(user_agent=None),
@@ -328,9 +328,9 @@ test "Hub request headers avoid empty auth and optional user agent" {
   @fs.write_string_to_file("_build/hub_hf_home_token/token", " home-token\n") catch {
     _ => ()
   }
-  @sys.set_env_var("HF_TOKEN", "")
-  @sys.set_env_var("HF_TOKEN_PATH", "")
-  @sys.set_env_var("HF_HOME", "_build/hub_hf_home_token")
+  @env.set_env_var("HF_TOKEN", "")
+  @env.set_env_var("HF_TOKEN_PATH", "")
+  @env.set_env_var("HF_HOME", "_build/hub_hf_home_token")
   let from_hf_home = @hub.plan_tokenizer_json_request(
     "bert-base-uncased",
     options=@hub.HubDownloadOptions::new(user_agent=None),
@@ -339,9 +339,9 @@ test "Hub request headers avoid empty auth and optional user agent" {
     from_hf_home.headers.get("Authorization"),
     Some("Bearer home-token"),
   )
-  @sys.set_env_var("HF_TOKEN", "")
-  @sys.set_env_var("HF_TOKEN_PATH", "")
-  @sys.set_env_var("HF_HOME", "")
+  @env.set_env_var("HF_TOKEN", "")
+  @env.set_env_var("HF_TOKEN_PATH", "")
+  @env.set_env_var("HF_HOME", "")
 }
 
 ///|
@@ -1010,7 +1010,7 @@ test "Hub streamed byte helper preserves UTF-8 split across chunks" {
 }
 
 ///|
-fn string_prefix(s : String, stop : Int) -> String {
+fn string_prefix(s : String, stop : Int32) -> String {
   let chars = s.to_array()
   let end = if stop < 0 {
     0
@@ -1027,7 +1027,7 @@ fn string_prefix(s : String, stop : Int) -> String {
 }
 
 ///|
-fn string_suffix(s : String, start : Int) -> String {
+fn string_suffix(s : String, start : Int32) -> String {
   let chars = s.to_array()
   let begin = if start < 0 {
     0
@@ -1183,7 +1183,7 @@ async test "from_pretrained honors local_files_only cache hit and miss" {
 
 ///|
 async test "optional online Hub smoke" {
-  guard @sys.get_env_var("TOKENIZERS_MOONBIT_HUB_ONLINE_TEST") == Some("1") else {
+  guard @env.get_env_var("TOKENIZERS_MOONBIT_HUB_ONLINE_TEST") == Some("1") else {
     return
   }
   let tok = @hub.from_pretrained(

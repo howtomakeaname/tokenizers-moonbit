@@ -5,7 +5,7 @@
 pub fn WordLevelModel::tokenize(
   self : WordLevelModel,
   word : String,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Array[@types.Token] raise @types.TokenizerError {
   let span = word.char_length()
   match self.vocab.get(word) {

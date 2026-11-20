@@ -208,10 +208,10 @@ test "split invert folds per-entry flags" {
     fn offs(
       t : @tokenizer.Tokenizer,
       text : String,
-    ) -> Array[(Int, Int)] raise {
+    ) -> Array[(Int32, Int32)] raise {
       t.encode(text).get_offsets()
     }
-    fn eq(a : Array[(Int, Int)], b : Array[(Int, Int)]) -> Bool {
+    fn eq(a : Array[(Int32, Int32)], b : Array[(Int32, Int32)]) -> Bool {
       if a.length() != b.length() {
         return false
       }
@@ -308,10 +308,10 @@ test "split bracket crlf no-plus matches single chars" {
     fn offs(
       t : @tokenizer.Tokenizer,
       text : String,
-    ) -> Array[(Int, Int)] raise {
+    ) -> Array[(Int32, Int32)] raise {
       t.encode(text).get_offsets()
     }
-    fn eq(a : Array[(Int, Int)], b : Array[(Int, Int)]) -> Bool {
+    fn eq(a : Array[(Int32, Int32)], b : Array[(Int32, Int32)]) -> Bool {
       if a.length() != b.length() {
         return false
       }
@@ -414,10 +414,10 @@ test "split bare classes and bracket ws" {
     fn offs(
       t : @tokenizer.Tokenizer,
       text : String,
-    ) -> Array[(Int, Int)] raise {
+    ) -> Array[(Int32, Int32)] raise {
       t.encode(text).get_offsets()
     }
-    fn eq(a : Array[(Int, Int)], b : Array[(Int, Int)]) -> Bool {
+    fn eq(a : Array[(Int32, Int32)], b : Array[(Int32, Int32)]) -> Bool {
       if a.length() != b.length() {
         return false
       }

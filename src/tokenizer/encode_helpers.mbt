@@ -23,10 +23,10 @@ fn encoding_with_pair_byte_offsets(
 ///|
 fn convert_offsets(
   enc : @types.Encoding,
-  table_a : Array[Int],
-  table_b : Array[Int]?,
+  table_a : Array[Int32],
+  table_b : Array[Int32]?,
 ) -> @types.Encoding {
-  let offsets : Array[(Int, Int)] = []
+  let offsets : Array[(Int32, Int32)] = []
   for i in 0..<enc.offsets.length() {
     let table = match enc.sequence_ids[i] {
       Some(1) => table_b.unwrap_or(table_a)
@@ -54,8 +54,8 @@ fn convert_offsets(
 }
 
 ///|
-fn char_to_byte_table(text : String) -> Array[Int] {
-  let out : Array[Int] = [0]
+fn char_to_byte_table(text : String) -> Array[Int32] {
+  let out : Array[Int32] = [0]
   let mut pos = 0
   for c in text {
     pos = pos + utf8_len(c)
@@ -65,7 +65,7 @@ fn char_to_byte_table(text : String) -> Array[Int] {
 }
 
 ///|
-fn char_to_byte(pos : Int, table : Array[Int]) -> Int {
+fn char_to_byte(pos : Int32, table : Array[Int32]) -> Int32 {
   if pos <= 0 {
     0
   } else if pos >= table.length() {
@@ -76,7 +76,7 @@ fn char_to_byte(pos : Int, table : Array[Int]) -> Int {
 }
 
 ///|
-fn utf8_len(c : Char) -> Int {
+fn utf8_len(c : Char) -> Int32 {
   let cp = c.to_int()
   if cp <= 0x7F {
     1
@@ -136,21 +136,21 @@ fn Tokenizer::encode_raw_with_hooks_impl(
   keep_special~ : Bool,
   track_offsets~ : Bool,
 ) -> @types.Encoding raise @types.TokenizerError {
-  let ids : Array[Int] = []
+  let ids : Array[Int32] = []
   let tokens : Array[String] = []
-  let type_ids : Array[Int] = []
-  let offsets : Array[(Int, Int)] = []
-  let special_tokens_mask : Array[Int] = []
-  let attention_mask : Array[Int] = []
-  let sequence_ids : Array[Int?] = []
-  let word_ids : Array[Int?] = []
+  let type_ids : Array[Int32] = []
+  let offsets : Array[(Int32, Int32)] = []
+  let special_tokens_mask : Array[Int32] = []
+  let attention_mask : Array[Int32] = []
+  let sequence_ids : Array[Int32?] = []
+  let word_ids : Array[Int32?] = []
   let mut next_word_id = 0
   fn emit(
-    id : Int,
+    id : Int32,
     value : String,
-    offs : (Int, Int),
-    special : Int,
-    word_id : Int?,
+    offs : (Int32, Int32),
+    special : Int32,
+    word_id : Int32?,
   ) -> Unit {
     ids.push(id)
     tokens.push(value)
@@ -174,11 +174,11 @@ fn Tokenizer::encode_raw_with_hooks_impl(
         // original-text coordinates (identity alignment keeps the previous
         // scalar arithmetic bit-for-bit).
         fn to_orig(
-          base_offset : Int,
+          base_offset : Int32,
           align : Align,
-          s : Int,
-          e : Int,
-        ) -> (Int, Int) {
+          s : Int32,
+          e : Int32,
+        ) -> (Int32, Int32) {
           let (a, b) = align.expand(s, e)
           (base_offset + a, base_offset + b)
         }
@@ -329,16 +329,16 @@ fn Tokenizer::encode_raw_with_hooks_impl(
 fn piece_origin_map(
   kind : String,
   norm_sub : String,
-  value_len : Int,
-) -> Array[Int]? {
+  value_len : Int32,
+) -> Array[Int32]? {
   // base map: per-UTF-8-byte (ByteLevel) or per-char (Metaspace 1:1
   // rewrite). A single prepended visible char (Ġ prefix space / ▁
   // prepend) attaches to the first input char's index.
-  let base : Array[Int]? = if kind == "byte" {
+  let base : Array[Int32]? = if kind == "byte" {
     byte_map_of(norm_sub)
   } else {
     let n = norm_sub.char_length()
-    let map : Array[Int] = []
+    let map : Array[Int32] = []
     for i in 0..<n {
       map.push(i)
     }
@@ -360,12 +360,12 @@ fn piece_origin_map(
 ///|
 /// Byte-level visible-char -> input-char map of a substring (one entry per
 /// UTF-8 byte). None when the substring is empty.
-fn byte_map_of(norm_sub : String) -> Array[Int]? {
+fn byte_map_of(norm_sub : String) -> Array[Int32]? {
   let chars = norm_sub.to_array()
   if chars.is_empty() {
     return None
   }
-  let map : Array[Int] = []
+  let map : Array[Int32] = []
   for i, c in chars {
     let b = @utf8.encode(c.to_string()).length()
     for _k in 0..<b {
@@ -377,7 +377,7 @@ fn byte_map_of(norm_sub : String) -> Array[Int]? {
 
 ///|
 /// Extract the substring of `text` in char range [s, e).
-fn char_substring(text : String, s : Int, e : Int) -> String {
+fn char_substring(text : String, s : Int32, e : Int32) -> String {
   let chars = text.to_array()
   let sb = StringBuilder()
   let stop = if e < chars.length() { e } else { chars.length() }
@@ -395,12 +395,12 @@ fn char_substring(text : String, s : Int, e : Int) -> String {
 /// component hook) keep a zero-allocation sentinel that expands spans with
 /// the exact clamping semantics of a materialized (i, i+1) column.
 priv enum Align {
-  Identity(Int)
-  Table(Array[(Int, Int)])
+  Identity(Int32)
+  Table(Array[(Int32, Int32)])
 }
 
 ///|
-fn Align::expand(self : Align, s : Int, e : Int) -> (Int, Int) {
+fn Align::expand(self : Align, s : Int32, e : Int32) -> (Int32, Int32) {
   match self {
     Identity(n) =>
       if n == 0 || e <= s {
@@ -442,7 +442,7 @@ fn Tokenizer::normalize_with_alignment(
 fn Tokenizer::pre_tokenize_with_hook(
   self : Tokenizer,
   text : String,
-  base_offset : Int,
+  base_offset : Int32,
   hooks : TokenizerComponentHooks,
 ) -> Array[@types.Split] {
   match hooks.pre_tokenize {
@@ -487,21 +487,21 @@ fn Tokenizer::encode_pretokenized_raw_impl(
   words : Array[String],
   track_offsets~ : Bool,
 ) -> @types.Encoding raise @types.TokenizerError {
-  let ids : Array[Int] = []
+  let ids : Array[Int32] = []
   let tokens : Array[String] = []
-  let type_ids : Array[Int] = []
-  let offsets : Array[(Int, Int)] = []
-  let special_tokens_mask : Array[Int] = []
-  let attention_mask : Array[Int] = []
-  let sequence_ids : Array[Int?] = []
-  let word_ids : Array[Int?] = []
+  let type_ids : Array[Int32] = []
+  let offsets : Array[(Int32, Int32)] = []
+  let special_tokens_mask : Array[Int32] = []
+  let attention_mask : Array[Int32] = []
+  let sequence_ids : Array[Int32?] = []
+  let word_ids : Array[Int32?] = []
   let mut base = 0
   fn emit(
-    id : Int,
+    id : Int32,
     value : String,
-    offs : (Int, Int),
-    special : Int,
-    word_id : Int,
+    offs : (Int32, Int32),
+    special : Int32,
+    word_id : Int32,
   ) -> Unit {
     ids.push(id)
     tokens.push(value)

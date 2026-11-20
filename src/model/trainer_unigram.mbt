@@ -1,19 +1,19 @@
 ///|
 pub fn Model::train_unigram(
   texts : Array[String],
-  unk_token? : String? = None,
-  unk_piece? : String? = None,
-  min_frequency? : Int = 1,
-  special_tokens? : Array[String] = [],
-  vocab_size? : Int? = Some(8000),
-  byte_fallback? : Bool = false,
-  fuse_unk? : Bool = true,
-  max_piece_length? : Int? = None,
-  initial_alphabet? : Array[String] = [],
-  shrinking_factor? : Double = 0.75,
-  n_sub_iterations? : Int = 2,
-  show_progress? : Bool = true,
-  seed_size? : Int = 1000000,
+  unk_token~ : String? = None,
+  unk_piece~ : String? = None,
+  min_frequency~ : Int32 = 1,
+  special_tokens~ : Array[String] = [],
+  vocab_size~ : Int32? = Some(8000),
+  byte_fallback~ : Bool = false,
+  fuse_unk~ : Bool = true,
+  max_piece_length~ : Int32? = None,
+  initial_alphabet~ : Array[String] = [],
+  shrinking_factor~ : Double = 0.75,
+  n_sub_iterations~ : Int32 = 2,
+  show_progress~ : Bool = true,
+  seed_size~ : Int32 = 1000000,
 ) -> Model {
   ignore(shrinking_factor)
   ignore(n_sub_iterations)
@@ -47,19 +47,19 @@ pub fn Model::train_unigram(
 /// Train a deterministic Unigram model from pre-tokenized token streams.
 pub fn Model::train_unigram_from_tokens(
   tokenized_texts : Array[Array[String]],
-  unk_token? : String? = None,
-  unk_piece? : String? = None,
-  min_frequency? : Int = 1,
-  special_tokens? : Array[String] = [],
-  vocab_size? : Int? = Some(8000),
-  byte_fallback? : Bool = false,
-  fuse_unk? : Bool = true,
-  max_piece_length? : Int? = None,
-  initial_alphabet? : Array[String] = [],
-  shrinking_factor? : Double = 0.75,
-  n_sub_iterations? : Int = 2,
-  show_progress? : Bool = true,
-  seed_size? : Int = 1000000,
+  unk_token~ : String? = None,
+  unk_piece~ : String? = None,
+  min_frequency~ : Int32 = 1,
+  special_tokens~ : Array[String] = [],
+  vocab_size~ : Int32? = Some(8000),
+  byte_fallback~ : Bool = false,
+  fuse_unk~ : Bool = true,
+  max_piece_length~ : Int32? = None,
+  initial_alphabet~ : Array[String] = [],
+  shrinking_factor~ : Double = 0.75,
+  n_sub_iterations~ : Int32 = 2,
+  show_progress~ : Bool = true,
+  seed_size~ : Int32 = 1000000,
 ) -> Model {
   ignore(show_progress)
   ignore(min_frequency)
@@ -67,7 +67,7 @@ pub fn Model::train_unigram_from_tokens(
     Some(piece) => Some(piece)
     None => unk_token
   }
-  let word_counts : Map[String, Int] = Map([])
+  let word_counts : Map[String, Int32] = Map([])
   let word_order : Array[String] = []
   for tokens in tokenized_texts {
     for tok in tokens {
@@ -90,7 +90,7 @@ pub fn Model::train_unigram_from_tokens(
     unk_token,
     initial_alphabet,
   )
-  let vocab : Map[String, (Int, Double)] = Map([])
+  let vocab : Map[String, (Int32, Double)] = Map([])
   let vocab_r : Array[String?] = []
   let mut em_i = 0
   while em_i < em_pieces.length() {
@@ -138,7 +138,7 @@ fn is_train_space(c : Char) -> Bool {
 }
 
 ///|
-fn slice_train(chars : Array[Char], start : Int, stop : Int) -> String {
+fn slice_train(chars : Array[Char], start : Int32, stop : Int32) -> String {
   let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])

@@ -5,6 +5,7 @@ import {
   "howtomakeaname/tokenizers-moonbit/common",
   "howtomakeaname/tokenizers-moonbit/types",
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -17,7 +18,7 @@ pub enum Decoder {
   WordPiece(prefix~ : String, cleanup~ : Bool)
   Metaspace(replacement~ : Char, prepend_scheme~ : String, split~ : Bool)
   BPEDecoder(suffix~ : String)
-  Strip(content~ : Char, start~ : Int, stop~ : Int)
+  Strip(content~ : Char, start~ : Int32, stop~ : Int32)
   Fuse
   Replace(pattern~ : String, content~ : String)
   ReplaceString(pattern~ : String, content~ : String)
@@ -25,9 +26,9 @@ pub enum Decoder {
   CTC(pad_token~ : String, word_delimiter_token~ : String, cleanup~ : Bool)
   Sequence(Array[Decoder])
 }
-pub fn Decoder::__getitem__(Self, Int) -> Self?
+pub fn Decoder::__getitem__(Self, Int32) -> Self?
 pub fn Decoder::__getstate__(Self) -> DecoderState raise @types.TokenizerError
-pub fn Decoder::__len__(Self) -> Int
+pub fn Decoder::__len__(Self) -> Int32
 pub fn Decoder::__repr__(Self) -> String raise @types.TokenizerError
 pub fn Decoder::__setstate__(DecoderState) -> Self raise @types.TokenizerError
 pub fn Decoder::__str__(Self) -> String raise @types.TokenizerError
@@ -41,32 +42,32 @@ pub fn Decoder::ctc(pad_token? : String, word_delimiter_token? : String, cleanup
 pub fn Decoder::decode(Self, Array[String]) -> String
 pub fn Decoder::decode_chain(Self, Array[String]) -> Array[String]
 pub fn Decoder::decoders(Self) -> Array[Self]
-pub fn Decoder::from_json(Json) -> Self raise @types.TokenizerError
+pub fn Decoder::from_json(@json.Json) -> Self raise @types.TokenizerError
 pub fn Decoder::from_state(DecoderState) -> Self raise @types.TokenizerError
 pub fn Decoder::fuse() -> Self
 pub fn Decoder::get_add_prefix_space(Self) -> Bool?
 pub fn Decoder::get_cleanup(Self) -> Bool?
 pub fn Decoder::get_content(Self) -> String?
 pub fn Decoder::get_decoders(Self) -> Array[Self]
-pub fn Decoder::get_item(Self, Int) -> Self?
-pub fn Decoder::get_left(Self) -> Int?
+pub fn Decoder::get_item(Self, Int32) -> Self?
+pub fn Decoder::get_left(Self) -> Int32?
 pub fn Decoder::get_pad_token(Self) -> String?
 pub fn Decoder::get_pattern(Self) -> String?
 pub fn Decoder::get_pattern_kind(Self) -> @common.PatternKind?
 pub fn Decoder::get_prefix(Self) -> String?
 pub fn Decoder::get_prepend_scheme(Self) -> String?
 pub fn Decoder::get_replacement(Self) -> Char?
-pub fn Decoder::get_right(Self) -> Int?
+pub fn Decoder::get_right(Self) -> Int32?
 pub fn Decoder::get_split(Self) -> Bool?
-pub fn Decoder::get_start(Self) -> Int?
+pub fn Decoder::get_start(Self) -> Int32?
 pub fn Decoder::get_state(Self) -> DecoderState raise @types.TokenizerError
-pub fn Decoder::get_stop(Self) -> Int?
+pub fn Decoder::get_stop(Self) -> Int32?
 pub fn Decoder::get_suffix(Self) -> String?
 pub fn Decoder::get_trim_offsets(Self) -> Bool?
 pub fn Decoder::get_use_regex(Self) -> Bool?
 pub fn Decoder::get_word_delimiter_token(Self) -> String?
 pub fn Decoder::kind(Self) -> String
-pub fn Decoder::left(Self) -> Int?
+pub fn Decoder::left(Self) -> Int32?
 pub fn Decoder::metaspace(replacement? : Char, prepend_scheme? : String, split? : Bool) -> Self
 pub fn Decoder::pad_token(Self) -> String?
 pub fn Decoder::pattern(Self) -> String?
@@ -76,7 +77,7 @@ pub fn Decoder::prepend_scheme(Self) -> String?
 pub fn Decoder::replace(String, String) -> Self
 pub fn Decoder::replace_regex(String, String) -> Self
 pub fn Decoder::replacement(Self) -> Char?
-pub fn Decoder::right(Self) -> Int?
+pub fn Decoder::right(Self) -> Int32?
 pub fn Decoder::sequence(Array[Self]) -> Self
 pub fn Decoder::set_add_prefix_space(Self, Bool) -> Self
 pub fn Decoder::set_add_prefix_space_alias(Self, Bool) -> Self
@@ -84,8 +85,8 @@ pub fn Decoder::set_cleanup(Self, Bool) -> Self
 pub fn Decoder::set_cleanup_alias(Self, Bool) -> Self
 pub fn Decoder::set_content(Self, String) -> Self
 pub fn Decoder::set_content_alias(Self, String) -> Self
-pub fn Decoder::set_left(Self, Int) -> Self
-pub fn Decoder::set_left_alias(Self, Int) -> Self
+pub fn Decoder::set_left(Self, Int32) -> Self
+pub fn Decoder::set_left_alias(Self, Int32) -> Self
 pub fn Decoder::set_pad_token(Self, String) -> Self
 pub fn Decoder::set_pad_token_alias(Self, String) -> Self
 pub fn Decoder::set_prefix(Self, String) -> Self
@@ -94,14 +95,14 @@ pub fn Decoder::set_prepend_scheme(Self, String) -> Self
 pub fn Decoder::set_prepend_scheme_alias(Self, String) -> Self
 pub fn Decoder::set_replacement(Self, Char) -> Self
 pub fn Decoder::set_replacement_alias(Self, Char) -> Self
-pub fn Decoder::set_right(Self, Int) -> Self
-pub fn Decoder::set_right_alias(Self, Int) -> Self
+pub fn Decoder::set_right(Self, Int32) -> Self
+pub fn Decoder::set_right_alias(Self, Int32) -> Self
 pub fn Decoder::set_split_enabled(Self, Bool) -> Self
 pub fn Decoder::set_split_enabled_alias(Self, Bool) -> Self
-pub fn Decoder::set_start(Self, Int) -> Self
-pub fn Decoder::set_start_alias(Self, Int) -> Self
-pub fn Decoder::set_stop(Self, Int) -> Self
-pub fn Decoder::set_stop_alias(Self, Int) -> Self
+pub fn Decoder::set_start(Self, Int32) -> Self
+pub fn Decoder::set_start_alias(Self, Int32) -> Self
+pub fn Decoder::set_stop(Self, Int32) -> Self
+pub fn Decoder::set_stop_alias(Self, Int32) -> Self
 pub fn Decoder::set_suffix(Self, String) -> Self
 pub fn Decoder::set_suffix_alias(Self, String) -> Self
 pub fn Decoder::set_trim_offsets(Self, Bool) -> Self
@@ -111,9 +112,9 @@ pub fn Decoder::set_use_regex_alias(Self, Bool) -> Self
 pub fn Decoder::set_word_delimiter_token(Self, String) -> Self
 pub fn Decoder::set_word_delimiter_token_alias(Self, String) -> Self
 pub fn Decoder::split_enabled(Self) -> Bool?
-pub fn Decoder::start(Self) -> Int?
-pub fn Decoder::stop(Self) -> Int?
-pub fn Decoder::strip(Char, Int, Int) -> Self
+pub fn Decoder::start(Self) -> Int32?
+pub fn Decoder::stop(Self) -> Int32?
+pub fn Decoder::strip(Char, Int32, Int32) -> Self
 pub fn Decoder::suffix(Self) -> String?
 pub fn Decoder::to_json(Self) -> String?
 pub fn Decoder::trim_offsets(Self) -> Bool?
@@ -121,9 +122,10 @@ pub fn Decoder::use_regex(Self) -> Bool?
 pub fn Decoder::word_delimiter_token(Self) -> String?
 pub fn Decoder::wordpiece(prefix? : String, cleanup? : Bool) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct DecoderState {
   json : String
-} derive(Eq, @debug.Debug)
+}
 pub fn DecoderState::equal(Self, Self) -> Bool
 pub fn DecoderState::new(String) -> Self
 pub fn DecoderState::not_equal(Self, Self) -> Bool

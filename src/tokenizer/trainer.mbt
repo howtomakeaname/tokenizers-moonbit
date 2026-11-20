@@ -5,92 +5,94 @@
 /// `train_from_iterator`. It intentionally wraps the existing deterministic model
 /// trainers while preserving tokenizer-level normalizer/pre-tokenizer and added
 /// vocabulary handling.
+#derive(Debug, Eq)
 pub enum Trainer {
   WordLevelTrainer(
     unk_token~ : String,
-    min_frequency~ : Int,
+    min_frequency~ : Int32,
     special_tokens~ : Array[String],
     special_added_tokens~ : Array[AddedToken],
-    vocab_size~ : Int?,
-    show_progress~ : Bool
+    vocab_size~ : Int32?,
+    show_progress~ : Bool,
   )
   WordPieceTrainer(
     unk_token~ : String,
     continuing_subword_prefix~ : String,
     end_of_word_suffix~ : String?,
-    min_frequency~ : Int,
+    min_frequency~ : Int32,
     special_tokens~ : Array[String],
     special_added_tokens~ : Array[AddedToken],
-    vocab_size~ : Int?,
-    max_input_chars_per_word~ : Int,
-    max_token_length~ : Int?,
+    vocab_size~ : Int32?,
+    max_input_chars_per_word~ : Int32,
+    max_token_length~ : Int32?,
     initial_alphabet~ : Array[String],
-    limit_alphabet~ : Int?,
-    show_progress~ : Bool
+    limit_alphabet~ : Int32?,
+    show_progress~ : Bool,
   )
   BpeTrainer(
     unk_token~ : String?,
-    min_frequency~ : Int,
+    min_frequency~ : Int32,
     special_tokens~ : Array[String],
     special_added_tokens~ : Array[AddedToken],
-    vocab_size~ : Int?,
+    vocab_size~ : Int32?,
     continuing_subword_prefix~ : String?,
     end_of_word_suffix~ : String?,
     fuse_unk~ : Bool,
     initial_alphabet~ : Array[String],
-    limit_alphabet~ : Int?,
-    max_token_length~ : Int?,
+    limit_alphabet~ : Int32?,
+    max_token_length~ : Int32?,
     show_progress~ : Bool,
-    progress_format~ : String
+    progress_format~ : String,
   )
   UnigramTrainer(
     unk_token~ : String?,
-    min_frequency~ : Int,
+    min_frequency~ : Int32,
     special_tokens~ : Array[String],
     special_added_tokens~ : Array[AddedToken],
-    vocab_size~ : Int?,
+    vocab_size~ : Int32?,
     byte_fallback~ : Bool,
     fuse_unk~ : Bool,
     shrinking_factor~ : Double,
-    max_piece_length~ : Int?,
+    max_piece_length~ : Int32?,
     initial_alphabet~ : Array[String],
-    n_sub_iterations~ : Int,
+    n_sub_iterations~ : Int32,
     show_progress~ : Bool,
-    seed_size~ : Int
+    seed_size~ : Int32,
   )
-} derive(Debug, Eq)
+}
 
 ///|
 /// Typed, copy-returning trainer configuration snapshot for binding layers.
+#derive(Debug, Eq)
 pub struct TrainerState {
   kind : String
   unk_token : String?
-  min_frequency : Int
+  min_frequency : Int32
   special_tokens : Array[String]
   special_added_tokens : Array[AddedToken]
-  vocab_size : Int?
+  vocab_size : Int32?
   show_progress : Bool
   continuing_subword_prefix : String?
   end_of_word_suffix : String?
-  max_input_chars_per_word : Int?
-  max_token_length : Int?
+  max_input_chars_per_word : Int32?
+  max_token_length : Int32?
   initial_alphabet : Array[String]
-  limit_alphabet : Int?
+  limit_alphabet : Int32?
   fuse_unk : Bool?
   byte_fallback : Bool?
   shrinking_factor : Double?
-  max_piece_length : Int?
-  n_sub_iterations : Int?
-  seed_size : Int?
+  max_piece_length : Int32?
+  n_sub_iterations : Int32?
+  seed_size : Int32?
   progress_format : String?
-} derive(Debug, Eq)
+}
 
 ///|
 priv struct BpeTrainingOptions {
   byte_fallback : Bool
   ignore_merges : Bool
   dropout : Double?
-  cache_capacity : Int?
+  cache_capacity : Int32?
 }
 
 ///|
@@ -103,12 +105,12 @@ pub fn TrainerState::with_kind(
 
 ///|
 pub fn Trainer::wordlevel(
-  unk_token? : String = "[UNK]",
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  special_added_tokens? : Array[AddedToken] = [],
-  vocab_size? : Int? = Some(30000),
-  show_progress? : Bool = true,
+  unk_token~ : String = "[UNK]",
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  special_added_tokens~ : Array[AddedToken] = [],
+  vocab_size~ : Int32? = Some(30000),
+  show_progress~ : Bool = true,
 ) -> Trainer {
   WordLevelTrainer(
     unk_token~,
@@ -123,12 +125,12 @@ pub fn Trainer::wordlevel(
 ///|
 /// HF Python-style constructor alias for binding layers.
 pub fn Trainer::wordlevel_trainer(
-  unk_token? : String = "[UNK]",
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  special_added_tokens? : Array[AddedToken] = [],
-  vocab_size? : Int? = Some(30000),
-  show_progress? : Bool = true,
+  unk_token~ : String = "[UNK]",
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  special_added_tokens~ : Array[AddedToken] = [],
+  vocab_size~ : Int32? = Some(30000),
+  show_progress~ : Bool = true,
 ) -> Trainer {
   Trainer::wordlevel(
     unk_token~,
@@ -142,18 +144,18 @@ pub fn Trainer::wordlevel_trainer(
 
 ///|
 pub fn Trainer::wordpiece(
-  unk_token? : String = "[UNK]",
-  continuing_subword_prefix? : String = "##",
-  end_of_word_suffix? : String? = None,
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  special_added_tokens? : Array[AddedToken] = [],
-  vocab_size? : Int? = Some(30000),
-  max_input_chars_per_word? : Int = 100,
-  max_token_length? : Int? = None,
-  initial_alphabet? : Array[String] = [],
-  limit_alphabet? : Int? = None,
-  show_progress? : Bool = true,
+  unk_token~ : String = "[UNK]",
+  continuing_subword_prefix~ : String = "##",
+  end_of_word_suffix~ : String? = None,
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  special_added_tokens~ : Array[AddedToken] = [],
+  vocab_size~ : Int32? = Some(30000),
+  max_input_chars_per_word~ : Int32 = 100,
+  max_token_length~ : Int32? = None,
+  initial_alphabet~ : Array[String] = [],
+  limit_alphabet~ : Int32? = None,
+  show_progress~ : Bool = true,
 ) -> Trainer {
   WordPieceTrainer(
     unk_token~,
@@ -174,18 +176,18 @@ pub fn Trainer::wordpiece(
 ///|
 /// HF Python-style constructor alias for binding layers.
 pub fn Trainer::wordpiece_trainer(
-  unk_token? : String = "[UNK]",
-  continuing_subword_prefix? : String = "##",
-  end_of_word_suffix? : String? = None,
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  special_added_tokens? : Array[AddedToken] = [],
-  vocab_size? : Int? = Some(30000),
-  max_input_chars_per_word? : Int = 100,
-  max_token_length? : Int? = None,
-  initial_alphabet? : Array[String] = [],
-  limit_alphabet? : Int? = None,
-  show_progress? : Bool = true,
+  unk_token~ : String = "[UNK]",
+  continuing_subword_prefix~ : String = "##",
+  end_of_word_suffix~ : String? = None,
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  special_added_tokens~ : Array[AddedToken] = [],
+  vocab_size~ : Int32? = Some(30000),
+  max_input_chars_per_word~ : Int32 = 100,
+  max_token_length~ : Int32? = None,
+  initial_alphabet~ : Array[String] = [],
+  limit_alphabet~ : Int32? = None,
+  show_progress~ : Bool = true,
 ) -> Trainer {
   Trainer::wordpiece(
     unk_token~,
@@ -205,19 +207,19 @@ pub fn Trainer::wordpiece_trainer(
 
 ///|
 pub fn Trainer::bpe(
-  unk_token? : String? = None,
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  special_added_tokens? : Array[AddedToken] = [],
-  vocab_size? : Int? = Some(30000),
-  continuing_subword_prefix? : String? = None,
-  end_of_word_suffix? : String? = None,
-  fuse_unk? : Bool = false,
-  initial_alphabet? : Array[String] = [],
-  limit_alphabet? : Int? = None,
-  max_token_length? : Int? = None,
-  show_progress? : Bool = true,
-  progress_format? : String = "indicatif",
+  unk_token~ : String? = None,
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  special_added_tokens~ : Array[AddedToken] = [],
+  vocab_size~ : Int32? = Some(30000),
+  continuing_subword_prefix~ : String? = None,
+  end_of_word_suffix~ : String? = None,
+  fuse_unk~ : Bool = false,
+  initial_alphabet~ : Array[String] = [],
+  limit_alphabet~ : Int32? = None,
+  max_token_length~ : Int32? = None,
+  show_progress~ : Bool = true,
+  progress_format~ : String = "indicatif",
 ) -> Trainer {
   BpeTrainer(
     unk_token~,
@@ -239,19 +241,19 @@ pub fn Trainer::bpe(
 ///|
 /// HF Python-style constructor alias for binding layers.
 pub fn Trainer::bpe_trainer(
-  unk_token? : String? = None,
-  min_frequency? : Int = 0,
-  special_tokens? : Array[String] = [],
-  special_added_tokens? : Array[AddedToken] = [],
-  vocab_size? : Int? = Some(30000),
-  continuing_subword_prefix? : String? = None,
-  end_of_word_suffix? : String? = None,
-  fuse_unk? : Bool = false,
-  initial_alphabet? : Array[String] = [],
-  limit_alphabet? : Int? = None,
-  max_token_length? : Int? = None,
-  show_progress? : Bool = true,
-  progress_format? : String = "indicatif",
+  unk_token~ : String? = None,
+  min_frequency~ : Int32 = 0,
+  special_tokens~ : Array[String] = [],
+  special_added_tokens~ : Array[AddedToken] = [],
+  vocab_size~ : Int32? = Some(30000),
+  continuing_subword_prefix~ : String? = None,
+  end_of_word_suffix~ : String? = None,
+  fuse_unk~ : Bool = false,
+  initial_alphabet~ : Array[String] = [],
+  limit_alphabet~ : Int32? = None,
+  max_token_length~ : Int32? = None,
+  show_progress~ : Bool = true,
+  progress_format~ : String = "indicatif",
 ) -> Trainer {
   Trainer::bpe(
     unk_token~,
@@ -272,20 +274,20 @@ pub fn Trainer::bpe_trainer(
 
 ///|
 pub fn Trainer::unigram(
-  unk_token? : String? = None,
-  unk_piece? : String? = None,
-  min_frequency? : Int = 1,
-  special_tokens? : Array[String] = [],
-  special_added_tokens? : Array[AddedToken] = [],
-  vocab_size? : Int? = Some(8000),
-  byte_fallback? : Bool = false,
-  fuse_unk? : Bool = true,
-  shrinking_factor? : Double = 0.75,
-  max_piece_length? : Int? = Some(16),
-  initial_alphabet? : Array[String] = [],
-  n_sub_iterations? : Int = 2,
-  show_progress? : Bool = true,
-  seed_size? : Int = 1000000,
+  unk_token~ : String? = None,
+  unk_piece~ : String? = None,
+  min_frequency~ : Int32 = 1,
+  special_tokens~ : Array[String] = [],
+  special_added_tokens~ : Array[AddedToken] = [],
+  vocab_size~ : Int32? = Some(8000),
+  byte_fallback~ : Bool = false,
+  fuse_unk~ : Bool = true,
+  shrinking_factor~ : Double = 0.75,
+  max_piece_length~ : Int32? = Some(16),
+  initial_alphabet~ : Array[String] = [],
+  n_sub_iterations~ : Int32 = 2,
+  show_progress~ : Bool = true,
+  seed_size~ : Int32 = 1000000,
 ) -> Trainer {
   let unk_token = match unk_piece {
     Some(piece) => Some(piece)
@@ -311,20 +313,20 @@ pub fn Trainer::unigram(
 ///|
 /// HF Python-style constructor alias for binding layers.
 pub fn Trainer::unigram_trainer(
-  unk_token? : String? = None,
-  unk_piece? : String? = None,
-  min_frequency? : Int = 1,
-  special_tokens? : Array[String] = [],
-  special_added_tokens? : Array[AddedToken] = [],
-  vocab_size? : Int? = Some(8000),
-  byte_fallback? : Bool = false,
-  fuse_unk? : Bool = true,
-  shrinking_factor? : Double = 0.75,
-  max_piece_length? : Int? = Some(16),
-  initial_alphabet? : Array[String] = [],
-  n_sub_iterations? : Int = 2,
-  show_progress? : Bool = true,
-  seed_size? : Int = 1000000,
+  unk_token~ : String? = None,
+  unk_piece~ : String? = None,
+  min_frequency~ : Int32 = 1,
+  special_tokens~ : Array[String] = [],
+  special_added_tokens~ : Array[AddedToken] = [],
+  vocab_size~ : Int32? = Some(8000),
+  byte_fallback~ : Bool = false,
+  fuse_unk~ : Bool = true,
+  shrinking_factor~ : Double = 0.75,
+  max_piece_length~ : Int32? = Some(16),
+  initial_alphabet~ : Array[String] = [],
+  n_sub_iterations~ : Int32 = 2,
+  show_progress~ : Bool = true,
+  seed_size~ : Int32 = 1000000,
 ) -> Trainer {
   Trainer::unigram(
     unk_token~,
@@ -371,7 +373,7 @@ pub fn Trainer::get_unk_token(self : Trainer) -> String? {
 }
 
 ///|
-pub fn Trainer::min_frequency(self : Trainer) -> Int {
+pub fn Trainer::min_frequency(self : Trainer) -> Int32 {
   match self {
     WordLevelTrainer(min_frequency~, ..) => min_frequency
     WordPieceTrainer(min_frequency~, ..) => min_frequency
@@ -381,7 +383,7 @@ pub fn Trainer::min_frequency(self : Trainer) -> Int {
 }
 
 ///|
-pub fn Trainer::get_min_frequency(self : Trainer) -> Int {
+pub fn Trainer::get_min_frequency(self : Trainer) -> Int32 {
   self.min_frequency()
 }
 
@@ -406,7 +408,7 @@ pub fn Trainer::get_special_added_tokens(self : Trainer) -> Array[AddedToken] {
 }
 
 ///|
-pub fn Trainer::vocab_size(self : Trainer) -> Int? {
+pub fn Trainer::vocab_size(self : Trainer) -> Int32? {
   match self {
     WordLevelTrainer(vocab_size~, ..) => vocab_size
     WordPieceTrainer(vocab_size~, ..) => vocab_size
@@ -416,7 +418,7 @@ pub fn Trainer::vocab_size(self : Trainer) -> Int? {
 }
 
 ///|
-pub fn Trainer::get_vocab_size(self : Trainer) -> Int? {
+pub fn Trainer::get_vocab_size(self : Trainer) -> Int32? {
   self.vocab_size()
 }
 
@@ -480,7 +482,7 @@ pub fn Trainer::get_initial_alphabet(self : Trainer) -> Array[String] {
 }
 
 ///|
-pub fn Trainer::limit_alphabet(self : Trainer) -> Int? {
+pub fn Trainer::limit_alphabet(self : Trainer) -> Int32? {
   match self {
     WordPieceTrainer(limit_alphabet~, ..) => limit_alphabet
     BpeTrainer(limit_alphabet~, ..) => limit_alphabet
@@ -489,12 +491,12 @@ pub fn Trainer::limit_alphabet(self : Trainer) -> Int? {
 }
 
 ///|
-pub fn Trainer::get_limit_alphabet(self : Trainer) -> Int? {
+pub fn Trainer::get_limit_alphabet(self : Trainer) -> Int32? {
   self.limit_alphabet()
 }
 
 ///|
-pub fn Trainer::max_token_length(self : Trainer) -> Int? {
+pub fn Trainer::max_token_length(self : Trainer) -> Int32? {
   match self {
     WordPieceTrainer(max_token_length~, ..) => max_token_length
     BpeTrainer(max_token_length~, ..) => max_token_length
@@ -503,12 +505,12 @@ pub fn Trainer::max_token_length(self : Trainer) -> Int? {
 }
 
 ///|
-pub fn Trainer::get_max_token_length(self : Trainer) -> Int? {
+pub fn Trainer::get_max_token_length(self : Trainer) -> Int32? {
   self.max_token_length()
 }
 
 ///|
-pub fn Trainer::max_input_chars_per_word(self : Trainer) -> Int? {
+pub fn Trainer::max_input_chars_per_word(self : Trainer) -> Int32? {
   match self {
     WordPieceTrainer(max_input_chars_per_word~, ..) =>
       Some(max_input_chars_per_word)
@@ -517,7 +519,7 @@ pub fn Trainer::max_input_chars_per_word(self : Trainer) -> Int? {
 }
 
 ///|
-pub fn Trainer::get_max_input_chars_per_word(self : Trainer) -> Int? {
+pub fn Trainer::get_max_input_chars_per_word(self : Trainer) -> Int32? {
   self.max_input_chars_per_word()
 }
 
@@ -562,7 +564,7 @@ pub fn Trainer::get_shrinking_factor(self : Trainer) -> Double? {
 }
 
 ///|
-pub fn Trainer::max_piece_length(self : Trainer) -> Int? {
+pub fn Trainer::max_piece_length(self : Trainer) -> Int32? {
   match self {
     UnigramTrainer(max_piece_length~, ..) => max_piece_length
     _ => None
@@ -570,12 +572,12 @@ pub fn Trainer::max_piece_length(self : Trainer) -> Int? {
 }
 
 ///|
-pub fn Trainer::get_max_piece_length(self : Trainer) -> Int? {
+pub fn Trainer::get_max_piece_length(self : Trainer) -> Int32? {
   self.max_piece_length()
 }
 
 ///|
-pub fn Trainer::n_sub_iterations(self : Trainer) -> Int? {
+pub fn Trainer::n_sub_iterations(self : Trainer) -> Int32? {
   match self {
     UnigramTrainer(n_sub_iterations~, ..) => Some(n_sub_iterations)
     _ => None
@@ -583,12 +585,12 @@ pub fn Trainer::n_sub_iterations(self : Trainer) -> Int? {
 }
 
 ///|
-pub fn Trainer::get_n_sub_iterations(self : Trainer) -> Int? {
+pub fn Trainer::get_n_sub_iterations(self : Trainer) -> Int32? {
   self.n_sub_iterations()
 }
 
 ///|
-pub fn Trainer::seed_size(self : Trainer) -> Int? {
+pub fn Trainer::seed_size(self : Trainer) -> Int32? {
   match self {
     UnigramTrainer(seed_size~, ..) => Some(seed_size)
     _ => None
@@ -596,7 +598,7 @@ pub fn Trainer::seed_size(self : Trainer) -> Int? {
 }
 
 ///|
-pub fn Trainer::get_seed_size(self : Trainer) -> Int? {
+pub fn Trainer::get_seed_size(self : Trainer) -> Int32? {
   self.seed_size()
 }
 

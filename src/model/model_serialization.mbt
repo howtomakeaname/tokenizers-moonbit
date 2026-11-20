@@ -20,7 +20,7 @@ pub fn Model::to_json(self : Model) -> String? {
 pub fn Model::save(
   self : Model,
   folder : String,
-  prefix? : String = "",
+  prefix~ : String = "",
 ) -> Array[String] raise @types.TokenizerError {
   ensure_dir(folder)
   let p = artifact_prefix(prefix)
@@ -87,7 +87,7 @@ fn save_unigram_artifact(
 }
 
 ///|
-fn bpe_merges_txt(merges : Map[(String, String), Int]) -> String {
+fn bpe_merges_txt(merges : Map[(String, String), Int32]) -> String {
   let ordered : Array[(String, String)?] = Array::make(merges.length(), None)
   for kv in merges {
     let (pair, rank) = kv
@@ -395,7 +395,7 @@ fn write_vocab_json(sb : StringBuilder, vocab_r : Array[String?]) -> Unit {
 ///|
 fn write_merges_json(
   sb : StringBuilder,
-  merges : Map[(String, String), Int],
+  merges : Map[(String, String), Int32],
 ) -> Unit {
   let ordered : Array[(String, String)?] = Array::make(merges.length(), None)
   for kv in merges {
@@ -447,7 +447,7 @@ fn write_json_string(sb : StringBuilder, s : String) -> Unit {
 }
 
 ///|
-fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
+fn write_control_escape(sb : StringBuilder, u : Int32) -> Unit {
   let digits = "0123456789ABCDEF".to_array()
   sb.write_string("\\u00")
   sb.write_char(digits[u / 16 % 16])
@@ -460,7 +460,7 @@ fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
 pub fn Model::tokenize(
   self : Model,
   word : String,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Array[@types.Token] raise @types.TokenizerError {
   match self {
     BPE(m) => m.tokenize(word, offset~)

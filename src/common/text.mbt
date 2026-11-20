@@ -38,7 +38,7 @@ pub fn is_ascii_alnum(c : Char) -> Bool {
 /// onig's six Latin-1 quirk codepoints (² ³ ¹ ¼ ½ ¾): they match BARE
 /// `\w`/`\w+`/`\w{n}` but NOT class-context spellings (`[\w]`, `[^\w]`)
 /// or single-word added-token boundaries (probed across all families).
-let word_onig_quirks : Array[Int] = [0xB2, 0xB3, 0xB9, 0xBC, 0xBD, 0xBE]
+let word_onig_quirks : Array[Int32] = [0xB2, 0xB3, 0xB9, 0xBC, 0xBD, 0xBE]
 
 ///|
 /// Word-char test for BARE `\w` spellings (includes the onig quirks).
@@ -523,7 +523,7 @@ fn is_regex_literal_pattern(pattern : String) -> Bool {
 /// class kind with an implied exact run of 1 — HF replaces each matching
 /// character individually (probed: Replace(Regex "[0-9]", "#") on "a5b7"
 /// -> "a#b#"). Returns the class kind.
-pub fn bare_class_kind(pattern : String) -> Int? {
+pub fn bare_class_kind(pattern : String) -> Int32? {
   match pattern {
     "\\s" | "[\\s]" => Some(1)
     "\\S" | "[^\\s]" => Some(12)
@@ -558,7 +558,11 @@ pub fn bare_class_kind(pattern : String) -> Int? {
 ///|
 /// Digit run at [k, until) capped at the onig 100000 bound; returns
 /// (value, next_index).
-fn parse_capped_digits(arr : Array[Char], k : Int, until : Int) -> (Int, Int)? {
+fn parse_capped_digits(
+  arr : Array[Char],
+  k : Int32,
+  until : Int32,
+) -> (Int32, Int32)? {
   let mut v = 0
   let mut j = k
   while j < until && arr[j] >= '0' && arr[j] <= '9' {
@@ -582,9 +586,9 @@ fn parse_capped_digits(arr : Array[Char], k : Int, until : Int) -> (Int, Int)? {
 /// Returns the equivalent greedy pattern for the downstream families,
 /// or None when the pattern has no lazy suffix / the bound is out of
 /// the onig 100000 window (the gate then rejects).
-fn last_char_index(s : String, c : Char) -> Int? {
+fn last_char_index(s : String, c : Char) -> Int32? {
   let a = s.to_array()
-  let mut idx : Int? = None
+  let mut idx : Int32? = None
   for i in 0..<a.length() {
     if a[i] == c {
       idx = Some(i)
@@ -1237,7 +1241,7 @@ pub fn escaped_letter_literal(c : Char) -> Char? {
 /// is a bare single-char class spelling (via bare_class_kind) or an
 /// ordinary literal char. `kind` = -1 signals a literal base (the char is
 /// carried in `literal`); `max` = -1 signals the unbounded `{0,}` form.
-pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
+pub fn zero_min_quantifier_spec(pattern : String) -> (Int32, Char?, Int32)? {
   let chars = pattern.to_array()
   let n = chars.length()
   // find the LAST '{' — base is everything before it
@@ -1257,7 +1261,7 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
   // the literal path. `{n,0}` also lands here — onig swaps it to
   // `{0,n}` (probed: `a{2,0}` on 'zaaaz' -> '#z##z#' == `a{0,2}`),
   // handled by the n-comma-zero branch below.
-  let n_zero : Int? = if chars[open + 1] >= '0' && chars[open + 1] <= '9' {
+  let n_zero : Int32? = if chars[open + 1] >= '0' && chars[open + 1] <= '9' {
     // `{n,0}` shape: digits, ',', '0', '}' — parse v then require ,0)
     let mut v = 0
     let mut k = open + 1
@@ -1293,7 +1297,7 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
       }
     None => ()
   }
-  let max : Int = if chars[open + 1] == ',' {
+  let max : Int32 = if chars[open + 1] == ',' {
     if open + 2 == n - 1 {
       return None // {,}
     }
@@ -1391,7 +1395,7 @@ pub fn zero_min_quantifier_spec(pattern : String) -> (Int, Char?, Int)? {
 /// gives '#z#z#' on 'zaaz' (block + boundary empties) but '#z#a#' on
 /// 'za' (no 2-run, pure empties). Base is a class kind or an escaped /
 /// ordinary literal char (same resolution as the zero-min spec).
-pub fn lazy_exact_spec(pattern : String) -> (Int, Char?, Int, Int)? {
+pub fn lazy_exact_spec(pattern : String) -> (Int32, Char?, Int32, Int32)? {
   let chars = pattern.to_array()
   let n = chars.length()
   if n < 5 || chars[n - 1] != '?' || chars[n - 2] != '}' {
@@ -1457,10 +1461,10 @@ pub fn lazy_exact_spec(pattern : String) -> (Int, Char?, Int, Int)? {
 /// escaped / ordinary literal char); `max` is the already-normalized
 /// bound.
 fn zero_min_base(
-  open : Int,
+  open : Int32,
   chars : Array[Char],
-  max : Int,
-) -> (Int, Char?, Int)? {
+  max : Int32,
+) -> (Int32, Char?, Int32)? {
   let base_sb = StringBuilder()
   for i in 0..<open {
     base_sb.write_char(chars[i])
@@ -1510,7 +1514,7 @@ fn zero_min_base(
 /// the twelve mixed-complement orderings, a single literal char, or an
 /// escaped literal. Returns (kind, literal, lo, hi); hi = -1 unbounded;
 /// kind -1 signals the literal base.
-pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
+pub fn double_anchored_spec(pattern : String) -> (Int32, Char?, Int32, Int32)? {
   let chars = pattern.to_array()
   let n = chars.length()
   if n < 3 || chars[0] != '^' || chars[n - 1] != '$' {
@@ -1542,8 +1546,8 @@ pub fn double_anchored_spec(pattern : String) -> (Int, Char?, Int, Int)? {
 ///|
 fn double_anchored_brace(
   chars : Array[Char],
-  n : Int,
-) -> (Int, Char?, Int, Int)? {
+  n : Int32,
+) -> (Int32, Char?, Int32, Int32)? {
   if n < 3 || chars[0] != '^' || chars[n - 1] != '$' {
     return None
   }
@@ -1553,7 +1557,7 @@ fn double_anchored_brace(
   let mut hi = 0
   let mut swapped = false
   let mut braced = false // a {n}/{n,m} window (vs `+` / quantifier-less)
-  let mut base_end : Int = 0 // exclusive end of the base inside chars
+  let mut base_end : Int32 = 0 // exclusive end of the base inside chars
   // '+' is the quantifier unless it is itself escaped (odd backslash
   // run before it: `^\+$` is the literal-plus base, `^\\+$` is an
   // escaped backslash base followed by the + quantifier)
@@ -1690,11 +1694,11 @@ fn double_anchored_brace(
 ///|
 fn double_anchored_base(
   base : String,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
   swapped~ : Bool,
   braced~ : Bool,
-) -> (Int, Char?, Int, Int)? {
+) -> (Int32, Char?, Int32, Int32)? {
   // dot-sequence base (`^..$` = a 2-char line, `^...$` = 3-char) —
   // `.` matches any char EXCEPT newline (onig default; the quantified
   // spelling `^.{2}$` arrives as a single-dot base with lo/hi set)
@@ -1790,7 +1794,7 @@ fn double_anchored_base(
 ///|
 /// The twelve mixed-complement orderings (`[^\s\p{L}\p{N}]` family,
 /// short and long property names) resolve to kind 21.
-fn mixed_complement_ordering_kind(base : String) -> Int? {
+fn mixed_complement_ordering_kind(base : String) -> Int32? {
   match base {
     "[^\\s\\p{L}\\p{N}]"
     | "[^\\s\\p{N}\\p{L}]"
@@ -1820,7 +1824,7 @@ fn mixed_complement_ordering_kind(base : String) -> Int? {
 /// wb_end); hi = -1 unbounded.
 pub fn boundary_window_spec(
   pattern : String,
-) -> (Int, Char?, Int, Int, Bool, Bool)? {
+) -> (Int32, Char?, Int32, Int32, Bool, Bool)? {
   match boundary_window_parse(pattern, true) {
     Some((kind, literal, lo, hi, ws, we)) => {
       // any-anchor zero-min ranges reject (round-2: ws-only also
@@ -1849,7 +1853,7 @@ pub fn boundary_window_spec(
 fn boundary_window_parse(
   pattern : String,
   b_trail : Bool,
-) -> (Int, Char?, Int, Int, Bool, Bool)? {
+) -> (Int32, Char?, Int32, Int32, Bool, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
   // leading \b
@@ -1872,8 +1876,8 @@ fn boundary_window_parse(
   // '\b\w+?' == '\b\w{1}' (the empty continuation stops the lazy group
   // at its minimum, one char per boundary start)
   let base_sb = StringBuilder()
-  let mut lo : Int = 0
-  let mut hi : Int = 0
+  let mut lo : Int32 = 0
+  let mut hi : Int32 = 0
   let mut lazy_flag = false
   if chars[body_hi - 1] != '}' {
     // plus spelling: 'X+?' lazy (ends '?', preceded by '+') or 'X+'
@@ -2011,7 +2015,7 @@ fn boundary_window_parse(
   // (probed 0.22.2; lo >= 1 windows and ws-only zero-min stay)
   // base resolution (class / literal / escaped)
   let base = base_sb.to_string()
-  let resolved : (Int, Char?, Int, Int, Bool, Bool)? = match
+  let resolved : (Int32, Char?, Int32, Int32, Bool, Bool)? = match
     bare_class_kind(base) {
     Some(kind) => Some((kind, None, lo, hi, ws, we))
     None => {
@@ -2061,7 +2065,7 @@ fn boundary_window_parse(
 /// Classes whose predicate matches BOTH word and non-word chars
 /// (complement classes and punctuation) — runs of them can hold \b
 /// at interior positions, which breaks the lazy-plus reductions.
-fn mixed_wordness_class_kind(kind : Int) -> Bool {
+fn mixed_wordness_class_kind(kind : Int32) -> Bool {
   match kind {
     8 | 12 | 14 | 16 | 17 | 18 | 19 | 23 | 25 | 29 => true
     _ => false
@@ -2080,7 +2084,7 @@ fn mixed_wordness_class_kind(kind : Int) -> Bool {
 /// '#zaaaz' — an empty at EVERY non-adjacent position).
 pub fn single_anchor_window_spec(
   pattern : String,
-) -> (Int, Char?, Int, Int, Bool)? {
+) -> (Int32, Char?, Int32, Int32, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
   if n < 2 || (chars[0] != '^' && chars[n - 1] != '$') {
@@ -2099,9 +2103,9 @@ pub fn single_anchor_window_spec(
   // mirroring the \b-trail rule), or a bare all-dots sequence
   // ('^..' == '^.{2}', probed identical)
   let base_sb = StringBuilder()
-  let mut lo : Int = 0
-  let mut hi : Int = 0
-  let mut dot_seq : Int? = None
+  let mut lo : Int32 = 0
+  let mut hi : Int32 = 0
+  let mut dot_seq : Int32? = None
   if chars[body_hi - 1] != '}' {
     let lazy_plus = chars[body_hi - 1] == '?' &&
       body_hi - 2 >= body_lo &&
@@ -2280,7 +2284,7 @@ pub fn single_anchor_window_spec(
 /// plain lazy quantifiers without the empty fallback and reject.
 pub fn boundary_lazy_exact_spec(
   pattern : String,
-) -> (Int, Char?, Int, Bool, Bool)? {
+) -> (Int32, Char?, Int32, Bool, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
   if n < 6 {
@@ -2330,7 +2334,7 @@ pub fn boundary_lazy_exact_spec(
 /// RANGE rejection mirrors the \\b family.
 pub fn nonboundary_window_spec(
   pattern : String,
-) -> (Int, Char?, Int, Int, Bool, Bool)? {
+) -> (Int32, Char?, Int32, Int32, Bool, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
   // 4 chars is the shortest live spelling ('\Ba+' since the plus
@@ -2388,7 +2392,7 @@ pub fn nonboundary_window_spec(
 /// optional-group semantics with the inverted predicate).
 pub fn nonboundary_lazy_exact_spec(
   pattern : String,
-) -> (Int, Char?, Int, Bool, Bool)? {
+) -> (Int32, Char?, Int32, Bool, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
   if n < 6 {
@@ -2434,7 +2438,7 @@ pub fn nonboundary_lazy_exact_spec(
 /// asserts \\b and \\B at one position, which never holds).
 pub fn mixed_anchor_window_spec(
   pattern : String,
-) -> (Int, Char?, Int, Int, Bool, Bool)? {
+) -> (Int32, Char?, Int32, Int32, Bool, Bool)? {
   let chars = pattern.to_array()
   let n = chars.length()
   if n < 6 {

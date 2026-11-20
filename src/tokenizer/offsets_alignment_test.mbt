@@ -3,7 +3,7 @@
 // ORIGINAL text) for equivalent configurations.
 
 ///|
-fn offsets_of(tok_json : String, text : String) -> Array[(Int, Int)] raise {
+fn offsets_of(tok_json : String, text : String) -> Array[(Int32, Int32)] raise {
   let tok = @tokenizer.Tokenizer::from_str(tok_json)
   let enc = tok.encode(text)
   enc.offsets

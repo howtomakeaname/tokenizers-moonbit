@@ -1,5 +1,5 @@
 ///|
-fn ranged_regex_kind_inner(pattern : String) -> (Int, Int, Int)? {
+fn ranged_regex_kind_inner(pattern : String) -> (Int32, Int32, Int32)? {
   match
     ranged_kind_variants(
       pattern,
@@ -338,7 +338,7 @@ fn ranged_regex_kind_inner(pattern : String) -> (Int, Int, Int)? {
 }
 
 ///|
-pub fn ranged_regex_kind(pattern : String) -> (Int, Int, Int)? {
+pub fn ranged_regex_kind(pattern : String) -> (Int32, Int32, Int32)? {
   match ranged_regex_kind_inner(pattern) {
     Some((kind, b, c)) => Some((ascii_class_kind_override(pattern, kind), b, c))
     None => None
@@ -357,7 +357,7 @@ pub fn is_ranged_regex_pattern(pattern : String) -> Bool {
 /// Common exact `{n}` regex class families shared by Split, Normalizer Replace
 /// and Decoder Replace. Return `(kind, exact_run)`. The supported exact run
 /// sizes intentionally stay in the small tokenizer-oriented 2..4 window.
-fn exact_regex_kind_inner(pattern : String) -> (Int, Int)? {
+fn exact_regex_kind_inner(pattern : String) -> (Int32, Int32)? {
   match quantified_class_kind(pattern, "{2}") {
     Some(kind) => return Some((kind, 2))
     None => ()
@@ -374,7 +374,7 @@ fn exact_regex_kind_inner(pattern : String) -> (Int, Int)? {
 }
 
 ///|
-pub fn exact_regex_kind(pattern : String) -> (Int, Int)? {
+pub fn exact_regex_kind(pattern : String) -> (Int32, Int32)? {
   match exact_regex_kind_inner(pattern) {
     Some((kind, b)) => Some((ascii_class_kind_override(pattern, kind), b))
     None => None
@@ -394,7 +394,7 @@ pub fn is_exact_regex_pattern(pattern : String) -> Bool {
 /// Replace and Decoder Replace. Return `(kind, min_run)`. This complements the
 /// bounded `{1,n}` and ranged `{m,n}` tables without introducing a full regex
 /// engine.
-fn min_regex_kind_inner(pattern : String) -> (Int, Int)? {
+fn min_regex_kind_inner(pattern : String) -> (Int32, Int32)? {
   match quantified_class_kind(pattern, "{2,}") {
     Some(kind) => return Some((kind, 2))
     None => ()
@@ -411,7 +411,7 @@ fn min_regex_kind_inner(pattern : String) -> (Int, Int)? {
 }
 
 ///|
-pub fn min_regex_kind(pattern : String) -> (Int, Int)? {
+pub fn min_regex_kind(pattern : String) -> (Int32, Int32)? {
   match min_regex_kind_inner(pattern) {
     Some((kind, b)) => Some((ascii_class_kind_override(pattern, kind), b))
     None => None
@@ -430,7 +430,7 @@ pub fn is_min_regex_pattern(pattern : String) -> Bool {
 /// Common anchored `^...+` / `...+$` regex class families shared by Split and
 /// Replace. Return `(kind, leading)` where `kind` uses
 /// `bounded_regex_kind_pred` and `leading=true` means `^...+`.
-fn anchored_regex_kind_inner(pattern : String) -> (Int, Bool)? {
+fn anchored_regex_kind_inner(pattern : String) -> (Int32, Bool)? {
   match
     anchored_variants(pattern, ["^\\s+", "^[\\s]+"], ["\\s+$", "[\\s]+$"], 1) {
     Some(v) => return Some(v)
@@ -677,7 +677,7 @@ fn anchored_regex_kind_inner(pattern : String) -> (Int, Bool)? {
 }
 
 ///|
-pub fn anchored_regex_kind(pattern : String) -> (Int, Bool)? {
+pub fn anchored_regex_kind(pattern : String) -> (Int32, Bool)? {
   match anchored_regex_kind_inner(pattern) {
     Some((kind, leading)) =>
       Some((ascii_class_kind_override(pattern, kind), leading))
@@ -694,7 +694,12 @@ pub fn is_anchored_regex_pattern(pattern : String) -> Bool {
 }
 
 ///|
-fn bounded_max(pattern : String, p2 : String, p3 : String, p4 : String) -> Int {
+fn bounded_max(
+  pattern : String,
+  p2 : String,
+  p3 : String,
+  p4 : String,
+) -> Int32 {
   if pattern == p2 {
     2
   } else if pattern == p3 {
@@ -712,7 +717,7 @@ fn bounded_max_variants(
   p2 : Array[String],
   p3 : Array[String],
   p4 : Array[String],
-) -> Int {
+) -> Int32 {
   for p in p2 {
     if pattern == p {
       return 2
@@ -734,11 +739,11 @@ fn bounded_max_variants(
 ///|
 fn ranged_kind_variants(
   pattern : String,
-  kind : Int,
+  kind : Int32,
   p23 : Array[String],
   p24 : Array[String],
   p34 : Array[String],
-) -> (Int, Int, Int)? {
+) -> (Int32, Int32, Int32)? {
   for p in p23 {
     if pattern == p {
       return Some((kind, 2, 3))
@@ -772,7 +777,7 @@ fn quantified_base_matches(
 }
 
 ///|
-fn quantified_class_kind(pattern : String, suffix : String) -> Int? {
+fn quantified_class_kind(pattern : String, suffix : String) -> Int32? {
   if quantified_base_matches(pattern, ["\\s", "[\\s]"], suffix) {
     return Some(1)
   }
@@ -919,8 +924,8 @@ fn anchored_variants(
   pattern : String,
   leading : Array[String],
   trailing : Array[String],
-  kind : Int,
-) -> (Int, Bool)? {
+  kind : Int32,
+) -> (Int32, Bool)? {
   for p in leading {
     if pattern == p {
       return Some((kind, true))

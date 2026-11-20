@@ -64,7 +64,7 @@ fn write_optional_string_json(sb : StringBuilder, value : String?) -> Unit {
 }
 
 ///|
-fn write_optional_int_json(sb : StringBuilder, value : Int?) -> Unit {
+fn write_optional_int_json(sb : StringBuilder, value : Int32?) -> Unit {
   match value {
     Some(n) => sb.write_string(n.to_string())
     None => sb.write_string("null")
@@ -147,7 +147,7 @@ pub fn Tokenizer::train_from_iterator(
   self : Tokenizer,
   texts : Array[String],
   trainer : Trainer,
-  length? : Int? = None,
+  length~ : Int32? = None,
 ) -> Tokenizer {
   ignore(length)
   let tokenized = self.training_tokenized_texts(texts)

@@ -4,17 +4,17 @@
 
 ///|
 fn mk_bpe(
-  vocab : Array[(String, Int)],
+  vocab : Array[(String, Int32)],
   merges : Array[(String, String)],
-  unk_token? : String? = None,
+  unk_token~ : String? = None,
 ) -> Model {
-  let v : Map[String, Int] = Map([])
+  let v : Map[String, Int32] = Map([])
   let vr : Array[String?] = []
   for kv in vocab {
     v[kv.0] = kv.1
     set_vocab_r(vr, kv.1, kv.0)
   }
-  let m : Map[(String, String), Int] = Map([])
+  let m : Map[(String, String), Int32] = Map([])
   for i, p in merges {
     m[p] = i
   }
@@ -37,7 +37,7 @@ fn mk_bpe(
 }
 
 ///|
-fn ids_of(tokens : Array[@types.Token]) -> Array[Int] {
+fn ids_of(tokens : Array[@types.Token]) -> Array[Int32] {
   tokens.map(t => t.id)
 }
 
@@ -47,7 +47,7 @@ fn surfaces_of(tokens : Array[@types.Token]) -> Array[String] {
 }
 
 ///|
-fn numbered_tokens(prefix : String, count : Int) -> Array[String] {
+fn numbered_tokens(prefix : String, count : Int32) -> Array[String] {
   let tokens : Array[String] = []
   for i in 0..<count {
     tokens.push(prefix + i.to_string())
@@ -388,7 +388,7 @@ test "model JSON state aliases round-trip serializable models" {
 
 ///|
 test "model direct constructors build WordLevel and WordPiece" {
-  let wl_vocab : Map[String, Int] = Map([])
+  let wl_vocab : Map[String, Int32] = Map([])
   wl_vocab["[UNK]"] = 0
   wl_vocab["hello"] = 2
   let wordlevel = Model::wordlevel(wl_vocab, unk_token="[UNK]")
@@ -413,11 +413,11 @@ test "model direct constructors build WordLevel and WordPiece" {
     wordlevel.to_json(),
   )
 
-  let empty_wl_vocab : Map[String, Int] = Map([])
+  let empty_wl_vocab : Map[String, Int32] = Map([])
   let default_wordlevel = Model::wordlevel(empty_wl_vocab)
   @test.assert_eq(default_wordlevel.unk_token(), Some("<unk>"))
 
-  let wp_vocab : Map[String, Int] = Map([])
+  let wp_vocab : Map[String, Int32] = Map([])
   wp_vocab["[UNK]"] = 0
   wp_vocab["hello"] = 1
   wp_vocab["he"] = 2
@@ -444,7 +444,7 @@ test "model direct constructors build WordLevel and WordPiece" {
     wordpiece.to_json(),
   )
 
-  let wp_suffix_vocab : Map[String, Int] = Map([])
+  let wp_suffix_vocab : Map[String, Int32] = Map([])
   wp_suffix_vocab["[UNK]"] = 0
   wp_suffix_vocab["he"] = 1
   wp_suffix_vocab["##llo</w>"] = 2

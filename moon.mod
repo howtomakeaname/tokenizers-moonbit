@@ -3,8 +3,8 @@ name = "howtomakeaname/tokenizers-moonbit"
 version = "0.16.3"
 
 import {
-  "moonbitlang/x@0.4.45",
-  "moonbitlang/async@0.19.2",
+  "moonbitlang/x@0.5.8",
+  "moonbitlang/async@0.22.10",
 }
 
 readme = "README.md"

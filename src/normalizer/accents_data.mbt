@@ -2,7 +2,7 @@
 // code point -> accent-stripped form (Unicode NFD minus Mn marks).
 
 ///|
-pub fn accent_entries() -> Array[(Int, String)] {
+pub fn accent_entries() -> Array[(Int32, String)] {
   [
     (192, "A"),
     (193, "A"),

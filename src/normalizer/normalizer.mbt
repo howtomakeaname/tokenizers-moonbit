@@ -6,8 +6,8 @@
 
 ///|
 pub(all) struct PrecompiledCharsMap {
-  trie : Array[Int]
-  normalized : Array[Int]
+  trie : Array[Int32]
+  normalized : Array[Int32]
 }
 
 ///|
@@ -33,16 +33,17 @@ pub(all) enum Normalizer {
     clean_text~ : Bool,
     handle_chinese_chars~ : Bool,
     strip_accents~ : Bool?,
-    lowercase~ : Bool
+    lowercase~ : Bool,
   )
   Sequence(Array[Normalizer])
 }
 
 ///|
 /// JSON-backed component state used by thin binding layers.
+#derive(Debug, Eq)
 pub struct NormalizerState {
   json : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NormalizerState::new(json : String) -> NormalizerState {
@@ -230,7 +231,7 @@ pub fn Normalizer::get_normalizers(self : Normalizer) -> Array[Normalizer] {
 }
 
 ///|
-pub fn Normalizer::__len__(self : Normalizer) -> Int {
+pub fn Normalizer::__len__(self : Normalizer) -> Int32 {
   match self {
     Sequence(steps) => steps.length()
     _ => 0
@@ -238,7 +239,7 @@ pub fn Normalizer::__len__(self : Normalizer) -> Int {
 }
 
 ///|
-pub fn Normalizer::get_item(self : Normalizer, index : Int) -> Normalizer? {
+pub fn Normalizer::get_item(self : Normalizer, index : Int32) -> Normalizer? {
   match self {
     Sequence(steps) =>
       if index >= 0 && index < steps.length() {
@@ -251,7 +252,7 @@ pub fn Normalizer::get_item(self : Normalizer, index : Int) -> Normalizer? {
 }
 
 ///|
-pub fn Normalizer::__getitem__(self : Normalizer, index : Int) -> Normalizer? {
+pub fn Normalizer::__getitem__(self : Normalizer, index : Int32) -> Normalizer? {
   self.get_item(index)
 }
 
@@ -302,8 +303,8 @@ pub fn Normalizer::precompiled() -> Normalizer {
 
 ///|
 pub fn Normalizer::strip(
-  left? : Bool = true,
-  right? : Bool = true,
+  left~ : Bool = true,
+  right~ : Bool = true,
 ) -> Normalizer {
   Strip(left~, right~)
 }
@@ -328,10 +329,10 @@ pub fn Normalizer::prepend_normalizer(prepend : String) -> Normalizer {
 
 ///|
 pub fn Normalizer::bert_normalizer(
-  clean_text? : Bool = true,
-  handle_chinese_chars? : Bool = true,
-  strip_accents? : Bool? = None,
-  lowercase? : Bool = true,
+  clean_text~ : Bool = true,
+  handle_chinese_chars~ : Bool = true,
+  strip_accents~ : Bool? = None,
+  lowercase~ : Bool = true,
 ) -> Normalizer {
   BertNormalizer(clean_text~, handle_chinese_chars~, strip_accents~, lowercase~)
 }

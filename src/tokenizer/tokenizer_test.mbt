@@ -390,7 +390,7 @@ fn hook_pipe_decode(tokens : Array[String]) -> String {
 ///|
 fn hook_comma_pre_tokenize(
   text : String,
-  base_offset : Int,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   let chars = text.to_array()
   let out : Array[@types.Split] = []
@@ -416,7 +416,11 @@ fn hook_comma_pre_tokenize(
 }
 
 ///|
-fn hook_string_slice(chars : Array[Char], start : Int, stop : Int) -> String {
+fn hook_string_slice(
+  chars : Array[Char],
+  start : Int32,
+  stop : Int32,
+) -> String {
   let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
@@ -2906,14 +2910,14 @@ test "from_pretrained resolves local HuggingFace hub cache snapshots" {
     #|{"version":"1.0",
     #| "pre_tokenizer":{"type":"WhitespaceSplit"},
     #| "model":{"type":"WordLevel","vocab":{"hub":0,"cache":1,"[UNK]":2},"unk_token":"[UNK]"}}
-  let previous_huggingface_hub_cache = @sys.get_env_var("HUGGINGFACE_HUB_CACHE")
-  let previous_hf_hub_cache = @sys.get_env_var("HF_HUB_CACHE")
-  let previous_hf_home = @sys.get_env_var("HF_HOME")
-  let previous_home = @sys.get_env_var("HOME")
+  let previous_huggingface_hub_cache = @env.get_env_var("HUGGINGFACE_HUB_CACHE")
+  let previous_hf_hub_cache = @env.get_env_var("HF_HUB_CACHE")
+  let previous_hf_home = @env.get_env_var("HF_HOME")
+  let previous_home = @env.get_env_var("HOME")
   fn restore_env(name : String, previous : String?) -> Unit {
     match previous {
-      Some(v) => @sys.set_env_var(name, v)
-      None => @sys.set_env_var(name, "")
+      Some(v) => @env.set_env_var(name, v)
+      None => @env.set_env_var(name, "")
     }
   }
   let root = "_build/hf_cache_test"
@@ -2943,7 +2947,7 @@ test "from_pretrained resolves local HuggingFace hub cache snapshots" {
     0, 1,
   ])
 
-  @sys.set_env_var("HUGGINGFACE_HUB_CACHE", hub)
+  @env.set_env_var("HUGGINGFACE_HUB_CACHE", hub)
   let implicit = @tokenizer.Tokenizer::from_pretrained("org/toy-tokenizer")
   @test.assert_eq(
     implicit.encode("cache missing", add_special_tokens=false).ids,
@@ -2975,8 +2979,8 @@ test "from_pretrained resolves local HuggingFace hub cache snapshots" {
   @fs.write_string_to_file(hf_hub_rev + "/tokenizer.json", json) catch {
     _ => ()
   }
-  @sys.set_env_var("HUGGINGFACE_HUB_CACHE", "")
-  @sys.set_env_var("HF_HUB_CACHE", hf_hub)
+  @env.set_env_var("HUGGINGFACE_HUB_CACHE", "")
+  @env.set_env_var("HF_HUB_CACHE", hf_hub)
   let hf_hub_implicit = @tokenizer.Tokenizer::from_pretrained(
     "org/hf-hub-cache-tokenizer",
   )
@@ -3005,9 +3009,9 @@ test "from_pretrained resolves local HuggingFace hub cache snapshots" {
   @fs.write_string_to_file(hf_home_rev + "/tokenizer.json", json) catch {
     _ => ()
   }
-  @sys.set_env_var("HUGGINGFACE_HUB_CACHE", "")
-  @sys.set_env_var("HF_HUB_CACHE", "")
-  @sys.set_env_var("HF_HOME", hf_home)
+  @env.set_env_var("HUGGINGFACE_HUB_CACHE", "")
+  @env.set_env_var("HF_HUB_CACHE", "")
+  @env.set_env_var("HF_HOME", hf_home)
   let hf_home_implicit = @tokenizer.Tokenizer::from_pretrained(
     "org/hf-home-cache-tokenizer",
   )
@@ -3040,10 +3044,10 @@ test "from_pretrained resolves local HuggingFace hub cache snapshots" {
   @fs.write_string_to_file(home_rev + "/tokenizer.json", json) catch {
     _ => ()
   }
-  @sys.set_env_var("HUGGINGFACE_HUB_CACHE", "")
-  @sys.set_env_var("HF_HUB_CACHE", "")
-  @sys.set_env_var("HF_HOME", "")
-  @sys.set_env_var("HOME", home)
+  @env.set_env_var("HUGGINGFACE_HUB_CACHE", "")
+  @env.set_env_var("HF_HUB_CACHE", "")
+  @env.set_env_var("HF_HOME", "")
+  @env.set_env_var("HOME", home)
   let home_implicit = @tokenizer.Tokenizer::from_pretrained(
     "org/home-cache-tokenizer",
   )
@@ -4113,7 +4117,7 @@ test "Trainer default vocab_size mirrors HF caps" {
 }
 
 ///|
-fn numbered_special_tokens(prefix : String, count : Int) -> Array[String] {
+fn numbered_special_tokens(prefix : String, count : Int32) -> Array[String] {
   let out : Array[String] = []
   for i in 0..<count {
     out.push(prefix + i.to_string())
@@ -4122,7 +4126,7 @@ fn numbered_special_tokens(prefix : String, count : Int) -> Array[String] {
 }
 
 ///|
-fn numbered_training_text(prefix : String, count : Int) -> String {
+fn numbered_training_text(prefix : String, count : Int32) -> String {
   let parts : Array[String] = []
   for i in 0..<count {
     parts.push(prefix + i.to_string())
@@ -5394,7 +5398,7 @@ test "Hub repo id validation matches huggingface_hub rules" {
 }
 
 ///|
-fn repeat_char(c : Char, n : Int) -> String {
+fn repeat_char(c : Char, n : Int32) -> String {
   let sb = StringBuilder()
   let mut i = 0
   while i < n {

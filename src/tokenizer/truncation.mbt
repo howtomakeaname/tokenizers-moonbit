@@ -2,39 +2,43 @@
 // in `overflowing`. Mirrors HuggingFace TruncationParams.
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum TruncationDirection {
   Left
   Right
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum TruncationStrategy {
   LongestFirst
   OnlyFirst
   OnlySecond
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct TruncationParams {
-  max_length : Int
-  stride : Int
+  max_length : Int32
+  stride : Int32
   direction : TruncationDirection
   strategy : TruncationStrategy
-} derive(Debug, Eq)
+}
 
 ///|
 /// Serializable/interoperable snapshot of truncation parameters for Python
 /// binding and pickle/state migration layers.
+#derive(Debug, Eq)
 pub(all) struct TruncationParamsState {
-  max_length : Int
-  stride : Int
+  max_length : Int32
+  stride : Int32
   direction : TruncationDirection
   strategy : TruncationStrategy
-} derive(Debug, Eq)
+}
 
 ///|
 /// Default truncation: right direction, no stride.
-pub fn TruncationParams::new(max_length : Int) -> TruncationParams {
+pub fn TruncationParams::new(max_length : Int32) -> TruncationParams {
   { max_length, stride: 0, direction: Right, strategy: LongestFirst, }
 }
 
@@ -52,7 +56,7 @@ pub fn TruncationParams::from_state(
 
 ///|
 pub fn TruncationParams::from_tuple(
-  t : (Int, Int, TruncationDirection, TruncationStrategy),
+  t : (Int32, Int32, TruncationDirection, TruncationStrategy),
 ) -> TruncationParams {
   { max_length: t.0, stride: t.1, direction: t.2, strategy: t.3, }
 }
@@ -60,7 +64,7 @@ pub fn TruncationParams::from_tuple(
 ///|
 pub fn TruncationParams::as_tuple(
   self : TruncationParams,
-) -> (Int, Int, TruncationDirection, TruncationStrategy) {
+) -> (Int32, Int32, TruncationDirection, TruncationStrategy) {
   (self.max_length, self.stride, self.direction, self.strategy)
 }
 
@@ -95,7 +99,7 @@ pub fn TruncationParams::__setstate__(
 ///|
 pub fn TruncationParams::with_stride(
   self : TruncationParams,
-  stride : Int,
+  stride : Int32,
 ) -> TruncationParams {
   { ..self, stride, }
 }
@@ -133,22 +137,22 @@ pub fn TruncationParams::with_strategy_hf(
 }
 
 ///|
-pub fn TruncationParams::get_max_length(self : TruncationParams) -> Int {
+pub fn TruncationParams::get_max_length(self : TruncationParams) -> Int32 {
   self.max_length
 }
 
 ///|
-pub fn TruncationParams::max_length(self : TruncationParams) -> Int {
+pub fn TruncationParams::max_length(self : TruncationParams) -> Int32 {
   self.max_length
 }
 
 ///|
-pub fn TruncationParams::get_stride(self : TruncationParams) -> Int {
+pub fn TruncationParams::get_stride(self : TruncationParams) -> Int32 {
   self.stride
 }
 
 ///|
-pub fn TruncationParams::stride(self : TruncationParams) -> Int {
+pub fn TruncationParams::stride(self : TruncationParams) -> Int32 {
   self.stride
 }
 
@@ -237,8 +241,8 @@ fn parse_truncation_param_strategy_hf(
 ///|
 fn slice_encoding(
   enc : @types.Encoding,
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
 ) -> @types.Encoding {
   {
     ids: enc.ids[start:stop].to_owned(),
@@ -279,7 +283,7 @@ fn truncate_encoding(
   // HF walks fixed-size ranges with step `max - stride`; for `Left` it walks
   // stops backward from the end, so the removed head becomes the windows.
   let offset = max - params.stride
-  let ranges : Array[(Int, Int)] = []
+  let ranges : Array[(Int32, Int32)] = []
   match params.direction {
     Right => {
       let mut end = false
@@ -367,7 +371,7 @@ fn truncate_pair_raw(
 ///|
 fn truncate_to_len(
   enc : @types.Encoding,
-  max_length : Int,
+  max_length : Int32,
   params : TruncationParams,
 ) -> @types.Encoding raise @types.TokenizerError {
   truncate_encoding(enc, { ..params, max_length, })
@@ -375,10 +379,10 @@ fn truncate_to_len(
 
 ///|
 fn longest_first_lengths(
-  len_a : Int,
-  len_b : Int,
-  max_length : Int,
-) -> (Int, Int) {
+  len_a : Int32,
+  len_b : Int32,
+  max_length : Int32,
+) -> (Int32, Int32) {
   let mut n1 = len_a
   let mut n2 = len_b
   let mut swapped = false

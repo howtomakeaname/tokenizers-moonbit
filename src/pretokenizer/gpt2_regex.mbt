@@ -221,7 +221,7 @@ pub fn clip_split(text : String) -> Array[String] {
 }
 
 ///|
-fn match_clip_special(chars : Array[Char], i : Int, n : Int) -> Int {
+fn match_clip_special(chars : Array[Char], i : Int32, n : Int32) -> Int32 {
   if matches_literal(chars, i, n, "<|startoftext|>") {
     return 15
   }
@@ -232,7 +232,12 @@ fn match_clip_special(chars : Array[Char], i : Int, n : Int) -> Int {
 }
 
 ///|
-fn matches_literal(chars : Array[Char], i : Int, n : Int, lit : String) -> Bool {
+fn matches_literal(
+  chars : Array[Char],
+  i : Int32,
+  n : Int32,
+  lit : String,
+) -> Bool {
   let pat = lit.to_array()
   if i + pat.length() > n {
     return false
@@ -248,11 +253,11 @@ fn matches_literal(chars : Array[Char], i : Int, n : Int, lit : String) -> Bool 
 // Match a contraction at position i; returns its char length or 0.
 
 ///|
-fn match_contraction(chars : Array[Char], i : Int, n : Int) -> Int {
+fn match_contraction(chars : Array[Char], i : Int32, n : Int32) -> Int32 {
   if i >= n || chars[i] != '\'' {
     return 0
   }
-  fn at(k : Int) -> Char {
+  fn at(k : Int32) -> Char {
     if i + k < n {
       chars[i + k]
     } else {
@@ -275,7 +280,7 @@ fn match_contraction(chars : Array[Char], i : Int, n : Int) -> Int {
 }
 
 ///|
-fn slice(chars : Array[Char], start : Int, stop : Int) -> String {
+fn slice(chars : Array[Char], start : Int32, stop : Int32) -> String {
   let sb = StringBuilder()
   for k in start..<stop {
     sb.write_char(chars[k])
@@ -333,7 +338,10 @@ pub fn qwen_split(text : String) -> Array[String] {
 }
 
 ///|
-pub fn qwen_split_max_digits(text : String, max_digits~ : Int) -> Array[String] {
+pub fn qwen_split_max_digits(
+  text : String,
+  max_digits~ : Int32,
+) -> Array[String] {
   let chars = text.to_array()
   let n = chars.length()
   let out : Array[String] = []
@@ -540,7 +548,7 @@ pub fn o200k_split(text : String) -> Array[String] {
 }
 
 ///|
-fn match_o200k_letter_piece(chars : Array[Char], i : Int, n : Int) -> Int {
+fn match_o200k_letter_piece(chars : Array[Char], i : Int32, n : Int32) -> Int32 {
   let has_prefix = !is_letter(chars[i]) &&
     chars[i] != '\r' &&
     chars[i] != '\n' &&
@@ -645,11 +653,11 @@ fn is_combining_mark_approx(c : Char) -> Bool {
 // Case-insensitive contraction match (Qwen uses (?i:...)).
 
 ///|
-fn match_contraction_ci(chars : Array[Char], i : Int, n : Int) -> Int {
+fn match_contraction_ci(chars : Array[Char], i : Int32, n : Int32) -> Int32 {
   if i >= n || chars[i] != '\'' {
     return 0
   }
-  fn lower(k : Int) -> Char {
+  fn lower(k : Int32) -> Char {
     if i + k < n {
       chars[i + k].to_ascii_lowercase()
     } else {

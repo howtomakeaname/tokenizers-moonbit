@@ -1,7 +1,7 @@
 ///|
-fn sa_brute_force(chars : Array[Int]) -> Array[Int] {
+fn sa_brute_force(chars : Array[Int32]) -> Array[Int32] {
   let n = chars.length()
-  let idx : Array[Int] = Array::make(n, 0)
+  let idx : Array[Int32] = Array::make(n, 0)
   for i in 0..<n {
     idx[i] = i
   }
@@ -21,7 +21,7 @@ fn sa_brute_force(chars : Array[Int]) -> Array[Int] {
 
 ///|
 fn sa_check(name : String, s : String) -> Bool {
-  let chars : Array[Int] = []
+  let chars : Array[Int32] = []
   for ch in s {
     chars.push(ch.to_int())
   }
@@ -41,7 +41,7 @@ fn sa_check(name : String, s : String) -> Bool {
 }
 
 ///|
-fn debug_string(a : Array[Int]) -> String {
+fn debug_string(a : Array[Int32]) -> String {
   let mut b = ""
   for v in a {
     b = b + v.to_string() + ","

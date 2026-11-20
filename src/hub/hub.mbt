@@ -5,6 +5,7 @@
 // then delegates cache layout + parsing back to @tokenizer.
 
 ///|
+#derive(Debug, Eq)
 pub struct HubDownloadOptions {
   /// HuggingFace-compatible base URL. Pass a mirror endpoint such as
   /// `https://hf-mirror.com` for regions where huggingface.co is slow.
@@ -13,28 +14,28 @@ pub struct HubDownloadOptions {
   cache_dir : String?
   token : String?
   local_files_only : Bool
-  max_redirects : Int
+  max_redirects : Int32
   /// Native-only explicit User-Agent. JavaScript/browser fetch forbids setting
   /// User-Agent manually, so the browser/runtime supplied UA is used there.
   user_agent : String?
   /// Maximum bytes requested from the HTTP stream per read. This controls how
   /// often resume metadata is refreshed while downloading large tokenizer.json
   /// files. Values <= 0 fall back to the default chunk size.
-  stream_chunk_size : Int
-} derive(Debug, Eq)
+  stream_chunk_size : Int32
+}
 
 ///|
 pub fn HubDownloadOptions::new(
-  endpoint? : String = default_endpoint(),
-  revision? : String = "main",
-  cache_dir? : String? = None,
-  token? : String? = None,
-  local_files_only? : Bool = default_local_files_only(),
-  max_redirects? : Int = 5,
-  user_agent? : String? = Some(
+  endpoint~ : String = default_endpoint(),
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
+  token~ : String? = None,
+  local_files_only~ : Bool = default_local_files_only(),
+  max_redirects~ : Int32 = 5,
+  user_agent~ : String? = Some(
     "unknown/None; hf_hub/0.34.4; python/3.x; tokenizers/0.21.4",
   ),
-  stream_chunk_size? : Int = 65536,
+  stream_chunk_size~ : Int32 = 65536,
 ) -> HubDownloadOptions {
   {
     endpoint,
@@ -63,13 +64,13 @@ pub fn HubDownloadOptions::with_endpoint(
 /// are normalized to the default so callers cannot accidentally disable reads.
 pub fn HubDownloadOptions::with_stream_chunk_size(
   self : HubDownloadOptions,
-  stream_chunk_size : Int,
+  stream_chunk_size : Int32,
 ) -> HubDownloadOptions {
   { ..self, stream_chunk_size: positive_stream_chunk_size(stream_chunk_size), }
 }
 
 ///|
-fn positive_stream_chunk_size(n : Int) -> Int {
+fn positive_stream_chunk_size(n : Int32) -> Int32 {
   if n > 0 {
     n
   } else {
@@ -79,7 +80,7 @@ fn positive_stream_chunk_size(n : Int) -> Int {
 
 ///|
 fn default_endpoint() -> String {
-  match @sys.get_env_var("HF_ENDPOINT") {
+  match @env.get_env_var("HF_ENDPOINT") {
     Some(v) => if !v.is_empty() { v } else { "https://huggingface.co" }
     None => "https://huggingface.co"
   }
@@ -87,7 +88,7 @@ fn default_endpoint() -> String {
 
 ///|
 fn default_local_files_only() -> Bool {
-  match @sys.get_env_var("HF_HUB_OFFLINE") {
+  match @env.get_env_var("HF_HUB_OFFLINE") {
     Some(v) => is_truthy_env(v)
     None => false
   }
@@ -103,51 +104,53 @@ fn is_truthy_env(value : String) -> Bool {
 /// Deterministic request plan for fetching `tokenizer.json`. It combines the
 /// HuggingFace-compatible URL, auth headers, local cache metadata, conditional
 /// `If-None-Match`, and optional Range resume headers without performing IO.
+#derive(Debug, Eq)
 pub struct HubRequestPlan {
   url : String
   // request context for huggingface_hub-style error messages
   model_id : String
   revision : String
-  headers : Map[String, String]
+  headers : Map[@http.CaseInsensitiveString, String]
   cache_paths : @tokenizer.PretrainedCachePaths?
   cache_metadata : @tokenizer.PretrainedCacheMetadata?
   resume_metadata : @tokenizer.PretrainedDownloadResumeMetadata?
-  range_start : Int?
+  range_start : Int32?
   conditional_etag : String?
-} derive(Debug, Eq)
+}
 
 ///|
 /// Response metadata extracted from HEAD/GET responses. Network callers can use
 /// it to decide whether to reuse the cache, refresh refs, or continue a partial
 /// download.
+#derive(Debug, Eq)
 pub struct HubResponseMetadata {
-  status : Int
+  status : Int32
   resolved_revision : String?
   etag : String?
-  content_length : Int?
-  content_range_start : Int?
-  content_range_end : Int?
-  content_range_total : Int?
+  content_length : Int32?
+  content_range_start : Int32?
+  content_range_end : Int32?
+  content_range_total : Int32?
   accept_ranges : Bool
   // Hub error classification headers (probed: 404 responses carry
   // x-error-code EntryNotFound/RevisionNotFound, 401 gated repos carry
   // GatedRepo, and every response carries x-request-id)
   x_error_code : String?
   request_id : String?
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn HubResponseMetadata::new(
-  status : Int,
-  resolved_revision? : String? = None,
-  etag? : String? = None,
-  content_length? : Int? = None,
-  content_range_start? : Int? = None,
-  content_range_end? : Int? = None,
-  content_range_total? : Int? = None,
-  accept_ranges? : Bool = false,
-  x_error_code? : String? = None,
-  request_id? : String? = None,
+  status : Int32,
+  resolved_revision~ : String? = None,
+  etag~ : String? = None,
+  content_length~ : Int32? = None,
+  content_range_start~ : Int32? = None,
+  content_range_end~ : Int32? = None,
+  content_range_total~ : Int32? = None,
+  accept_ranges~ : Bool = false,
+  x_error_code~ : String? = None,
+  request_id~ : String? = None,
 ) -> HubResponseMetadata {
   {
     status,
@@ -167,6 +170,7 @@ pub fn HubResponseMetadata::new(
 /// Cache/write action selected after inspecting a Hub response. It is separated
 /// from actual network IO so native/js/wasm host layers can share the same
 /// HuggingFace-compatible 304/200/206 policy.
+#derive(Debug, Eq)
 pub enum HubTransferAction {
   /// The server answered 304 Not Modified; load the existing tokenizer.json from
   /// cache and optionally refresh refs from response metadata.
@@ -183,28 +187,30 @@ pub enum HubTransferAction {
   RetryWithoutRange
   /// Non-cacheable/non-success HTTP status.
   RejectResponse
-} derive(Debug, Eq)
+}
 
 ///|
 /// Pure transfer decision derived from a request plan and response headers.
+#derive(Debug, Eq)
 pub struct HubResponseDecision {
   action : HubTransferAction
   resolved_revision : String?
   etag : String?
-  expected_size : Int?
-  range_start : Int?
+  expected_size : Int32?
+  range_start : Int32?
   message : String
-} derive(Debug, Eq)
+}
 
 ///|
 /// Result of a real HTTP HEAD preflight. `decision` tells callers whether the
 /// existing cache is fresh enough to reuse or whether a GET body should still be
 /// downloaded and applied through `apply_tokenizer_json_download_result`.
+#derive(Debug, Eq)
 pub struct HubHeadResult {
   metadata : HubResponseMetadata
   decision : HubResponseDecision
   final_url : String
-} derive(Debug, Eq)
+}
 
 ///|
 /// huggingface_hub-style error message for a non-success Hub response,
@@ -221,12 +227,12 @@ pub struct HubHeadResult {
 /// The `(Request ID: ...)` segment mirrors the `x-request-id` response
 /// header and is omitted when the header is absent.
 pub fn hub_http_error_message(
-  status : Int,
+  status : Int32,
   url : String,
-  x_error_code? : String? = None,
-  request_id? : String? = None,
-  model_id? : String? = None,
-  revision? : String? = None,
+  x_error_code~ : String? = None,
+  request_id~ : String? = None,
+  model_id~ : String? = None,
+  revision~ : String? = None,
 ) -> String {
   let status_line = match request_id {
     Some(rid) => "\{status} Client Error. (Request ID: \{rid})"
@@ -260,7 +266,7 @@ pub fn hub_http_error_message(
 ///|
 /// Local-only diagnostic for non-success Hub HTTP statuses. This helper performs
 /// no network IO and keeps GET/HEAD rejection messages consistent.
-pub fn hub_http_status_diagnostic(status : Int) -> String {
+pub fn hub_http_status_diagnostic(status : Int32) -> String {
   if status == 401 || status == 403 {
     "HTTP " +
     status.to_string() +
@@ -279,7 +285,7 @@ pub fn hub_http_status_diagnostic(status : Int) -> String {
 ///|
 pub fn plan_tokenizer_json_request(
   model_id : String,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubRequestPlan {
   plan_hub_file_request_unchecked(model_id, "tokenizer.json", options)
 }
@@ -292,7 +298,7 @@ pub fn plan_tokenizer_json_request(
 pub fn plan_hub_file_request(
   model_id : String,
   filename : String,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubRequestPlan raise @types.TokenizerError {
   validate_hub_filename(filename)
   plan_hub_file_request_unchecked(model_id, filename, options)
@@ -352,7 +358,7 @@ fn plan_hub_file_request_unchecked(
       }
     None => ()
   }
-  let mut range_start : Int? = None
+  let mut range_start : Int32? = None
   match resume_meta {
     Some(meta) =>
       if meta.downloaded_size > 0 {
@@ -384,7 +390,7 @@ fn plan_hub_file_request_unchecked(
 /// used to validate cache freshness rather than continue a partial body.
 pub fn head_tokenizer_json_request(
   model_id : String,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubRequestPlan {
   let plan = plan_tokenizer_json_request(model_id, options~)
   {
@@ -397,8 +403,8 @@ pub fn head_tokenizer_json_request(
 
 ///|
 pub fn HubResponseMetadata::from_headers(
-  status : Int,
-  headers : Map[String, String],
+  status : Int32,
+  headers : Map[@http.CaseInsensitiveString, String],
 ) -> HubResponseMetadata {
   let content_length = match header(headers, "content-length") {
     Some(v) => parse_non_negative_int(v)

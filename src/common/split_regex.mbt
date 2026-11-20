@@ -3,8 +3,8 @@
 
 ///|
 pub(all) struct Span {
-  start : Int
-  stop : Int
+  start : Int32
+  stop : Int32
 }
 
 ///|
@@ -12,9 +12,10 @@ pub(all) struct Span {
 /// Split, Normalizer::Replace and Decoder::Replace. It deliberately exposes a
 /// capability check so callers can avoid assuming a full backtracking regex
 /// engine exists on every MoonBit target.
+#derive(Debug, Eq)
 pub struct Regex {
   pattern : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn Regex::new(pattern : String) -> Regex {
@@ -35,7 +36,10 @@ pub fn Regex::is_supported(self : Regex) -> Bool {
 ///|
 /// Return half-open char spans for all matches, or `None` when the pattern is
 /// outside the supported deterministic subset.
-pub fn Regex::find_matches(self : Regex, text : String) -> Array[(Int, Int)]? {
+pub fn Regex::find_matches(
+  self : Regex,
+  text : String,
+) -> Array[(Int32, Int32)]? {
   match simple_split_regex_matches(text.to_array(), self.pattern) {
     Some(spans) => Some(spans.map(s => (s.start, s.stop)))
     None => None

@@ -29,9 +29,9 @@ pub fn apply_tokenizer_json_response(
   model_id : String,
   response_body : String,
   metadata : HubResponseMetadata,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
-  tokenizer_config_json? : String? = None,
-  special_tokens_map_json? : String? = None,
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
+  tokenizer_config_json~ : String? = None,
+  special_tokens_map_json~ : String? = None,
 ) -> @tokenizer.Tokenizer raise @types.TokenizerError {
   validate_hub_request(model_id, options.revision)
   let plan = plan_tokenizer_json_request(model_id, options~)
@@ -87,7 +87,7 @@ pub fn apply_tokenizer_json_response(
 }
 
 ///|
-fn combine_range_size(start : Int, body_length : Int?) -> Int? {
+fn combine_range_size(start : Int32, body_length : Int32?) -> Int32? {
   match body_length {
     Some(n) => if n >= 0 { Some(start + n) } else { None }
     None => None
@@ -97,8 +97,8 @@ fn combine_range_size(start : Int, body_length : Int?) -> Int? {
 ///|
 fn validate_range_response(
   metadata : HubResponseMetadata,
-  start : Int,
-) -> (Bool, Int?) {
+  start : Int32,
+) -> (Bool, Int32?) {
   match
     (
       metadata.content_range_start,
@@ -186,7 +186,7 @@ fn is_existing_local_pretrained_path(path : String) -> Bool {
 /// `@tokenizer.from_pretrained_downloaded`.
 pub async fn from_pretrained(
   model_id : String,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> @tokenizer.Tokenizer raise @types.TokenizerError {
   if is_existing_local_pretrained_path(model_id) {
     return @tokenizer.Tokenizer::from_pretrained_cached(
@@ -242,18 +242,20 @@ pub async fn from_pretrained(
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct HubDownloadResult {
   content : String
   resolved_revision : String?
   etag : String?
   final_url : String
-  status : Int
-} derive(Debug, Eq)
+  status : Int32
+}
 
 ///|
 /// Result of applying a tokenizer-adjacent Hub file body to the local snapshot
 /// cache. Unlike tokenizer.json downloads, sidecar files are cached as raw text
 /// without Range/ETag freshness decisions or content parsing.
+#derive(Debug, Eq)
 pub struct HubFileDownloadResult {
   filename : String
   content : String
@@ -261,8 +263,8 @@ pub struct HubFileDownloadResult {
   resolved_revision : String?
   etag : String?
   final_url : String
-  status : Int
-} derive(Debug, Eq)
+  status : Int32
+}
 
 ///|
 /// Apply a complete tokenizer-adjacent Hub file body to the HF-style local cache.

@@ -5,7 +5,7 @@ pub fn apply_hub_file_download_result(
   response_body : String,
   metadata : HubResponseMetadata,
   final_url : String,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubFileDownloadResult raise @types.TokenizerError {
   validate_hub_request(model_id, options.revision)
   validate_hub_filename(filename)
@@ -123,7 +123,7 @@ pub fn apply_tokenizer_json_download_chunks(
   chunks : Array[String],
   metadata : HubResponseMetadata,
   final_url : String,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
   validate_hub_request(model_id, options.revision)
   let plan = plan_tokenizer_json_request(model_id, options~)
@@ -157,7 +157,7 @@ pub fn apply_tokenizer_json_download_bytes(
   chunks : Array[Bytes],
   metadata : HubResponseMetadata,
   final_url : String,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
   validate_hub_request(model_id, options.revision)
   let plan = plan_tokenizer_json_request(model_id, options~)
@@ -426,7 +426,7 @@ fn write_stream_chunks_to_incomplete(
 ///|
 pub async fn download_tokenizer_json(
   model_id : String,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
   validate_hub_request(model_id, options.revision)
   let plan = plan_tokenizer_json_request(model_id, options~)
@@ -449,7 +449,7 @@ pub async fn download_tokenizer_json(
 pub async fn download_hub_file(
   model_id : String,
   filename : String,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubDownloadResult raise @types.TokenizerError {
   validate_hub_request(model_id, options.revision)
   validate_hub_filename(filename)
@@ -473,7 +473,7 @@ pub async fn download_hub_file(
 /// and returning cache-freshness metadata without reading a response body.
 pub async fn head_tokenizer_json(
   model_id : String,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> HubHeadResult raise @types.TokenizerError {
   validate_hub_request(model_id, options.revision)
   let plan = head_tokenizer_json_request(model_id, options~)
@@ -504,7 +504,7 @@ fn hub_tokenizer_sidecar_files() -> Array[String] {
 /// where the hub client fetches the full file family automatically.
 pub async fn download_tokenizer_with_sidecars(
   model_id : String,
-  options? : HubDownloadOptions = HubDownloadOptions::new(),
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
 ) -> @tokenizer.Tokenizer raise @types.TokenizerError {
   // 1. Download tokenizer.json (required)
   let result = download_tokenizer_json(model_id, options~)

@@ -11,12 +11,12 @@
 /// BPE model state.
 pub struct BPEModel {
   // token surface -> id
-  vocab : Map[String, Int]
+  vocab : Map[String, Int32]
   // id -> token surface (for decode). Dense array is cheaper to build and
   // faster to query than an Int-keyed map for HF vocabularies.
   vocab_r : Array[String?]
   // merge pair (left, right) -> rank (lower = applied earlier)
-  merges : Map[(String, String), Int]
+  merges : Map[(String, String), Int32]
   unk_token : String?
   continuing_subword_prefix : String?
   end_of_word_suffix : String?
@@ -29,22 +29,22 @@ pub struct BPEModel {
   // Small deterministic PRNG state used only when dropout is enabled. This keeps
   // core tokenization self-contained across MoonBit targets without importing a
   // platform-specific random source.
-  mut dropout_rng_state : Int
+  mut dropout_rng_state : Int32
   // word -> tokens with offsets relative to 0. HF tokenizers caches BPE words;
   // this keeps repeated prompts/corpora competitive while preserving offsets by
   // shifting a fresh copy per call.
   cache : Map[String, Array[@types.Token]]
   // None keeps the historical unbounded cache; Some(0) disables caching.
-  mut cache_capacity : Int?
+  mut cache_capacity : Int32?
   // Number of unique words seen during BPE training (HF BpeTrainer.get_word_count).
   // None for models loaded from files or constructed directly.
-  word_count : Int?
+  word_count : Int32?
 }
 
 ///|
 /// WordLevel model state: a flat token->id map with an unk fallback.
 pub struct WordLevelModel {
-  vocab : Map[String, Int]
+  vocab : Map[String, Int32]
   vocab_r : Array[String?]
   unk_token : String
 }
@@ -52,24 +52,24 @@ pub struct WordLevelModel {
 ///|
 /// WordPiece model state.
 pub struct WordPieceModel {
-  vocab : Map[String, Int]
+  vocab : Map[String, Int32]
   vocab_r : Array[String?]
   unk_token : String
   continuing_subword_prefix : String
   end_of_word_suffix : String?
-  max_input_chars_per_word : Int
+  max_input_chars_per_word : Int32
   cache : Map[String, Array[@types.Token]]
-  mut cache_capacity : Int?
+  mut cache_capacity : Int32?
 }
 
 ///|
 /// Unigram model state.
 pub struct UnigramModel {
   // token surface -> (id, log-probability score)
-  vocab : Map[String, (Int, Double)]
+  vocab : Map[String, (Int32, Double)]
   // id -> token surface
   vocab_r : Array[String?]
-  unk_id : Int?
+  unk_id : Int32?
   byte_fallback : Bool
   fuse_unk : Bool
   // Sampling temperature: when set (> 0), use sampling instead of Viterbi.
@@ -77,9 +77,9 @@ pub struct UnigramModel {
   alpha : Double?
   // N-best paths for sampling: when set (> 0) with alpha, sample from top-N paths.
   // None or 0 means sample from full lattice when alpha is set.
-  nbest_size : Int?
+  nbest_size : Int32?
   cache : Map[String, Array[@types.Token]]
-  mut cache_capacity : Int?
+  mut cache_capacity : Int32?
 }
 
 ///|
@@ -93,9 +93,10 @@ pub enum Model {
 
 ///|
 /// JSON-backed model state used by thin binding layers.
+#derive(Debug, Eq)
 pub struct ModelState {
   json : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ModelState::new(json : String) -> ModelState {
@@ -180,7 +181,7 @@ pub fn Model::get_unk_token(self : Model) -> String? {
 }
 
 ///|
-pub fn Model::unk_id(self : Model) -> Int? {
+pub fn Model::unk_id(self : Model) -> Int32? {
   match self {
     Unigram(m) => m.unk_id
     _ =>
@@ -192,7 +193,7 @@ pub fn Model::unk_id(self : Model) -> Int? {
 }
 
 ///|
-pub fn Model::get_unk_id(self : Model) -> Int? {
+pub fn Model::get_unk_id(self : Model) -> Int32? {
   self.unk_id()
 }
 
@@ -225,7 +226,7 @@ pub fn Model::get_end_of_word_suffix(self : Model) -> String? {
 }
 
 ///|
-pub fn Model::max_input_chars_per_word(self : Model) -> Int? {
+pub fn Model::max_input_chars_per_word(self : Model) -> Int32? {
   match self {
     WordPiece(m) => Some(m.max_input_chars_per_word)
     _ => None
@@ -233,7 +234,7 @@ pub fn Model::max_input_chars_per_word(self : Model) -> Int? {
 }
 
 ///|
-pub fn Model::get_max_input_chars_per_word(self : Model) -> Int? {
+pub fn Model::get_max_input_chars_per_word(self : Model) -> Int32? {
   self.max_input_chars_per_word()
 }
 
@@ -307,7 +308,7 @@ pub fn Model::get_alpha(self : Model) -> Double? {
 
 ///|
 /// Unigram N-best size for sampling. None or 0 means sample from full lattice.
-pub fn Model::nbest_size(self : Model) -> Int? {
+pub fn Model::nbest_size(self : Model) -> Int32? {
   match self {
     Unigram(m) => m.nbest_size
     _ => None
@@ -315,7 +316,7 @@ pub fn Model::nbest_size(self : Model) -> Int? {
 }
 
 ///|
-pub fn Model::get_nbest_size(self : Model) -> Int? {
+pub fn Model::get_nbest_size(self : Model) -> Int32? {
   self.nbest_size()
 }
 
@@ -323,7 +324,7 @@ pub fn Model::get_nbest_size(self : Model) -> Int? {
 /// Return the number of unique words seen during BPE training (HF
 /// `BpeTrainer.get_word_count`). Returns `None` for non-BPE models or models
 /// loaded from files.
-pub fn Model::get_word_count(self : Model) -> Int? {
+pub fn Model::get_word_count(self : Model) -> Int32? {
   match self {
     BPE(m) => m.word_count
     _ => None
@@ -459,7 +460,7 @@ pub fn Model::set_ignore_merges_alias(self : Model, val : Bool) -> Model {
 
 ///|
 /// Set max_input_chars_per_word. Returns a new Model; only WordPiece supports it.
-pub fn Model::set_max_input_chars_per_word(self : Model, val : Int) -> Model {
+pub fn Model::set_max_input_chars_per_word(self : Model, val : Int32) -> Model {
   match self {
     WordPiece(m) => WordPiece({ ..m, max_input_chars_per_word: val, })
     _ => self
@@ -470,7 +471,7 @@ pub fn Model::set_max_input_chars_per_word(self : Model, val : Int) -> Model {
 /// Python/property-style setter alias for max_input_chars_per_word.
 pub fn Model::set_max_input_chars_per_word_alias(
   self : Model,
-  val : Int,
+  val : Int32,
 ) -> Model {
   self.set_max_input_chars_per_word(val)
 }
@@ -492,7 +493,7 @@ pub fn Model::set_alpha_alias(self : Model, alpha : Double?) -> Model {
 
 ///|
 /// Set nbest_size for Unigram models. Returns a new Model; non-Unigram unchanged.
-pub fn Model::set_nbest_size(self : Model, nbest_size : Int?) -> Model {
+pub fn Model::set_nbest_size(self : Model, nbest_size : Int32?) -> Model {
   match self {
     Unigram(m) => Unigram({ ..m, nbest_size, })
     _ => self
@@ -501,7 +502,7 @@ pub fn Model::set_nbest_size(self : Model, nbest_size : Int?) -> Model {
 
 ///|
 /// Python/property-style setter alias for nbest_size.
-pub fn Model::set_nbest_size_alias(self : Model, nbest_size : Int?) -> Model {
+pub fn Model::set_nbest_size_alias(self : Model, nbest_size : Int32?) -> Model {
   self.set_nbest_size(nbest_size)
 }
 

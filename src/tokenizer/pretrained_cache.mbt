@@ -3,12 +3,12 @@
 pub fn Tokenizer::from_pretrained_downloaded(
   model_id : String,
   tokenizer_json : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
-  tokenizer_config_json? : String? = None,
-  special_tokens_map_json? : String? = None,
-  etag? : String? = None,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
+  tokenizer_config_json~ : String? = None,
+  special_tokens_map_json~ : String? = None,
+  etag~ : String? = None,
 ) -> Tokenizer raise @types.TokenizerError {
   let path = cache_pretrained_tokenizer_json(
     model_id,
@@ -33,12 +33,12 @@ pub fn Tokenizer::from_pretrained_downloaded(
 pub fn from_pretrained_downloaded(
   model_id : String,
   tokenizer_json : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
-  tokenizer_config_json? : String? = None,
-  special_tokens_map_json? : String? = None,
-  etag? : String? = None,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
+  tokenizer_config_json~ : String? = None,
+  special_tokens_map_json~ : String? = None,
+  etag~ : String? = None,
 ) -> Tokenizer raise @types.TokenizerError {
   Tokenizer::from_pretrained_downloaded(
     model_id,
@@ -57,8 +57,8 @@ pub fn from_pretrained_downloaded(
 /// tokenizer is not present in local cache, matching the offline-only core API.
 pub fn Tokenizer::from_pretrained_cache_metadata(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> PretrainedCacheMetadata? {
   match resolve_hub_cache_path(model_id, revision~, cache_dir~) {
     Some(tokenizer_path) => {
@@ -93,8 +93,8 @@ pub fn Tokenizer::from_pretrained_cache_metadata(
 ///|
 pub fn from_pretrained_cache_metadata(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> PretrainedCacheMetadata? {
   Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~)
 }
@@ -105,9 +105,9 @@ pub fn from_pretrained_cache_metadata(
 /// revision is used as the snapshot name, mirroring `from_pretrained_cached`.
 pub fn Tokenizer::from_pretrained_cache_paths(
   model_id : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
 ) -> PretrainedCachePaths? {
   if !is_valid_hub_identifier(model_id) ||
     !is_safe_hub_revision_path(revision) ||
@@ -130,9 +130,9 @@ pub fn Tokenizer::from_pretrained_cache_paths(
 ///|
 pub fn from_pretrained_cache_paths(
   model_id : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
 ) -> PretrainedCachePaths? {
   Tokenizer::from_pretrained_cache_paths(
     model_id,
@@ -146,8 +146,8 @@ pub fn from_pretrained_cache_paths(
 /// Return the resolved commit/snapshot recorded in `refs/<revision>`, if any.
 pub fn Tokenizer::from_pretrained_ref_revision(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> String? {
   match
     Tokenizer::from_pretrained_cache_paths(model_id, revision~, cache_dir~) {
@@ -163,8 +163,8 @@ pub fn Tokenizer::from_pretrained_ref_revision(
 ///|
 pub fn from_pretrained_ref_revision(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> String? {
   Tokenizer::from_pretrained_ref_revision(model_id, revision~, cache_dir~)
 }
@@ -176,8 +176,8 @@ pub fn from_pretrained_ref_revision(
 pub fn Tokenizer::write_pretrained_ref_revision(
   model_id : String,
   resolved_revision : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> String raise @types.TokenizerError {
   validate_hub_model_id(model_id)
   validate_hub_revision(revision)
@@ -207,8 +207,8 @@ pub fn Tokenizer::write_pretrained_ref_revision(
 pub fn write_pretrained_ref_revision(
   model_id : String,
   resolved_revision : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> String raise @types.TokenizerError {
   Tokenizer::write_pretrained_ref_revision(
     model_id,
@@ -224,12 +224,12 @@ pub fn write_pretrained_ref_revision(
 /// sidecar for ETag/size validation before issuing a Range request.
 pub fn Tokenizer::write_pretrained_download_resume_metadata(
   model_id : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
-  etag? : String? = None,
-  expected_size? : Int? = None,
-  downloaded_size? : Int = 0,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
+  etag~ : String? = None,
+  expected_size~ : Int32? = None,
+  downloaded_size~ : Int32 = 0,
 ) -> PretrainedDownloadResumeMetadata raise @types.TokenizerError {
   validate_hub_model_id(model_id)
   validate_hub_revision(revision)
@@ -275,12 +275,12 @@ pub fn Tokenizer::write_pretrained_download_resume_metadata(
 ///|
 pub fn write_pretrained_download_resume_metadata(
   model_id : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
-  etag? : String? = None,
-  expected_size? : Int? = None,
-  downloaded_size? : Int = 0,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
+  etag~ : String? = None,
+  expected_size~ : Int32? = None,
+  downloaded_size~ : Int32 = 0,
 ) -> PretrainedDownloadResumeMetadata raise @types.TokenizerError {
   Tokenizer::write_pretrained_download_resume_metadata(
     model_id,
@@ -297,9 +297,9 @@ pub fn write_pretrained_download_resume_metadata(
 /// Read resumable-download metadata for a cached tokenizer snapshot, if present.
 pub fn Tokenizer::from_pretrained_download_resume_metadata(
   model_id : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
 ) -> PretrainedDownloadResumeMetadata? {
   let paths = match
     Tokenizer::from_pretrained_cache_paths(
@@ -325,9 +325,9 @@ pub fn Tokenizer::from_pretrained_download_resume_metadata(
 ///|
 pub fn from_pretrained_download_resume_metadata(
   model_id : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
 ) -> PretrainedDownloadResumeMetadata? {
   Tokenizer::from_pretrained_download_resume_metadata(
     model_id,
@@ -342,9 +342,9 @@ pub fn from_pretrained_download_resume_metadata(
 /// call this automatically after writing `tokenizer.json`.
 pub fn Tokenizer::clear_pretrained_download_resume_metadata(
   model_id : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
 ) -> Bool {
   let paths = match
     Tokenizer::from_pretrained_cache_paths(
@@ -368,9 +368,9 @@ pub fn Tokenizer::clear_pretrained_download_resume_metadata(
 ///|
 pub fn clear_pretrained_download_resume_metadata(
   model_id : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
 ) -> Bool {
   Tokenizer::clear_pretrained_download_resume_metadata(
     model_id,
@@ -409,10 +409,10 @@ pub fn PretrainedCacheMetadata::etag_matches(
 /// sidecar requirements.
 pub fn PretrainedCacheMetadata::is_fresh(
   self : PretrainedCacheMetadata,
-  resolved_revision? : String? = None,
-  etag? : String? = None,
-  require_tokenizer_config? : Bool = false,
-  require_special_tokens_map? : Bool = false,
+  resolved_revision~ : String? = None,
+  etag~ : String? = None,
+  require_tokenizer_config~ : Bool = false,
+  require_special_tokens_map~ : Bool = false,
 ) -> Bool {
   if !self.cache_exists() {
     return false
@@ -440,8 +440,8 @@ pub fn PretrainedCacheMetadata::is_fresh(
 /// Offline cache existence check for a model id/revision.
 pub fn Tokenizer::from_pretrained_cache_exists(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> Bool {
   match
     Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
@@ -453,8 +453,8 @@ pub fn Tokenizer::from_pretrained_cache_exists(
 ///|
 pub fn from_pretrained_cache_exists(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> Bool {
   Tokenizer::from_pretrained_cache_exists(model_id, revision~, cache_dir~)
 }
@@ -463,12 +463,12 @@ pub fn from_pretrained_cache_exists(
 /// Offline cache freshness check for a model id/revision.
 pub fn Tokenizer::from_pretrained_cache_is_fresh(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
-  resolved_revision? : String? = None,
-  etag? : String? = None,
-  require_tokenizer_config? : Bool = false,
-  require_special_tokens_map? : Bool = false,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
+  resolved_revision~ : String? = None,
+  etag~ : String? = None,
+  require_tokenizer_config~ : Bool = false,
+  require_special_tokens_map~ : Bool = false,
 ) -> Bool {
   match
     Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
@@ -486,12 +486,12 @@ pub fn Tokenizer::from_pretrained_cache_is_fresh(
 ///|
 pub fn from_pretrained_cache_is_fresh(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
-  resolved_revision? : String? = None,
-  etag? : String? = None,
-  require_tokenizer_config? : Bool = false,
-  require_special_tokens_map? : Bool = false,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
+  resolved_revision~ : String? = None,
+  etag~ : String? = None,
+  require_tokenizer_config~ : Bool = false,
+  require_special_tokens_map~ : Bool = false,
 ) -> Bool {
   Tokenizer::from_pretrained_cache_is_fresh(
     model_id,
@@ -509,8 +509,8 @@ pub fn from_pretrained_cache_is_fresh(
 pub fn Tokenizer::from_pretrained_cache_etag_matches(
   model_id : String,
   expected_etag : String?,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> Bool {
   match
     Tokenizer::from_pretrained_cache_metadata(model_id, revision~, cache_dir~) {
@@ -523,8 +523,8 @@ pub fn Tokenizer::from_pretrained_cache_etag_matches(
 pub fn from_pretrained_cache_etag_matches(
   model_id : String,
   expected_etag : String?,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> Bool {
   Tokenizer::from_pretrained_cache_etag_matches(
     model_id,
@@ -540,8 +540,8 @@ pub fn from_pretrained_cache_etag_matches(
 /// inspected and includes guidance for private/gated repositories.
 pub fn Tokenizer::from_pretrained_resolution_hint(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> PretrainedResolutionHint {
   let root = match cache_dir {
     Some(c) => Some(c)
@@ -633,8 +633,8 @@ pub fn Tokenizer::from_pretrained_resolution_hint(
 ///|
 pub fn from_pretrained_resolution_hint(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> PretrainedResolutionHint {
   Tokenizer::from_pretrained_resolution_hint(model_id, revision~, cache_dir~)
 }

@@ -8,11 +8,11 @@
 // 0 / +1 / -N change contract of HF's `transform`).
 
 ///|
-pub type Aligned = Array[(Int, Int)]
+pub type Aligned = Array[(Int32, Int32)]
 
 ///|
-fn identity_align(n : Int) -> Aligned {
-  let align : Array[(Int, Int)] = []
+fn identity_align(n : Int32) -> Aligned {
+  let align : Array[(Int32, Int32)] = []
   for i in 0..<n {
     align.push((i, i + 1))
   }
@@ -23,9 +23,9 @@ fn identity_align(n : Int) -> Aligned {
 /// Compose a second alignment (relative to the intermediate text) onto a
 /// first one (intermediate -> original): expand each top span through base.
 fn compose_align(
-  base : Array[(Int, Int)],
-  top : Array[(Int, Int)],
-) -> Array[(Int, Int)] {
+  base : Array[(Int32, Int32)],
+  top : Array[(Int32, Int32)],
+) -> Array[(Int32, Int32)] {
   top.map(span => {
     let (s, e) = span
     if s >= base.length() {
@@ -54,7 +54,11 @@ fn compose_align(
 ///|
 /// Map a normalized-text span [s, e) back to the original text through the
 /// alignment column.
-pub fn expand_align(align : Array[(Int, Int)], s : Int, e : Int) -> (Int, Int) {
+pub fn expand_align(
+  align : Array[(Int32, Int32)],
+  s : Int32,
+  e : Int32,
+) -> (Int32, Int32) {
   let n = align.length()
   if n == 0 || e <= s {
     return (0, 0)
@@ -80,9 +84,9 @@ pub fn Normalizer::normalize_aligned(
     Prepend(prepend~) => {
       // Inserted chars attach to the first original char's span (HF
       // prepend.rs maps them all to [0, 1)).
-      let align : Array[(Int, Int)] = []
+      let align : Array[(Int32, Int32)] = []
       let pl = prepend.char_length()
-      let first_span : (Int, Int) = if input.char_length() > 0 {
+      let first_span : (Int32, Int32) = if input.char_length() > 0 {
         (0, 1)
       } else {
         (0, 0)
@@ -113,7 +117,7 @@ pub fn Normalizer::normalize_aligned(
       clean_text~,
       handle_chinese_chars~,
       strip_accents=sa,
-      lowercase~
+      lowercase~,
     ) => {
       let mut text = input
       let mut align = identity_align(input.char_length())
@@ -190,7 +194,7 @@ fn strip_aligned(
     }
   }
   let sb = StringBuilder()
-  let align : Array[(Int, Int)] = []
+  let align : Array[(Int32, Int32)] = []
   for k in start..<stop {
     sb.write_char(chars[k])
     align.push((k, k + 1))
@@ -203,7 +207,7 @@ fn strip_accents_aligned(input : String) -> (String, Aligned) {
   // Standalone StripAccents removes already-decomposed marks only
   // (precomposed chars untouched — same rule as strip_accents).
   let sb = StringBuilder()
-  let align : Array[(Int, Int)] = []
+  let align : Array[(Int32, Int32)] = []
   for i, c in input {
     if is_combining_mark(c.to_int()) {
       continue
@@ -218,7 +222,7 @@ fn strip_accents_aligned(input : String) -> (String, Aligned) {
 fn byte_level_align(input : String) -> Aligned {
   // Every input char expands to its UTF-8 byte count of visible chars; all
   // map back to the char's span.
-  let align : Array[(Int, Int)] = []
+  let align : Array[(Int32, Int32)] = []
   for i, c in input {
     let byte_len = @utf8.encode(c.to_string()).length()
     for _k in 0..<byte_len {
@@ -232,7 +236,7 @@ fn byte_level_align(input : String) -> Aligned {
 fn nmt_align(input : String) -> Aligned {
   // nmt_normalize is a per-char mapping (possibly dropping chars); rebuild
   // alignment by re-running its per-char decisions with spans.
-  let align : Array[(Int, Int)] = []
+  let align : Array[(Int32, Int32)] = []
   for i, c in input {
     let cp = c.to_int()
     let out = nmt_char_replacement(cp)
@@ -247,7 +251,7 @@ fn nmt_align(input : String) -> Aligned {
 ///|
 fn bert_clean_text_aligned(input : String) -> (String, Aligned) {
   let sb = StringBuilder()
-  let align : Array[(Int, Int)] = []
+  let align : Array[(Int32, Int32)] = []
   for i, c in input {
     let u = c.to_int()
     if u == 0 || u == 0xFFFD || is_control(c) {
@@ -268,7 +272,7 @@ fn bert_pad_chinese_aligned(input : String) -> (String, Aligned) {
   // HF inserts a space on both sides of a CJK char; inserted spaces attach
   // to the CJK char's span.
   let sb = StringBuilder()
-  let align : Array[(Int, Int)] = []
+  let align : Array[(Int32, Int32)] = []
   for i, c in input {
     if is_chinese_char(c) {
       sb.write_char(' ')
@@ -296,10 +300,10 @@ fn replace_aligned(
   // paths cannot diverge on which replacements apply (previously only the
   // simple split scanner was consulted here, silently skipping every
   // quantifier family during encode).
-  let spans : Array[(Int, Int)] = match
+  let spans : Array[(Int32, Int32)] = match
     @common.replace_family_spans(chars, pattern) {
     Some(list) => {
-      let conv : Array[(Int, Int)] = []
+      let conv : Array[(Int32, Int32)] = []
       for sp in list {
         conv.push((sp.start, sp.stop))
       }
@@ -308,7 +312,7 @@ fn replace_aligned(
     None => return replace_literal_aligned(input, pattern, content)
   }
   let sb = StringBuilder()
-  let align : Array[(Int, Int)] = []
+  let align : Array[(Int32, Int32)] = []
   let mut pos = 0
   for span in spans {
     if span.0 < pos {
@@ -355,7 +359,7 @@ fn replace_literal_aligned(
   let pat_chars = pattern.to_array()
   let m = pat_chars.length()
   let sb = StringBuilder()
-  let align : Array[(Int, Int)] = []
+  let align : Array[(Int32, Int32)] = []
   let mut i = 0
   let n = chars.length()
   while i < n {
@@ -390,9 +394,11 @@ fn replace_literal_aligned(
 ///|
 /// BertNormalizer strip_accents: NFD-then-drop-marks with span mapping
 /// (precomposed é -> e keeps the char's span; expansions map to it too).
-fn bert_strip_accents_aligned(input : String) -> (String, Array[(Int, Int)]) {
+fn bert_strip_accents_aligned(
+  input : String,
+) -> (String, Array[(Int32, Int32)]) {
   let sb = StringBuilder()
-  let align : Array[(Int, Int)] = []
+  let align : Array[(Int32, Int32)] = []
   for i, c in input {
     let cp = c.to_int()
     if is_combining_mark(cp) {

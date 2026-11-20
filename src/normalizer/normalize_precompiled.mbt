@@ -69,7 +69,11 @@ fn precompiled_map_normalize(data : PrecompiledCharsMap, s : String) -> String {
 }
 
 ///|
-fn char_slice_to_string(chars : Array[Char], start : Int, stop : Int) -> String {
+fn char_slice_to_string(
+  chars : Array[Char],
+  start : Int32,
+  stop : Int32,
+) -> String {
   let sb = StringBuilder()
   for k in start..<stop {
     sb.write_char(chars[k])
@@ -99,10 +103,10 @@ fn precompiled_transform(data : PrecompiledCharsMap, chunk : String) -> String? 
 
 ///|
 fn precompiled_common_prefix_search(
-  trie : Array[Int],
+  trie : Array[Int32],
   key : Bytes,
-) -> Array[Int] {
-  let results : Array[Int] = []
+) -> Array[Int32] {
+  let results : Array[Int32] = []
   if trie.length() == 0 {
     return results
   }
@@ -134,22 +138,22 @@ fn precompiled_common_prefix_search(
 }
 
 ///|
-fn precompiled_has_leaf(unit : Int) -> Bool {
+fn precompiled_has_leaf(unit : Int32) -> Bool {
   ((unit >> 8) & 1) == 1
 }
 
 ///|
-fn precompiled_value(unit : Int) -> Int {
+fn precompiled_value(unit : Int32) -> Int32 {
   unit & 0x7FFFFFFF
 }
 
 ///|
-fn precompiled_label(unit : Int) -> Int {
+fn precompiled_label(unit : Int32) -> Int32 {
   unit & 0x800000FF
 }
 
 ///|
-fn precompiled_offset(unit : Int) -> Int {
+fn precompiled_offset(unit : Int32) -> Int32 {
   unit >> 10 << ((unit & 0x200) >> 6)
 }
 
@@ -191,11 +195,13 @@ fn precompiled_ascii_fast(s : String) -> String? {
 // replacement chars onto the consumed original cluster/char span.
 
 ///|
-pub fn precompiled_normalize_aligned(s : String) -> (String, Array[(Int, Int)]) {
+pub fn precompiled_normalize_aligned(
+  s : String,
+) -> (String, Array[(Int32, Int32)]) {
   match precompiled_ascii_fast(s) {
     Some(out) => {
       // ascii fast path: chars map 1:1 (whitespace folding is 1:1)
-      let align : Array[(Int, Int)] = []
+      let align : Array[(Int32, Int32)] = []
       for i in 0..<s.char_length() {
         align.push((i, i + 1))
       }
@@ -207,7 +213,7 @@ pub fn precompiled_normalize_aligned(s : String) -> (String, Array[(Int, Int)]) 
   let normalized = normalize_unicode_aligned(s, compat=true, compose=true)
   let text = normalized.0
   // rebuild whitespace folding with alignment against `s` composed through
-  let folded : Array[(Int, Int)] = []
+  let folded : Array[(Int32, Int32)] = []
   let inner = normalized.1
   let mut oi = 0
   for c in text {
@@ -227,11 +233,11 @@ pub fn precompiled_normalize_aligned(s : String) -> (String, Array[(Int, Int)]) 
 pub fn precompiled_map_normalize_aligned(
   data : PrecompiledCharsMap,
   s : String,
-) -> (String, Array[(Int, Int)]) {
+) -> (String, Array[(Int32, Int32)]) {
   let chars = s.to_array()
   let n = chars.length()
   let sb = StringBuilder()
-  let align : Array[(Int, Int)] = []
+  let align : Array[(Int32, Int32)] = []
   let mut i = 0
   while i < n {
     let mut j = i + 1

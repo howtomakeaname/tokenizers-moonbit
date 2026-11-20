@@ -1,5 +1,5 @@
 ///|
-pub fn bounded_regex_kind_pred(kind : Int, c : Char) -> Bool {
+pub fn bounded_regex_kind_pred(kind : Int32, c : Char) -> Bool {
   match kind {
     1 => is_unicode_whitespace(c.to_int())
     2 => is_unicode_whitespace(c.to_int()) && c != '\r' && c != '\n'
@@ -48,7 +48,7 @@ pub fn is_ascii_word_char(c : Char) -> Bool {
 /// while `\d`/`\w` are Unicode. Post-override for kind entry points whose
 /// spelling groups conflate them (verified: [0-9] leaves fullwidth ０,
 /// \d replaces it).
-fn ascii_class_kind_override(pattern : String, kind : Int) -> Int {
+fn ascii_class_kind_override(pattern : String, kind : Int32) -> Int32 {
   match kind {
     11 => if pattern.contains("[0-9]") { 22 } else { 11 }
     14 => if pattern.contains("[^0-9]") { 23 } else { 14 }
@@ -60,7 +60,7 @@ fn ascii_class_kind_override(pattern : String, kind : Int) -> Int {
 
 ///|
 /// Unicode whitespace coverage used for HF/Rust-regex `\s`.
-pub fn is_unicode_whitespace(u : Int) -> Bool {
+pub fn is_unicode_whitespace(u : Int32) -> Bool {
   u == 0x09 ||
   u == 0x0A ||
   u == 0x0B ||

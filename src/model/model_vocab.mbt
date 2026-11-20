@@ -1,5 +1,5 @@
 ///|
-pub fn Model::id_to_token(self : Model, id : Int) -> String? {
+pub fn Model::id_to_token(self : Model, id : Int32) -> String? {
   match self {
     BPE(m) => lookup_id(m.vocab_r, id)
     WordPiece(m) => lookup_id(m.vocab_r, id)
@@ -9,7 +9,7 @@ pub fn Model::id_to_token(self : Model, id : Int) -> String? {
 }
 
 ///|
-fn lookup_id(vocab_r : Array[String?], id : Int) -> String? {
+fn lookup_id(vocab_r : Array[String?], id : Int32) -> String? {
   if id < 0 || id >= vocab_r.length() {
     None
   } else {
@@ -19,7 +19,7 @@ fn lookup_id(vocab_r : Array[String?], id : Int) -> String? {
 
 ///|
 /// Look up an id by token surface.
-pub fn Model::token_to_id(self : Model, token : String) -> Int? {
+pub fn Model::token_to_id(self : Model, token : String) -> Int32? {
   match self {
     BPE(m) => m.vocab.get(token)
     WordPiece(m) => m.vocab.get(token)
@@ -30,7 +30,7 @@ pub fn Model::token_to_id(self : Model, token : String) -> Int? {
 
 ///|
 /// Total vocabulary size.
-pub fn Model::vocab_size(self : Model) -> Int {
+pub fn Model::vocab_size(self : Model) -> Int32 {
   match self {
     BPE(m) => m.vocab.length()
     WordPiece(m) => m.vocab.length()
@@ -41,18 +41,18 @@ pub fn Model::vocab_size(self : Model) -> Int {
 
 ///|
 /// HF-style getter alias for `vocab_size`.
-pub fn Model::get_vocab_size(self : Model) -> Int {
+pub fn Model::get_vocab_size(self : Model) -> Int32 {
   self.vocab_size()
 }
 
 ///|
 /// Return a copy of the model vocabulary as `token -> id`.
-pub fn Model::get_vocab(self : Model) -> Map[String, Int] {
+pub fn Model::get_vocab(self : Model) -> Map[String, Int32] {
   match self {
     BPE(m) => m.vocab.copy()
     WordPiece(m) => m.vocab.copy()
     Unigram(m) => {
-      let out : Map[String, Int] = Map([])
+      let out : Map[String, Int32] = Map([])
       for kv in m.vocab.to_array() {
         out[kv.0] = kv.1.0
       }
@@ -64,7 +64,7 @@ pub fn Model::get_vocab(self : Model) -> Map[String, Int] {
 
 ///|
 /// Python/property-style alias for `get_vocab`.
-pub fn Model::vocab(self : Model) -> Map[String, Int] {
+pub fn Model::vocab(self : Model) -> Map[String, Int32] {
   self.get_vocab()
 }
 
@@ -72,8 +72,8 @@ pub fn Model::vocab(self : Model) -> Map[String, Int] {
 /// Construct a WordLevel model directly from an in-memory vocabulary.
 /// The vocabulary is copied so later caller mutations do not affect the model.
 pub fn Model::wordlevel(
-  vocab : Map[String, Int],
-  unk_token? : String = "<unk>",
+  vocab : Map[String, Int32],
+  unk_token~ : String = "<unk>",
 ) -> Model {
   let copied = vocab.copy()
   WordLevel(WordLevelModel::{
@@ -87,11 +87,11 @@ pub fn Model::wordlevel(
 /// Construct a WordPiece model directly from an in-memory vocabulary.
 /// This mirrors the common HF `models.WordPiece(vocab=...)` migration path.
 pub fn Model::wordpiece(
-  vocab : Map[String, Int],
-  unk_token? : String = "[UNK]",
-  continuing_subword_prefix? : String = "##",
-  end_of_word_suffix? : String? = None,
-  max_input_chars_per_word? : Int = 100,
+  vocab : Map[String, Int32],
+  unk_token~ : String = "[UNK]",
+  continuing_subword_prefix~ : String = "##",
+  end_of_word_suffix~ : String? = None,
+  max_input_chars_per_word~ : Int32 = 100,
 ) -> Model {
   let copied = vocab.copy()
   WordPiece(WordPieceModel::{
@@ -107,7 +107,7 @@ pub fn Model::wordpiece(
 }
 
 ///|
-fn build_vocab_r(vocab : Map[String, Int]) -> Array[String?] {
+fn build_vocab_r(vocab : Map[String, Int32]) -> Array[String?] {
   let vocab_r : Array[String?] = Array::make(vocab.length(), None)
   for kv in vocab.to_array() {
     set_vocab_r(vocab_r, kv.1, kv.0)
@@ -137,7 +137,7 @@ pub fn Model::_clear_cache(self : Model) -> Unit {
 /// Resize model-level tokenization caches. A capacity of `0` disables future
 /// caching; negative values are clamped to zero. The previous unbounded behavior
 /// is preserved until callers opt in to a bounded cache.
-pub fn Model::resize_cache(self : Model, capacity : Int) -> Unit {
+pub fn Model::resize_cache(self : Model, capacity : Int32) -> Unit {
   let capacity = if capacity > 0 { capacity } else { 0 }
   match self {
     BPE(m) =>
@@ -152,13 +152,13 @@ pub fn Model::resize_cache(self : Model, capacity : Int) -> Unit {
 
 ///|
 /// HF Python binding alias for resizing model caches.
-pub fn Model::_resize_cache(self : Model, capacity : Int) -> Unit {
+pub fn Model::_resize_cache(self : Model, capacity : Int32) -> Unit {
   self.resize_cache(capacity)
 }
 
 ///|
 /// Return the current number of cached word tokenizations.
-pub fn Model::cache_size(self : Model) -> Int {
+pub fn Model::cache_size(self : Model) -> Int32 {
   match self {
     BPE(m) => m.cache.length()
     WordPiece(m) => m.cache.length()
@@ -170,8 +170,8 @@ pub fn Model::cache_size(self : Model) -> Int {
 ///|
 fn resize_token_cache(
   cache : Map[String, Array[@types.Token]],
-  capacity : Int,
-  set_capacity : (Int?) -> Unit,
+  capacity : Int32,
+  set_capacity : (Int32?) -> Unit,
 ) -> Unit {
   set_capacity(Some(capacity))
   trim_token_cache(cache, capacity)
@@ -180,7 +180,7 @@ fn resize_token_cache(
 ///|
 fn trim_token_cache(
   cache : Map[String, Array[@types.Token]],
-  capacity : Int,
+  capacity : Int32,
 ) -> Unit {
   if capacity <= 0 {
     cache.clear()
@@ -200,7 +200,7 @@ fn trim_token_cache(
 ///|
 fn put_token_cache(
   cache : Map[String, Array[@types.Token]],
-  capacity : Int?,
+  capacity : Int32?,
   word : String,
   tokens : Array[@types.Token],
 ) -> Unit {

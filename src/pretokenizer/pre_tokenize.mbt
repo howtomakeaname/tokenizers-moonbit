@@ -9,7 +9,7 @@
 pub fn PreTokenizer::pre_tokenize(
   self : PreTokenizer,
   text : String,
-  base_offset? : Int = 0,
+  base_offset~ : Int32 = 0,
 ) -> Array[@types.Split] {
   match self {
     ByteLevel(add_prefix_space~, use_regex~, ..) =>
@@ -38,7 +38,7 @@ pub fn PreTokenizer::pre_tokenize(
 pub fn PreTokenizer::pre_tokenize_str(
   self : PreTokenizer,
   text : String,
-) -> Array[(String, (Int, Int))] {
+) -> Array[(String, (Int32, Int32))] {
   self.pre_tokenize(text, base_offset=0).map(s => (s.value, s.offsets))
 }
 
@@ -67,7 +67,7 @@ fn split_pre_tokenize(
   behavior : SplitBehavior,
   invert : Bool,
   regex : Bool,
-  base_offset : Int,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   let pieces = if is_cjk_range_pattern(pattern) {
     cjk_range_split(text)
@@ -145,7 +145,7 @@ fn split_with_simple_pattern(
   behavior : SplitBehavior,
   invert : Bool,
   regex : Bool,
-  base_offset : Int,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   let chars = text.to_array()
   let matches = if regex {
@@ -197,11 +197,11 @@ fn apply_split_matches(
   matches : Array[@common.Span],
   behavior : SplitBehavior,
   invert : Bool,
-  base_offset : Int,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   // interleaved (start, stop, is_match) entries; zero-width matches
   // kept, zero-width gaps skipped
-  let entries : Array[(Int, Int, Bool)] = []
+  let entries : Array[(Int32, Int32, Bool)] = []
   let mut cursor = 0
   for m in matches {
     if m.start > cursor {
@@ -215,7 +215,7 @@ fn apply_split_matches(
   }
   let flag_of = fn(b : Bool) -> Bool { if invert { !b } else { b } }
   let out : Array[@types.Split] = []
-  fn emit(start : Int, stop : Int) -> Unit {
+  fn emit(start : Int32, stop : Int32) -> Unit {
     if stop <= start {
       return
     }
@@ -254,7 +254,7 @@ fn apply_split_matches(
     MergedWithPrevious => {
       // a match extends the open piece iff the previous ENTRY was
       // flagged false (an empty word still anchors)
-      let mut piece_start : Int? = None
+      let mut piece_start : Int32? = None
       let mut piece_stop = 0
       let mut prev_flag : Bool? = None
       for e in entries {
@@ -357,7 +357,7 @@ fn is_clip_pattern(p : String) -> Bool {
 }
 
 ///|
-fn digit_chunk_split(text : String, max_digits~ : Int) -> Array[String] {
+fn digit_chunk_split(text : String, max_digits~ : Int32) -> Array[String] {
   let chars = text.to_array()
   let n = chars.length()
   let out : Array[String] = []
@@ -415,7 +415,7 @@ fn byte_level_pre_tokenize(
   text : String,
   add_prefix_space : Bool,
   use_regex : Bool,
-  base_offset : Int,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   let input = if add_prefix_space && !starts_with_space(text) {
     " " + text

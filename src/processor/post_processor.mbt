@@ -6,14 +6,15 @@
 ///|
 /// One piece of a processing template: either a reference to an input sequence
 /// (A or B) or a literal special token, each tagged with a type_id.
+#derive(Debug, Eq)
 pub enum Piece {
-  SequenceRef(id~ : String, type_id~ : Int)
-  SpecialTokenRef(id~ : String, type_id~ : Int)
-} derive(Debug, Eq)
+  SequenceRef(id~ : String, type_id~ : Int32)
+  SpecialTokenRef(id~ : String, type_id~ : Int32)
+}
 
 ///|
 pub fn Piece::from_tuple(
-  t : (String, String, Int),
+  t : (String, String, Int32),
 ) -> Piece raise @types.TokenizerError {
   match t.0 {
     "SequenceRef" => SequenceRef(id=t.1, type_id=t.2)
@@ -23,7 +24,7 @@ pub fn Piece::from_tuple(
 }
 
 ///|
-pub fn Piece::as_tuple(self : Piece) -> (String, String, Int) {
+pub fn Piece::as_tuple(self : Piece) -> (String, String, Int32) {
   match self {
     SequenceRef(id~, type_id~) => ("SequenceRef", id, type_id)
     SpecialTokenRef(id~, type_id~) => ("SpecialTokenRef", id, type_id)
@@ -51,12 +52,12 @@ pub fn Piece::get_id(self : Piece) -> String {
 }
 
 ///|
-pub fn Piece::type_id(self : Piece) -> Int {
+pub fn Piece::type_id(self : Piece) -> Int32 {
   self.as_tuple().2
 }
 
 ///|
-pub fn Piece::get_type_id(self : Piece) -> Int {
+pub fn Piece::get_type_id(self : Piece) -> Int32 {
   self.type_id()
 }
 
@@ -80,11 +81,12 @@ pub fn Piece::__repr__(self : Piece) -> String {
 
 ///|
 /// A special token definition: its surface and the ids/tokens it expands to.
+#derive(Debug, Eq)
 pub struct SpecialToken {
   id : String
-  ids : Array[Int]
+  ids : Array[Int32]
   tokens : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 /// Programmatic constructor for a TemplateProcessing special token. HF supports
@@ -92,7 +94,7 @@ pub struct SpecialToken {
 /// let processors expand them during post-processing.
 pub fn SpecialToken::new(
   id : String,
-  ids : Array[Int],
+  ids : Array[Int32],
   tokens : Array[String],
 ) -> SpecialToken {
   { id, ids: ids.copy(), tokens: tokens.copy(), }
@@ -100,7 +102,7 @@ pub fn SpecialToken::new(
 
 ///|
 pub fn SpecialToken::from_tuple(
-  t : (String, Array[Int], Array[String]),
+  t : (String, Array[Int32], Array[String]),
 ) -> SpecialToken {
   SpecialToken::new(t.0, t.1, t.2)
 }
@@ -108,7 +110,7 @@ pub fn SpecialToken::from_tuple(
 ///|
 pub fn SpecialToken::as_tuple(
   self : SpecialToken,
-) -> (String, Array[Int], Array[String]) {
+) -> (String, Array[Int32], Array[String]) {
   (self.id, self.ids.copy(), self.tokens.copy())
 }
 
@@ -123,12 +125,12 @@ pub fn SpecialToken::id(self : SpecialToken) -> String {
 }
 
 ///|
-pub fn SpecialToken::get_ids(self : SpecialToken) -> Array[Int] {
+pub fn SpecialToken::get_ids(self : SpecialToken) -> Array[Int32] {
   self.ids.copy()
 }
 
 ///|
-pub fn SpecialToken::ids(self : SpecialToken) -> Array[Int] {
+pub fn SpecialToken::ids(self : SpecialToken) -> Array[Int32] {
   self.get_ids()
 }
 
@@ -165,14 +167,14 @@ pub enum PostProcessor {
   TemplateProcessing(
     single~ : Array[Piece],
     pair~ : Array[Piece],
-    special_tokens~ : Map[String, SpecialToken]
+    special_tokens~ : Map[String, SpecialToken],
   )
-  BertProcessing(sep~ : (String, Int), cls~ : (String, Int))
+  BertProcessing(sep~ : (String, Int32), cls~ : (String, Int32))
   RobertaProcessing(
-    sep~ : (String, Int),
-    cls~ : (String, Int),
+    sep~ : (String, Int32),
+    cls~ : (String, Int32),
     trim_offsets~ : Bool,
-    add_prefix_space~ : Bool
+    add_prefix_space~ : Bool,
   )
   ByteLevel(add_prefix_space~ : Bool, trim_offsets~ : Bool, use_regex~ : Bool)
   Sequence(Array[PostProcessor])
@@ -180,9 +182,10 @@ pub enum PostProcessor {
 
 ///|
 /// JSON-backed component state used by thin binding layers.
+#derive(Debug, Eq)
 pub struct PostProcessorState {
   json : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn PostProcessorState::new(json : String) -> PostProcessorState {
@@ -260,7 +263,7 @@ fn PostProcessor::state_json(
 }
 
 ///|
-pub fn PostProcessor::sep(self : PostProcessor) -> (String, Int)? {
+pub fn PostProcessor::sep(self : PostProcessor) -> (String, Int32)? {
   match self {
     BertProcessing(sep~, ..) => Some(sep)
     RobertaProcessing(sep~, ..) => Some(sep)
@@ -269,12 +272,12 @@ pub fn PostProcessor::sep(self : PostProcessor) -> (String, Int)? {
 }
 
 ///|
-pub fn PostProcessor::get_sep(self : PostProcessor) -> (String, Int)? {
+pub fn PostProcessor::get_sep(self : PostProcessor) -> (String, Int32)? {
   self.sep()
 }
 
 ///|
-pub fn PostProcessor::cls(self : PostProcessor) -> (String, Int)? {
+pub fn PostProcessor::cls(self : PostProcessor) -> (String, Int32)? {
   match self {
     BertProcessing(cls~, ..) => Some(cls)
     RobertaProcessing(cls~, ..) => Some(cls)
@@ -283,7 +286,7 @@ pub fn PostProcessor::cls(self : PostProcessor) -> (String, Int)? {
 }
 
 ///|
-pub fn PostProcessor::get_cls(self : PostProcessor) -> (String, Int)? {
+pub fn PostProcessor::get_cls(self : PostProcessor) -> (String, Int32)? {
   self.cls()
 }
 
@@ -404,7 +407,7 @@ pub fn PostProcessor::set_use_regex_alias(
 /// Set sep. Returns a new PostProcessor; only BertProcessing and RobertaProcessing support it.
 pub fn PostProcessor::set_sep(
   self : PostProcessor,
-  val : (String, Int),
+  val : (String, Int32),
 ) -> PostProcessor {
   match self {
     BertProcessing(cls~, ..) => BertProcessing(sep=val, cls~)
@@ -418,7 +421,7 @@ pub fn PostProcessor::set_sep(
 /// Python/property-style setter alias for sep.
 pub fn PostProcessor::set_sep_alias(
   self : PostProcessor,
-  val : (String, Int),
+  val : (String, Int32),
 ) -> PostProcessor {
   self.set_sep(val)
 }
@@ -427,7 +430,7 @@ pub fn PostProcessor::set_sep_alias(
 /// Set cls. Returns a new PostProcessor; only BertProcessing and RobertaProcessing support it.
 pub fn PostProcessor::set_cls(
   self : PostProcessor,
-  val : (String, Int),
+  val : (String, Int32),
 ) -> PostProcessor {
   match self {
     BertProcessing(sep~, ..) => BertProcessing(sep~, cls=val)
@@ -441,7 +444,7 @@ pub fn PostProcessor::set_cls(
 /// Python/property-style setter alias for cls.
 pub fn PostProcessor::set_cls_alias(
   self : PostProcessor,
-  val : (String, Int),
+  val : (String, Int32),
 ) -> PostProcessor {
   self.set_cls(val)
 }
@@ -529,7 +532,7 @@ pub fn PostProcessor::get_processors(
 }
 
 ///|
-pub fn PostProcessor::__len__(self : PostProcessor) -> Int {
+pub fn PostProcessor::__len__(self : PostProcessor) -> Int32 {
   match self {
     Sequence(steps) => steps.length()
     _ => 0
@@ -539,7 +542,7 @@ pub fn PostProcessor::__len__(self : PostProcessor) -> Int {
 ///|
 pub fn PostProcessor::get_item(
   self : PostProcessor,
-  index : Int,
+  index : Int32,
 ) -> PostProcessor? {
   match self {
     Sequence(steps) =>
@@ -555,7 +558,7 @@ pub fn PostProcessor::get_item(
 ///|
 pub fn PostProcessor::__getitem__(
   self : PostProcessor,
-  index : Int,
+  index : Int32,
 ) -> PostProcessor? {
   self.get_item(index)
 }
@@ -564,8 +567,8 @@ pub fn PostProcessor::__getitem__(
 /// Programmatic constructor for HF-style BERT post-processing:
 /// `[CLS] A [SEP]` and `[CLS] A [SEP] B [SEP]`.
 pub fn PostProcessor::bert(
-  sep : (String, Int),
-  cls : (String, Int),
+  sep : (String, Int32),
+  cls : (String, Int32),
 ) -> PostProcessor {
   BertProcessing(sep~, cls~)
 }
@@ -573,8 +576,8 @@ pub fn PostProcessor::bert(
 ///|
 /// HF class-name style alias for `BertProcessing`.
 pub fn PostProcessor::bert_processing(
-  sep : (String, Int),
-  cls : (String, Int),
+  sep : (String, Int32),
+  cls : (String, Int32),
 ) -> PostProcessor {
   PostProcessor::bert(sep, cls)
 }
@@ -582,10 +585,10 @@ pub fn PostProcessor::bert_processing(
 ///|
 /// Programmatic constructor for RoBERTa post-processing.
 pub fn PostProcessor::roberta(
-  sep : (String, Int),
-  cls : (String, Int),
-  trim_offsets? : Bool = true,
-  add_prefix_space? : Bool = true,
+  sep : (String, Int32),
+  cls : (String, Int32),
+  trim_offsets~ : Bool = true,
+  add_prefix_space~ : Bool = true,
 ) -> PostProcessor {
   RobertaProcessing(sep~, cls~, trim_offsets~, add_prefix_space~)
 }
@@ -593,10 +596,10 @@ pub fn PostProcessor::roberta(
 ///|
 /// HF class-name style alias for `RobertaProcessing`.
 pub fn PostProcessor::roberta_processing(
-  sep : (String, Int),
-  cls : (String, Int),
-  trim_offsets? : Bool = true,
-  add_prefix_space? : Bool = true,
+  sep : (String, Int32),
+  cls : (String, Int32),
+  trim_offsets~ : Bool = true,
+  add_prefix_space~ : Bool = true,
 ) -> PostProcessor {
   PostProcessor::roberta(sep, cls, trim_offsets~, add_prefix_space~)
 }
@@ -638,9 +641,9 @@ pub fn PostProcessor::template_from_strings(
 
 ///|
 pub fn PostProcessor::byte_level(
-  add_prefix_space? : Bool = true,
-  trim_offsets? : Bool = true,
-  use_regex? : Bool = true,
+  add_prefix_space~ : Bool = true,
+  trim_offsets~ : Bool = true,
+  use_regex~ : Bool = true,
 ) -> PostProcessor {
   ByteLevel(add_prefix_space~, trim_offsets~, use_regex~)
 }
@@ -683,7 +686,7 @@ fn template_to_json(
 }
 
 ///|
-fn bert_to_json(sep : (String, Int), cls : (String, Int)) -> String {
+fn bert_to_json(sep : (String, Int32), cls : (String, Int32)) -> String {
   let sb = StringBuilder()
   sb.write_string("{\"type\":\"BertProcessing\",\"sep\":")
   write_token_id_pair(sb, sep)
@@ -695,8 +698,8 @@ fn bert_to_json(sep : (String, Int), cls : (String, Int)) -> String {
 
 ///|
 fn roberta_to_json(
-  sep : (String, Int),
-  cls : (String, Int),
+  sep : (String, Int32),
+  cls : (String, Int32),
   trim_offsets : Bool,
   add_prefix_space : Bool,
 ) -> String {
@@ -800,7 +803,7 @@ fn write_special_tokens_json(
 }
 
 ///|
-fn write_token_id_pair(sb : StringBuilder, pair : (String, Int)) -> Unit {
+fn write_token_id_pair(sb : StringBuilder, pair : (String, Int32)) -> Unit {
   sb.write_char('[')
   write_json_string(sb, pair.0)
   sb.write_char(',')
@@ -809,7 +812,7 @@ fn write_token_id_pair(sb : StringBuilder, pair : (String, Int)) -> Unit {
 }
 
 ///|
-fn write_int_array(sb : StringBuilder, xs : Array[Int]) -> Unit {
+fn write_int_array(sb : StringBuilder, xs : Array[Int32]) -> Unit {
   sb.write_char('[')
   for i, x in xs {
     if i > 0 {

@@ -38,7 +38,7 @@ fn bert_strip_accents(s : String) -> String {
 // StripAccents follows NFKD in tokenizer.json (e.g. ALBERT).
 
 ///|
-fn is_combining_mark(cp : Int) -> Bool {
+fn is_combining_mark(cp : Int32) -> Bool {
   (cp >= 0x0300 && cp <= 0x036F) ||
   (cp >= 0x1AB0 && cp <= 0x1AFF) ||
   (cp >= 0x1DC0 && cp <= 0x1DFF) ||
@@ -49,14 +49,14 @@ fn is_combining_mark(cp : Int) -> Bool {
 // Lazily-built map: code point -> accent-stripped form.
 
 ///|
-let accent_map_cache : Ref[Map[Int, String]?] = { val: None, }
+let accent_map_cache : Ref[Map[Int32, String]?] = { val: None, }
 
 ///|
-fn accent_map() -> Map[Int, String] {
+fn accent_map() -> Map[Int32, String] {
   match accent_map_cache.val {
     Some(m) => m
     None => {
-      let m : Map[Int, String] = Map([])
+      let m : Map[Int32, String] = Map([])
       for e in accent_entries() {
         m[e.0] = e.1
       }

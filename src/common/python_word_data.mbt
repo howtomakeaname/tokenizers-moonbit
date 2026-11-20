@@ -6,7 +6,7 @@
 ///|
 /// Inclusive [start, stop] codepoint ranges of Python re \w word
 /// characters, sorted ascending.
-let python_word_ranges : Array[(Int, Int)] = [
+let python_word_ranges : Array[(Int32, Int32)] = [
   (48, 57),
   (65, 90),
   (95, 95),

@@ -9,7 +9,7 @@ pub enum Decoder {
   WordPiece(prefix~ : String, cleanup~ : Bool)
   Metaspace(replacement~ : Char, prepend_scheme~ : String, split~ : Bool)
   BPEDecoder(suffix~ : String)
-  Strip(content~ : Char, start~ : Int, stop~ : Int)
+  Strip(content~ : Char, start~ : Int32, stop~ : Int32)
   Fuse
   Replace(pattern~ : String, content~ : String)
   ReplaceString(pattern~ : String, content~ : String)
@@ -22,9 +22,10 @@ pub enum Decoder {
 
 ///|
 /// JSON-backed component state used by thin binding layers.
+#derive(Debug, Eq)
 pub struct DecoderState {
   json : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn DecoderState::new(json : String) -> DecoderState {
@@ -231,7 +232,7 @@ pub fn Decoder::get_content(self : Decoder) -> String? {
 }
 
 ///|
-pub fn Decoder::start(self : Decoder) -> Int? {
+pub fn Decoder::start(self : Decoder) -> Int32? {
   match self {
     Strip(start~, ..) => Some(start)
     _ => None
@@ -239,12 +240,12 @@ pub fn Decoder::start(self : Decoder) -> Int? {
 }
 
 ///|
-pub fn Decoder::get_start(self : Decoder) -> Int? {
+pub fn Decoder::get_start(self : Decoder) -> Int32? {
   self.start()
 }
 
 ///|
-pub fn Decoder::stop(self : Decoder) -> Int? {
+pub fn Decoder::stop(self : Decoder) -> Int32? {
   match self {
     Strip(stop~, ..) => Some(stop)
     _ => None
@@ -252,31 +253,31 @@ pub fn Decoder::stop(self : Decoder) -> Int? {
 }
 
 ///|
-pub fn Decoder::get_stop(self : Decoder) -> Int? {
+pub fn Decoder::get_stop(self : Decoder) -> Int32? {
   self.stop()
 }
 
 ///|
 /// HF Python alias: `left` maps to `start` for Strip.
-pub fn Decoder::left(self : Decoder) -> Int? {
+pub fn Decoder::left(self : Decoder) -> Int32? {
   self.start()
 }
 
 ///|
 /// HF Python getter alias for `left`.
-pub fn Decoder::get_left(self : Decoder) -> Int? {
+pub fn Decoder::get_left(self : Decoder) -> Int32? {
   self.left()
 }
 
 ///|
 /// HF Python alias: `right` maps to `stop` for Strip.
-pub fn Decoder::right(self : Decoder) -> Int? {
+pub fn Decoder::right(self : Decoder) -> Int32? {
   self.stop()
 }
 
 ///|
 /// HF Python getter alias for `right`.
-pub fn Decoder::get_right(self : Decoder) -> Int? {
+pub fn Decoder::get_right(self : Decoder) -> Int32? {
   self.right()
 }
 
@@ -349,7 +350,7 @@ pub fn Decoder::get_decoders(self : Decoder) -> Array[Decoder] {
 }
 
 ///|
-pub fn Decoder::__len__(self : Decoder) -> Int {
+pub fn Decoder::__len__(self : Decoder) -> Int32 {
   match self {
     Sequence(steps) => steps.length()
     _ => 0
@@ -357,7 +358,7 @@ pub fn Decoder::__len__(self : Decoder) -> Int {
 }
 
 ///|
-pub fn Decoder::get_item(self : Decoder, index : Int) -> Decoder? {
+pub fn Decoder::get_item(self : Decoder, index : Int32) -> Decoder? {
   match self {
     Sequence(steps) =>
       if index >= 0 && index < steps.length() {
@@ -370,7 +371,7 @@ pub fn Decoder::get_item(self : Decoder, index : Int) -> Decoder? {
 }
 
 ///|
-pub fn Decoder::__getitem__(self : Decoder, index : Int) -> Decoder? {
+pub fn Decoder::__getitem__(self : Decoder, index : Int32) -> Decoder? {
   self.get_item(index)
 }
 
@@ -541,7 +542,7 @@ pub fn Decoder::set_content_alias(self : Decoder, val : String) -> Decoder {
 
 ///|
 /// Set start. Returns a new Decoder; only Strip supports it.
-pub fn Decoder::set_start(self : Decoder, val : Int) -> Decoder {
+pub fn Decoder::set_start(self : Decoder, val : Int32) -> Decoder {
   match self {
     Strip(content~, stop~, ..) => Strip(content~, start=val, stop~)
     _ => self
@@ -550,13 +551,13 @@ pub fn Decoder::set_start(self : Decoder, val : Int) -> Decoder {
 
 ///|
 /// Python/property-style setter alias for start.
-pub fn Decoder::set_start_alias(self : Decoder, val : Int) -> Decoder {
+pub fn Decoder::set_start_alias(self : Decoder, val : Int32) -> Decoder {
   self.set_start(val)
 }
 
 ///|
 /// Set stop. Returns a new Decoder; only Strip supports it.
-pub fn Decoder::set_stop(self : Decoder, val : Int) -> Decoder {
+pub fn Decoder::set_stop(self : Decoder, val : Int32) -> Decoder {
   match self {
     Strip(content~, start~, ..) => Strip(content~, start~, stop=val)
     _ => self
@@ -565,31 +566,31 @@ pub fn Decoder::set_stop(self : Decoder, val : Int) -> Decoder {
 
 ///|
 /// Python/property-style setter alias for stop.
-pub fn Decoder::set_stop_alias(self : Decoder, val : Int) -> Decoder {
+pub fn Decoder::set_stop_alias(self : Decoder, val : Int32) -> Decoder {
   self.set_stop(val)
 }
 
 ///|
 /// Set left (alias for start). Returns a new Decoder; only Strip supports it.
-pub fn Decoder::set_left(self : Decoder, val : Int) -> Decoder {
+pub fn Decoder::set_left(self : Decoder, val : Int32) -> Decoder {
   self.set_start(val)
 }
 
 ///|
 /// Python/property-style setter alias for left.
-pub fn Decoder::set_left_alias(self : Decoder, val : Int) -> Decoder {
+pub fn Decoder::set_left_alias(self : Decoder, val : Int32) -> Decoder {
   self.set_left(val)
 }
 
 ///|
 /// Set right (alias for stop). Returns a new Decoder; only Strip supports it.
-pub fn Decoder::set_right(self : Decoder, val : Int) -> Decoder {
+pub fn Decoder::set_right(self : Decoder, val : Int32) -> Decoder {
   self.set_stop(val)
 }
 
 ///|
 /// Python/property-style setter alias for right.
-pub fn Decoder::set_right_alias(self : Decoder, val : Int) -> Decoder {
+pub fn Decoder::set_right_alias(self : Decoder, val : Int32) -> Decoder {
   self.set_right(val)
 }
 
@@ -643,29 +644,29 @@ pub fn Decoder::replace_regex(pattern : String, content : String) -> Decoder {
 
 ///|
 pub fn Decoder::byte_level(
-  add_prefix_space? : Bool = true,
-  trim_offsets? : Bool = true,
-  use_regex? : Bool = true,
+  add_prefix_space~ : Bool = true,
+  trim_offsets~ : Bool = true,
+  use_regex~ : Bool = true,
 ) -> Decoder {
   ByteLevel(add_prefix_space~, trim_offsets~, use_regex~)
 }
 
 ///|
-pub fn Decoder::bpe_decoder(suffix? : String = "</w>") -> Decoder {
+pub fn Decoder::bpe_decoder(suffix~ : String = "</w>") -> Decoder {
   BPEDecoder(suffix~)
 }
 
 ///|
 pub fn Decoder::metaspace(
-  replacement? : Char = '▁',
-  prepend_scheme? : String = "always",
-  split? : Bool = true,
+  replacement~ : Char = '▁',
+  prepend_scheme~ : String = "always",
+  split~ : Bool = true,
 ) -> Decoder {
   Metaspace(replacement~, prepend_scheme~, split~)
 }
 
 ///|
-pub fn Decoder::strip(content : Char, start : Int, stop : Int) -> Decoder {
+pub fn Decoder::strip(content : Char, start : Int32, stop : Int32) -> Decoder {
   Strip(content~, start~, stop~)
 }
 
@@ -686,17 +687,17 @@ pub fn Decoder::byte_fallback() -> Decoder {
 
 ///|
 pub fn Decoder::wordpiece(
-  prefix? : String = "##",
-  cleanup? : Bool = true,
+  prefix~ : String = "##",
+  cleanup~ : Bool = true,
 ) -> Decoder {
   WordPiece(prefix~, cleanup~)
 }
 
 ///|
 pub fn Decoder::ctc(
-  pad_token? : String = "<pad>",
-  word_delimiter_token? : String = "|",
-  cleanup? : Bool = true,
+  pad_token~ : String = "<pad>",
+  word_delimiter_token~ : String = "|",
+  cleanup~ : Bool = true,
 ) -> Decoder {
   CTC(pad_token~, word_delimiter_token~, cleanup~)
 }

@@ -32,7 +32,7 @@ fn hub_repo_id_error(value : String) -> String? {
 }
 
 ///|
-fn slash_count(value : String) -> Int {
+fn slash_count(value : String) -> Int32 {
   let mut n = 0
   for c in value {
     if c == '/' {
@@ -71,9 +71,9 @@ fn repo_id_parts_shape_ok(value : String) -> Bool {
 ///|
 fn repo_id_part_ok(
   chars : Array[Char],
-  start : Int,
-  end : Int,
-  _max : Int,
+  start : Int32,
+  end : Int32,
+  _max : Int32,
 ) -> Bool {
   if end <= start {
     return false
@@ -202,7 +202,7 @@ fn build_pretrained_cache_paths(
   root : String,
   model_id : String,
   revision : String,
-  resolved_revision? : String? = None,
+  resolved_revision~ : String? = None,
 ) -> PretrainedCachePaths {
   let repo = root + "/" + hub_model_dir(model_id)
   let snapshot = match resolved_revision {
@@ -234,8 +234,8 @@ fn incomplete_tokenizer_path(tokenizer_json_path : String) -> String {
 ///|
 fn resume_metadata_to_string(
   etag~ : String?,
-  expected_size~ : Int?,
-  downloaded_size~ : Int,
+  expected_size~ : Int32?,
+  downloaded_size~ : Int32,
 ) -> String {
   let sb = StringBuilder()
   match etag {
@@ -260,7 +260,7 @@ fn parse_resume_metadata(
   incomplete_path : String,
 ) -> PretrainedDownloadResumeMetadata? {
   let mut etag : String? = None
-  let mut expected_size : Int? = None
+  let mut expected_size : Int32? = None
   let mut downloaded_size = 0
   for line in split_lines(content) {
     let trimmed = trim_ascii_ws(line)
@@ -316,7 +316,7 @@ fn split_once(s : String, sep : Char) -> (String, String)? {
 }
 
 ///|
-fn parse_non_negative_int(s : String) -> Int? {
+fn parse_non_negative_int(s : String) -> Int32? {
   let chars = s.to_array()
   if chars.length() == 0 {
     return None
@@ -361,7 +361,7 @@ fn unescape_resume_value(s : String) -> String {
 }
 
 ///|
-fn string_slice(chars : Array[Char], start : Int, stop : Int) -> String {
+fn string_slice(chars : Array[Char], start : Int32, stop : Int32) -> String {
   let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])

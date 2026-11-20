@@ -4,6 +4,7 @@ package "howtomakeaname/tokenizers-moonbit/model"
 import {
   "howtomakeaname/tokenizers-moonbit/types",
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -12,9 +13,9 @@ import {
 
 // Types and methods
 pub struct BPEModel {
-  vocab : Map[String, Int]
+  vocab : Map[String, Int32]
   vocab_r : Array[String?]
-  merges : Map[(String, String), Int]
+  merges : Map[(String, String), Int32]
   unk_token : String?
   continuing_subword_prefix : String?
   end_of_word_suffix : String?
@@ -22,12 +23,12 @@ pub struct BPEModel {
   byte_fallback : Bool
   ignore_merges : Bool
   dropout : Double?
-  mut dropout_rng_state : Int
+  mut dropout_rng_state : Int32
   cache : Map[String, Array[@types.Token]]
-  mut cache_capacity : Int?
-  word_count : Int?
+  mut cache_capacity : Int32?
+  word_count : Int32?
 }
-pub fn BPEModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
+pub fn BPEModel::tokenize(Self, String, offset? : Int32) -> Array[@types.Token] raise @types.TokenizerError
 
 pub enum Model {
   BPE(BPEModel)
@@ -40,22 +41,22 @@ pub fn Model::__repr__(Self) -> String raise @types.TokenizerError
 pub fn Model::__setstate__(ModelState) -> Self raise @types.TokenizerError
 pub fn Model::__str__(Self) -> String raise @types.TokenizerError
 pub fn Model::_clear_cache(Self) -> Unit
-pub fn Model::_resize_cache(Self, Int) -> Unit
+pub fn Model::_resize_cache(Self, Int32) -> Unit
 pub fn Model::alpha(Self) -> Double?
 pub fn Model::bpe_from_file(String, String, unk_token? : String?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?) -> Self raise @types.TokenizerError
 pub fn Model::bpe_read_file(String, String, unk_token? : String?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?) -> Self raise @types.TokenizerError
 pub fn Model::byte_fallback(Self) -> Bool?
-pub fn Model::cache_size(Self) -> Int
+pub fn Model::cache_size(Self) -> Int32
 pub fn Model::clear_cache(Self) -> Unit
 pub fn Model::continuing_subword_prefix(Self) -> String?
 pub fn Model::dropout(Self) -> Double?
 pub fn Model::end_of_word_suffix(Self) -> String?
 pub fn Model::from_bpe_files(String, String, unk_token? : String?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?) -> Self raise @types.TokenizerError
-pub fn Model::from_json(Json) -> Self raise @types.TokenizerError
+pub fn Model::from_json(@json.Json) -> Self raise @types.TokenizerError
 pub fn Model::from_state(ModelState) -> Self raise @types.TokenizerError
 pub fn Model::from_unigram_file(String) -> Self raise @types.TokenizerError
 pub fn Model::from_wordlevel_file(String, unk_token? : String) -> Self raise @types.TokenizerError
-pub fn Model::from_wordpiece_file(String, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int) -> Self raise @types.TokenizerError
+pub fn Model::from_wordpiece_file(String, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int32) -> Self raise @types.TokenizerError
 pub fn Model::fuse_unk(Self) -> Bool?
 pub fn Model::get_alpha(Self) -> Double?
 pub fn Model::get_byte_fallback(Self) -> Bool?
@@ -64,20 +65,20 @@ pub fn Model::get_dropout(Self) -> Double?
 pub fn Model::get_end_of_word_suffix(Self) -> String?
 pub fn Model::get_fuse_unk(Self) -> Bool?
 pub fn Model::get_ignore_merges(Self) -> Bool?
-pub fn Model::get_max_input_chars_per_word(Self) -> Int?
-pub fn Model::get_nbest_size(Self) -> Int?
+pub fn Model::get_max_input_chars_per_word(Self) -> Int32?
+pub fn Model::get_nbest_size(Self) -> Int32?
 pub fn Model::get_state(Self) -> ModelState raise @types.TokenizerError
-pub fn Model::get_unk_id(Self) -> Int?
+pub fn Model::get_unk_id(Self) -> Int32?
 pub fn Model::get_unk_token(Self) -> String?
-pub fn Model::get_vocab(Self) -> Map[String, Int]
-pub fn Model::get_vocab_size(Self) -> Int
-pub fn Model::get_word_count(Self) -> Int?
-pub fn Model::id_to_token(Self, Int) -> String?
+pub fn Model::get_vocab(Self) -> Map[String, Int32]
+pub fn Model::get_vocab_size(Self) -> Int32
+pub fn Model::get_word_count(Self) -> Int32?
+pub fn Model::id_to_token(Self, Int32) -> String?
 pub fn Model::ignore_merges(Self) -> Bool?
 pub fn Model::kind(Self) -> String
-pub fn Model::max_input_chars_per_word(Self) -> Int?
-pub fn Model::nbest_size(Self) -> Int?
-pub fn Model::resize_cache(Self, Int) -> Unit
+pub fn Model::max_input_chars_per_word(Self) -> Int32?
+pub fn Model::nbest_size(Self) -> Int32?
+pub fn Model::resize_cache(Self, Int32) -> Unit
 pub fn Model::save(Self, String, prefix? : String) -> Array[String] raise @types.TokenizerError
 pub fn Model::set_alpha(Self, Double?) -> Self
 pub fn Model::set_alpha_alias(Self, Double?) -> Self
@@ -93,73 +94,74 @@ pub fn Model::set_fuse_unk(Self, Bool) -> Self
 pub fn Model::set_fuse_unk_alias(Self, Bool) -> Self
 pub fn Model::set_ignore_merges(Self, Bool) -> Self
 pub fn Model::set_ignore_merges_alias(Self, Bool) -> Self
-pub fn Model::set_max_input_chars_per_word(Self, Int) -> Self
-pub fn Model::set_max_input_chars_per_word_alias(Self, Int) -> Self
-pub fn Model::set_nbest_size(Self, Int?) -> Self
-pub fn Model::set_nbest_size_alias(Self, Int?) -> Self
+pub fn Model::set_max_input_chars_per_word(Self, Int32) -> Self
+pub fn Model::set_max_input_chars_per_word_alias(Self, Int32) -> Self
+pub fn Model::set_nbest_size(Self, Int32?) -> Self
+pub fn Model::set_nbest_size_alias(Self, Int32?) -> Self
 pub fn Model::set_unk_token(Self, String) -> Self
 pub fn Model::set_unk_token_alias(Self, String) -> Self
 pub fn Model::to_json(Self) -> String?
-pub fn Model::token_to_id(Self, String) -> Int?
-pub fn Model::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
-pub fn Model::train_bpe(Array[String], unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?, cache_capacity? : Int?, show_progress? : Bool) -> Self
-pub fn Model::train_bpe_from_tokens(Array[Array[String]], unk_token? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int?, max_token_length? : Int?, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?, cache_capacity? : Int?, show_progress? : Bool) -> Self
-pub fn Model::train_unigram(Array[String], unk_token? : String?, unk_piece? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, max_piece_length? : Int?, initial_alphabet? : Array[String], shrinking_factor? : Double, n_sub_iterations? : Int, show_progress? : Bool, seed_size? : Int) -> Self
-pub fn Model::train_unigram_from_tokens(Array[Array[String]], unk_token? : String?, unk_piece? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, byte_fallback? : Bool, fuse_unk? : Bool, max_piece_length? : Int?, initial_alphabet? : Array[String], shrinking_factor? : Double, n_sub_iterations? : Int, show_progress? : Bool, seed_size? : Int) -> Self
-pub fn Model::train_wordlevel(Array[String], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, show_progress? : Bool) -> Self
-pub fn Model::train_wordlevel_from_tokens(Array[Array[String]], unk_token? : String, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, show_progress? : Bool) -> Self
-pub fn Model::train_wordpiece(Array[String], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, max_token_length? : Int?, initial_alphabet? : Array[String], limit_alphabet? : Int?, show_progress? : Bool) -> Self
-pub fn Model::train_wordpiece_from_tokens(Array[Array[String]], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int, special_tokens? : Array[String], vocab_size? : Int?, max_input_chars_per_word? : Int, max_token_length? : Int?, initial_alphabet? : Array[String], limit_alphabet? : Int?, show_progress? : Bool) -> Self
-pub fn Model::unk_id(Self) -> Int?
+pub fn Model::token_to_id(Self, String) -> Int32?
+pub fn Model::tokenize(Self, String, offset? : Int32) -> Array[@types.Token] raise @types.TokenizerError
+pub fn Model::train_bpe(Array[String], unk_token? : String?, min_frequency? : Int32, special_tokens? : Array[String], vocab_size? : Int32?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int32?, max_token_length? : Int32?, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?, cache_capacity? : Int32?, show_progress? : Bool) -> Self
+pub fn Model::train_bpe_from_tokens(Array[Array[String]], unk_token? : String?, min_frequency? : Int32, special_tokens? : Array[String], vocab_size? : Int32?, continuing_subword_prefix? : String?, end_of_word_suffix? : String?, fuse_unk? : Bool, initial_alphabet? : Array[String], limit_alphabet? : Int32?, max_token_length? : Int32?, byte_fallback? : Bool, ignore_merges? : Bool, dropout? : Double?, cache_capacity? : Int32?, show_progress? : Bool) -> Self
+pub fn Model::train_unigram(Array[String], unk_token? : String?, unk_piece? : String?, min_frequency? : Int32, special_tokens? : Array[String], vocab_size? : Int32?, byte_fallback? : Bool, fuse_unk? : Bool, max_piece_length? : Int32?, initial_alphabet? : Array[String], shrinking_factor? : Double, n_sub_iterations? : Int32, show_progress? : Bool, seed_size? : Int32) -> Self
+pub fn Model::train_unigram_from_tokens(Array[Array[String]], unk_token? : String?, unk_piece? : String?, min_frequency? : Int32, special_tokens? : Array[String], vocab_size? : Int32?, byte_fallback? : Bool, fuse_unk? : Bool, max_piece_length? : Int32?, initial_alphabet? : Array[String], shrinking_factor? : Double, n_sub_iterations? : Int32, show_progress? : Bool, seed_size? : Int32) -> Self
+pub fn Model::train_wordlevel(Array[String], unk_token? : String, min_frequency? : Int32, special_tokens? : Array[String], vocab_size? : Int32?, show_progress? : Bool) -> Self
+pub fn Model::train_wordlevel_from_tokens(Array[Array[String]], unk_token? : String, min_frequency? : Int32, special_tokens? : Array[String], vocab_size? : Int32?, show_progress? : Bool) -> Self
+pub fn Model::train_wordpiece(Array[String], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int32, special_tokens? : Array[String], vocab_size? : Int32?, max_input_chars_per_word? : Int32, max_token_length? : Int32?, initial_alphabet? : Array[String], limit_alphabet? : Int32?, show_progress? : Bool) -> Self
+pub fn Model::train_wordpiece_from_tokens(Array[Array[String]], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, min_frequency? : Int32, special_tokens? : Array[String], vocab_size? : Int32?, max_input_chars_per_word? : Int32, max_token_length? : Int32?, initial_alphabet? : Array[String], limit_alphabet? : Int32?, show_progress? : Bool) -> Self
+pub fn Model::unk_id(Self) -> Int32?
 pub fn Model::unk_token(Self) -> String?
-pub fn Model::vocab(Self) -> Map[String, Int]
-pub fn Model::vocab_size(Self) -> Int
-pub fn Model::wordlevel(Map[String, Int], unk_token? : String) -> Self
+pub fn Model::vocab(Self) -> Map[String, Int32]
+pub fn Model::vocab_size(Self) -> Int32
+pub fn Model::wordlevel(Map[String, Int32], unk_token? : String) -> Self
 pub fn Model::wordlevel_from_file(String, unk_token? : String) -> Self raise @types.TokenizerError
 pub fn Model::wordlevel_read_file(String, unk_token? : String) -> Self raise @types.TokenizerError
-pub fn Model::wordpiece(Map[String, Int], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int) -> Self
-pub fn Model::wordpiece_from_file(String, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int) -> Self raise @types.TokenizerError
-pub fn Model::wordpiece_read_file(String, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int) -> Self raise @types.TokenizerError
+pub fn Model::wordpiece(Map[String, Int32], unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int32) -> Self
+pub fn Model::wordpiece_from_file(String, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int32) -> Self raise @types.TokenizerError
+pub fn Model::wordpiece_read_file(String, unk_token? : String, continuing_subword_prefix? : String, end_of_word_suffix? : String?, max_input_chars_per_word? : Int32) -> Self raise @types.TokenizerError
 
+#derive(Eq, @debug.Debug)
 pub struct ModelState {
   json : String
-} derive(Eq, @debug.Debug)
+}
 pub fn ModelState::equal(Self, Self) -> Bool
 pub fn ModelState::new(String) -> Self
 pub fn ModelState::not_equal(Self, Self) -> Bool
 pub fn ModelState::to_repr(Self) -> @debug.Repr
 
 pub struct UnigramModel {
-  vocab : Map[String, (Int, Double)]
+  vocab : Map[String, (Int32, Double)]
   vocab_r : Array[String?]
-  unk_id : Int?
+  unk_id : Int32?
   byte_fallback : Bool
   fuse_unk : Bool
   alpha : Double?
-  nbest_size : Int?
+  nbest_size : Int32?
   cache : Map[String, Array[@types.Token]]
-  mut cache_capacity : Int?
+  mut cache_capacity : Int32?
 }
-pub fn UnigramModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
+pub fn UnigramModel::tokenize(Self, String, offset? : Int32) -> Array[@types.Token] raise @types.TokenizerError
 
 pub struct WordLevelModel {
-  vocab : Map[String, Int]
+  vocab : Map[String, Int32]
   vocab_r : Array[String?]
   unk_token : String
 }
-pub fn WordLevelModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
+pub fn WordLevelModel::tokenize(Self, String, offset? : Int32) -> Array[@types.Token] raise @types.TokenizerError
 
 pub struct WordPieceModel {
-  vocab : Map[String, Int]
+  vocab : Map[String, Int32]
   vocab_r : Array[String?]
   unk_token : String
   continuing_subword_prefix : String
   end_of_word_suffix : String?
-  max_input_chars_per_word : Int
+  max_input_chars_per_word : Int32
   cache : Map[String, Array[@types.Token]]
-  mut cache_capacity : Int?
+  mut cache_capacity : Int32?
 }
-pub fn WordPieceModel::tokenize(Self, String, offset? : Int) -> Array[@types.Token] raise @types.TokenizerError
+pub fn WordPieceModel::tokenize(Self, String, offset? : Int32) -> Array[@types.Token] raise @types.TokenizerError
 
 // Type aliases
 

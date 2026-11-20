@@ -6,13 +6,14 @@
 
 ///|
 /// How a Split pre-tokenizer treats the matched delimiter.
+#derive(Eq, Debug)
 pub enum SplitBehavior {
   Removed
   Isolated
   MergedWithPrevious
   MergedWithNext
   Contiguous
-} derive(Eq, Debug)
+}
 
 ///|
 pub enum PreTokenizer {
@@ -25,21 +26,22 @@ pub enum PreTokenizer {
     pattern~ : String,
     behavior~ : SplitBehavior,
     invert~ : Bool,
-    regex~ : Bool
+    regex~ : Bool,
   )
   BertPreTokenizer
   Digits(individual_digits~ : Bool)
   Delimiter(delimiter~ : Char)
-  FixedLength(length~ : Int)
+  FixedLength(length~ : Int32)
   UnicodeScripts
   Sequence(Array[PreTokenizer])
 }
 
 ///|
 /// JSON-backed component state used by thin binding layers.
+#derive(Debug, Eq)
 pub struct PreTokenizerState {
   json : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn PreTokenizerState::new(json : String) -> PreTokenizerState {
@@ -243,7 +245,10 @@ pub fn PreTokenizer::set_individual_digits_alias(
 
 ///|
 /// Set length. Returns a new PreTokenizer; only FixedLength supports it.
-pub fn PreTokenizer::set_length(self : PreTokenizer, val : Int) -> PreTokenizer {
+pub fn PreTokenizer::set_length(
+  self : PreTokenizer,
+  val : Int32,
+) -> PreTokenizer {
   match self {
     FixedLength(..) => FixedLength(length=val)
     _ => self
@@ -254,7 +259,7 @@ pub fn PreTokenizer::set_length(self : PreTokenizer, val : Int) -> PreTokenizer 
 /// Python/property-style setter alias for length.
 pub fn PreTokenizer::set_length_alias(
   self : PreTokenizer,
-  val : Int,
+  val : Int32,
 ) -> PreTokenizer {
   self.set_length(val)
 }
@@ -518,7 +523,7 @@ pub fn PreTokenizer::get_delimiter(self : PreTokenizer) -> Char? {
 }
 
 ///|
-pub fn PreTokenizer::length(self : PreTokenizer) -> Int? {
+pub fn PreTokenizer::length(self : PreTokenizer) -> Int32? {
   match self {
     FixedLength(length~) => Some(length)
     _ => None
@@ -526,7 +531,7 @@ pub fn PreTokenizer::length(self : PreTokenizer) -> Int? {
 }
 
 ///|
-pub fn PreTokenizer::get_length(self : PreTokenizer) -> Int? {
+pub fn PreTokenizer::get_length(self : PreTokenizer) -> Int32? {
   self.length()
 }
 
@@ -547,7 +552,7 @@ pub fn PreTokenizer::get_pre_tokenizers(
 }
 
 ///|
-pub fn PreTokenizer::__len__(self : PreTokenizer) -> Int {
+pub fn PreTokenizer::__len__(self : PreTokenizer) -> Int32 {
   match self {
     Sequence(steps) => steps.length()
     _ => 0
@@ -557,7 +562,7 @@ pub fn PreTokenizer::__len__(self : PreTokenizer) -> Int {
 ///|
 pub fn PreTokenizer::get_item(
   self : PreTokenizer,
-  index : Int,
+  index : Int32,
 ) -> PreTokenizer? {
   match self {
     Sequence(steps) =>
@@ -573,7 +578,7 @@ pub fn PreTokenizer::get_item(
 ///|
 pub fn PreTokenizer::__getitem__(
   self : PreTokenizer,
-  index : Int,
+  index : Int32,
 ) -> PreTokenizer? {
   self.get_item(index)
 }
@@ -597,22 +602,22 @@ pub fn PreTokenizer::bert_pre_tokenizer() -> PreTokenizer {
 
 ///|
 pub fn PreTokenizer::metaspace(
-  replacement? : Char = '▁',
-  prepend_scheme? : String = "always",
-  split? : Bool = true,
+  replacement~ : Char = '▁',
+  prepend_scheme~ : String = "always",
+  split~ : Bool = true,
 ) -> PreTokenizer {
   Metaspace(replacement~, prepend_scheme~, split~)
 }
 
 ///|
 pub fn PreTokenizer::punctuation(
-  behavior? : SplitBehavior = Isolated,
+  behavior~ : SplitBehavior = Isolated,
 ) -> PreTokenizer {
   Punctuation(behavior~)
 }
 
 ///|
-pub fn PreTokenizer::digits(individual_digits? : Bool = false) -> PreTokenizer {
+pub fn PreTokenizer::digits(individual_digits~ : Bool = false) -> PreTokenizer {
   Digits(individual_digits~)
 }
 
@@ -622,7 +627,7 @@ pub fn PreTokenizer::char_delimiter_split(delimiter : Char) -> PreTokenizer {
 }
 
 ///|
-pub fn PreTokenizer::fixed_length(length? : Int = 5) -> PreTokenizer {
+pub fn PreTokenizer::fixed_length(length~ : Int32 = 5) -> PreTokenizer {
   FixedLength(length~)
 }
 
@@ -641,9 +646,9 @@ pub fn PreTokenizer::sequence(
 ///|
 /// Public constructor for GPT-2/RoBERTa style ByteLevel pre-tokenization.
 pub fn PreTokenizer::byte_level(
-  add_prefix_space? : Bool = true,
-  use_regex? : Bool = true,
-  trim_offsets? : Bool = true,
+  add_prefix_space~ : Bool = true,
+  use_regex~ : Bool = true,
+  trim_offsets~ : Bool = true,
 ) -> PreTokenizer {
   ByteLevel(add_prefix_space~, use_regex~, trim_offsets~)
 }
@@ -677,8 +682,8 @@ pub fn SplitBehavior::merged_with_next() -> SplitBehavior {
 pub fn PreTokenizer::split(
   pattern : String,
   behavior : SplitBehavior,
-  invert? : Bool = false,
-  regex? : Bool = false,
+  invert~ : Bool = false,
+  regex~ : Bool = false,
 ) -> PreTokenizer {
   Split(pattern~, behavior~, invert~, regex~)
 }

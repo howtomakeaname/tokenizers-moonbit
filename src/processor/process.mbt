@@ -10,7 +10,7 @@ pub fn PostProcessor::process(
   self : PostProcessor,
   a : @types.Encoding,
   b : @types.Encoding?,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding {
   let processed = match self {
     TemplateProcessing(single~, pair~, special_tokens~) => {
@@ -117,14 +117,14 @@ pub fn PostProcessor::process(
 
 ///|
 fn remove_post_processor_specials(enc : @types.Encoding) -> @types.Encoding {
-  let ids : Array[Int] = []
-  let type_ids : Array[Int] = []
+  let ids : Array[Int32] = []
+  let type_ids : Array[Int32] = []
   let tokens : Array[String] = []
-  let offsets : Array[(Int, Int)] = []
-  let special_tokens_mask : Array[Int] = []
-  let attention_mask : Array[Int] = []
-  let sequence_ids : Array[Int?] = []
-  let word_ids : Array[Int?] = []
+  let offsets : Array[(Int32, Int32)] = []
+  let special_tokens_mask : Array[Int32] = []
+  let attention_mask : Array[Int32] = []
+  let sequence_ids : Array[Int32?] = []
+  let word_ids : Array[Int32?] = []
   for i in 0..<enc.ids.length() {
     if !(enc.special_tokens_mask[i] == 1 && enc.sequence_ids[i] is None) {
       ids.push(enc.ids[i])
@@ -191,8 +191,8 @@ fn apply_template(
 fn bert_like(
   a : @types.Encoding,
   b : @types.Encoding?,
-  cls : (String, Int),
-  sep : (String, Int),
+  cls : (String, Int32),
+  sep : (String, Int32),
   roberta : Bool,
 ) -> @types.Encoding {
   let out = new_builder()
@@ -284,7 +284,7 @@ fn process_byte_level_offsets(
   if !trim_offsets {
     return enc
   }
-  let offsets : Array[(Int, Int)] = []
+  let offsets : Array[(Int32, Int32)] = []
   for i in 0..<enc.tokens.length() {
     let is_first = i == 0 || enc.offsets[i].0 == 0
     offsets.push(
@@ -314,10 +314,10 @@ fn process_byte_level_offsets(
 ///|
 fn process_token_offset(
   token : String,
-  offsets : (Int, Int),
+  offsets : (Int32, Int32),
   add_prefix_space : Bool,
   is_first : Bool,
-) -> (Int, Int) {
+) -> (Int32, Int32) {
   // Mirrors HF byte_level.rs process_offsets: the leading space added by
   // `add_prefix_space` on the first token is kept (a single leading space
   // on the first/zero-anchored token is assumed to be the added one);
@@ -339,7 +339,7 @@ fn process_token_offset(
 }
 
 ///|
-fn count_leading_byte_spaces(token : String) -> Int {
+fn count_leading_byte_spaces(token : String) -> Int32 {
   let mut n = 0
   for c in token {
     if is_byte_level_space(c) {
@@ -352,7 +352,7 @@ fn count_leading_byte_spaces(token : String) -> Int {
 }
 
 ///|
-fn count_trailing_byte_spaces(token : String) -> Int {
+fn count_trailing_byte_spaces(token : String) -> Int32 {
   let chars = token.to_array()
   let mut n = 0
   let mut i = chars.length() - 1
@@ -375,7 +375,7 @@ fn is_byte_level_space(c : Char) -> Bool {
 }
 
 ///|
-fn min_int(a : Int, b : Int) -> Int {
+fn min_int(a : Int32, b : Int32) -> Int32 {
   if a < b {
     a
   } else {
@@ -384,7 +384,7 @@ fn min_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-fn max_int(a : Int, b : Int) -> Int {
+fn max_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {
@@ -396,14 +396,14 @@ fn max_int(a : Int, b : Int) -> Int {
 
 ///|
 priv struct Builder {
-  ids : Array[Int]
-  type_ids : Array[Int]
+  ids : Array[Int32]
+  type_ids : Array[Int32]
   tokens : Array[String]
-  offsets : Array[(Int, Int)]
-  special_tokens_mask : Array[Int]
-  attention_mask : Array[Int]
-  sequence_ids : Array[Int?]
-  word_ids : Array[Int?]
+  offsets : Array[(Int32, Int32)]
+  special_tokens_mask : Array[Int32]
+  attention_mask : Array[Int32]
+  sequence_ids : Array[Int32?]
+  word_ids : Array[Int32?]
 }
 
 ///|
@@ -424,8 +424,8 @@ fn new_builder() -> Builder {
 fn append_sequence_with_id(
   out : Builder,
   enc : @types.Encoding,
-  type_id : Int,
-  seq_id : Int,
+  type_id : Int32,
+  seq_id : Int32,
 ) -> Unit {
   for i in 0..<enc.ids.length() {
     out.ids.push(enc.ids[i])
@@ -440,7 +440,7 @@ fn append_sequence_with_id(
 }
 
 ///|
-fn append_special(out : Builder, st : SpecialToken, type_id : Int) -> Unit {
+fn append_special(out : Builder, st : SpecialToken, type_id : Int32) -> Unit {
   for i in 0..<st.ids.length() {
     out.ids.push(st.ids[i])
     out.type_ids.push(type_id)
@@ -454,7 +454,12 @@ fn append_special(out : Builder, st : SpecialToken, type_id : Int) -> Unit {
 }
 
 ///|
-fn push_special(out : Builder, id : Int, token : String, type_id : Int) -> Unit {
+fn push_special(
+  out : Builder,
+  id : Int32,
+  token : String,
+  type_id : Int32,
+) -> Unit {
   out.ids.push(id)
   out.type_ids.push(type_id)
   out.tokens.push(token)

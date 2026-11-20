@@ -122,7 +122,7 @@ fn parse_added_tokens(
 fn get_added_int(
   obj : Map[String, Json],
   key : String,
-) -> Int raise @types.TokenizerError {
+) -> Int32 raise @types.TokenizerError {
   match obj.get(key) {
     Some(Number(n, ..)) => n.to_int()
     _ =>
@@ -241,9 +241,9 @@ fn get_tokenizer_int(
   obj : Map[String, Json],
   key : String,
   required~ : Bool,
-  default~ : Int,
+  default~ : Int32,
   ctx : String,
-) -> Int raise @types.TokenizerError {
+) -> Int32 raise @types.TokenizerError {
   match obj.get(key) {
     Some(Number(n, ..)) => n.to_int()
     Some(Null) | None =>
@@ -264,7 +264,7 @@ fn get_tokenizer_int_opt(
   obj : Map[String, Json],
   key : String,
   ctx : String,
-) -> Int? raise @types.TokenizerError {
+) -> Int32? raise @types.TokenizerError {
   match obj.get(key) {
     Some(Number(n, ..)) => Some(n.to_int())
     Some(Null) | None => None
@@ -365,8 +365,8 @@ fn parse_padding(j : Json) -> PaddingParams raise @types.TokenizerError {
 /// Vocabulary size of the underlying model.
 pub fn Tokenizer::get_vocab_size(
   self : Tokenizer,
-  with_added_tokens? : Bool = true,
-) -> Int {
+  with_added_tokens~ : Bool = true,
+) -> Int32 {
   self.get_vocab(with_added_tokens~).length()
 }
 
@@ -374,8 +374,8 @@ pub fn Tokenizer::get_vocab_size(
 /// Python/property-style alias for `get_vocab_size`.
 pub fn Tokenizer::vocab_size(
   self : Tokenizer,
-  with_added_tokens? : Bool = true,
-) -> Int {
+  with_added_tokens~ : Bool = true,
+) -> Int32 {
   self.get_vocab_size(with_added_tokens~)
 }
 
@@ -383,8 +383,8 @@ pub fn Tokenizer::vocab_size(
 /// Export vocabulary as `token -> id`; includes added tokens by default.
 pub fn Tokenizer::get_vocab(
   self : Tokenizer,
-  with_added_tokens? : Bool = true,
-) -> Map[String, Int] {
+  with_added_tokens~ : Bool = true,
+) -> Map[String, Int32] {
   let vocab = self.model.get_vocab()
   if with_added_tokens {
     for kv in self.added_vocabulary.get_vocab().to_array() {
@@ -398,14 +398,14 @@ pub fn Tokenizer::get_vocab(
 /// Python/property-style alias for `get_vocab`.
 pub fn Tokenizer::vocab(
   self : Tokenizer,
-  with_added_tokens? : Bool = true,
-) -> Map[String, Int] {
+  with_added_tokens~ : Bool = true,
+) -> Map[String, Int32] {
   self.get_vocab(with_added_tokens~)
 }
 
 ///|
 /// Look up a token id by surface string (added vocabulary first, then model).
-pub fn Tokenizer::token_to_id(self : Tokenizer, token : String) -> Int? {
+pub fn Tokenizer::token_to_id(self : Tokenizer, token : String) -> Int32? {
   match self.added_vocabulary.token_to_id(token) {
     Some(id) => Some(id)
     None => self.model.token_to_id(token)
@@ -414,7 +414,7 @@ pub fn Tokenizer::token_to_id(self : Tokenizer, token : String) -> Int? {
 
 ///|
 /// Look up a token surface by id (added vocabulary first, then model).
-pub fn Tokenizer::id_to_token(self : Tokenizer, id : Int) -> String? {
+pub fn Tokenizer::id_to_token(self : Tokenizer, id : Int32) -> String? {
   match self.added_vocabulary.id_to_token(id) {
     Some(t) => Some(t)
     None => self.model.id_to_token(id)
@@ -423,13 +423,16 @@ pub fn Tokenizer::id_to_token(self : Tokenizer, id : Int) -> String? {
 
 ///|
 /// Python binding-friendly alias for `token_to_id` on a single token.
-pub fn Tokenizer::convert_token_to_id(self : Tokenizer, token : String) -> Int? {
+pub fn Tokenizer::convert_token_to_id(
+  self : Tokenizer,
+  token : String,
+) -> Int32? {
   self.token_to_id(token)
 }
 
 ///|
 /// Python binding-friendly alias for `id_to_token` on a single id.
-pub fn Tokenizer::convert_id_to_token(self : Tokenizer, id : Int) -> String? {
+pub fn Tokenizer::convert_id_to_token(self : Tokenizer, id : Int32) -> String? {
   self.id_to_token(id)
 }
 
@@ -439,7 +442,7 @@ pub fn Tokenizer::convert_id_to_token(self : Tokenizer, id : Int) -> String? {
 pub fn Tokenizer::convert_tokens_to_ids(
   self : Tokenizer,
   tokens : Array[String],
-) -> Array[Int?] {
+) -> Array[Int32?] {
   tokens.map(tok => self.token_to_id(tok))
 }
 
@@ -448,7 +451,7 @@ pub fn Tokenizer::convert_tokens_to_ids(
 /// `None`, matching the optional return shape of `id_to_token`.
 pub fn Tokenizer::convert_ids_to_tokens(
   self : Tokenizer,
-  ids : Array[Int],
+  ids : Array[Int32],
 ) -> Array[String?] {
   ids.map(id => self.id_to_token(id))
 }

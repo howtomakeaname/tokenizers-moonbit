@@ -12,7 +12,7 @@
 let pretrained_source_cache : Map[String, String] = Map([])
 
 ///|
-let pretrained_source_cache_limit : Int = 16
+let pretrained_source_cache_limit : Int32 = 16
 
 ///|
 let pretrained_source_cache_order : Array[String] = []
@@ -22,15 +22,17 @@ let pretrained_source_cache_order : Array[String] = []
 /// artifacts. The core tokenizer does not interpret these files yet; exposing
 /// their raw JSON lets migration layers inspect `tokenizer_config.json` and
 /// `special_tokens_map.json` without reimplementing cache resolution.
+#derive(Debug, Eq)
 pub struct PretrainedAuxFiles {
   tokenizer_config_json : String?
   special_tokens_map_json : String?
-} derive(Debug, Eq)
+}
 
 ///|
 /// Local Hub-cache metadata for a resolved tokenizer artifact. This is useful for
 /// HF-compatible offline layers that need to validate resolved revisions, ETags
 /// or sidecar presence without duplicating the cache layout logic.
+#derive(Debug, Eq)
 pub struct PretrainedCacheMetadata {
   tokenizer_json_path : String
   tokenizer_config_path : String?
@@ -38,12 +40,13 @@ pub struct PretrainedCacheMetadata {
   revision : String
   resolved_revision : String
   etag : String?
-} derive(Debug, Eq)
+}
 
 ///|
 /// Concrete paths used by the local HuggingFace Hub cache layout for a tokenizer
 /// artifact. Optional Hub/Python layers can use this to implement HEAD checks,
 /// ref updates or resumable downloads without duplicating path construction.
+#derive(Debug, Eq)
 pub struct PretrainedCachePaths {
   repo_cache_dir : String
   refs_dir : String
@@ -54,24 +57,26 @@ pub struct PretrainedCachePaths {
   special_tokens_map_path : String
   etag_path : String
   resume_path : String
-} derive(Debug, Eq)
+}
 
 ///|
 /// Sidecar state for an interrupted `tokenizer.json` download. The core package
 /// never performs partial network IO itself, but exposing stable resume metadata
 /// lets network-capable packages coordinate Range/ETag resume policies.
+#derive(Debug, Eq)
 pub struct PretrainedDownloadResumeMetadata {
   resume_path : String
   incomplete_path : String
   etag : String?
-  expected_size : Int?
-  downloaded_size : Int
-} derive(Debug, Eq)
+  expected_size : Int32?
+  downloaded_size : Int32
+}
 
 ///|
 /// Diagnostic information for offline `from_pretrained` resolution failures.
 /// It is intentionally string/path based so optional Hub/Python layers can turn
 /// it into actionable private-repo, gated-repo or missing-file exceptions.
+#derive(Debug, Eq)
 pub struct PretrainedResolutionHint {
   model_id : String
   revision : String
@@ -83,7 +88,7 @@ pub struct PretrainedResolutionHint {
   tokenizer_json_path : String?
   cache_exists : Bool
   message : String
-} derive(Debug, Eq)
+}
 
 ///|
 /// Load a tokenizer from a `tokenizer.json` file path.
@@ -107,7 +112,7 @@ pub fn Tokenizer::from_file(
 pub fn Tokenizer::save(
   self : Tokenizer,
   path : String,
-  pretty? : Bool = true,
+  pretty~ : Bool = true,
 ) -> Unit raise @types.TokenizerError {
   let content = self.to_str(pretty~)
   @fs.write_string_to_file(path, content) catch {
@@ -128,9 +133,9 @@ pub fn Tokenizer::save(
 pub fn Tokenizer::save_pretrained(
   self : Tokenizer,
   dir : String,
-  pretty? : Bool = false,
-  save_model? : Bool = false,
-  model_prefix? : String = "",
+  pretty~ : Bool = false,
+  save_model~ : Bool = false,
+  model_prefix~ : String = "",
 ) -> String raise @types.TokenizerError {
   if !@fs.path_exists(dir) {
     @fs.create_dir(dir) catch {
@@ -152,7 +157,7 @@ pub fn Tokenizer::save_pretrained(
 pub fn Tokenizer::save_model(
   self : Tokenizer,
   folder : String,
-  prefix? : String = "",
+  prefix~ : String = "",
 ) -> Array[String] raise @types.TokenizerError {
   self.model.save(folder, prefix~)
 }
@@ -186,8 +191,8 @@ pub fn Tokenizer::from_pretrained(
 /// workflow without adding network IO to the core library.
 pub fn Tokenizer::from_pretrained_cached(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> Tokenizer raise @types.TokenizerError {
   let resolved = resolve_pretrained_path(model_id, revision~, cache_dir~)
   Tokenizer::from_str(read_pretrained_source(resolved))
@@ -196,8 +201,8 @@ pub fn Tokenizer::from_pretrained_cached(
 ///|
 pub fn from_pretrained_cached(
   model_id : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> Tokenizer raise @types.TokenizerError {
   Tokenizer::from_pretrained_cached(model_id, revision~, cache_dir~)
 }
@@ -208,8 +213,8 @@ pub fn from_pretrained_cached(
 /// resolution rules as `from_pretrained`.
 pub fn Tokenizer::from_pretrained_aux_files(
   path : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> PretrainedAuxFiles {
   {
     tokenizer_config_json: Tokenizer::from_pretrained_aux_file(
@@ -230,8 +235,8 @@ pub fn Tokenizer::from_pretrained_aux_files(
 ///|
 pub fn from_pretrained_aux_files(
   path : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> PretrainedAuxFiles {
   Tokenizer::from_pretrained_aux_files(path, revision~, cache_dir~)
 }
@@ -242,8 +247,8 @@ pub fn from_pretrained_aux_files(
 pub fn Tokenizer::from_pretrained_aux_file_path(
   path : String,
   filename : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> String? {
   if !is_valid_aux_filename(filename) {
     return None
@@ -258,8 +263,8 @@ pub fn Tokenizer::from_pretrained_aux_file_path(
 pub fn from_pretrained_aux_file_path(
   path : String,
   filename : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> String? {
   Tokenizer::from_pretrained_aux_file_path(
     path,
@@ -275,8 +280,8 @@ pub fn from_pretrained_aux_file_path(
 pub fn Tokenizer::from_pretrained_aux_file(
   path : String,
   filename : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> String? {
   match
     Tokenizer::from_pretrained_aux_file_path(
@@ -294,8 +299,8 @@ pub fn Tokenizer::from_pretrained_aux_file(
 pub fn from_pretrained_aux_file(
   path : String,
   filename : String,
-  revision? : String = "main",
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  cache_dir~ : String? = None,
 ) -> String? {
   Tokenizer::from_pretrained_aux_file(path, filename, revision~, cache_dir~)
 }
@@ -309,9 +314,9 @@ pub fn Tokenizer::cache_pretrained_aux_file(
   model_id : String,
   filename : String,
   content : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
 ) -> String raise @types.TokenizerError {
   if !is_valid_aux_filename(filename) {
     raise @types.ParseError(
@@ -368,9 +373,9 @@ pub fn cache_pretrained_aux_file(
   model_id : String,
   filename : String,
   content : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
 ) -> String raise @types.TokenizerError {
   Tokenizer::cache_pretrained_aux_file(
     model_id,
@@ -398,9 +403,9 @@ pub fn cache_pretrained_aux_file(
 pub fn cache_pretrained_tokenizer_json(
   model_id : String,
   tokenizer_json : String,
-  revision? : String = "main",
-  resolved_revision? : String? = None,
-  cache_dir? : String? = None,
+  revision~ : String = "main",
+  resolved_revision~ : String? = None,
+  cache_dir~ : String? = None,
 ) -> String raise @types.TokenizerError {
   validate_hub_model_id(model_id)
   validate_hub_revision(revision)
@@ -597,19 +602,19 @@ fn write_optional_snapshot_file(
 
 ///|
 fn default_hub_cache_dir() -> String? {
-  match @sys.get_env_var("HUGGINGFACE_HUB_CACHE") {
+  match @env.get_env_var("HUGGINGFACE_HUB_CACHE") {
     Some(v) => if !v.is_empty() { return Some(v) }
     None => ()
   }
-  match @sys.get_env_var("HF_HUB_CACHE") {
+  match @env.get_env_var("HF_HUB_CACHE") {
     Some(v) => if !v.is_empty() { return Some(v) }
     None => ()
   }
-  match @sys.get_env_var("HF_HOME") {
+  match @env.get_env_var("HF_HOME") {
     Some(v) => if !v.is_empty() { return Some(v + "/hub") }
     None => ()
   }
-  match @sys.get_env_var("HOME") {
+  match @env.get_env_var("HOME") {
     Some(v) =>
       if !v.is_empty() {
         Some(v + "/.cache/huggingface/hub")

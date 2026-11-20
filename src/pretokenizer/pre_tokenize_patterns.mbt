@@ -1,5 +1,5 @@
 ///|
-fn whitespace(text : String, base_offset : Int) -> Array[@types.Split] {
+fn whitespace(text : String, base_offset : Int32) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
   let out : Array[@types.Split] = []
@@ -32,7 +32,7 @@ fn whitespace(text : String, base_offset : Int) -> Array[@types.Split] {
 // WhitespaceSplit: split on runs of whitespace only.
 
 ///|
-fn whitespace_split(text : String, base_offset : Int) -> Array[@types.Split] {
+fn whitespace_split(text : String, base_offset : Int32) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
   let out : Array[@types.Split] = []
@@ -61,7 +61,7 @@ fn whitespace_split(text : String, base_offset : Int) -> Array[@types.Split] {
 fn apply_sequence(
   steps : Array[PreTokenizer],
   text : String,
-  base_offset : Int,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   let mut current : Array[@types.Split] = [
     { value: text, offsets: (base_offset, base_offset + text.char_length()), },
@@ -97,7 +97,7 @@ fn is_word_char(c : Char) -> Bool {
 // only through BertNormalizer's handle_chinese_chars (a normalizer concern).
 
 ///|
-fn bert_pre_tokenize(text : String, base_offset : Int) -> Array[@types.Split] {
+fn bert_pre_tokenize(text : String, base_offset : Int32) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
   let out : Array[@types.Split] = []
@@ -138,7 +138,7 @@ fn bert_pre_tokenize(text : String, base_offset : Int) -> Array[@types.Split] {
 fn punctuation_split(
   text : String,
   behavior : SplitBehavior,
-  base_offset : Int,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
@@ -243,7 +243,7 @@ fn punctuation_split(
 ///|
 fn unicode_scripts_split(
   text : String,
-  base_offset : Int,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
@@ -277,7 +277,7 @@ fn unicode_scripts_split(
 }
 
 ///|
-fn fixed_script(c : Char) -> Int {
+fn fixed_script(c : Char) -> Int32 {
   let u = c.to_int()
   if c == ' ' {
     0 // Any
@@ -308,7 +308,7 @@ fn fixed_script(c : Char) -> Int {
 }
 
 ///|
-fn is_han_script(u : Int) -> Bool {
+fn is_han_script(u : Int32) -> Bool {
   (u >= 0x3400 && u <= 0x4DBF) ||
   (u >= 0x4E00 && u <= 0x9FFF) ||
   (u >= 0xF900 && u <= 0xFAFF) ||
@@ -319,12 +319,12 @@ fn is_han_script(u : Int) -> Bool {
 }
 
 ///|
-fn is_hiragana(u : Int) -> Bool {
+fn is_hiragana(u : Int32) -> Bool {
   u >= 0x3040 && u <= 0x309F
 }
 
 ///|
-fn is_katakana(u : Int) -> Bool {
+fn is_katakana(u : Int32) -> Bool {
   (u >= 0x30A0 && u <= 0x30FF) || (u >= 0x31F0 && u <= 0x31FF)
 }
 
@@ -366,7 +366,7 @@ pub fn is_cjk(c : Char) -> Bool {
 }
 
 ///|
-fn substr(chars : Array[Char], start : Int, stop : Int) -> String {
+fn substr(chars : Array[Char], start : Int32, stop : Int32) -> String {
   let sb = StringBuilder()
   for k in start..<stop {
     sb.write_char(chars[k])
@@ -380,7 +380,7 @@ fn substr(chars : Array[Char], start : Int, stop : Int) -> String {
 fn delimiter_split(
   text : String,
   delim : Char,
-  base_offset : Int,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
@@ -408,8 +408,8 @@ fn delimiter_split(
 ///|
 fn fixed_length_split(
   text : String,
-  length : Int,
-  base_offset : Int,
+  length : Int32,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
@@ -434,7 +434,7 @@ fn fixed_length_split(
 fn digits_split(
   text : String,
   individual_digits : Bool,
-  base_offset : Int,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   let chars = text.to_array()
   let n = chars.length()
@@ -482,7 +482,7 @@ fn metaspace_pre_tokenize(
   replacement : Char,
   prepend_scheme : String,
   split : Bool,
-  base_offset : Int,
+  base_offset : Int32,
 ) -> Array[@types.Split] {
   // prepend_scheme: "always" -> always prepend; "first" -> only on the very
   // first piece of the whole input (base_offset == 0); "never" -> never.
@@ -493,7 +493,7 @@ fn metaspace_pre_tokenize(
   }
   let src = text.to_array()
   let mapped : Array[Char] = []
-  let origin : Array[Int] = [] // original index for each mapped char
+  let origin : Array[Int32] = [] // original index for each mapped char
   if prepend && (src.length() == 0 || src[0] != ' ') {
     mapped.push(replacement)
     origin.push(0)

@@ -123,7 +123,7 @@ pub fn replace_min_char_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  min_run~ : Int,
+  min_run~ : Int32,
 ) -> String {
   if min_run <= 1 {
     return replace_char_runs(s, content, pred)
@@ -159,7 +159,7 @@ pub fn replace_bounded_char_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  max_run~ : Int,
+  max_run~ : Int32,
 ) -> String {
   if max_run <= 0 {
     return s
@@ -189,7 +189,7 @@ pub fn replace_exact_char_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  exact_run~ : Int,
+  exact_run~ : Int32,
 ) -> String {
   if exact_run <= 0 {
     return s
@@ -226,8 +226,8 @@ pub fn replace_ranged_char_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  min_run~ : Int,
-  max_run~ : Int,
+  min_run~ : Int32,
+  max_run~ : Int32,
 ) -> String {
   if min_run <= 1 {
     return replace_bounded_char_runs(s, content, pred, max_run~)
@@ -483,7 +483,7 @@ fn replace_line_trailing_runs(
 pub fn replace_space_runs(
   s : String,
   content : String,
-  min_run~ : Int,
+  min_run~ : Int32,
 ) -> String {
   let chars = s.to_array()
   let n = chars.length()
@@ -517,7 +517,7 @@ pub fn replace_whitespace_runs(s : String, content : String) -> String {
 }
 
 ///|
-fn matches_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
+fn matches_at(src : Array[Char], at : Int32, pat : Array[Char]) -> Bool {
   for k in 0..<pat.length() {
     if src[at + k] != pat[k] {
       return false
@@ -534,7 +534,7 @@ fn matches_at(src : Array[Char], at : Int, pat : Array[Char]) -> Bool {
 /// HF probes: `a{2}` on "zaaz" -> "z#z", `a{2,3}` on "zaaaay" -> "z#ay",
 /// `a{1}` on "zaaz" -> "z##z". Metacharacter bases are excluded:
 /// `.{n}` is any-char in HF; `?{n}`/`+{n}`/etc. are construction errors.
-pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
+pub fn char_bounded_spec(pattern : String) -> (Char, Int32, Int32)? {
   let chars = pattern.to_array()
   let n = chars.length()
   // shape: c { digits }  |  c { digits , }  |  c { digits , digits }
@@ -595,7 +595,7 @@ pub fn char_bounded_spec(pattern : String) -> (Char, Int, Int)? {
     return None
   }
   let mut c : Char = '\u{0}'
-  let mut brace : Int = 0
+  let mut brace : Int32 = 0
   if chars[1] == '{' {
     c = chars[0]
     brace = 1
@@ -739,7 +739,7 @@ pub fn replace_zero_min_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  max : Int?, // None = unbounded
+  max : Int32?, // None = unbounded
 ) -> String {
   let chars = s.to_array()
   replace_spans(chars, zero_min_match_spans(chars, pred, max), content)
@@ -754,7 +754,7 @@ pub fn replace_zero_min_runs(
 pub fn zero_min_match_spans(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  max : Int?, // None = unbounded
+  max : Int32?, // None = unbounded
 ) -> Array[Span] {
   let out : Array[Span] = []
   let n = chars.length()
@@ -811,8 +811,8 @@ pub fn zero_min_match_spans(
 fn block_match_spans(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
 ) -> Array[Span] {
   let out : Array[Span] = []
   let n = chars.length()
@@ -1160,7 +1160,7 @@ pub fn replace_family_spans(
       } else {
         fn(x) { bounded_regex_kind_pred(kind, x) }
       }
-      let m : Int? = if max < 0 { None } else { Some(max) }
+      let m : Int32? = if max < 0 { None } else { Some(max) }
       return Some(zero_min_match_spans(chars, pred, m))
     }
     None => ()
@@ -1225,8 +1225,8 @@ pub fn replace_ascii_word_boundary_runs(s : String, content : String) -> String 
 fn lazy_ranged_or_empty_spans(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
 ) -> Array[Span] {
   // a REVERSED-bound swap can arrive with lo == 0 ('\w{2,0}?' ==
   // the {0,2} walk, probed: 'aaa' -> '##'); delegate — walking the
@@ -1296,8 +1296,8 @@ pub fn replace_lazy_exact_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
 ) -> String {
   let chars = s.to_array()
   replace_spans(chars, lazy_ranged_or_empty_spans(chars, pred, lo, hi), content)
@@ -1313,8 +1313,8 @@ pub fn replace_lazy_exact_runs(
 fn double_anchored_line_spans(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
 ) -> Array[Span] {
   let out : Array[Span] = []
   let n = chars.length()
@@ -1365,8 +1365,8 @@ pub fn replace_double_anchored_line_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
 ) -> String {
   let chars = s.to_array()
   replace_spans(chars, double_anchored_line_spans(chars, pred, lo, hi), content)
@@ -1380,7 +1380,7 @@ pub fn replace_double_anchored_line_runs(
 /// bare_class_kind (\w, \d, [0-9], [\w], \p{N}, [\p{L}] ...). Replaces
 /// the hardcoded {1,2}/{1,3}/{1,4} spelling tables for the plain
 /// window forms; anchored/zero-min shapes keep their own parsers.
-pub fn class_bounded_spec(pattern : String) -> (Int, Int, Int)? {
+pub fn class_bounded_spec(pattern : String) -> (Int32, Int32, Int32)? {
   let chars = pattern.to_array()
   let n = chars.length()
   // plus tail: 'CLASS+' == 'CLASS{1,}' greedy runs — also claims the
@@ -1392,7 +1392,7 @@ pub fn class_bounded_spec(pattern : String) -> (Int, Int, Int)? {
       base_sb.write_char(chars[i])
     }
     let base = base_sb.to_string()
-    let kind : Int? = if base == "." {
+    let kind : Int32? = if base == "." {
       Some(30)
     } else {
       match bare_class_kind(base) {
@@ -1433,7 +1433,7 @@ pub fn class_bounded_spec(pattern : String) -> (Int, Int, Int)? {
   let base = base_sb.to_string()
   // the unanchored DOT base rides the same window (kind 30, '.' !=
   // '\n'; probed: '.{2,}' == dot greedy runs)
-  let base_kind : Int? = if base == "." {
+  let base_kind : Int32? = if base == "." {
     Some(30)
   } else {
     match bare_class_kind(base) {
@@ -1532,8 +1532,8 @@ pub fn replace_class_bounded_runs(
 fn boundary_window_spans(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
   ws : Bool,
   we : Bool,
 ) -> Array[Span] {
@@ -1549,13 +1549,13 @@ fn boundary_window_spans(
 fn boundary_window_impl(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
   ws : Bool,
   we : Bool,
   invert : Bool,
 ) -> Array[Span] {
-  fn holds(pos : Int) -> Bool {
+  fn holds(pos : Int32) -> Bool {
     if invert {
       !regex_word_boundary_at(chars, pos)
     } else {
@@ -1636,8 +1636,8 @@ pub fn replace_boundary_window_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
   ws : Bool,
   we : Bool,
 ) -> String {
@@ -1659,8 +1659,8 @@ pub fn replace_boundary_window_runs(
 fn single_anchor_window_spans(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
   leading : Bool,
 ) -> Array[Span] {
   let n = chars.length()
@@ -1716,8 +1716,8 @@ pub fn replace_single_anchor_window_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
   leading : Bool,
 ) -> String {
   let chars = s.to_array()
@@ -1736,7 +1736,7 @@ pub fn replace_single_anchor_window_runs(
 fn boundary_lazy_exact_spans(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  n : Int,
+  n : Int32,
   ws : Bool,
   we : Bool,
 ) -> Array[Span] {
@@ -1745,10 +1745,10 @@ fn boundary_lazy_exact_spans(
   if len == 0 {
     return out
   }
-  fn start_ok(p : Int) -> Bool {
+  fn start_ok(p : Int32) -> Bool {
     !ws || regex_word_boundary_at(chars, p)
   }
-  fn end_ok(q : Int) -> Bool {
+  fn end_ok(q : Int32) -> Bool {
     !we || regex_word_boundary_at(chars, q)
   }
   let mut p = 0
@@ -1795,7 +1795,7 @@ pub fn replace_boundary_lazy_exact_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  n : Int,
+  n : Int32,
   ws : Bool,
   we : Bool,
 ) -> String {
@@ -1818,8 +1818,8 @@ pub fn replace_boundary_lazy_exact_runs(
 pub fn nonboundary_window_spans(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
   ws : Bool,
   we : Bool,
 ) -> Array[Span] {
@@ -1828,11 +1828,11 @@ pub fn nonboundary_window_spans(
   if n == 0 {
     return out
   }
-  fn holds(pos : Int) -> Bool {
+  fn holds(pos : Int32) -> Bool {
     !regex_word_boundary_at(chars, pos)
   }
   if lo == 0 {
-    let cap : Int? = if hi < 0 { None } else { Some(hi) }
+    let cap : Int32? = if hi < 0 { None } else { Some(hi) }
     let base = zero_min_match_spans(chars, pred, cap)
     for sp in base {
       let ok = (!ws || holds(sp.start)) && (!we || holds(sp.stop))
@@ -1871,8 +1871,8 @@ pub fn replace_nonboundary_window_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
   ws : Bool,
   we : Bool,
 ) -> String {
@@ -1894,8 +1894,8 @@ pub fn replace_nonboundary_window_runs(
 fn mixed_anchor_window_spans(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
   lead_nb : Bool,
   trail_nb : Bool,
 ) -> Array[Span] {
@@ -1904,14 +1904,14 @@ fn mixed_anchor_window_spans(
   if n == 0 {
     return out
   }
-  fn lead_holds(pos : Int) -> Bool {
+  fn lead_holds(pos : Int32) -> Bool {
     if lead_nb {
       !regex_word_boundary_at(chars, pos)
     } else {
       regex_word_boundary_at(chars, pos)
     }
   }
-  fn trail_holds(pos : Int) -> Bool {
+  fn trail_holds(pos : Int32) -> Bool {
     if trail_nb {
       !regex_word_boundary_at(chars, pos)
     } else {
@@ -1949,9 +1949,9 @@ pub fn replace_bracket_set_runs(
   content : String,
   members : Array[BracketMember],
   negated : Bool,
-  lo : Int,
-  hi : Int,
-  lazy_group? : Bool = false,
+  lo : Int32,
+  hi : Int32,
+  lazy_group~ : Bool = false,
 ) -> String {
   let chars = s.to_array()
   let pred = fn(c) { bracket_set_holds(members, negated, c) }
@@ -1971,8 +1971,8 @@ pub fn replace_mixed_anchor_window_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  lo : Int,
-  hi : Int,
+  lo : Int32,
+  hi : Int32,
   lead_nb : Bool,
   trail_nb : Bool,
 ) -> String {
@@ -1990,7 +1990,7 @@ pub fn replace_mixed_anchor_window_runs(
 fn nonboundary_lazy_exact_spans(
   chars : Array[Char],
   pred : (Char) -> Bool,
-  n : Int,
+  n : Int32,
   ws : Bool,
   we : Bool,
 ) -> Array[Span] {
@@ -2000,10 +2000,10 @@ fn nonboundary_lazy_exact_spans(
   if len == 0 {
     return out
   }
-  fn start_ok(p : Int) -> Bool {
+  fn start_ok(p : Int32) -> Bool {
     !ws || !regex_word_boundary_at(chars, p)
   }
-  fn end_ok(q : Int) -> Bool {
+  fn end_ok(q : Int32) -> Bool {
     !we || !regex_word_boundary_at(chars, q)
   }
   let mut p = 0
@@ -2049,7 +2049,7 @@ pub fn replace_nonboundary_lazy_exact_runs(
   s : String,
   content : String,
   pred : (Char) -> Bool,
-  n : Int,
+  n : Int32,
   ws : Bool,
   we : Bool,
 ) -> String {

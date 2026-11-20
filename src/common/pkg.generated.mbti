@@ -6,33 +6,33 @@ import {
 }
 
 // Values
-pub fn anchored_regex_kind(String) -> (Int, Bool)?
+pub fn anchored_regex_kind(String) -> (Int32, Bool)?
 
-pub fn bare_class_kind(String) -> Int?
+pub fn bare_class_kind(String) -> Int32?
 
-pub fn boundary_lazy_exact_spec(String) -> (Int, Char?, Int, Bool, Bool)?
+pub fn boundary_lazy_exact_spec(String) -> (Int32, Char?, Int32, Bool, Bool)?
 
-pub fn boundary_window_spec(String) -> (Int, Char?, Int, Int, Bool, Bool)?
+pub fn boundary_window_spec(String) -> (Int32, Char?, Int32, Int32, Bool, Bool)?
 
-pub fn bounded_regex_kind(String) -> (Int, Int)?
+pub fn bounded_regex_kind(String) -> (Int32, Int32)?
 
-pub fn bounded_regex_kind_pred(Int, Char) -> Bool
+pub fn bounded_regex_kind_pred(Int32, Char) -> Bool
 
 pub fn bracket_set_holds(Array[BracketMember], Bool, Char) -> Bool
 
-pub fn bracket_set_spec(String) -> (Array[BracketMember], Bool, Int, Int, Bool)?
+pub fn bracket_set_spec(String) -> (Array[BracketMember], Bool, Int32, Int32, Bool)?
 
-pub fn char_bounded_spec(String) -> (Char, Int, Int)?
+pub fn char_bounded_spec(String) -> (Char, Int32, Int32)?
 
 pub fn char_string(Char) -> String
 
-pub fn class_bounded_spec(String) -> (Int, Int, Int)?
+pub fn class_bounded_spec(String) -> (Int32, Int32, Int32)?
 
-pub fn double_anchored_spec(String) -> (Int, Char?, Int, Int)?
+pub fn double_anchored_spec(String) -> (Int32, Char?, Int32, Int32)?
 
 pub fn escaped_letter_literal(Char) -> Char?
 
-pub fn exact_regex_kind(String) -> (Int, Int)?
+pub fn exact_regex_kind(String) -> (Int32, Int32)?
 
 pub fn is_anchored_regex_pattern(String) -> Bool
 
@@ -74,43 +74,43 @@ pub fn is_unicode_punctuation_or_symbol(Char) -> Bool
 
 pub fn is_unicode_symbol(Char) -> Bool
 
-pub fn is_unicode_whitespace(Int) -> Bool
+pub fn is_unicode_whitespace(Int32) -> Bool
 
 pub fn is_word_char(Char) -> Bool
 
 pub fn is_word_char_class(Char) -> Bool
 
-pub fn lazy_exact_spec(String) -> (Int, Char?, Int, Int)?
+pub fn lazy_exact_spec(String) -> (Int32, Char?, Int32, Int32)?
 
 pub fn lazy_normalize(String) -> String?
 
 pub fn literal_matches(Array[Char], String) -> Array[Span]?
 
-pub fn min_regex_kind(String) -> (Int, Int)?
+pub fn min_regex_kind(String) -> (Int32, Int32)?
 
-pub fn mixed_anchor_window_spec(String) -> (Int, Char?, Int, Int, Bool, Bool)?
+pub fn mixed_anchor_window_spec(String) -> (Int32, Char?, Int32, Int32, Bool, Bool)?
 
-pub fn nonboundary_lazy_exact_spec(String) -> (Int, Char?, Int, Bool, Bool)?
+pub fn nonboundary_lazy_exact_spec(String) -> (Int32, Char?, Int32, Bool, Bool)?
 
-pub fn nonboundary_window_spans(Array[Char], (Char) -> Bool, Int, Int, Bool, Bool) -> Array[Span]
+pub fn nonboundary_window_spans(Array[Char], (Char) -> Bool, Int32, Int32, Bool, Bool) -> Array[Span]
 
-pub fn nonboundary_window_spec(String) -> (Int, Char?, Int, Int, Bool, Bool)?
+pub fn nonboundary_window_spec(String) -> (Int32, Char?, Int32, Int32, Bool, Bool)?
 
-pub fn ranged_regex_kind(String) -> (Int, Int, Int)?
+pub fn ranged_regex_kind(String) -> (Int32, Int32, Int32)?
 
 pub fn replace_anchored_simple_regex(String, String, String) -> String?
 
 pub fn replace_ascii_word_boundary_runs(String, String) -> String
 
-pub fn replace_boundary_lazy_exact_runs(String, String, (Char) -> Bool, Int, Bool, Bool) -> String
+pub fn replace_boundary_lazy_exact_runs(String, String, (Char) -> Bool, Int32, Bool, Bool) -> String
 
-pub fn replace_boundary_window_runs(String, String, (Char) -> Bool, Int, Int, Bool, Bool) -> String
+pub fn replace_boundary_window_runs(String, String, (Char) -> Bool, Int32, Int32, Bool, Bool) -> String
 
-pub fn replace_bounded_char_runs(String, String, (Char) -> Bool, max_run~ : Int) -> String
+pub fn replace_bounded_char_runs(String, String, (Char) -> Bool, max_run~ : Int32) -> String
 
 pub fn replace_bounded_simple_regex(String, String, String) -> String?
 
-pub fn replace_bracket_set_runs(String, String, Array[BracketMember], Bool, Int, Int, lazy_group? : Bool) -> String
+pub fn replace_bracket_set_runs(String, String, Array[BracketMember], Bool, Int32, Int32, lazy_group? : Bool) -> String
 
 pub fn replace_char_bounded_runs(String, String, String) -> String?
 
@@ -118,74 +118,76 @@ pub fn replace_char_runs(String, String, (Char) -> Bool) -> String
 
 pub fn replace_class_bounded_runs(String, String, String) -> String?
 
-pub fn replace_double_anchored_line_runs(String, String, (Char) -> Bool, Int, Int) -> String
+pub fn replace_double_anchored_line_runs(String, String, (Char) -> Bool, Int32, Int32) -> String
 
-pub fn replace_exact_char_runs(String, String, (Char) -> Bool, exact_run~ : Int) -> String
+pub fn replace_exact_char_runs(String, String, (Char) -> Bool, exact_run~ : Int32) -> String
 
 pub fn replace_family_spans(Array[Char], String) -> Array[Span]?
 
-pub fn replace_lazy_exact_runs(String, String, (Char) -> Bool, Int, Int) -> String
+pub fn replace_lazy_exact_runs(String, String, (Char) -> Bool, Int32, Int32) -> String
 
 pub fn replace_leading_runs(String, String, (Char) -> Bool) -> String
 
 pub fn replace_literal(String, String, String) -> String
 
-pub fn replace_min_char_runs(String, String, (Char) -> Bool, min_run~ : Int) -> String
+pub fn replace_min_char_runs(String, String, (Char) -> Bool, min_run~ : Int32) -> String
 
-pub fn replace_mixed_anchor_window_runs(String, String, (Char) -> Bool, Int, Int, Bool, Bool) -> String
+pub fn replace_mixed_anchor_window_runs(String, String, (Char) -> Bool, Int32, Int32, Bool, Bool) -> String
 
-pub fn replace_nonboundary_lazy_exact_runs(String, String, (Char) -> Bool, Int, Bool, Bool) -> String
+pub fn replace_nonboundary_lazy_exact_runs(String, String, (Char) -> Bool, Int32, Bool, Bool) -> String
 
-pub fn replace_nonboundary_window_runs(String, String, (Char) -> Bool, Int, Int, Bool, Bool) -> String
+pub fn replace_nonboundary_window_runs(String, String, (Char) -> Bool, Int32, Int32, Bool, Bool) -> String
 
-pub fn replace_ranged_char_runs(String, String, (Char) -> Bool, min_run~ : Int, max_run~ : Int) -> String
+pub fn replace_ranged_char_runs(String, String, (Char) -> Bool, min_run~ : Int32, max_run~ : Int32) -> String
 
 pub fn replace_ranged_simple_regex(String, String, String) -> String?
 
 pub fn replace_simple_regex(String, String, String) -> String?
 
-pub fn replace_single_anchor_window_runs(String, String, (Char) -> Bool, Int, Int, Bool) -> String
+pub fn replace_single_anchor_window_runs(String, String, (Char) -> Bool, Int32, Int32, Bool) -> String
 
-pub fn replace_space_runs(String, String, min_run~ : Int) -> String
+pub fn replace_space_runs(String, String, min_run~ : Int32) -> String
 
 pub fn replace_trailing_runs(String, String, (Char) -> Bool) -> String
 
 pub fn replace_whitespace_runs(String, String) -> String
 
-pub fn replace_zero_min_runs(String, String, (Char) -> Bool, Int?) -> String
+pub fn replace_zero_min_runs(String, String, (Char) -> Bool, Int32?) -> String
 
 pub fn simple_split_regex_matches(Array[Char], String) -> Array[Span]?
 
-pub fn single_anchor_window_spec(String) -> (Int, Char?, Int, Int, Bool)?
+pub fn single_anchor_window_spec(String) -> (Int32, Char?, Int32, Int32, Bool)?
 
-pub fn unicode_punct_ranges() -> Array[(Int, Int)]
+pub fn unicode_punct_ranges() -> Array[(Int32, Int32)]
 
-pub fn zero_min_match_spans(Array[Char], (Char) -> Bool, Int?) -> Array[Span]
+pub fn zero_min_match_spans(Array[Char], (Char) -> Bool, Int32?) -> Array[Span]
 
-pub fn zero_min_quantifier_spec(String) -> (Int, Char?, Int)?
+pub fn zero_min_quantifier_spec(String) -> (Int32, Char?, Int32)?
 
 // Errors
 
 // Types and methods
 pub(all) enum BracketMember {
-  MKind(Int)
+  MKind(Int32)
   MChar(Char)
   MRange(Char, Char)
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PatternKind {
   StringPattern
   RegexPattern
-} derive(Eq, @debug.Debug)
+}
 pub fn PatternKind::equal(Self, Self) -> Bool
 pub fn PatternKind::not_equal(Self, Self) -> Bool
 pub fn PatternKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct Regex {
   pattern : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Regex::equal(Self, Self) -> Bool
-pub fn Regex::find_matches(Self, String) -> Array[(Int, Int)]?
+pub fn Regex::find_matches(Self, String) -> Array[(Int32, Int32)]?
 pub fn Regex::is_supported(Self) -> Bool
 pub fn Regex::new(String) -> Self
 pub fn Regex::not_equal(Self, Self) -> Bool
@@ -194,8 +196,8 @@ pub fn Regex::replace_all(Self, String, String) -> String?
 pub fn Regex::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Span {
-  start : Int
-  stop : Int
+  start : Int32
+  stop : Int32
 }
 
 // Type aliases

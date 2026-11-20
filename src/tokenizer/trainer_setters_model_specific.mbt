@@ -157,7 +157,7 @@ pub fn Trainer::set_end_of_word_suffix_alias(
 /// Set max_input_chars_per_word. Returns a new Trainer; only WordPiece supports it.
 pub fn Trainer::set_max_input_chars_per_word(
   self : Trainer,
-  val : Int,
+  val : Int32,
 ) -> Trainer {
   match self {
     WordPieceTrainer(
@@ -196,14 +196,14 @@ pub fn Trainer::set_max_input_chars_per_word(
 /// Python/property-style setter alias for max_input_chars_per_word.
 pub fn Trainer::set_max_input_chars_per_word_alias(
   self : Trainer,
-  val : Int,
+  val : Int32,
 ) -> Trainer {
   self.set_max_input_chars_per_word(val)
 }
 
 ///|
 /// Set max_token_length. Returns a new Trainer; WordPiece and BPE support it.
-pub fn Trainer::set_max_token_length(self : Trainer, val : Int?) -> Trainer {
+pub fn Trainer::set_max_token_length(self : Trainer, val : Int32?) -> Trainer {
   match self {
     WordPieceTrainer(
       unk_token~,
@@ -271,7 +271,7 @@ pub fn Trainer::set_max_token_length(self : Trainer, val : Int?) -> Trainer {
 /// Python/property-style setter alias for max_token_length.
 pub fn Trainer::set_max_token_length_alias(
   self : Trainer,
-  val : Int?,
+  val : Int32?,
 ) -> Trainer {
   self.set_max_token_length(val)
 }
@@ -386,7 +386,7 @@ pub fn Trainer::set_initial_alphabet_alias(
 
 ///|
 /// Set limit_alphabet. Returns a new Trainer; WordPiece and BPE support it.
-pub fn Trainer::set_limit_alphabet(self : Trainer, val : Int?) -> Trainer {
+pub fn Trainer::set_limit_alphabet(self : Trainer, val : Int32?) -> Trainer {
   match self {
     WordPieceTrainer(
       unk_token~,
@@ -452,7 +452,10 @@ pub fn Trainer::set_limit_alphabet(self : Trainer, val : Int?) -> Trainer {
 
 ///|
 /// Python/property-style setter alias for limit_alphabet.
-pub fn Trainer::set_limit_alphabet_alias(self : Trainer, val : Int?) -> Trainer {
+pub fn Trainer::set_limit_alphabet_alias(
+  self : Trainer,
+  val : Int32?,
+) -> Trainer {
   self.set_limit_alphabet(val)
 }
 

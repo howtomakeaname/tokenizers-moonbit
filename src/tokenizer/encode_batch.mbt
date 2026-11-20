@@ -2,7 +2,7 @@
 pub fn Tokenizer::encode_batch(
   self : Tokenizer,
   texts : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   if texts.length() == 0 {
     return []
@@ -35,7 +35,7 @@ pub fn Tokenizer::encode_batch(
 pub fn Tokenizer::encode_batch_fast(
   self : Tokenizer,
   texts : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   if texts.length() == 0 {
     return []
@@ -66,7 +66,7 @@ pub fn Tokenizer::encode_batch_fast(
 pub fn Tokenizer::encode_text_batch(
   self : Tokenizer,
   texts : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_batch(texts, add_special_tokens~)
 }
@@ -76,7 +76,7 @@ pub fn Tokenizer::encode_text_batch(
 pub fn Tokenizer::encode_text_batch_fast(
   self : Tokenizer,
   texts : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_batch_fast(texts, add_special_tokens~)
 }
@@ -89,7 +89,7 @@ pub fn Tokenizer::encode_text_batch_fast(
 pub fn Tokenizer::encode_batch_parallel(
   self : Tokenizer,
   texts : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_batch(texts, add_special_tokens~)
 }
@@ -100,7 +100,7 @@ pub fn Tokenizer::encode_batch_parallel(
 pub fn Tokenizer::encode_batch_parallel_fast(
   self : Tokenizer,
   texts : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_batch_fast(texts, add_special_tokens~)
 }
@@ -112,7 +112,7 @@ pub fn Tokenizer::encode_batch_parallel_fast(
 pub fn Tokenizer::encode_pretokenized_batch(
   self : Tokenizer,
   batch : Array[Array[String]],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   if batch.length() == 0 {
     return []
@@ -144,7 +144,7 @@ pub fn Tokenizer::encode_pretokenized_batch(
 pub fn Tokenizer::encode_pretokenized_batch_fast(
   self : Tokenizer,
   batch : Array[Array[String]],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   if batch.length() == 0 {
     return []
@@ -175,7 +175,7 @@ pub fn Tokenizer::encode_pretokenized_batch_fast(
 pub fn Tokenizer::encode_pretokenized_batch_parallel(
   self : Tokenizer,
   batch : Array[Array[String]],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_pretokenized_batch(batch, add_special_tokens~)
 }
@@ -184,7 +184,7 @@ pub fn Tokenizer::encode_pretokenized_batch_parallel(
 pub fn Tokenizer::encode_pretokenized_batch_parallel_fast(
   self : Tokenizer,
   batch : Array[Array[String]],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_pretokenized_batch_fast(batch, add_special_tokens~)
 }
@@ -194,7 +194,7 @@ pub fn Tokenizer::encode_pretokenized_batch_parallel_fast(
 pub fn Tokenizer::encode_pretokenized_batch_with_byte_offsets(
   self : Tokenizer,
   batch : Array[Array[String]],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   let encs = self.encode_pretokenized_batch(batch, add_special_tokens~)
   let out : Array[@types.Encoding] = []
@@ -215,7 +215,7 @@ pub fn Tokenizer::encode_pretokenized_batch_with_byte_offsets(
 pub fn Tokenizer::encode_pretokenized_pair_batch(
   self : Tokenizer,
   batch : Array[(Array[String], Array[String])],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   if batch.length() == 0 {
     return []
@@ -248,7 +248,7 @@ pub fn Tokenizer::encode_pretokenized_pair_batch(
 pub fn Tokenizer::encode_pretokenized_pair_batch_fast(
   self : Tokenizer,
   batch : Array[(Array[String], Array[String])],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   if batch.length() == 0 {
     return []
@@ -280,7 +280,7 @@ pub fn Tokenizer::encode_pretokenized_pair_batch_fast(
 pub fn Tokenizer::encode_pretokenized_pair_batch_parallel(
   self : Tokenizer,
   batch : Array[(Array[String], Array[String])],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_pretokenized_pair_batch(batch, add_special_tokens~)
 }
@@ -289,7 +289,7 @@ pub fn Tokenizer::encode_pretokenized_pair_batch_parallel(
 pub fn Tokenizer::encode_pretokenized_pair_batch_parallel_fast(
   self : Tokenizer,
   batch : Array[(Array[String], Array[String])],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_pretokenized_pair_batch_fast(batch, add_special_tokens~)
 }
@@ -299,7 +299,7 @@ pub fn Tokenizer::encode_pretokenized_pair_batch_parallel_fast(
 pub fn Tokenizer::encode_pretokenized_pair_batch_with_byte_offsets(
   self : Tokenizer,
   batch : Array[(Array[String], Array[String])],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   let encs = self.encode_pretokenized_pair_batch(batch, add_special_tokens~)
   let out : Array[@types.Encoding] = []
@@ -321,7 +321,7 @@ pub fn Tokenizer::encode_pretokenized_pair_batch_with_byte_offsets(
 pub fn Tokenizer::encode_batch_with_byte_offsets(
   self : Tokenizer,
   texts : Array[String],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   let encs = self.encode_batch(texts, add_special_tokens~)
   let out : Array[@types.Encoding] = []
@@ -339,7 +339,7 @@ pub fn Tokenizer::encode_batch_with_byte_offsets(
 pub fn Tokenizer::encode_pair_batch(
   self : Tokenizer,
   pairs : Array[(String, String)],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   if pairs.length() == 0 {
     return []
@@ -367,7 +367,7 @@ pub fn Tokenizer::encode_pair_batch(
 pub fn Tokenizer::encode_pair_batch_fast(
   self : Tokenizer,
   pairs : Array[(String, String)],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   if pairs.length() == 0 {
     return []
@@ -394,7 +394,7 @@ pub fn Tokenizer::encode_pair_batch_fast(
 pub fn Tokenizer::encode_pair_batch_parallel(
   self : Tokenizer,
   pairs : Array[(String, String)],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_pair_batch(pairs, add_special_tokens~)
 }
@@ -403,7 +403,7 @@ pub fn Tokenizer::encode_pair_batch_parallel(
 pub fn Tokenizer::encode_pair_batch_parallel_fast(
   self : Tokenizer,
   pairs : Array[(String, String)],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   self.encode_pair_batch_fast(pairs, add_special_tokens~)
 }
@@ -414,7 +414,7 @@ pub fn Tokenizer::encode_pair_batch_parallel_fast(
 pub fn Tokenizer::encode_pair_batch_with_byte_offsets(
   self : Tokenizer,
   pairs : Array[(String, String)],
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> Array[@types.Encoding] raise @types.TokenizerError {
   let encs = self.encode_pair_batch(pairs, add_special_tokens~)
   let out : Array[@types.Encoding] = []
@@ -430,7 +430,7 @@ pub fn Tokenizer::encode_pair(
   self : Tokenizer,
   text_a : String,
   text_b : String,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.finalize_padding(
     self.encode_pair_unpadded(text_a, text_b, add_special_tokens~),
@@ -443,7 +443,7 @@ pub fn Tokenizer::encode_pair_fast(
   self : Tokenizer,
   text_a : String,
   text_b : String,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.finalize_padding(
     self.encode_pair_unpadded_fast(text_a, text_b, add_special_tokens~),
@@ -455,8 +455,8 @@ pub fn Tokenizer::encode_pair_fast(
 pub fn Tokenizer::encode_plus(
   self : Tokenizer,
   text : String,
-  pair? : String? = None,
-  add_special_tokens? : Bool = true,
+  pair~ : String? = None,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   match pair {
     Some(text_b) => self.encode_pair(text, text_b, add_special_tokens~)
@@ -469,8 +469,8 @@ pub fn Tokenizer::encode_plus(
 pub fn Tokenizer::encode_plus_fast(
   self : Tokenizer,
   text : String,
-  pair? : String? = None,
-  add_special_tokens? : Bool = true,
+  pair~ : String? = None,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   match pair {
     Some(text_b) => self.encode_pair_fast(text, text_b, add_special_tokens~)
@@ -549,7 +549,7 @@ pub fn Tokenizer::encode_pair_with_byte_offsets(
   self : Tokenizer,
   text_a : String,
   text_b : String,
-  add_special_tokens? : Bool = true,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   let enc = self.encode_pair(text_a, text_b, add_special_tokens~)
   encoding_with_pair_byte_offsets(enc, text_a, text_b)

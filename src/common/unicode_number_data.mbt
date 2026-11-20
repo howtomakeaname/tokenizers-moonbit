@@ -13,7 +13,7 @@
 ///|
 /// Unicode `\p{N}` / `\p{Number}` ranges (Nd + Nl + No) as probed from the parity target 0.22.2 — module-level so hot paths pay no
 /// per-call allocation; consumers binary-search over it.
-let number_ranges : Array[(Int, Int)] = [
+let number_ranges : Array[(Int32, Int32)] = [
   (0x30, 0x39),
   (0xb2, 0xb3),
   (0xb9, 0xb9),
@@ -163,7 +163,7 @@ let number_ranges : Array[(Int, Int)] = [
 ///|
 /// Unicode `\d` ranges (Nd) as probed from the parity target 0.22.2 — module-level so hot paths pay no
 /// per-call allocation; consumers binary-search over it.
-let decimal_ranges : Array[(Int, Int)] = [
+let decimal_ranges : Array[(Int32, Int32)] = [
   (0x30, 0x39),
   (0x660, 0x669),
   (0x6f0, 0x6f9),

@@ -81,7 +81,7 @@ fn join(tokens : Array[String]) -> String {
 ///|
 fn decode_byte_fallback(tokens : Array[String]) -> Array[String] {
   let out : Array[String] = []
-  let pending : Array[Int] = []
+  let pending : Array[Int32] = []
   fn flush() -> Unit {
     if pending.length() > 0 {
       let bytes = @buffer.Buffer::Buffer()
@@ -146,7 +146,7 @@ fn decode_sentencepiece_sequence_fast(
     return None
   }
   let sb = StringBuilder()
-  let pending : Array[Int] = []
+  let pending : Array[Int32] = []
   fn flush_bytes() -> Unit {
     if pending.length() > 0 {
       let bytes = @buffer.Buffer::Buffer()
@@ -243,7 +243,7 @@ fn decode_ctc(
 // Parse "<0xXX>" -> byte value; None otherwise.
 
 ///|
-fn parse_byte_token(t : String) -> Int? {
+fn parse_byte_token(t : String) -> Int32? {
   if t.length() != 6 {
     return None
   }
@@ -262,7 +262,7 @@ fn parse_byte_token(t : String) -> Int? {
 }
 
 ///|
-fn hex_val_int(u : Int) -> Int? {
+fn hex_val_int(u : Int32) -> Int32? {
   if u >= '0'.to_int() && u <= '9'.to_int() {
     Some(u - '0'.to_int())
   } else if u >= 'A'.to_int() && u <= 'F'.to_int() {
@@ -369,7 +369,12 @@ fn drop_prefix(s : String, prefix : String) -> String {
 }
 
 ///|
-fn strip_token(t : String, content : Char, start : Int, stop : Int) -> String {
+fn strip_token(
+  t : String,
+  content : Char,
+  start : Int32,
+  stop : Int32,
+) -> String {
   let chars = t.to_array()
   let n = chars.length()
   let mut a = 0

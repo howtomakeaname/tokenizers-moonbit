@@ -1,4 +1,5 @@
 ///|
+#derive(Debug)
 pub(all) suberror TokenizerError {
   /// The tokenizer.json could not be parsed or had an unexpected shape.
   ParseError(String)
@@ -6,15 +7,16 @@ pub(all) suberror TokenizerError {
   UnsupportedComponent(String)
   /// vocab / merges data was malformed.
   VocabError(String)
-} derive(Debug)
+}
 
 ///|
 /// Stable high-level error category for Python binding exception mapping.
+#derive(Debug, Eq)
 pub(all) enum TokenizerErrorKind {
   ParseKind
   UnsupportedComponentKind
   VocabKind
-} derive(Debug, Eq)
+}
 
 ///|
 /// Classify a tokenizer error into a stable category so bindings can map it to
@@ -54,7 +56,7 @@ pub fn Encoding::empty() -> Encoding {
 }
 
 ///|
-fn encoding_slice(enc : Encoding, start : Int, stop : Int) -> Encoding {
+fn encoding_slice(enc : Encoding, start : Int32, stop : Int32) -> Encoding {
   {
     ids: enc.ids[start:stop].to_owned(),
     type_ids: enc.type_ids[start:stop].to_owned(),
@@ -69,7 +71,7 @@ fn encoding_slice(enc : Encoding, start : Int, stop : Int) -> Encoding {
 }
 
 ///|
-fn concat_ints(a : Array[Int], b : Array[Int]) -> Array[Int] {
+fn concat_ints(a : Array[Int32], b : Array[Int32]) -> Array[Int32] {
   let out = a.copy()
   for x in b {
     out.push(x)
@@ -88,9 +90,9 @@ fn concat_strings(a : Array[String], b : Array[String]) -> Array[String] {
 
 ///|
 fn concat_offsets(
-  a : Array[(Int, Int)],
-  b : Array[(Int, Int)],
-) -> Array[(Int, Int)] {
+  a : Array[(Int32, Int32)],
+  b : Array[(Int32, Int32)],
+) -> Array[(Int32, Int32)] {
   let out = a.copy()
   for x in b {
     out.push(x)
@@ -99,7 +101,7 @@ fn concat_offsets(
 }
 
 ///|
-fn concat_opt_ints(a : Array[Int?], b : Array[Int?]) -> Array[Int?] {
+fn concat_opt_ints(a : Array[Int32?], b : Array[Int32?]) -> Array[Int32?] {
   let out = a.copy()
   for x in b {
     out.push(x)
@@ -129,7 +131,7 @@ fn write_repr_string(sb : StringBuilder, s : String) -> Unit {
 }
 
 ///|
-fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
+fn write_control_escape(sb : StringBuilder, u : Int32) -> Unit {
   let hex = "0123456789ABCDEF".to_array()
   sb.write_string("\\u00")
   sb.write_char(hex[u / 16 % 16])

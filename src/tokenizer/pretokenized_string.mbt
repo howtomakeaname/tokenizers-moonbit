@@ -6,10 +6,11 @@ pub struct PreTokenizedString {
 
 ///|
 /// Serializable/interoperable snapshot of a `PreTokenizedString`.
+#derive(Debug, Eq)
 pub struct PreTokenizedStringState {
   original : String
   splits : Array[@types.Split]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn PreTokenizedString::new(text : String) -> PreTokenizedString {
@@ -95,13 +96,13 @@ pub fn PreTokenizedString::original(self : PreTokenizedString) -> String {
 
 ///|
 /// Number of current splits, matching Python `len(pretokenized)` binding needs.
-pub fn PreTokenizedString::len(self : PreTokenizedString) -> Int {
+pub fn PreTokenizedString::len(self : PreTokenizedString) -> Int32 {
   self.splits.length()
 }
 
 ///|
 /// Python `__len__`-style alias for `len`.
-pub fn PreTokenizedString::__len__(self : PreTokenizedString) -> Int {
+pub fn PreTokenizedString::__len__(self : PreTokenizedString) -> Int32 {
   self.len()
 }
 
@@ -129,7 +130,7 @@ pub fn PreTokenizedString::splits(
 /// HF-style single-index split access for Python binding shims.
 pub fn PreTokenizedString::get_item(
   self : PreTokenizedString,
-  index : Int,
+  index : Int32,
 ) -> @types.Split? {
   if index >= 0 && index < self.splits.length() {
     Some(self.splits[index])
@@ -142,7 +143,7 @@ pub fn PreTokenizedString::get_item(
 /// Python `__getitem__`-style alias for `get_item`.
 pub fn PreTokenizedString::__getitem__(
   self : PreTokenizedString,
-  index : Int,
+  index : Int32,
 ) -> @types.Split? {
   self.get_item(index)
 }
@@ -181,7 +182,7 @@ pub fn PreTokenizedString::split(
 pub fn PreTokenizedString::to_encoding(
   self : PreTokenizedString,
   model : @model.Model,
-  type_id? : Int = 0,
+  type_id~ : Int32 = 0,
 ) -> @types.Encoding raise @types.TokenizerError {
   let toks : Array[@types.Token] = []
   for s in self.splits {
@@ -197,13 +198,13 @@ pub fn PreTokenizedString::to_encoding(
 pub fn PreTokenizedString::into_encoding(
   self : PreTokenizedString,
   model : @model.Model,
-  type_id? : Int = 0,
+  type_id~ : Int32 = 0,
 ) -> @types.Encoding raise @types.TokenizerError {
   self.to_encoding(model, type_id~)
 }
 
 ///|
-fn clamp_int(n : Int, lo : Int, hi : Int) -> Int {
+fn clamp_int(n : Int32, lo : Int32, hi : Int32) -> Int32 {
   if n < lo {
     lo
   } else if n > hi {

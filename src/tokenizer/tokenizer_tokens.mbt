@@ -19,7 +19,7 @@ pub fn Tokenizer::encode_special_tokens(self : Tokenizer) -> Bool {
 /// Return `id -> AddedToken` for all added/special tokens.
 pub fn Tokenizer::get_added_tokens_decoder(
   self : Tokenizer,
-) -> Map[Int, AddedToken] {
+) -> Map[Int32, AddedToken] {
   self.added_vocabulary.get_added_tokens_decoder()
 }
 
@@ -27,7 +27,7 @@ pub fn Tokenizer::get_added_tokens_decoder(
 /// Python/property-style alias for `get_added_tokens_decoder`.
 pub fn Tokenizer::added_tokens_decoder(
   self : Tokenizer,
-) -> Map[Int, AddedToken] {
+) -> Map[Int32, AddedToken] {
   self.get_added_tokens_decoder()
 }
 
@@ -51,8 +51,8 @@ pub fn Tokenizer::added_tokens(self : Tokenizer) -> Array[AddedToken] {
 /// only special added tokens.
 pub fn Tokenizer::get_added_tokens_count(
   self : Tokenizer,
-  special_only? : Bool = false,
-) -> Int {
+  special_only~ : Bool = false,
+) -> Int32 {
   let mut count = 0
   for kv in self.get_added_tokens_decoder().to_array() {
     if !special_only || kv.1.special {
@@ -66,8 +66,8 @@ pub fn Tokenizer::get_added_tokens_count(
 /// Python/property-style alias for `get_added_tokens_count`.
 pub fn Tokenizer::added_tokens_count(
   self : Tokenizer,
-  special_only? : Bool = false,
-) -> Int {
+  special_only~ : Bool = false,
+) -> Int32 {
   self.get_added_tokens_count(special_only~)
 }
 
@@ -93,10 +93,10 @@ pub fn Tokenizer::get_all_special_tokens(self : Tokenizer) -> Array[String] {
 
 ///|
 /// Return all special added token ids ordered by id.
-pub fn Tokenizer::all_special_ids(self : Tokenizer) -> Array[Int] {
+pub fn Tokenizer::all_special_ids(self : Tokenizer) -> Array[Int32] {
   let pairs = self.get_added_tokens_decoder().to_array()
   pairs.sort_by(fn(a, b) { a.0.compare(b.0) })
-  let out : Array[Int] = []
+  let out : Array[Int32] = []
   for kv in pairs {
     if kv.1.special {
       out.push(kv.0)
@@ -107,7 +107,7 @@ pub fn Tokenizer::all_special_ids(self : Tokenizer) -> Array[Int] {
 
 ///|
 /// HF/Python getter alias for `all_special_ids`.
-pub fn Tokenizer::get_all_special_ids(self : Tokenizer) -> Array[Int] {
+pub fn Tokenizer::get_all_special_ids(self : Tokenizer) -> Array[Int32] {
   self.all_special_ids()
 }
 
@@ -122,8 +122,8 @@ pub fn Tokenizer::is_special_token(self : Tokenizer, token : String) -> Bool {
 /// input. Mirrors HF's `num_special_tokens_to_add` helper.
 pub fn Tokenizer::num_special_tokens_to_add(
   self : Tokenizer,
-  is_pair? : Bool = false,
-) -> Int {
+  is_pair~ : Bool = false,
+) -> Int32 {
   match self.post_processor {
     Some(pp) => pp.added_tokens(pair=is_pair)
     None => 0
@@ -136,8 +136,8 @@ pub fn Tokenizer::num_special_tokens_to_add(
 pub fn Tokenizer::post_process(
   self : Tokenizer,
   encoding : @types.Encoding,
-  pair? : @types.Encoding? = None,
-  add_special_tokens? : Bool = true,
+  pair~ : @types.Encoding? = None,
+  add_special_tokens~ : Bool = true,
 ) -> @types.Encoding raise @types.TokenizerError {
   let is_pair = pair is Some(_)
   let (encoding, pair) = match
@@ -182,7 +182,7 @@ pub fn Tokenizer::add_tokens(
 pub fn Tokenizer::add_tokens_with_count(
   self : Tokenizer,
   tokens : Array[AddedToken],
-) -> (Tokenizer, Int) {
+) -> (Tokenizer, Int32) {
   self.add_tokens_impl(tokens, force_special=false)
 }
 
@@ -200,7 +200,7 @@ pub fn Tokenizer::add_token_strings(
 pub fn Tokenizer::add_token_strings_with_count(
   self : Tokenizer,
   tokens : Array[String],
-) -> (Tokenizer, Int) {
+) -> (Tokenizer, Int32) {
   self.add_tokens_with_count(tokens.map(t => AddedToken::new(t)))
 }
 
@@ -221,7 +221,7 @@ pub fn Tokenizer::add_special_tokens(
 pub fn Tokenizer::add_special_tokens_with_count(
   self : Tokenizer,
   tokens : Array[AddedToken],
-) -> (Tokenizer, Int) {
+) -> (Tokenizer, Int32) {
   self.add_tokens_impl(tokens, force_special=true)
 }
 
@@ -239,7 +239,7 @@ pub fn Tokenizer::add_special_token_strings(
 pub fn Tokenizer::add_special_token_strings_with_count(
   self : Tokenizer,
   tokens : Array[String],
-) -> (Tokenizer, Int) {
+) -> (Tokenizer, Int32) {
   self.add_special_tokens_with_count(tokens.map(AddedToken::special))
 }
 
@@ -248,7 +248,7 @@ fn Tokenizer::add_tokens_impl(
   self : Tokenizer,
   tokens : Array[AddedToken],
   force_special~ : Bool,
-) -> (Tokenizer, Int) {
+) -> (Tokenizer, Int32) {
   if tokens.length() == 0 {
     return (self, 0)
   }
@@ -306,7 +306,7 @@ fn Tokenizer::add_tokens_impl(
 }
 
 ///|
-fn max_vocab_id(vocab : Map[String, Int]) -> Int {
+fn max_vocab_id(vocab : Map[String, Int32]) -> Int32 {
   let mut out = -1
   for kv in vocab.to_array() {
     if kv.1 > out {
@@ -401,7 +401,7 @@ fn bool_repr(v : Bool) -> String {
 }
 
 ///|
-fn write_control_escape(sb : StringBuilder, u : Int) -> Unit {
+fn write_control_escape(sb : StringBuilder, u : Int32) -> Unit {
   let digits = "0123456789ABCDEF".to_array()
   sb.write_string("\\u00")
   sb.write_char(digits[u / 16 % 16])

@@ -11,12 +11,12 @@
 let byte_to_char : Array[Char] = build_byte_to_char()
 
 ///|
-let char_to_byte : Map[Char, Int] = build_char_to_byte()
+let char_to_byte : Map[Char, Int32] = build_char_to_byte()
 
 ///|
-fn build_bs() -> Array[Int] {
+fn build_bs() -> Array[Int32] {
   // The "printable" byte ranges that map to themselves.
-  let bs : Array[Int] = []
+  let bs : Array[Int32] = []
   for b in 33..<=126 {
     bs.push(b)
   }
@@ -54,8 +54,8 @@ fn build_byte_to_char() -> Array[Char] {
 }
 
 ///|
-fn build_char_to_byte() -> Map[Char, Int] {
-  let m : Map[Char, Int] = Map([])
+fn build_char_to_byte() -> Map[Char, Int32] {
+  let m : Map[Char, Int32] = Map([])
   let table = build_byte_to_char()
   for b in 0..<256 {
     m[table[b]] = b

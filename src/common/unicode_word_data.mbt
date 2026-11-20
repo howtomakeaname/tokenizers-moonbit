@@ -7,7 +7,7 @@
 ///|
 /// Inclusive [start, stop] codepoint ranges of Unicode \w word
 /// characters, sorted ascending.
-let word_ranges : Array[(Int, Int)] = [
+let word_ranges : Array[(Int32, Int32)] = [
   (48, 57),
   (65, 90),
   (95, 95),

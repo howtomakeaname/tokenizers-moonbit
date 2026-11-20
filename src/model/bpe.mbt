@@ -11,8 +11,8 @@
 ///|
 priv struct Symbol {
   mut value : String
-  mut prev : Int
-  mut next : Int
+  mut prev : Int32
+  mut next : Int32
   mut alive : Bool
 }
 
@@ -22,11 +22,12 @@ priv struct Symbol {
 // and thus pops first. `right` lets us detect stale entries after merges.
 
 ///|
+#derive(Eq)
 priv struct Merge {
-  rank : Int
-  pos : Int
-  right : Int
-} derive(Eq)
+  rank : Int32
+  pos : Int32
+  right : Int32
+}
 
 ///|
 impl Compare for Merge with fn compare(self, other) {
@@ -45,7 +46,7 @@ impl Compare for Merge with fn compare(self, other) {
 pub fn BPEModel::tokenize(
   self : BPEModel,
   word : String,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Array[@types.Token] raise @types.TokenizerError {
   let chars = word.to_array()
   let n = chars.length()
@@ -98,7 +99,7 @@ pub fn BPEModel::tokenize(
 
   // Seed a priority queue with every adjacent pair that has a merge rank.
   let heap : @pq.PriorityQueue[Merge] = @pq.PriorityQueue([])
-  fn try_push(pos : Int) -> Unit {
+  fn try_push(pos : Int32) -> Unit {
     if pos < 0 || !symbols[pos].alive {
       return
     }
@@ -204,8 +205,8 @@ fn BPEModel::has_dropout(self : BPEModel) -> Bool {
 fn BPEModel::should_apply_dropout_merge(
   self : BPEModel,
   word : String,
-  rank : Int,
-  pos : Int,
+  rank : Int32,
+  pos : Int32,
 ) -> Bool {
   match self.dropout {
     Some(p) => {
@@ -227,9 +228,9 @@ fn BPEModel::should_apply_dropout_merge(
 fn BPEModel::next_dropout_sample(
   self : BPEModel,
   word : String,
-  rank : Int,
-  pos : Int,
-) -> Int {
+  rank : Int32,
+  pos : Int32,
+) -> Int32 {
   let mut state = self.dropout_rng_state
   if state <= 0 {
     state = 1
@@ -245,7 +246,7 @@ fn BPEModel::next_dropout_sample(
 ///|
 fn shift_tokens(
   tokens : Array[@types.Token],
-  offset : Int,
+  offset : Int32,
 ) -> Array[@types.Token] {
   if offset == 0 {
     return tokens.copy()
@@ -264,7 +265,7 @@ fn BPEModel::collect_tokens(
   self : BPEModel,
   symbols : Array[Symbol],
   chars : Array[Char],
-  offset : Int,
+  offset : Int32,
 ) -> Array[@types.Token] raise @types.TokenizerError {
   let raw : Array[@types.Token] = []
   let mut idx = 0
@@ -333,7 +334,7 @@ fn BPEModel::collect_tokens(
 // The vocab id of the unk token, if any.
 
 ///|
-fn BPEModel::unk_id(self : BPEModel) -> Int? {
+fn BPEModel::unk_id(self : BPEModel) -> Int32? {
   match self.unk_token {
     Some(unk) => self.vocab.get(unk)
     None => None
@@ -347,8 +348,8 @@ fn BPEModel::unk_id(self : BPEModel) -> Int? {
 fn BPEModel::try_byte_fallback(
   self : BPEModel,
   surface : String,
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
 ) -> Array[@types.Token]? {
   let bytes = @utf8.encode(surface)
   let toks : Array[@types.Token] = []
@@ -366,7 +367,7 @@ fn BPEModel::try_byte_fallback(
 // "<0xE2>" style token: uppercase, fixed two hex digits.
 
 ///|
-fn byte_hex_token(b : Int) -> String {
+fn byte_hex_token(b : Int32) -> String {
   let digits = "0123456789ABCDEF"
   let hi = digits.to_array()[b / 16]
   let lo = digits.to_array()[b % 16]
@@ -384,7 +385,7 @@ fn byte_hex_token(b : Int) -> String {
 ///|
 fn fuse_unk_tokens(
   toks : Array[@types.Token],
-  unk : Int?,
+  unk : Int32?,
 ) -> Array[@types.Token] {
   match unk {
     None => return toks
@@ -411,7 +412,11 @@ fn fuse_unk_tokens(
 // next alive node (in original char index space).
 
 ///|
-fn symbol_char_span(symbols : Array[Symbol], idx : Int, total : Int) -> Int {
+fn symbol_char_span(
+  symbols : Array[Symbol],
+  idx : Int32,
+  total : Int32,
+) -> Int32 {
   // The initial symbol array index equals the starting char index, and merges
   // keep `next` pointing at the next start. So span = next_index - idx, or
   // total - idx for the last symbol.
@@ -424,7 +429,7 @@ fn symbol_char_span(symbols : Array[Symbol], idx : Int, total : Int) -> Int {
 }
 
 ///|
-fn make_surface(chars : Array[Char], start : Int, stop : Int) -> String {
+fn make_surface(chars : Array[Char], start : Int32, stop : Int32) -> String {
   let sb = StringBuilder()
   for i in start..<stop {
     sb.write_char(chars[i])
@@ -433,7 +438,7 @@ fn make_surface(chars : Array[Char], start : Int, stop : Int) -> String {
 }
 
 ///|
-fn BPEModel::lookup(self : BPEModel, value : String) -> Int? {
+fn BPEModel::lookup(self : BPEModel, value : String) -> Int32? {
   self.vocab.get(value)
 }
 

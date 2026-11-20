@@ -16,7 +16,7 @@ test "Model::set_unk_token for BPE" {
 
 ///|
 test "Model::set_unk_token for WordPiece" {
-  let v : Map[String, Int] = { "hello": 0, "world": 1, "[UNK]": 2 }
+  let v : Map[String, Int32] = { "hello": 0, "world": 1, "[UNK]": 2 }
   let vr : Array[String?] = []
   set_vocab_r(vr, 0, "hello")
   set_vocab_r(vr, 1, "world")
@@ -148,7 +148,7 @@ test "Model::set_nbest_size for Unigram" {
 
 ///|
 test "Model::set_max_input_chars_per_word for WordPiece" {
-  let v : Map[String, Int] = { "a": 0 }
+  let v : Map[String, Int32] = { "a": 0 }
   let vr : Array[String?] = []
   set_vocab_r(vr, 0, "a")
   let m = WordPiece(WordPieceModel::{

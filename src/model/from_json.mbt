@@ -30,8 +30,8 @@ pub fn Model::from_json(j : Json) -> Model raise @types.TokenizerError {
 ///|
 fn parse_vocab(
   obj : Map[String, Json],
-) -> (Map[String, Int], Array[String?]) raise @types.TokenizerError {
-  let vocab : Map[String, Int] = Map([])
+) -> (Map[String, Int32], Array[String?]) raise @types.TokenizerError {
+  let vocab : Map[String, Int32] = Map([])
   let vobj = match obj.get("vocab") {
     Some(Object(v)) => v
     _ => raise @types.VocabError("model.vocab must be an object")
@@ -58,7 +58,7 @@ fn parse_vocab(
 }
 
 ///|
-fn set_vocab_r(vocab_r : Array[String?], id : Int, token : String) -> Unit {
+fn set_vocab_r(vocab_r : Array[String?], id : Int32, token : String) -> Unit {
   if id < 0 {
     return
   }
@@ -74,8 +74,8 @@ fn set_vocab_r(vocab_r : Array[String?], id : Int, token : String) -> Unit {
 ///|
 fn parse_merges(
   obj : Map[String, Json],
-) -> Map[(String, String), Int] raise @types.TokenizerError {
-  let merges : Map[(String, String), Int] = Map([])
+) -> Map[(String, String), Int32] raise @types.TokenizerError {
+  let merges : Map[(String, String), Int32] = Map([])
   let marr = match obj.get("merges") {
     Some(Array(a)) => a
     None => raise @types.VocabError("model.merges must be an array")
@@ -214,7 +214,7 @@ fn get_required_int(
   obj : Map[String, Json],
   key : String,
   ctx : String,
-) -> Int raise @types.TokenizerError {
+) -> Int32 raise @types.TokenizerError {
   match obj.get(key) {
     Some(Number(n, ..)) => n.to_int()
     _ =>
@@ -227,7 +227,7 @@ fn get_optional_int_strict(
   obj : Map[String, Json],
   key : String,
   ctx : String,
-) -> Int? raise @types.TokenizerError {
+) -> Int32? raise @types.TokenizerError {
   match obj.get(key) {
     Some(Number(n, ..)) => Some(n.to_int())
     Some(Null) | None => None
@@ -288,7 +288,7 @@ fn parse_unigram(
   obj : Map[String, Json],
 ) -> UnigramModel raise @types.TokenizerError {
   // Unigram vocab is an array of [token, score] pairs; index is the id.
-  let vocab : Map[String, (Int, Double)] = Map([])
+  let vocab : Map[String, (Int32, Double)] = Map([])
   let varr = match obj.get("vocab") {
     Some(Array(a)) => a
     _ => raise @types.VocabError("unigram model.vocab must be an array")

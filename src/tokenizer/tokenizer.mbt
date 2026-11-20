@@ -26,9 +26,10 @@ pub struct Tokenizer {
 /// Serializable/interoperable snapshot of a full `Tokenizer`. Python binding
 /// layers can pickle this stable JSON state and restore through `__setstate__`
 /// without depending on MoonBit-internal component layout.
+#derive(Debug, Eq)
 pub struct TokenizerState {
   json : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn TokenizerState::new(json : String) -> TokenizerState {
@@ -44,15 +45,15 @@ pub fn TokenizerState::new(json : String) -> TokenizerState {
 /// serialized into tokenizer JSON/state.
 pub struct TokenizerComponentHooks {
   normalize : ((String) -> String)?
-  pre_tokenize : ((String, Int) -> Array[@types.Split])?
+  pre_tokenize : ((String, Int32) -> Array[@types.Split])?
   decode : ((Array[String]) -> String)?
 }
 
 ///|
 pub fn TokenizerComponentHooks::new(
-  normalize? : ((String) -> String)? = None,
-  pre_tokenize? : ((String, Int) -> Array[@types.Split])? = None,
-  decode? : ((Array[String]) -> String)? = None,
+  normalize~ : ((String) -> String)? = None,
+  pre_tokenize~ : ((String, Int32) -> Array[@types.Split])? = None,
+  decode~ : ((Array[String]) -> String)? = None,
 ) -> TokenizerComponentHooks {
   { normalize, pre_tokenize, decode, }
 }
@@ -73,7 +74,7 @@ pub fn TokenizerComponentHooks::with_normalize(
 ///|
 pub fn TokenizerComponentHooks::with_pre_tokenize(
   self : TokenizerComponentHooks,
-  pre_tokenize : ((String, Int) -> Array[@types.Split])?,
+  pre_tokenize : ((String, Int32) -> Array[@types.Split])?,
 ) -> TokenizerComponentHooks {
   { ..self, pre_tokenize, }
 }
@@ -119,7 +120,7 @@ fn TokenizerComponentHooks::overlay(
 let from_str_parse_cache : Map[String, Json] = Map([])
 
 ///|
-let from_str_parse_cache_limit : Int = 4
+let from_str_parse_cache_limit : Int32 = 4
 
 ///|
 /// Create a tokenizer from a model and attach pipeline components with builder
@@ -179,7 +180,7 @@ pub fn Tokenizer::from_str(
   let added_infos = parse_added_tokens(root)
   let vocab_size = model.get_vocab_size()
   let mut alloc_counter = 0
-  let resolved : Map[String, Int] = Map([])
+  let resolved : Map[String, Int32] = Map([])
   let remapped : Array[AddedTokenInfo] = []
   for info in added_infos {
     let id = match resolved.get(info.content) {
@@ -334,7 +335,7 @@ pub fn Tokenizer::to_json(
 /// JSON and re-emits it with two-space indentation for human-readable saves.
 pub fn Tokenizer::to_str(
   self : Tokenizer,
-  pretty? : Bool = false,
+  pretty~ : Bool = false,
 ) -> String raise @types.TokenizerError {
   format_tokenizer_json(self.to_json(), pretty~)
 }
@@ -560,10 +561,10 @@ pub fn Tokenizer::set_truncation(
 /// shape used by HuggingFace tokenizers users.
 pub fn Tokenizer::enable_truncation(
   self : Tokenizer,
-  max_length : Int,
-  stride? : Int = 0,
-  strategy? : TruncationStrategy = LongestFirst,
-  direction? : TruncationDirection = Right,
+  max_length : Int32,
+  stride~ : Int32 = 0,
+  strategy~ : TruncationStrategy = LongestFirst,
+  direction~ : TruncationDirection = Right,
 ) -> Tokenizer raise @types.TokenizerError {
   self.with_truncation(
     Some(
@@ -579,10 +580,10 @@ pub fn Tokenizer::enable_truncation(
 /// HF Python-style truncation wrapper using string strategy/direction values.
 pub fn Tokenizer::enable_truncation_hf(
   self : Tokenizer,
-  max_length : Int,
-  stride? : Int = 0,
-  strategy? : String = "longest_first",
-  direction? : String = "right",
+  max_length : Int32,
+  stride~ : Int32 = 0,
+  strategy~ : String = "longest_first",
+  direction~ : String = "right",
 ) -> Tokenizer raise @types.TokenizerError {
   self.enable_truncation(
     max_length,
@@ -625,12 +626,12 @@ pub fn Tokenizer::set_padding(
 /// batch-longest padding; `Some(length)` selects fixed-length padding.
 pub fn Tokenizer::enable_padding(
   self : Tokenizer,
-  length? : Int? = None,
-  direction? : PaddingDirection = Right,
-  pad_id? : Int = 0,
-  pad_type_id? : Int = 0,
-  pad_token? : String = "[PAD]",
-  pad_to_multiple_of? : Int? = None,
+  length~ : Int32? = None,
+  direction~ : PaddingDirection = Right,
+  pad_id~ : Int32 = 0,
+  pad_type_id~ : Int32 = 0,
+  pad_token~ : String = "[PAD]",
+  pad_to_multiple_of~ : Int32? = None,
 ) -> Tokenizer {
   let strategy = match length {
     Some(n) => Fixed(n)
@@ -650,12 +651,12 @@ pub fn Tokenizer::enable_padding(
 /// HF Python-style padding wrapper using string direction values.
 pub fn Tokenizer::enable_padding_hf(
   self : Tokenizer,
-  length? : Int? = None,
-  direction? : String = "right",
-  pad_id? : Int = 0,
-  pad_type_id? : Int = 0,
-  pad_token? : String = "[PAD]",
-  pad_to_multiple_of? : Int? = None,
+  length~ : Int32? = None,
+  direction~ : String = "right",
+  pad_id~ : Int32 = 0,
+  pad_type_id~ : Int32 = 0,
+  pad_token~ : String = "[PAD]",
+  pad_to_multiple_of~ : Int32? = None,
 ) -> Tokenizer raise @types.TokenizerError {
   self.enable_padding(
     length~,
@@ -726,14 +727,14 @@ pub fn Tokenizer::clear_cache(self : Tokenizer) -> Tokenizer {
 /// Resize model-level tokenization caches. `capacity=0` disables future model
 /// cache inserts; negative values are clamped to zero. Returns `self` for
 /// chaining and leaves tokenization semantics unchanged.
-pub fn Tokenizer::resize_cache(self : Tokenizer, capacity : Int) -> Tokenizer {
+pub fn Tokenizer::resize_cache(self : Tokenizer, capacity : Int32) -> Tokenizer {
   self.model.resize_cache(capacity)
   self
 }
 
 ///|
 /// Return the number of currently cached model word tokenizations.
-pub fn Tokenizer::cache_size(self : Tokenizer) -> Int {
+pub fn Tokenizer::cache_size(self : Tokenizer) -> Int32 {
   self.model.cache_size()
 }
 

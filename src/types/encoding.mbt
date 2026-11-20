@@ -2,74 +2,78 @@
 
 ///|
 /// The output of `Tokenizer::encode`, mirroring HuggingFace's `Encoding`.
+#derive(Debug, Eq)
 pub(all) struct Encoding {
-  ids : Array[Int]
-  type_ids : Array[Int]
+  ids : Array[Int32]
+  type_ids : Array[Int32]
   tokens : Array[String]
-  offsets : Array[(Int, Int)]
-  special_tokens_mask : Array[Int]
-  attention_mask : Array[Int]
+  offsets : Array[(Int32, Int32)]
+  special_tokens_mask : Array[Int32]
+  attention_mask : Array[Int32]
   // Sequence id for each token: Some(0) for A, Some(1) for B, None for
   // post-processor/padding special tokens. Mirrors HF Encoding.sequence_ids().
-  sequence_ids : Array[Int?]
+  sequence_ids : Array[Int32?]
   // Word/pre-token id for each token. For raw strings this is the pre-token
   // piece index after added-vocabulary/normalization/pre-tokenization. Special
   // and padding tokens use None, matching HF's optional word ids.
-  word_ids : Array[Int?]
+  word_ids : Array[Int32?]
   // Truncation overflow windows (empty unless truncation with stride trims).
   overflowing : Array[Encoding]
-} derive(Debug, Eq)
+}
 
 ///|
 /// Serializable/interoperable snapshot of an `Encoding`. This mirrors the shape
 /// Python binding layers need for pickle/state transfer while keeping the core
 /// MoonBit API strongly typed.
+#derive(Debug, Eq)
 pub(all) struct EncodingState {
-  ids : Array[Int]
-  type_ids : Array[Int]
+  ids : Array[Int32]
+  type_ids : Array[Int32]
   tokens : Array[String]
-  offsets : Array[(Int, Int)]
-  special_tokens_mask : Array[Int]
-  attention_mask : Array[Int]
-  sequence_ids : Array[Int?]
-  word_ids : Array[Int?]
+  offsets : Array[(Int32, Int32)]
+  special_tokens_mask : Array[Int32]
+  attention_mask : Array[Int32]
+  sequence_ids : Array[Int32?]
+  word_ids : Array[Int32?]
   overflowing : Array[Encoding]
-} derive(Debug, Eq)
+}
 
 ///|
 /// Compact tuple-oriented interop view of an `Encoding`. Python bindings often
 /// move ids/type ids/tokens/offsets/masks as parallel buffers; this shape keeps
 /// that common path explicit while `EncodingState` remains the full pickle state.
+#derive(Debug, Eq)
 pub(all) struct EncodingBuffers {
-  ids : Array[Int]
-  type_ids : Array[Int]
+  ids : Array[Int32]
+  type_ids : Array[Int32]
   tokens : Array[String]
-  offsets : Array[(Int, Int)]
-  special_tokens_mask : Array[Int]
-  attention_mask : Array[Int]
-} derive(Debug, Eq)
+  offsets : Array[(Int32, Int32)]
+  special_tokens_mask : Array[Int32]
+  attention_mask : Array[Int32]
+}
 
 ///|
 /// Direction used by HF-style public Encoding manipulation helpers.
+#derive(Debug, Eq)
 pub(all) enum EncodingDirection {
   Left
   Right
-} derive(Debug, Eq)
+}
 
 ///|
 /// Build an Encoding from its parallel arrays. Optional metadata arrays default
 /// to HF-compatible values (`sequence_ids`/`word_ids` all `Some(0)`/`None`, no
 /// overflowing windows) when omitted.
 pub fn Encoding::new(
-  ids : Array[Int],
-  type_ids : Array[Int],
+  ids : Array[Int32],
+  type_ids : Array[Int32],
   tokens : Array[String],
-  offsets : Array[(Int, Int)],
-  special_tokens_mask : Array[Int],
-  attention_mask : Array[Int],
-  sequence_ids? : Array[Int?] = [],
-  word_ids? : Array[Int?] = [],
-  overflowing? : Array[Encoding] = [],
+  offsets : Array[(Int32, Int32)],
+  special_tokens_mask : Array[Int32],
+  attention_mask : Array[Int32],
+  sequence_ids~ : Array[Int32?] = [],
+  word_ids~ : Array[Int32?] = [],
+  overflowing~ : Array[Encoding] = [],
 ) -> Encoding raise TokenizerError {
   validate_encoding_required_lengths(
     ids, type_ids, tokens, offsets, special_tokens_mask, attention_mask,
@@ -95,14 +99,14 @@ pub fn Encoding::new(
 
 ///|
 fn encoding_from_parts_unchecked(
-  ids : Array[Int],
-  type_ids : Array[Int],
+  ids : Array[Int32],
+  type_ids : Array[Int32],
   tokens : Array[String],
-  offsets : Array[(Int, Int)],
-  special_tokens_mask : Array[Int],
-  attention_mask : Array[Int],
-  sequence_ids~ : Array[Int?],
-  word_ids~ : Array[Int?],
+  offsets : Array[(Int32, Int32)],
+  special_tokens_mask : Array[Int32],
+  attention_mask : Array[Int32],
+  sequence_ids~ : Array[Int32?],
+  word_ids~ : Array[Int32?],
   overflowing~ : Array[Encoding],
 ) -> Encoding {
   let n = ids.length()
@@ -129,12 +133,12 @@ fn encoding_from_parts_unchecked(
 
 ///|
 fn validate_encoding_required_lengths(
-  ids : Array[Int],
-  type_ids : Array[Int],
+  ids : Array[Int32],
+  type_ids : Array[Int32],
   tokens : Array[String],
-  offsets : Array[(Int, Int)],
-  special_tokens_mask : Array[Int],
-  attention_mask : Array[Int],
+  offsets : Array[(Int32, Int32)],
+  special_tokens_mask : Array[Int32],
+  attention_mask : Array[Int32],
 ) -> Unit raise TokenizerError {
   let n = ids.length()
   validate_encoding_length("type_ids", type_ids.length(), n)
@@ -151,8 +155,8 @@ fn validate_encoding_required_lengths(
 ///|
 fn validate_encoding_optional_length(
   name : String,
-  actual : Int,
-  expected : Int,
+  actual : Int32,
+  expected : Int32,
 ) -> Unit raise TokenizerError {
   if actual != 0 {
     validate_encoding_length(name, actual, expected)
@@ -162,8 +166,8 @@ fn validate_encoding_optional_length(
 ///|
 fn validate_encoding_length(
   name : String,
-  actual : Int,
-  expected : Int,
+  actual : Int32,
+  expected : Int32,
 ) -> Unit raise TokenizerError {
   if actual != expected {
     raise ParseError(
@@ -195,9 +199,9 @@ pub fn Encoding::from_state(
 /// metadata arrays follow the same defaults as `Encoding::new`.
 pub fn Encoding::from_buffers(
   buffers : EncodingBuffers,
-  sequence_ids? : Array[Int?] = [],
-  word_ids? : Array[Int?] = [],
-  overflowing? : Array[Encoding] = [],
+  sequence_ids~ : Array[Int32?] = [],
+  word_ids~ : Array[Int32?] = [],
+  overflowing~ : Array[Encoding] = [],
 ) -> Encoding raise TokenizerError {
   Encoding::new(
     buffers.ids,
@@ -265,7 +269,7 @@ pub fn Encoding::__setstate__(
 
 ///|
 /// Python binding convenience alias for `len(encoding)` shims.
-pub fn Encoding::__len__(self : Encoding) -> Int {
+pub fn Encoding::__len__(self : Encoding) -> Int32 {
   self.len()
 }
 
@@ -289,14 +293,14 @@ pub fn Encoding::__repr__(self : Encoding) -> String {
 /// Python/FFI shims that already marshal positional buffers.
 pub fn Encoding::from_tuple(
   t : (
-    Array[Int],
-    Array[Int],
+    Array[Int32],
+    Array[Int32],
     Array[String],
-    Array[(Int, Int)],
-    Array[Int],
-    Array[Int],
-    Array[Int?],
-    Array[Int?],
+    Array[(Int32, Int32)],
+    Array[Int32],
+    Array[Int32],
+    Array[Int32?],
+    Array[Int32?],
     Array[Encoding],
   ),
 ) -> Encoding raise TokenizerError {
@@ -319,14 +323,14 @@ pub fn Encoding::from_tuple(
 pub fn Encoding::as_tuple(
   self : Encoding,
 ) -> (
-  Array[Int],
-  Array[Int],
+  Array[Int32],
+  Array[Int32],
   Array[String],
-  Array[(Int, Int)],
-  Array[Int],
-  Array[Int],
-  Array[Int?],
-  Array[Int?],
+  Array[(Int32, Int32)],
+  Array[Int32],
+  Array[Int32],
+  Array[Int32?],
+  Array[Int32?],
   Array[Encoding],
 ) {
   let state = self.get_state()
@@ -347,16 +351,16 @@ pub fn Encoding::as_tuple(
 /// Build an Encoding from model tokens, mirroring HF's `Encoding::from_tokens`.
 pub fn Encoding::from_tokens(
   tokens : Array[Token],
-  type_id? : Int = 0,
+  type_id~ : Int32 = 0,
 ) -> Encoding {
-  let ids : Array[Int] = []
-  let type_ids : Array[Int] = []
+  let ids : Array[Int32] = []
+  let type_ids : Array[Int32] = []
   let values : Array[String] = []
-  let offsets : Array[(Int, Int)] = []
-  let special : Array[Int] = []
-  let attention : Array[Int] = []
-  let sequence_ids : Array[Int?] = []
-  let word_ids : Array[Int?] = []
+  let offsets : Array[(Int32, Int32)] = []
+  let special : Array[Int32] = []
+  let attention : Array[Int32] = []
+  let sequence_ids : Array[Int32?] = []
+  let word_ids : Array[Int32?] = []
   for i, t in tokens {
     ids.push(t.id)
     type_ids.push(type_id)
@@ -383,7 +387,7 @@ pub fn Encoding::from_tokens(
 ///|
 pub fn Encoding::with_type_ids(
   self : Encoding,
-  type_ids : Array[Int],
+  type_ids : Array[Int32],
 ) -> Encoding raise TokenizerError {
   validate_encoding_length("type_ids", type_ids.length(), self.ids.length())
   { ..self, type_ids: type_ids.copy(), }
@@ -392,7 +396,7 @@ pub fn Encoding::with_type_ids(
 ///|
 pub fn Encoding::with_special_tokens_mask(
   self : Encoding,
-  special_tokens_mask : Array[Int],
+  special_tokens_mask : Array[Int32],
 ) -> Encoding raise TokenizerError {
   validate_encoding_length(
     "special_tokens_mask",
@@ -405,7 +409,7 @@ pub fn Encoding::with_special_tokens_mask(
 ///|
 pub fn Encoding::with_attention_mask(
   self : Encoding,
-  attention_mask : Array[Int],
+  attention_mask : Array[Int32],
 ) -> Encoding raise TokenizerError {
   validate_encoding_length(
     "attention_mask",
@@ -418,7 +422,7 @@ pub fn Encoding::with_attention_mask(
 ///|
 pub fn Encoding::with_word_ids(
   self : Encoding,
-  word_ids : Array[Int?],
+  word_ids : Array[Int32?],
 ) -> Encoding raise TokenizerError {
   validate_encoding_length("word_ids", word_ids.length(), self.ids.length())
   { ..self, word_ids: word_ids.copy(), }
@@ -427,7 +431,7 @@ pub fn Encoding::with_word_ids(
 ///|
 pub fn Encoding::with_sequence_id(
   self : Encoding,
-  sequence_id : Int,
+  sequence_id : Int32,
 ) -> Encoding raise TokenizerError {
   if sequence_id < 0 {
     raise ParseError("sequence_id must be non-negative")
@@ -441,7 +445,7 @@ pub fn Encoding::with_sequence_id(
 /// `with_sequence_id` instead of mutating in place.
 pub fn Encoding::set_sequence_id(
   self : Encoding,
-  sequence_id : Int,
+  sequence_id : Int32,
 ) -> Encoding raise TokenizerError {
   self.with_sequence_id(sequence_id)
 }
@@ -451,7 +455,7 @@ pub fn Encoding::set_sequence_id(
 /// updated type ids, preserving immutability.
 pub fn Encoding::set_type_ids(
   self : Encoding,
-  type_ids : Array[Int],
+  type_ids : Array[Int32],
 ) -> Encoding raise TokenizerError {
   self.with_type_ids(type_ids)
 }
@@ -461,7 +465,7 @@ pub fn Encoding::set_type_ids(
 /// with the updated special tokens mask, preserving immutability.
 pub fn Encoding::set_special_tokens_mask(
   self : Encoding,
-  special_tokens_mask : Array[Int],
+  special_tokens_mask : Array[Int32],
 ) -> Encoding raise TokenizerError {
   self.with_special_tokens_mask(special_tokens_mask)
 }
@@ -471,7 +475,7 @@ pub fn Encoding::set_special_tokens_mask(
 /// with the updated attention mask, preserving immutability.
 pub fn Encoding::set_attention_mask(
   self : Encoding,
-  attention_mask : Array[Int],
+  attention_mask : Array[Int32],
 ) -> Encoding raise TokenizerError {
   self.with_attention_mask(attention_mask)
 }
@@ -481,7 +485,7 @@ pub fn Encoding::set_attention_mask(
 /// updated word ids, preserving immutability.
 pub fn Encoding::set_word_ids(
   self : Encoding,
-  word_ids : Array[Int?],
+  word_ids : Array[Int32?],
 ) -> Encoding raise TokenizerError {
   self.with_word_ids(word_ids)
 }
@@ -517,7 +521,7 @@ pub fn Encoding::take_overflowing(
 /// This enables programmatic construction and patching of encodings.
 pub fn Encoding::with_ids(
   self : Encoding,
-  ids : Array[Int],
+  ids : Array[Int32],
 ) -> Encoding raise TokenizerError {
   validate_encoding_length("ids", ids.length(), self.ids.length())
   { ..self, ids: ids.copy(), }
@@ -528,7 +532,7 @@ pub fn Encoding::with_ids(
 /// updated token ids, preserving immutability.
 pub fn Encoding::set_ids(
   self : Encoding,
-  ids : Array[Int],
+  ids : Array[Int32],
 ) -> Encoding raise TokenizerError {
   self.with_ids(ids)
 }
@@ -559,7 +563,7 @@ pub fn Encoding::set_tokens(
 /// Raises TokenizerError if the new offsets length doesn't match the original.
 pub fn Encoding::with_offsets(
   self : Encoding,
-  offsets : Array[(Int, Int)],
+  offsets : Array[(Int32, Int32)],
 ) -> Encoding raise TokenizerError {
   validate_encoding_length("offsets", offsets.length(), self.ids.length())
   { ..self, offsets: offsets.copy(), }
@@ -570,7 +574,7 @@ pub fn Encoding::with_offsets(
 /// updated offsets, preserving immutability.
 pub fn Encoding::set_offsets(
   self : Encoding,
-  offsets : Array[(Int, Int)],
+  offsets : Array[(Int32, Int32)],
 ) -> Encoding raise TokenizerError {
   self.with_offsets(offsets)
 }
@@ -581,9 +585,9 @@ pub fn Encoding::set_offsets(
 /// updated value instead of mutating in place.
 pub fn Encoding::truncate(
   self : Encoding,
-  max_len : Int,
-  stride? : Int = 0,
-  direction? : EncodingDirection = Right,
+  max_len : Int32,
+  stride~ : Int32 = 0,
+  direction~ : EncodingDirection = Right,
 ) -> Encoding {
   let n = self.ids.length()
   if max_len >= n {
@@ -593,7 +597,7 @@ pub fn Encoding::truncate(
     return { ..encoding_slice(self, 0, 0), overflowing: [self], }
   }
   let step = if max_len - stride > 0 { max_len - stride } else { max_len }
-  let ranges : Array[(Int, Int)] = []
+  let ranges : Array[(Int32, Int32)] = []
   match direction {
     Right => {
       let mut start = 0
@@ -633,9 +637,9 @@ pub fn Encoding::truncate(
 /// HF Python-style truncate wrapper using string directions.
 pub fn Encoding::truncate_hf(
   self : Encoding,
-  max_len : Int,
-  stride? : Int = 0,
-  direction? : String = "right",
+  max_len : Int32,
+  stride~ : Int32 = 0,
+  direction~ : String = "right",
 ) -> Encoding raise TokenizerError {
   if stride >= max_len && max_len > 0 {
     raise ParseError("stride must be strictly less than max_len=\{max_len}")
@@ -648,11 +652,11 @@ pub fn Encoding::truncate_hf(
 /// mirrors HF's public Encoding padding API but returns a new value.
 pub fn Encoding::pad(
   self : Encoding,
-  target_length : Int,
-  pad_id? : Int = 0,
-  pad_type_id? : Int = 0,
-  pad_token? : String = "[PAD]",
-  direction? : EncodingDirection = Right,
+  target_length : Int32,
+  pad_id~ : Int32 = 0,
+  pad_type_id~ : Int32 = 0,
+  pad_token~ : String = "[PAD]",
+  direction~ : EncodingDirection = Right,
 ) -> Encoding {
   let padded_overflow = self.overflowing.map(e => {
     e.pad(target_length, pad_id~, pad_type_id~, pad_token~, direction~)
@@ -666,11 +670,11 @@ pub fn Encoding::pad(
   let pad_ids = Array::make(pad, pad_id)
   let pad_types = Array::make(pad, pad_type_id)
   let pad_tokens = Array::make(pad, pad_token)
-  let pad_offsets : Array[(Int, Int)] = Array::make(pad, (0, 0))
+  let pad_offsets : Array[(Int32, Int32)] = Array::make(pad, (0, 0))
   let pad_special = Array::make(pad, 1)
   let pad_attention = Array::make(pad, 0)
-  let pad_seq : Array[Int?] = Array::make(pad, None)
-  let pad_words : Array[Int?] = Array::make(pad, None)
+  let pad_seq : Array[Int32?] = Array::make(pad, None)
+  let pad_words : Array[Int32?] = Array::make(pad, None)
   match direction {
     Right =>
       {
@@ -703,11 +707,11 @@ pub fn Encoding::pad(
 /// HF Python-style pad wrapper using string directions and keyword order.
 pub fn Encoding::pad_hf(
   self : Encoding,
-  length : Int,
-  direction? : String = "right",
-  pad_id? : Int = 0,
-  pad_type_id? : Int = 0,
-  pad_token? : String = "[PAD]",
+  length : Int32,
+  direction~ : String = "right",
+  pad_id~ : Int32 = 0,
+  pad_type_id~ : Int32 = 0,
+  pad_token~ : String = "[PAD]",
 ) -> Encoding raise TokenizerError {
   self.pad(
     length,
@@ -721,7 +725,7 @@ pub fn Encoding::pad_hf(
 ///|
 pub fn Encoding::merge(
   encodings : Array[Encoding],
-  growing_offsets? : Bool = true,
+  growing_offsets~ : Bool = true,
 ) -> Encoding {
   let mut out = Encoding::empty()
   for enc in encodings {
@@ -745,7 +749,7 @@ fn parse_encoding_direction(
 pub fn Encoding::merge_with(
   self : Encoding,
   pair : Encoding,
-  growing_offsets? : Bool = true,
+  growing_offsets~ : Bool = true,
 ) -> Encoding {
   let starting_offset = if growing_offsets {
     if self.offsets.length() > 0 {
@@ -756,7 +760,7 @@ pub fn Encoding::merge_with(
   } else {
     0
   }
-  let shifted_offsets : Array[(Int, Int)] = []
+  let shifted_offsets : Array[(Int32, Int32)] = []
   for off in pair.offsets {
     shifted_offsets.push((off.0 + starting_offset, off.1 + starting_offset))
   }

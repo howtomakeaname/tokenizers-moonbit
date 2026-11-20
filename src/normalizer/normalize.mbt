@@ -27,7 +27,7 @@ pub fn Normalizer::normalize(self : Normalizer, input : String) -> String {
       clean_text~,
       handle_chinese_chars~,
       strip_accents=sa,
-      lowercase~
+      lowercase~,
     ) => {
       let mut s = input
       if clean_text {
@@ -80,7 +80,7 @@ fn byte_level_normalize(s : String) -> String {
 }
 
 ///|
-fn byte_to_visible_char(b : Int) -> Char {
+fn byte_to_visible_char(b : Int32) -> Char {
   if is_byte_self_mapped(b) {
     b.unsafe_to_char()
   } else {
@@ -95,7 +95,7 @@ fn byte_to_visible_char(b : Int) -> Char {
 }
 
 ///|
-fn is_byte_self_mapped(b : Int) -> Bool {
+fn is_byte_self_mapped(b : Int32) -> Bool {
   (b >= 33 && b <= 126) || (b >= 161 && b <= 172) || (b >= 174 && b <= 255)
 }
 
@@ -115,7 +115,7 @@ fn nmt_normalize(s : String) -> String {
 
 ///|
 /// The Nmt per-character replacement ("" drops the char).
-fn nmt_char_replacement(u : Int) -> String {
+fn nmt_char_replacement(u : Int32) -> String {
   if u == 0 || u == 0xFFFD || is_nmt_control_or_format(u) {
     return ""
   }
@@ -126,14 +126,14 @@ fn nmt_char_replacement(u : Int) -> String {
 }
 
 ///|
-fn cp_to_string(u : Int) -> String {
+fn cp_to_string(u : Int32) -> String {
   let sb = StringBuilder()
   sb.write_char(u.unsafe_to_char())
   sb.to_string()
 }
 
 ///|
-fn is_nmt_control_or_format(u : Int) -> Bool {
+fn is_nmt_control_or_format(u : Int32) -> Bool {
   // Keep tab/newline/carriage-return as whitespace; drop the rest of C0/C1 and
   // common Cf ranges such as ZWSP/BOM/variation selectors.
   ((u >= 0 && u < 0x20) && u != 0x09 && u != 0x0A && u != 0x0D) ||
@@ -146,7 +146,7 @@ fn is_nmt_control_or_format(u : Int) -> Bool {
 }
 
 ///|
-fn is_nmt_space(u : Int) -> Bool {
+fn is_nmt_space(u : Int32) -> Bool {
   u == 0x09 ||
   u == 0x0A ||
   u == 0x0D ||
