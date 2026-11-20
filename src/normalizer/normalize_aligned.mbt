@@ -254,7 +254,7 @@ fn bert_clean_text_aligned(input : String) -> (String, Aligned) {
   let align : Array[(Int32, Int32)] = []
   for i, c in input {
     let u = c.to_int()
-    if u == 0 || u == 0xFFFD || is_control(c) {
+    if is_control(c) {
       continue
     }
     if @common.is_unicode_whitespace(u) {

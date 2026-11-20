@@ -66,18 +66,20 @@ fn accent_map() -> Map[Int32, String] {
   }
 }
 
-// BertNormalizer clean_text: drop control chars and 0xFFFD, map whitespace to
-// a single space.
+// BertNormalizer clean_text: drop control chars (including Unicode format
+// controls and U+FFFD), map whitespace to a single space.
 
 ///|
 fn bert_clean_text(s : String) -> String {
   let sb = StringBuilder()
   for c in s {
-    let u = c.to_int()
-    if u == 0 || u == 0xFFFD || is_control(c) {
+    if is_control(c) {
       continue
     }
-    if @common.is_ascii_whitespace(c) {
+    // HF maps every Unicode White_Space char to a single space, not just the
+    // ASCII ones. The control check above already removed VT/FF/NEL, which the
+    // regex `\s` table includes but BERT treats as controls.
+    if @common.is_unicode_whitespace(c.to_int()) {
       sb.write_char(' ')
     } else {
       sb.write_char(c)
@@ -105,12 +107,26 @@ fn bert_pad_chinese(s : String) -> String {
 
 ///|
 fn is_control(c : Char) -> Bool {
-  // \t \n \r are treated as whitespace, not control, by BERT.
-  if c == '\t' || c == '\n' || c == '\r' {
-    return false
-  }
+  // Mirrors HF tokenizers 0.22.2 BertNormalizer: Rust `char::is_other()`
+  // (Unicode Cc/Cf/Co/Cs/Cn, tab/LF/CR excluded) plus U+FFFD. The exact
+  // codepoint set is version-dependent, so it lives in the generated table
+  // scripts/gen_bert_control.py (empirical full-range sweep).
   let u = c.to_int()
-  (u >= 0 && u < 0x20) || u == 0x7F
+  let ranges = bert_control_ranges()
+  let mut lo = 0
+  let mut hi = ranges.length() - 1
+  while lo <= hi {
+    let mid = (lo + hi) / 2
+    let (start, stop) = ranges[mid]
+    if u < start {
+      hi = mid - 1
+    } else if u > stop {
+      lo = mid + 1
+    } else {
+      return true
+    }
+  }
+  false
 }
 
 ///|
