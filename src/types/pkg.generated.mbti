@@ -13,15 +13,31 @@ pub fn as_object(@json.Json, String) -> Map[String, @json.Json] raise TokenizerE
 
 pub fn get_bool(Map[String, @json.Json], String, default~ : Bool) -> Bool
 
+pub fn get_bool_strict(Map[String, @json.Json], String, default~ : Bool, String) -> Bool raise TokenizerError
+
 pub fn get_char(Map[String, @json.Json], String, default~ : Char) -> Char
 
 pub fn get_int(Map[String, @json.Json], String, default~ : Int32) -> Int32
 
 pub fn get_int_opt(Map[String, @json.Json], String) -> Int32?
 
+pub fn get_int_strict(Map[String, @json.Json], String, default~ : Int32, String) -> Int32 raise TokenizerError
+
+pub fn get_optional_int_strict(Map[String, @json.Json], String, String) -> Int32? raise TokenizerError
+
+pub fn get_optional_number_strict(Map[String, @json.Json], String, String) -> Double? raise TokenizerError
+
+pub fn get_optional_string_strict(Map[String, @json.Json], String, String) -> String? raise TokenizerError
+
+pub fn get_required_int(Map[String, @json.Json], String, String) -> Int32 raise TokenizerError
+
+pub fn get_required_string(Map[String, @json.Json], String, String) -> String raise TokenizerError
+
 pub fn get_str(Map[String, @json.Json], String, default~ : String) -> String
 
 pub fn get_str_opt(Map[String, @json.Json], String) -> String?
+
+pub fn get_str_strict(Map[String, @json.Json], String, default~ : String, String) -> String raise TokenizerError
 
 pub fn get_type(Map[String, @json.Json], String) -> String raise TokenizerError
 

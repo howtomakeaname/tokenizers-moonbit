@@ -197,7 +197,12 @@ pub fn Tokenizer::from_str(
   }
   let added_vocabulary = AddedVocabulary::new_with_encode_special_tokens(
     remapped,
-    @types.get_bool(root, "encode_special_tokens", default=false),
+    @types.get_bool_strict(
+      root,
+      "encode_special_tokens",
+      default=false,
+      "tokenizer root",
+    ),
   ).with_normalizer(normalizer)
   let truncation = decode_opt(root, "truncation", parse_truncation)
   let padding = decode_opt(root, "padding", parse_padding)

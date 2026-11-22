@@ -212,12 +212,27 @@ pub fn Normalizer::from_json(
     "ByteLevel" => ByteLevel
     "Strip" =>
       Strip(
-        left=@types.get_bool(obj, "strip_left", default=true),
-        right=@types.get_bool(obj, "strip_right", default=true),
+        left=@types.get_bool_strict(
+          obj,
+          "strip_left",
+          default=true,
+          "Strip normalizer",
+        ),
+        right=@types.get_bool_strict(
+          obj,
+          "strip_right",
+          default=true,
+          "Strip normalizer",
+        ),
       )
     "Replace" => {
       let (pattern, pattern_kind) = parse_pattern(obj)
-      let content = @types.get_str(obj, "content", default="")
+      let content = @types.get_str_strict(
+        obj,
+        "content",
+        default="",
+        "Replace normalizer",
+      )
       match pattern_kind {
         @common.StringPattern => ReplaceString(pattern~, content~)
         @common.RegexPattern => {
@@ -232,7 +247,15 @@ pub fn Normalizer::from_json(
         }
       }
     }
-    "Prepend" => Prepend(prepend=@types.get_str(obj, "prepend", default=""))
+    "Prepend" =>
+      Prepend(
+        prepend=@types.get_str_strict(
+          obj,
+          "prepend",
+          default="",
+          "Prepend normalizer",
+        ),
+      )
     "Nmt" => Nmt
     "Precompiled" =>
       match obj.get("precompiled_charsmap") {
@@ -245,18 +268,29 @@ pub fn Normalizer::from_json(
         _ => Precompiled
       }
     "BertNormalizer" => {
-      let lowercase = @types.get_bool(obj, "lowercase", default=true)
+      let lowercase = @types.get_bool_strict(
+        obj,
+        "lowercase",
+        default=true,
+        "BertNormalizer",
+      )
       let strip_accents = match obj.get("strip_accents") {
         Some(True) => Some(true)
         Some(False) => Some(false)
         _ => None
       }
       BertNormalizer(
-        clean_text=@types.get_bool(obj, "clean_text", default=true),
-        handle_chinese_chars=@types.get_bool(
+        clean_text=@types.get_bool_strict(
+          obj,
+          "clean_text",
+          default=true,
+          "BertNormalizer",
+        ),
+        handle_chinese_chars=@types.get_bool_strict(
           obj,
           "handle_chinese_chars",
           default=true,
+          "BertNormalizer",
         ),
         strip_accents~,
         lowercase~,

@@ -206,9 +206,24 @@ pub fn PreTokenizer::from_json(
   match ty {
     "ByteLevel" =>
       ByteLevel(
-        add_prefix_space=@types.get_bool(obj, "add_prefix_space", default=true),
-        use_regex=@types.get_bool(obj, "use_regex", default=true),
-        trim_offsets=@types.get_bool(obj, "trim_offsets", default=true),
+        add_prefix_space=@types.get_bool_strict(
+          obj,
+          "add_prefix_space",
+          default=true,
+          "ByteLevel pre_tokenizer",
+        ),
+        use_regex=@types.get_bool_strict(
+          obj,
+          "use_regex",
+          default=true,
+          "ByteLevel pre_tokenizer",
+        ),
+        trim_offsets=@types.get_bool_strict(
+          obj,
+          "trim_offsets",
+          default=true,
+          "ByteLevel pre_tokenizer",
+        ),
       )
     "Whitespace" => Whitespace
     "WhitespaceSplit" => WhitespaceSplit
@@ -218,14 +233,20 @@ pub fn PreTokenizer::from_json(
       Metaspace(
         replacement=@types.get_char(obj, "replacement", default='▁'),
         prepend_scheme=parse_prepend_scheme(obj),
-        split=@types.get_bool(obj, "split", default=true),
+        split=@types.get_bool_strict(
+          obj,
+          "split",
+          default=true,
+          "Metaspace pre_tokenizer",
+        ),
       )
     "Digits" =>
       Digits(
-        individual_digits=@types.get_bool(
+        individual_digits=@types.get_bool_strict(
           obj,
           "individual_digits",
           default=false,
+          "Digits pre_tokenizer",
         ),
       )
     "Delimiter" | "CharDelimiterSplit" =>
@@ -242,7 +263,12 @@ pub fn PreTokenizer::from_json(
       Split(
         pattern~,
         behavior=parse_behavior(obj),
-        invert=@types.get_bool(obj, "invert", default=false),
+        invert=@types.get_bool_strict(
+          obj,
+          "invert",
+          default=false,
+          "Split pre_tokenizer",
+        ),
         regex~,
       )
     }
@@ -264,7 +290,12 @@ pub fn PreTokenizer::from_json(
 fn parse_fixed_length(
   obj : Map[String, Json],
 ) -> PreTokenizer raise @types.TokenizerError {
-  let length = @types.get_int(obj, "length", default=5)
+  let length = @types.get_int_strict(
+    obj,
+    "length",
+    default=5,
+    "FixedLength pre_tokenizer",
+  )
   if length <= 0 {
     raise @types.ParseError("FixedLength length must be positive")
   }
@@ -304,11 +335,18 @@ fn parse_behavior(obj : Map[String, Json]) -> SplitBehavior {
 // ("always"/"never"/"first"); old configs use a bool "add_prefix_space".
 
 ///|
-fn parse_prepend_scheme(obj : Map[String, Json]) -> String {
+fn parse_prepend_scheme(
+  obj : Map[String, Json],
+) -> String raise @types.TokenizerError {
   match @types.get_str_opt(obj, "prepend_scheme") {
     Some(s) => s
     None =>
-      if @types.get_bool(obj, "add_prefix_space", default=true) {
+      if @types.get_bool_strict(
+          obj,
+          "add_prefix_space",
+          default=true,
+          "Metaspace pre_tokenizer",
+        ) {
         "always"
       } else {
         "never"

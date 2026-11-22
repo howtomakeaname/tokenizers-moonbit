@@ -82,14 +82,39 @@ pub fn PostProcessor::from_json(
       RobertaProcessing(
         sep=parse_token_id_pair(obj, "sep"),
         cls=parse_token_id_pair(obj, "cls"),
-        trim_offsets=@types.get_bool(obj, "trim_offsets", default=true),
-        add_prefix_space=@types.get_bool(obj, "add_prefix_space", default=true),
+        trim_offsets=@types.get_bool_strict(
+          obj,
+          "trim_offsets",
+          default=true,
+          "RobertaProcessing",
+        ),
+        add_prefix_space=@types.get_bool_strict(
+          obj,
+          "add_prefix_space",
+          default=true,
+          "RobertaProcessing",
+        ),
       )
     "ByteLevel" =>
       ByteLevel(
-        add_prefix_space=@types.get_bool(obj, "add_prefix_space", default=true),
-        trim_offsets=@types.get_bool(obj, "trim_offsets", default=true),
-        use_regex=@types.get_bool(obj, "use_regex", default=true),
+        add_prefix_space=@types.get_bool_strict(
+          obj,
+          "add_prefix_space",
+          default=true,
+          "ByteLevel post_processor",
+        ),
+        trim_offsets=@types.get_bool_strict(
+          obj,
+          "trim_offsets",
+          default=true,
+          "ByteLevel post_processor",
+        ),
+        use_regex=@types.get_bool_strict(
+          obj,
+          "use_regex",
+          default=true,
+          "ByteLevel post_processor",
+        ),
       )
     "Sequence" => {
       let arr = match obj.get("processors") {
@@ -136,8 +161,18 @@ fn parse_pieces(
               Some(Object(s)) =>
                 out.push(
                   SequenceRef(
-                    id=@types.get_str(s, "id", default="A"),
-                    type_id=@types.get_int(s, "type_id", default=0),
+                    id=@types.get_str_strict(
+                      s,
+                      "id",
+                      default="A",
+                      "TemplateProcessing Sequence",
+                    ),
+                    type_id=@types.get_int_strict(
+                      s,
+                      "type_id",
+                      default=0,
+                      "TemplateProcessing Sequence",
+                    ),
                   ),
                 )
               _ =>
@@ -145,8 +180,18 @@ fn parse_pieces(
                   Some(Object(s)) =>
                     out.push(
                       SpecialTokenRef(
-                        id=@types.get_str(s, "id", default=""),
-                        type_id=@types.get_int(s, "type_id", default=0),
+                        id=@types.get_str_strict(
+                          s,
+                          "id",
+                          default="",
+                          "TemplateProcessing SpecialToken",
+                        ),
+                        type_id=@types.get_int_strict(
+                          s,
+                          "type_id",
+                          default=0,
+                          "TemplateProcessing SpecialToken",
+                        ),
                       ),
                     )
                   _ => raise @types.ParseError("unknown template piece")
@@ -302,7 +347,12 @@ fn parse_special_tokens(
   for kv in sobj {
     let (key, v) = kv
     let vobj = @types.as_object(v, "special_token")
-    let id = @types.get_str(vobj, "id", default=key)
+    let id = @types.get_str_strict(
+      vobj,
+      "id",
+      default=key,
+      "TemplateProcessing special token",
+    )
     let ids : Array[Int32] = []
     match vobj.get("ids") {
       Some(Array(a)) =>

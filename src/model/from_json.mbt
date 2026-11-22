@@ -117,7 +117,7 @@ fn split_legacy_merge(s : String) -> (String, String) {
 ///|
 fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
   let (vocab, vocab_r) = parse_vocab(obj)
-  let ignore_merges = get_bool_strict(
+  let ignore_merges = @types.get_bool_strict(
     obj,
     "ignore_merges",
     default=false,
@@ -129,15 +129,20 @@ fn parse_bpe(obj : Map[String, Json]) -> BPEModel raise @types.TokenizerError {
     vocab,
     vocab_r,
     merges,
-    unk_token: get_optional_string_strict(obj, "unk_token", "BPE model"),
-    continuing_subword_prefix: get_optional_string_strict(
+    unk_token: @types.get_optional_string_strict(obj, "unk_token", "BPE model"),
+    continuing_subword_prefix: @types.get_optional_string_strict(
       obj, "continuing_subword_prefix", "BPE model",
     ),
-    end_of_word_suffix: get_optional_string_strict(
+    end_of_word_suffix: @types.get_optional_string_strict(
       obj, "end_of_word_suffix", "BPE model",
     ),
-    fuse_unk: get_bool_strict(obj, "fuse_unk", default=false, "BPE model"),
-    byte_fallback: get_bool_strict(
+    fuse_unk: @types.get_bool_strict(
+      obj,
+      "fuse_unk",
+      default=false,
+      "BPE model",
+    ),
+    byte_fallback: @types.get_bool_strict(
       obj,
       "byte_fallback",
       default=false,
@@ -168,87 +173,6 @@ fn parse_bpe_dropout(
 }
 
 ///|
-fn get_bool_strict(
-  obj : Map[String, Json],
-  key : String,
-  default~ : Bool,
-  ctx : String,
-) -> Bool raise @types.TokenizerError {
-  match obj.get(key) {
-    Some(True) => true
-    Some(False) => false
-    Some(_) =>
-      raise @types.ParseError("\{ctx}: missing or non-bool \"\{key}\" field")
-    None => default
-  }
-}
-
-///|
-fn get_optional_string_strict(
-  obj : Map[String, Json],
-  key : String,
-  ctx : String,
-) -> String? raise @types.TokenizerError {
-  match obj.get(key) {
-    Some(String(s)) => Some(s)
-    Some(Null) | None => None
-    Some(_) => raise @types.ParseError("\{ctx}: non-string \"\{key}\" field")
-  }
-}
-
-///|
-fn get_required_string(
-  obj : Map[String, Json],
-  key : String,
-  ctx : String,
-) -> String raise @types.TokenizerError {
-  match obj.get(key) {
-    Some(String(s)) => s
-    _ =>
-      raise @types.ParseError("\{ctx}: missing or non-string \"\{key}\" field")
-  }
-}
-
-///|
-fn get_required_int(
-  obj : Map[String, Json],
-  key : String,
-  ctx : String,
-) -> Int32 raise @types.TokenizerError {
-  match obj.get(key) {
-    Some(Number(n, ..)) => n.to_int()
-    _ =>
-      raise @types.ParseError("\{ctx}: missing or non-number \"\{key}\" field")
-  }
-}
-
-///|
-fn get_optional_int_strict(
-  obj : Map[String, Json],
-  key : String,
-  ctx : String,
-) -> Int32? raise @types.TokenizerError {
-  match obj.get(key) {
-    Some(Number(n, ..)) => Some(n.to_int())
-    Some(Null) | None => None
-    Some(_) => raise @types.ParseError("\{ctx}: non-number \"\{key}\" field")
-  }
-}
-
-///|
-fn get_optional_number_strict(
-  obj : Map[String, Json],
-  key : String,
-  ctx : String,
-) -> Double? raise @types.TokenizerError {
-  match obj.get(key) {
-    Some(Number(n, ..)) => Some(n)
-    Some(Null) | None => None
-    Some(_) => raise @types.ParseError("\{ctx}: non-number \"\{key}\" field")
-  }
-}
-
-///|
 fn parse_wordlevel(
   obj : Map[String, Json],
 ) -> WordLevelModel raise @types.TokenizerError {
@@ -256,7 +180,7 @@ fn parse_wordlevel(
   {
     vocab,
     vocab_r,
-    unk_token: get_required_string(obj, "unk_token", "WordLevel model"),
+    unk_token: @types.get_required_string(obj, "unk_token", "WordLevel model"),
   }
 }
 
@@ -268,14 +192,14 @@ fn parse_wordpiece(
   {
     vocab,
     vocab_r,
-    unk_token: get_required_string(obj, "unk_token", "WordPiece model"),
-    continuing_subword_prefix: get_required_string(
+    unk_token: @types.get_required_string(obj, "unk_token", "WordPiece model"),
+    continuing_subword_prefix: @types.get_required_string(
       obj, "continuing_subword_prefix", "WordPiece model",
     ),
-    end_of_word_suffix: get_optional_string_strict(
+    end_of_word_suffix: @types.get_optional_string_strict(
       obj, "end_of_word_suffix", "WordPiece model",
     ),
-    max_input_chars_per_word: get_required_int(
+    max_input_chars_per_word: @types.get_required_int(
       obj, "max_input_chars_per_word", "WordPiece model",
     ),
     cache: {},
@@ -306,16 +230,23 @@ fn parse_unigram(
   {
     vocab,
     vocab_r,
-    unk_id: get_optional_int_strict(obj, "unk_id", "Unigram model"),
-    byte_fallback: get_bool_strict(
+    unk_id: @types.get_optional_int_strict(obj, "unk_id", "Unigram model"),
+    byte_fallback: @types.get_bool_strict(
       obj,
       "byte_fallback",
       default=false,
       "Unigram model",
     ),
-    fuse_unk: get_bool_strict(obj, "fuse_unk", default=true, "Unigram model"),
-    alpha: get_optional_number_strict(obj, "alpha", "Unigram model"),
-    nbest_size: get_optional_int_strict(obj, "nbest_size", "Unigram model"),
+    fuse_unk: @types.get_bool_strict(
+      obj,
+      "fuse_unk",
+      default=true,
+      "Unigram model",
+    ),
+    alpha: @types.get_optional_number_strict(obj, "alpha", "Unigram model"),
+    nbest_size: @types.get_optional_int_strict(
+      obj, "nbest_size", "Unigram model",
+    ),
     cache: {},
     cache_capacity: None,
   }

@@ -180,14 +180,39 @@ pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
   match ty {
     "ByteLevel" =>
       ByteLevel(
-        add_prefix_space=@types.get_bool(obj, "add_prefix_space", default=true),
-        trim_offsets=@types.get_bool(obj, "trim_offsets", default=true),
-        use_regex=@types.get_bool(obj, "use_regex", default=true),
+        add_prefix_space=@types.get_bool_strict(
+          obj,
+          "add_prefix_space",
+          default=true,
+          "ByteLevel decoder",
+        ),
+        trim_offsets=@types.get_bool_strict(
+          obj,
+          "trim_offsets",
+          default=true,
+          "ByteLevel decoder",
+        ),
+        use_regex=@types.get_bool_strict(
+          obj,
+          "use_regex",
+          default=true,
+          "ByteLevel decoder",
+        ),
       )
     "WordPiece" =>
       WordPiece(
-        prefix=@types.get_str(obj, "prefix", default="##"),
-        cleanup=@types.get_bool(obj, "cleanup", default=true),
+        prefix=@types.get_str_strict(
+          obj,
+          "prefix",
+          default="##",
+          "WordPiece decoder",
+        ),
+        cleanup=@types.get_bool_strict(
+          obj,
+          "cleanup",
+          default=true,
+          "WordPiece decoder",
+        ),
       )
     "Metaspace" =>
       Metaspace(
@@ -195,43 +220,77 @@ pub fn Decoder::from_json(j : Json) -> Decoder raise @types.TokenizerError {
         prepend_scheme=match @types.get_str_opt(obj, "prepend_scheme") {
           Some(s) => s
           None =>
-            if @types.get_bool(obj, "add_prefix_space", default=true) {
+            if @types.get_bool_strict(
+                obj,
+                "add_prefix_space",
+                default=true,
+                "Metaspace decoder",
+              ) {
               "always"
             } else {
               "never"
             }
         },
-        split=@types.get_bool(obj, "split", default=true),
+        split=@types.get_bool_strict(
+          obj,
+          "split",
+          default=true,
+          "Metaspace decoder",
+        ),
       )
     "BPEDecoder" =>
-      BPEDecoder(suffix=@types.get_str(obj, "suffix", default="</w>"))
+      BPEDecoder(
+        suffix=@types.get_str_strict(
+          obj,
+          "suffix",
+          default="</w>",
+          "BPEDecoder",
+        ),
+      )
     "Fuse" => Fuse
     "ByteFallback" => ByteFallback
     "CTC" =>
       CTC(
-        pad_token=@types.get_str(obj, "pad_token", default="<pad>"),
-        word_delimiter_token=@types.get_str(
+        pad_token=@types.get_str_strict(
+          obj,
+          "pad_token",
+          default="<pad>",
+          "CTC decoder",
+        ),
+        word_delimiter_token=@types.get_str_strict(
           obj,
           "word_delimiter_token",
           default="|",
+          "CTC decoder",
         ),
-        cleanup=@types.get_bool(obj, "cleanup", default=true),
+        cleanup=@types.get_bool_strict(
+          obj,
+          "cleanup",
+          default=true,
+          "CTC decoder",
+        ),
       )
     "Strip" =>
       Strip(
         content=@types.get_char(obj, "content", default=' '),
         start=match @types.get_int_opt(obj, "left") {
           Some(v) => v
-          None => @types.get_int(obj, "start", default=0)
+          None =>
+            @types.get_int_strict(obj, "start", default=0, "Strip decoder")
         },
         stop=match @types.get_int_opt(obj, "right") {
           Some(v) => v
-          None => @types.get_int(obj, "stop", default=0)
+          None => @types.get_int_strict(obj, "stop", default=0, "Strip decoder")
         },
       )
     "Replace" => {
       let (pattern, pattern_kind) = parse_pattern(obj)
-      let content = @types.get_str(obj, "content", default="")
+      let content = @types.get_str_strict(
+        obj,
+        "content",
+        default="",
+        "Replace decoder",
+      )
       match pattern_kind {
         @common.StringPattern => ReplaceString(pattern~, content~)
         @common.RegexPattern => Replace(pattern~, content~)
