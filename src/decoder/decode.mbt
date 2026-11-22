@@ -359,13 +359,8 @@ fn decode_metaspace(
 
 ///|
 fn drop_prefix(s : String, prefix : String) -> String {
-  let pc = prefix.char_length()
-  let chars = s.to_array()
-  let sb = StringBuilder()
-  for i in pc..<chars.length() {
-    sb.write_char(chars[i])
-  }
-  sb.to_string()
+  // Native char-indexed slice; equivalent to rebuilding the tail.
+  s[prefix.char_length():].to_owned()
 }
 
 ///|
@@ -405,6 +400,12 @@ fn cleanup_text(s : String) -> String {
   // previous single-pass approximation drifted on three rules (it dropped
   // spaces before ";" and ":" which HF keeps, left the trailing space of
   // " ' ", and lacked " do not" -> " don't").
+  // Every rule below starts with a space, so a token without one cannot
+  // match any of them. Skip the 11 literal passes (each allocates a char
+  // array and rebuilds the string) on the common no-space wordpiece token.
+  if !s.contains_char(' ') {
+    return s
+  }
   let out = @common.replace_literal(s, " .", ".")
   let out = @common.replace_literal(out, " ?", "?")
   let out = @common.replace_literal(out, " !", "!")
