@@ -18,11 +18,11 @@
 - 原则：inference-first、确定性、跨 target；**精确 HF 行为优先于大而全**；不支持的行为必须显式失败（加载期 `UnsupportedComponent` / 运行期报错），**绝不静默近似**。
 - 公开 API 变更必须 `moon info` 更新 .mbti。
 - 措辞红线（合规）：PR/commit/docs 只用"行为对比/probe/对拍"，禁用逆向类词汇。
-- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.16.3**（2026-09-26，0.16.2 后含 PR #69）。0.16.3 后待办见 §2 队列。
+- 发布：mooncakes `howtomakeaname/tokenizers-moonbit`，已发 0.1.0→**0.16.4**（2026-11-22，0.16.3 后含 2026-11-19 工具链迁移与 issue #70 修复）。0.16.4 后待办见 §2 队列。
 
 ## 2. 当前状态与下一步（TL;DR）
 
-**状态（2026-09-21）**：行为对比扫描**双双全绿**——合成 1134/1134、真实模型 100/100（Python 0.22.2 基准）；39 模型 fixture 对拍全绿；测试 native/js 452、wasm/wasm-gc 429；CI 8/8（含 HF benchmark smoke）。Replace text/aligned 双路径已统一到共享匹配 span 分发器（PR #19），71 拼写 ×20 输入等价扫描在库内常驻。
+**状态（2026-11-22）**：工具链已迁至 moon 0.1.20261119 / moonc v0.10.22（第九层漂移，见工作日志）；issue #70 BERT 控制字符修复后四后端全绿，测试 native/js 541、wasm/wasm-gc 515；完整 bench 248 行 0 失败（reports/bench-native-all.json，未入库）。历史基线：行为对比扫描**双双全绿**——合成 1134/1134、真实模型 100/100（Python 0.22.2 基准）；39 模型 fixture 对拍全绿；测试 native/js 452、wasm/wasm-gc 429；CI 8/8（含 HF benchmark smoke）。Replace text/aligned 双路径已统一到共享匹配 span 分发器（PR #19），71 拼写 ×20 输入等价扫描在库内常驻。
 
 ### 待办队列
 
@@ -37,6 +37,8 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-11-22 issue #70 修复 → 随 0.16.4 发布（BERT clean_text Unicode 控制字符，外部用户 Milky2018 报告）**：外部高质量 issue（精确复现+根因行号+HF 真值）。根因：`is_control` 只覆盖 ASCII C0+DEL，U+200B 等 Cf 格式控制字符（及 Rust `char::is_other()` 全集）穿透 clean_text，bert-base-uncased 把 "a<ZWSP>b" 编成 [UNK]。方案沿用仓内经验扫描方法论：新增 `scripts/gen_bert_control.py` 对 Python tokenizers 0.22.2 全量扫 0..=0x10FFFF，生成 `bert_control_data.mbt`（25 区间/137,681 码点，含 Cc/Cf/Co 与 U+FFFD，tab/LF/CR 除外）；`is_control` 改表驱动二分，plain/aligned 两路径共用，去掉冗余 U+0000/U+FFFD 显式判断；plain 路径 whitespace 映射从 ASCII 升级为 Unicode White_Space（NBSP 等，全量扫描确认 22 字符与 HF 一致，VT/FF/NEL 先被控制表删除）。验证：issue 原始复现 native+wasm-gc 通过；bert 端到端 ids [101,11113,1039,102] 与 HF 逐 id 一致；新增 5 个回归测试，四后端 native/js 541、wasm/wasm-gc 515 全绿。已在 issue 回复报告者并关闭（COMPLETED）。
+- **2026-11-20 工具链迁移（第九层漂移，commit 2fa1c15）**：moon 0.1.20261119 / moonc v0.10.22。`moon fmt` 自动迁移三类：后缀 `} derive(...)` → `#derive` 属性、`Int` → `Int32`（1587 处）、可选参数 `name? : T` → `name~ : T`（约 700 处），共 89 文件。依赖升级：moonbitlang/x 0.4.45→0.5.8、async 0.19.2→0.22.10（旧版在新编译器 implicit_impl_as_method 规则下 native/js 自身编译失败）。适配两处 API 破坏：`x/sys` 的 get/set_env_var 弃用 → `core/env`（42 处/3 包）；async/http header map 改为 `Map[CaseInsensitiveString, String]`，hub 包全链路适配并删去手写大小写回退查找。迁移后四后端 check/test 全绿，测试数 536/536/510/510（#70 修复后增至 541/541/515/515）。
 - **2026-09-26 发版 0.16.3（已发布 200 OK，干净验证 1/1×三后端）**：/tmp/verify0163 从 mooncakes 拉取 @0.16.3 冒烟——`a{2,4x}` 字面量替换（'za{2,4x}z'→'z#z'、'aaa' 不变）+ 合法 `a{2,4}` 窗口仍计算（'aaaaa'→'#a' 块语义）。
 - **2026-09-26 PR #69 合入 → 发版 0.16.3（Replace 管线三方漂移扫 + 畸形大括号尾修复，评审一轮 APPROVE）**：起因：P1/P2 两行队列均过期（门已落地、去重已完成）——转向真正未验证的**门↔引擎↔HF 三方一致性**。方法：1002 生成拼写（24 基×26 量词尾、7 锚定包裹×7 基×8 尾、~50 残留/畸形杂项）×9 输入，走端口真实管线（from_json 门+normalize_str 引擎，/tmp/repl-drv moon.work 驱动）对照装好的 Python 0.22.2，pattern 级归并（输出转义后 join）。结论：**0 false-accept**（无静默 no-op 类，P1 正式关闭）；**1 真 MISMATCH 已修**——char_bounded_spec 的 hi 数字循环后没验证消费到闭括号（无逗号分支有检查、PR #60 修过 lazy 形），`a{2,4x}` 被误当 (2,4) 窗口而 HF/onig 整条当字面量（探针：'za{2,4x}z'→'z#z'、'aaa' 不变、'a{2,4}x' 输入不动排除拼接读法）；修复=窗口拒收→引擎字面量兜底=与 HF 逐字节一致；修复后全量复扫 676 过/0 mismatch。**评审增值发现**：`a{2,4}}` 修复前是静默错（算 (2,4) 丢尾 `}`），修复后变响亮拒绝（拼接拒绝族一致）；评审独立差分修复前 13/84 分歧全在此族、修复后 0/84（含 a{4,2x} 修复前被交换成 (2,4) 窗口的更糟情形）；text/aligned 双路径与门（is_regex_literal_pattern）均验证一致。**326 响亮拒绝分类**（探针）：`\p`/`\P`/`\u`/`\x`/`]`=HF 字面量语义（廉价后续批候选）；`[`/`[a-`=HF 加载错误（双双拒绝正确）；`[a-c]{2}[x-z]`/`((a))`/`.`/`a{2,4}x`/`\d{3}\s`=真计算类（引擎能力边界，保持响亮）。四后端 536/536/510/510。
 - **2026-09-26 发版 0.16.2（已发布 200 OK，干净验证 1/1×三后端）**：/tmp/verify0162 从 mooncakes 拉取 @0.16.2（注意：发布后需 `moon update` 刷本地索引才可解析新版本号）；冒烟断言多斜杠 id 报 Python 形式错误文案、`µ模型` 合法（生成表）、`a‿b` 非法（Pc 非 \w）。下游备忘：错误类型在 types 包（`@ty.ParseError`）。
