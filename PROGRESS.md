@@ -26,11 +26,13 @@
 
 ### 待办队列
 
-| 优先级 | 事项 | 验收口径 | 备注 |
-|---|---|---|---|
-| P1 | normalizer Replace 不支持 regex 族的**加载期显式门** | 穷举 chain 支持族做判定，未知族 load 期 `UnsupportedComponent`，不得误拒现有 39 模型 | 需先枚举 `normalize_utils.mbt` replace_all 全部族；decoder 侧同类门见 PR #8（`replace_pattern_supported`） |
-| P2 | identity 对齐列 lazy 化 | `tokenizer-encode-special-switch-mixed` 微基准回到 +14% 以内 | encode 热路径每归一化字符一个 tuple（PR #9 评审 nit；identity 情形可延迟构造） |
-| P2 | `replace_pattern_supported` 与 `replace_all` 分发表去重 | 从 `@common` 暴露统一族判定，两处调用同一实现 | 两处表会漂移（PR #8 评审 nit） |
+> 2026-11-22 对账：下列 P1/P2 历史项均已落地，原队列表已过期，保留结案记录；下一批活见 §5 现存缺口（性能长尾、nightly 趋势等）。
+
+| 优先级 | 事项 | 状态 / 落点 |
+|---|---|---|
+| ~~P1~~ | normalizer Replace 不支持 regex 族的**加载期显式门** | 已落地（7eaa237 `common.is_supported_replace_regex`）：normalizer `normalizer_json.mbt` 加载期对不支持族 raise `UnsupportedComponent`，decoder 委托同一谓词，分发表已单一来源。2026-11-22 用 21 个真实 fixture（×25 用例）重验，全部加载成功、parity 0 mismatch，无误拒 |
+| ~~P2~~ | identity 对齐列 lazy 化 | 已落地（f566e73）：`encode_helpers.mbt` 的 `Align::Identity(n)` 零分配哨兵，`expand` 惰性物化，identity normalizer 不再每字符构 tuple |
+| ~~P2~~ | `replace_pattern_supported` 与 `replace_all` 分发表去重 | 已落地（7eaa237）：decoder 的 `replace_pattern_supported` 仅转调 `@common.is_supported_replace_regex`，两处共用同一实现 |
 
 | P3 | 高级 trainer 大语料 EM 对拍 | ~~与 HF trainer 在真实语料逐 id 对比~~ 已落地（PR #66：wikitext-2 真实语料 set 对拍 95.8%/98.3%；残余为 HF 自身跨进程不确定的近平局尾片 + 文档化的 vocab-too-small 分歧） | 真实 EM 已是默认路径；性能长尾已收敛（PR #67：5K 行/vocab500 全量训练 18s→~8s，种子路径 20s→~3s） |
 | P3 | Hub sidecar 内容解析与错误映射 | ~~参照 hf-tokenizers 源码逐项对拍~~ 已关闭（PR #68：本地 hf-tokenizers 切至 v0.22.2 tag 后实测发现 Python binding 走 huggingface_hub.hf_hub_download——错误映射真值是 Python 异常族而非 Rust 文案；repo-id 四条有序校验规则+逐字文案、revision 无客户端字符集校验、401/403/404 按 x-error-code 映射、offline 双文案、revision quote(safe="") 编码、生成式 Python re \w 表（707 段全码点 0 失配）。sidecar 内容解析按 0.22.2 基准裁定不属于 tokenizers 层（transformers 的 AutoTokenizer 才解析），aux 文件保持原文 API） | 已关闭；遗留记录：auth-flow 403/disabled 文案、认证态 gated 变体、空 body 镜像、TRANSFORMERS_OFFLINE |
@@ -300,11 +302,11 @@ moon test --target native --deny-warn                      # 同样跑 js/wasm/w
 
 ## 5. 已知缺口与取舍（当前有效）
 
-1. **normalizer Replace regex 族显式门（队列 P1）**：不支持族（如 `a+`、`e.*o`）在 normalizer 路径文本级静默 no-op（decoder 侧已显式 abort）；需穷举 `replace_all` chain 全部支持族后加加载期判定，防误拒真实模型。
+1. **normalizer Replace regex 族显式门**：~~队列 P1，已落地（7eaa237）~~。不支持族现在加载期即 `UnsupportedComponent`，normalizer/decoder 共用 `common.is_supported_replace_regex`；2026-11-22 以 21 真实模型 fixture 复验无误拒。
 2. **通用 regex 引擎**：明确不做；策略=主流家族手写扫描器（§4 Split 行）+复杂 pattern 加载期 Unsupported。Split 与 Replace/Normalizer/Decoder 三端共享 `common.simple_split_regex_matches` 分发保持同步。
 3. **batch 并行**：`moonbitlang/async` 为单线程协作式（官方文档明示单硬件核），无法跨 target 多核并行 CPU-bound encode；提供 `*_parallel(_fast)` 兼容入口（串行+批内重复缓存+word cache）。runtime 提供稳定 worker 调度后可替换内部实现而不动公开 API。
 4. **pair overflow 叉积 vs 0.23-dev**：按用户确认锁定 0.22.2；HF 主分支已改每侧独立窗口，若未来切换基准需重做（背景与实测数据在 PR #3）。
-5. **性能遗留**：大词表 JSON 冷加载（llama from_str ~1.14x）；identity 对齐列分配（lazy 化在队列 P2）；nightly 趋势落盘未建。
+5. **性能遗留**：大词表 JSON 冷加载（llama from_str ~1.14x）；~~identity 对齐列分配（已由 f566e73 lazy 化解决）~~；大 BPE 模型 long-doc encode 比 HF 慢 16–26x（2026-11-22 全量 bench 最慢项，长文本扫描热路径，下一优化重点）；nightly 趋势落盘未建。
 6. **Unigram 采样随机性**：确定性种子（可复现），按需换真随机源。
 7. **已收敛的 Replace/正则对抗分歧**（PR #13 评审发现，PR #14/#16 修复并全部 HF 实测对齐）：多行锚定（onig 逐行 `^`/`$` + 跨换行贪婪 run，normalizer/Split/decoder 三端一致）、ASCII class 拼写（`[0-9]`/`[A-Za-z0-9_]` 全量词/锚定/裸拼写）、字面量大括号（`a{b` 字面量化、`{,n}` 显式拒绝）、裸单字符类逐字符替换（双侧）、`[\w]` 族括号拼写（canonicalize 到 `\w`/`\W` 快捷形式，Unicode-wide 与 HF 一致）、锚定 `[\r\n]+`、单字符字面量有界量词 `c{n}`/`c{n,}`/`c{n,m}`（窗口 1–4，`{n,}` 整 run 消费；元字符基 `.{n}`/`?{n}` 等显式拒绝）、零下限量词 `c{0}`/`c{0,m}`/`c{0,}` 与类基（PR #19：onig 空匹配规则，max 上限 100000 与 onig 一致；text/aligned 双路径统一走 `replace_family_spans`，71 拼写等价扫描常驻）。**仍显式不支持**：`a{2,1}` 逆序区间（HF 接受并等价 `{1,2}`，本库拒绝）、class 内大括号、惰性后缀 `?`（`a{,2}?` 等）、双锚 `^[...]+$`、多转义基 `\\{0,2}`（PR #28 评审记录，均 HF 可算而本库显式拒绝）、
 
