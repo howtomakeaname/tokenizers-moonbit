@@ -9,12 +9,12 @@ The project is actively converging on practical HF `tokenizers` parity.
 
 | Milestone | Status | Notes |
 |---|---:|---|
-| Main encode/decode pipeline | Stable | Real model parity fixtures cover common families |
-| tokenizer.json parser strictness | Active / mostly aligned | Required field/type checks follow HF in many areas |
+| Main encode/decode pipeline | Stable | 39 real-model fixture families, all four backends green |
+| tokenizer.json parser strictness | Stable | Required field/type checks follow HF; unsupported components fail loudly |
 | Added tokens | Stable | Metadata, Unicode whitespace strip behavior and introspection covered |
-| Hub cache/download | Active | tokenizer.json path is robust; broader sidecar ecosystem expanding |
-| Trainers | Active | Deterministic MVPs with common knobs |
-| Python binding aliases | Active | State, getters, constructor and display aliases continue expanding |
+| Hub cache/download | Stable | tokenizer.json path robust; sidecar outcomes distinguish 404 from real failures |
+| Trainers | Stable | Real Unigram EM trainer (HF 0.22.2 do_train port); BPE/WordPiece/WordLevel complete |
+| Python binding aliases | Stable | 263 HF surface methods audited and covered |
 
 ## Recent Correctness Closures
 

@@ -1,8 +1,5 @@
-// Top-level Tokenizer assembly and public API.
-//
-// P1: parse the full tokenizer.json into typed components. encode/decode are
-// added in later phases (P2+); for now they are declared as TODO stubs so the
-// public surface is visible.
+// Top-level Tokenizer assembly and public API: loads the full tokenizer.json
+// into typed components and runs the complete encode/decode pipeline.
 
 ///|
 /// A loaded tokenizer: the full decoded pipeline.
