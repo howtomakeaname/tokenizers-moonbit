@@ -39,6 +39,7 @@
 | P3 | Python binding 低频 alias 长尾 | 按需 | 已至第三十七批（§7.4） |
 
 ### 最近工作日志（新在上）
+- **2026-11-22 正确性覆盖：39 模型 fixture parity 全覆盖（无代码改动，纯测试设施补全）**：此前 `parity_test.mbt` 注册 39 个模型但本地只有 21 个 fixture，18 个静默 skip。经 hf-mirror 补齐全部 18 个（llama3_2 官方 gated，用 unsloth 同版 tokenizer），`gen_parity.py` 生成 39×25 用例期望。四后端 integration 套件全过 0 mismatch，临时覆盖审计测试确认 39/39 真实执行（非 skip）。这是工具链迁移与三项性能修复后最强的一次端到端正确性背书。
 - **2026-11-22 性能修复：WordPiece decode 跳过无空格 token 的 11 次 cleanup（commit 7041f9e，随 0.16.4）**：bert decode 是表常量化后的最慢行。根因：`cleanup_text` 对每个 token 跑 11 条有序字面量替换，每条 `replace_literal` 都分配字符数组并重建字符串；但 11 条规则全部空格开头，无空格 token 不可能命中。加 `contains_char(' ')` 快速路径直接返回；`drop_prefix` 的 to_array 手工重建改为原生字符切片 `s[pc:].to_owned()`。同机 bench_compare 无 Moon 侧绝对耗时回退：bert-decode-stream 1.31x→0.51x（2580→1030us）、bert-decode-mixed 1.67x→1.26x（712→543us）、bert-decode-batch 0.59x→0.48x、wordpiece-cleanup 1.44x→1.24x。四后端 541/541、515/515 与 21 模型 parity 全绿。
 - **2026-11-22 性能修复：Unicode 区间表常量化，消除 regex 扫描器按字符分配（commit 4637aca，随 0.16.4）**：全量 bench 剩余慢点集中在手写 regex 扫描器（normalizer replace 最高 19.85x、pretokenizer split 4.84x）。微基准定位：pattern 解析仅 1.68ns（占 0.04%），热点是 `is_unicode_punctuation` 每次调用都经 `unicode_punct_ranges()` 重建 161 元素数组，而扫描器逐字符调谓词。两表（`unicode_punct_ranges`、#70 的 `bert_control_ranges`）均为不可变生成数据，改为模块级 `let` 常量（与 number/word 表一致），两个生成器同步改输出形式；公开符号由 fn 变 let（无外部调用方）。微基准（1563 字符 `[\p{P}\p{S}]{2,4}`）family dispatch 4454ns→331ns。同机 bench_compare：normalizer ranged-regex 19.85x→1.43x、punct-symbol 13.37x→0.94x，pretokenizer split union 4.84x→0.44x、punct-symbol 3.11x→0.35x，bert-encode-mixed 1.30x→0.48x；faster 行 224→232、slower 16→5（全部 ≤1.67x，最慢转为 bert-decode-mixed）；无 Moon 侧绝对耗时回退（llama-short 的比值波动来自 HF 基线方差）。四后端 541/541、515/515 与 21 模型 parity 全绿。
 - **2026-11-22 性能修复：长文档 encode 从 O(N²) 降到 O(N)（commit 0ba2eeb，随 0.16.4）**：全量 bench（248 行）发现大 BPE 模型 `*-encode-long` 比 HF 慢 16–26x（gpt2 339ms vs HF 13ms）。根因：offset 路径在每个 pretokenizer piece 上都对整个归一化 segment 调一次 `normalized.to_array()`（`char_substring`），单段长文本即 O(N²)。改法：piece 循环外只物化一次字符数组，新增 `char_substring_from` 切片共享数组；`piece_origin_map` 仍是 per-piece O(piece)，总量 O(N)；`encode_fast`（无 offset）不受影响。同机 Moon/HF 复测零回归（无 >20% 变慢行）：所有原 15–26x 慢的 encode-long 行降到 0.4–0.84x，gpt2 26.06x→0.63x（绝对快约 40 倍），encode 中位数 0.71x→0.60x，faster 行数 176→224；WordPiece 模型（bert/minilm 无 byte origin map）如预期不变。四后端 541/541、515/515 全绿。
@@ -196,6 +197,8 @@ z"→'z#z'；转义基跳过元字符排除——`.`{2}` 是 any-char 拒绝、`
 ### 39 模型 fixture 对拍
 
 `src/integration/parity_test.mbt` 表驱动；`scripts/fetch_models.py` 下载 `tests/data/*.full.json`，`scripts/gen_parity.py` 生成期望（均 gitignore，缺失自跳过）。逐 token id 一致，覆盖：
+
+> **2026-11-22 覆盖里程碑：39/39 注册模型全部本地可对拍**（此前仅 21 个有 fixture，18 个静默 skip）。补拉 18 个 fixture（含 albert/distilbert/xlm-roberta/deepseek 全系/falcon/gptneox/glm4_5/granite4/qwen3_vl/deberta/bge-large-en/e5-small/gte-modernbert/nomic/mxbai/smollm2），39 模型 × 25 用例在 native/js/wasm/wasm-gc 四后端全过、0 mismatch（llama3_2 走 unsloth 公开镜像，官方 gated）。
 
 - **经典**：gpt2（+内联 `<|endoftext|>`/decode 往返）、roberta-base、bert-base-uncased（+special/type_ids/mask/pair）、bert-base-cased、distilbert、t5-small（Unigram+Metaspace）、albert、xlm-roberta（NFKC）。
 - **现代 LLM**：llama（byte_fallback+Metaspace，emoji 字节回退）、Llama-3.2、Qwen2.5、Qwen3、Qwen3-Coder、Qwen3-VL、DeepSeek-V2-Lite/V3.2/R1-Distill、Phi-3-mini（byte_fallback+Prepend）、Phi-4-mini（o200k）、Mistral、Falcon、StarCoder2、GPT-NeoX、GPT-OSS、GLM-4.5-Air、Granite-4、SmolLM2。
