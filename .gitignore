@@ -15,8 +15,11 @@ node_modules/
 .idea/
 .vscode/
 
-# CI-generated benchmark reports (regenerated during docs build)
-/
+# CI-generated benchmark reports (regenerated during docs build).
+# Sample reports and parity-artifacts are tracked; full runs and the local
+# trend history are machine-specific and stay out of git.
+/reports/*.json
+/reports/trend/
 # Large test fixtures downloaded locally (real tokenizer.json files) and the
 # expected outputs generated from them. Both are regenerable (see README).
 tests/data/*.full.json

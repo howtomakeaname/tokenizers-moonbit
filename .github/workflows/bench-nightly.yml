@@ -1,0 +1,101 @@
+name: Benchmark nightly
+
+# Full MoonBit-vs-HF benchmark on a schedule and on demand. The point-in-time
+# JSON is uploaded as an artifact; bench_trend.py compares it against the
+# previous run so a real absolute slowdown (not HF-side jitter) fails the job.
+#
+# Runs are deliberately separate from the PR CI bench-smoke job: the full
+# matrix needs all fixtures and takes ~10 min, and benchmark timing is too
+# noisy to gate every pull request.
+on:
+  schedule:
+    # 02:17 UTC daily; off-peak minute to avoid runner congestion.
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+    inputs:
+      baseline_artifact:
+        description: "Optional benchmark JSON artifact name to diff against"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  bench-full:
+    name: Full MoonBit vs HF benchmark
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install MoonBit CLI
+        shell: bash
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Update MoonBit registry index
+        run: moon update
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python tokenizers and numpy
+        run: python -m pip install --upgrade pip tokenizers numpy
+
+      - name: Fetch all model fixtures
+        run: python scripts/fetch_models.py
+
+      - name: Run full benchmark matrix
+        run: |
+          mkdir -p reports/trend
+          python scripts/bench_compare.py --target native --corpus all \
+            --json-out reports/bench-native-all.json
+
+      - name: Archive snapshot into local trend history
+        run: |
+          python scripts/bench_trend.py save reports/bench-native-all.json \
+            --note "nightly ${GITHUB_SHA:0:7}"
+          python scripts/bench_trend.py list
+
+      # Diff against the previous successful run when one is available. The
+      # compare command exits non-zero on a confirmed absolute regression.
+      - name: Resolve previous successful benchmark run
+        id: prev
+        run: |
+          rid=$(gh run list --workflow=bench-nightly.yml --status=success \
+                --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -n "$rid" ] && [ "$rid" != "$GITHUB_RUN_ID" ]; then
+            echo "run_id=$rid" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download previous benchmark for trend comparison
+        if: steps.prev.outputs.run_id != ''
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: bench-native-all
+          path: previous-run
+          run-id: ${{ steps.prev.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compare against previous run
+        if: hashFiles('previous-run/bench-native-all.json') != ''
+        run: |
+          python scripts/bench_trend.py compare \
+            previous-run/bench-native-all.json reports/bench-native-all.json
+
+      - name: Upload full benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-native-all
+          path: |
+            reports/bench-native-all.json
+            reports/trend/index.json
+          retention-days: 90
