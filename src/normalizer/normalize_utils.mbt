@@ -112,7 +112,7 @@ fn is_control(c : Char) -> Bool {
   // codepoint set is version-dependent, so it lives in the generated table
   // scripts/gen_bert_control.py (empirical full-range sweep).
   let u = c.to_int()
-  let ranges = bert_control_ranges()
+  let ranges = bert_control_ranges
   let mut lo = 0
   let mut hi = ranges.length() - 1
   while lo <= hi {

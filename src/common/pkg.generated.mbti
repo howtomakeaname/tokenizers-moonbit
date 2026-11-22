@@ -158,7 +158,7 @@ pub fn simple_split_regex_matches(Array[Char], String) -> Array[Span]?
 
 pub fn single_anchor_window_spec(String) -> (Int32, Char?, Int32, Int32, Bool)?
 
-pub fn unicode_punct_ranges() -> Array[(Int32, Int32)]
+pub let unicode_punct_ranges : Array[(Int32, Int32)]
 
 pub fn zero_min_match_spans(Array[Char], (Char) -> Bool, Int32?) -> Array[Span]
 

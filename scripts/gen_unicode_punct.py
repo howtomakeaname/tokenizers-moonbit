@@ -60,8 +60,7 @@ def main() -> None:
         "///|",
         "/// Inclusive [start, stop] codepoint ranges of Unicode P*",
         "/// (Punctuation) characters, sorted ascending.",
-        "pub fn unicode_punct_ranges() -> Array[(Int, Int)] {",
-        "  [",
+        "pub let unicode_punct_ranges : Array[(Int32, Int32)] = [",
     ]
     row = []
     for start, stop in ranges:
@@ -71,7 +70,7 @@ def main() -> None:
             row = []
     if row:
         lines.append("    " + ", ".join(row) + ",")
-    lines += ["  ]", "}"]
+    lines += ["]"]
     with open(OUT, "w") as f:
         f.write("\n".join(lines) + "\n")
     print(f"{len(ranges)} ranges ({len(cps)} codepoints) -> {OUT}")

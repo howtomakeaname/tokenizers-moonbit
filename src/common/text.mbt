@@ -316,7 +316,7 @@ pub fn is_unicode_letter(c : Char) -> Bool {
 /// match the regex semantics HF's Rust engine uses.
 pub fn is_unicode_punctuation(c : Char) -> Bool {
   let u = c.to_int()
-  let ranges = unicode_punct_ranges()
+  let ranges = unicode_punct_ranges
   let mut lo = 0
   let mut hi = ranges.length() - 1
   while lo <= hi {

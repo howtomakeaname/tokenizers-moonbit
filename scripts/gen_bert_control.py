@@ -59,14 +59,12 @@ def main() -> None:
         "/// Inclusive [start, stop] codepoint ranges removed by BERT clean_text,",
         "/// sorted ascending. Tab, LF and CR are absent on purpose because BERT",
         "/// maps them to whitespace rather than dropping them.",
-        "fn bert_control_ranges() -> Array[(Int32, Int32)] {",
-        "  [",
+        "let bert_control_ranges : Array[(Int32, Int32)] = [",
     ]
     for start, stop in ranges:
         lines.append(f"    ({start}, {stop}),")
     lines += [
-        "  ]",
-        "}",
+        "]",
         "",
     ]
 
