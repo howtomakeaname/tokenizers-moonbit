@@ -239,6 +239,15 @@ fn Tokenizer::encode_raw_with_hooks_impl(
                 }
                 _ => None
               }
+              // Materialize the segment char array once. The per-piece origin
+              // map only needs a slice of it; rebuilding the whole array per
+              // piece used to be O(N) each and made a long single segment
+              // (e.g. GPT-2 ByteLevel without added tokens) quadratic.
+              let normalized_chars = if origin_kind is Some(_) && track_offsets {
+                normalized.to_array()
+              } else {
+                []
+              }
               for piece in pieces {
                 let word_id = next_word_id
                 next_word_id = next_word_id + 1
@@ -252,7 +261,7 @@ fn Tokenizer::encode_raw_with_hooks_impl(
                 let bl_map = if origin_kind is Some(_) && track_offsets {
                   piece_origin_map(
                     origin_kind.unwrap(),
-                    char_substring(normalized, norm_s, norm_e),
+                    char_substring_from(normalized_chars, norm_s, norm_e),
                     piece.value.char_length(),
                   )
                 } else {
@@ -376,9 +385,10 @@ fn byte_map_of(norm_sub : String) -> Array[Int32]? {
 }
 
 ///|
-/// Extract the substring of `text` in char range [s, e).
-fn char_substring(text : String, s : Int32, e : Int32) -> String {
-  let chars = text.to_array()
+/// Extract the substring in char range [s, e) from a precomputed char array.
+/// Callers materialize the array once per segment; rebuilding it per piece
+/// would be O(N) per call and make long single-segment encodes quadratic.
+fn char_substring_from(chars : Array[Char], s : Int32, e : Int32) -> String {
   let sb = StringBuilder()
   let stop = if e < chars.length() { e } else { chars.length() }
   let start = if s > 0 { s } else { 0 }
