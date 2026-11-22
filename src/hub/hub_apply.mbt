@@ -267,6 +267,32 @@ pub struct HubFileDownloadResult {
 }
 
 ///|
+/// What happened when provisioning one optional tokenizer sidecar. Sidecars
+/// are best-effort, so callers need to distinguish a file that the repository
+/// simply does not have (Missing, normal) from a real failure (Failed, worth
+/// surfacing) instead of treating every non-tokenizer.json problem the same.
+#derive(Debug, Eq)
+pub(all) enum HubSidecarOutcome {
+  /// Already present in the local snapshot; no network call was made.
+  AlreadyCached
+  /// Downloaded this call and written to the given cache path.
+  Saved(String)
+  /// HTTP 404: the repo/revision exists but does not ship this sidecar.
+  Missing
+  /// Transport, auth, 5xx, or cache-write failure; carries the error message.
+  Failed(String)
+}
+
+///|
+/// Provisioning result for one sidecar filename. Never raises for the benign
+/// Missing case so an optional file cannot abort a tokenizer load.
+#derive(Debug, Eq)
+pub struct HubSidecarResult {
+  filename : String
+  outcome : HubSidecarOutcome
+}
+
+///|
 /// Apply a complete tokenizer-adjacent Hub file body to the HF-style local cache.
 /// This is the sidecar counterpart to `apply_tokenizer_json_download_result` but
 /// intentionally omits tokenizer-specific 304/206 cache decisions.

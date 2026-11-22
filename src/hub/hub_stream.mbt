@@ -489,23 +489,82 @@ pub async fn head_tokenizer_json(
 ///|
 /// Standard sidecar files that HuggingFace tokenizers automatically downloads
 /// alongside `tokenizer.json`. These are optional and download failures are
-/// silently ignored.
+/// treated as non-fatal. `added_tokens.json` is the legacy plain-JSON form of
+/// the added vocabulary; tokenizers 0.22.2 reads added tokens from
+/// tokenizer.json itself, but many repositories still publish the sidecar.
 fn hub_tokenizer_sidecar_files() -> Array[String] {
-  ["tokenizer_config.json", "special_tokens_map.json"]
+  ["tokenizer_config.json", "special_tokens_map.json", "added_tokens.json"]
+}
+
+///|
+/// Provision one optional sidecar file into the local snapshot. Never raises:
+/// an existing cache hit, a successful save, a benign 404 (the repo does not
+/// ship the file), and a real failure are all reported through
+/// `HubSidecarOutcome` so callers can decide how loudly to react.
+
+///|
+/// Download and cache one sidecar, assuming it is not already cached. Raises
+/// the underlying Hub error; callers map 404 vs other failures into
+/// `HubSidecarOutcome`.
+async fn fetch_and_cache_sidecar(
+  model_id : String,
+  filename : String,
+  resolved_revision : String?,
+  options : HubDownloadOptions,
+) -> String raise @types.TokenizerError {
+  let file_result = download_hub_file(model_id, filename, options~)
+  @tokenizer.Tokenizer::cache_pretrained_aux_file(
+    model_id,
+    filename,
+    file_result.content,
+    revision=options.revision,
+    resolved_revision~,
+    cache_dir=options.cache_dir,
+  )
+}
+
+///|
+/// Provision one optional sidecar file into the local snapshot. Never raises:
+/// an existing cache hit, a successful save, a benign 404 (the repo does not
+/// ship the file), and a real failure are all reported through
+/// `HubSidecarOutcome` so callers can decide how loudly to react.
+async fn provision_sidecar(
+  model_id : String,
+  filename : String,
+  resolved_revision : String?,
+  options : HubDownloadOptions,
+) -> HubSidecarResult {
+  let existing = @tokenizer.Tokenizer::from_pretrained_aux_file(
+    model_id,
+    filename,
+    revision=options.revision,
+    cache_dir=options.cache_dir,
+  )
+  if existing != None {
+    return { filename, outcome: AlreadyCached, }
+  }
+  let cache_path = fetch_and_cache_sidecar(
+    model_id, filename, resolved_revision, options,
+  ) catch {
+    err => return { filename, outcome: sidecar_outcome_from_error(err), }
+  }
+  { filename, outcome: Saved(cache_path), }
 }
 
 ///|
 /// Download `tokenizer.json` and its standard sidecar files from the Hub,
 /// cache them in an HF-compatible local snapshot, and return the loaded
-/// Tokenizer. Sidecar file download failures are silently ignored since they
-/// are optional.
+/// Tokenizer together with a per-sidecar provisioning report.
 ///
-/// This function mirrors the Python `AutoTokenizer.from_pretrained` workflow
-/// where the hub client fetches the full file family automatically.
-pub async fn download_tokenizer_with_sidecars(
+/// `tokenizer.json` is required and its failure still raises; sidecars are
+/// best-effort. A sidecar the repository does not contain (HTTP 404) is
+/// reported as `Missing`, while transport/auth/cache problems are `Failed`
+/// with the error message, so the difference is visible instead of being
+/// silently collapsed.
+pub async fn download_tokenizer_sidecars(
   model_id : String,
   options~ : HubDownloadOptions = HubDownloadOptions::new(),
-) -> @tokenizer.Tokenizer raise @types.TokenizerError {
+) -> (@tokenizer.Tokenizer, Array[HubSidecarResult]) raise @types.TokenizerError {
   // 1. Download tokenizer.json (required)
   let result = download_tokenizer_json(model_id, options~)
   let tokenizer_json = result.content
@@ -520,37 +579,39 @@ pub async fn download_tokenizer_with_sidecars(
     etag=result.etag,
   )
 
-  // 3. Attempt to download and cache sidecar files (optional, failures ignored)
-  let sidecars = hub_tokenizer_sidecar_files()
-  for filename in sidecars {
-    // Skip if already in local cache
-    let existing = @tokenizer.Tokenizer::from_pretrained_aux_file(
-      model_id,
-      filename,
-      revision=options.revision,
-      cache_dir=options.cache_dir,
-    )
-    if existing != None {
-      continue
+  // 3. Provision each optional sidecar, recording the outcome for callers.
+  // The explicit try/noraise tells the async type checker that
+  // provision_sidecar cannot raise (all its errors are mapped into
+  // HubSidecarOutcome), so it does not widen this function's error type.
+  let reports : Array[HubSidecarResult] = []
+  for filename in hub_tokenizer_sidecar_files() {
+    let r = try
+      provision_sidecar(model_id, filename, result.resolved_revision, options)
+    catch {
+      err =>
+        abort(
+          "unreachable: provision_sidecar never raises: \{Error::to_string(err)}",
+        )
+    } noraise {
+      v => v
     }
-    // Attempt download; silently ignore failures
-    let file_result = download_hub_file(model_id, filename, options~) catch {
-      _ => continue
-    }
-    // Cache the downloaded sidecar file (ignore failures)
-    ignore(
-      @tokenizer.Tokenizer::cache_pretrained_aux_file(
-        model_id,
-        filename,
-        file_result.content,
-        revision=options.revision,
-        resolved_revision=result.resolved_revision,
-        cache_dir=options.cache_dir,
-      ) catch {
-        _ => ""
-      },
-    )
+    reports.push(r)
   }
+  (tok, reports)
+}
 
+///|
+/// Download `tokenizer.json` and its standard sidecar files from the Hub,
+/// cache them in an HF-compatible local snapshot, and return the loaded
+/// Tokenizer. Sidecar provisioning stays best-effort: use
+/// `download_tokenizer_sidecars` when the per-file outcome matters.
+///
+/// This function mirrors the Python `AutoTokenizer.from_pretrained` workflow
+/// where the hub client fetches the full file family automatically.
+pub async fn download_tokenizer_with_sidecars(
+  model_id : String,
+  options~ : HubDownloadOptions = HubDownloadOptions::new(),
+) -> @tokenizer.Tokenizer raise @types.TokenizerError {
+  let (tok, _reports) = download_tokenizer_sidecars(model_id, options~)
   tok
 }

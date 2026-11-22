@@ -53,6 +53,30 @@ fn validate_hub_filename(filename : String) -> Unit raise @types.TokenizerError 
 }
 
 ///|
+/// Whether an error message raised while fetching an optional sidecar means
+/// the file simply does not exist (HTTP 404), as opposed to an
+/// auth/transport/service failure. The Hub downloader builds its message
+/// through `hub_http_status_diagnostic`, so a 404 always carries this marker.
+pub fn is_hub_missing_file_message(message : String) -> Bool {
+  message.contains("HTTP 404")
+}
+
+///|
+/// Map a caught sidecar download error to the structured outcome: a 404 means
+/// the optional file is absent (Missing), anything else is a real failure
+/// worth surfacing (Failed with the message).
+pub fn sidecar_outcome_from_error(
+  err : @types.TokenizerError,
+) -> HubSidecarOutcome {
+  let msg = err.message()
+  if is_hub_missing_file_message(msg) {
+    Missing
+  } else {
+    Failed(msg)
+  }
+}
+
+///|
 /// huggingface_hub's OfflineModeIsEnabled text, raised when outgoing
 /// traffic is disabled and a network attempt would have been made.
 fn reject_local_files_only_direct_download(
